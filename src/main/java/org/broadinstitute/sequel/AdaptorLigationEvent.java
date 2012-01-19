@@ -1,0 +1,150 @@
+package org.broadinstitute.sequel;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+
+/**
+ * A very early thought about how one might
+ * write a {@link LabEvent}.
+ * 
+ * This is outdated.  Look at the {@link LabEvent} in
+ * {@link org.broadinstitute.sequel.v0.sketches.EndToEndTest.GenericLabEvent} to
+ * get a different (perhaps better) take on this.
+ */
+public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable {
+
+    private LabEventConfiguration eventConfiguration;
+
+    private MolecularEnvelope adaptor;
+    
+    private Invoice invoice;
+
+    public AdaptorLigationEvent(LabEventConfiguration eventConfig,MolecularEnvelope adaptor) {
+        this.eventConfiguration = eventConfig;
+        this.adaptor = adaptor;
+    }
+
+    @Override
+    public LabEventName getEventName() {
+       return LabEventName.ADAPTOR_LIGATION;
+    }
+
+    @Override
+    public boolean isBillable() {
+        return true;
+    }
+
+    /**
+     * Sources ar expected to have sample information
+     * but no adaptor.
+     * @throws InvalidMolecularStateException
+     */
+    @Override
+    public void validateSourceMolecularState() throws InvalidMolecularStateException {
+        for (LabVessel tangible: getSourceLabVessels()) {
+            for (SampleSheet sampleSheet : tangible.getGoop().getSampleSheets()) {
+                if (sampleSheet.getSamples().isEmpty()) {
+                    throw new InvalidMolecularStateException("No sample sheet");
+                }
+                for (SampleInstance sampleInstance: sampleSheet.getSamples()) {
+                    if (sampleInstance.getStartingSample() == null) {
+                        throw new InvalidMolecularStateException("No source sample");
+                    }
+                    MolecularEnvelope molEnvelope = sampleInstance.getMolecularState().getMolecularEnvelope();
+                    // if we have pooling, we expect indexes
+                    if (sampleSheet.getSamples().size() > 1) {
+                        if (molEnvelope == null) {
+                            Project p = sampleInstance.getProject();
+                            // is this a fatal error?  or just an alert?
+                            // do we throw the exception?  or alert?  or both?
+                            p.sendAlert("No index for " + sampleInstance.getStartingSample().getSampleName() + " in " + getEventName());
+                        }
+                    }
+
+                    float concentration  = sampleInstance.getMolecularState().getConcentration().floatValue();
+                    if (concentration < eventConfiguration.getExpectedMolecularState().getMinConcentration()) {
+                        SampleSheetAlertUtil.doAlert("Concentration " + concentration + " is out of range for " + tangible.getGoop().getLabCentricName(),tangible.getGoop().getSampleSheets(),true);
+                    }
+
+                    if (!sampleInstance.getMolecularState().getMolecularEnvelope().equals(eventConfiguration.getExpectedMolecularState().getMolecularEnvelope())) {
+                        throw new InvalidMolecularStateException("Molecular envelope is wrong!");
+                    }
+
+                    for (LabMetricRange thresholds: eventConfiguration.getExpectedMolecularState().getDisastrousMetricRanges()) {
+                        LabMetric someMetric = tangible.getMetric(thresholds.getMetricName(),
+                                LabVessel.MetricSearchMode.NEAREST,
+                                sampleInstance);
+                        if (!someMetric.isInRange(thresholds)) {
+                            SampleSheetAlertUtil.doAlert(thresholds.getMetricName() + " disaster for " + tangible.getGoop().getLabCentricName(),tangible.getGoop().getSampleSheets(),true);
+                        }
+                    }
+                }    
+            }            
+        }
+    }
+
+    @Override
+    public void validateTargetMolecularState() throws InvalidMolecularStateException {
+        for (LabVessel tangible: getTargetLabVessels()) {
+            for (SampleSheet sampleSheet : tangible.getGoop().getSampleSheets()) {
+                if (sampleSheet != null && eventConfiguration.getOutputMode() == LabEventConfiguration.OutputMaterialMode.NEW_LIBRARY) {
+                    throw new InvalidMolecularStateException("There's already a sample sheet; I expected empty destinations");
+                }    
+            }
+            
+        }
+    }
+
+    @Override
+    public Collection<SampleSheet> getAllSampleSheets() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    /**
+     * Dead example. See EndToEndTest.
+     */
+    public void applyMolecularStateChanges() throws InvalidMolecularStateException {
+        
+    }
+
+    @Override
+    public String getPriceListItemName() {
+        return "Adaptor Ligation";
+    }
+
+    @Override
+    public String getLabNameOfPricedItem() {
+        return getPriceListItemName();
+    }
+
+    @Override
+    public int getMaximumSplitFactor() {
+        Collection<StartingSample> aliquots = new HashSet<StartingSample>();
+        for (LabVessel source: getSourceLabVessels()) {
+            for (SampleSheet sampleSheet : source.getGoop().getSampleSheets()) {
+                for (SampleInstance aliquotInstance: sampleSheet.getSamples()) {
+                    aliquots.add(aliquotInstance.getStartingSample());
+                }
+            }
+        }
+        return aliquots.size();
+    }
+
+    @Override
+    public Invoice getInvoice() {
+        return invoice;
+    }
+
+
+    @Override
+    public Date getPriceableCreationDate() {
+        return getEventDate();
+    }
+
+    @Override
+    public Collection<SampleSheet> getSampleSheets() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+}
