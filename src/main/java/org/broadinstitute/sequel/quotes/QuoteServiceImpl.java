@@ -8,9 +8,12 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 
 import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.sequel.quotes.conf.QuoteConnectionParameters;
 import org.broadinstitute.sequel.quotes.data.Quote;
 import org.broadinstitute.sequel.quotes.data.Quotes;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.net.ssl.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -19,11 +22,11 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@ApplicationScoped
 public class QuoteServiceImpl implements QuoteService {
 
 
-    // how do you get CDI to "autowire" these in a profile-dependent way?
+    @Inject
     private QuoteConnectionParameters connectionParameters;
 
 

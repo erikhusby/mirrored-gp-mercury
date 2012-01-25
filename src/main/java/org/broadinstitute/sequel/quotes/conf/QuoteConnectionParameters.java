@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.quotes;
+package org.broadinstitute.sequel.quotes.conf;
 
 
 public interface QuoteConnectionParameters {
