@@ -51,6 +51,9 @@ public class SampleSheetImpl implements SampleSheet {
         for (StartingSample startingSample : startingSamples) {
             SampleInstanceImpl sampleInstance = startingSample.createSampleInstance();
             for (StateChange stateChange : LabEventTraverser.getStateChangesPriorToAndIncluding(this,container)) {
+                // ordering of the state changes is critical...
+                // doing it root-to-branch means that nearest ancestor
+                // wins, which is what we want
                 sampleInstance.applyChange(stateChange);
             }    
             sampleInstances.add(sampleInstance);
