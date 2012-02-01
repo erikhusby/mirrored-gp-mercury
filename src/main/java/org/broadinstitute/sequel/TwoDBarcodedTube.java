@@ -128,4 +128,24 @@ public class TwoDBarcodedTube implements LabVessel {
     public void addSampleSheet(SampleSheet sampleSheet) {
         getGoop().addSampleSheet(sampleSheet);
     }
+
+    @Override
+    public Collection<StateChange> getStateChanges() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void addStateChange(StateChange stateChange) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public MolecularState buildMolecularState(SampleSheet sheet) {
+        // todo ensure this is ordered properly
+        Collection<StateChange> stateChanges = getStateChanges();
+        Collection<StateChange> previousStateChanges = sheet.getStateChanges();
+
+
+    }
+        
 }

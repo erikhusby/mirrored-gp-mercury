@@ -28,4 +28,15 @@ public class SampleSheetImpl implements SampleSheet {
     public boolean contains(Goop sample) {
         throw new RuntimeException("I haven't been written yet.");
     }
+
+    @Override
+    public void addLabVessel(LabTangible labTangible, Project project, ReadBucket readBucket, MolecularState molecularStateChange) {
+        // add the state change to the list
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<StateChange> getStateChanges() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 }

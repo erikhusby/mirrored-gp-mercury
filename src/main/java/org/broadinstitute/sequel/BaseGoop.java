@@ -99,18 +99,9 @@ public class BaseGoop implements Goop {
         appliedReagents.add(r);
         
         if (r.getMolecularEnvelopeDelta() != null) {
-            Collection<SampleSheet> newSampleSheets = new HashSet<SampleSheet>();
             MolecularEnvelope envelopeDelta = r.getMolecularEnvelopeDelta();
-            for (SampleSheet originalSampleSheet : getSampleSheets()) {
-                SampleSheet newSampleSheet = originalSampleSheet.createBranch();
-                for (SampleInstance sampleInstance : newSampleSheet.getSamples()) {
-                    sampleInstance.getMolecularState().getMolecularEnvelope().surroundWith(envelopeDelta);
-                }
-                newSampleSheets.add(newSampleSheet);
-            }
-            clearSampleSheets();
-            for (SampleSheet newSampleSheet : newSampleSheets) {
-                addSampleSheet(newSampleSheet);
+            for (SampleSheet sampleSheet: getSampleSheets()) {
+                sampleSheet.addLabVessel();
             }
         }
     }

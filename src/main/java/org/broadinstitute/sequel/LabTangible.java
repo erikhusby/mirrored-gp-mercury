@@ -38,6 +38,8 @@ public interface LabTangible {
      * @return
      */
     public Collection<SampleSheet> getSampleSheets();
+    
+    public Collection<StateChange> getStateChanges();
 
     /**
      * We want GSP to let you walk in with a tube, declare
@@ -57,6 +59,10 @@ public interface LabTangible {
      * @param sampleSheet
      */
     public void addSampleSheet(SampleSheet sampleSheet);
+    
+    public void addStateChange(StateChange stateChange);
+    
+    public MolecularState buildMolecularState();
 
 
 }

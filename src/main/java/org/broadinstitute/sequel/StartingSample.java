@@ -28,5 +28,11 @@ public interface StartingSample {
     public String getOrganism();
     
     public void logNote(StatusNote note);
+
+    public MolecularState getRootMolecularState();
+
+    public Project getRootProject();
+
+    public ReadBucket getRootReadBucket();
     
 }

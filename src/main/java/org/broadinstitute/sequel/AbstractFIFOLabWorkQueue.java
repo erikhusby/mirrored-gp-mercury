@@ -87,6 +87,10 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
     @Override
     public LabWorkQueueResponse add(LabTangible labTangible, T parameters) {
 
+        for (StateChange stateChange : labTangible.getStateChanges()) {
+
+        }
+
         for (SampleSheet sampleSheet : labTangible.getSampleSheets()) {
             for (SampleInstance sampleInstance: sampleSheet.getSamples()) {
                 for (MolecularStateRange molStateRange: getMolecularStateRequirements()) {

@@ -12,6 +12,41 @@ public interface SampleSheet {
     public void addSample(SampleInstance sampleInstance);
 
     /**
+     * 
+     * @param labTangible the piece of plastic which
+     *                  contains this {@link SampleSheet}
+     * @param project If null, no change to the {@link Project}
+     *                relationships in {@link org.broadinstitute.sequel.StartingSample#getRootProject()}.
+     *                
+     *                If not null, the effect is that in the
+     *                context of {@link LabVessel}, this {@link SampleSheet}
+     *                should be associated to {@link Project}.  Specifying
+     *                a {@link Project} here essentially tells the
+     *                system to "override" the {@link org.broadinstitute.sequel.StartingSample#getRootProject()}  with this project, from here on down
+     *                in the event graph.
+     * @param readBucket Similar behavior to setting the {@link Project}.
+     *                   
+     *                   If  null, the {@link org.broadinstitute.sequel.StartingSample#getRootReadBucket()} is used as the {@link ReadBucket} for this {@link SampleSheet} in the context
+     *                   of {@link LabVessel}.
+     *                   
+     *                   If not null, the effect should be that from here
+     *                   on down in the transfer graph, any mention of this
+     *                   {@link SampleSheet} should have its reads visible
+     *                   in {@link ReadBucket}.
+     * @param molecularStateChange In this {@link LabVessel}, is there a 
+     *                             {@link MolecularState molecular state change?}
+     *                             If null, there is no change.  If {@param molecularStateChange} is
+     *                             set, then this {@link SampleSheet} in the context of {@param labTangible}
+     *                             has the given {@param molecularStateChange} added to it.
+     */
+    public void addLabVessel(LabTangible labTangible,
+                             Project project,
+                             ReadBucket readBucket,
+                             MolecularState molecularStateChange);
+
+    public Collection<StateChange> getStateChanges();
+
+    /**
      * Some lab reactions permanently alter the
      * state of the samples inside this vessel.  For
      * instance, adding a molecular index under the
@@ -50,7 +85,5 @@ public interface SampleSheet {
      *
      * @return the new, copied {@link SampleSheet}
      */
-    public SampleSheet createBranch();
-
-    public boolean contains(Goop sample);
+   
 }
