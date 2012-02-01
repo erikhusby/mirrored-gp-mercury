@@ -167,6 +167,14 @@ public interface SampleInstance  {
      *
      * @return
      */
+    public Project getProject();
+
+    /**
+     * What is the molecular state  of this
+     * sample in this container?
+     * @return
+     */
+    public MolecularState getMolecularState();
 
     /**
      * This seems at odds with {@link Project#getWorkflowDescription(SampleInstance)}.
@@ -190,9 +198,8 @@ public interface SampleInstance  {
      * there, or it stores it internal to itself.
      * @return
      */
+    //public WorkflowDescription getWorkflowDescription();
 
-    /**
-     * Is this sample, in this container, earmarked
-     * for use in development?
-     */
+    public Collection<ReadBucket> getReadBuckets();
+
 }

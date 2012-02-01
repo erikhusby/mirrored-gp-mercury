@@ -7,10 +7,14 @@ import java.util.Collection;
  */
 public interface SampleSheet {
 
-    public Collection<SampleInstance> getSamples();
+    public Collection<StartingSample> getStartingSamples();
 
-    public void addSample(SampleInstance sampleInstance);
+    public void addStartingSample(StartingSample startingSample);
 
+    public Collection<LabTangible> getLabTangibles();
+    
+    public Collection<SampleInstance> getSampleInstances(LabVessel labVessel);
+    
     /**
      * 
      * @param labTangible the piece of plastic which
@@ -39,13 +43,12 @@ public interface SampleSheet {
      *                             set, then this {@link SampleSheet} in the context of {@param labTangible}
      *                             has the given {@param molecularStateChange} added to it.
      */
-    public void addLabVessel(LabTangible labTangible,
-                             Project project,
-                             ReadBucket readBucket,
-                             MolecularState molecularStateChange);
+    public void addStateChange(LabTangible labTangible,
+                                StateChange stateChange);
 
-    public Collection<StateChange> getStateChanges();
+    public void addToTangible(LabTangible labTangible);
 
+    
     /**
      * Some lab reactions permanently alter the
      * state of the samples inside this vessel.  For

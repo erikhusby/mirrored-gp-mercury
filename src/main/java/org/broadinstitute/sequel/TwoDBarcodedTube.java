@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 public class TwoDBarcodedTube implements LabVessel {
 
@@ -140,12 +141,11 @@ public class TwoDBarcodedTube implements LabVessel {
     }
 
     @Override
-    public MolecularState buildMolecularState(SampleSheet sheet) {
-        // todo ensure this is ordered properly
-        Collection<StateChange> stateChanges = getStateChanges();
-        Collection<StateChange> previousStateChanges = sheet.getStateChanges();
-
-
+    public Collection<SampleInstance> getSampleInstances() {
+        Collection<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        for (SampleSheet sampleSheet : getSampleSheets()) {
+            sampleInstances.addAll(sampleSheet.getSampleInstances(this));
+        }
+        return sampleInstances;
     }
-        
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel;
 
+import javax.persistence.Transient;
 import java.util.Collection;
 
 /**
@@ -38,8 +39,6 @@ public interface LabTangible {
      * @return
      */
     public Collection<SampleSheet> getSampleSheets();
-    
-    public Collection<StateChange> getStateChanges();
 
     /**
      * We want GSP to let you walk in with a tube, declare
@@ -59,10 +58,18 @@ public interface LabTangible {
      * @param sampleSheet
      */
     public void addSampleSheet(SampleSheet sampleSheet);
-    
+
     public void addStateChange(StateChange stateChange);
+
+    /**
+     * Probably a transient that computes the {@link SampleInstance} data
+     * on-the-fly by walking the history and applying the
+     * {@link StateChange}s applied during lab work.
+     * @return
+     */
+    public Collection<SampleInstance> getSampleInstances();
     
-    public MolecularState buildMolecularState();
+    public Collection<StateChange> getStateChanges();
 
 
 }
