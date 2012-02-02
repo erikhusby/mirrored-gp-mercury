@@ -15,7 +15,7 @@ public class BSPSample implements StartingSample {
 
     private final String sampleName;
 
-    private final Projet project;
+    private Project project;
 
     /**
      * Is there a distinction in BSP between
@@ -61,7 +61,7 @@ public class BSPSample implements StartingSample {
 
     @Override
     public Project getRootProject() {
-        throw new RuntimeException("not implemented");
+        return project;
     }
 
     @Override
@@ -77,5 +77,10 @@ public class BSPSample implements StartingSample {
     @Override
     public SampleInstanceImpl createSampleInstance() {
         throw new RuntimeException("not implemented");
+    }
+
+    @Override
+    public void setRootProject(Project rootProject) {
+        this.project = rootProject;
     }
 }

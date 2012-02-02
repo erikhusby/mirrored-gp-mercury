@@ -9,7 +9,7 @@ import java.util.HashSet;
  * write a {@link LabEvent}.
  * 
  * This is outdated.  Look at the {@link LabEvent} in
- * {@link org.broadinstitute.sequel.v0.sketches.EndToEndTest.GenericLabEvent} to
+ * {@link org.broadinstitute.sequel.EndToEndTest.GenericLabEvent} to
  * get a different (perhaps better) take on this.
  */
 public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable {
@@ -43,17 +43,16 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
     @Override
     public void validateSourceMolecularState() throws InvalidMolecularStateException {
         for (LabVessel tangible: getSourceLabVessels()) {
-            for (SampleSheet sampleSheet : tangible.getGoop().getSampleSheets()) {
-                if (sampleSheet.getSamples().isEmpty()) {
+                if (tangible.getSampleInstances().isEmpty()) {
                     throw new InvalidMolecularStateException("No sample sheet");
                 }
-                for (SampleInstance sampleInstance: sampleSheet.getSamples()) {
+                for (SampleInstance sampleInstance: tangible.getSampleInstances()) {
                     if (sampleInstance.getStartingSample() == null) {
                         throw new InvalidMolecularStateException("No source sample");
                     }
                     MolecularEnvelope molEnvelope = sampleInstance.getMolecularState().getMolecularEnvelope();
                     // if we have pooling, we expect indexes
-                    if (sampleSheet.getSamples().size() > 1) {
+                    if (tangible.getSampleInstances().size() > 1) {
                         if (molEnvelope == null) {
                             Project p = sampleInstance.getProject();
                             // is this a fatal error?  or just an alert?
@@ -79,8 +78,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
                             SampleSheetAlertUtil.doAlert(thresholds.getMetricName() + " disaster for " + tangible.getGoop().getLabCentricName(),tangible.getGoop().getSampleSheets(),true);
                         }
                     }
-                }    
-            }            
+                }
         }
     }
 
@@ -123,10 +121,8 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
     public int getMaximumSplitFactor() {
         Collection<StartingSample> aliquots = new HashSet<StartingSample>();
         for (LabVessel source: getSourceLabVessels()) {
-            for (SampleSheet sampleSheet : source.getGoop().getSampleSheets()) {
-                for (SampleInstance aliquotInstance: sampleSheet.getSamples()) {
-                    aliquots.add(aliquotInstance.getStartingSample());
-                }
+            for (SampleInstance aliquotInstance: source.getSampleInstances()) {
+                aliquots.add(aliquotInstance.getStartingSample());
             }
         }
         return aliquots.size();
@@ -144,7 +140,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
     }
 
     @Override
-    public Collection<SampleSheet> getSampleSheets() {
+    public Collection<SampleInstance> getSampleInstances() {
         throw new RuntimeException("I haven't been written yet.");
     }
 }

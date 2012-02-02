@@ -31,10 +31,10 @@ public class SageUnloadingEvent extends AbstractLabEvent implements Priceable {
     }
 
     @Override
-    public Collection<SampleSheet> getSampleSheets() {
-        final Collection<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
+    public Collection<SampleInstance> getSampleInstances() {
+        final Collection<SampleInstance> sampleSheets = new HashSet<SampleInstance>();
         for (LabVessel target: getTargetLabVessels()) {
-            sampleSheets.addAll(target.getGoop().getSampleSheets());
+            sampleSheets.addAll(target.getGoop().getSampleInstances());
         }
         // i wonder if we should start making lots of things
         // in here unmodifiable.

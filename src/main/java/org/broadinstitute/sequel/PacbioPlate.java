@@ -32,7 +32,7 @@ public class PacbioPlate extends StaticPlate implements RunCartridge, Priceable 
     }
 
     @Override
-    public Collection<SampleSheet> getSampleSheets() {
+    public Collection<SampleInstance> getSampleInstances() {
         throw new RuntimeException("I haven't been written yet.");
     }
 

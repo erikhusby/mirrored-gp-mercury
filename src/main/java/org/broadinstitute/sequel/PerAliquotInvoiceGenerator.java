@@ -36,18 +36,17 @@ public class PerAliquotInvoiceGenerator implements InvoiceGenerator {
 
         // build a list of quotes for each aliquot in the sample sheet,
         // eliminating redundant aliquots and quotes along the way
-        for (SampleSheet sampleSheet: priceable.getSampleSheets()) {
-            for (SampleInstance sampleInstance:sampleSheet.getSamples()) {
-                if (!quotesForAliquots.containsKey(sampleInstance.getStartingSample())) {
-                    quotesForAliquots.put(sampleInstance.getStartingSample(),new HashSet<Quote>());
-                }
-                Project p = sampleInstance.getProject();
-                quotesForAliquots.get(sampleInstance.getStartingSample()).addAll(p.getAvailableQuotes());
-            }
 
-            for (Map.Entry<StartingSample,Collection<Quote>> quotesForAliquot: quotesForAliquots.entrySet()) {
-                invoice.add(new InvoiceLineItemImpl(quotesForAliquot.getKey(),quotesForAliquot.getValue()));
+        for (SampleInstance sampleInstance: priceable.getSampleInstances()) {
+            if (!quotesForAliquots.containsKey(sampleInstance.getStartingSample())) {
+                quotesForAliquots.put(sampleInstance.getStartingSample(),new HashSet<Quote>());
             }
+            Project p = sampleInstance.getProject();
+            quotesForAliquots.get(sampleInstance.getStartingSample()).addAll(p.getAvailableQuotes());
+        }
+
+        for (Map.Entry<StartingSample,Collection<Quote>> quotesForAliquot: quotesForAliquots.entrySet()) {
+            invoice.add(new InvoiceLineItemImpl(quotesForAliquot.getKey(),quotesForAliquot.getValue()));
         }
         return invoice;
     }

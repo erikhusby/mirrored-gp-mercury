@@ -76,7 +76,7 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
     }
 
     @Override
-    public Collection<SampleSheet> getSampleSheets() {
+    public Collection<SampleInstance> getSampleInstances() {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -101,9 +101,7 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
     @Override
     public int getMaximumSplitFactor() {
         final Set<SampleInstance> aliquotInstances = new HashSet<SampleInstance>();
-        for (SampleSheet sampleSheet : getSampleSheets()) {
-            aliquotInstances.addAll(sampleSheet.getSamples());
-        }
+        aliquotInstances.addAll(getGoop().getSampleInstances());
         return aliquotInstances.size();
         // or maybe we should count inique indexes?
 
@@ -162,5 +160,20 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
     @Override
     public void setGoop(Goop library) {
         this.library = library;
+    }
+
+    @Override
+    public void addStateChange(StateChange stateChange) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<StateChange> getStateChanges() {
+        throw new RuntimeException("I haven't been written yet.");
     }
 }

@@ -84,11 +84,9 @@ public class BaseGoop implements Goop {
     @Override
     public Collection<Project> getAllProjects() {
         Collection<Project> allProjects = new HashSet<Project>();
-        for (SampleSheet sampleSheet : getSampleSheets()) {
-            for (SampleInstance sampleInstance : sampleSheet.getSamples()) {
-                if (sampleInstance.getProject() != null) {
-                    allProjects.add(sampleInstance.getProject());
-                }
+        for (SampleInstance sampleInstance : getSampleInstances()) {
+            if (sampleInstance.getProject() != null) {
+                allProjects.add(sampleInstance.getProject());
             }
         }
         return Collections.unmodifiableCollection(allProjects);
@@ -96,14 +94,7 @@ public class BaseGoop implements Goop {
 
     @Override
     public void applyReagent(Reagent r) {
-        appliedReagents.add(r);
-        
-        if (r.getMolecularEnvelopeDelta() != null) {
-            MolecularEnvelope envelopeDelta = r.getMolecularEnvelopeDelta();
-            for (SampleSheet sampleSheet: getSampleSheets()) {
-                sampleSheet.addLabVessel();
-            }
-        }
+        throw new RuntimeException("Method not yet implemented.");
     }
 
     @Override
@@ -169,13 +160,7 @@ public class BaseGoop implements Goop {
 
     @Override
     public void branchAll(Project p) {
-        for (SampleSheet oldSheet : getSampleSheets()) {
-            SampleSheet newSheet = oldSheet.createBranch();
-            for (SampleInstance sampleInstance : newSheet.getSamples()) {
-                sampleInstance.setProject(p);
-            }
-            replaceSampleSheet(oldSheet, newSheet);
-        }
+        throw new RuntimeException("Method not yet implemented.");
     }
 
     @Override
@@ -190,6 +175,26 @@ public class BaseGoop implements Goop {
 
     @Override
     public Collection<ReadBucket> getReadBuckets() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void addStateChange(StateChange stateChange) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<StateChange> getStateChanges() {
         throw new RuntimeException("I haven't been written yet.");
     }
 }

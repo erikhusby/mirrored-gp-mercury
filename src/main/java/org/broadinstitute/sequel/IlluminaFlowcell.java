@@ -67,4 +67,23 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements UserRemark
     }
 
 
+    @Override
+    public void addStateChange(StateChange stateChange) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<StateChange> getStateChanges() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 }
