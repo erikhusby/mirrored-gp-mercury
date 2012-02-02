@@ -8,10 +8,10 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
     private IlluminaFlowcell flowcell;
     
     private int laneNumber;
+
+    private LabVessel library;
     
-    private Goop library;
-    
-    public IlluminaRunChamber(IlluminaFlowcell flowcell, int laneNumber,Goop library) {
+    public IlluminaRunChamber(IlluminaFlowcell flowcell, int laneNumber,LabVessel library) {
         this.flowcell = flowcell;
         this.laneNumber = laneNumber;
         this.library = library;
@@ -101,7 +101,7 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
     @Override
     public int getMaximumSplitFactor() {
         final Set<SampleInstance> aliquotInstances = new HashSet<SampleInstance>();
-        aliquotInstances.addAll(getGoop().getSampleInstances());
+        aliquotInstances.addAll(getSampleInstances());
         return aliquotInstances.size();
         // or maybe we should count inique indexes?
 
@@ -158,11 +158,6 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
     }
 
     @Override
-    public void setGoop(Goop library) {
-        this.library = library;
-    }
-
-    @Override
     public void addStateChange(StateChange stateChange) {
         throw new RuntimeException("I haven't been written yet.");
     }
@@ -174,6 +169,46 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
 
     @Override
     public Collection<StateChange> getStateChanges() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<Project> getAllProjects() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public StatusNote getLatestNote() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void logNote(StatusNote statusNote) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<StatusNote> getAllStatusNotes() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Float getVolume() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Float getConcentration() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void applyReagent(Reagent r) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<Reagent> getAppliedReagents() {
         throw new RuntimeException("I haven't been written yet.");
     }
 }

@@ -60,4 +60,6 @@ public class PacbioPlate extends StaticPlate implements RunCartridge, Priceable 
     public String getCartridgeBarcode() {
         throw new RuntimeException("I haven't been written yet.");
     }
+
+
 }

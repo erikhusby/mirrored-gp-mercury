@@ -20,58 +20,7 @@ import java.util.Collection;
  */
 public interface LabTangible {
 
-    /**
-     * Get the name of the thing.  This
-     * isn't just getName() because that would
-     * probably clash with something else.
-     * @return
-     */
-    public String getLabCentricName();
 
-    /**
-     * May return null if no sample sheet
-     * has been registered.  Consider
-     * a "new" destination in a transfer event.
-     * When first encountered, the plate
-     * may have no sample sheet, and it's up
-     * to the message processor to fill
-     * in the sample sheet.
-     * @return
-     */
-    public Collection<SampleSheet> getSampleSheets();
-
-    /**
-     * We want GSP to let you walk in with a tube, declare
-     * the contents of the tube, and then inject the tube
-     * into the middle of the lab process, into
-     * whatever LabWorkQueue you need.
-     *
-     * This method is the key to this feature.  We do not
-     * care <b>how</b> the sample metadata was built
-     * for a container, but we care deeply that
-     * we have consistent metadata.  Whether it was
-     * built half at 320, half at the collaborator,
-     * all at 320, all in Mozambique, it does not
-     * matter.  Just declare the sample metadata
-     * in one place.
-     *
-     * @param sampleSheet
-     */
-    public void addSampleSheet(SampleSheet sampleSheet);
-
-    public void addStateChange(StateChange stateChange);
-
-    /**
-     * Probably a transient that computes the {@link SampleInstance} data
-     * on-the-fly by walking the history and applying the
-     * {@link StateChange}s applied during lab work.
-     * @return
-     */
-    public Collection<SampleInstance> getSampleInstances();
-    
-    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet);
-    
-    public Collection<StateChange> getStateChanges();
 
 
 }

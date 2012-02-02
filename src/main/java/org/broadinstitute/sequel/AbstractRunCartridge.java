@@ -35,8 +35,4 @@ public abstract class AbstractRunCartridge extends AbstractLabVessel implements 
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public void setGoop(Goop goop) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
 }

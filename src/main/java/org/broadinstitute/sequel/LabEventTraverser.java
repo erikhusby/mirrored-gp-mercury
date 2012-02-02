@@ -4,6 +4,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public class LabEventTraverser {
 
@@ -18,7 +19,8 @@ public class LabEventTraverser {
      */
     public static Collection<StateChange> getStateChangesPriorToAndIncluding(SampleSheet sheet,
                                                                              LabVessel leaf) {
-        throw new RuntimeException("Method not yet implemented.");
+        gLog.error("I haven't been written yet.  but I'll give you null.");
+        return Collections.emptyList();
     }
 
 }

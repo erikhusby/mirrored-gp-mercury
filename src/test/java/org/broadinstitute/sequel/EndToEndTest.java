@@ -28,7 +28,7 @@ public class EndToEndTest  {
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
         sampleSheet.addStartingSample(new BSPSample(sampleName, project));
-        return new TwoDBarcodedTube(new BaseGoop(sampleName,sampleSheet),tubeBarcode);
+        return new TwoDBarcodedTube(tubeBarcode,sampleSheet);
     }
     
     private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode,Project project) {
@@ -52,16 +52,16 @@ public class EndToEndTest  {
 
         BSPAliquotWorkQueue aliquotWorkQueue = new BSPAliquotWorkQueue(new MockBSPConnector());
 
-        Assert.assertTrue(project.getAllLabTangibles().isEmpty());
-        Assert.assertTrue(project.getAllLabTangibles().isEmpty());
+        Assert.assertTrue(project.getAllVessels().isEmpty());
+        Assert.assertTrue(project.getAllVessels().isEmpty());
         // add a sample to the project
-        project.addLabTangible(stock1, workflow);
-        project2.addLabTangible(stock2, workflow);
+        project.addVessel(stock1, workflow);
+        project2.addVessel(stock2, workflow);
 
-        Assert.assertTrue(project.getAllLabTangibles().contains(stock1));
-        Assert.assertTrue(project2.getAllLabTangibles().contains(stock2));
-        Assert.assertTrue(project.getLabTangibles(workflow).contains(stock1));
-        Assert.assertFalse(project.getAllLabTangibles().contains(stock2));
+        Assert.assertTrue(project.getAllVessels().contains(stock1));
+        Assert.assertTrue(project2.getAllVessels().contains(stock2));
+        Assert.assertTrue(project.getVessels(workflow).contains(stock1));
+        Assert.assertFalse(project.getAllVessels().contains(stock2));
 
 
         // load up the bsp aliquot queue
@@ -91,37 +91,37 @@ public class EndToEndTest  {
         LabVessel aliquotTube = createBSPAliquot(aliquot1Label,aliquot1Label,null);
         LabVessel aliquot2Tube = createBSPAliquot(aliquot2Label,aliquot2Label,null);
 
-        Goop aliquot = aliquotTube.getGoop();
-        Goop aliquot2 = aliquot2Tube.getGoop();
+        //Goop aliquot = aliquotTube.getGoop();
+       //Goop aliquot2 = aliquot2Tube.getGoop();
 
-        Assert.assertTrue(aliquot.getAllProjects().isEmpty()); // we just got the aliquot -- we don't know the project yet!
-        Assert.assertTrue(aliquot2.getAllProjects().isEmpty()); // we just got the aliquot -- we don't know the project yet!
+        Assert.assertTrue(aliquotTube.getAllProjects().isEmpty()); // we just got the aliquot -- we don't know the project yet!
+        Assert.assertTrue(aliquot2Tube.getAllProjects().isEmpty()); // we just got the aliquot -- we don't know the project yet!
 
-        Assert.assertTrue(aliquot2.getAllStatusNotes().isEmpty());
+        Assert.assertTrue(aliquot2Tube.getAllStatusNotes().isEmpty());
         BSPPlatingRequest platingRequest = new AliquotReceiver().receiveAliquot(stock1,aliquotTube,platingResponse.getReceipt());
         BSPPlatingRequest platingRequest2 = new AliquotReceiver().receiveAliquot(stock2,aliquot2Tube,platingResponse.getReceipt());
 
         Assert.assertTrue(project.getPendingPlatingRequests().isEmpty());
         Assert.assertTrue(project2.getPendingPlatingRequests().isEmpty());
         Assert.assertNotNull(platingRequest);
-        Assert.assertFalse(aliquot.getAllProjects().isEmpty()); // after receiving the aliquot,
+        Assert.assertFalse(aliquot2Tube.getAllProjects().isEmpty()); // after receiving the aliquot,
                                                                    // we should know the project
-        Assert.assertEquals(1,aliquot.getAllProjects().size());
-        Assert.assertEquals(1,aliquot2.getAllProjects().size());
+        Assert.assertEquals(1,aliquotTube.getAllProjects().size());
+        Assert.assertEquals(1,aliquot2Tube.getAllProjects().size());
 
 
         Assert.assertEquals(aliquotParameters,platingRequest.getAliquotParameters());
-        Assert.assertEquals(project,aliquot.getAllProjects().iterator().next());
+        Assert.assertEquals(project,aliquotTube.getAllProjects().iterator().next());
 
         Assert.assertEquals(aliquotParameters2,platingRequest2.getAliquotParameters());
-        Assert.assertEquals(project2,aliquot2.getAllProjects().iterator().next());
+        Assert.assertEquals(project2,aliquot2Tube.getAllProjects().iterator().next());
 
         EasyMock.verify(project.getJiraTicket());
 
-        Assert.assertFalse(aliquot.getAllStatusNotes().isEmpty());
-        Assert.assertFalse(aliquot2.getAllStatusNotes().isEmpty());
+        Assert.assertFalse(aliquotTube.getAllStatusNotes().isEmpty());
+        Assert.assertFalse(aliquot2Tube.getAllStatusNotes().isEmpty());
 
-        for (StatusNote statusNote : aliquot.getAllStatusNotes()) {
+        for (StatusNote statusNote : aliquotTube.getAllStatusNotes()) {
             Assert.assertEquals(LabEventName.ALIQUOT_RECEIVED, statusNote.getEventName());
         }
 
@@ -187,7 +187,7 @@ public class EndToEndTest  {
     
     private void checkForSampleProjectData(SequencingRun srun,
                                           Project p,
-                                          Goop sam,
+                                          StartingSample sam,
                                           int numberOfSampleSheetsPerSample,
                                           MolecularEnvelope expectedEnvelope) {
         boolean foundSample = false;
@@ -195,7 +195,7 @@ public class EndToEndTest  {
         boolean wasIndexFound = false;
         for (RunCartridge cartridge: srun.getSampleCartridge()) {
             for (RunChamber chamber: cartridge.getChambers()) {
-                for (SampleInstance sampleInstance : chamber.getGoop().getSampleInstances()) {
+                for (SampleInstance sampleInstance : chamber.getSampleInstances()) {
                     if (sam.equals(sampleInstance.getStartingSample())) {
                         foundSample = true;
                         MolecularEnvelope envelope = sampleInstance.getMolecularState().getMolecularEnvelope();
@@ -315,12 +315,14 @@ public class EndToEndTest  {
             for (LabVessel target: getTargetLabVessels()) {
                 for (LabVessel source: getSourcesForTarget(target)) {
                     // apply all goop from all sources
-                    target.getGoop().applyGoop(source.getGoop());
+                    for (SampleSheet sampleSheet : source.getSampleSheets()) {
+                        target.addSampleSheet(sampleSheet);
+                    }
                 }
                 // after the target goop is transferred,
                 // apply the reagent
                 for (Reagent reagent : getReagents()) {
-                    target.getGoop().applyReagent(reagent);
+                    target.applyReagent(reagent);
                 }
             }
 
@@ -341,7 +343,7 @@ public class EndToEndTest  {
                 // {@link LabEvent} might have to dip into {@link Project}
                 // data to make some sort of special case
                 if (molecularStateTemplatesInTarget.size() > 1) {
-                    StringBuilder errorMessage = new StringBuilder("Molecular state will not be uniform as a result of this operation.  " + target.getGoop().getLabCentricName() + " has " + molecularStateTemplatesInTarget.size() + " different molecular states:\n");
+                    StringBuilder errorMessage = new StringBuilder("Molecular state will not be uniform as a result of this operation.  " + target.getLabCentricName() + " has " + molecularStateTemplatesInTarget.size() + " different molecular states:\n");
                     for (MolecularStateTemplate stateTemplate : molecularStateTemplatesInTarget) {
                         errorMessage.append(stateTemplate.toText());
                     }
@@ -368,8 +370,8 @@ public class EndToEndTest  {
             }
             for (LabVessel source: getSourceLabVessels()) {
                 if (!expectedEmptySources) {
-                    if (source.getGoop().getSampleInstances().isEmpty()) {
-                        throw new InvalidMolecularStateException("Source " + source.getGoop().getLabCentricName() + " is empty");
+                    if (source.getSampleInstances().isEmpty()) {
+                        throw new InvalidMolecularStateException("Source " + source.getLabCentricName() + " is empty");
                     }
                 }
             }
@@ -389,8 +391,8 @@ public class EndToEndTest  {
             }
             for (LabVessel target: getTargetLabVessels()) {
                 if (!expectedEmptyTargets) {
-                    if (target.getGoop().getSampleInstances().isEmpty()) {
-                        throw new InvalidMolecularStateException("Target " + target.getGoop().getLabCentricName() + " is empty");
+                    if (target.getSampleInstances().isEmpty()) {
+                        throw new InvalidMolecularStateException("Target " + target.getLabCentricName() + " is empty");
                     }
                 }
             }

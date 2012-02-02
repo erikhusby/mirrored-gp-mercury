@@ -63,7 +63,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
 
                     float concentration  = sampleInstance.getMolecularState().getConcentration().floatValue();
                     if (concentration < eventConfiguration.getExpectedMolecularState().getMinConcentration()) {
-                        SampleSheetAlertUtil.doAlert("Concentration " + concentration + " is out of range for " + tangible.getGoop().getLabCentricName(),tangible,true);
+                        SampleSheetAlertUtil.doAlert("Concentration " + concentration + " is out of range for " + tangible.getLabCentricName(),tangible,true);
                     }
 
                     if (!sampleInstance.getMolecularState().getMolecularEnvelope().equals(eventConfiguration.getExpectedMolecularState().getMolecularEnvelope())) {
@@ -75,7 +75,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
                                 LabVessel.MetricSearchMode.NEAREST,
                                 sampleInstance);
                         if (!someMetric.isInRange(thresholds)) {
-                            SampleSheetAlertUtil.doAlert(thresholds.getMetricName() + " disaster for " + tangible.getGoop().getLabCentricName(),tangible,true);
+                            SampleSheetAlertUtil.doAlert(thresholds.getMetricName() + " disaster for " + tangible.getLabCentricName(),tangible,true);
                         }
                     }
                 }
@@ -85,7 +85,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
     @Override
     public void validateTargetMolecularState() throws InvalidMolecularStateException {
         for (LabVessel tangible: getTargetLabVessels()) {
-            for (SampleSheet sampleSheet : tangible.getGoop().getSampleSheets()) {
+            for (SampleSheet sampleSheet : tangible.getSampleSheets()) {
                 if (sampleSheet != null && eventConfiguration.getOutputMode() == LabEventConfiguration.OutputMaterialMode.NEW_LIBRARY) {
                     throw new InvalidMolecularStateException("There's already a sample sheet; I expected empty destinations");
                 }    

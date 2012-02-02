@@ -31,7 +31,7 @@ public class SampleSheetAlertUtil {
      * development projects.  if false, we'll skip alerting
      * dev projects.
      */
-    public static void doAlert(String message, LabTangible labTangible,boolean includeDev) {
+    public static void doAlert(String message, LabVessel labTangible,boolean includeDev) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
         final Map<Project,Collection<String>> samplesByProject = new HashMap<Project,Collection<String>>();

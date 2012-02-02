@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class SampleSheetImpl implements SampleSheet {
 
-    private Map<LabTangible,Collection<StateChange>> containerToStateChanges = new HashMap<LabTangible,Collection<StateChange>>();
+    private Map<LabVessel,Collection<StateChange>> containerToStateChanges = new HashMap<LabVessel,Collection<StateChange>>();
     
     private Collection<StartingSample> startingSamples = new HashSet<StartingSample>();
     
@@ -24,20 +24,20 @@ public class SampleSheetImpl implements SampleSheet {
     }
 
     @Override
-    public Collection<LabTangible> getLabTangibles() {
+    public Collection<LabVessel> getVessels() {
         return containerToStateChanges.keySet();
     }
 
     @Override
-    public void addStateChange(LabTangible labTangible, StateChange stateChange) {
-        addToTangible(labTangible);
-        containerToStateChanges.get(labTangible).add(stateChange);
+    public void addStateChange(LabVessel vessel, StateChange stateChange) {
+        addToVessel(vessel);
+        containerToStateChanges.get(vessel).add(stateChange);
     }
 
     @Override
-    public void addToTangible(LabTangible labTangible) {
-        if (!containerToStateChanges.containsKey(labTangible)) {
-             containerToStateChanges.put(labTangible,new HashSet<StateChange>());
+    public void addToVessel(LabVessel vessel) {
+        if (!containerToStateChanges.containsKey(vessel)) {
+             containerToStateChanges.put(vessel,new HashSet<StateChange>());
         }
     }
     
@@ -52,8 +52,8 @@ public class SampleSheetImpl implements SampleSheet {
             SampleInstanceImpl sampleInstance = startingSample.createSampleInstance();
             for (StateChange stateChange : LabEventTraverser.getStateChangesPriorToAndIncluding(this,container)) {
                 // ordering of the state changes is critical...
-                // doing it root-to-branch means that nearest ancestor
-                // wins, which is what we want
+                // doing it root-to-branch means that "nearest ancestor"
+                //
                 sampleInstance.applyChange(stateChange);
             }    
             sampleInstances.add(sampleInstance);

@@ -76,7 +76,7 @@ public class BSPSample implements StartingSample {
 
     @Override
     public SampleInstanceImpl createSampleInstance() {
-        throw new RuntimeException("not implemented");
+        return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE,project,null,null);
     }
 
     @Override

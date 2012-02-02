@@ -50,12 +50,11 @@ public class AliquotReceiver {
                                             BSPPlatingReceipt receipt) {
         BSPPlatingRequest platingRequest = resolveAliquotToPlatingRequest(source,aliquot,receipt);
 
-        Goop aliquotGoop = aliquot.getGoop();
-        for (Project project : aliquotGoop.getAllProjects()) {
-            project.getJiraTicket().addComment("Aliquot " + aliquotGoop.getLabCentricName() + " with concentration " + aliquotGoop.getConcentration() + " and volume " + aliquotGoop.getVolume() + " derived from " + source.getGoop().getLabCentricName() + " has been received.");
+        for (Project project : aliquot.getAllProjects()) {
+            project.getJiraTicket().addComment("Aliquot " + aliquot.getLabCentricName() + " derived from " + source.getLabCentricName() + " has been received.");
         }
 
-        aliquotGoop.logNote(new StatusNote(LabEventName.ALIQUOT_RECEIVED));
+        aliquot.logNote(new StatusNote(LabEventName.ALIQUOT_RECEIVED));
         return platingRequest;
     }
 
@@ -81,7 +80,6 @@ public class AliquotReceiver {
         if (platingReceipt == null) {
              throw new IllegalArgumentException("platingReceipt must be non-null in AliquotReceiver.resolveAliquotToPlatingRequest");
         }
-        Goop aliquotGoop = aliquot.getGoop();
         BSPPlatingRequest platingRequest = null;
 
         for (BSPPlatingRequest possibleRequest : platingReceipt.getPlatingRequests()) {

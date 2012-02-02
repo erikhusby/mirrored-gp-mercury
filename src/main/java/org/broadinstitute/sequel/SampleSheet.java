@@ -11,7 +11,7 @@ public interface SampleSheet {
 
     public void addStartingSample(StartingSample startingSample);
 
-    public Collection<LabTangible> getLabTangibles();
+    public Collection<LabVessel> getVessels();
     
     public Collection<SampleInstance> getSampleInstances(LabVessel labVessel);
     
@@ -43,10 +43,10 @@ public interface SampleSheet {
      *                             set, then this {@link SampleSheet} in the context of {@param labTangible}
      *                             has the given {@param molecularStateChange} added to it.
      */
-    public void addStateChange(LabTangible labTangible,
+    public void addStateChange(LabVessel vessel,
                                 StateChange stateChange);
 
-    public void addToTangible(LabTangible labTangible);
+    public void addToVessel(LabVessel vessel);
 
     
     /**
