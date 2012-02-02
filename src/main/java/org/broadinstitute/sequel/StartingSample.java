@@ -35,6 +35,8 @@ public interface StartingSample {
     public MolecularState getRootMolecularState();
 
     public Project getRootProject();
+    
+    public void setRootProject(Project rootProject);
 
     public Collection<ReadBucket> getRootReadBuckets();
 

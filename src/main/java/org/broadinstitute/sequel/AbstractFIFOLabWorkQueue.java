@@ -14,8 +14,8 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
     private Map<T,LinkedList<LabTangible>> items = new HashMap<T, LinkedList<LabTangible>>();
 
     @Override
-    public Collection<LabTangible> suggestNextBatch(int batchSize,LabWorkQueueParameters bucket) {
-        throw new RuntimeException("I haven't been written yet.");
+    public Collection<LabTangible> suggestNextBatch(int batchSize, T bucket) {
+        throw new RuntimeException("not implemented");
     }
 
     @Override
@@ -91,16 +91,14 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
 
         }
 
-        for (SampleSheet sampleSheet : labTangible.getSampleSheets()) {
-            for (SampleInstance sampleInstance: sampleSheet.getSamples()) {
-                for (MolecularStateRange molStateRange: getMolecularStateRequirements()) {
-                    if (!molStateRange.isInRange(sampleInstance.getMolecularState())) {
-                        throw new RuntimeException("Can't add " + labTangible.getLabCentricName() + " into " + getQueueName() + " because sample " + sampleInstance.getStartingSample().getSampleName() + " is in an invalid molecular state.");
-                    }
+        for (SampleInstance sampleInstance: labTangible.getSampleInstances()) {
+            for (MolecularStateRange molStateRange: getMolecularStateRequirements()) {
+                if (!molStateRange.isInRange(sampleInstance.getMolecularState())) {
+                    throw new RuntimeException("Can't add " + labTangible.getLabCentricName() + " into " + getQueueName() + " because sample " + sampleInstance.getStartingSample().getSampleName() + " is in an invalid molecular state.");
                 }
-                // check that the molecular state of the sample
-                // matches what this queue can handle.
             }
+            // check that the molecular state of the sample
+            // matches what this queue can handle.
         }
 
 

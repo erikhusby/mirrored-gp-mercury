@@ -51,8 +51,8 @@ public class SageUnloadingEvent extends AbstractLabEvent implements Priceable {
     @Override
     public int getMaximumSplitFactor() {
         final Collection<StartingSample> aliquots = new HashSet<StartingSample>();
-        for (SampleSheet sampleSheet: getSampleSheets()) {
-            for (SampleInstance sampleInstance: sampleSheet.getSamples()) {
+        for (LabTangible target: getTargetLabVessels()) {
+            for (SampleInstance sampleInstance:target.getSampleInstances()) {
                 aliquots.add(sampleInstance.getStartingSample());
             }
         }

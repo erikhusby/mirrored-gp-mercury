@@ -94,9 +94,9 @@ public class AliquotReceiver {
                     // instructions with the aliquot yet.  We're just requesting
                     // particular aliquots.
                     possibleRequest.setFulfilled(true);
-                    for (SampleSheet sampleSheet : aliquotGoop.getSampleSheets()) {
-                        for (SampleInstance sampleInstance : sampleSheet.getSamples()) {
-                            sampleInstance.setProject(possibleRequest.getAliquotParameters().getProject());
+                    for (SampleSheet sampleSheet : aliquot.getSampleSheets()) {
+                        for (StartingSample startingSample : sampleSheet.getStartingSamples()) {
+                            startingSample.setRootProject(possibleRequest.getAliquotParameters().getProject());
                         }
                     }
 

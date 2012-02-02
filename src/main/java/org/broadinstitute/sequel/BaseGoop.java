@@ -109,7 +109,7 @@ public class BaseGoop implements Goop {
     @Override
     public void applyGoop(Goop goop) {
         for (SampleSheet sampleSheet : goop.getSampleSheets()) {
-            for (SampleInstance addedInstance: sampleSheet.getSamples()) {
+            for (SampleInstance addedInstance: getSampleInstances()) {
                 Collection<SampleInstance> sampleInstances = getSampleInstancesFor(addedInstance.getStartingSample());
                 if (!sampleInstances.isEmpty()) {
                     // if this goop already contains the sample that you're
@@ -134,7 +134,7 @@ public class BaseGoop implements Goop {
     public Collection<SampleInstance> getSampleInstancesFor(StartingSample rootSample) {
         Collection<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         for (SampleSheet sampleSheet : getSampleSheets()) {
-            for (SampleInstance sampleInstance : sampleSheet.getSamples()) {
+            for (SampleInstance sampleInstance : getSampleInstances()) {
                 if (rootSample.equals(sampleInstance.getStartingSample())) {
                     sampleInstances.add(sampleInstance);
                 }
