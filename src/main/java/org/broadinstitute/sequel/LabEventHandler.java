@@ -144,8 +144,8 @@ public class LabEventHandler {
      */
     public void notifyCheckpoints(LabEvent event) {
         Map<Project,Collection<StartingSample>> samplesForProject = new HashMap<Project,Collection<StartingSample>>();
-        for (SampleSheet sampleSheet : event.getAllSampleSheets()) {
-            for (SampleInstance sampleInstance: sampleSheet.getSamples()) {
+        for (LabVessel container : event.getAllLabVessels()) {
+            for (SampleInstance sampleInstance: container.getSampleInstances()) {
                 Project p = sampleInstance.getProject();
                 if (!samplesForProject.containsKey(p)) {
                     samplesForProject.put(p,new HashSet<StartingSample>());
@@ -182,10 +182,8 @@ public class LabEventHandler {
      */
     private void updateSampleStatus(LabEvent event) {
         for (LabVessel target: event.getTargetLabVessels()) {
-            for (SampleSheet sampleSheet : target.getGoop().getSampleSheets()) {
-                for (SampleInstance sampleInstance: sampleSheet.getSamples()) {
-                    sampleInstance.getStartingSample().logNote(new StatusNote(event.getEventName()));
-                }
+            for (SampleInstance sampleInstance: target.getSampleInstances()) {
+                sampleInstance.getStartingSample().logNote(new StatusNote(event.getEventName()));
             }
         }
     }

@@ -21,19 +21,19 @@ public class EndToEndTest  {
         return ticket;
     }
 
-    private LabVessel createBSPStock(String sampleName,String tubeBarcode) {
+    private LabVessel createBSPStock(String sampleName,String tubeBarcode,Project project) {
         SampleSheet sampleSheet = new SampleSheetImpl();
         // this seems redundant: we're adding a sample sheet with only the stock
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        sampleSheet.addSample(new SampleInstanceImpl(new BSPSample(sampleName), SampleInstance.GSP_CONTROL_ROLE.NONE,null,null,null));
+        sampleSheet.addStartingSample(new BSPSample(sampleName,project));
         return new TwoDBarcodedTube(new BaseGoop(sampleName,sampleSheet),tubeBarcode);
     }
     
-    private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode) {
+    private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode,Project project) {
         // yowza, it's the same code!
-        return createBSPStock(aliquotName,tubeBarcode);
+        return createBSPStock(aliquotName,tubeBarcode,project);
     }
     
     @Test
@@ -47,8 +47,8 @@ public class EndToEndTest  {
         Project project = new BasicProject("Project1",createMockJiraTicket());
         Project project2 = new BasicProject("Project2",createMockJiraTicket());
 
-        LabVessel stock1 = createBSPStock(masterSample1,"00001234");
-        LabVessel stock2 = createBSPStock(masterSample2,"00005678");
+        LabVessel stock1 = createBSPStock(masterSample1,"00001234",project);
+        LabVessel stock2 = createBSPStock(masterSample2,"00005678",project2);
 
         BSPAliquotWorkQueue aliquotWorkQueue = new BSPAliquotWorkQueue(new MockBSPConnector());
 
@@ -88,8 +88,8 @@ public class EndToEndTest  {
         // have the same receipt.
         Assert.assertEquals(project1PlatingReceipt,project2PlatingReceipt);
 
-        LabVessel aliquotTube = createBSPAliquot(aliquot1Label,aliquot1Label);
-        LabVessel aliquot2Tube = createBSPAliquot(aliquot2Label,aliquot2Label);
+        LabVessel aliquotTube = createBSPAliquot(aliquot1Label,aliquot1Label,null);
+        LabVessel aliquot2Tube = createBSPAliquot(aliquot2Label,aliquot2Label,null);
 
         Goop aliquot = aliquotTube.getGoop();
         Goop aliquot2 = aliquot2Tube.getGoop();
