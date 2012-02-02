@@ -31,7 +31,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements UserRemark
         this.flowcellType = flowcellType;
     }
         
-    public void addChamber(Goop library,int laneNumber) {
+    public void addChamber(LabVessel library,int laneNumber) {
         if (flowcellType == FLOWCELL_TYPE.EIGHT_LANE) {
             if (laneNumber < 1 || laneNumber > 8) {
                 throw new RuntimeException("Lane numbers are 1-8");
@@ -73,4 +73,63 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements UserRemark
     }
 
 
+    @Override
+    public void addStateChange(StateChange stateChange) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<StateChange> getStateChanges() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<Project> getAllProjects() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public StatusNote getLatestNote() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void logNote(StatusNote statusNote) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<StatusNote> getAllStatusNotes() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Float getVolume() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Float getConcentration() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void applyReagent(Reagent r) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<Reagent> getAppliedReagents() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 }

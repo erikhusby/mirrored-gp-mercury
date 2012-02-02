@@ -64,12 +64,14 @@ public class GenericLabEvent extends AbstractLabEvent {
         for (LabVessel target: getTargetLabVessels()) {
             for (LabVessel source: getSourcesForTarget(target)) {
                 // apply all goop from all sources
-                target.getGoop().applyGoop(source.getGoop());
+                for (SampleSheet sampleSheet : source.getSampleSheets()) {
+                    target.addSampleSheet(sampleSheet);
+                }
             }
             // after the target goop is transferred,
             // apply the reagent
             for (Reagent reagent : getReagents()) {
-                target.getGoop().applyReagent(reagent);
+                target.applyReagent(reagent);
             }
         }
 
@@ -80,10 +82,9 @@ public class GenericLabEvent extends AbstractLabEvent {
         for (LabVessel target: getTargetLabVessels()) {
             // check the molecular state per target.
             Set<MolecularStateTemplate> molecularStateTemplatesInTarget = new HashSet<MolecularStateTemplate>();
-            for (SampleSheet sampleSheet: target.getGoop().getSampleSheets()) {
-                for (SampleInstance sampleInstance : sampleSheet.getSamples()) {
-                    molecularStateTemplatesInTarget.add(sampleInstance.getMolecularState().getMolecularStateTemplate());
-                }
+
+            for (SampleInstance sampleInstance : target.getSampleInstances()) {
+                molecularStateTemplatesInTarget.add(sampleInstance.getMolecularState().getMolecularStateTemplate());
             }
             // allowing for jumbled {@link MolecularState} is probably
             // one of those things we'd override per {@link LabEvent}
@@ -91,7 +92,7 @@ public class GenericLabEvent extends AbstractLabEvent {
             // {@link LabEvent} might have to dip into {@link Project}
             // data to make some sort of special case
             if (molecularStateTemplatesInTarget.size() > 1) {
-                StringBuilder errorMessage = new StringBuilder("Molecular state will not be uniform as a result of this operation.  " + target.getGoop().getLabCentricName() + " has " + molecularStateTemplatesInTarget.size() + " different molecular states:\n");
+                StringBuilder errorMessage = new StringBuilder("Molecular state will not be uniform as a result of this operation.  " + target.getLabCentricName() + " has " + molecularStateTemplatesInTarget.size() + " different molecular states:\n");
                 for (MolecularStateTemplate stateTemplate : molecularStateTemplatesInTarget) {
                     errorMessage.append(stateTemplate.toText());
                 }
@@ -118,10 +119,8 @@ public class GenericLabEvent extends AbstractLabEvent {
         }
         for (LabVessel source: getSourceLabVessels()) {
             if (!labEventType.isExpectedEmptySources()) {
-                for (SampleSheet sampleSheet : source.getGoop().getSampleSheets()) {
-                    if (sampleSheet.getSamples().isEmpty()) {
-                        throw new InvalidMolecularStateException("Source " + source.getGoop().getLabCentricName() + " is empty");
-                    }
+                if (source.getSampleInstances().isEmpty()) {
+                    throw new InvalidMolecularStateException("Source " + source.getLabCentricName() + " is empty");
                 }
             }
         }
@@ -141,10 +140,8 @@ public class GenericLabEvent extends AbstractLabEvent {
         }
         for (LabVessel target: getTargetLabVessels()) {
             if (!labEventType.isExpectedEmptyTargets()) {
-                for (SampleSheet sampleSheet : target.getGoop().getSampleSheets()) {
-                    if (sampleSheet.getSamples().isEmpty()) {
-                        throw new InvalidMolecularStateException("Target " + target.getGoop().getLabCentricName() + " is empty");
-                    }
+                if (target.getSampleInstances().isEmpty()) {
+                    throw new InvalidMolecularStateException("Target " + target.getLabCentricName() + " is empty");
                 }
             }
         }

@@ -45,4 +45,64 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
     public SBSSection getSection() {
         throw new RuntimeException("I haven't been written yet.");
     }
+
+    @Override
+    public void addStateChange(StateChange stateChange) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<StateChange> getStateChanges() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<Project> getAllProjects() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public StatusNote getLatestNote() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void logNote(StatusNote statusNote) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<StatusNote> getAllStatusNotes() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Float getVolume() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Float getConcentration() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void applyReagent(Reagent r) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<Reagent> getAppliedReagents() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 }

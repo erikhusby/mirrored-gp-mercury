@@ -139,15 +139,6 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public Goop getGoop() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setGoop(Goop goop) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
 
     @Override
     public String getLabCentricName() {

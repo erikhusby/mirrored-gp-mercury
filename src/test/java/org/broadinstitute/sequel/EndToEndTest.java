@@ -9,6 +9,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,19 +26,19 @@ public class EndToEndTest  {
         return ticket;
     }
 
-    private LabVessel createBSPStock(String sampleName,String tubeBarcode) {
+    private LabVessel createBSPStock(String sampleName,String tubeBarcode,Project project) {
         SampleSheet sampleSheet = new SampleSheetImpl();
         // this seems redundant: we're adding a sample sheet with only the stock
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        sampleSheet.addSample(new SampleInstanceImpl(new BSPSample(sampleName), SampleInstance.GSP_CONTROL_ROLE.NONE,null,null,null));
-        return new TwoDBarcodedTube(new BaseGoop(sampleName,sampleSheet),tubeBarcode);
+        sampleSheet.addStartingSample(new BSPSample(sampleName, project));
+        return new TwoDBarcodedTube(tubeBarcode,sampleSheet);
     }
     
-    private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode) {
+    private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode,Project project) {
         // yowza, it's the same code!
-        return createBSPStock(aliquotName,tubeBarcode);
+        return createBSPStock(aliquotName,tubeBarcode,project);
     }
     
     @Test
@@ -51,21 +52,21 @@ public class EndToEndTest  {
         Project project = new BasicProject("Project1",createMockJiraTicket());
         Project project2 = new BasicProject("Project2",createMockJiraTicket());
 
-        LabVessel stock1 = createBSPStock(masterSample1,"00001234");
-        LabVessel stock2 = createBSPStock(masterSample2,"00005678");
+        LabVessel stock1 = createBSPStock(masterSample1,"00001234",project);
+        LabVessel stock2 = createBSPStock(masterSample2,"00005678",project2);
 
         BSPAliquotWorkQueue aliquotWorkQueue = new BSPAliquotWorkQueue(new MockBSPConnector());
 
-        Assert.assertTrue(project.getAllLabTangibles().isEmpty());
-        Assert.assertTrue(project2.getAllLabTangibles().isEmpty());
+        Assert.assertTrue(project.getAllVessels().isEmpty());
+        Assert.assertTrue(project2.getAllVessels().isEmpty());
         // add a sample to the project
-        project.addLabTangible(stock1, workflow);
-        project2.addLabTangible(stock2, workflow);
+        project.addVessel(stock1, workflow);
+        project2.addVessel(stock2, workflow);
 
-        Assert.assertTrue(project.getAllLabTangibles().contains(stock1));
-        Assert.assertTrue(project2.getAllLabTangibles().contains(stock2));
-        Assert.assertTrue(project.getLabTangibles(workflow).contains(stock1));
-        Assert.assertFalse(project.getAllLabTangibles().contains(stock2));
+        Assert.assertTrue(project.getAllVessels().contains(stock1));
+        Assert.assertTrue(project2.getAllVessels().contains(stock2));
+        Assert.assertTrue(project.getVessels(workflow).contains(stock1));
+        Assert.assertFalse(project.getAllVessels().contains(stock2));
 
 
         // load up the bsp aliquot queue
@@ -92,40 +93,40 @@ public class EndToEndTest  {
         // have the same receipt.
         Assert.assertEquals(project1PlatingReceipt,project2PlatingReceipt);
 
-        LabVessel aliquotTube = createBSPAliquot(aliquot1Label,aliquot1Label);
-        LabVessel aliquot2Tube = createBSPAliquot(aliquot2Label,aliquot2Label);
+        LabVessel aliquotTube = createBSPAliquot(aliquot1Label,aliquot1Label,null);
+        LabVessel aliquot2Tube = createBSPAliquot(aliquot2Label,aliquot2Label,null);
 
-        Goop aliquot = aliquotTube.getGoop();
-        Goop aliquot2 = aliquot2Tube.getGoop();
+        //Goop aliquot = aliquotTube.getGoop();
+       //Goop aliquot2 = aliquot2Tube.getGoop();
 
-        Assert.assertTrue(aliquot.getAllProjects().isEmpty()); // we just got the aliquot -- we don't know the project yet!
-        Assert.assertTrue(aliquot2.getAllProjects().isEmpty()); // we just got the aliquot -- we don't know the project yet!
+        Assert.assertTrue(aliquotTube.getAllProjects().isEmpty()); // we just got the aliquot -- we don't know the project yet!
+        Assert.assertTrue(aliquot2Tube.getAllProjects().isEmpty()); // we just got the aliquot -- we don't know the project yet!
 
-        Assert.assertTrue(aliquot2.getAllStatusNotes().isEmpty());
+        Assert.assertTrue(aliquot2Tube.getAllStatusNotes().isEmpty());
         BSPPlatingRequest platingRequest = new AliquotReceiver().receiveAliquot(stock1,aliquotTube,platingResponse.getReceipt());
         BSPPlatingRequest platingRequest2 = new AliquotReceiver().receiveAliquot(stock2,aliquot2Tube,platingResponse.getReceipt());
 
         Assert.assertTrue(project.getPendingPlatingRequests().isEmpty());
         Assert.assertTrue(project2.getPendingPlatingRequests().isEmpty());
         Assert.assertNotNull(platingRequest);
-        Assert.assertFalse(aliquot.getAllProjects().isEmpty()); // after receiving the aliquot,
+        Assert.assertFalse(aliquot2Tube.getAllProjects().isEmpty()); // after receiving the aliquot,
                                                                    // we should know the project
-        Assert.assertEquals(1,aliquot.getAllProjects().size());
-        Assert.assertEquals(1,aliquot2.getAllProjects().size());
+        Assert.assertEquals(1,aliquotTube.getAllProjects().size());
+        Assert.assertEquals(1,aliquot2Tube.getAllProjects().size());
 
 
         Assert.assertEquals(aliquotParameters,platingRequest.getAliquotParameters());
-        Assert.assertEquals(project,aliquot.getAllProjects().iterator().next());
+        Assert.assertEquals(project,aliquotTube.getAllProjects().iterator().next());
 
         Assert.assertEquals(aliquotParameters2,platingRequest2.getAliquotParameters());
-        Assert.assertEquals(project2,aliquot2.getAllProjects().iterator().next());
+        Assert.assertEquals(project2,aliquot2Tube.getAllProjects().iterator().next());
 
         EasyMock.verify(project.getJiraTicket());
 
-        Assert.assertFalse(aliquot.getAllStatusNotes().isEmpty());
-        Assert.assertFalse(aliquot2.getAllStatusNotes().isEmpty());
+        Assert.assertFalse(aliquotTube.getAllStatusNotes().isEmpty());
+        Assert.assertFalse(aliquot2Tube.getAllStatusNotes().isEmpty());
 
-        for (StatusNote statusNote : aliquot.getAllStatusNotes()) {
+        for (StatusNote statusNote : aliquotTube.getAllStatusNotes()) {
             Assert.assertEquals(LabEventName.ALIQUOT_RECEIVED, statusNote.getEventName());
         }
 
@@ -231,7 +232,7 @@ public class EndToEndTest  {
     
     private void checkForSampleProjectData(SequencingRun srun,
                                           Project p,
-                                          Goop sam,
+                                          StartingSample sam,
                                           int numberOfSampleSheetsPerSample,
                                           MolecularEnvelope expectedEnvelope) {
         boolean foundSample = false;
@@ -239,36 +240,34 @@ public class EndToEndTest  {
         boolean wasIndexFound = false;
         for (RunCartridge cartridge: srun.getSampleCartridge()) {
             for (RunChamber chamber: cartridge.getChambers()) {
-                for (SampleSheet sampleSheet : chamber.getGoop().getSampleSheets()) {
-                    for (SampleInstance sampleInstance: sampleSheet.getSamples()) {
-                        if (sam.equals(sampleInstance.getStartingSample())) {
-                            foundSample = true;
-                            MolecularEnvelope envelope = sampleInstance.getMolecularState().getMolecularEnvelope();
+                for (SampleInstance sampleInstance : chamber.getSampleInstances()) {
+                    if (sam.equals(sampleInstance.getStartingSample())) {
+                        foundSample = true;
+                        MolecularEnvelope envelope = sampleInstance.getMolecularState().getMolecularEnvelope();
 
-                            // sloppy check on the envelope: we're not checking position relative
-                            // to other envelopes; just the presence of this envelope somewhere
-                            if (expectedEnvelope.equals(envelope)) {
+                        // sloppy check on the envelope: we're not checking position relative
+                        // to other envelopes; just the presence of this envelope somewhere
+                        if (expectedEnvelope.equals(envelope)) {
+                            wasIndexFound = true;
+                        }
+                        while (envelope.getContainedEnvelope() != null) {
+                            if (expectedEnvelope.equals(envelope.getContainedEnvelope())) {
                                 wasIndexFound = true;
                             }
-                            while (envelope.getContainedEnvelope() != null) {
-                                if (expectedEnvelope.equals(envelope.getContainedEnvelope())) {
-                                    wasIndexFound = true;
-                                }
-                            }
+                        }
 
 
-                            Project project = sampleInstance.getProject();
-                            if (project.equals(p)) {
-                                foundProject = true;
-                            }
+                        Project project = sampleInstance.getProject();
+                        if (project.equals(p)) {
+                            foundProject = true;
                         }
-                        Set<SampleSheet> allSampleSheetsForAliquot = new HashSet<SampleSheet>();
-                        if (allSampleSheetsForAliquot.size() != numberOfSampleSheetsPerSample) {
-                           Assert.fail("Should have found exactly " + numberOfSampleSheetsPerSample + " sample sheets.  One for the unindexed SampleAliquotInstance and one with the index.");
-                        }
-                    }    
-                }                
-            }
+                    }
+                    Set<SampleSheet> allSampleSheetsForAliquot = new HashSet<SampleSheet>();
+                    if (allSampleSheetsForAliquot.size() != numberOfSampleSheetsPerSample) {
+                        Assert.fail("Should have found exactly " + numberOfSampleSheetsPerSample + " sample sheets.  One for the unindexed SampleAliquotInstance and one with the index.");
+                    }
+                }
+            }               
 
             if (!foundSample) {
                 Assert.fail("Failed to find sample " + sam);
@@ -281,4 +280,8 @@ public class EndToEndTest  {
             }
         }
     }
+    
+    
+
+
 }

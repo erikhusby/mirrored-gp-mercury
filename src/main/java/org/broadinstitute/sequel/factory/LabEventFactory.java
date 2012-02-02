@@ -2,13 +2,13 @@ package org.broadinstitute.sequel.factory;
 
 import org.broadinstitute.sequel.GenericLabEvent;
 import org.broadinstitute.sequel.GenericReagent;
-import org.broadinstitute.sequel.Goop;
 import org.broadinstitute.sequel.LabEvent;
 import org.broadinstitute.sequel.LabEventMessage;
 import org.broadinstitute.sequel.LabEventType;
 import org.broadinstitute.sequel.MolecularState;
 import org.broadinstitute.sequel.PersonDAO;
 import org.broadinstitute.sequel.RackOfTubes;
+import org.broadinstitute.sequel.SampleSheet;
 import org.broadinstitute.sequel.StaticPlate;
 import org.broadinstitute.sequel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.TwoDBarcodedTubeDAO;
@@ -106,9 +106,9 @@ public class LabEventFactory {
             if(twoDBarcodedTube == null) {
 
             }
-            Goop goop = null;
+            SampleSheet sampleSheet = null;
             rackOfTubes.addContainedVessel(/*receptacleType.getPosition(),*/
-                    new TwoDBarcodedTube(goop, receptacleType.getBarcode()));
+                    new TwoDBarcodedTube(receptacleType.getBarcode(), sampleSheet));
         }
         return rackOfTubes;
     }

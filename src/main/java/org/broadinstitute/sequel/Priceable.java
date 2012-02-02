@@ -89,7 +89,7 @@ public interface Priceable {
      */
     public Invoice getInvoice();
 
-    public Collection<SampleSheet> getSampleSheets();
+    public Collection<SampleInstance> getSampleInstances();
 
     /**
      * What was the date at which this priceable

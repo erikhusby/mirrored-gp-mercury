@@ -24,7 +24,7 @@ package org.broadinstitute.sequel;
  * that we can reliably load with sample.
  *
  */
-public interface RunChamber extends GoopHolder {
+public interface RunChamber extends LabVessel {
 
     public RunConfiguration getRunConfiguration();
 
