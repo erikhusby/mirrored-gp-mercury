@@ -18,6 +18,9 @@ import java.util.Date;
  * of src/dest mapping.
  */
 public abstract class AbstractLabEvent implements LabEvent {
+    private String eventLocation;
+    private Person eventOperator;
+    private Date eventDate;
 
     @Override
     public Collection<LabVessel> getTargetLabVessels() {
@@ -46,17 +49,17 @@ public abstract class AbstractLabEvent implements LabEvent {
 
     @Override
     public String getEventLocation() {
-        throw new RuntimeException("I haven't been written yet.");
+        return eventLocation;
     }
 
     @Override
     public Person getEventOperator() {
-        throw new RuntimeException("I haven't been written yet.");
+        return eventOperator;
     }
 
     @Override
     public Date getEventDate() {
-        throw new RuntimeException("I haven't been written yet.");
+        return eventDate;
     }
 
     @Override
@@ -77,5 +80,17 @@ public abstract class AbstractLabEvent implements LabEvent {
     @Override
     public void addReagent(Reagent reagent) {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public void setEventLocation(String eventLocation) {
+        this.eventLocation = eventLocation;
+    }
+
+    public void setEventOperator(Person eventOperator) {
+        this.eventOperator = eventOperator;
+    }
+
+    public void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
     }
 }

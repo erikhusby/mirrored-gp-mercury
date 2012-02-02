@@ -11,7 +11,12 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements UserRemark
     private IlluminaRunConfiguration runConfiguration;
 
     private FLOWCELL_TYPE flowcellType;
-    
+
+    protected IlluminaFlowcell(String label) {
+        super(label);
+        this.flowcellBarcode = label;
+    }
+
     public enum FLOWCELL_TYPE {
         EIGHT_LANE,MISEQ
     }
@@ -20,6 +25,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements UserRemark
 
 
     public IlluminaFlowcell(FLOWCELL_TYPE flowcellType,String flowcellBarcode,IlluminaRunConfiguration runConfig) {
+        super(flowcellBarcode);
         this.flowcellBarcode = flowcellBarcode;
         this.runConfiguration = runConfig;
         this.flowcellType = flowcellType;

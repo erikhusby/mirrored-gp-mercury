@@ -1,12 +1,16 @@
 package org.broadinstitute.sequel;
 
 
+import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
+import org.broadinstitute.sequel.bettalims.jaxb.PlateType;
+import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
 import org.easymock.EasyMock;
-import org.testng.annotations.*;
 import org.testng.Assert;
+import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class EndToEndTest  {
 
@@ -53,7 +57,7 @@ public class EndToEndTest  {
         BSPAliquotWorkQueue aliquotWorkQueue = new BSPAliquotWorkQueue(new MockBSPConnector());
 
         Assert.assertTrue(project.getAllLabTangibles().isEmpty());
-        Assert.assertTrue(project.getAllLabTangibles().isEmpty());
+        Assert.assertTrue(project2.getAllLabTangibles().isEmpty());
         // add a sample to the project
         project.addLabTangible(stock1, workflow);
         project2.addLabTangible(stock2, workflow);
@@ -125,6 +129,47 @@ public class EndToEndTest  {
             Assert.assertEquals(LabEventName.ALIQUOT_RECEIVED, statusNote.getEventName());
         }
 
+        // package structure DDD (Bien in parens)
+        //    application (control)
+        //       impl
+        //       util
+        //    domain (entity)
+        //       model
+        //          <area1 etc.>
+        //       service
+        //       shared
+        //    infrastructure
+        //       messaging
+        //       persistence
+        //       routing
+        //    interface (boundary)
+        //       <area1 etc.>
+        //           web
+        //           ws
+
+        PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
+        PlateType sourcePlate = new PlateType();
+        plateTransferEvent.setSourcePlate(sourcePlate);
+        plateTransferEvent.setSourcePositionMap(new PositionMapType());
+        PlateType destinationPlate = new PlateType();
+        plateTransferEvent.setPlate(destinationPlate);
+
+        // kiosk associates tubes with rack?
+        RackOfTubes rackOfTubes = new RackOfTubes("KioskRack1");
+        rackOfTubes.addContainedVessel(aliquotTube); // need ability to add at well position
+        rackOfTubes.addContainedVessel(aliquot2Tube); // need ability to add at well position
+        // PreflightNormalization rack event
+        // deck calls web services
+        // ShearingTransfer rack to plate
+        // EndRepair plate event with reagent
+        // IndexedAdapterLigation plate to plate
+        // BaitSetup tube to plate
+        // BaitAddition plate to plate
+        // NormalizedCatchRegistration plate to rack
+        // PoolingTransfer cherry pick
+        // StripTubeBTransfer
+        // FlowcellTransfer
+
         /**
          * Todo arz: test {@link Goop#applyReagent(Reagent)} by applying
          * a reagent transfer.  Also do a test from a container that has
@@ -132,7 +177,6 @@ public class EndToEndTest  {
          * only {@link Reagent}, so test scenarios where we add samples
          * into reagent containers.
          */
-        
         /*
 
         LabVessel firstDestination = new TwoDBarcodedTube(null,"tube1");
@@ -237,176 +281,4 @@ public class EndToEndTest  {
             }
         }
     }
-    
-    
-
-    private class GenericLabEvent extends AbstractLabEvent {
-
-        private final boolean expectedEmptySources;
-        
-        private final boolean expectedEmptyTargets;
-        
-        private final MolecularState.DNA_OR_RNA nucleicAcidType;
-        
-        private final MolecularState.STRANDEDNESS targetStrand;
-
-        /**
-         * One attempt at trying to make a very generic
-         * {@link LabEvent} to handle lots of different
-         * {@link LabEventName event names}
-         * @param expectSourcesEmpty
-         * @param expectTargetsEmpty
-         * @param targetStrand if null, inherit the same {@link MolecularState.STRANDEDNESS strand}
-         *                     from the {@link #getSourceLabVessels()}
-         * @param nucleicAcid if null, inherit the same {@link MolecularState.DNA_OR_RNA nucleic acid}
-         *                     from the {@link #getSourceLabVessels() sources}
-         */
-        public GenericLabEvent(boolean expectSourcesEmpty,
-                               boolean expectTargetsEmpty,
-                               MolecularState.STRANDEDNESS targetStrand,
-                               MolecularState.DNA_OR_RNA nucleicAcid) {
-            this.expectedEmptySources = expectSourcesEmpty;
-            this.expectedEmptyTargets = expectTargetsEmpty;
-            this.nucleicAcidType = nucleicAcid;
-            this.targetStrand = targetStrand;
-        }
-        
-        @Override
-        public LabEventName getEventName() {
-            return LabEventName.GENERIC;
-        }
-
-        @Override
-        public boolean isBillable() {
-            return false;
-        }
-
-        /**
-         * Are we going to change the molecular
-         * state?
-         * 
-         * Perhaps this should be up at {@link AbstractLabEvent}
-         * 
-         * Events that denature or that transform from
-         * RNA into DNA also change molecular state.  So perhaps
-         * these 
-         * @return
-         */
-        private boolean isMolecularStateBeingChanged() {
-            boolean hasMolStateChange = false;
-            for (Reagent reagent: getReagents()) {
-                if (reagent.getMolecularEnvelopeDelta() != null) {
-                    hasMolStateChange = true;    
-                }
-            }
-            return hasMolStateChange;
-        }
-
-        /**
-         * After writing this method, I know think we only need
-         * a single {@link LabEvent} class to handle most Logic for properly handling
-         * {@link MolecularState} changes can be written
-         * once.  The need to customize behavior of 
-         * {@link #validateSourceMolecularState()}, {@link #validateTargetMolecularState()},
-         * and {@link #applyMolecularStateChanges()}  is
-         * pretty unlikely.
-         * @throws InvalidMolecularStateException
-         */
-        @Override
-        public void applyMolecularStateChanges() throws InvalidMolecularStateException {
-            for (LabVessel target: getTargetLabVessels()) {
-                for (LabVessel source: getSourcesForTarget(target)) {
-                    // apply all goop from all sources
-                    target.getGoop().applyGoop(source.getGoop());
-                }
-                // after the target goop is transferred,
-                // apply the reagent
-                for (Reagent reagent : getReagents()) {
-                    target.getGoop().applyReagent(reagent);
-                }
-            }
-
-            /**
-             * Here is why we probably only need a single {@link #applyMolecularStateChanges()} 
-             * method.
-             */
-            for (LabVessel target: getTargetLabVessels()) {
-                // check the molecular state per target.  
-                Set<MolecularStateTemplate> molecularStateTemplatesInTarget = new HashSet<MolecularStateTemplate>();
-                for (SampleSheet sampleSheet: target.getGoop().getSampleSheets()) {
-                    for (SampleInstance sampleInstance : sampleSheet.getSamples()) {
-                        molecularStateTemplatesInTarget.add(sampleInstance.getMolecularState().getMolecularStateTemplate());
-                    }
-                }
-                // allowing for jumbled {@link MolecularState} is probably
-                // one of those things we'd override per {@link LabEvent}
-                // subclass.  In the worst case, an implementation of
-                // {@link LabEvent} might have to dip into {@link Project}
-                // data to make some sort of special case
-                if (molecularStateTemplatesInTarget.size() > 1) {
-                    StringBuilder errorMessage = new StringBuilder("Molecular state will not be uniform as a result of this operation.  " + target.getGoop().getLabCentricName() + " has " + molecularStateTemplatesInTarget.size() + " different molecular states:\n");
-                    for (MolecularStateTemplate stateTemplate : molecularStateTemplatesInTarget) {
-                        errorMessage.append(stateTemplate.toText());
-                    }
-                    // todo post this error message back to PM jira
-                    throw new InvalidMolecularStateException(errorMessage.toString());
-                }
-            }
-            
-            
-        }
-
-        /**
-         * Probably we'll want generic source/target
-         * molecular state checks done up at the
-         * abstract superclass level and then let
-         * subclasses override them?
-         * 
-         * @throws InvalidMolecularStateException
-         */
-        @Override
-        public void validateSourceMolecularState() throws InvalidMolecularStateException {
-            if (getSourceLabVessels().isEmpty()) {
-                throw new InvalidMolecularStateException("No sources.");
-            }
-            for (LabVessel source: getSourceLabVessels()) {
-                if (!expectedEmptySources) {
-                    for (SampleSheet sampleSheet : source.getGoop().getSampleSheets()) {
-                        if (sampleSheet.getSamples().isEmpty()) {
-                            throw new InvalidMolecularStateException("Source " + source.getGoop().getLabCentricName() + " is empty");
-                        }
-                    }
-                }
-            }
-        }
-
-        /**
-         * Probably we'll want generic source/target
-         * molecular state checks done up at the
-         * abstract superclass level and then let
-         * subclasses override them?
-         * @throws InvalidMolecularStateException
-         */
-        @Override
-        public void validateTargetMolecularState() throws InvalidMolecularStateException {
-            if (getTargetLabVessels().isEmpty()) {
-                throw new InvalidMolecularStateException("No destinations!");
-            }
-            for (LabVessel target: getTargetLabVessels()) {
-                if (!expectedEmptyTargets) {
-                    for (SampleSheet sampleSheet : target.getGoop().getSampleSheets()) {
-                        if (sampleSheet.getSamples().isEmpty()) {
-                            throw new InvalidMolecularStateException("Target " + target.getGoop().getLabCentricName() + " is empty");
-                        }
-                    }
-                }
-            }
-        }
-
-        @Override
-        public Collection<SampleSheet> getAllSampleSheets() {
-            throw new RuntimeException("I haven't been written yet.");
-        }
-    }
-    
 }

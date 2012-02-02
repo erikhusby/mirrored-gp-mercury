@@ -8,8 +8,12 @@ public class PlateWell extends AbstractLabVessel {
     private StaticPlate plate;
     
     public PlateWell(StaticPlate p,WellName wellName) {
+        super(p.getLabel() + wellName);
         plate = p;
-        
+    }
+
+    protected PlateWell(String label) {
+        super(label);
     }
 
     @Override

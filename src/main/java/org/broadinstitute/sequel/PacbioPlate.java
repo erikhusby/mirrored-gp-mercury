@@ -11,6 +11,10 @@ import java.util.Date;
  */
 public class PacbioPlate extends StaticPlate implements RunCartridge, Priceable {
 
+    public PacbioPlate(String label) {
+        super(label);
+    }
+
     @Override
     public String getPriceListItemName() {
         throw new RuntimeException("I haven't been written yet.");

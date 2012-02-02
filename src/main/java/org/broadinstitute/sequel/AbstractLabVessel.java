@@ -5,11 +5,17 @@ import java.util.*;
 
 public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
 
+    private String label;
+
     private final Collection<Stalker> stalkers = new HashSet<Stalker>();
+
+    protected AbstractLabVessel(String label) {
+        this.label = label;
+    }
 
     @Override
     public String getLabel() {
-        throw new RuntimeException("I haven't been written yet.");
+        return label;
     }
 
     @Override

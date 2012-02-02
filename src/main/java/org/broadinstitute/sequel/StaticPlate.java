@@ -8,6 +8,9 @@ import java.util.Collection;
  */
 public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
 
+    public StaticPlate(String label) {
+        super(label);
+    }
 
     @Override
     public LabVessel getContainingVessel() {

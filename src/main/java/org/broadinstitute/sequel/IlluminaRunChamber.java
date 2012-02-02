@@ -12,9 +12,14 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
     private Goop library;
     
     public IlluminaRunChamber(IlluminaFlowcell flowcell, int laneNumber,Goop library) {
+        super("don't know");
         this.flowcell = flowcell;
         this.laneNumber = laneNumber;
         this.library = library;
+    }
+
+    protected IlluminaRunChamber(String label) {
+        super(label);
     }
 
     @Override

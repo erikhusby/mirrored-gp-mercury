@@ -6,4 +6,6 @@ package org.broadinstitute.sequel;
  */
 public interface LabEventMessage {
 
+    public static final String TUBE_RACK = "TubeRack";
+
 }

@@ -7,6 +7,10 @@ import java.util.Collection;
  */
 public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
 
+    public RackOfTubes(String label) {
+        super(label);
+    }
+
     @Override
     public LabVessel getContainingVessel() {
         throw new RuntimeException("I haven't been written yet.");
