@@ -27,7 +27,7 @@ public class EndToEndTest  {
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        sampleSheet.addStartingSample(new BSPSample(sampleName,project));
+        sampleSheet.addStartingSample(new BSPSample(sampleName, project));
         return new TwoDBarcodedTube(new BaseGoop(sampleName,sampleSheet),tubeBarcode);
     }
     
@@ -195,36 +195,34 @@ public class EndToEndTest  {
         boolean wasIndexFound = false;
         for (RunCartridge cartridge: srun.getSampleCartridge()) {
             for (RunChamber chamber: cartridge.getChambers()) {
-                for (SampleSheet sampleSheet : chamber.getGoop().getSampleSheets()) {
-                    for (SampleInstance sampleInstance: sampleSheet.getSamples()) {
-                        if (sam.equals(sampleInstance.getStartingSample())) {
-                            foundSample = true;
-                            MolecularEnvelope envelope = sampleInstance.getMolecularState().getMolecularEnvelope();
+                for (SampleInstance sampleInstance : chamber.getGoop().getSampleInstances()) {
+                    if (sam.equals(sampleInstance.getStartingSample())) {
+                        foundSample = true;
+                        MolecularEnvelope envelope = sampleInstance.getMolecularState().getMolecularEnvelope();
 
-                            // sloppy check on the envelope: we're not checking position relative
-                            // to other envelopes; just the presence of this envelope somewhere
-                            if (expectedEnvelope.equals(envelope)) {
+                        // sloppy check on the envelope: we're not checking position relative
+                        // to other envelopes; just the presence of this envelope somewhere
+                        if (expectedEnvelope.equals(envelope)) {
+                            wasIndexFound = true;
+                        }
+                        while (envelope.getContainedEnvelope() != null) {
+                            if (expectedEnvelope.equals(envelope.getContainedEnvelope())) {
                                 wasIndexFound = true;
                             }
-                            while (envelope.getContainedEnvelope() != null) {
-                                if (expectedEnvelope.equals(envelope.getContainedEnvelope())) {
-                                    wasIndexFound = true;
-                                }
-                            }
+                        }
 
 
-                            Project project = sampleInstance.getProject();
-                            if (project.equals(p)) {
-                                foundProject = true;
-                            }
+                        Project project = sampleInstance.getProject();
+                        if (project.equals(p)) {
+                            foundProject = true;
                         }
-                        Set<SampleSheet> allSampleSheetsForAliquot = new HashSet<SampleSheet>();
-                        if (allSampleSheetsForAliquot.size() != numberOfSampleSheetsPerSample) {
-                           Assert.fail("Should have found exactly " + numberOfSampleSheetsPerSample + " sample sheets.  One for the unindexed SampleAliquotInstance and one with the index.");
-                        }
-                    }    
-                }                
-            }
+                    }
+                    Set<SampleSheet> allSampleSheetsForAliquot = new HashSet<SampleSheet>();
+                    if (allSampleSheetsForAliquot.size() != numberOfSampleSheetsPerSample) {
+                        Assert.fail("Should have found exactly " + numberOfSampleSheetsPerSample + " sample sheets.  One for the unindexed SampleAliquotInstance and one with the index.");
+                    }
+                }
+            }               
 
             if (!foundSample) {
                 Assert.fail("Failed to find sample " + sam);
@@ -333,10 +331,9 @@ public class EndToEndTest  {
             for (LabVessel target: getTargetLabVessels()) {
                 // check the molecular state per target.  
                 Set<MolecularStateTemplate> molecularStateTemplatesInTarget = new HashSet<MolecularStateTemplate>();
-                for (SampleSheet sampleSheet: target.getGoop().getSampleSheets()) {
-                    for (SampleInstance sampleInstance : sampleSheet.getSamples()) {
-                        molecularStateTemplatesInTarget.add(sampleInstance.getMolecularState().getMolecularStateTemplate());
-                    }
+                
+                for (SampleInstance sampleInstance : target.getSampleInstances()) {
+                    molecularStateTemplatesInTarget.add(sampleInstance.getMolecularState().getMolecularStateTemplate());
                 }
                 // allowing for jumbled {@link MolecularState} is probably
                 // one of those things we'd override per {@link LabEvent}
@@ -371,10 +368,8 @@ public class EndToEndTest  {
             }
             for (LabVessel source: getSourceLabVessels()) {
                 if (!expectedEmptySources) {
-                    for (SampleSheet sampleSheet : source.getGoop().getSampleSheets()) {
-                        if (sampleSheet.getSamples().isEmpty()) {
-                            throw new InvalidMolecularStateException("Source " + source.getGoop().getLabCentricName() + " is empty");
-                        }
+                    if (source.getGoop().getSampleInstances().isEmpty()) {
+                        throw new InvalidMolecularStateException("Source " + source.getGoop().getLabCentricName() + " is empty");
                     }
                 }
             }
@@ -394,10 +389,8 @@ public class EndToEndTest  {
             }
             for (LabVessel target: getTargetLabVessels()) {
                 if (!expectedEmptyTargets) {
-                    for (SampleSheet sampleSheet : target.getGoop().getSampleSheets()) {
-                        if (sampleSheet.getSamples().isEmpty()) {
-                            throw new InvalidMolecularStateException("Target " + target.getGoop().getLabCentricName() + " is empty");
-                        }
+                    if (target.getGoop().getSampleInstances().isEmpty()) {
+                        throw new InvalidMolecularStateException("Target " + target.getGoop().getLabCentricName() + " is empty");
                     }
                 }
             }
