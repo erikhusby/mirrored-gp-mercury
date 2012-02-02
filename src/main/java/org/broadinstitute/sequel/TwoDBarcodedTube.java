@@ -141,6 +141,11 @@ public class TwoDBarcodedTube implements LabVessel {
     }
 
     @Override
+    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
+        return sheet.getSampleInstances(this);
+    }
+
+    @Override
     public Collection<SampleInstance> getSampleInstances() {
         Collection<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         for (SampleSheet sampleSheet : getSampleSheets()) {

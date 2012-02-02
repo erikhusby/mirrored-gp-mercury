@@ -69,6 +69,8 @@ public interface LabTangible {
      */
     public Collection<SampleInstance> getSampleInstances();
     
+    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet);
+    
     public Collection<StateChange> getStateChanges();
 
 
