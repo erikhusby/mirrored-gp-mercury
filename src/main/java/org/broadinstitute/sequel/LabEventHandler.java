@@ -109,7 +109,6 @@ public class LabEventHandler {
         }
         catch(InvalidMolecularStateException e) {
             invalidMolecularState.addEvent(labEvent);
-            SampleSheetAlertUtil.doAlert(e.getMessage(),labEvent.getAllSampleSheets(),false);
             return HANDLER_RESPONSE.ERROR;
         }
         try {
@@ -117,7 +116,6 @@ public class LabEventHandler {
         }
         catch(InvalidMolecularStateException e) {
             invalidMolecularState.addEvent(labEvent);
-            SampleSheetAlertUtil.doAlert(e.getMessage(),labEvent.getAllSampleSheets(),false);
             return HANDLER_RESPONSE.ERROR;
         }
 
@@ -130,7 +128,6 @@ public class LabEventHandler {
             return HANDLER_RESPONSE.OK;
         }
         catch(InvalidMolecularStateException e) {
-            SampleSheetAlertUtil.doAlert(e.getMessage(),labEvent.getAllSampleSheets(),false);
             return HANDLER_RESPONSE.ERROR;
         }
     }

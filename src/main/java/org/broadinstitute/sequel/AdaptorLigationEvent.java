@@ -63,7 +63,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
 
                     float concentration  = sampleInstance.getMolecularState().getConcentration().floatValue();
                     if (concentration < eventConfiguration.getExpectedMolecularState().getMinConcentration()) {
-                        SampleSheetAlertUtil.doAlert("Concentration " + concentration + " is out of range for " + tangible.getGoop().getLabCentricName(),tangible.getGoop().getSampleSheets(),true);
+                        SampleSheetAlertUtil.doAlert("Concentration " + concentration + " is out of range for " + tangible.getGoop().getLabCentricName(),tangible,true);
                     }
 
                     if (!sampleInstance.getMolecularState().getMolecularEnvelope().equals(eventConfiguration.getExpectedMolecularState().getMolecularEnvelope())) {
@@ -75,7 +75,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
                                 LabVessel.MetricSearchMode.NEAREST,
                                 sampleInstance);
                         if (!someMetric.isInRange(thresholds)) {
-                            SampleSheetAlertUtil.doAlert(thresholds.getMetricName() + " disaster for " + tangible.getGoop().getLabCentricName(),tangible.getGoop().getSampleSheets(),true);
+                            SampleSheetAlertUtil.doAlert(thresholds.getMetricName() + " disaster for " + tangible.getGoop().getLabCentricName(),tangible,true);
                         }
                     }
                 }

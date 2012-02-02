@@ -78,7 +78,7 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
             throw new RuntimeException("Can't start work on " + labTangible.getLabCentricName() + " in the " + bucket.toText() + " bucket in " + getQueueName());
         }
         */
-        SampleSheetAlertUtil.doAlert("Starting " + getQueueName() + " work for these samples.",labTangible.getSampleSheets(),false);
+        SampleSheetAlertUtil.doAlert("Starting " + getQueueName() + " work for these samples.",labTangible,false);
         remove(labTangible,bucket);
     }
 
@@ -122,7 +122,7 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
 
     @Override
     public void markComplete(LabTangible labTangible,T bucket) {
-        SampleSheetAlertUtil.doAlert("Completed " + getQueueName() + " work for these samples.",labTangible.getSampleSheets(),false);
+        SampleSheetAlertUtil.doAlert("Completed " + getQueueName() + " work for these samples.",labTangible,false);
     }
 
     @Override

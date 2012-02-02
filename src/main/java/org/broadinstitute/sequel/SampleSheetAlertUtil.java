@@ -31,23 +31,21 @@ public class SampleSheetAlertUtil {
      * development projects.  if false, we'll skip alerting
      * dev projects.
      */
-    public static void doAlert(String message, Collection<SampleSheet> sampleSheets,boolean includeDev) {
+    public static void doAlert(String message, LabTangible labTangible,boolean includeDev) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
         final Map<Project,Collection<String>> samplesByProject = new HashMap<Project,Collection<String>>();
-        for (SampleSheet sampleSheet : sampleSheets) {
-            for (SampleInstance samInstance: sampleSheet.getSamples()) {
-                Project p = samInstance.getProject();
-                boolean useProject = true;
-                if (p.isDevelopment() && !includeDev) {
-                    useProject = false;
+         for (SampleInstance samInstance: labTangible.getSampleInstances()) {
+            Project p = samInstance.getProject();
+            boolean useProject = true;
+            if (p.isDevelopment() && !includeDev) {
+                useProject = false;
+            }
+            if (useProject) {
+                if (!samplesByProject.containsKey(p)) {
+                    samplesByProject.put(p,new HashSet<String>());
                 }
-                if (useProject) {
-                    if (!samplesByProject.containsKey(p)) {
-                        samplesByProject.put(p,new HashSet<String>());
-                    }
-                    samplesByProject.get(p).add(samInstance.getStartingSample().getSampleName());
-                }
+                samplesByProject.get(p).add(samInstance.getStartingSample().getSampleName());
             }
         }
 

@@ -16,7 +16,7 @@ public class SampleSheetState {
     }
 
     public ReadBucket getReadBucket() {
-
+        throw new RuntimeException("Method not yet implemented.");
     }
 
 }
