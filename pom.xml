@@ -81,6 +81,40 @@
 
     <profiles>
         <profile>
+            <id>Clover.report</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.atlassian.maven.plugins</groupId>
+                        <artifactId>maven-clover2-plugin</artifactId>
+                        <configuration>
+                            <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
+                            <includesAllSourceRoots>true</includesAllSourceRoots>
+                            <targetPercentage>15%</targetPercentage>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>clover</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                    <goal>clover</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+             <reporting>
+                 <plugins>
+                     <plugin>
+                         <groupId>com.atlassian.maven.plugins</groupId>
+                         <artifactId>maven-clover2-plugin</artifactId>
+                     </plugin>
+                 </plugins>
+             </reporting>
+        </profile>
+        <profile>
             <id>Clover.optimize</id>
             <build>
                 <plugins>
@@ -297,8 +331,7 @@
                 <groupId>com.atlassian.maven.plugins</groupId>
                 <artifactId>maven-clover2-plugin</artifactId>
                 <configuration>
-                    <targetPercentage>15%</targetPercentage>
-                    <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
+                    <includesAllSourceRoots>true</includesAllSourceRoots>
                 </configuration>
                 <executions>
                     <execution>
