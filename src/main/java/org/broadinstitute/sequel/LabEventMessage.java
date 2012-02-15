@@ -5,7 +5,4 @@ package org.broadinstitute.sequel;
  * automation instruments.
  */
 public interface LabEventMessage {
-
-    public static final String TUBE_RACK = "TubeRack";
-
 }

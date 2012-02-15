@@ -3,6 +3,7 @@ package org.broadinstitute.sequel;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * A plate loaded into the pacbio instrument
@@ -36,7 +37,7 @@ public class PacbioPlate extends StaticPlate implements RunCartridge, Priceable 
     }
 
     @Override
-    public Collection<SampleInstance> getSampleInstances() {
+    public Set<SampleInstance> getSampleInstances() {
         throw new RuntimeException("I haven't been written yet.");
     }
 

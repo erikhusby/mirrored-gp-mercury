@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel;
 
 /**
- * "Society for Biomolecular Screening" SBS
+ * "Society for Biomolecular Sciences" SBS
  */
 public interface SBSSectionable {
 

@@ -3,23 +3,29 @@ package org.broadinstitute.sequel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import sun.security.provider.certpath.CollectionCertStore;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
-public class TwoDBarcodedTube implements LabVessel {
+public class TwoDBarcodedTube extends AbstractLabVessel {
 
     private static Log gLog = LogFactory.getLog(TwoDBarcodedTube.class);
     
     private String twoDBarcode;
     
-    private final Collection<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
-    
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
     
+    public TwoDBarcodedTube(String twoDBarcode) {
+        super(twoDBarcode);
+        if (twoDBarcode == null) {
+            throw new IllegalArgumentException("twoDBarcode must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
+        }
+        this.twoDBarcode = twoDBarcode;
+    }
+
     public TwoDBarcodedTube(String twoDBarcode,SampleSheet sheet) {
+        super(twoDBarcode);
         if (twoDBarcode == null) {
              throw new IllegalArgumentException("twoDBarcode must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
         }
@@ -27,7 +33,7 @@ public class TwoDBarcodedTube implements LabVessel {
              throw new IllegalArgumentException("sheet must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
         }
         this.twoDBarcode = twoDBarcode;
-        sampleSheets.add(sheet);
+        getSampleSheets().add(sheet);
         sheet.addToVessel(this);
     }
 
@@ -118,16 +124,6 @@ public class TwoDBarcodedTube implements LabVessel {
     }
 
     @Override
-    public Collection<SampleSheet> getSampleSheets() {
-        return sampleSheets;        
-    }
-
-    @Override
-    public void addSampleSheet(SampleSheet sampleSheet) {
-        sampleSheets.add(sampleSheet);
-    }
-
-    @Override
     public Collection<StateChange> getStateChanges() {
         throw new RuntimeException("I haven't been written yet.");
     }
@@ -137,14 +133,15 @@ public class TwoDBarcodedTube implements LabVessel {
         throw new RuntimeException("I haven't been written yet.");
     }
 
+
     @Override
     public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
         return sheet.getSampleInstances(this);
     }
 
     @Override
-    public Collection<SampleInstance> getSampleInstances() {
-        Collection<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+    public Set<SampleInstance> getSampleInstances() {
+        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         for (SampleSheet sampleSheet : getSampleSheets()) {
             sampleInstances.addAll(sampleSheet.getSampleInstances(this));
         }

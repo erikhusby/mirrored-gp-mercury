@@ -7,7 +7,7 @@ package org.broadinstitute.sequel;
  * sample is what is expected.
  *
  * What we're defending against here is an accident
- * that can destory a sample.  Each step in the lab
+ * that can destroy a sample.  Each step in the lab
  * (think automation) has preconditions which are a
  * combination of concentration, volume, molecular
  * envelope status, RNA/DNA, etc.  That's what

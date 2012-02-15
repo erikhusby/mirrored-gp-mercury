@@ -7,6 +7,26 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
 
     private String label;
 
+    private final Collection<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
+
+    /** SampleInstances in this vessel.  If null, follow {@link #sampleSheetReferences}*/
+//    private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+    /** Ancestor vessel that has the nearest change to sampleInstances, e.g. starting vessel or pooling */
+    private Set<LabVessel> sampleSheetReferences = new HashSet<LabVessel>();
+    /** The molecular envelope delta applied to this vessel (is this redundant wrt reagent). If null, follow {@link #molecularEnvelopeDeltaReference}*/
+    private MolecularEnvelope molecularEnvelopeDelta;
+    /** Ancestor vessel that applied the nearest change to molecular envelope */
+    private LabVessel molecularEnvelopeDeltaReference;
+    
+    private Project project;
+    private LabVessel projectReference;
+    
+    private ReadBucket readBucket;
+    private LabVessel readBucketReference;
+    
+    private Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
+    private Set<LabEvent> transfersTo = new HashSet<LabEvent>();
+
     private final Collection<Stalker> stalkers = new HashSet<Stalker>();
 
     protected AbstractLabVessel(String label) {
@@ -142,16 +162,37 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
 
     @Override
     public String getLabCentricName() {
-        throw new RuntimeException("I haven't been written yet.");
+        // todo jmt what should this do?
+        return label;
     }
 
     @Override
     public Collection<SampleSheet> getSampleSheets() {
-        throw new RuntimeException("I haven't been written yet.");
+        return sampleSheets;
     }
 
     @Override
     public void addSampleSheet(SampleSheet sampleSheet) {
         throw new RuntimeException("I haven't been written yet.");
     }
+
+    public Set<LabVessel> getSampleSheetReferences() {
+        return sampleSheetReferences;
+    }
+
+    public void setSampleSheetReferences(Set<LabVessel> sampleSheetReferences) {
+        this.sampleSheetReferences = sampleSheetReferences;
+    }
+
+    @Override
+    public Collection<LabEvent> getTransfersFrom() {
+        return transfersFrom;
+    }
+
+    @Override
+    public Collection<LabEvent> getTransfersTo() {
+        return transfersTo;
+    }
+
+
 }

@@ -16,6 +16,8 @@ public abstract class AbstractProject implements  Project, UserRemarkable {
     private final Map<WorkflowDescription,Collection<LabVessel>> startingStuffByWorkflow =  new HashMap<WorkflowDescription,Collection<LabVessel>>();
     
     private final Collection<LabWorkQueue> availableWorkQueues = new HashSet<LabWorkQueue>();
+    
+    private List<LabEventName> checkpointableEvents = new ArrayList<LabEventName>();
 
     @Override
     public JiraTicket getJiraTicket() {
@@ -192,7 +194,7 @@ public abstract class AbstractProject implements  Project, UserRemarkable {
 
     @Override
     public Collection<LabEventName> getCheckpointableEvents() {
-        throw new RuntimeException("I haven't been written yet.");
+        return checkpointableEvents;
     }
 
     @Override

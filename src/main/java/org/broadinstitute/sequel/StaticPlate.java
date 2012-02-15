@@ -2,11 +2,15 @@ package org.broadinstitute.sequel;
 
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A traditional plate.
  */
 public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
+
+    private Set<PlateWell> wells = new HashSet<PlateWell>();
 
     public StaticPlate(String label) {
         super(label);
@@ -28,16 +32,6 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
     }
 
     @Override
-    public Collection<LabEvent> getTransfersFrom() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<LabEvent> getTransfersTo() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Collection<LabEvent> getEvents() {
         throw new RuntimeException("I haven't been written yet.");
     }
@@ -53,8 +47,18 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
     }
 
     @Override
-    public Collection<SampleInstance> getSampleInstances() {
-        throw new RuntimeException("I haven't been written yet.");
+    public Set<SampleInstance> getSampleInstances() {
+        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        if(wells.isEmpty()) {
+            for (LabVessel labVessel : getSampleSheetReferences()) {
+                for (SampleSheet sampleSheet : labVessel.getSampleSheets()) {
+                    sampleInstances.addAll(sampleSheet.getSampleInstances());
+                }
+            }
+        } else {
+            throw new RuntimeException("I haven't been written yet.");
+        }
+        return sampleInstances;
     }
 
     @Override
@@ -105,5 +109,21 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
     @Override
     public Collection<Reagent> getAppliedReagents() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public Set<SampleInstance> getSampleInstancesInWell(String wellPosition) {
+        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        if(wells.isEmpty()) {
+            for (LabVessel labVessel : getSampleSheetReferences()) {
+                if(labVessel instanceof RackOfTubes) {
+                    RackOfTubes rackOfTubes = (RackOfTubes) labVessel;
+                    // todo jmt honor sections
+                    sampleInstances.addAll(rackOfTubes.getSampleInstancesInPosition(wellPosition));
+                }
+            }
+        } else {
+            throw new RuntimeException("I haven't been written yet.");
+        }
+        return sampleInstances;
     }
 }

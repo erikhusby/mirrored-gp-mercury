@@ -2,15 +2,16 @@ package org.broadinstitute.sequel;
 
 
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
-import org.broadinstitute.sequel.bettalims.jaxb.PlateType;
-import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
+import org.broadinstitute.sequel.factory.LabEventFactory;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class EndToEndTest  {
@@ -130,35 +131,50 @@ public class EndToEndTest  {
             Assert.assertEquals(LabEventName.ALIQUOT_RECEIVED, statusNote.getEventName());
         }
 
-        // package structure DDD (Bien in parens)
-        //    application (control)
-        //       impl
-        //       util
-        //    domain (entity)
-        //       model
-        //          <area1 etc.>
-        //       service
-        //       shared
-        //    infrastructure
-        //       messaging
-        //       persistence
-        //       routing
-        //    interface (boundary)
-        //       <area1 etc.>
-        //           web
-        //           ws
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        for(int rackPosition = 1; rackPosition <= 96; rackPosition++) {
+            SampleSheetImpl sampleSheet = new SampleSheetImpl();
+            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, project));
+            String barcode = "R" + rackPosition;
+            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
+        }
 
-        PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
-        PlateType sourcePlate = new PlateType();
-        plateTransferEvent.setSourcePlate(sourcePlate);
-        plateTransferEvent.setSourcePositionMap(new PositionMapType());
-        PlateType destinationPlate = new PlateType();
-        plateTransferEvent.setPlate(destinationPlate);
+        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+        LabEventFactory labEventFactory = new LabEventFactory();
+        labEventFactory.setPersonDAO(new PersonDAO());
+        LabEventHandler labEventHandler = new LabEventHandler();
 
-        // kiosk associates tubes with rack?
-        RackOfTubes rackOfTubes = new RackOfTubes("KioskRack1");
-        rackOfTubes.addContainedVessel(aliquotTube); // need ability to add at well position
-        rackOfTubes.addContainedVessel(aliquot2Tube); // need ability to add at well position
+        PlateTransferEventType shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate(
+                new ArrayList<String>(mapBarcodeToTube.keySet()), "ShearingTransfer", "KioskRack", "ShearPlate");
+        LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsDbFree(
+                shearingTransferEventJaxb, mapBarcodeToTube, null);
+        labEventHandler.processEvent(shearingTransferEventEntity);
+
+        StaticPlate shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
+        Assert.assertEquals(shearingPlate.getSampleInstances().size(),
+                96, "Wrong number of sample instances");
+
+        PlateTransferEventType postShearingTransferCleanupEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
+                "PostShearingTransferCleanup", "ShearPlate", "ShearCleanPlate");
+        LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsDbFree(
+                postShearingTransferCleanupEventJaxb, shearingPlate, null);
+        labEventHandler.processEvent(postShearingTransferCleanupEntity);
+
+        StaticPlate shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
+        Assert.assertEquals(shearingCleanupPlate.getSampleInstances().size(),
+                96, "Wrong number of sample instances");
+        Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getSampleInstancesInWell("A8");
+        Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
+        Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
+
+        PlateTransferEventType indexedAdapterLigationJaxb = bettaLimsMessageFactory.buildPlateToPlate(
+                "IndexedAdapterLigation", "IndexPlate", "ShearCleanPlate");
+        
+        StaticPlate indexPlate = new StaticPlate("IndexPlate");
+        LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLimsDbFree(
+                postShearingTransferCleanupEventJaxb, indexPlate, shearingCleanupPlate);
+        labEventHandler.processEvent(postShearingTransferCleanupEntity);
+
         // PreflightNormalization rack event
         // deck calls web services
         // ShearingTransfer rack to plate
@@ -228,8 +244,7 @@ public class EndToEndTest  {
                                                             // we should have branched and made a new sample sheet.
         */
     }
-    
-    
+
     private void checkForSampleProjectData(SequencingRun srun,
                                           Project p,
                                           StartingSample sam,

@@ -1,12 +1,18 @@
 package org.broadinstitute.sequel;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A rack of tubes
  */
 public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
 
+    private Map<String, TwoDBarcodedTube> mapPositionToTube = new HashMap<String, TwoDBarcodedTube>();
+    
     public RackOfTubes(String label) {
         super(label);
     }
@@ -17,13 +23,17 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
     }
 
     @Override
-    public Collection<LabVessel> getContainedVessels() {
-        throw new RuntimeException("I haven't been written yet.");
+    public Collection<? extends LabVessel> getContainedVessels() {
+        return mapPositionToTube.values();
     }
 
     @Override
     public void addContainedVessel(LabVessel child) {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public void addContainedVessel(TwoDBarcodedTube child, String position) {
+        mapPositionToTube.put(position, child);
     }
 
     @Override
@@ -52,8 +62,19 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
     }
 
     @Override
-    public Collection<SampleInstance> getSampleInstances() {
-        throw new RuntimeException("I haven't been written yet.");
+    public Set<SampleInstance> getSampleInstances() {
+        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        if(getSampleSheetReferences().isEmpty()) {
+            for (LabVessel labVessel : getContainedVessels()) {
+                sampleInstances.addAll(labVessel.getSampleInstances());
+            }
+        }
+        return sampleInstances;
+    }
+    
+    public Set<SampleInstance> getSampleInstancesInPosition(String rackPosition) {
+        TwoDBarcodedTube twoDBarcodedTube = mapPositionToTube.get(rackPosition);
+        return twoDBarcodedTube.getSampleInstances();
     }
 
     @Override
@@ -104,5 +125,14 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
     @Override
     public Collection<Reagent> getAppliedReagents() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<SampleSheet> getSampleSheets() {
+        Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
+        for (TwoDBarcodedTube twoDBarcodedTube : mapPositionToTube.values()) {
+            sampleSheets.addAll(twoDBarcodedTube.getSampleSheets());
+        }
+        return sampleSheets;
     }
 }

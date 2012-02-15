@@ -62,12 +62,14 @@ public class GenericLabEvent extends AbstractLabEvent {
     @Override
     public void applyMolecularStateChanges() throws InvalidMolecularStateException {
         for (LabVessel target: getTargetLabVessels()) {
+/*
             for (LabVessel source: getSourcesForTarget(target)) {
                 // apply all goop from all sources
                 for (SampleSheet sampleSheet : source.getSampleSheets()) {
                     target.addSampleSheet(sampleSheet);
                 }
             }
+*/
             // after the target goop is transferred,
             // apply the reagent
             for (Reagent reagent : getReagents()) {
@@ -83,6 +85,8 @@ public class GenericLabEvent extends AbstractLabEvent {
             // check the molecular state per target.
             Set<MolecularStateTemplate> molecularStateTemplatesInTarget = new HashSet<MolecularStateTemplate>();
 
+/*
+todo jmt restore this, after figuring out how to create SampleInstance
             for (SampleInstance sampleInstance : target.getSampleInstances()) {
                 molecularStateTemplatesInTarget.add(sampleInstance.getMolecularState().getMolecularStateTemplate());
             }
@@ -99,6 +103,7 @@ public class GenericLabEvent extends AbstractLabEvent {
                 // todo post this error message back to PM jira
                 throw new InvalidMolecularStateException(errorMessage.toString());
             }
+*/
         }
 
 

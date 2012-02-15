@@ -10,7 +10,7 @@ public class SampleAliquotSequencingResult implements SequencingResult {
      * pertinant to the given sample.
      * @param s
      */
-    public SampleAliquotSequencingResult(Goop s) {
+    public SampleAliquotSequencingResult(SampleInstance s) {
         throw new RuntimeException("Method not yet implemented.");
     }
 

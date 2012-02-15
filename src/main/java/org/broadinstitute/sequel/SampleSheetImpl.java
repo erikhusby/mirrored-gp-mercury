@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class SampleSheetImpl implements SampleSheet {
 
@@ -56,6 +57,16 @@ public class SampleSheetImpl implements SampleSheet {
                 //
                 sampleInstance.applyChange(stateChange);
             }    
+            sampleInstances.add(sampleInstance);
+        }
+        return sampleInstances;
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances() {
+        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        for (StartingSample startingSample : startingSamples) {
+            SampleInstanceImpl sampleInstance = startingSample.createSampleInstance();
             sampleInstances.add(sampleInstance);
         }
         return sampleInstances;

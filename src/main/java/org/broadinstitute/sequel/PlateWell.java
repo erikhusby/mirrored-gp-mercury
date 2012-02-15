@@ -2,6 +2,7 @@ package org.broadinstitute.sequel;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 public class PlateWell extends AbstractLabVessel {
 
@@ -52,7 +53,7 @@ public class PlateWell extends AbstractLabVessel {
     }
 
     @Override
-    public Collection<SampleInstance> getSampleInstances() {
+    public Set<SampleInstance> getSampleInstances() {
         throw new RuntimeException("I haven't been written yet.");
     }
 

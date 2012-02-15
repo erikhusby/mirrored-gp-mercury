@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  *
@@ -65,7 +66,7 @@ public interface LabVessel  {
      * {@link StateChange}s applied during lab work.
      * @return
      */
-    public Collection<SampleInstance> getSampleInstances();
+    public Set<SampleInstance> getSampleInstances();
 
     public Collection<SampleInstance> getSampleInstances(SampleSheet sheet);
 
@@ -104,7 +105,7 @@ public interface LabVessel  {
      * the rack.
      * @return
      */
-    public Collection<LabVessel> getContainedVessels();
+    public Collection<? extends LabVessel> getContainedVessels();
 
     public void addContainedVessel(LabVessel child);
 

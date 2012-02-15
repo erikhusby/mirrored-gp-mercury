@@ -48,6 +48,8 @@ public interface SampleSheet {
 
     public void addToVessel(LabVessel vessel);
 
+
+    Collection<SampleInstance> getSampleInstances();
     
     /**
      * Some lab reactions permanently alter the
@@ -88,5 +90,4 @@ public interface SampleSheet {
      *
      * @return the new, copied {@link SampleSheet}
      */
-   
 }

@@ -1,24 +1,20 @@
 package org.broadinstitute.sequel.factory;
 
 import org.broadinstitute.sequel.GenericLabEvent;
-import org.broadinstitute.sequel.GenericReagent;
 import org.broadinstitute.sequel.LabEvent;
-import org.broadinstitute.sequel.LabEventMessage;
 import org.broadinstitute.sequel.LabEventType;
 import org.broadinstitute.sequel.MolecularState;
 import org.broadinstitute.sequel.PersonDAO;
 import org.broadinstitute.sequel.RackOfTubes;
-import org.broadinstitute.sequel.SampleSheet;
 import org.broadinstitute.sequel.StaticPlate;
+import org.broadinstitute.sequel.StaticPlateDAO;
 import org.broadinstitute.sequel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateCherryPickEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateEventType;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
-import org.broadinstitute.sequel.bettalims.jaxb.PlateType;
 import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
-import org.broadinstitute.sequel.bettalims.jaxb.ReagentType;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptacleType;
 import org.broadinstitute.sequel.bettalims.jaxb.StationEventType;
@@ -32,14 +28,18 @@ import java.util.Map;
  * Creates Lab Events
  */
 public class LabEventFactory {
+
     private static final Map<String, LabEventType> mapMessageNameToEventType = new HashMap<String, LabEventType>();
     static {
         mapMessageNameToEventType.put("ShearingTransfer", new LabEventType(false, true,
                 MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
+        mapMessageNameToEventType.put("PostShearingTransferCleanup", new LabEventType(false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
     }
     
-    TwoDBarcodedTubeDAO twoDBarcodedTubeDao;
-    PersonDAO personDAO;
+    private TwoDBarcodedTubeDAO twoDBarcodedTubeDao;
+    private StaticPlateDAO staticPlateDAO;
+    private PersonDAO personDAO;
 
     public List<LabEvent> buildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
         List<LabEvent> labEvents = new ArrayList<LabEvent>();
@@ -61,65 +61,60 @@ public class LabEventFactory {
     }
 
     public LabEvent buildFromBettaLims(PlateTransferEventType plateTransferEvent) {
+        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes = null;
+        if(plateTransferEvent.getSourcePositionMap() != null) {
+            mapBarcodeToSourceTubes = findTubesByBarcodes(plateTransferEvent.getSourcePositionMap());
+        }
+        // todo jmt hash the tube positions, fetch any existing tube formation
+        StaticPlate targetPlate = staticPlateDAO.findByBarcode(plateTransferEvent.getPlate().getBarcode());
+        
+        return buildFromBettaLimsDbFree(plateTransferEvent, mapBarcodeToSourceTubes, targetPlate);
+    }
+
+    public LabEvent buildFromBettaLimsDbFree(
+            PlateTransferEventType plateTransferEvent,
+            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
+            StaticPlate targetPlate) {
         LabEvent labEvent = constructReferenceData(plateTransferEvent);
-
-        // todo jmt separate out the database fetch stages
-        // todo jmt there's currently no difference between a plate and a rack, consider combining them
-        if(plateTransferEvent.getSourcePositionMap() != null ) {
-            RackOfTubes sourceRack = constructRack(plateTransferEvent.getSourcePlate(),
-                    plateTransferEvent.getSourcePositionMap());
-            labEvent.addSourceLabVessel(sourceRack);
-        } else {
-            StaticPlate sourcePlate = constructPlate(plateTransferEvent.getSourcePlate());
-            labEvent.addSourceLabVessel(sourcePlate);
+        RackOfTubes rackOfTubes = new RackOfTubes(plateTransferEvent.getSourcePlate().getBarcode());
+        for (ReceptacleType receptacleType : plateTransferEvent.getSourcePositionMap().getReceptacle()) {
+            TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToSourceTubes.get(receptacleType.getBarcode());
+            if(twoDBarcodedTube == null) {
+                twoDBarcodedTube = new TwoDBarcodedTube(receptacleType.getBarcode(), null);
+            }
+            rackOfTubes.addContainedVessel(twoDBarcodedTube, receptacleType.getPosition());
+        }
+        if(targetPlate == null) {
+            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode());
         }
 
-        if(plateTransferEvent.getPositionMap() != null ) {
-            RackOfTubes targetRack = constructRack(plateTransferEvent.getPlate(), plateTransferEvent.getPositionMap());
-            labEvent.addTargetLabVessel(targetRack);
-        } else {
-            StaticPlate targetPlate = constructPlate(plateTransferEvent.getPlate());
-            labEvent.addTargetLabVessel(targetPlate);
-        }
-
-        for (ReagentType reagentType : plateTransferEvent.getReagent()) {
-            // todo jmt how to choose specific reagent subclasses?
-            labEvent.addReagent(new GenericReagent(reagentType.getKitType(), reagentType.getBarcode()));
-        }
-
+        labEvent.addSourceLabVessel(rackOfTubes);
+        labEvent.addTargetLabVessel(targetPlate);
         return labEvent;
     }
 
-    private StaticPlate constructPlate(PlateType plateType) {
-        return new StaticPlate(plateType.getBarcode());
+    public LabEvent buildFromBettaLimsDbFree(
+            PlateTransferEventType plateTransferEvent,
+            StaticPlate sourcePlate,
+            StaticPlate targetPlate) {
+        LabEvent labEvent = constructReferenceData(plateTransferEvent);
+        if(targetPlate == null) {
+            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode());
+        }
+
+        labEvent.addSourceLabVessel(sourcePlate);
+        labEvent.addTargetLabVessel(targetPlate);
+        return labEvent;
     }
 
-    private RackOfTubes constructRack(PlateType plateType, PositionMapType positionMapType) {
-        RackOfTubes rackOfTubes = new RackOfTubes(plateType.getBarcode());
+
+    private Map<String, TwoDBarcodedTube> findTubesByBarcodes(PositionMapType positionMap) {
         List<String> barcodes = new ArrayList<String>();
-        for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+        for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             barcodes.add(receptacleType.getBarcode());
         }
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDao.findByBarcodes(barcodes);
-        for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-            TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(receptacleType.getBarcode());
-            if(twoDBarcodedTube == null) {
-
-            }
-            SampleSheet sampleSheet = null;
-            rackOfTubes.addContainedVessel(/*receptacleType.getPosition(),*/
-                    new TwoDBarcodedTube(receptacleType.getBarcode(), sampleSheet));
-        }
-        return rackOfTubes;
+        return twoDBarcodedTubeDao.findByBarcodes(barcodes);
     }
-
-    // plate to rack
-    // rack to plate
-    // rack to rack
-    // plate event
-    // rack event
-    // create rack or plate for source
-    // create rack or plate for destination
 
     public LabEvent buildFromBettaLims(PlateCherryPickEvent plateCherryPickEvent) {
         LabEvent labEvent = constructReferenceData(plateCherryPickEvent);
@@ -147,5 +142,17 @@ public class LabEventFactory {
         }
         return new GenericLabEvent(labEventType, stationEventType.getStart().toGregorianCalendar().getTime(),
                 stationEventType.getStation(), personDAO.findByName(stationEventType.getOperator()));
+    }
+
+    public void setTwoDBarcodedTubeDao(TwoDBarcodedTubeDAO twoDBarcodedTubeDao) {
+        this.twoDBarcodedTubeDao = twoDBarcodedTubeDao;
+    }
+
+    public void setStaticPlateDAO(StaticPlateDAO staticPlateDAO) {
+        this.staticPlateDAO = staticPlateDAO;
+    }
+
+    public void setPersonDAO(PersonDAO personDAO) {
+        this.personDAO = personDAO;
     }
 }

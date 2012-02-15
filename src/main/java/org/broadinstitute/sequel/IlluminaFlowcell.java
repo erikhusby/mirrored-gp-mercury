@@ -3,6 +3,7 @@ package org.broadinstitute.sequel;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 
 public class IlluminaFlowcell extends AbstractRunCartridge implements UserRemarkable {
 
@@ -79,7 +80,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements UserRemark
     }
 
     @Override
-    public Collection<SampleInstance> getSampleInstances() {
+    public Set<SampleInstance> getSampleInstances() {
         throw new RuntimeException("I haven't been written yet.");
     }
 

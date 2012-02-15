@@ -18,6 +18,8 @@ public class SampleInstanceImpl implements SampleInstance {
     
     private Collection<ReadBucket> readBuckets = new HashSet<ReadBucket>();
     
+    private MolecularState molecularState = new MolecularStateImpl();
+    
     public SampleInstanceImpl(StartingSample sample,
                               GSP_CONTROL_ROLE controlRole,
                               Project project,
@@ -26,6 +28,7 @@ public class SampleInstanceImpl implements SampleInstance {
         this.sample = sample;
         this.controlRole = controlRole;
         this.project = project;
+        this.molecularState = molecularState;
     }
     
     @Override
@@ -45,7 +48,7 @@ public class SampleInstanceImpl implements SampleInstance {
 
     @Override
     public MolecularState getMolecularState() {
-        throw new RuntimeException("I haven't been written yet.");
+        return molecularState;
     }
 
     @Override
