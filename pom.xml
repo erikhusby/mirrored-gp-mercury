@@ -7,6 +7,36 @@
     <groupId>SequeL</groupId>
     <artifactId>SequeL</artifactId>
     <version>1.0</version>
+    <inceptionYear>2012</inceptionYear>
+
+    <name>SequeL</name>
+    <description>The next generation Squid.</description>
+
+    <url>${site.url}/${project.artifactId}</url>
+
+    <issueManagement>
+        <system>Jira</system>
+        <url>${jira.url}</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>Bamboo</system>
+        <url>${bamboo.url}</url>
+    </ciManagement>
+
+    <scm>
+        <developerConnection>scm:git:${git.url}/${project.artifactId}</developerConnection>
+        <url>${git.browseUrl}</url>
+    </scm>
+
+    <distributionManagement>
+        <site>
+            <id>${artifactId}.website</id>
+            <name>${project.name} Website</name>
+            <url>file://${site.path}/${project.artifactId}</url>
+        </site>
+    </distributionManagement>
+
     <repositories>
         <repository>
             <id>java.net2</id>
@@ -31,6 +61,96 @@
         </repository>
     </repositories>
 
+    <properties>
+        <!-- Clover -->
+        <clover.plugin.version>3.1.2</clover.plugin.version>
+        <clover.version>3.1.2</clover.version>
+
+        <!-- For site reports -->
+        <jira.url>http://prodinfojira.broadinstitute.org:8080/jira</jira.url>
+        <bamboo.url>http://prodinfobuild.broadinstitute.org:8085</bamboo.url>
+
+        <git.url>gitolite@git:sequel</git.url>
+        <git.browseUrl>git:gitolite@git:sequel</git.browseUrl>
+
+        <site.url>http://prodinfosvn.broadinstitute.org:8000/m2-projects</site.url>
+        <site.path>/prodinfo/releng/m2-projects</site.path>
+
+
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>Clover.optimize</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.atlassian.maven.plugins</groupId>
+                        <artifactId>maven-clover2-plugin</artifactId>
+                        <configuration>
+                            <fullRunEvery>60</fullRunEvery>
+                            <snapshot>${user.home}/.clover/${groupId}-${artifactId}/clover.snapshot</snapshot>
+                            <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
+                            <includesAllSourceRoots>true</includesAllSourceRoots>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>clover</id>
+                                <goals>
+                                    <goal>setup</goal>
+                                    <goal>optimize</goal>
+                                    <goal>snapshot</goal>
+                                    <goal>save-history</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>Clover.site</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.atlassian.maven.plugins</groupId>
+                        <artifactId>maven-clover2-plugin</artifactId>
+                        <configuration>
+                            <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>site</id>
+                                <phase>pre-site</phase>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                    <goal>save-history</goal>
+                                    <goal>reset</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+            <reporting>
+                <plugins>
+                    <plugin>
+                        <groupId>com.atlassian.maven.plugins</groupId>
+                        <artifactId>maven-clover2-plugin</artifactId>
+                        <version>${clover.plugin.version}</version>
+                        <configuration>
+                            <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
+                            <generateHistorical>true</generateHistorical>
+                            <generateHtml>true</generateHtml>
+                            <generateXml>true</generateXml>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </reporting>
+        </profile>
+
+    </profiles>
     <dependencies>
         <!-- glassfish-embedded-all must be before javaee-api -->
         <dependency>
@@ -134,14 +254,79 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.atlassian.maven.plugins</groupId>
+                    <artifactId>maven-clover2-plugin</artifactId>
+                    <version>${clover.plugin.version}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.3.2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.12</version>
+                </plugin>
+
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>com.atlassian.maven.plugins</groupId>
+                <artifactId>maven-clover2-plugin</artifactId>
+                <configuration>
+                    <targetPercentage>15%</targetPercentage>
+                    <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>instrument</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.12</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>report-only</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
+
 </project>
