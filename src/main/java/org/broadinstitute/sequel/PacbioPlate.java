@@ -3,6 +3,7 @@ package org.broadinstitute.sequel;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * A plate loaded into the pacbio instrument
@@ -10,6 +11,10 @@ import java.util.Date;
  * cartridge.  and it's probably priceable.
  */
 public class PacbioPlate extends StaticPlate implements RunCartridge, Priceable {
+
+    public PacbioPlate(String label) {
+        super(label);
+    }
 
     @Override
     public String getPriceListItemName() {
@@ -32,7 +37,7 @@ public class PacbioPlate extends StaticPlate implements RunCartridge, Priceable 
     }
 
     @Override
-    public Collection<SampleSheet> getSampleSheets() {
+    public Set<SampleInstance> getSampleInstances() {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -60,4 +65,6 @@ public class PacbioPlate extends StaticPlate implements RunCartridge, Priceable 
     public String getCartridgeBarcode() {
         throw new RuntimeException("I haven't been written yet.");
     }
+
+
 }

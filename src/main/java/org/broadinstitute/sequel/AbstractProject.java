@@ -13,9 +13,11 @@ public abstract class AbstractProject implements  Project, UserRemarkable {
 
     private final Collection<BSPPlatingRequest> platingRequests = new HashSet<BSPPlatingRequest>();
     
-    private final Map<WorkflowDescription,Collection<LabTangible>> startingStuffByWorkflow =  new HashMap<WorkflowDescription,Collection<LabTangible>>();
+    private final Map<WorkflowDescription,Collection<LabVessel>> startingStuffByWorkflow =  new HashMap<WorkflowDescription,Collection<LabVessel>>();
     
     private final Collection<LabWorkQueue> availableWorkQueues = new HashSet<LabWorkQueue>();
+    
+    private List<LabEventName> checkpointableEvents = new ArrayList<LabEventName>();
 
     @Override
     public JiraTicket getJiraTicket() {
@@ -52,14 +54,14 @@ public abstract class AbstractProject implements  Project, UserRemarkable {
     }
 
     @Override
-    public Collection<LabTangible> getLabTangibles(WorkflowDescription workflowDescription) {
+    public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription) {
         return startingStuffByWorkflow.get(workflowDescription);
     }
 
     @Override
-    public Collection<LabTangible> getAllLabTangibles() {
-        Collection<LabTangible> allTangibles = new HashSet<LabTangible>();
-        for (Map.Entry<WorkflowDescription, Collection<LabTangible>> entry : startingStuffByWorkflow.entrySet()) {
+    public Collection<LabVessel> getAllVessels() {
+        Collection<LabVessel> allTangibles = new HashSet<LabVessel>();
+        for (Map.Entry<WorkflowDescription, Collection<LabVessel>> entry : startingStuffByWorkflow.entrySet()) {
             allTangibles.addAll(entry.getValue());
         }
         return allTangibles;
@@ -106,7 +108,7 @@ public abstract class AbstractProject implements  Project, UserRemarkable {
     }
 
     @Override
-    public SequencingResult getSequencingResults(Goop aliquot) {
+    public SequencingResult getSequencingResults(StartingSample aliquot) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -192,7 +194,7 @@ public abstract class AbstractProject implements  Project, UserRemarkable {
 
     @Override
     public Collection<LabEventName> getCheckpointableEvents() {
-        throw new RuntimeException("I haven't been written yet.");
+        return checkpointableEvents;
     }
 
     @Override
@@ -214,11 +216,11 @@ public abstract class AbstractProject implements  Project, UserRemarkable {
     }
 
     @Override
-    public void addLabTangible(LabTangible labTangible, WorkflowDescription workflowDescription) {
+    public void addVessel(LabVessel vessel, WorkflowDescription workflowDescription) {
         if (!startingStuffByWorkflow.containsKey(workflowDescription)) {
-            startingStuffByWorkflow.put(workflowDescription,new HashSet<LabTangible>());
+            startingStuffByWorkflow.put(workflowDescription,new HashSet<LabVessel>());
         }
-        startingStuffByWorkflow.get(workflowDescription).add(labTangible);
+        startingStuffByWorkflow.get(workflowDescription).add(vessel);
         /**
          * We don't go into the {@link SampleSheet}s and set the
          * Project at this point because we aren't reserving

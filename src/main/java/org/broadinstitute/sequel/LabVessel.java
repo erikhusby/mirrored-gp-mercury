@@ -1,17 +1,76 @@
 package org.broadinstitute.sequel;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  *
  */
-public interface LabVessel extends GoopHolder, LabTangible  {
+public interface LabVessel  {
 
     public enum CONTAINER_TYPE {
         STATIC_PLATE,
         TUBE,
         RACK_OF_TUBES
     }
+
+    // todo notion of a "sample group", not a cohorot,
+    // but rather an ID for the pool of samples within
+    // a container.  useful for finding "related"
+    // libraries, related by the group of samples
+
+    /**
+     * Get the name of the thing.  This
+     * isn't just getName() because that would
+     * probably clash with something else.
+     * @return
+     */
+    public String getLabCentricName();
+
+    /**
+     * May return null if no sample sheet
+     * has been registered.  Consider
+     * a "new" destination in a transfer event.
+     * When first encountered, the plate
+     * may have no sample sheet, and it's up
+     * to the message processor to fill
+     * in the sample sheet.
+     * @return
+     */
+    public Collection<SampleSheet> getSampleSheets();
+
+    /**
+     * We want GSP to let you walk in with a tube, declare
+     * the contents of the tube, and then inject the tube
+     * into the middle of the lab process, into
+     * whatever LabWorkQueue you need.
+     *
+     * This method is the key to this feature.  We do not
+     * care <b>how</b> the sample metadata was built
+     * for a container, but we care deeply that
+     * we have consistent metadata.  Whether it was
+     * built half at 320, half at the collaborator,
+     * all at 320, all in Mozambique, it does not
+     * matter.  Just declare the sample metadata
+     * in one place.
+     *
+     * @param sampleSheet
+     */
+    public void addSampleSheet(SampleSheet sampleSheet);
+
+    public void addStateChange(StateChange stateChange);
+
+    /**
+     * Probably a transient that computes the {@link SampleInstance} data
+     * on-the-fly by walking the history and applying the
+     * {@link StateChange}s applied during lab work.
+     * @return
+     */
+    public Set<SampleInstance> getSampleInstances();
+
+    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet);
+
+    public Collection<StateChange> getStateChanges();
 
     /**
      * Well A01, Lane 3, Region 6 all might
@@ -46,7 +105,7 @@ public interface LabVessel extends GoopHolder, LabTangible  {
      * the rack.
      * @return
      */
-    public Collection<LabVessel> getContainedVessels();
+    public Collection<? extends LabVessel> getContainedVessels();
 
     public void addContainedVessel(LabVessel child);
 
@@ -159,5 +218,54 @@ public interface LabVessel extends GoopHolder, LabTangible  {
 
     public boolean isProgeny(LabVessel ancestor);
 
+    /**
+     * Returns all projects.  Convenience method vs.
+     * iterating over {@link #getSampleSheets()} and
+     * calling {@link SampleInstance#getProject()}
+     * @return
+     */
+    public Collection<Project> getAllProjects();
+
+
+    /**
+     * PM Dashboard will want to show the most recent
+     * event performed on this aliquot.  Implementations
+     * traipse through lims history to find the most
+     * recent event.
+     *
+     * For informational use only.  Can be volatile.
+     * @return
+     */
+    public StatusNote getLatestNote();
+
+    /**
+     * Reporting will want to look at aliquot-level
+     * notes, not traipse through our {@link LabEvent}
+     * history.  So every time we do a {@link LabEvent}
+     * or have key things happen like {@link AliquotReceiver receiving an aliquot},
+     * recording quants, etc. our code will want to post
+     * a semi-structured note here for reporting.
+     * @param statusNote
+     */
+    /**
+     * Adds a persistent note.  These notes will be used for reporting
+     * things like dwell time and reporting status back to other
+     * systems like PM Bridge, POEMs, and reporting.  Instead of having
+     * these other systems query our operational event information,
+     * we can summarize the events in a more flexible way in
+     * a sample centric manner.
+     * @param statusNote
+     */
+    public void logNote(StatusNote statusNote);
+
+    public Collection<StatusNote> getAllStatusNotes();
+
+    public Float getVolume();
+
+    public Float getConcentration();
+
+    public void applyReagent(Reagent r);
+
+    public Collection<Reagent> getAppliedReagents();
 
 }

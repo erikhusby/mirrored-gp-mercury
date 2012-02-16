@@ -3,6 +3,8 @@ package org.broadinstitute.sequel;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Basic source/destination lab vessel
@@ -18,20 +20,27 @@ import java.util.Date;
  * of src/dest mapping.
  */
 public abstract class AbstractLabEvent implements LabEvent {
+    private String eventLocation;
+    private Person eventOperator;
+    private Date eventDate;
+    private Set<LabVessel> sourceLabVessels = new HashSet<LabVessel>();
+    private Set<LabVessel> targetLabVessels = new HashSet<LabVessel>();
+    private Set<Reagent> reagents = new HashSet<Reagent>();
 
     @Override
     public Collection<LabVessel> getTargetLabVessels() {
-        throw new RuntimeException("I haven't been written yet.");
+        return targetLabVessels;
     }
 
     @Override
     public Collection<LabVessel> getSourceLabVessels() {
-        throw new RuntimeException("I haven't been written yet.");
+        return sourceLabVessels;
     }
 
     @Override
     public Collection<LabVessel> getSourcesForTarget(LabVessel targetVessel) {
-        throw new RuntimeException("I haven't been written yet.");
+        // todo jmt need some kind of mapping for cherry picks
+        return sourceLabVessels;
     }
 
     @Override
@@ -41,41 +50,70 @@ public abstract class AbstractLabEvent implements LabEvent {
 
     @Override
     public Collection<LabVessel> getAllLabVessels() {
-        throw new RuntimeException("I haven't been written yet.");
+        Set<LabVessel> allLabVessels = new HashSet<LabVessel>();
+        allLabVessels.addAll(sourceLabVessels);
+        allLabVessels.addAll(targetLabVessels);
+        return allLabVessels;
     }
 
     @Override
     public String getEventLocation() {
-        throw new RuntimeException("I haven't been written yet.");
+        return eventLocation;
     }
 
     @Override
     public Person getEventOperator() {
-        throw new RuntimeException("I haven't been written yet.");
+        return eventOperator;
     }
 
     @Override
     public Date getEventDate() {
-        throw new RuntimeException("I haven't been written yet.");
+        return eventDate;
     }
 
     @Override
     public Collection<Reagent> getReagents() {
-        throw new RuntimeException("I haven't been written yet.");
+        return reagents;
     }
 
     @Override
     public void addTargetLabVessel(LabVessel targetVessel) {
-        throw new RuntimeException("I haven't been written yet.");
+        if(sourceLabVessels.isEmpty()) {
+            // todo jmt method for adding source / target pairs
+            throw new RuntimeException("Add source lab vessels first");
+        }
+        if(targetVessel.getTransfersTo().isEmpty()) {
+            for (LabVessel sourceLabVessel : sourceLabVessels) {
+                if (((AbstractLabVessel) sourceLabVessel).getSampleSheetReferences().isEmpty()) {
+                    ((AbstractLabVessel)targetVessel).getSampleSheetReferences().add(sourceLabVessel);
+                } else {
+                    ((AbstractLabVessel)targetVessel).getSampleSheetReferences().addAll(
+                            ((AbstractLabVessel) sourceLabVessel).getSampleSheetReferences());
+                }
+            }
+        }
+        targetLabVessels.add(targetVessel);
     }
 
     @Override
     public void addSourceLabVessel(LabVessel sourceVessel) {
-        throw new RuntimeException("I haven't been written yet.");
+        sourceLabVessels.add(sourceVessel);
     }
 
     @Override
     public void addReagent(Reagent reagent) {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public void setEventLocation(String eventLocation) {
+        this.eventLocation = eventLocation;
+    }
+
+    public void setEventOperator(Person eventOperator) {
+        this.eventOperator = eventOperator;
+    }
+
+    public void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
     }
 }

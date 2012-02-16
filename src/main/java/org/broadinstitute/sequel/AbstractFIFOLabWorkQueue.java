@@ -14,27 +14,27 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
     private Map<T,LinkedList<LabTangible>> items = new HashMap<T, LinkedList<LabTangible>>();
 
     @Override
-    public Collection<LabTangible> suggestNextBatch(int batchSize,LabWorkQueueParameters bucket) {
-        throw new RuntimeException("I haven't been written yet.");
+    public Collection<LabVessel> suggestNextBatch(int batchSize, T bucket) {
+        throw new RuntimeException("not implemented");
     }
 
     @Override
-    public LabWorkQueueResponse remove(final LabTangible labTangible,T bucket) {
-        final Collection<T> containingBuckets = getContainingBuckets(labTangible);
+    public LabWorkQueueResponse remove(final LabVessel vessel,T bucket) {
+        final Collection<T> containingBuckets = getContainingBuckets(vessel);
         if (containingBuckets.isEmpty()) {
-            throw new RuntimeException("Cannot find " + labTangible.getLabCentricName() + " in " + getQueueName());
+            throw new RuntimeException("Cannot find " + vessel.getLabCentricName() + " in " + getQueueName());
         }
         else {
             for (T bucketKey: containingBuckets) {
-                if (!items.get(bucketKey).remove(labTangible)) {
-                    throw new RuntimeException("Failed to remove " + labTangible.getLabCentricName() + " from " + getQueueName());
+                if (!items.get(bucketKey).remove(vessel)) {
+                    throw new RuntimeException("Failed to remove " + vessel.getLabCentricName() + " from " + getQueueName());
                 }
             }
         }
         return new LabWorkQueueResponse() {
             @Override
             public String getText() {
-                return "Removed " + labTangible.getLabCentricName() + " from " + containingBuckets.size() + " buckets in " + getQueueName();
+                return "Removed " + vessel.getLabCentricName() + " from " + containingBuckets.size() + " buckets in " + getQueueName();
             }
         };
     }
@@ -42,13 +42,13 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
     /**
      * Returns keys for the buckets in which this
      * labTangible resides.
-     * @param tangible
-     * @return
+     *
+     * @param vessel@return
      */
-    public Collection<T> getContainingBuckets(LabTangible tangible) {
+    public Collection<T> getContainingBuckets(LabVessel vessel) {
         Set<T> bucketsThatContainIt = new HashSet<T>();
         for (Map.Entry<T,LinkedList<LabTangible>> entry: items.entrySet()) {
-            if (entry.getValue().contains(tangible)) {
+            if (entry.getValue().contains(vessel)) {
                 bucketsThatContainIt.add(entry.getKey());
             }
         }
@@ -56,12 +56,12 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
     }
 
     @Override
-    public void moveToTop(LabTangible labTangible,T bucket) {
+    public void moveToTop(LabVessel vessel,T bucket) {
 
     }
 
     @Override
-    public void startWork(LabTangible labTangible, T bucket) {
+    public void startWork(LabVessel vessel, T bucket) {
         // I'm commenting this part out because I think the lab is going
         // to work FIFO internally.  How does the tech know what
         // they should work on?  Go look in the freezer.  Whatever's there
@@ -78,25 +78,27 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
             throw new RuntimeException("Can't start work on " + labTangible.getLabCentricName() + " in the " + bucket.toText() + " bucket in " + getQueueName());
         }
         */
-        SampleSheetAlertUtil.doAlert("Starting " + getQueueName() + " work for these samples.",labTangible.getSampleSheets(),false);
-        remove(labTangible,bucket);
+        SampleSheetAlertUtil.doAlert("Starting " + getQueueName() + " work for these samples.", vessel,false);
+        remove(vessel,bucket);
     }
 
 
 
     @Override
-    public LabWorkQueueResponse add(LabTangible labTangible, T parameters) {
+    public LabWorkQueueResponse add(LabVessel vessel, T parameters) {
 
-        for (SampleSheet sampleSheet : labTangible.getSampleSheets()) {
-            for (SampleInstance sampleInstance: sampleSheet.getSamples()) {
-                for (MolecularStateRange molStateRange: getMolecularStateRequirements()) {
-                    if (!molStateRange.isInRange(sampleInstance.getMolecularState())) {
-                        throw new RuntimeException("Can't add " + labTangible.getLabCentricName() + " into " + getQueueName() + " because sample " + sampleInstance.getStartingSample().getSampleName() + " is in an invalid molecular state.");
-                    }
+        for (StateChange stateChange : vessel.getStateChanges()) {
+
+        }
+
+        for (SampleInstance sampleInstance: vessel.getSampleInstances()) {
+            for (MolecularStateRange molStateRange: getMolecularStateRequirements()) {
+                if (!molStateRange.isInRange(sampleInstance.getMolecularState())) {
+                    throw new RuntimeException("Can't add " + vessel.getLabCentricName() + " into " + getQueueName() + " because sample " + sampleInstance.getStartingSample().getSampleName() + " is in an invalid molecular state.");
                 }
-                // check that the molecular state of the sample
-                // matches what this queue can handle.
             }
+            // check that the molecular state of the sample
+            // matches what this queue can handle.
         }
 
 
@@ -109,22 +111,22 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
     }
 
     @Override
-    public Collection<LabTangible> peek(T parameters) {
+    public Collection<LabVessel> peek(T parameters) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override
-    public Collection<LabTangible> peekAll() {
+    public Collection<LabVessel> peekAll() {
         throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override
-    public void markComplete(LabTangible labTangible,T bucket) {
-        SampleSheetAlertUtil.doAlert("Completed " + getQueueName() + " work for these samples.",labTangible.getSampleSheets(),false);
+    public void markComplete(LabVessel vessel,T bucket) {
+        SampleSheetAlertUtil.doAlert("Completed " + getQueueName() + " work for these samples.", vessel,false);
     }
 
     @Override
-    public void printWorkSheet(Collection<LabTangible> labTangibles, T bucket) {
+    public void printWorkSheet(Collection<LabVessel> vessel, T bucket) {
         throw new RuntimeException("I haven't been written yet.");
     }
 }

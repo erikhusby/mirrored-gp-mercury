@@ -63,9 +63,9 @@ public interface Project {
      */
     public Collection<GroupOfTangibles> getTangibleGroups();
 
-    public Collection<LabTangible> getLabTangibles(WorkflowDescription workflowDescription);
+    public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription);
 
-    public Collection<LabTangible> getAllLabTangibles();
+    public Collection<LabVessel> getAllVessels();
 
     /**
      * Stateful side effect: when you add a {@link LabTangible}
@@ -76,12 +76,11 @@ public interface Project {
      * find Project1 listed as an active project
      * when you call {@link Goop#getActiveProjects()},
      * as long as Project1 is considered "active"
-     * @param labTangible
+     * @param vessel
      * @param workflowDescription the description of the workflow
      *                            that labTangible is expected
-     *                            to undergo
      */
-    public void addLabTangible(LabTangible labTangible,WorkflowDescription workflowDescription);
+    public void addVessel(LabVessel vessel, WorkflowDescription workflowDescription);
 
     public Collection<Person> getProjectOwners();
 
@@ -167,7 +166,7 @@ public interface Project {
      */
     public boolean ignoreLabThresholds();
 
-    public SequencingResult getSequencingResults(Goop aliquot);
+    public SequencingResult getSequencingResults(StartingSample aliquot);
 
     public CapacityDimension getDefaultCapacityDimension();
 

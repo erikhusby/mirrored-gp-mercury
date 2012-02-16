@@ -15,8 +15,8 @@ import java.util.HashSet;
  * Unlike other queues, which we treat as
  * static singletons, the the BSP queue
  * is used to build a single plate at
- * a time.  So {@link #add(LabTangible, AliquotParameters) add} and
- * {@link #remove(LabTangible, AliquotParameters) remove} are
+ * a time.  So {@link LabWorkQueue#add(LabVessel, T) add} and
+ * {@link LabWorkQueue#remove(LabVessel, T) remove} are
  * used to build a list which is then sent to
  * BSP when we call some method.
  */
@@ -37,7 +37,7 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
      * that are specific to GSP are used by PMs (to add
      * stuff) and by GSP lab staff (to process samples),
      * but the BSP queue is only used in GSP to
-     * add stuff.  So when you {@link #add(LabTangible, AliquotParameters) add stuff},
+     * add stuff.  So when you {@link LabWorkQueue#add(LabVessel, T) add stuff},
      * you're only adding it to the session.  
      * 
      * In other words, an instance of this class is
@@ -62,14 +62,14 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
     }
 
     @Override
-    public LabWorkQueueResponse add(LabTangible labTangible, AliquotParameters aliquotParameters) {
-        if (labTangible == null) {
+    public LabWorkQueueResponse add(LabVessel vessel, AliquotParameters aliquotParameters) {
+        if (vessel == null) {
              throw new IllegalArgumentException("labTangible must be non-null in BSPAliquotWorkQueue.add");
         }
         if (aliquotParameters == null) {
              throw new IllegalArgumentException("bucket must be non-null in BSPAliquotWorkQueue.add");
         }
-        aliquotRequests.add(new BSPPlatingRequest(labTangible.getLabCentricName(),aliquotParameters));
+        aliquotRequests.add(new BSPPlatingRequest(vessel.getLabCentricName(),aliquotParameters));
 
         // todo some service call to BSP to say "does this look right?"
         // and then respond accordingly
@@ -88,7 +88,7 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
     }
     
     @Override
-    public LabWorkQueueResponse remove(LabTangible labTangible, AliquotParameters bucket) {
+    public LabWorkQueueResponse remove(LabVessel vessel, AliquotParameters bucket) {
         throw new RuntimeException("I haven't been written yet.");
     }
 

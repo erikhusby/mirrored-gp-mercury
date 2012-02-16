@@ -24,7 +24,7 @@ public interface LabMaterialSearch {
      * @param labMetricRangeRestrictions
      * @return
      */
-    public Collection<LabVessel> doSearch(Iterable<Goop> aliquots,
+    public Collection<LabVessel> doSearch(Iterable<StartingSample> startingSamples,
                                           MolecularStateRange molecularStateRange,
                                           Integer samplePlexity,
                                           LabVessel.CONTAINER_TYPE containerType,
@@ -49,7 +49,7 @@ public interface LabMaterialSearch {
      * @param labMetricRangeRestrictions
      * @return
      */
-    public Collection<LabVessel> doSearch(Iterable<Goop> aliquots,
+    public Collection<LabVessel> doSearch(Iterable<StartingSample> startingSamples,
                                           LabWorkQueueName queueName,
                                           Integer samplePlexity,
                                           Iterable<LabMetricRange> labMetricRangeRestrictions);

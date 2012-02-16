@@ -1,5 +1,8 @@
 package org.broadinstitute.sequel;
 
+import javax.persistence.Transient;
+import java.util.Collection;
+
 /**
  * What makes {@link StartingSample} different
  * from {@link Goop} is taht {@link StartingSample }
@@ -28,5 +31,18 @@ public interface StartingSample {
     public String getOrganism();
     
     public void logNote(StatusNote note);
+
+    public MolecularState getRootMolecularState();
+
+    public Project getRootProject();
+    
+    public void setRootProject(Project rootProject);
+
+    public Collection<ReadBucket> getRootReadBuckets();
+
+    public SampleInstance.GSP_CONTROL_ROLE getRootControlRole();
+
+    @Transient
+    public SampleInstanceImpl createSampleInstance();
     
 }

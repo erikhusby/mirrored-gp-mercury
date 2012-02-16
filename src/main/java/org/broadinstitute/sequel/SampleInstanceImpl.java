@@ -4,6 +4,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 public class SampleInstanceImpl implements SampleInstance {
 
@@ -15,6 +16,9 @@ public class SampleInstanceImpl implements SampleInstance {
     
     private Project project;
     
+    private Collection<ReadBucket> readBuckets = new HashSet<ReadBucket>();
+    
+    private MolecularState molecularState = new MolecularStateImpl();
     
     public SampleInstanceImpl(StartingSample sample,
                               GSP_CONTROL_ROLE controlRole,
@@ -24,6 +28,7 @@ public class SampleInstanceImpl implements SampleInstance {
         this.sample = sample;
         this.controlRole = controlRole;
         this.project = project;
+        this.molecularState = molecularState;
     }
     
     @Override
@@ -42,27 +47,33 @@ public class SampleInstanceImpl implements SampleInstance {
     }
 
     @Override
-    public void setProject(Project p) {
-        this.project = p;
-    }
-
-    @Override
     public MolecularState getMolecularState() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public WorkflowDescription getWorkflowDescription() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public boolean isDevelopment() {
-        throw new RuntimeException("I haven't been written yet.");
+        return molecularState;
     }
 
     @Override
     public Collection<ReadBucket> getReadBuckets() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+    
+    public void applyChange(StateChange change) {
+        if (change != null) {
+            if (change.getControlRole() != null) {
+                controlRole = change.getControlRole();
+            }
+            if (change.getProjectOverride() != null) {
+                project = change.getProjectOverride();
+            }
+            if (change.getReadBucketOverrides() != null) {
+                readBuckets.clear();
+                readBuckets.addAll(change.getReadBucketOverrides());
+            }
+            if (change.getMolecularState() != null) {
+                if (change.getMolecularState().getMolecularEnvelope() != null) {
+                    MolecularEnvelope envelopeDelta = change.getMolecularState().getMolecularEnvelope();
+                    getMolecularState().getMolecularEnvelope().surroundWith(envelopeDelta);
+                }
+            }
+        }
     }
 }

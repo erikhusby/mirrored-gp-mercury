@@ -6,8 +6,7 @@ public class StalkEverything extends AbstractStalker {
 
     @Override
     public void stalk(LabEvent event) {
-        SampleSheetAlertUtil.doAlert(event.getEventOperator().getLogin() + " completed " + event.getEventName() + " at " + event.getEventDate(),event.getAllSampleSheets(),true);
-
+        throw new RuntimeException("Method not yet implemented.");
     }
 
     @Override

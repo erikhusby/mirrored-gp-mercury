@@ -74,10 +74,11 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * always say "forget that, I'm going to work on these
      * samples" and ignore prioritization, which is why
      * startWork() just takes any pile of things.
+     *
      * @param batchSize
      * @return
      */
-    public Collection<LabTangible> suggestNextBatch(int batchSize,T bucket);
+    public Collection<LabVessel> suggestNextBatch(int batchSize, T bucket);
 
     /**
      * Returns the contents which are waiting for
@@ -87,19 +88,19 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * demand.
      * @return
      */
-    public Collection<LabTangible> peek(T bucket);
+    public Collection<LabVessel> peek(T bucket);
 
 
-    public Collection<LabTangible> peekAll();
+    public Collection<LabVessel> peekAll();
 
     /**
      * Sometimes you just gotta put something
      * at the top of the queue, in violation
      * of whatever rules you have.  Here's
      * how you do that.
-     * @param labTangible
+     * @param vessel
      */
-    public void moveToTop(LabTangible labTangible,T bucket);
+    public void moveToTop(LabVessel vessel,T bucket);
 
     /**
      * When the lab actually starts work, they
@@ -108,9 +109,9 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * preferred priority.  As long as they
      * start work on something in the queue, they
      * should be okay.
-     * @param labTangible
+     * @param vessel
      */
-    public void startWork(LabTangible labTangible, T bucket);
+    public void startWork(LabVessel vessel, T bucket);
 
     /**
      * This should be considered optional.  Most of the time
@@ -140,9 +141,9 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * requires someone mark their input tubes as complete,
      * 2 hours after they've thrown out the single-use
      * starting material, you're probably screwed.
-     * @param labTangible
+     * @param vessel
      */
-    public void markComplete(LabTangible labTangible, T bucket);
+    public void markComplete(LabVessel vessel, T bucket);
 
     /**
      * Prints a work sheet for the operator.  Could be a zebra printer,
@@ -153,9 +154,9 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * One implementation could be to make new jira ticket for
      * this step, or send a message to some other separate system
      * that lab techs use to track their work.
-     * @param labTangibles
+     * @param vessel
      */
-    public void printWorkSheet(Collection<LabTangible> labTangibles,T bucket);
+    public void printWorkSheet(Collection<LabVessel> vessel,T bucket);
 
 
     /**
@@ -167,18 +168,17 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * library as well as a 101bp lane for the very
      * same library.
      *
-     * @param tangible
-     * @return
+     *
+     * @param vessel@return
      */
-    public Collection<T> getContainingBuckets(LabTangible tangible);
+    public Collection<T> getContainingBuckets(LabVessel vessel);
 
     /**
      * How many times has the given tangible
      * been placed in this work queue?
-     * @param tangible
-     * @return
+     *
+     * @param vessel@return
      */
-    public int getNumOrbits(LabTangible tangible);
-    
-    public int getNumOrbits(Goop sam);
+    public int getNumOrbits(LabVessel vessel);
+
 }

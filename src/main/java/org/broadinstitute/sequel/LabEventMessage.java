@@ -5,5 +5,4 @@ package org.broadinstitute.sequel;
  * automation instruments.
  */
 public interface LabEventMessage {
-
 }

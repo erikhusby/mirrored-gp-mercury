@@ -168,8 +168,6 @@ public interface SampleInstance  {
      * @return
      */
     public Project getProject();
-    
-    public void setProject(Project p);
 
     /**
      * What is the molecular state  of this
@@ -200,13 +198,7 @@ public interface SampleInstance  {
      * there, or it stores it internal to itself.
      * @return
      */
-    public WorkflowDescription getWorkflowDescription();
-
-    /**
-     * Is this sample, in this container, earmarked
-     * for use in development?
-     */
-    public boolean isDevelopment();
+    //public WorkflowDescription getWorkflowDescription();
 
     public Collection<ReadBucket> getReadBuckets();
 

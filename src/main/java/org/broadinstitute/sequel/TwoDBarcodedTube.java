@@ -5,22 +5,36 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-public class TwoDBarcodedTube implements LabVessel {
+public class TwoDBarcodedTube extends AbstractLabVessel {
 
     private static Log gLog = LogFactory.getLog(TwoDBarcodedTube.class);
     
-    private Goop goop;
-    
     private String twoDBarcode;
     
-    public TwoDBarcodedTube(Goop goop,String twoDBarcode) {
-        if (goop == null) {
-             throw new IllegalArgumentException("goop must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
+    private Collection<StatusNote> notes = new HashSet<StatusNote>();
+    
+    public TwoDBarcodedTube(String twoDBarcode) {
+        super(twoDBarcode);
+        if (twoDBarcode == null) {
+            throw new IllegalArgumentException("twoDBarcode must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
         }
-        this.goop = goop;
         this.twoDBarcode = twoDBarcode;
+    }
+
+    public TwoDBarcodedTube(String twoDBarcode,SampleSheet sheet) {
+        super(twoDBarcode);
+        if (twoDBarcode == null) {
+             throw new IllegalArgumentException("twoDBarcode must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
+        }
+        if (sheet == null) {
+             throw new IllegalArgumentException("sheet must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
+        }
+        this.twoDBarcode = twoDBarcode;
+        getSampleSheets().add(sheet);
+        sheet.addToVessel(this);
     }
 
 
@@ -105,27 +119,79 @@ public class TwoDBarcodedTube implements LabVessel {
     }
 
     @Override
-    public Goop getGoop() {
-        return goop;
-    }
-
-    @Override
-    public void setGoop(Goop goop) {
-        this.goop = goop;
-    }
-
-    @Override
     public String getLabCentricName() {
         return twoDBarcode;
     }
 
     @Override
-    public Collection<SampleSheet> getSampleSheets() {
-        return getGoop().getSampleSheets();
+    public Collection<StateChange> getStateChanges() {
+        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override
-    public void addSampleSheet(SampleSheet sampleSheet) {
-        getGoop().addSampleSheet(sampleSheet);
+    public void addStateChange(StateChange stateChange) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
+        return sheet.getSampleInstances(this);
+    }
+
+    @Override
+    public Set<SampleInstance> getSampleInstances() {
+        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        for (SampleSheet sampleSheet : getSampleSheets()) {
+            sampleInstances.addAll(sampleSheet.getSampleInstances(this));
+        }
+        return sampleInstances;
+    }
+
+    @Override
+    public Collection<Project> getAllProjects() {
+        Collection<Project> allProjects = new HashSet<Project>();
+        for (SampleInstance sampleInstance : getSampleInstances()) {
+            if (sampleInstance.getProject() != null) {
+                allProjects.add(sampleInstance.getProject());
+            }
+        }
+        return allProjects;
+    }
+
+    @Override
+    public StatusNote getLatestNote() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void logNote(StatusNote statusNote) {
+        gLog.info(statusNote);
+        notes.add(statusNote);
+    }
+
+    @Override
+    public Collection<StatusNote> getAllStatusNotes() {
+        return notes;
+    }
+
+    @Override
+    public Float getVolume() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Float getConcentration() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void applyReagent(Reagent r) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<Reagent> getAppliedReagents() {
+        throw new RuntimeException("I haven't been written yet.");
     }
 }
