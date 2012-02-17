@@ -1,0 +1,45 @@
+includeTool << gant.tools.Execute
+
+/**
+ * Clover specificaitons.
+ */
+cloverVersion = "3.1.2"
+cloverPluginVersion = "3.1.2"
+clover2 = "com.atlassian.maven.plugins:maven-clover2-plugin:$cloverPluginVersion"
+
+/**
+ * Default parameters
+ */
+mvn_options='-Dforkmode=once --batch-mode -Dmaven.download.meter=silent -DskipAssembly -Dmaven.test.failure.ignore=true -DfailIfNoTests=false -Dmaven.test.redirectTestOutputToFile=false -Dlog4j.debug'
+
+remoteDebugOptions='-Dmaven.surefire.debug="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=5005,suspend=y -Xnoagent -Djava.compiler=NONE"'
+
+/**
+ * Site options
+ */
+siteUrl = "http://localhost:8080/site"
+sitePath = "/Users/mhusby/Applications/tomcat/webapps/site"
+license = "/prodinfolocal/BambooHome/clover.license"
+
+/**
+ * Targets
+ */
+target( CloverOptimized : 'Run Tests through the Clover optimize.') {
+
+    def options = "-PClover.optimize -Djava.awt.headless=true $mvn_options -Dmaven.clover.licenseLocation=$license -Dclover.plugin.version=$cloverPluginVersion -Dclover.version=$cloverVersion"
+    execute.shell("mvn ${options} test clover2:aggregate clover2:clover")
+}
+target( CloverReport : 'Run Tests through Clover.') {
+
+    def options = "-PClover.report -Djava.awt.headless=true $mvn_options -Dmaven.clover.licenseLocation=$license -Dclover.plugin.version=$cloverPluginVersion -Dclover.version=$cloverVersion"
+    execute.shell("mvn ${options} verify")
+}
+
+target( Site : 'Build Site after running all unit tests') {
+    def options = "-PClover.site $mvn_options -Dsite.url=$siteUrl -Dsite.path=$sitePath -Dmaven.clover.licenseLocation=$license -Dclover.plugin.version=$cloverPluginVersion -Dclover.version=$cloverVersion"
+    execute.shell("mvn ${options} clean clover2:setup test site")
+}
+
+target( SiteDeploy : 'Deploy the Site') {
+    execute.shell("mvn site:deploy")
+}

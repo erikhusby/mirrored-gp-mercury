@@ -1,0 +1,10 @@
+#bannerRight {
+    margin-right:20px;
+}
+
+#bannerLeft {
+    margin-left:20px;
+	top: 25px;
+	position: relative;
+	text-transform: capitalize;
+}
