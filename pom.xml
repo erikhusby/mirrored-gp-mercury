@@ -25,8 +25,9 @@
     </ciManagement>
 
     <scm>
-        <developerConnection>scm:git:${git.url}/${project.artifactId}</developerConnection>
-        <url>${git.browseUrl}</url>
+        <connection>scm:git:${git.url}</connection>
+        <developerConnection>scm:git:${git.url}</developerConnection>
+        <url>scm:git:${git.browseUrl}</url>
     </scm>
 
     <distributionManagement>
@@ -71,8 +72,9 @@
         <jira.url>http://prodinfojira.broadinstitute.org:8080/jira</jira.url>
         <bamboo.url>http://prodinfobuild.broadinstitute.org:8085</bamboo.url>
 
-        <git.url>gitolite@git:sequel</git.url>
-        <git.browseUrl>git:gitolite@git:sequel</git.browseUrl>
+        <!-- git clone gitolite@git.broadinstitute.org:sequel -->
+        <git.url>gitolite@git.broadinstitute.org:sequel</git.url>
+        <git.browseUrl>gitolite@git.broadinstitute.org:sequel</git.browseUrl>
 
         <site.url>http://prodinfosvn.broadinstitute.org:8000/m2-projects</site.url>
         <site.path>/prodinfo/releng/m2-projects</site.path>
