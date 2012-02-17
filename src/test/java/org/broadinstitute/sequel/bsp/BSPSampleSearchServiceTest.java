@@ -2,6 +2,8 @@ package org.broadinstitute.sequel.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.sequel.control.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

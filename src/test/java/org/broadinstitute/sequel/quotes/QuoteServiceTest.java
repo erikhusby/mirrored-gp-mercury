@@ -1,7 +1,10 @@
 package org.broadinstitute.sequel.quotes;
 
 
-import org.broadinstitute.sequel.quotes.data.Quote;
+import org.broadinstitute.sequel.control.quote.Quote;
+import org.broadinstitute.sequel.control.quote.QuoteNotFoundException;
+import org.broadinstitute.sequel.control.quote.QuoteServerException;
+import org.broadinstitute.sequel.control.quote.QuoteService;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

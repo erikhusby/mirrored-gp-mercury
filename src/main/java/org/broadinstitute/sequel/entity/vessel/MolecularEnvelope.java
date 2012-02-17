@@ -1,0 +1,102 @@
+package org.broadinstitute.sequel.entity.vessel;
+
+/**
+ * Target DNA is surrounded with various
+ * appendages (or adaptors--but in the
+ * non-DNA sense of the word) to facilitate
+ * its travel through various biological
+ * operations.
+ *
+ * It's analgous to network envelopes/datagrams and
+ * payloads.  Take
+ * a piece of target DNA and put adaptors
+ * on the 3' and 5' ends.  Then a piece
+ * of machine can do step X to it.  When
+ * that's done, attach another set
+ * of adaptors to the output of that
+ * step, and step Y can be applied.
+ *
+ * At the end of LC, you have a complicated
+ * molecule, all of which we end up sequencing,
+ * but some of which we throw away before
+ * publishing the sequence of the target of interest.
+ *
+ * Need to link to a nice diagram in confluence
+ * of how all this stuff comes together.  We
+ * end up sequence a concatention of various
+ * envelopes, and we need to know where
+ * the various daptor sequences are and
+ * where the target DNA of interest is.
+ *
+ * Equals() is very important here.  Equals() will
+ * be used to determine whether the expected molecular
+ * envelope for an event matches the molecular
+ * envelope of (typically) the source in a transfer.
+ * Take a look at {@link org.broadinstitute.sequel.entity.labevent.AdaptorLigationEvent#validateSourceMolecularState() an example
+ * use}
+ */
+public interface MolecularEnvelope {
+
+    public enum FUNCTIONAL_ROLE {
+        INDEX,ADAPTOR,SEQUENCING_PRIMER,PCR_PRIMER
+    }
+
+    /**
+     * Primer?  adaptor?  index? pcr primer?
+     * @return
+     */
+    public FUNCTIONAL_ROLE getFunctionalRole();
+
+    /**
+     * What DNA thing is on the 3' end of the molecular?
+     * Might be null.
+     * @return
+     */
+    public MolecularAppendage get3PrimeAttachment();
+
+    /**
+     * What DNA thing is on the 3' end of the molecular?
+     * Might be null.
+     * @return
+     */
+    public MolecularAppendage get5PrimeAttachment();
+
+    // todo abstract class to implement getContainedEnvelope and surroundWith()
+
+    /**
+     * Is there another envelope inside this envelope?
+     * Often there are multiple envelopes.  For
+     * example, the insert DNA (target paylod of
+     * ultimate interest) may be surrounded by sequencing
+     * primers, which are surrounded by fluidigm adaptors,
+     * which are in turn surrounded by molecular
+     * indexes, which are in turn surrounded by ion, illumina,
+     * or 454 library adaptors.
+     *
+     * When null is returned, you've reached the
+     * target DNA.
+     * @return
+     */
+    public MolecularEnvelope getContainedEnvelope();
+
+    /**
+     * Add a surrounding envelope around this envelope.
+     * If you've already added sequencing primers and
+     * are about to attach adaptors, call this method
+     * to attach your adaptors.
+     * @param containingEnvelope
+     */
+    public void surroundWith(MolecularEnvelope containingEnvelope);
+
+    /**
+     * Does the envelope contain this appendage, regardless
+     * of position?
+     * @param appendage
+     * @return
+     */
+    public boolean contains(MolecularAppendage appendage);
+
+    public boolean contains3Prime(MolecularAppendage appendage);
+
+    public boolean contains5Prime(MolecularAppendage appendage);
+}

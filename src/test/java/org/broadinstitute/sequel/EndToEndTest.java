@@ -2,7 +2,36 @@ package org.broadinstitute.sequel;
 
 
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
-import org.broadinstitute.sequel.factory.LabEventFactory;
+import org.broadinstitute.sequel.control.bsp.AliquotReceiver;
+import org.broadinstitute.sequel.control.bsp.MockBSPConnector;
+import org.broadinstitute.sequel.control.dao.person.PersonDAO;
+import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
+import org.broadinstitute.sequel.control.labevent.LabEventFactory;
+import org.broadinstitute.sequel.control.labevent.LabEventHandler;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
+import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.entity.labevent.LabEventName;
+import org.broadinstitute.sequel.entity.notice.StatusNote;
+import org.broadinstitute.sequel.entity.project.BasicProject;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.queue.AliquotParameters;
+import org.broadinstitute.sequel.entity.queue.BSPAliquotWorkQueue;
+import org.broadinstitute.sequel.entity.run.RunCartridge;
+import org.broadinstitute.sequel.entity.run.RunChamber;
+import org.broadinstitute.sequel.entity.run.SequencingRun;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
+import org.broadinstitute.sequel.entity.vessel.StaticPlate;
+import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -16,7 +45,8 @@ import java.util.Set;
 
 public class EndToEndTest  {
 
-    @Inject LabVesselDAO labVesselDAO;
+    @Inject
+    LabVesselDAO labVesselDAO;
     
     @Inject LabEventHandler handler;
 
@@ -188,10 +218,10 @@ public class EndToEndTest  {
         // FlowcellTransfer
 
         /**
-         * Todo arz: test {@link Goop#applyReagent(Reagent)} by applying
+         * Todo arz: test {@link Goop#applyReagent(org.broadinstitute.sequel.entity.reagent.Reagent)} by applying
          * a reagent transfer.  Also do a test from a container that has
          * SampleSheets with samples in it to a LabVessel that contains
-         * only {@link Reagent}, so test scenarios where we add samples
+         * only {@link org.broadinstitute.sequel.entity.reagent.Reagent}, so test scenarios where we add samples
          * into reagent containers.
          */
         /*
