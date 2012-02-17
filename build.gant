@@ -39,3 +39,7 @@ target( Site : 'Build Site after running all unit tests') {
     def options = "-PClover.site $mvn_options -Dsite.url=$siteUrl -Dsite.path=$sitePath -Dmaven.clover.licenseLocation=$license -Dclover.plugin.version=$cloverPluginVersion -Dclover.version=$cloverVersion"
     execute.shell("mvn ${options} clean clover2:setup test site")
 }
+
+target( SiteDeploy : 'Deploy the Site') {
+    execute.shell("mvn site:deploy")
+}
