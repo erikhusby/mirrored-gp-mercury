@@ -22,13 +22,10 @@ import java.util.List;
 @ApplicationScoped
 public class QuoteServiceImpl implements QuoteService {
 
-
     @Inject
     private QuoteConnectionParameters connectionParameters;
 
-
     private Client client;
-
 
     public QuoteServiceImpl(QuoteConnectionParameters params) {
         connectionParameters = params;
@@ -115,16 +112,12 @@ public class QuoteServiceImpl implements QuoteService {
      */
     @Override
     public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException {
-
         initializeClient();
-
         Quote quote;
         if(StringUtils.isEmpty(id))
         {
            return(null);
         }
-
-
         WebResource resource = client.resource(connectionParameters.getUrl() + id);
         try
         {
