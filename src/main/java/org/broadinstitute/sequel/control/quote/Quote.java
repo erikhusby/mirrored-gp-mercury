@@ -12,14 +12,6 @@ public class Quote {
     private String name;
     private QuoteFunding quoteFunding;
 
-    public Quote() {}
-
-    public Quote(String alphanumericId, String approvalStatus, String id,String name) {
-        this.alphanumericId = alphanumericId;
-        this.approvalStatus = approvalStatus;
-        this.id = id;
-    }
-
     @XmlElement(name = "QuoteFunding")
     public QuoteFunding getQuoteFunding() {
         return quoteFunding;

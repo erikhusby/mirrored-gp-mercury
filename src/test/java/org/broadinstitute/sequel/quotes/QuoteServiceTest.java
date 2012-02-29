@@ -10,8 +10,7 @@ import java.util.Set;
 
 public class QuoteServiceTest {
 
-
-    @Test(enabled = true)
+    @Test
     public void test_get_a_quote() {
 
         boolean caught = false;
@@ -25,6 +24,13 @@ public class QuoteServiceTest {
             Assert.assertEquals("Regev ChIP Sequencing 8-1-2011", quote.getName());
             Assert.assertEquals("6820110", quote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
             Assert.assertEquals("ZEBRAFISH_NIH_REGEV",quote.getQuoteFunding().getFundingLevel().getFunding().getGrantDescription());
+            Assert.assertEquals(Funding.FUNDS_RESERVATION,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
+            Assert.assertEquals("DNA3CD",quote.getAlphanumericId());
+            
+            quote = service.getQuoteFromQuoteServer("DNA3A9");
+            Assert.assertEquals("HARVARD UNIVERSITY",quote.getQuoteFunding().getFundingLevel().getFunding().getInstitute());
+            Assert.assertEquals(Funding.PURCHASE_ORDER,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
+            Assert.assertEquals("DNA3A9",quote.getAlphanumericId());
         }
         catch (QuoteNotFoundException nfx) {
             caught = true;
@@ -36,7 +42,7 @@ public class QuoteServiceTest {
 
     }
 
-    @Test(enabled = true)
+    @Test
     public void test_get_all_quotes_for_sequencing() {
 
         boolean caught = false;
@@ -52,7 +58,6 @@ public class QuoteServiceTest {
             Set<String> fundingTypes = new HashSet<String>();
             Set<String> pos = new HashSet<String>();
             for (Quote quote : quotes.getQuotes()) {
-                System.out.println(quote.getName() + "/" + quote.getAlphanumericId());
                 if (quote.getQuoteFunding() != null) {
                     if (quote.getQuoteFunding().getFundingLevel() != null) {
                         if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
