@@ -30,6 +30,10 @@ public class QuoteServiceImpl implements QuoteService {
     private Client client;
 
 
+    public QuoteServiceImpl(QuoteConnectionParameters params) {
+        connectionParameters = params;
+    }
+
     private void ensureAcceptanceOfServerCertificate(ClientConfig config) {
 
         // code pulled from http://stackoverflow.com/questions/6047996/ignore-self-signed-ssl-cert-using-jersey-client
@@ -126,9 +130,9 @@ public class QuoteServiceImpl implements QuoteService {
         {
             Quotes quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
 
-            if(quotes.getQuote() != null && quotes.getQuote().size()>0)
+            if(quotes.getQuotes() != null && quotes.getQuotes().size()>0)
             {
-                quote = quotes.getQuote().get(0);
+                quote = quotes.getQuotes().get(0);
             }
             else
             {
@@ -147,5 +151,25 @@ public class QuoteServiceImpl implements QuoteService {
         return quote;
     }
 
+    public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
+
+        initializeClient();
+        WebResource resource = client.resource(connectionParameters.getUrl());
+        Quotes quotes = null;
+        try
+        {
+           quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
+        }
+        catch(UniformInterfaceException e)
+        {
+            throw new QuoteNotFoundException("Could not find quotes for sequencing at " + connectionParameters.getUrl());
+        }
+        catch(ClientHandlerException e)
+        {
+            throw new QuoteServerException("Could not communicate with quote server", e);
+        }
+
+        return quotes;
+    }
 
 }

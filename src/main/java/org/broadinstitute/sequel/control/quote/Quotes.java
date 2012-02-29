@@ -10,11 +10,11 @@ public class Quotes {
     private List<Quote> quote = new ArrayList<Quote>();
 
     @XmlElement(name="Quote")    
-    public List<Quote> getQuote() {
+    public List<Quote> getQuotes() {
         return quote;
     }
 
-    public void setQuote(List<Quote> quote) {
+    public void setQuotes(List<Quote> quote) {
         this.quote = quote;
     }
 }
