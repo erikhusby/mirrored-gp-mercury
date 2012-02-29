@@ -151,6 +151,13 @@ public class QuoteServiceImpl implements QuoteService {
         return quote;
     }
 
+    /**
+     * Gets all quotes for the sequencing platform.
+     * This is a bit slow.
+     * @return
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     */
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
 
         initializeClient();
