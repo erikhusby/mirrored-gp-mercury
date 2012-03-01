@@ -71,4 +71,22 @@ public class Quote {
     public void setApprovalStatus(String approvalStatus) {
         this.approvalStatus = approvalStatus;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Quote quote = (Quote) o;
+
+        if (alphanumericId != null ? !alphanumericId.equals(quote.alphanumericId) : quote.alphanumericId != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return alphanumericId != null ? alphanumericId.hashCode() : 0;
+    }
 }

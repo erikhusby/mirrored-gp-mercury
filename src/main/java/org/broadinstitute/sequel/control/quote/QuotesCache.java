@@ -21,6 +21,10 @@ public class QuotesCache {
         this.quotes = quotes;
     }
     
+    public Collection<Quote> getQuotes() {
+        return this.quotes.getQuotes();
+    }
+    
     public Collection<Funding> getAllFundingSources() {
         Set<Funding> fundingSources = new HashSet<Funding>();
         for (Quote quote : quotes.getQuotes()) {

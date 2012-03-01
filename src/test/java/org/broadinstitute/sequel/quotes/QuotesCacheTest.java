@@ -61,7 +61,14 @@ public class QuotesCacheTest {
     public void test_known_good_funding_sources() throws Exception {
 
         QuotesCache cache = new QuotesCache(new QuoteServiceImpl(new QAQuoteConnectionParams(QuoteConnectionParameters.GET_ALL_SEQUENCING_QUOTES_URL)).getAllSequencingPlatformQuotes());
-        Collection<Quote> foundQuotes = cache.getQuotesForFundingSource(new Funding(Funding.FUNDS_RESERVATION,"NHGRI_NIH_LANDER"));
+
+        Funding nhgriGrant = new Funding(Funding.FUNDS_RESERVATION,"NHGRI_NIH_LANDER");
+        // todo put in alternate constructor
+        nhgriGrant.setBroadName("");
+        nhgriGrant.setCommonName("");
+        nhgriGrant.setCostObject("5015441");
+        nhgriGrant.setGrantStatus("Active");
+        Collection<Quote> foundQuotes = cache.getQuotesForFundingSource(nhgriGrant);
 
         Assert.assertFalse(foundQuotes == null);
         Assert.assertTrue(0 < foundQuotes.size());
