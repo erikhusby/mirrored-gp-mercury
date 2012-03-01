@@ -1,6 +1,5 @@
 package org.broadinstitute.sequel.entity.project;
 
-import org.broadinstitute.sequel.entity.run.CoverageGoal;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.workflow.LabWorkflow;
 
@@ -34,8 +33,9 @@ public class ProjectPlanDetail {
     private CoverageGoal coverageGoal;
 
     public ProjectPlanDetail(LabWorkflow workflow,
-                             SequencingTechnology sequencingTechnology,CoverageGoal coverageGoal) {
-        this.labWorkflow = labWorkflow;
+                             SequencingTechnology sequencingTechnology,
+                             CoverageGoal coverageGoal) {
+        this.labWorkflow = workflow;
         this.sequencingTechnology = sequencingTechnology;
         this.coverageGoal = coverageGoal;
     }
