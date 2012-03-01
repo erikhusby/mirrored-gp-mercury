@@ -55,6 +55,8 @@ public class QuotesCacheTest {
         Assert.assertTrue(fundingSources.contains(new Funding(Funding.FUNDS_RESERVATION,"Magical Infinite Grant")));
         Assert.assertTrue(fundingSources.contains(new Funding(Funding.FUNDS_RESERVATION,"Cheap Grant")));
         Assert.assertTrue(fundingSources.contains(new Funding(Funding.FUNDS_RESERVATION,"NHGRI")));
+        
+        Assert.assertEquals(quotes.getQuotes(),cache.getQuotes());
     }
 
     @Test(groups = {"slow"})
@@ -75,6 +77,10 @@ public class QuotesCacheTest {
         Assert.assertTrue(foundQuotes.contains(new Quote("DNA3PI")));
         Assert.assertTrue(foundQuotes.contains(new Quote("DNA3PK")));
         Assert.assertFalse(foundQuotes.contains(new Quote("DNA4DW")));
+
+        for (Quote foundQuote : foundQuotes) {
+            System.out.println(foundQuote.getAlphanumericId() + " " + foundQuote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
+        }
 
     }
 }
