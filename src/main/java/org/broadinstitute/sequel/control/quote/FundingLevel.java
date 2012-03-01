@@ -10,7 +10,9 @@ public class FundingLevel {
     private String percent;
     
     private Funding funding;
-    
+
+    public FundingLevel() {}
+
     public FundingLevel(String percent,Funding funding) {
         this.percent = percent;
         this.funding = funding;

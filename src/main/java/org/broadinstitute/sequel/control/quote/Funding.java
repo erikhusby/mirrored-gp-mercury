@@ -32,6 +32,8 @@ public class Funding {
     private String institute;
 
     private String purchaseOrderNumber;
+
+    public Funding() {}
     
     public Funding(String fundingType,
                   String grantDescription) {

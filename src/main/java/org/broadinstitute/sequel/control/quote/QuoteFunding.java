@@ -15,6 +15,8 @@ public class QuoteFunding {
 
     
     private FundingLevel fundingLevel;
+
+    public QuoteFunding() {}
     
     public QuoteFunding(FundingLevel fundLevel) {
         this.fundingLevel = fundLevel;
