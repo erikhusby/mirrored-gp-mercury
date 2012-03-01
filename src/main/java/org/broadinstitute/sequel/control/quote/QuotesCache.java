@@ -21,7 +21,7 @@ public class QuotesCache {
         this.quotes = quotes;
     }
     
-    public Collection<Funding> getAllFundingSourcesForSequencingPlatform() {
+    public Collection<Funding> getAllFundingSources() {
         Set<Funding> fundingSources = new HashSet<Funding>();
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {

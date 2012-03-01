@@ -16,6 +16,10 @@ public class QuoteFunding {
     
     private FundingLevel fundingLevel;
     
+    public QuoteFunding(FundingLevel fundLevel) {
+        this.fundingLevel = fundLevel;
+    }
+    
     @XmlElement(name = "FundingLevel")
     public FundingLevel getFundingLevel() {
         return fundingLevel;

@@ -30,8 +30,6 @@ public class QuoteServiceImpl implements QuoteService {
          connectionParameters = params;
     }
 
-
-
     private void ensureAcceptanceOfServerCertificate(ClientConfig config) {
 
         // code pulled from http://stackoverflow.com/questions/6047996/ignore-self-signed-ssl-cert-using-jersey-client

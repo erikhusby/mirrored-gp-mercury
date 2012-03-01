@@ -12,6 +12,18 @@ public class Quote {
     private String name;
     private QuoteFunding quoteFunding;
 
+    public Quote(String alphanumericId,QuoteFunding quoteFunding) {
+        if (alphanumericId == null) {
+            throw new NullPointerException("alphanumeric Id cannot be null.");
+        }
+        this.alphanumericId = alphanumericId;
+        this.quoteFunding = quoteFunding;
+    }
+    
+    public Quote(String alphanumericId) {
+        this(alphanumericId,null);
+    }
+    
     @XmlElement(name = "QuoteFunding")
     public QuoteFunding getQuoteFunding() {
         return quoteFunding;

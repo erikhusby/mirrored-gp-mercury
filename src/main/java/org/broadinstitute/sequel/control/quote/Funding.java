@@ -32,6 +32,12 @@ public class Funding {
     private String institute;
 
     private String purchaseOrderNumber;
+    
+    public Funding(String fundingType,
+                  String grantDescription) {
+        this.fundingType = fundingType;
+        this.grantDescription = grantDescription;
+    }
 
     @XmlAttribute(name = "costObject")
     public String getCostObject() {
@@ -103,5 +109,39 @@ public class Funding {
 
     public void setPurchaseOrderNumber(String purchaseOrderNumber) {
         this.purchaseOrderNumber = purchaseOrderNumber;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Funding funding = (Funding) o;
+
+        if (broadName != null ? !broadName.equals(funding.broadName) : funding.broadName != null) return false;
+        if (commonName != null ? !commonName.equals(funding.commonName) : funding.commonName != null) return false;
+        if (costObject != null ? !costObject.equals(funding.costObject) : funding.costObject != null) return false;
+        if (fundingType != null ? !fundingType.equals(funding.fundingType) : funding.fundingType != null) return false;
+        if (grantDescription != null ? !grantDescription.equals(funding.grantDescription) : funding.grantDescription != null)
+            return false;
+        if (grantStatus != null ? !grantStatus.equals(funding.grantStatus) : funding.grantStatus != null) return false;
+        if (institute != null ? !institute.equals(funding.institute) : funding.institute != null) return false;
+        if (purchaseOrderNumber != null ? !purchaseOrderNumber.equals(funding.purchaseOrderNumber) : funding.purchaseOrderNumber != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = costObject != null ? costObject.hashCode() : 0;
+        result = 31 * result + (broadName != null ? broadName.hashCode() : 0);
+        result = 31 * result + (commonName != null ? commonName.hashCode() : 0);
+        result = 31 * result + (grantDescription != null ? grantDescription.hashCode() : 0);
+        result = 31 * result + (grantStatus != null ? grantStatus.hashCode() : 0);
+        result = 31 * result + (fundingType != null ? fundingType.hashCode() : 0);
+        result = 31 * result + (institute != null ? institute.hashCode() : 0);
+        result = 31 * result + (purchaseOrderNumber != null ? purchaseOrderNumber.hashCode() : 0);
+        return result;
     }
 }

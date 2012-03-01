@@ -10,6 +10,11 @@ public class FundingLevel {
     private String percent;
     
     private Funding funding;
+    
+    public FundingLevel(String percent,Funding funding) {
+        this.percent = percent;
+        this.funding = funding;
+    }
 
     @XmlAttribute(name = "percent")
     public String getPercent() {
