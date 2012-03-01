@@ -8,9 +8,15 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 
 import org.apache.commons.lang.StringUtils;
+import org.jboss.weld.environment.se.Weld;
+import org.jboss.weld.environment.se.WeldContainer;
+import org.jboss.weld.environment.se.bindings.Parameters;
+import org.jboss.weld.environment.se.events.ContainerInitialized;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.net.ssl.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -19,17 +25,22 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApplicationScoped
 public class QuoteServiceImpl implements QuoteService {
 
+    // todo: how do we use CDI/weld/etc to inject this
+    // properly in test environment or production?
     @Inject
     private QuoteConnectionParameters connectionParameters;
 
     private Client client;
 
     public QuoteServiceImpl(QuoteConnectionParameters params) {
-        connectionParameters = params;
+       WeldContainer weld = new Weld().initialize();
+       connectionParameters = (QuoteConnectionParameters)weld.instance().select(QuoteConnectionParameters.class);
+       connectionParameters = params;
     }
+
+
 
     private void ensureAcceptanceOfServerCertificate(ClientConfig config) {
 
