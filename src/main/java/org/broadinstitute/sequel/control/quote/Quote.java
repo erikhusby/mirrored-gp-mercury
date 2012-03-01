@@ -12,6 +12,8 @@ public class Quote {
     private String name;
     private QuoteFunding quoteFunding;
 
+    public Quote() {}
+
     public Quote(String alphanumericId,QuoteFunding quoteFunding) {
         if (alphanumericId == null) {
             throw new NullPointerException("alphanumeric Id cannot be null.");
