@@ -8,15 +8,7 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 
 import org.apache.commons.lang.StringUtils;
-import org.jboss.weld.environment.se.Weld;
-import org.jboss.weld.environment.se.WeldContainer;
-import org.jboss.weld.environment.se.bindings.Parameters;
-import org.jboss.weld.environment.se.events.ContainerInitialized;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.net.ssl.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -35,9 +27,7 @@ public class QuoteServiceImpl implements QuoteService {
     private Client client;
 
     public QuoteServiceImpl(QuoteConnectionParameters params) {
-       WeldContainer weld = new Weld().initialize();
-       connectionParameters = (QuoteConnectionParameters)weld.instance().select(QuoteConnectionParameters.class);
-       connectionParameters = params;
+         connectionParameters = params;
     }
 
 
