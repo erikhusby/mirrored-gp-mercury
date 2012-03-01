@@ -10,6 +10,12 @@ package org.broadinstitute.sequel.entity.workflow;
 public interface LabWorkflow {
 
     /**
+     * Name of the workflow.
+     * @return
+     */
+    public String getName();
+    
+    /**
      * Optional version.  Early in a project,
      * the version might not be set.  By the
      * time the project starts, we might

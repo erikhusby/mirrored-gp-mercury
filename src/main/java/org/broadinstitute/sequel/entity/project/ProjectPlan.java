@@ -1,18 +1,62 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
+
 import java.util.Collection;
+import java.util.HashSet;
 
-public interface ProjectPlan {
+public class ProjectPlan {
 
-    public Collection<ProjectPlanDetail> getPlanDetails();
+    private Collection<LabVessel> starters = new HashSet<LabVessel>();
+    
+    private Collection<ProjectPlanDetail> planDetails = new HashSet<ProjectPlanDetail>();
+    
+    private Project project;
+    
+    private String planName;
+    
+    private String notes;
+    
+    public ProjectPlan(Project project,String name)  {
+        if (project == null) {
+             throw new NullPointerException("project cannot be null."); 
+        }
+        if (name == null) {
+             throw new NullPointerException("name cannot be null."); 
+        }
+        this.project = project;
+        this.planName = name;
+    }
+    
+    public void addStarters(LabVessel vessel) {
+        if (vessel == null) {
+            throw new NullPointerException("vessel cannot be null.");
+        }
+        starters.add(vessel);
+    }
+
+    public void addPlanDetail(ProjectPlanDetail detail) {
+        if (detail == null) {
+             throw new NullPointerException("detail cannot be null.");
+        }
+        planDetails.add(detail);
+    }
+
+    public Collection<ProjectPlanDetail> getPlanDetails() {
+        return planDetails;
+    }
 
     /**
-     * Something about the "why" of this
-     * project.  What's the data going to
-     * be used for?
+     * What's the name of this plan?
      * @return
      */
-    public String getTextOverview();
+    public String getName() {
+        return planName;
+    }
+    
+    public String getNotes() {
+        return notes;
+    }
 
     /**
      * Basically how much sequencing are we going

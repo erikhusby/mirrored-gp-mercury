@@ -61,23 +61,9 @@ public interface Project {
 
     public void sendAlert(String alertText);
 
-    /**
-     * Suppose you (as a PM) start a simple project with 10 samples,
-     * and then decide you want to do 2 different things to
-     * that same set of samples.  You'd want to tell the system
-     * "Hey, take these samples and make a group for them."
-     * @param labTangibles
-     * @return
-     */
-    public GroupOfTangibles makeGroup(Collection<LabTangible> labTangibles);
-
-    /**
-     * A group of tangibles for use in the mind of the
-     * PM.  "Here are the libraries I want to top off
-     * it the libraries from last week don't make it".
-     * @return
-     */
-    public Collection<GroupOfTangibles> getTangibleGroups();
+    public Collection<LabVessel> getAllStarters();
+    
+    public void addProjectPlan(ProjectPlan projectPlan);
 
     public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription);
 
