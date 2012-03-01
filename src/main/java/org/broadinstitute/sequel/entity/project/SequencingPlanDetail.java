@@ -24,7 +24,7 @@ import org.broadinstitute.sequel.entity.workflow.LabWorkflow;
  *
  * You make a plan with multiple plan details.
  */
-public class ProjectPlanDetail {
+public class SequencingPlanDetail {
 
     private LabWorkflow labWorkflow;
 
@@ -32,9 +32,9 @@ public class ProjectPlanDetail {
 
     private CoverageGoal coverageGoal;
 
-    public ProjectPlanDetail(LabWorkflow workflow,
-                             SequencingTechnology sequencingTechnology,
-                             CoverageGoal coverageGoal) {
+    public SequencingPlanDetail(LabWorkflow workflow,
+                                SequencingTechnology sequencingTechnology,
+                                CoverageGoal coverageGoal) {
         this.labWorkflow = workflow;
         this.sequencingTechnology = sequencingTechnology;
         this.coverageGoal = coverageGoal;

@@ -1,21 +1,31 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.apache.commons.collections.map.HashedMap;
+import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 public class ProjectPlan {
 
     private Collection<LabVessel> starters = new HashSet<LabVessel>();
     
-    private Collection<ProjectPlanDetail> planDetails = new HashSet<ProjectPlanDetail>();
+    private Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
     
     private Project project;
     
     private String planName;
     
     private String notes;
+
+    // todo where does analysis type go here?
+    
+    private Collection<PoolGroup> poolGroups = new HashSet<PoolGroup>();
+
+    private Collection<ReagentDesign> reagentDesigns = new HashSet<ReagentDesign>();
     
     public ProjectPlan(Project project,String name)  {
         if (project == null) {
@@ -27,6 +37,25 @@ public class ProjectPlan {
         this.project = project;
         this.planName = name;
     }
+
+    public Collection<ReagentDesign> getReagentDesigns() {
+        return reagentDesigns;
+    }
+    
+    public void addReagentDesign(ReagentDesign design) {
+        reagentDesigns.add(design);
+    }
+    
+    public void addPoolGroup(PoolGroup poolGroup) {
+        if (poolGroup == null) {
+             throw new NullPointerException("poolGroup cannot be null."); 
+        }
+        poolGroups.add(poolGroup);
+    }
+
+    public Collection<PoolGroup> getPoolGroups() {
+        return poolGroups;
+    }
     
     public void addStarters(LabVessel vessel) {
         if (vessel == null) {
@@ -35,14 +64,14 @@ public class ProjectPlan {
         starters.add(vessel);
     }
 
-    public void addPlanDetail(ProjectPlanDetail detail) {
+    public void addSequencingDetail(SequencingPlanDetail detail) {
         if (detail == null) {
              throw new NullPointerException("detail cannot be null.");
         }
         planDetails.add(detail);
     }
 
-    public Collection<ProjectPlanDetail> getPlanDetails() {
+    public Collection<SequencingPlanDetail> getPlanDetails() {
         return planDetails;
     }
 

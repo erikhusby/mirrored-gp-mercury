@@ -61,16 +61,6 @@ public abstract class AbstractProject implements Project, UserRemarkable {
     }
 
     @Override
-    public GroupOfTangibles makeGroup(Collection<LabTangible> labTangibles) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<GroupOfTangibles> getTangibleGroups() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription) {
         return startingStuffByWorkflow.get(workflowDescription);
     }
@@ -273,6 +263,16 @@ public abstract class AbstractProject implements Project, UserRemarkable {
             }
         }
         return pendingRequests;
+    }
+
+    @Override
+    public Collection<LabVessel> getAllStarters() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void addProjectPlan(ProjectPlan projectPlan) {
+        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override
