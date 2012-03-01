@@ -26,7 +26,7 @@ public class QuotesCacheTest {
         Assert.assertEquals(3,quotes.getQuotes().size());
         
         QuotesCache cache = new QuotesCache(quotes);
-        Collection<Quote> foundQuotes = cache.getQuotesForFundingSource(targetSource);
+        Collection<Quote> foundQuotes = cache.getQuotesForGrantDescription(targetSource.getGrantDescription());
         
         Assert.assertFalse(foundQuotes == null);
         Assert.assertEquals(2,foundQuotes.size());
@@ -60,21 +60,21 @@ public class QuotesCacheTest {
     @Test(groups = {"slow"})
     public void test_known_good_funding_sources() throws Exception {
 
+        long start = System.currentTimeMillis();
         QuotesCache cache = new QuotesCache(new QuoteServiceImpl(new QAQuoteConnectionParams(QuoteConnectionParameters.GET_ALL_SEQUENCING_QUOTES_URL)).getAllSequencingPlatformQuotes());
-
+        System.out.println("Quotes call took " + (System.currentTimeMillis() - start) + "ms");
+        
         Funding nhgriGrant = new Funding(Funding.FUNDS_RESERVATION,"NHGRI_NIH_LANDER");
-        // todo put in alternate constructor
-        nhgriGrant.setBroadName("");
-        nhgriGrant.setCommonName("");
-        nhgriGrant.setCostObject("5015441");
-        nhgriGrant.setGrantStatus("Active");
-        Collection<Quote> foundQuotes = cache.getQuotesForFundingSource(nhgriGrant);
-
+        start = System.currentTimeMillis();
+        Collection<Quote> foundQuotes = cache.getQuotesForGrantDescription(nhgriGrant.getGrantDescription());
+        System.out.println("Search for quotes took " + (System.currentTimeMillis() - start) + "ms");
+        
         Assert.assertFalse(foundQuotes == null);
         Assert.assertTrue(0 < foundQuotes.size());
 
         Assert.assertTrue(foundQuotes.contains(new Quote("DNA3PI")));
         Assert.assertTrue(foundQuotes.contains(new Quote("DNA3PK")));
         Assert.assertFalse(foundQuotes.contains(new Quote("DNA4DW")));
+
     }
 }

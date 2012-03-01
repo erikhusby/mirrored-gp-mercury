@@ -39,9 +39,9 @@ public class QuotesCache {
         return fundingSources;
     }
     
-    public Collection<Quote> getQuotesForFundingSource(Funding fundingSource) {
-        if (fundingSource == null) {
-            throw new NullPointerException("fundingSource cannot be null.");
+    public Collection<Quote> getQuotesForGrantDescription(String grantDescription) {
+        if (grantDescription == null) {
+            throw new NullPointerException("grantDescription cannot be null.");
         }
         Set<Quote> quotesForFundingSource = new HashSet<Quote>();
         for (Quote quote : quotes.getQuotes()) {
@@ -49,8 +49,10 @@ public class QuotesCache {
                 if (quote.getQuoteFunding().getFundingLevel() != null) {
                     if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
                         Funding fundingForQuote = quote.getQuoteFunding().getFundingLevel().getFunding();
-                        if (fundingForQuote.equals(fundingSource)) {
-                            quotesForFundingSource.add(quote);
+                        if (fundingForQuote.getGrantDescription() != null) {
+                            if (grantDescription.equalsIgnoreCase(fundingForQuote.getGrantDescription())) {
+                                quotesForFundingSource.add(quote);
+                            }
                         }
                     }
                 }
