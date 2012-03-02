@@ -9,14 +9,28 @@ package org.broadinstitute.sequel.entity.project;
 public class ReagentDesign {
     
     private String reagentDesign;
+
+    public enum REAGENT_TYPE {
+        BAIT,CAT
+    }
+
+    private REAGENT_TYPE reagent_type;
     
-    public ReagentDesign(String designName) {
+    public ReagentDesign(String designName,REAGENT_TYPE reagent_type) {
         if (designName == null) {
              throw new NullPointerException("designName cannot be null."); 
         }
-        this.reagentDesign = reagentDesign;
+        if (reagent_type == null) {
+             throw new NullPointerException("reagent_type cannot be null.");
+        }
+        this.reagentDesign = designName;
+        this.reagent_type = reagent_type;
     }
-    
+
+    public REAGENT_TYPE getReagentType() {
+        return reagent_type;
+    }
+
     public String getDesignName() {
         return reagentDesign;
     }

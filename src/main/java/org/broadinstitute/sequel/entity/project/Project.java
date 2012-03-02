@@ -69,20 +69,7 @@ public interface Project {
 
     public Collection<LabVessel> getAllVessels();
 
-    /**
-     * Stateful side effect: when you add a {@link org.broadinstitute.sequel.entity.vessel.LabTangible}
-     * to a {@link Project}, you are implicitly linking
-     * every {@link Goop} in {@link org.broadinstitute.sequel.entity.vessel.LabTangible#getSampleSheets()
-     * the sample sheet} to this project.  In other words,
-     * if you call Project1.addLabTangible(), you'll
-     * find Project1 listed as an active project
-     * when you call {@link Goop#getActiveProjects()},
-     * as long as Project1 is considered "active"
-     * @param vessel
-     * @param workflowDescription the description of the workflow
-     *                            that labTangible is expected
-     */
-    public void addVessel(LabVessel vessel, WorkflowDescription workflowDescription);
+    public void addStarter(LabVessel vessel);
 
     public Collection<Person> getProjectOwners();
 

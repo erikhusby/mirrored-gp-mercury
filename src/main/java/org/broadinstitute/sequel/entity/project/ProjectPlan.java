@@ -57,11 +57,16 @@ public class ProjectPlan {
         return poolGroups;
     }
     
-    public void addStarters(LabVessel vessel) {
+    public void addStarter(LabVessel vessel) {
         if (vessel == null) {
             throw new NullPointerException("vessel cannot be null.");
         }
+        project.addStarter(vessel);
         starters.add(vessel);
+    }
+    
+    public Collection<LabVessel> getStarters() {
+        return starters;
     }
 
     public void addSequencingDetail(SequencingPlanDetail detail) {

@@ -30,11 +30,13 @@ public abstract class AbstractProject implements Project, UserRemarkable {
 
     private final Collection<BSPPlatingRequest> platingRequests = new HashSet<BSPPlatingRequest>();
     
-    private final Map<WorkflowDescription,Collection<LabVessel>> startingStuffByWorkflow =  new HashMap<WorkflowDescription,Collection<LabVessel>>();
+    public Collection<LabVessel> starters = new HashSet<LabVessel>();
     
     private final Collection<LabWorkQueue> availableWorkQueues = new HashSet<LabWorkQueue>();
     
     private List<LabEventName> checkpointableEvents = new ArrayList<LabEventName>();
+    
+    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
 
     @Override
     public JiraTicket getJiraTicket() {
@@ -60,18 +62,11 @@ public abstract class AbstractProject implements Project, UserRemarkable {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription) {
-        return startingStuffByWorkflow.get(workflowDescription);
-    }
+    
 
     @Override
     public Collection<LabVessel> getAllVessels() {
-        Collection<LabVessel> allTangibles = new HashSet<LabVessel>();
-        for (Map.Entry<WorkflowDescription, Collection<LabVessel>> entry : startingStuffByWorkflow.entrySet()) {
-            allTangibles.addAll(entry.getValue());
-        }
-        return allTangibles;
+        throw new RuntimeException("not implemented");
     }
 
     @Override
@@ -223,17 +218,11 @@ public abstract class AbstractProject implements Project, UserRemarkable {
     }
 
     @Override
-    public void addVessel(LabVessel vessel, WorkflowDescription workflowDescription) {
-        if (!startingStuffByWorkflow.containsKey(workflowDescription)) {
-            startingStuffByWorkflow.put(workflowDescription,new HashSet<LabVessel>());
+    public void addStarter(LabVessel vessel) {
+        if (vessel == null) {
+             throw new NullPointerException("labVessel cannot be null."); 
         }
-        startingStuffByWorkflow.get(workflowDescription).add(vessel);
-        /**
-         * We don't go into the {@link org.broadinstitute.sequel.entity.sample.SampleSheet}s and set the
-         * Project at this point because we aren't reserving
-         * the tangible for this project exclusively.  The separate gesture
-         * for this is {@link ProjectBranchable}.
-         */
+        starters.add(vessel);
     }
 
     @Override
@@ -267,11 +256,19 @@ public abstract class AbstractProject implements Project, UserRemarkable {
 
     @Override
     public Collection<LabVessel> getAllStarters() {
-        throw new RuntimeException("I haven't been written yet.");
+        return starters;
     }
 
     @Override
     public void addProjectPlan(ProjectPlan projectPlan) {
+        if (projectPlan == null) {
+             throw new NullPointerException("projectPlan cannot be null."); 
+        }
+        projectPlans.add(projectPlan);
+    }
+
+    @Override
+    public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
