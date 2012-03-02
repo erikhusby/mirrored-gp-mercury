@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.project;
 
-import org.broadinstitute.sequel.entity.run.CoverageGoal;
+import org.broadinstitute.sequel.entity.run.SequencingTechnology;
+import org.broadinstitute.sequel.entity.workflow.LabWorkflow;
 
 /**
  * A project can have multiple aspects.
@@ -23,25 +24,40 @@ import org.broadinstitute.sequel.entity.run.CoverageGoal;
  *
  * You make a plan with multiple plan details.
  */
-public interface ProjectPlanDetail {
+public class SequencingPlanDetail {
 
-    /**
-     * Very high level name of the workflow.  Think
-     * "menu item" in the price list.
-     * @return
-     */
-    public String getLCWorkflow();
+    private LabWorkflow labWorkflow;
+
+    private SequencingTechnology sequencingTechnology;
+
+    private CoverageGoal coverageGoal;
+
+    public SequencingPlanDetail(LabWorkflow workflow,
+                                SequencingTechnology sequencingTechnology,
+                                CoverageGoal coverageGoal) {
+        this.labWorkflow = workflow;
+        this.sequencingTechnology = sequencingTechnology;
+        this.coverageGoal = coverageGoal;
+    }
+    
+    public LabWorkflow getWorkflow() {
+        return labWorkflow;
+    }
 
     /**
      * Illumina, Ion, Pacbio, Sanger, etc.  Each implementation
      * has its own run setup parameters.
      * @return
      */
-    public String getSequencingTechnology();
+    public SequencingTechnology getSequencingTechnology() {
+        return sequencingTechnology;
+    }
 
     /**
      * 20x?  90% @ 20x for HS?  20 gigabases? 2 lanes?
      * @return
      */
-    public CoverageGoal getCoverageGoal();
+    public CoverageGoal getCoverageGoal() {
+        return coverageGoal;
+    }
 }

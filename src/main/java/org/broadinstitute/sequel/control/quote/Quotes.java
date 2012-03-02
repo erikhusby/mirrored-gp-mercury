@@ -7,15 +7,20 @@ import java.util.List;
 
 @XmlRootElement(name="Quotes")
 public class Quotes {
-    private List<Quote> quote = new ArrayList<Quote>();
 
+    private List<Quote> quotes = new ArrayList<Quote>();
+
+    public void addQuote(Quote q) {
+        quotes.add(q);
+    }
+    
     @XmlElement(name="Quote")    
-    public List<Quote> getQuote() {
-        return quote;
+    public List<Quote> getQuotes() {
+        return quotes;
     }
 
-    public void setQuote(List<Quote> quote) {
-        this.quote = quote;
+    public void setQuotes(List<Quote> quote) {
+        this.quotes = quote;
     }
 }
     

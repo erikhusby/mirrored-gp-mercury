@@ -8,8 +8,8 @@ public class BSPConnectionParametersImpl implements BSPConnectionParameters {
 
     private String superuserLogin = "seqsystem";
     private String superuserPassword = "bspbsp";
-    private String hostname = "bsp.broadinstitute.org";
-    private int port = 80;
+    private String hostname = "gapqa01.broadinstitute.org";
+    private int port = 8080;
 
 
 	public String getSuperuserLogin() {

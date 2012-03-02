@@ -1,7 +1,7 @@
-package org.broadinstitute.sequel.entity.run;
+package org.broadinstitute.sequel.entity.project;
 
 /**
- * A org.broadinstitute.sequel.entity.run.CoverageGoal tells us how much
+ * A org.broadinstitute.sequel.entity.project.CoverageGoal tells us how much
  * sequencing we're planning on doing.
  */
 public interface CoverageGoal {
@@ -12,5 +12,5 @@ public interface CoverageGoal {
      * "1 lane"
      * @return
      */
-    public String toText();
+    public String coverageGoalToText();
 }

@@ -7,13 +7,13 @@ import org.broadinstitute.sequel.entity.vessel.MolecularAppendage;
 public class DNAAppendage implements MolecularAppendage {
     
     private String appendageName;
-    private SequencingTechnology sequencingTechnology;
+    private SequencingTechnology.TECHNOLOGY_NAME sequencingTechnology;
     private FunctionalRole functionalRole;
     private String threeToFiveSequence;
     private String fiveToThreeSequence;
 
-    public DNAAppendage(String appendageName, SequencingTechnology sequencingTechnology, FunctionalRole functionalRole,
-            String threeToFiveSequence, String fiveToThreeSequence) {
+    public DNAAppendage(String appendageName, SequencingTechnology.TECHNOLOGY_NAME sequencingTechnology,
+            FunctionalRole functionalRole, String threeToFiveSequence, String fiveToThreeSequence) {
         this.appendageName = appendageName;
         this.sequencingTechnology = sequencingTechnology;
         this.functionalRole = functionalRole;
@@ -27,7 +27,7 @@ public class DNAAppendage implements MolecularAppendage {
     }
 
     @Override
-    public SequencingTechnology getSequencingTechnology() {
+    public SequencingTechnology.TECHNOLOGY_NAME getSequencingTechnology() {
         return sequencingTechnology;
     }
 

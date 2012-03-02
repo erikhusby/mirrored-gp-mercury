@@ -24,5 +24,5 @@ public interface MolecularAppendage {
      * technology?
      * @return
      */
-    public SequencingTechnology getSequencingTechnology();
+    public SequencingTechnology.TECHNOLOGY_NAME getSequencingTechnology();
 }

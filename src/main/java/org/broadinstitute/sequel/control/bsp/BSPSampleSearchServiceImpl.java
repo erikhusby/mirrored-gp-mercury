@@ -23,12 +23,17 @@ public class BSPSampleSearchServiceImpl implements BSPSampleSearchService {
     private static Log _logger = LogFactory
             .getLog(BSPSampleSearchServiceImpl.class);
     
-    
-    @Inject
+
     private BSPConnectionParameters connParams;
 
     private Client jerseyClient;
 
+    public BSPSampleSearchServiceImpl(BSPConnectionParameters params) {
+        if (params == null) {
+             throw new NullPointerException("params cannot be null.");
+        }
+        this.connParams = params;
+    }
 
     private Client getClient() {
 

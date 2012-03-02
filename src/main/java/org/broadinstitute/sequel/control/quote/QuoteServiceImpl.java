@@ -8,8 +8,6 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 
 import org.apache.commons.lang.StringUtils;
-
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.net.ssl.*;
 import javax.ws.rs.core.MediaType;
@@ -19,16 +17,18 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApplicationScoped
 public class QuoteServiceImpl implements QuoteService {
 
-
+    // todo: how do we use CDI/weld/etc to inject this
+    // properly in test environment or production?
     @Inject
     private QuoteConnectionParameters connectionParameters;
 
-
     private Client client;
 
+    public QuoteServiceImpl(QuoteConnectionParameters params) {
+         connectionParameters = params;
+    }
 
     private void ensureAcceptanceOfServerCertificate(ClientConfig config) {
 
@@ -111,24 +111,20 @@ public class QuoteServiceImpl implements QuoteService {
      */
     @Override
     public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException {
-
         initializeClient();
-
         Quote quote;
         if(StringUtils.isEmpty(id))
         {
            return(null);
         }
-
-
         WebResource resource = client.resource(connectionParameters.getUrl() + id);
         try
         {
             Quotes quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
 
-            if(quotes.getQuote() != null && quotes.getQuote().size()>0)
+            if(quotes.getQuotes() != null && quotes.getQuotes().size()>0)
             {
-                quote = quotes.getQuote().get(0);
+                quote = quotes.getQuotes().get(0);
             }
             else
             {
@@ -147,5 +143,32 @@ public class QuoteServiceImpl implements QuoteService {
         return quote;
     }
 
+    /**
+     * Gets all quotes for the sequencing platform.
+     * This is a bit slow.
+     * @return
+     * @throws QuoteServerException
+     * @throws QuoteNotFoundException
+     */
+    public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
+
+        initializeClient();
+        WebResource resource = client.resource(connectionParameters.getUrl());
+        Quotes quotes = null;
+        try
+        {
+           quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
+        }
+        catch(UniformInterfaceException e)
+        {
+            throw new QuoteNotFoundException("Could not find quotes for sequencing at " + connectionParameters.getUrl());
+        }
+        catch(ClientHandlerException e)
+        {
+            throw new QuoteServerException("Could not communicate with quote server", e);
+        }
+
+        return quotes;
+    }
 
 }

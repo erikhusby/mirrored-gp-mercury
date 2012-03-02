@@ -1,11 +1,18 @@
 package org.broadinstitute.sequel.entity.run;
 
-public enum SequencingTechnology {
+public interface SequencingTechnology {
 
-    ILLUMINA_MISEQ,
-    ILLUMINA_HISEQ,
-    FOUR54,
-    ION_TORRENT,
-    PACBIO
+    public TECHNOLOGY_NAME getTechnologyName();
+
+    public enum TECHNOLOGY_NAME {
+        ILLUMINA_MISEQ,
+        ILLUMINA_HISEQ,
+        FOUR54,
+        ION_TORRENT,
+        PACBIO
+        
+    };
+    
+    public String asText();
 
 }

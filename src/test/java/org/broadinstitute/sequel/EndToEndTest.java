@@ -47,7 +47,7 @@ public class EndToEndTest  {
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        sampleSheet.addStartingSample(new BSPSample(sampleName, project));
+        sampleSheet.addStartingSample(new BSPSample(sampleName, project,null));
         return new TwoDBarcodedTube(tubeBarcode,sampleSheet);
     }
     
@@ -73,16 +73,15 @@ public class EndToEndTest  {
 
         BSPAliquotWorkQueue aliquotWorkQueue = new BSPAliquotWorkQueue(new MockBSPConnector());
 
-        Assert.assertTrue(project.getAllVessels().isEmpty());
-        Assert.assertTrue(project2.getAllVessels().isEmpty());
+        Assert.assertTrue(project.getAllStarters().isEmpty());
+        Assert.assertTrue(project2.getAllStarters().isEmpty());
         // add a sample to the project
-        project.addVessel(stock1, workflow);
-        project2.addVessel(stock2, workflow);
+        project.addStarter(stock1);
+        project2.addStarter(stock2);
 
-        Assert.assertTrue(project.getAllVessels().contains(stock1));
-        Assert.assertTrue(project2.getAllVessels().contains(stock2));
-        Assert.assertTrue(project.getVessels(workflow).contains(stock1));
-        Assert.assertFalse(project.getAllVessels().contains(stock2));
+        Assert.assertTrue(project.getAllStarters().contains(stock1));
+        Assert.assertTrue(project2.getAllStarters().contains(stock2));
+        Assert.assertFalse(project.getAllStarters().contains(stock2));
 
 
         // load up the bsp aliquot queue
@@ -112,8 +111,6 @@ public class EndToEndTest  {
         LabVessel aliquotTube = createBSPAliquot(aliquot1Label,aliquot1Label,null);
         LabVessel aliquot2Tube = createBSPAliquot(aliquot2Label,aliquot2Label,null);
 
-        //Goop aliquot = aliquotTube.getGoop();
-       //Goop aliquot2 = aliquot2Tube.getGoop();
 
         Assert.assertTrue(aliquotTube.getAllProjects().isEmpty()); // we just got the aliquot -- we don't know the project yet!
         Assert.assertTrue(aliquot2Tube.getAllProjects().isEmpty()); // we just got the aliquot -- we don't know the project yet!
@@ -130,6 +127,10 @@ public class EndToEndTest  {
         Assert.assertEquals(1,aliquotTube.getAllProjects().size());
         Assert.assertEquals(1,aliquot2Tube.getAllProjects().size());
 
+        // at this point, after receiving aliquots, {@link Project#getAllVessels()} should
+        // give us both aliquots.  This will be a good test of the back pointer/authority
+        // model
+
 
         Assert.assertEquals(aliquotParameters,platingRequest.getAliquotParameters());
         Assert.assertEquals(project,aliquotTube.getAllProjects().iterator().next());
@@ -145,7 +146,6 @@ public class EndToEndTest  {
         for (StatusNote statusNote : aliquotTube.getAllStatusNotes()) {
             Assert.assertEquals(LabEventName.ALIQUOT_RECEIVED, statusNote.getEventName());
         }
-
 
         /**
          * Todo arz: test {@link Goop#applyReagent(org.broadinstitute.sequel.entity.reagent.Reagent)} by applying

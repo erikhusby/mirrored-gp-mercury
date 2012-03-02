@@ -27,13 +27,13 @@ public class IndexEnvelope  implements MolecularEnvelope {
 
     @Override
     public MolecularAppendage get3PrimeAttachment() {
-        return new DNAAppendage(name, SequencingTechnology.ILLUMINA_HISEQ, DNAAppendage.FunctionalRole.MOLECULAR_INDEX,
+        return new DNAAppendage(name, SequencingTechnology.TECHNOLOGY_NAME.ILLUMINA_HISEQ, DNAAppendage.FunctionalRole.MOLECULAR_INDEX,
                 threePrimeSeq, null);
     }
 
     @Override
     public MolecularAppendage get5PrimeAttachment() {
-        return new DNAAppendage(name, SequencingTechnology.ILLUMINA_HISEQ, DNAAppendage.FunctionalRole.MOLECULAR_INDEX,
+        return new DNAAppendage(name, SequencingTechnology.TECHNOLOGY_NAME.ILLUMINA_HISEQ, DNAAppendage.FunctionalRole.MOLECULAR_INDEX,
                 null, fivePrimeSeq);
     }
 

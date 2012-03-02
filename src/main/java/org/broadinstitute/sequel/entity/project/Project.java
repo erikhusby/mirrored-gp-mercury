@@ -61,42 +61,15 @@ public interface Project {
 
     public void sendAlert(String alertText);
 
-    /**
-     * Suppose you (as a PM) start a simple project with 10 samples,
-     * and then decide you want to do 2 different things to
-     * that same set of samples.  You'd want to tell the system
-     * "Hey, take these samples and make a group for them."
-     * @param labTangibles
-     * @return
-     */
-    public GroupOfTangibles makeGroup(Collection<LabTangible> labTangibles);
-
-    /**
-     * A group of tangibles for use in the mind of the
-     * PM.  "Here are the libraries I want to top off
-     * it the libraries from last week don't make it".
-     * @return
-     */
-    public Collection<GroupOfTangibles> getTangibleGroups();
+    public Collection<LabVessel> getAllStarters();
+    
+    public void addProjectPlan(ProjectPlan projectPlan);
 
     public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription);
 
     public Collection<LabVessel> getAllVessels();
 
-    /**
-     * Stateful side effect: when you add a {@link org.broadinstitute.sequel.entity.vessel.LabTangible}
-     * to a {@link Project}, you are implicitly linking
-     * every {@link Goop} in {@link org.broadinstitute.sequel.entity.vessel.LabTangible#getSampleSheets()
-     * the sample sheet} to this project.  In other words,
-     * if you call Project1.addLabTangible(), you'll
-     * find Project1 listed as an active project
-     * when you call {@link Goop#getActiveProjects()},
-     * as long as Project1 is considered "active"
-     * @param vessel
-     * @param workflowDescription the description of the workflow
-     *                            that labTangible is expected
-     */
-    public void addVessel(LabVessel vessel, WorkflowDescription workflowDescription);
+    public void addStarter(LabVessel vessel);
 
     public Collection<Person> getProjectOwners();
 

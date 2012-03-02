@@ -7,8 +7,28 @@ package org.broadinstitute.sequel.entity.workflow;
  *
  * For example: HybridSelection 7.0.
  */
-public interface LabWorkflow {
+public class LabWorkflow {
 
+    private String workflowName;
+    
+    private String version;
+    
+    public LabWorkflow(String workflowName,String version) {
+        if (workflowName == null) {
+             throw new NullPointerException("workflowName cannot be null."); 
+        }
+        this.workflowName = workflowName;
+        this.version = version;
+    }
+    
+    /**
+     * Name of the workflow.
+     * @return
+     */
+    public String getName() {
+        return workflowName;
+    }
+    
     /**
      * Optional version.  Early in a project,
      * the version might not be set.  By the
@@ -18,6 +38,8 @@ public interface LabWorkflow {
      * might be interpreted as "latest".
      * @return
      */
-    public String getVersion();
+    public String getVersion() {
+        return version;
+    }
 
 }

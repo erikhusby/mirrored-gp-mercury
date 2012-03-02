@@ -38,7 +38,7 @@ public class LabEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             SampleSheetImpl sampleSheet = new SampleSheetImpl();
-            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, project));
+            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, project, null));
             String barcode = "R" + rackPosition;
             mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
         }
