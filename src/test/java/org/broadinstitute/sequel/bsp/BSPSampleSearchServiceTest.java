@@ -2,8 +2,10 @@ package org.broadinstitute.sequel.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.sequel.control.bsp.BSPConnectionParametersImpl;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
+import org.broadinstitute.sequel.control.bsp.BSPSampleSearchServiceImpl;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -14,22 +16,21 @@ import java.util.Map;
 
 public class BSPSampleSearchServiceTest {
 
-    @Inject
-    private BSPSampleSearchService service;
 
 
     @SuppressWarnings("unused")
     private static final Log _logger = LogFactory.getLog(BSPSampleSearchServiceTest.class);
 
+    BSPSampleSearchService service = new BSPSampleSearchServiceImpl(new BSPConnectionParametersImpl());
 
-    @Test(enabled = false)
+    @Test
     public void testBasic() {
-        Assert.assertNotNull(service);
-
         final String TEST_SAMPLE_ID = "SM-12CO4";
         String [] sampleIDs = new String [] {TEST_SAMPLE_ID};
 
-        List<String[]> data = service.runSampleSearch(Arrays.asList(sampleIDs), BSPSampleSearchColumn.SAMPLE_ID);
+        List<String[]> data = service.runSampleSearch(Arrays.asList(sampleIDs), BSPSampleSearchColumn.SAMPLE_ID,
+                BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
+                BSPSampleSearchColumn.ROOT_SAMPLE);
 
         Assert.assertEquals(TEST_SAMPLE_ID, data.get(0)[0]);
     }

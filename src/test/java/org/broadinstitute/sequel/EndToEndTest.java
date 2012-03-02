@@ -63,7 +63,7 @@ public class EndToEndTest  {
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        sampleSheet.addStartingSample(new BSPSample(sampleName, project));
+        sampleSheet.addStartingSample(new BSPSample(sampleName, project,null));
         return new TwoDBarcodedTube(tubeBarcode,sampleSheet);
     }
     
@@ -165,7 +165,7 @@ public class EndToEndTest  {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= 96; rackPosition++) {
             SampleSheetImpl sampleSheet = new SampleSheetImpl();
-            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, project));
+            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, project,null));
             String barcode = "R" + rackPosition;
             mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
         }

@@ -1,5 +1,8 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.control.bsp.BSPConnectionParametersImpl;
+import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
+import org.broadinstitute.sequel.control.bsp.BSPSampleSearchServiceImpl;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
@@ -35,7 +38,7 @@ public class ProjectTest {
         legacyProject.addProjectPlan(plan);
 
         SampleSheetImpl sampleSheet = new SampleSheetImpl();
-        StartingSample startingSample = new BSPSample("BSPRoot123",legacyProject);
+        StartingSample startingSample = new BSPSample("BSPRoot123",legacyProject,null);
         sampleSheet.addStartingSample(startingSample);
         LabVessel starter = new TwoDBarcodedTube(startingSample.getContainerId(), sampleSheet);
         
