@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.StateChange;
@@ -16,6 +17,8 @@ import java.util.Set;
  *
  */
 public interface LabVessel  {
+
+    void applyTransfer(SectionTransfer sectionTransfer);
 
     public enum CONTAINER_TYPE {
         STATIC_PLATE,

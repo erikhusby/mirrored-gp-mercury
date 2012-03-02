@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.StateChange;
@@ -72,7 +73,7 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
     @Override
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if(getSampleSheetReferences().isEmpty()) {
+        if(getSampleSheetAuthorities().isEmpty()) {
             for (LabVessel labVessel : getContainedVessels()) {
                 sampleInstances.addAll(labVessel.getSampleInstances());
             }
@@ -142,5 +143,10 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
             sampleSheets.addAll(twoDBarcodedTube.getSampleSheets());
         }
         return sampleSheets;
+    }
+
+    @Override
+    public void applyTransfer(SectionTransfer sectionTransfer) {
+        throw new RuntimeException("Method not yet implemented.");
     }
 }

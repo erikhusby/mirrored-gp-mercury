@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.StateChange;
@@ -10,11 +11,14 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class PlateWell extends AbstractLabVessel {
 
     private StaticPlate plate;
+    
+    private Set<Reagent> appliedReagents = new HashSet<Reagent>();
     
     public PlateWell(StaticPlate p,WellName wellName) {
         super(p.getLabel() + wellName);
@@ -62,7 +66,16 @@ public class PlateWell extends AbstractLabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        throw new RuntimeException("I haven't been written yet.");
+        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        for (SampleSheet sampleSheet : getSampleSheets()) {
+            for (SampleInstance sampleInstance : sampleSheet.getSampleInstances()) {
+                for (Reagent appliedReagent : appliedReagents) {
+                    sampleInstance.getMolecularState().getMolecularEnvelope().surroundWith(appliedReagent.getMolecularEnvelopeDelta());
+                }
+            }
+            sampleInstances.addAll(sampleSheet.getSampleInstances());
+        }
+        return sampleInstances;
     }
 
     @Override
@@ -106,12 +119,17 @@ public class PlateWell extends AbstractLabVessel {
     }
 
     @Override
-    public void applyReagent(Reagent r) {
-        throw new RuntimeException("I haven't been written yet.");
+    public void applyReagent(Reagent reagent) {
+        appliedReagents.add(reagent);
     }
 
     @Override
     public Collection<Reagent> getAppliedReagents() {
-        throw new RuntimeException("I haven't been written yet.");
+        return appliedReagents;
+    }
+
+    @Override
+    public void applyTransfer(SectionTransfer sectionTransfer) {
+        throw new RuntimeException("Method not yet implemented.");
     }
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.UserRemarkable;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
@@ -20,25 +21,33 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
 
     private final Collection<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
 
-    /** SampleInstances in this vessel.  If null, follow {@link #sampleSheetReferences}*/
+    /** SampleInstances in this vessel.  If null, follow {@link #sampleSheetAuthorities}*/
 //    private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
     /** Ancestor vessel that has the nearest change to sampleInstances, e.g. starting vessel or pooling */
-    private Set<LabVessel> sampleSheetReferences = new HashSet<LabVessel>();
-    /** The molecular envelope delta applied to this vessel (is this redundant wrt reagent). If null, follow {@link #molecularEnvelopeDeltaReference}*/
+    private Set<LabVessel> sampleSheetAuthorities = new HashSet<LabVessel>();
+    
+    /** The molecular envelope delta applied to this vessel. If null, follow {@link #molecularEnvelopeDeltaAuthority}*/
     private MolecularEnvelope molecularEnvelopeDelta;
     /** Ancestor vessel that applied the nearest change to molecular envelope */
-    private LabVessel molecularEnvelopeDeltaReference;
+    private LabVessel molecularEnvelopeDeltaAuthority;
     
+    private MolecularState molecularState;
+    // todo jmt molecularStateAuthority?
+    // need a list of molecular states, and a map from event type to state(s?)
+    // a vessel might undergo more than one state change, do we need to
+
     private Project project;
-    private LabVessel projectReference;
+    private LabVessel projectAuthority;
     
     private ReadBucket readBucket;
-    private LabVessel readBucketReference;
+    private LabVessel readBucketAuthority;
     
     private Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
     private Set<LabEvent> transfersTo = new HashSet<LabEvent>();
 
     private final Collection<Stalker> stalkers = new HashSet<Stalker>();
+    
+    private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
     protected AbstractLabVessel(String label) {
         this.label = label;
@@ -71,12 +80,12 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
 
     @Override
     public Collection<Reagent> getReagentContents() {
-        throw new RuntimeException("I haven't been written yet.");
+        return reagentContents;
     }
 
     @Override
-    public void addReagent(Reagent r) {
-        throw new RuntimeException("I haven't been written yet.");
+    public void addReagent(Reagent reagent) {
+        reagentContents.add(reagent);
     }
 
     @Override
@@ -170,7 +179,6 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-
     @Override
     public String getLabCentricName() {
         // todo jmt what should this do?
@@ -187,12 +195,12 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public Set<LabVessel> getSampleSheetReferences() {
-        return sampleSheetReferences;
+    public Set<LabVessel> getSampleSheetAuthorities() {
+        return sampleSheetAuthorities;
     }
 
-    public void setSampleSheetReferences(Set<LabVessel> sampleSheetReferences) {
-        this.sampleSheetReferences = sampleSheetReferences;
+    public void setSampleSheetAuthorities(Set<LabVessel> sampleSheetAuthorities) {
+        this.sampleSheetAuthorities = sampleSheetAuthorities;
     }
 
     @Override

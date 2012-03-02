@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateTemplate;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
@@ -67,6 +68,7 @@ public class GenericLabEvent extends AbstractLabEvent {
      */
     @Override
     public void applyMolecularStateChanges() throws InvalidMolecularStateException {
+        // apply reagents in message
         for (LabVessel target: getTargetLabVessels()) {
 /*
             for (LabVessel source: getSourcesForTarget(target)) {
@@ -88,11 +90,10 @@ public class GenericLabEvent extends AbstractLabEvent {
          * method.
          */
         for (LabVessel target: getTargetLabVessels()) {
+/*
+            // todo jmt restore this
             // check the molecular state per target.
             Set<MolecularStateTemplate> molecularStateTemplatesInTarget = new HashSet<MolecularStateTemplate>();
-
-/*
-todo jmt restore this, after figuring out how to create SampleInstance
             for (SampleInstance sampleInstance : target.getSampleInstances()) {
                 molecularStateTemplatesInTarget.add(sampleInstance.getMolecularState().getMolecularStateTemplate());
             }
@@ -110,9 +111,19 @@ todo jmt restore this, after figuring out how to create SampleInstance
                 throw new InvalidMolecularStateException(errorMessage.toString());
             }
 */
+            // if no molecular envelope change, set backlink
+
+            // create pool, or set backlink
+            // how to determine that it's a pooling operation? destination section has samples (is not empty), source section has samples
+
+            // set molecular state from map (or set backlink?)
+
+            // setting backlinks must be section based, unless the section is ALL* (without flips)
         }
 
-
+        for (SectionTransfer sectionTransfer : getSectionTransfers()) {
+            sectionTransfer.getTargetVessel().applyTransfer(sectionTransfer);
+        }
     }
 
     /**

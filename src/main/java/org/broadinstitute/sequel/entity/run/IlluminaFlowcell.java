@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.run;
 
 
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.notice.UserRemarkable;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
@@ -141,5 +142,10 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements UserRemark
     @Override
     public Collection<Reagent> getAppliedReagents() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void applyTransfer(SectionTransfer sectionTransfer) {
+        throw new RuntimeException("Method not yet implemented.");
     }
 }

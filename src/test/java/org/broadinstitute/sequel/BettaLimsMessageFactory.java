@@ -27,7 +27,11 @@ public class BettaLimsMessageFactory {
             column = NUMBER_OF_RACK_COLUMNS;
             row--;
         }
-        return row + String.valueOf(column);
+        String columnString = String.valueOf(column);
+        if(columnString.length() < 2) {
+            columnString = "0" + columnString;
+        }
+        return row + columnString;
     }
 
     public PlateTransferEventType buildRackToPlate(List<String> tubeBarcodes, String eventType,

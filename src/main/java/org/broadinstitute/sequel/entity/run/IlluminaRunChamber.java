@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.run;
 
 
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.vessel.LabMetric;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
@@ -169,6 +170,11 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
             sequencerReagents.addAll(event.getReagents());
         }
         return sequencerReagents;
+    }
+
+    @Override
+    public void applyTransfer(SectionTransfer sectionTransfer) {
+        throw new RuntimeException("Method not yet implemented.");
     }
 
     @Override

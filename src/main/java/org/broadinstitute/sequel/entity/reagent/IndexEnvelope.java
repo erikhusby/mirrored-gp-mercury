@@ -1,15 +1,23 @@
 package org.broadinstitute.sequel.entity.reagent;
 
 
+import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.vessel.MolecularAppendage;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 
 public class IndexEnvelope  implements MolecularEnvelope {
 
+    private String threePrimeSeq;
+    private String fivePrimeSeq;
+    private String name;
+
+    // todo jmt add technology
     public IndexEnvelope(String threePrimeSeq,
                          String fivePrimeSeq,
                          String name) {
-
+        this.threePrimeSeq = threePrimeSeq;
+        this.fivePrimeSeq = fivePrimeSeq;
+        this.name = name;
     }
     
     @Override
@@ -19,12 +27,14 @@ public class IndexEnvelope  implements MolecularEnvelope {
 
     @Override
     public MolecularAppendage get3PrimeAttachment() {
-        throw new RuntimeException("I haven't been written yet.");
+        return new DNAAppendage(name, SequencingTechnology.ILLUMINA_HISEQ, DNAAppendage.FunctionalRole.MOLECULAR_INDEX,
+                threePrimeSeq, null);
     }
 
     @Override
     public MolecularAppendage get5PrimeAttachment() {
-        throw new RuntimeException("I haven't been written yet.");
+        return new DNAAppendage(name, SequencingTechnology.ILLUMINA_HISEQ, DNAAppendage.FunctionalRole.MOLECULAR_INDEX,
+                null, fivePrimeSeq);
     }
 
     @Override

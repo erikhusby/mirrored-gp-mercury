@@ -7,6 +7,7 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * A lab event isn't just at the granularity
@@ -173,4 +174,5 @@ public interface LabEvent {
      */
     public Collection<SampleSheet> getAllSampleSheets();
 
+    Set<SectionTransfer> getSectionTransfers();
 }

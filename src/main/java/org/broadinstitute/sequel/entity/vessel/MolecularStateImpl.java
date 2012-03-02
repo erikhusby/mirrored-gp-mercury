@@ -15,6 +15,11 @@ public class MolecularStateImpl implements MolecularState {
     }
 
     @Override
+    public void setMolecularEnvelope(MolecularEnvelope molecularEnvelopeDelta) {
+        molecularEnvelope = molecularEnvelopeDelta;
+    }
+
+    @Override
     public DNA_OR_RNA getNucleicAcidState() {
         return nucleicAcidState;
     }
