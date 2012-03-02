@@ -16,8 +16,6 @@ import java.util.Map;
 
 public class BSPSampleSearchServiceTest {
 
-
-
     @SuppressWarnings("unused")
     private static final Log _logger = LogFactory.getLog(BSPSampleSearchServiceTest.class);
 
@@ -36,7 +34,7 @@ public class BSPSampleSearchServiceTest {
     }
 
 
-    @Test(enabled = false)
+    @Test
     public void testLsidsToIds() {
         String [] lsids = {
                 "broadinstitute.org:bsp.prod.sample:UP6R",
