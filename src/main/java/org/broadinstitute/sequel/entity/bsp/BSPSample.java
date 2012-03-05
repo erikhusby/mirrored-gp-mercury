@@ -30,7 +30,6 @@ public class BSPSample implements StartingSample {
 
     private Project project;
 
-    @Inject
     BSPSampleSearchService service;
 
     /**

@@ -21,13 +21,13 @@ public class BSPSampleSearchServiceTest {
 
     BSPSampleSearchService service;
 
-    @BeforeClass
+    @BeforeClass(groups = "ExternalIntegration")
     public void initWeld() {
         WeldContainer weld = new Weld().initialize();
         service = weld.instance().select(BSPSampleSearchService.class).get();
     }
 
-    @Test
+    @Test(groups = {"ExternalIntegration"})
     public void testBasic() {
         final String TEST_SAMPLE_ID = "SM-12CO4";
         String [] sampleIDs = new String [] {TEST_SAMPLE_ID};
@@ -38,7 +38,7 @@ public class BSPSampleSearchServiceTest {
     }
 
 
-    @Test
+    @Test(groups = {"ExternalIntegration"})
     public void testLsidsToIds() {
         String [] lsids = {
                 "broadinstitute.org:bsp.prod.sample:UP6R",

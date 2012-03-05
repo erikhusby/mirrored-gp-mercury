@@ -12,13 +12,13 @@ public class BSPSampleTest {
 
     BSPSampleSearchService service;
 
-    @BeforeClass
+    @BeforeClass(groups = "ExternalIntegration")
     public void initWeld() {
         WeldContainer weld = new Weld().initialize();
         service = weld.instance().select(BSPSampleSearchService.class).get();
     }
 
-    @Test
+    @Test(groups = {"ExternalIntegration"})
     public void test_patient_id() {
 
         BSPSample bspSample = new BSPSample("SM-12CO4",

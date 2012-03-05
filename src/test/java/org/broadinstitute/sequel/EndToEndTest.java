@@ -73,7 +73,7 @@ public class EndToEndTest  {
         return createBSPStock(aliquotName,tubeBarcode,project);
     }
     
-    @Test
+    @Test(groups = {"DatabaseFree"})
     public void doIt() {
 
         String masterSample1 = "master sample1";

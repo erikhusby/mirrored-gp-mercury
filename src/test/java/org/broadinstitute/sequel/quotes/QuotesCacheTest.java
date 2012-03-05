@@ -14,7 +14,7 @@ public class QuotesCacheTest {
     Quote quote3 = new Quote("DNA34",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"Cheap Grant"))));
     Quote quote4 = new Quote("DNA35",new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))));
 
-    @Test
+    @Test(groups = {"ExternalIntegration"})
     public void test_quotes_for_funding_source() throws Exception {
         Quotes quotes = new Quotes();
         Funding targetSource = new Funding(Funding.FUNDS_RESERVATION,"Magical Infinite Grant");
@@ -36,7 +36,7 @@ public class QuotesCacheTest {
         Assert.assertFalse(foundQuotes.contains(quote3));
     }
 
-    @Test
+    @Test(groups = {"ExternalIntegration"})
     public void test_unique_funding_soures() throws Exception {
         Quotes quotes = new Quotes();
         quotes.addQuote(quote1);
@@ -59,7 +59,7 @@ public class QuotesCacheTest {
         Assert.assertEquals(quotes.getQuotes(),cache.getQuotes());
     }
 
-    @Test(groups = {"slow"})
+    @Test(groups = {"ExternalIntegration"})
     public void test_known_good_funding_sources() throws Exception {
 
         long start = System.currentTimeMillis();

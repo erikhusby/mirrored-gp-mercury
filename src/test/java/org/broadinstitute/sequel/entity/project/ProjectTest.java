@@ -18,7 +18,7 @@ import java.util.HashSet;
 
 public class ProjectTest {
     
-    @Test(enabled = true)
+    @Test(groups = {"DatabaseFree"})
     public void test_legacy_squid_project() {
         Project legacyProject = new BasicProject("Legacy Squid Project C203",null);
         ProjectPlan plan = new ProjectPlan(legacyProject,legacyProject.getProjectName() + " Plan");
