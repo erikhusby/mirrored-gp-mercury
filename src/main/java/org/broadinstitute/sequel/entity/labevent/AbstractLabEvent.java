@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.AbstractLabVessel;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.vessel.SBSSection;
 
 import java.util.Collection;
 import java.util.Date;
@@ -31,6 +32,10 @@ public abstract class AbstractLabEvent implements LabEvent {
     private Set<LabVessel> sourceLabVessels = new HashSet<LabVessel>();
     private Set<LabVessel> targetLabVessels = new HashSet<LabVessel>();
     private Set<Reagent> reagents = new HashSet<Reagent>();
+    /** for transfers between plates and racks */
+    private Set<SectionTransfer> sectionTransfers = new HashSet<SectionTransfer>();
+    // todo jmt need transfers between positions, for cherry picks
+    // Also need tube to tube transfers, or will they always be in a rack?
 
     @Override
     public Collection<LabVessel> getTargetLabVessels() {
@@ -89,11 +94,13 @@ public abstract class AbstractLabEvent implements LabEvent {
         }
         if(targetVessel.getTransfersTo().isEmpty()) {
             for (LabVessel sourceLabVessel : sourceLabVessels) {
-                if (((AbstractLabVessel) sourceLabVessel).getSampleSheetReferences().isEmpty()) {
-                    ((AbstractLabVessel)targetVessel).getSampleSheetReferences().add(sourceLabVessel);
+                if (((AbstractLabVessel) sourceLabVessel).getSampleSheetAuthorities().isEmpty()) {
+                    if(sourceLabVessel.getReagentContents().isEmpty()) {
+                        ((AbstractLabVessel)targetVessel).getSampleSheetAuthorities().add(sourceLabVessel);
+                    }
                 } else {
-                    ((AbstractLabVessel)targetVessel).getSampleSheetReferences().addAll(
-                            ((AbstractLabVessel) sourceLabVessel).getSampleSheetReferences());
+                    ((AbstractLabVessel)targetVessel).getSampleSheetAuthorities().addAll(
+                            ((AbstractLabVessel) sourceLabVessel).getSampleSheetAuthorities());
                 }
             }
         }
@@ -120,5 +127,14 @@ public abstract class AbstractLabEvent implements LabEvent {
 
     public void setEventDate(Date eventDate) {
         this.eventDate = eventDate;
+    }
+
+    @Override
+    public Set<SectionTransfer> getSectionTransfers() {
+        return sectionTransfers;
+    }
+
+    public void setSectionTransfers(Set<SectionTransfer> sectionTransfers) {
+        this.sectionTransfers = sectionTransfers;
     }
 }

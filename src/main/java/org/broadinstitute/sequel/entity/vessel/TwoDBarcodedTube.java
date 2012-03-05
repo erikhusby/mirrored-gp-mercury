@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.vessel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
@@ -77,7 +78,7 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
     }
 
     @Override
-    public void addReagent(Reagent r) {
+    public void addReagent(Reagent reagent) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -201,5 +202,10 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
     @Override
     public Collection<Reagent> getAppliedReagents() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void applyTransfer(SectionTransfer sectionTransfer) {
+        throw new RuntimeException("Method not yet implemented.");
     }
 }

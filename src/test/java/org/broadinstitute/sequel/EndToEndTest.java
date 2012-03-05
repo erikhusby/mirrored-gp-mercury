@@ -1,22 +1,17 @@
 package org.broadinstitute.sequel;
 
 
-import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.control.bsp.MockBSPConnector;
-import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
-import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
-import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.queue.BSPAliquotWorkQueue;
@@ -29,7 +24,6 @@ import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
-import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 import org.easymock.EasyMock;
@@ -37,10 +31,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Set;
 
 public class EndToEndTest  {
@@ -50,13 +41,6 @@ public class EndToEndTest  {
     
     //@Inject
     LabEventHandler handler;
-
-    private JiraTicket createMockJiraTicket() {
-        JiraTicket ticket = EasyMock.createMock(JiraTicket.class);
-        EasyMock.expect(ticket.addComment((String)EasyMock.anyObject())).andReturn(JiraTicket.JiraResponse.OK).atLeastOnce();
-        EasyMock.replay(ticket);
-        return ticket;
-    }
 
     private LabVessel createBSPStock(String sampleName,String tubeBarcode,Project project) {
         SampleSheet sampleSheet = new SampleSheetImpl();
@@ -80,9 +64,10 @@ public class EndToEndTest  {
         String masterSample2 = "master sample2";
         String aliquot1Label = "aliquot1";
         String aliquot2Label = "aliquot2";
+        TestUtilities testUtilities = new TestUtilities();
         final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection", "7.0");
-        Project project = new BasicProject("Project1",createMockJiraTicket());
-        Project project2 = new BasicProject("Project2",createMockJiraTicket());
+        Project project = new BasicProject("Project1", testUtilities.createMockJiraTicket());
+        Project project2 = new BasicProject("Project2", testUtilities.createMockJiraTicket());
 
         LabVessel stock1 = createBSPStock(masterSample1,"00001234",project);
         LabVessel stock2 = createBSPStock(masterSample2,"00005678",project2);
@@ -162,62 +147,6 @@ public class EndToEndTest  {
         for (StatusNote statusNote : aliquotTube.getAllStatusNotes()) {
             Assert.assertEquals(LabEventName.ALIQUOT_RECEIVED, statusNote.getEventName());
         }
-
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        for(int rackPosition = 1; rackPosition <= 96; rackPosition++) {
-            SampleSheetImpl sampleSheet = new SampleSheetImpl();
-            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, project,null));
-            String barcode = "R" + rackPosition;
-            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
-        }
-
-        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
-        LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setPersonDAO(new PersonDAO());
-        LabEventHandler labEventHandler = new LabEventHandler();
-
-        PlateTransferEventType shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate(
-                new ArrayList<String>(mapBarcodeToTube.keySet()), "ShearingTransfer", "KioskRack", "ShearPlate");
-        LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsDbFree(
-                shearingTransferEventJaxb, mapBarcodeToTube, null);
-        labEventHandler.processEvent(shearingTransferEventEntity);
-
-        StaticPlate shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(shearingPlate.getSampleInstances().size(),
-                96, "Wrong number of sample instances");
-
-        PlateTransferEventType postShearingTransferCleanupEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                "PostShearingTransferCleanup", "ShearPlate", "ShearCleanPlate");
-        LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsDbFree(
-                postShearingTransferCleanupEventJaxb, shearingPlate, null);
-        labEventHandler.processEvent(postShearingTransferCleanupEntity);
-
-        StaticPlate shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
-        Assert.assertEquals(shearingCleanupPlate.getSampleInstances().size(),
-                96, "Wrong number of sample instances");
-        Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getSampleInstancesInWell("A8");
-        Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
-        Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
-
-        PlateTransferEventType indexedAdapterLigationJaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                "IndexedAdapterLigation", "IndexPlate", "ShearCleanPlate");
-        
-        StaticPlate indexPlate = new StaticPlate("IndexPlate");
-        LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLimsDbFree(
-                postShearingTransferCleanupEventJaxb, indexPlate, shearingCleanupPlate);
-        labEventHandler.processEvent(postShearingTransferCleanupEntity);
-
-        // PreflightNormalization rack event
-        // deck calls web services
-        // ShearingTransfer rack to plate
-        // EndRepair plate event with reagent
-        // IndexedAdapterLigation plate to plate
-        // BaitSetup tube to plate
-        // BaitAddition plate to plate
-        // NormalizedCatchRegistration plate to rack
-        // PoolingTransfer cherry pick
-        // StripTubeBTransfer
-        // FlowcellTransfer
 
         /**
          * Todo arz: test {@link Goop#applyReagent(org.broadinstitute.sequel.entity.reagent.Reagent)} by applying

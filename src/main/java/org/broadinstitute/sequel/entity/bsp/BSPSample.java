@@ -11,6 +11,7 @@ import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleInstanceImpl;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
+import org.broadinstitute.sequel.entity.vessel.MolecularStateImpl;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -124,7 +125,7 @@ public class BSPSample implements StartingSample {
 
     @Override
     public SampleInstanceImpl createSampleInstance() {
-        return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE,project,null,null);
+        return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE, project, new MolecularStateImpl(), null);
     }
 
     @Override

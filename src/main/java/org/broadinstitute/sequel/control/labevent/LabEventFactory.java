@@ -6,8 +6,10 @@ import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventType;
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
+import org.broadinstitute.sequel.entity.vessel.SBSSection;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
@@ -34,6 +36,8 @@ public class LabEventFactory {
         mapMessageNameToEventType.put("ShearingTransfer", new LabEventType(false, true,
                 MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
         mapMessageNameToEventType.put("PostShearingTransferCleanup", new LabEventType(false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
+        mapMessageNameToEventType.put("IndexedAdapterLigation", new LabEventType(true, false,
                 MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
     }
     
@@ -104,6 +108,9 @@ public class LabEventFactory {
 
         labEvent.addSourceLabVessel(sourcePlate);
         labEvent.addTargetLabVessel(targetPlate);
+        labEvent.getSectionTransfers().add(new SectionTransfer(
+                sourcePlate, SBSSection.valueOf(plateTransferEvent.getSourcePlate().getSection()),
+                targetPlate, SBSSection.valueOf(plateTransferEvent.getPlate().getSection())));
         return labEvent;
     }
 

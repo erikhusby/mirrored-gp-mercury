@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.StateChange;
@@ -10,7 +11,10 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -18,7 +22,7 @@ import java.util.Set;
  */
 public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
 
-    private Set<PlateWell> wells = new HashSet<PlateWell>();
+    private Map<String, PlateWell> mapPositionToWell = new HashMap<String, PlateWell>();
 
     public StaticPlate(String label) {
         super(label);
@@ -36,7 +40,11 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
 
     @Override
     public void addContainedVessel(LabVessel child) {
-        throw new RuntimeException("I haven't been written yet.");
+        throw new RuntimeException("Use addWell");
+    }
+
+    public void addWell(PlateWell plateWell, String position) {
+        mapPositionToWell.put(position, plateWell);
     }
 
     @Override
@@ -57,14 +65,18 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
     @Override
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if(wells.isEmpty()) {
-            for (LabVessel labVessel : getSampleSheetReferences()) {
+        if (mapPositionToWell.isEmpty()) {
+            for (LabVessel labVessel : getSampleSheetAuthorities()) {
                 for (SampleSheet sampleSheet : labVessel.getSampleSheets()) {
                     sampleInstances.addAll(sampleSheet.getSampleInstances());
                 }
             }
         } else {
-            throw new RuntimeException("I haven't been written yet.");
+            for (PlateWell well : mapPositionToWell.values()) {
+                for (SampleInstance sampleInstance : well.getSampleInstances()) {
+
+                }
+            }
         }
         return sampleInstances;
     }
@@ -121,17 +133,67 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
 
     public Set<SampleInstance> getSampleInstancesInWell(String wellPosition) {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if(wells.isEmpty()) {
-            for (LabVessel labVessel : getSampleSheetReferences()) {
-                if(labVessel instanceof RackOfTubes) {
+        if(getSampleSheetAuthorities().isEmpty()) {
+            throw new RuntimeException("I haven't been written yet.");
+        } else {
+            for (LabVessel labVessel : getSampleSheetAuthorities()) {
+                // todo jmt generalize to handle rack and tube
+                if (labVessel instanceof RackOfTubes) {
                     RackOfTubes rackOfTubes = (RackOfTubes) labVessel;
-                    // todo jmt honor sections
-                    sampleInstances.addAll(rackOfTubes.getSampleInstancesInPosition(wellPosition));
+                    Set<SampleInstance> sampleInstancesInPosition = rackOfTubes.getSampleInstancesInPosition(wellPosition);
+                    for (SampleInstance sampleInstance : sampleInstancesInPosition) {
+                        PlateWell wellAtPosition = getWellAtPosition(wellPosition);
+                        if (wellAtPosition != null) {
+                            for (Reagent reagent : wellAtPosition.getAppliedReagents()) {
+                                if(reagent.getMolecularEnvelopeDelta() != null) {
+                                    MolecularEnvelope molecularEnvelope = sampleInstance.getMolecularState().getMolecularEnvelope();
+                                    if(molecularEnvelope == null) {
+                                        sampleInstance.getMolecularState().setMolecularEnvelope(reagent.getMolecularEnvelopeDelta());
+                                    } else {
+                                        molecularEnvelope.surroundWith(reagent.getMolecularEnvelopeDelta());
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    sampleInstances.addAll(sampleInstancesInPosition);
                 }
             }
-        } else {
-            throw new RuntimeException("I haven't been written yet.");
         }
         return sampleInstances;
+    }
+
+    public PlateWell getWellAtPosition(String position) {
+        return mapPositionToWell.get(position);
+    }
+
+    public Map<String, PlateWell> getMapPositionToWell() {
+        return mapPositionToWell;
+    }
+
+    @Override
+    public void applyTransfer(SectionTransfer sectionTransfer) {
+        List<WellName> wells = sectionTransfer.getSourceSection().getWells();
+        StaticPlate sourcePlate = (StaticPlate) sectionTransfer.getSourceVessel();
+        StaticPlate targetPlate = (StaticPlate) sectionTransfer.getTargetVessel();
+        for (int wellIndex = 0; wellIndex < wells.size(); wellIndex++) {
+            WellName sourceWellName = wells.get(wellIndex);
+            WellName targetWellName = sectionTransfer.getTargetSection().getWells().get(wellIndex);
+            if (!sourcePlate.getMapPositionToWell().isEmpty()) {
+                PlateWell sourceWell = sourcePlate.getWellAtPosition(sourceWellName.getWellName());
+                if (sourceWell != null) {
+                    Collection<Reagent> reagents = sourceWell.getReagentContents();
+                    for (Reagent reagent : reagents) {
+                        PlateWell plateWell = targetPlate.getWellAtPosition(targetWellName.getWellName());
+                        if (plateWell == null) {
+                            plateWell = new PlateWell(targetPlate, targetWellName);
+                            targetPlate.addWell(plateWell, targetWellName.getWellName());
+                        }
+                        plateWell.applyReagent(reagent);
+                    }
+                }
+            }
+        }
     }
 }

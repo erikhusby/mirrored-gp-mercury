@@ -48,6 +48,8 @@ public interface MolecularState {
      */
     public MolecularEnvelope getMolecularEnvelope();
 
+    void setMolecularEnvelope(MolecularEnvelope molecularEnvelopeDelta);
+
     /**
      * Is the target sample in the evenlope DNA or RNA?
      * @return
