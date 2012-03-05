@@ -21,6 +21,10 @@ public class BSPSampleSearchServiceTest {
 
     BSPSampleSearchService service;
 
+    // todo figure out the right way to encapsulte weld SE startup,
+    // without cluttering the tests and putting @BeforeClass
+    // into every single group.
+
     @BeforeClass(groups = "ExternalIntegration")
     public void initWeld() {
         WeldContainer weld = new Weld().initialize();
