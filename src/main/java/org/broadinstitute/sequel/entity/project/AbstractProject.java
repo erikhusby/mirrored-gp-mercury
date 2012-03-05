@@ -1,8 +1,10 @@
 package org.broadinstitute.sequel.entity.project;
 
 
+import org.broadinstitute.sequel.control.quote.Funding;
+import org.broadinstitute.sequel.control.quote.Quote;
+import org.broadinstitute.sequel.control.quote.QuotesCache;
 import org.broadinstitute.sequel.entity.analysis.SequenceAnalysisInstructions;
-import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.Stalker;
@@ -14,14 +16,16 @@ import org.broadinstitute.sequel.entity.run.SequenceAccessControlModel;
 import org.broadinstitute.sequel.entity.run.SequencingResult;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
-import org.broadinstitute.sequel.entity.vessel.LabTangible;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 
+import javax.inject.Inject;
 import java.util.*;
 
 public abstract class AbstractProject implements Project, UserRemarkable {
 
+    private QuotesCache quotesCache;
+    
     private String projectName;
     
     JiraTicket jiraTicket;
@@ -36,7 +40,13 @@ public abstract class AbstractProject implements Project, UserRemarkable {
     
     private List<LabEventName> checkpointableEvents = new ArrayList<LabEventName>();
     
+    private Collection<String> grants = new HashSet<String>();
+    
     private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
+
+    public void setQuotesCache(QuotesCache cache) {
+        this.quotesCache = cache;
+    }
 
     @Override
     public JiraTicket getJiraTicket() {
@@ -101,7 +111,14 @@ public abstract class AbstractProject implements Project, UserRemarkable {
 
     @Override
     public Collection<Quote> getAvailableQuotes() {
-        throw new RuntimeException("I haven't been written yet.");
+        Set<Quote> quotes = new HashSet<Quote>();
+        if (quotesCache == null) {
+            throw new RuntimeException("Cached quote server data is not available");
+        }
+        for (String grant : grants) {
+            quotes.addAll(quotesCache.getQuotesForGrantDescription(grant));
+        }
+        return quotes;
     }
 
     @Override
@@ -270,6 +287,14 @@ public abstract class AbstractProject implements Project, UserRemarkable {
     @Override
     public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription) {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void addGrant(String grantDescription) {
+        if (grantDescription == null) {
+             throw new NullPointerException("grantDescription cannot be null."); 
+        }
+        grants.add(grantDescription);
     }
 
     @Override

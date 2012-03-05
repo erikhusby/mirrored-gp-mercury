@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.control.quote.*;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
@@ -12,6 +13,7 @@ import org.broadinstitute.sequel.entity.workflow.LabWorkflow;
 
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
+import org.yaml.snakeyaml.nodes.CollectionNode;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -20,7 +22,7 @@ public class ProjectTest {
     
     @Test(groups = {"DatabaseFree"})
     public void test_legacy_squid_project() {
-        Project legacyProject = new BasicProject("Legacy Squid Project C203",null);
+        AbstractProject legacyProject = new BasicProject("Legacy Squid Project C203",null);
         ProjectPlan plan = new ProjectPlan(legacyProject,legacyProject.getProjectName() + " Plan");
         ReagentDesign bait = new ReagentDesign("agilent_foo", ReagentDesign.REAGENT_TYPE.BAIT);
         plan.addReagentDesign(bait);
@@ -94,5 +96,20 @@ public class ProjectTest {
         
         assertEquals(30,((XFoldCoverage)ionPlan.getCoverageGoal()).getCoverageDepth());
 
+        legacyProject.addGrant("NHGRI");
+        legacyProject.setQuotesCache(buildQuotesCache());
+        
+        Collection<Quote> quotes = legacyProject.getAvailableQuotes();
+        
+        assertEquals(2,quotes.size());
+
+    }
+    
+    private QuotesCache buildQuotesCache() {
+        Quotes quotes = new Quotes();
+        quotes.addQuote(new Quote("GF128",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
+        quotes.addQuote(new Quote("GF129",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
+        quotes.addQuote(new Quote("GF130",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
+        return new QuotesCache(quotes);
     }
 }
