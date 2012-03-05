@@ -25,11 +25,9 @@ public class LabEventHandler {
         ERROR /* further refine to "out of order", "bad molecular envelope", critical, warning, etc. */
     }
 
-   
-    @Inject
+
     PartiallyProcessedLabEventCache unanchored;
 
-    @Inject
     PartiallyProcessedLabEventCache invalidMolecularState;
 
     EntityManager em;

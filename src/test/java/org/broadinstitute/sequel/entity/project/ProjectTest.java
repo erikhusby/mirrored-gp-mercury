@@ -1,8 +1,5 @@
 package org.broadinstitute.sequel.entity.project;
 
-import org.broadinstitute.sequel.control.bsp.BSPConnectionParametersImpl;
-import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
-import org.broadinstitute.sequel.control.bsp.BSPSampleSearchServiceImpl;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;

@@ -2,14 +2,14 @@ package org.broadinstitute.sequel.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.sequel.control.bsp.BSPConnectionParametersImpl;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
-import org.broadinstitute.sequel.control.bsp.BSPSampleSearchServiceImpl;
+import org.jboss.weld.environment.se.Weld;
+import org.jboss.weld.environment.se.WeldContainer;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -19,17 +19,21 @@ public class BSPSampleSearchServiceTest {
     @SuppressWarnings("unused")
     private static final Log _logger = LogFactory.getLog(BSPSampleSearchServiceTest.class);
 
-    BSPSampleSearchService service = new BSPSampleSearchServiceImpl(new BSPConnectionParametersImpl());
+    BSPSampleSearchService service;
+
+    @BeforeClass
+    public void initWeld() {
+        WeldContainer weld = new Weld().initialize();
+        service = weld.instance().select(BSPSampleSearchService.class).get();
+    }
 
     @Test
     public void testBasic() {
         final String TEST_SAMPLE_ID = "SM-12CO4";
         String [] sampleIDs = new String [] {TEST_SAMPLE_ID};
-
         List<String[]> data = service.runSampleSearch(Arrays.asList(sampleIDs), BSPSampleSearchColumn.SAMPLE_ID,
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
                 BSPSampleSearchColumn.ROOT_SAMPLE);
-
         Assert.assertEquals(TEST_SAMPLE_ID, data.get(0)[0]);
     }
 

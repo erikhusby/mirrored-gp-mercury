@@ -31,7 +31,7 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
 
     // Can we first make db-free unit tests and then play some
     // CDI configuration to turn them into various flavors
-    // of integration tests for free?  Just change the beans.xml
+    // of integration tests for free?  Just change the beans.crap.xml
     // file you're using to run the same tests with or without
     // BSP connectivity.  Could you do the same with db access?
     private BSPConnector bspConnector;

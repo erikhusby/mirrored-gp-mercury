@@ -9,24 +9,34 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.weld.environment.se.events.ContainerInitialized;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.*;
 
-
 public class BSPSampleSearchServiceImpl implements BSPSampleSearchService {
+
 
     private static Log _logger = LogFactory
             .getLog(BSPSampleSearchServiceImpl.class);
-    
 
+
+    @Inject
     private BSPConnectionParameters connParams;
 
     private Client jerseyClient;
+
+    public BSPSampleSearchServiceImpl() {}
 
     public BSPSampleSearchServiceImpl(BSPConnectionParameters params) {
         if (params == null) {

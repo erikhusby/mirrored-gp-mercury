@@ -45,10 +45,11 @@ import java.util.Set;
 
 public class EndToEndTest  {
 
-    @Inject
+    //@Inject
     LabVesselDAO labVesselDAO;
     
-    @Inject LabEventHandler handler;
+    //@Inject
+    LabEventHandler handler;
 
     private JiraTicket createMockJiraTicket() {
         JiraTicket ticket = EasyMock.createMock(JiraTicket.class);
