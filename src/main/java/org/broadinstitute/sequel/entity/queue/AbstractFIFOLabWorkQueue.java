@@ -2,6 +2,8 @@ package org.broadinstitute.sequel.entity.queue;
 
 
 import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
@@ -38,7 +40,7 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
         boolean foundIt = false;
         for (WorkQueueEntry queuedWork: requestedWork) {
             if (vessel.equals(queuedWork.getLabVessel())) {
-                if (workflow.equals(queuedWork.getWorkflowDescription())) {
+                if (workflow.equals(queuedWork.)) {
                     if (workflowParameters == null) {
                         if (queuedWork.getWorkflowParameters() == null) {
                             foundIt = true;
@@ -53,7 +55,7 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
             }
             if (foundIt) {
                 requestedWork.remove(queuedWork);
-                markWorkStarted(queuedWork);
+                markWorkStarted(queuedWork,user);
                 break;
             }
         }
@@ -67,6 +69,13 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
     
     private void markWorkStarted(WorkQueueEntry queuedWork,Person user) {
         queuedWork.addWorkStarted(user);
+        ProjectPlan projectPlan = queuedWork.getProjectPlan();
+        Project p = projectPlan.getProject();
+        JiraTicket ticket = p.getJiraTicket();
+        if (ticket != null) {
+            ticket.addComment(user.getFirstName() + " " + user.getLastName() + " has started work for plan '" +
+                    projectPlan.getName() + "' for starter " + queuedWork.getLabVessel().getLabel());
+        }
     }
 
     @Override

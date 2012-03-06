@@ -14,14 +14,41 @@ import java.util.HashSet;
 
 public class WorkQueueEntry {
 
-    private Collection<GenericLabEvent> workStartedEvents = new HashSet<GenericLabEvent>();
+    private Collection<SimpleUserEvent> workStartedEvents = new HashSet<SimpleUserEvent>();
+    
+    private LabVessel vessel;
+    
+    private LabWorkQueueParameters parameters;
+    
+    private ProjectPlan projectPlan;
     
     public WorkQueueEntry(LabVessel vessel,
                           LabWorkQueueParameters workflowParameters,
-                          ProjectPlan workflowDescription) {
-
+                          ProjectPlan projectPlan) {
+        if (vessel == null) {
+             throw new NullPointerException("vessel cannot be null."); 
+        }
+        if (projectPlan == null) {
+             throw new NullPointerException("projectPlan cannot be null."); 
+        }
+        
+        this.vessel = vessel;
+        this.projectPlan = projectPlan;
+        this.parameters = workflowParameters;
     }
-    
+
+    public ProjectPlan getProjectPlan() {
+        return projectPlan;
+    }
+
+    public LabVessel getLabVessel() {
+        return vessel;
+    }
+
+    public LabWorkQueueParameters getWorkflowParameters() {
+        return parameters;
+    }
+
     public void addWorkStarted(Person user) {
         workStartedEvents.add(new SimpleUserEvent(user, LabEventName.WORK_STARTED));
     }

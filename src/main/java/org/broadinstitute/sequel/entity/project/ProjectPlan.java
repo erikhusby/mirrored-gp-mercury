@@ -38,6 +38,10 @@ public class ProjectPlan {
         this.planName = name;
     }
 
+    public Project getProject() {
+        return project;
+    }
+    
     public Collection<ReagentDesign> getReagentDesigns() {
         return reagentDesigns;
     }
