@@ -2,6 +2,9 @@ package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.control.quote.*;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.queue.AbstractFIFOLabWorkQueue;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueueResponse;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -9,11 +12,11 @@ import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.entity.workflow.LabWorkflow;
 
 import static org.testng.Assert.*;
+
+import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 import org.testng.annotations.Test;
-import org.yaml.snakeyaml.nodes.CollectionNode;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -25,8 +28,9 @@ public class ProjectTest {
         AbstractProject legacyProject = new BasicProject("Legacy Squid Project C203",null);
         ProjectPlan plan = new ProjectPlan(legacyProject,legacyProject.getProjectName() + " Plan");
         ReagentDesign bait = new ReagentDesign("agilent_foo", ReagentDesign.REAGENT_TYPE.BAIT);
+        String aliquotBarcode = "000029103912";
         plan.addReagentDesign(bait);
-        LabWorkflow workflow = new LabWorkflow("HybridSelection","9.6");
+        WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6");
 
         SequencingPlanDetail ionPlan = new SequencingPlanDetail(workflow,
                 new IonSequencingTechnology(65, IonSequencingTechnology.CHIP_TYPE.CHIP1),
@@ -39,7 +43,7 @@ public class ProjectTest {
         SampleSheetImpl sampleSheet = new SampleSheetImpl();
         StartingSample startingSample = new BSPSample("BSPRoot123",legacyProject,null);
         sampleSheet.addStartingSample(startingSample);
-        LabVessel starter = new TwoDBarcodedTube(startingSample.getContainerId(), sampleSheet);
+        LabVessel starter = new TwoDBarcodedTube(aliquotBarcode, sampleSheet);
         
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose
@@ -90,7 +94,7 @@ public class ProjectTest {
         assertEquals(ionPlan,planDetail);
         
         assertEquals(SequencingTechnology.TECHNOLOGY_NAME.ION_TORRENT,ionPlan.getSequencingTechnology().getTechnologyName());
-        assertEquals("HybridSelection",ionPlan.getWorkflow().getName());
+        assertEquals("HybridSelection",ionPlan.getWorkflow().getWorkflowName());
         assertEquals(65,((IonSequencingTechnology)ionPlan.getSequencingTechnology()).getCycleCount());
         assertEquals(IonSequencingTechnology.CHIP_TYPE.CHIP1,((IonSequencingTechnology)ionPlan.getSequencingTechnology()).getChipType());
         
@@ -102,6 +106,21 @@ public class ProjectTest {
         Collection<Quote> quotes = legacyProject.getAvailableQuotes();
         
         assertEquals(2,quotes.size());
+
+        LabWorkQueue labWorkQueue = new AbstractFIFOLabWorkQueue();
+
+        assertTrue(labWorkQueue.isEmpty());
+        labWorkQueue.add(starter,null,plan);
+
+        assertFalse(labWorkQueue.isEmpty());
+        
+        // todo add a transfer event, look for project relationships
+        // on destinations
+        
+        LabWorkQueueResponse queueResponse = labWorkQueue.startWork(starter, null, ionPlan.getWorkflow());
+
+        assertTrue(labWorkQueue.isEmpty());
+
 
     }
     

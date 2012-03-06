@@ -19,6 +19,8 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 
 import java.util.Collection;
 
+// todo move interface down to abstract class,
+// maybe even just a single class
 public interface Project {
 
     /**

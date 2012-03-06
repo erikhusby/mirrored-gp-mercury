@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
-import org.broadinstitute.sequel.entity.workflow.LabWorkflow;
+import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 
 /**
  * A project can have multiple aspects.
@@ -26,13 +26,13 @@ import org.broadinstitute.sequel.entity.workflow.LabWorkflow;
  */
 public class SequencingPlanDetail {
 
-    private LabWorkflow labWorkflow;
+    private WorkflowDescription labWorkflow;
 
     private SequencingTechnology sequencingTechnology;
 
     private CoverageGoal coverageGoal;
 
-    public SequencingPlanDetail(LabWorkflow workflow,
+    public SequencingPlanDetail(WorkflowDescription workflow,
                                 SequencingTechnology sequencingTechnology,
                                 CoverageGoal coverageGoal) {
         this.labWorkflow = workflow;
@@ -40,7 +40,7 @@ public class SequencingPlanDetail {
         this.coverageGoal = coverageGoal;
     }
     
-    public LabWorkflow getWorkflow() {
+    public WorkflowDescription getWorkflow() {
         return labWorkflow;
     }
 
