@@ -39,9 +39,6 @@ public class Person {
     }
     
     public Person(String username) {
-        if (username == null) {
-             throw new NullPointerException("name cannot be null."); 
-        }
         this.username = username;
     }
     
