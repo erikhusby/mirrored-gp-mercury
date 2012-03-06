@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 
@@ -40,7 +41,7 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
         boolean foundIt = false;
         for (WorkQueueEntry queuedWork: requestedWork) {
             if (vessel.equals(queuedWork.getLabVessel())) {
-                if (workflow.equals(queuedWork.)) {
+                if (workflow.equals(queuedWork.getSequencingPlan().getWorkflow())) {
                     if (workflowParameters == null) {
                         if (queuedWork.getWorkflowParameters() == null) {
                             foundIt = true;
@@ -69,7 +70,8 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
     
     private void markWorkStarted(WorkQueueEntry queuedWork,Person user) {
         queuedWork.addWorkStarted(user);
-        ProjectPlan projectPlan = queuedWork.getProjectPlan();
+        SequencingPlanDetail sequencingPlan = queuedWork.getSequencingPlan();
+        ProjectPlan projectPlan = sequencingPlan.getProjectPlan();
         Project p = projectPlan.getProject();
         JiraTicket ticket = p.getJiraTicket();
         if (ticket != null) {
@@ -79,14 +81,16 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
     }
 
     @Override
-    public LabWorkQueueResponse add(LabVessel vessel, T workflowParameters, ProjectPlan projectPlan) {
+    public LabWorkQueueResponse add(LabVessel vessel, 
+                                    T workflowParameters, 
+                                    SequencingPlanDetail sequencingDetail) {
         if (vessel == null) {
              throw new NullPointerException("vessel cannot be null.");
         }
-        if (projectPlan == null) {
+        if (sequencingDetail == null) {
              throw new NullPointerException("projectPlan cannot be null.");
         }
-        WorkQueueEntry newWork = new WorkQueueEntry(vessel,workflowParameters,projectPlan);
+        WorkQueueEntry newWork = new WorkQueueEntry(vessel,workflowParameters,sequencingDetail);
         LabWorkQueueResponse response = null;
         if (requestedWork.contains(newWork)) {
             response = new StandardLabWorkQueueResponse(vessel.getLabel() + " is already in " + getQueueName() + "; duplicate work has been requested."); 

@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.labevent.SimpleUserEvent;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 
@@ -20,25 +21,25 @@ public class WorkQueueEntry {
     
     private LabWorkQueueParameters parameters;
     
-    private ProjectPlan projectPlan;
+    private SequencingPlanDetail sequencingPlan;
     
     public WorkQueueEntry(LabVessel vessel,
                           LabWorkQueueParameters workflowParameters,
-                          ProjectPlan projectPlan) {
+                          SequencingPlanDetail sequencingPlan) {
         if (vessel == null) {
              throw new NullPointerException("vessel cannot be null."); 
         }
-        if (projectPlan == null) {
-             throw new NullPointerException("projectPlan cannot be null."); 
+        if (sequencingPlan == null) {
+             throw new NullPointerException("sequuencingPlan cannot be null.");
         }
         
         this.vessel = vessel;
-        this.projectPlan = projectPlan;
+        this.sequencingPlan = sequencingPlan;
         this.parameters = workflowParameters;
     }
 
-    public ProjectPlan getProjectPlan() {
-        return projectPlan;
+    public SequencingPlanDetail getSequencingPlan() {
+        return sequencingPlan;
     }
 
     public LabVessel getLabVessel() {

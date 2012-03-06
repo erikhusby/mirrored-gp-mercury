@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.queue;
 
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
@@ -27,7 +28,7 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
      */
     public LabWorkQueueResponse add(LabVessel vessel,
                                     T workflowParameters,
-                                    ProjectPlan projectPlan);
+                                    SequencingPlanDetail sequencingPlan);
 
     /**
      * What's the MolecularStateRange required for
