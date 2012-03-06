@@ -48,4 +48,6 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
                                           T workflowParameters,
                                           WorkflowDescription workflow,
                                           Person user);
+
+    public boolean isEmpty();
 }

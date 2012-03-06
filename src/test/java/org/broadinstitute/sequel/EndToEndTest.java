@@ -93,8 +93,8 @@ public class EndToEndTest  {
         AliquotParameters aliquotParameters = new AliquotParameters(project,0.9f,0.6f);
         AliquotParameters aliquotParameters2 = new AliquotParameters(project2,1.9f,2.6f);
         
-        aliquotWorkQueue.add(stock1,aliquotParameters);
-        aliquotWorkQueue.add(stock2,aliquotParameters2);
+        aliquotWorkQueue.add(stock1,aliquotParameters,null);
+        aliquotWorkQueue.add(stock2,aliquotParameters2,null);
 
         BSPPlatingResponse platingResponse = aliquotWorkQueue.sendBatch();
 
