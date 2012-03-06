@@ -182,7 +182,7 @@ public interface SampleInstance  {
 
     /**
      * This seems at odds with {@link org.broadinstitute.sequel.entity.project.Project#getWorkflowDescription(SampleInstance)}.
-     * We already declared the expected {@link org.broadinstitute.sequel.entity.workflow.WorkflowDescription} up at
+     * We already declared the expected {@link org.broadinstitute.sequel.entity.project.WorkflowDescription} up at
      * the project, right?
      *
      * We have a history of pioneering some kind of sample prep

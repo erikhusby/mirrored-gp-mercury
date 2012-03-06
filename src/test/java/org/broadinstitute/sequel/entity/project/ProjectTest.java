@@ -1,6 +1,5 @@
 package org.broadinstitute.sequel.entity.project;
 
-import org.broadinstitute.sequel.TestUtilities;
 import org.broadinstitute.sequel.control.quote.*;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.person.Person;
@@ -18,7 +17,6 @@ import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 
 import static org.testng.Assert.*;
 
-import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 

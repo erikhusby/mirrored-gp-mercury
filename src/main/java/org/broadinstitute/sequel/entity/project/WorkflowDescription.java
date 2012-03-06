@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.entity.workflow;
+package org.broadinstitute.sequel.entity.project;
 
 /**
  * A stub description of the end-to-end

@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
-import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 
 /**
  * A project can have multiple aspects.

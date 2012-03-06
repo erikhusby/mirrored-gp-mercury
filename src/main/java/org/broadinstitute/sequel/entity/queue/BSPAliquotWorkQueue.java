@@ -2,13 +2,12 @@ package org.broadinstitute.sequel.entity.queue;
 
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.control.bsp.BSPConnector;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
-import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -26,7 +25,7 @@ import java.util.HashSet;
  * static singletons, the the BSP queue
  * is used to build a single plate at
  * a time.  So {@link LabWorkQueue#add(org.broadinstitute.sequel.entity.vessel.LabVessel, LabWorkQueueParameters, org.broadinstitute.sequel.entity.project.SequencingPlanDetail)} and
- * {@link LabWorkQueue#startWork(org.broadinstitute.sequel.entity.vessel.LabVessel, LabWorkQueueParameters, org.broadinstitute.sequel.entity.workflow.WorkflowDescription, org.broadinstitute.sequel.entity.person.Person)} are
+ * {@link LabWorkQueue#startWork(org.broadinstitute.sequel.entity.vessel.LabVessel, LabWorkQueueParameters, org.broadinstitute.sequel.entity.project.WorkflowDescription, org.broadinstitute.sequel.entity.person.Person)} are
  * used to build a list which is then sent to
  * BSP when we call some method.
  */

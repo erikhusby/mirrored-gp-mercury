@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
 
-import org.broadinstitute.sequel.control.quote.Funding;
 import org.broadinstitute.sequel.control.quote.Quote;
 import org.broadinstitute.sequel.control.quote.QuotesCache;
 import org.broadinstitute.sequel.entity.analysis.SequenceAnalysisInstructions;
@@ -17,9 +16,7 @@ import org.broadinstitute.sequel.entity.run.SequencingResult;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 
-import javax.inject.Inject;
 import java.util.*;
 
 public abstract class AbstractProject implements Project, UserRemarkable {

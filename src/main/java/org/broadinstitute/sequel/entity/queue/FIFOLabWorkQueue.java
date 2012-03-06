@@ -2,13 +2,10 @@ package org.broadinstitute.sequel.entity.queue;
 
 
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
-import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 
 import java.util.*;
 
