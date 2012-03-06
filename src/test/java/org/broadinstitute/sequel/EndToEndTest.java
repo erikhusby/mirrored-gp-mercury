@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.control.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.control.bsp.MockBSPConnector;
 import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
+import org.broadinstitute.sequel.control.quote.PriceItem;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
@@ -13,6 +14,7 @@ import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.queue.BSPAliquotWorkQueue;
 import org.broadinstitute.sequel.entity.run.RunCartridge;
@@ -25,12 +27,10 @@ import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -65,7 +65,10 @@ public class EndToEndTest  {
         String aliquot1Label = "aliquot1";
         String aliquot2Label = "aliquot2";
         TestUtilities testUtilities = new TestUtilities();
-        final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection", "7.0");
+        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
+        final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
+                "7.0",
+                priceItem);
         Project project = new BasicProject("Project1", testUtilities.createMockJiraTicket());
         Project project2 = new BasicProject("Project2", testUtilities.createMockJiraTicket());
 
@@ -93,8 +96,8 @@ public class EndToEndTest  {
         AliquotParameters aliquotParameters = new AliquotParameters(project,0.9f,0.6f);
         AliquotParameters aliquotParameters2 = new AliquotParameters(project2,1.9f,2.6f);
         
-        aliquotWorkQueue.add(stock1,aliquotParameters);
-        aliquotWorkQueue.add(stock2,aliquotParameters2);
+        aliquotWorkQueue.add(stock1,aliquotParameters,null);
+        aliquotWorkQueue.add(stock2,aliquotParameters2,null);
 
         BSPPlatingResponse platingResponse = aliquotWorkQueue.sendBatch();
 

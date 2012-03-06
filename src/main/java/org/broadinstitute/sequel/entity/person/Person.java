@@ -24,16 +24,30 @@ package org.broadinstitute.sequel.entity.person;
  */
 public class Person {
 
-    public Person(String name) {
-
+    private String username;
+    
+    private String firstName;
+    
+    private String lastName;
+    
+    public Person(String name,
+                  String firstName,
+                  String lastName) {
+        this(name);
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+    
+    public Person(String username) {
+        this.username = username;
     }
     
     public String getFirstName() {
-        throw new RuntimeException("Method not yet implemented.");
+        return firstName;
     }
 
     public String getLastName() {
-        throw new RuntimeException("Method not yet implemented.");
+        return lastName;
     }
 
     /**

@@ -1,5 +1,8 @@
 package org.broadinstitute.sequel.entity.queue;
 
+import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 
@@ -16,14 +19,15 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
      *
      *
      * @param vessel
-     * @param bucket the parameters, also considered
+     * @param workflowParameters the parameters, also considered
      *                   the "bucket" for the queue.
      * @return a response object, which may embody error information
      * like "Hey, I can't put this into the queue because the project
      * linked to this sample doesn't have the read length set".
      */
     public LabWorkQueueResponse add(LabVessel vessel,
-                                    T bucket);
+                                    T workflowParameters,
+                                    SequencingPlanDetail sequencingPlan);
 
     /**
      * What's the MolecularStateRange required for
@@ -36,8 +40,13 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
      * Remove the tangible from the given bucket.
      *
      * @param vessel
-     * @param bucket
+     * @param workflowParameters
      * @return
      */
-    public LabWorkQueueResponse remove(LabVessel vessel,T bucket);
+    public LabWorkQueueResponse startWork(LabVessel vessel,
+                                          T workflowParameters,
+                                          WorkflowDescription workflow,
+                                          Person user);
+
+    public boolean isEmpty();
 }

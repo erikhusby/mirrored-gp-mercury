@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.control.quote;
 
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;

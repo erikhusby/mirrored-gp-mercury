@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
-import org.broadinstitute.sequel.entity.workflow.LabWorkflow;
 
 /**
  * A project can have multiple aspects.
@@ -26,22 +25,25 @@ import org.broadinstitute.sequel.entity.workflow.LabWorkflow;
  */
 public class SequencingPlanDetail {
 
-    private LabWorkflow labWorkflow;
-
     private SequencingTechnology sequencingTechnology;
 
     private CoverageGoal coverageGoal;
 
-    public SequencingPlanDetail(LabWorkflow workflow,
-                                SequencingTechnology sequencingTechnology,
-                                CoverageGoal coverageGoal) {
-        this.labWorkflow = workflow;
-        this.sequencingTechnology = sequencingTechnology;
-        this.coverageGoal = coverageGoal;
-    }
+    private ProjectPlan projectPlan;
     
-    public LabWorkflow getWorkflow() {
-        return labWorkflow;
+    public SequencingPlanDetail(SequencingTechnology sequencingTechnology,
+                                CoverageGoal coverageGoal,
+                                ProjectPlan projectPlan) {
+        if (projectPlan == null) {
+             throw new NullPointerException("projectPlan cannot be null.");
+        }
+         this.sequencingTechnology = sequencingTechnology;
+        this.coverageGoal = coverageGoal;
+        this.projectPlan = projectPlan;
+    }
+
+    public ProjectPlan getProjectPlan() {
+        return projectPlan;
     }
 
     /**

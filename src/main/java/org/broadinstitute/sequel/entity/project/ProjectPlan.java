@@ -1,20 +1,18 @@
 package org.broadinstitute.sequel.entity.project;
 
-import org.apache.commons.collections.map.HashedMap;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+
 
 public class ProjectPlan {
 
     private Collection<LabVessel> starters = new HashSet<LabVessel>();
     
     private Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
-    
+
+    private WorkflowDescription workflowDescription;
+
     private Project project;
     
     private String planName;
@@ -27,17 +25,31 @@ public class ProjectPlan {
 
     private Collection<ReagentDesign> reagentDesigns = new HashSet<ReagentDesign>();
     
-    public ProjectPlan(Project project,String name)  {
+    public ProjectPlan(Project project,
+                       String name,
+                       WorkflowDescription workflowDescription)  {
         if (project == null) {
              throw new NullPointerException("project cannot be null."); 
         }
         if (name == null) {
              throw new NullPointerException("name cannot be null."); 
         }
+        if (workflowDescription == null) {
+             throw new NullPointerException("workflowDescription cannot be null.");
+        }
         this.project = project;
         this.planName = name;
+        this.workflowDescription = workflowDescription;
     }
 
+    public Project getProject() {
+        return project;
+    }
+
+    public WorkflowDescription getWorkflowDescription() {
+        return workflowDescription;
+    }
+    
     public Collection<ReagentDesign> getReagentDesigns() {
         return reagentDesigns;
     }

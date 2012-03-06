@@ -1,15 +1,13 @@
 package org.broadinstitute.sequel.entity.project;
 
 
+import org.broadinstitute.sequel.control.quote.Quote;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.run.SequenceAccessControlModel;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
-import org.broadinstitute.sequel.entity.vessel.LabTangible;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
-import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 import org.broadinstitute.sequel.entity.analysis.SequenceAnalysisInstructions;
-import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.Stalker;
@@ -19,6 +17,8 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 
 import java.util.Collection;
 
+// todo move interface down to abstract class,
+// maybe even just a single class
 public interface Project {
 
     /**
@@ -121,6 +121,8 @@ public interface Project {
 
     public SequenceAccessControlModel getAccessControl();
 
+    public void addGrant(String grantDescription);
+    
     /**
      * Gets a list of all quotes that have been
      * tenatively earmarked for use in this project.
