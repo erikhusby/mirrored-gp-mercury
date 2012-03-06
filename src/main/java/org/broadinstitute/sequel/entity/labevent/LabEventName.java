@@ -14,5 +14,6 @@ public enum LabEventName {
     SAGE_UNLOADED,
     METRIC_APPLIED,
     GENERIC,
-    ALIQUOT_RECEIVED
+    ALIQUOT_RECEIVED,
+    WORK_STARTED
 }

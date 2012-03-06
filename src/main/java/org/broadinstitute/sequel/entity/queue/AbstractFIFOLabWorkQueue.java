@@ -1,14 +1,9 @@
 package org.broadinstitute.sequel.entity.queue;
 
 
+import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
-import org.broadinstitute.sequel.entity.sample.StateChange;
-import org.broadinstitute.sequel.entity.vessel.LabTangible;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
-import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheetAlertUtil;
 import org.broadinstitute.sequel.entity.workflow.WorkflowDescription;
 
 import java.util.*;
@@ -20,11 +15,58 @@ import java.util.*;
  */
 public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullAccessLabWorkQueue<T> {
 
-    private Collection<WorkQueueEntry> entries = new HashSet<WorkQueueEntry>();
+    // order matters: fifo
+    private List<WorkQueueEntry> requestedWork = new ArrayList<WorkQueueEntry>();
     
     @Override
-    public LabWorkQueueResponse startWork(LabVessel vessel, T workflowParameters, WorkflowDescription workflow) {
-        throw new RuntimeException("I haven't been written yet.");
+    public LabWorkQueueResponse startWork(LabVessel vessel, 
+                                          T workflowParameters, 
+                                          WorkflowDescription workflow,
+                                          Person user) {
+        if (vessel == null) {
+             throw new NullPointerException("vessel cannot be null.");
+        }
+        if (workflow == null) {
+             throw new NullPointerException("workflow cannot be null.");
+        }
+
+        // because we allow duplicate entries for duplicate work,
+        // and because we expect to see the same {@link LabVessel}
+        // queued for work across different {@link Project}s and
+        // different {@link ProjectPlan}s, we play pin-the-tail-on-the-ProjectPlan
+        // here, in FIFO order.
+        boolean foundIt = false;
+        for (WorkQueueEntry queuedWork: requestedWork) {
+            if (vessel.equals(queuedWork.getLabVessel())) {
+                if (workflow.equals(queuedWork.getWorkflowDescription())) {
+                    if (workflowParameters == null) {
+                        if (queuedWork.getWorkflowParameters() == null) {
+                            foundIt = true;
+                        }
+                    }
+                    else {
+                        if (workflowParameters.equals(queuedWork.getWorkflowParameters())) {
+                            foundIt = true;
+                        }
+                    }                   
+                }
+            }
+            if (foundIt) {
+                requestedWork.remove(queuedWork);
+                markWorkStarted(queuedWork);
+                break;
+            }
+        }
+        if (foundIt) {
+            return new StandardLabWorkQueueResponse("OK");
+        }
+        else {
+            return new StandardLabWorkQueueResponse(vessel.getLabel() + " has not been queued for work.  Proceed at your own risk");
+        }
+    }
+    
+    private void markWorkStarted(WorkQueueEntry queuedWork,Person user) {
+        queuedWork.addWorkStarted(user);
     }
 
     @Override
@@ -35,15 +77,17 @@ public abstract class AbstractFIFOLabWorkQueue<T extends LabWorkQueueParameters>
         if (projectPlan == null) {
              throw new NullPointerException("projectPlan cannot be null.");
         }
-        boolean isNew = entries.add(new WorkQueueEntry(vessel,workflowParameters,projectPlan));
-
-
-    }
-
-
-    @Override
-    public void moveToTop(LabVessel vessel,T bucket) {
-
+        WorkQueueEntry newWork = new WorkQueueEntry(vessel,workflowParameters,projectPlan);
+        LabWorkQueueResponse response = null;
+        if (requestedWork.contains(newWork)) {
+            response = new StandardLabWorkQueueResponse(vessel.getLabel() + " is already in " + getQueueName() + "; duplicate work has been requested."); 
+        }
+        else {
+            response = new StandardLabWorkQueueResponse("Added " + vessel.getLabel() + " to " + getQueueName());
+        }
+        requestedWork.add(newWork);
+        
+        return response;
     }
 
 
