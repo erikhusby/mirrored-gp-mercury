@@ -33,13 +33,14 @@ public class ProjectTest {
         EasyMock.replay(ticket);
 
         AbstractProject legacyProject = new BasicProject("Legacy Squid Project C203",ticket);
-        ProjectPlan plan = new ProjectPlan(legacyProject,legacyProject.getProjectName() + " Plan");
+        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
+        WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6",priceItem);
+        ProjectPlan plan = new ProjectPlan(legacyProject,legacyProject.getProjectName() + " Plan",workflow);
         ReagentDesign bait = new ReagentDesign("agilent_foo", ReagentDesign.REAGENT_TYPE.BAIT);
         String aliquotBarcode = "000029103912";
         plan.addReagentDesign(bait);
-        WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6");
 
-        SequencingPlanDetail ionPlan = new SequencingPlanDetail(workflow,
+        SequencingPlanDetail ionPlan = new SequencingPlanDetail(
                 new IonSequencingTechnology(65, IonSequencingTechnology.CHIP_TYPE.CHIP1),
                 new XFoldCoverage(30),
                 plan);
@@ -102,7 +103,7 @@ public class ProjectTest {
         assertEquals(ionPlan,planDetail);
         
         assertEquals(SequencingTechnology.TECHNOLOGY_NAME.ION_TORRENT,ionPlan.getSequencingTechnology().getTechnologyName());
-        assertEquals("HybridSelection",ionPlan.getWorkflow().getWorkflowName());
+        assertEquals("HybridSelection",ionPlan.getProjectPlan().getWorkflowDescription().getWorkflowName());
         assertEquals(65,((IonSequencingTechnology)ionPlan.getSequencingTechnology()).getCycleCount());
         assertEquals(IonSequencingTechnology.CHIP_TYPE.CHIP1,((IonSequencingTechnology)ionPlan.getSequencingTechnology()).getChipType());
         
@@ -125,7 +126,10 @@ public class ProjectTest {
         // todo add a transfer event, look for project relationships
         // on destinations
         
-        LabWorkQueueResponse queueResponse = labWorkQueue.startWork(starter,null,ionPlan.getWorkflow(),new Person("tony","Tony","Hawk"));
+        LabWorkQueueResponse queueResponse = labWorkQueue.startWork(starter,
+                null,
+                ionPlan.getProjectPlan().getWorkflowDescription(),
+                new Person("tony","Tony","Hawk"));
 
         assertTrue(labWorkQueue.isEmpty());
         EasyMock.verify(ticket);

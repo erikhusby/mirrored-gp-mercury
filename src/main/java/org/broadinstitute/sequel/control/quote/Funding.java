@@ -3,13 +3,6 @@ package org.broadinstitute.sequel.control.quote;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
-/**
- * Created by IntelliJ IDEA.
- * User: andrew
- * Date: 2/29/12
- * Time: 2:36 PM
- * To change this template use File | Settings | File Templates.
- */
 @XmlRootElement(name = "Funding")
 public class Funding {
     

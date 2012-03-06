@@ -25,33 +25,25 @@ import org.broadinstitute.sequel.entity.run.SequencingTechnology;
  */
 public class SequencingPlanDetail {
 
-    private WorkflowDescription labWorkflow;
-
     private SequencingTechnology sequencingTechnology;
 
     private CoverageGoal coverageGoal;
 
     private ProjectPlan projectPlan;
     
-    public SequencingPlanDetail(WorkflowDescription workflow,
-                                SequencingTechnology sequencingTechnology,
+    public SequencingPlanDetail(SequencingTechnology sequencingTechnology,
                                 CoverageGoal coverageGoal,
                                 ProjectPlan projectPlan) {
         if (projectPlan == null) {
              throw new NullPointerException("projectPlan cannot be null.");
         }
-        this.labWorkflow = workflow;
-        this.sequencingTechnology = sequencingTechnology;
+         this.sequencingTechnology = sequencingTechnology;
         this.coverageGoal = coverageGoal;
         this.projectPlan = projectPlan;
     }
 
     public ProjectPlan getProjectPlan() {
         return projectPlan;
-    }
-
-    public WorkflowDescription getWorkflow() {
-        return labWorkflow;
     }
 
     /**

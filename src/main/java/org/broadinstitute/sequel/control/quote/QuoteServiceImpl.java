@@ -19,8 +19,6 @@ import java.util.List;
 
 public class QuoteServiceImpl implements QuoteService {
 
-    // todo: how do we use CDI/weld/etc to inject this
-    // properly in test environment or production?
     @Inject
     private QuoteConnectionParameters connectionParameters;
 
@@ -141,6 +139,26 @@ public class QuoteServiceImpl implements QuoteService {
         }
 
         return quote;
+    }
+
+    public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
+        initializeClient();
+        WebResource resource = client.resource(connectionParameters.getUrl());
+        PriceList prices = null;
+        try
+        {
+            prices = resource.accept(MediaType.APPLICATION_XML).get(PriceList.class);
+        }
+        catch(UniformInterfaceException e)
+        {
+            throw new QuoteNotFoundException("Could not find price list at " + connectionParameters.getUrl());
+        }
+        catch(ClientHandlerException e)
+        {
+            throw new QuoteServerException("Could not communicate with quote server", e);
+        }
+
+        return prices;
     }
 
     /**

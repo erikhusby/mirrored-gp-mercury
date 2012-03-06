@@ -48,7 +48,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         boolean foundIt = false;
         for (WorkQueueEntry queuedWork: requestedWork) {
             if (vessel.equals(queuedWork.getLabVessel())) {
-                if (workflow.equals(queuedWork.getSequencingPlan().getWorkflow())) {
+                if (workflow.equals(queuedWork.getSequencingPlan().getProjectPlan().getWorkflowDescription())) {
                     if (workflowParameters == null) {
                         if (queuedWork.getWorkflowParameters() == null) {
                             foundIt = true;

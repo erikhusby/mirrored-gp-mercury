@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.control.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.control.bsp.MockBSPConnector;
 import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
+import org.broadinstitute.sequel.control.quote.PriceItem;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
@@ -64,7 +65,10 @@ public class EndToEndTest  {
         String aliquot1Label = "aliquot1";
         String aliquot2Label = "aliquot2";
         TestUtilities testUtilities = new TestUtilities();
-        final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection", "7.0");
+        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
+        final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
+                "7.0",
+                priceItem);
         Project project = new BasicProject("Project1", testUtilities.createMockJiraTicket());
         Project project2 = new BasicProject("Project2", testUtilities.createMockJiraTicket());
 
