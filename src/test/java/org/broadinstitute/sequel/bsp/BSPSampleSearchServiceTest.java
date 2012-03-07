@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+
 public class BSPSampleSearchServiceTest {
 
     @SuppressWarnings("unused")
@@ -25,13 +27,13 @@ public class BSPSampleSearchServiceTest {
     // without cluttering the tests and putting @BeforeClass
     // into every single group.
 
-    @BeforeClass(groups = "ExternalIntegration")
+    @BeforeClass(groups = EXTERNAL_INTEGRATION)
     public void initWeld() {
         WeldContainer weld = new Weld().initialize();
         service = weld.instance().select(BSPSampleSearchService.class).get();
     }
 
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void testBasic() {
         final String TEST_SAMPLE_ID = "SM-12CO4";
         String [] sampleIDs = new String [] {TEST_SAMPLE_ID};
@@ -42,7 +44,7 @@ public class BSPSampleSearchServiceTest {
     }
 
 
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void testLsidsToIds() {
         String [] lsids = {
                 "broadinstitute.org:bsp.prod.sample:UP6R",

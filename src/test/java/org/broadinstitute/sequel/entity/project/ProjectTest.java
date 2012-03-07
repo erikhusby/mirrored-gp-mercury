@@ -1,8 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.control.quote.*;
-import org.broadinstitute.sequel.entity.workflow.Workflow;
-import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
@@ -16,18 +14,20 @@ import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-
-import static org.testng.Assert.*;
-
+import org.broadinstitute.sequel.entity.workflow.Workflow;
+import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
 import java.util.HashSet;
 
+import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+import static org.testng.Assert.*;
+
 public class ProjectTest {
     
-    @Test(groups = {"DatabaseFree"})
+    @Test(groups = {DATABASE_FREE})
     public void test_legacy_squid_project() {
 
         JiraTicket ticket = EasyMock.createMock(JiraTicket.class);

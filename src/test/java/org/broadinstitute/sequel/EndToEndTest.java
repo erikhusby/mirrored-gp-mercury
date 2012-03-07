@@ -34,6 +34,8 @@ import org.testng.annotations.Test;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+
 public class EndToEndTest  {
 
     //@Inject
@@ -57,7 +59,7 @@ public class EndToEndTest  {
         return createBSPStock(aliquotName,tubeBarcode,project);
     }
     
-    @Test(groups = {"DatabaseFree"})
+    @Test(groups = {DATABASE_FREE})
     public void doIt() {
 
         String masterSample1 = "master sample1";
