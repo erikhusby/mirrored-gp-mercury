@@ -4,6 +4,7 @@ package org.broadinstitute.sequel.entity.vessel;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.UserRemarkable;
 import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.notice.Stalker;
@@ -213,5 +214,18 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
         return transfersTo;
     }
 
-
+    @Override
+    public void addNoteToProjects(String message) {
+        Collection<JiraTicket> ticketsToNotify = new HashSet<JiraTicket>();
+        for (SampleInstance sampleInstance : getSampleInstances()) {
+            if (sampleInstance.getProject() != null) {
+                if (sampleInstance.getProject().getJiraTicket() != null) {
+                    ticketsToNotify.add(sampleInstance.getProject().getJiraTicket());
+                }
+            }
+        }
+        for (JiraTicket jiraTicket : ticketsToNotify) {
+            jiraTicket.addComment(message);
+        }
+    }
 }

@@ -279,5 +279,7 @@ public interface LabVessel  {
     public void applyReagent(Reagent r);
 
     public Collection<Reagent> getAppliedReagents();
+    
+    public void addNoteToProjects(String message);
 
 }

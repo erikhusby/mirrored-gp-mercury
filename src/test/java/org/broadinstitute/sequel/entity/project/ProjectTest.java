@@ -1,8 +1,8 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.control.quote.*;
-import org.broadinstitute.sequel.control.workflow.Workflow;
-import org.broadinstitute.sequel.control.workflow.WorkflowEngine;
+import org.broadinstitute.sequel.entity.workflow.Workflow;
+import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
@@ -120,10 +120,21 @@ public class ProjectTest {
 
         WorkflowEngine workflowEngine = new WorkflowEngine();
         LabWorkQueue labWorkQueue = new FIFOLabWorkQueue(LabWorkQueueName.LC,workflowEngine);
-
+        Collection<Workflow> workflows = workflowEngine.getActiveWorkflows(starter,null);
+        
+        assertTrue(workflows.isEmpty());
+        
         assertTrue(labWorkQueue.isEmpty());
         labWorkQueue.add(starter,null,ionPlan);
 
+        workflows = workflowEngine.getActiveWorkflows(starter,null);
+        assertEquals(1, workflows.size());
+        Workflow workflowInstance = workflows.iterator().next();
+        assertNull(workflowInstance.getState());
+        assertEquals(1,workflowInstance.getAllVessels().size());
+        assertTrue(workflowInstance.getAllVessels().contains(starter));
+        assertEquals(ionPlan.getProjectPlan(),workflowInstance.getProjectPlan());
+        
         assertFalse(labWorkQueue.isEmpty());
         
         // todo add a transfer event, look for project relationships
@@ -135,21 +146,8 @@ public class ProjectTest {
                 new Person("tony","Tony","Hawk"));
 
         assertTrue(labWorkQueue.isEmpty());
-
-        Collection<Workflow> workflows = workflowEngine.getActiveWorkflows(starter);
-        
-        assertEquals(1, workflows.size());
-        
-        Workflow workflowInstance = workflows.iterator().next();
-        
-        assertEquals(1,workflowInstance.getAllVessels().size());
-        
-        assertTrue(workflowInstance.getAllVessels().contains(starter));
-        
-        
-        
-        // todo check the state of the workflow.
-        
+                 
+        assertEquals("work has stated",workflowInstance.getState().getState());
         
         EasyMock.verify(ticket);
 

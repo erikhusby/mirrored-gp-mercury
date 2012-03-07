@@ -9,18 +9,18 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import java.util.Collection;
 import java.util.HashSet;
 
-public class WorkQueueEntry {
+public class WorkQueueEntry<T extends LabWorkQueueParameters> {
 
     private Collection<SimpleUserEvent> workStartedEvents = new HashSet<SimpleUserEvent>();
     
     private LabVessel vessel;
     
-    private LabWorkQueueParameters parameters;
+    private T parameters;
     
     private SequencingPlanDetail sequencingPlan;
     
     public WorkQueueEntry(LabVessel vessel,
-                          LabWorkQueueParameters workflowParameters,
+                          T workflowParameters,
                           SequencingPlanDetail sequencingPlan) {
         if (vessel == null) {
              throw new NullPointerException("vessel cannot be null."); 
@@ -42,7 +42,7 @@ public class WorkQueueEntry {
         return vessel;
     }
 
-    public LabWorkQueueParameters getWorkflowParameters() {
+    public T getLabWorkQueueParameters() {
         return parameters;
     }
 
