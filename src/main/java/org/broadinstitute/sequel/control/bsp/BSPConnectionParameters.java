@@ -1,6 +1,8 @@
 package org.broadinstitute.sequel.control.bsp;
 
-public interface BSPConnectionParameters {
+import org.broadinstitute.sequel.control.UsernameAndPassword;
+
+public interface BSPConnectionParameters extends UsernameAndPassword {
 
     
     public String getSuperuserLogin();
