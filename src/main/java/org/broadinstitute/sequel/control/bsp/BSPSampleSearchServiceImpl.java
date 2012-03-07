@@ -1,30 +1,20 @@
 package org.broadinstitute.sequel.control.bsp;
 
-import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.weld.environment.se.events.ContainerInitialized;
+import org.broadinstitute.sequel.control.AbstractJerseyClientService;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.*;
 
-public class BSPSampleSearchServiceImpl implements BSPSampleSearchService {
+public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
 
 
     private static Log _logger = LogFactory
@@ -33,8 +23,6 @@ public class BSPSampleSearchServiceImpl implements BSPSampleSearchService {
 
     @Inject
     private BSPConnectionParameters connParams;
-
-    private Client jerseyClient;
 
     public BSPSampleSearchServiceImpl() {}
 
@@ -45,16 +33,6 @@ public class BSPSampleSearchServiceImpl implements BSPSampleSearchService {
         this.connParams = params;
     }
 
-    private Client getClient() {
-
-        if (jerseyClient == null) {
-            ClientConfig clientConfiguration = new DefaultClientConfig();
-            jerseyClient = Client.create(clientConfiguration);
-
-            jerseyClient.addFilter(new HTTPBasicAuthFilter(connParams.getSuperuserLogin(), connParams.getSuperuserPassword()));
-        }
-        return jerseyClient;
-    }
 
     @Override
     public List<String[]> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... queryColumns) {
@@ -76,7 +54,7 @@ public class BSPSampleSearchServiceImpl implements BSPSampleSearchService {
         
         _logger.info(String.format("url string is '%s'", urlString));
         
-        WebResource webResource = getClient().resource(urlString);
+        WebResource webResource = getClient(connParams).resource(urlString);
 
 
         List<String> queryParameters = new ArrayList<String>();
