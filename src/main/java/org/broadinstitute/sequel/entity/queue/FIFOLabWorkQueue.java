@@ -1,6 +1,8 @@
 package org.broadinstitute.sequel.entity.queue;
 
 
+import org.broadinstitute.sequel.control.workflow.Workflow;
+import org.broadinstitute.sequel.control.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -21,11 +23,18 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
 
     private LabWorkQueueName name;
     
-    public FIFOLabWorkQueue(LabWorkQueueName name) {
+    private WorkflowEngine workflowEngine;
+    
+    public FIFOLabWorkQueue(LabWorkQueueName name,
+                            WorkflowEngine workflowEngine) {
         if (name == null) {
              throw new NullPointerException("name cannot be null.");
         }
+        if (workflowEngine == null) {
+             throw new NullPointerException("workflowEngine cannot be null."); 
+        }
         this.name = name;
+        this.workflowEngine = workflowEngine;
     }
 
     @Override
@@ -62,7 +71,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
                 }
             }
             if (foundIt) {
-                requestedWork.remove(queuedWork);
+                requestedWork.remove(queuedWork);                
                 markWorkStarted(queuedWork,user);
                 break;
             }
@@ -73,6 +82,10 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         else {
             return new StandardLabWorkQueueResponse(vessel.getLabel() + " has not been queued for work.  Proceed at your own risk");
         }
+    }
+
+    private void startWorkflow(LabVessel vessel,ProjectPlan plan,T workflowParameters) {
+        workflowEngine.addWorkflow(new Workflow(plan,vessel,workflowParameters));
     }
     
     private void markWorkStarted(WorkQueueEntry queuedWork,Person user) {
@@ -103,6 +116,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
             response = new StandardLabWorkQueueResponse(vessel.getLabel() + " is already in " + getQueueName() + "; duplicate work has been requested."); 
         }
         else {
+            startWorkflow(vessel,sequencingDetail.getProjectPlan(),workflowParameters);
             response = new StandardLabWorkQueueResponse("Added " + vessel.getLabel() + " to " + getQueueName());
         }
         requestedWork.add(newWork);

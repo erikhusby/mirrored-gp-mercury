@@ -1,6 +1,8 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.control.quote.*;
+import org.broadinstitute.sequel.control.workflow.Workflow;
+import org.broadinstitute.sequel.control.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
@@ -116,7 +118,8 @@ public class ProjectTest {
         
         assertEquals(2,quotes.size());
 
-        LabWorkQueue labWorkQueue = new FIFOLabWorkQueue(LabWorkQueueName.LC);
+        WorkflowEngine workflowEngine = new WorkflowEngine();
+        LabWorkQueue labWorkQueue = new FIFOLabWorkQueue(LabWorkQueueName.LC,workflowEngine);
 
         assertTrue(labWorkQueue.isEmpty());
         labWorkQueue.add(starter,null,ionPlan);
@@ -132,6 +135,22 @@ public class ProjectTest {
                 new Person("tony","Tony","Hawk"));
 
         assertTrue(labWorkQueue.isEmpty());
+
+        Collection<Workflow> workflows = workflowEngine.getActiveWorkflows(starter);
+        
+        assertEquals(1, workflows.size());
+        
+        Workflow workflowInstance = workflows.iterator().next();
+        
+        assertEquals(1,workflowInstance.getAllVessels().size());
+        
+        assertTrue(workflowInstance.getAllVessels().contains(starter));
+        
+        
+        
+        // todo check the state of the workflow.
+        
+        
         EasyMock.verify(ticket);
 
 

@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.control.quote.Quote;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import java.util.Collection;
 import java.util.HashSet;
@@ -24,6 +25,8 @@ public class ProjectPlan {
     private Collection<PoolGroup> poolGroups = new HashSet<PoolGroup>();
 
     private Collection<ReagentDesign> reagentDesigns = new HashSet<ReagentDesign>();
+    
+    private Quote quote;
     
     public ProjectPlan(Project project,
                        String name,
