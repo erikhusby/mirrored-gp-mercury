@@ -2,6 +2,8 @@ package org.broadinstitute.sequel.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.sequel.TestUtilities;
+import org.broadinstitute.sequel.WeldBooter;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
 import org.jboss.weld.environment.se.Weld;
@@ -10,27 +12,24 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.sequel.TestGroups.BOOT_WELD;
 
-public class BSPSampleSearchServiceTest {
+public class BSPSampleSearchServiceTest extends WeldBooter {
 
     @SuppressWarnings("unused")
     private static final Log _logger = LogFactory.getLog(BSPSampleSearchServiceTest.class);
 
     BSPSampleSearchService service;
 
-    // todo figure out the right way to encapsulte weld SE startup,
-    // without cluttering the tests and putting @BeforeClass
-    // into every single group.
-
-    @BeforeClass(groups = EXTERNAL_INTEGRATION)
-    public void initWeld() {
-        WeldContainer weld = new Weld().initialize();
-        service = weld.instance().select(BSPSampleSearchService.class).get();
+    @BeforeClass
+    private void init() {
+        service = weldUtil.getFromContainer(BSPSampleSearchService.class);
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)

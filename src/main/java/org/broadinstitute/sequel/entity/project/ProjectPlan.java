@@ -21,7 +21,7 @@ public class ProjectPlan {
     private String notes;
 
     // todo where does analysis type go here?
-    
+
     private Collection<PoolGroup> poolGroups = new HashSet<PoolGroup>();
 
     private Collection<ReagentDesign> reagentDesigns = new HashSet<ReagentDesign>();

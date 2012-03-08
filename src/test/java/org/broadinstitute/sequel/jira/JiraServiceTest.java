@@ -1,10 +1,9 @@
 package org.broadinstitute.sequel.jira;
 
 
+import org.broadinstitute.sequel.WeldBooter;
 import org.broadinstitute.sequel.control.jira.JiraService;
 import org.broadinstitute.sequel.control.jira.issue.CreateResponse;
-import org.jboss.weld.environment.se.Weld;
-import org.jboss.weld.environment.se.WeldContainer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -15,14 +14,13 @@ import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.sequel.control.jira.issue.CreateRequest.Fields.Issuetype.IssuetypeName.Bug;
 
 
-public class JiraServiceTest {
+public class JiraServiceTest extends WeldBooter {
 
     private JiraService service;
 
-    @BeforeClass(groups = EXTERNAL_INTEGRATION)
+    @BeforeClass
     public void initWeld() {
-        WeldContainer weld = new Weld().initialize();
-        service = weld.instance().select(JiraService.class).get();
+        service = weldUtil.getFromContainer(JiraService.class);
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)
