@@ -11,6 +11,7 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,7 +45,7 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
     }
 
     public void addWell(PlateWell plateWell, String position) {
-        mapPositionToWell.put(position, plateWell);
+        this.mapPositionToWell.put(position, plateWell);
     }
 
     @Override
@@ -65,17 +66,15 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
     @Override
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if (mapPositionToWell.isEmpty()) {
+        if (this.mapPositionToWell.isEmpty()) {
             for (LabVessel labVessel : getSampleSheetAuthorities()) {
                 for (SampleSheet sampleSheet : labVessel.getSampleSheets()) {
                     sampleInstances.addAll(sampleSheet.getSampleInstances());
                 }
             }
         } else {
-            for (PlateWell well : mapPositionToWell.values()) {
-                for (SampleInstance sampleInstance : well.getSampleInstances()) {
-
-                }
+            for (String position : this.mapPositionToWell.keySet()) {
+                sampleInstances.addAll(getSampleInstancesInWell(position));
             }
         }
         return sampleInstances;
@@ -134,7 +133,7 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
     public Set<SampleInstance> getSampleInstancesInWell(String wellPosition) {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if(getSampleSheetAuthorities().isEmpty()) {
-            throw new RuntimeException("I haven't been written yet.");
+            return Collections.emptySet();
         } else {
             for (LabVessel labVessel : getSampleSheetAuthorities()) {
                 // todo jmt generalize to handle rack and tube
@@ -165,11 +164,11 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
     }
 
     public PlateWell getWellAtPosition(String position) {
-        return mapPositionToWell.get(position);
+        return this.mapPositionToWell.get(position);
     }
 
     public Map<String, PlateWell> getMapPositionToWell() {
-        return mapPositionToWell;
+        return this.mapPositionToWell;
     }
 
     @Override

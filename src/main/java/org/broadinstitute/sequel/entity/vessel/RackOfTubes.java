@@ -20,8 +20,14 @@ import java.util.Set;
  */
 public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
 
+    /* rack holds tubes, tubes can be removed
+     * plate holds wells, wells can't be removed
+     * flowcell holds lanes
+     * PTP holds regions
+     * smartpac holds smrtcells, smrtcells are removed, but not replaced
+     * striptube holds tubes, tubes can't be removed, don't have barcodes */
     private Map<String, TwoDBarcodedTube> mapPositionToTube = new HashMap<String, TwoDBarcodedTube>();
-    
+
     public RackOfTubes(String label) {
         super(label);
     }
@@ -45,15 +51,19 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
         mapPositionToTube.put(position, child);
     }
 
+/*
     @Override
     public Collection<LabEvent> getTransfersFrom() {
         throw new RuntimeException("I haven't been written yet.");
     }
+*/
 
+/*
     @Override
     public Collection<LabEvent> getTransfersTo() {
         throw new RuntimeException("I haven't been written yet.");
     }
+*/
 
     @Override
     public Collection<LabEvent> getEvents() {
@@ -75,6 +85,10 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if(getSampleSheetAuthorities().isEmpty()) {
             for (LabVessel labVessel : getContainedVessels()) {
+                sampleInstances.addAll(labVessel.getSampleInstances());
+            }
+        } else {
+            for (LabVessel labVessel : getSampleSheetAuthorities()) {
                 sampleInstances.addAll(labVessel.getSampleInstances());
             }
         }

@@ -20,7 +20,7 @@ public class SectionTransfer {
     }
 
     public LabVessel getSourceVessel() {
-        return sourceVessel;
+        return this.sourceVessel;
     }
 
     public void setSourceVessel(LabVessel sourceVessel) {
@@ -28,7 +28,7 @@ public class SectionTransfer {
     }
 
     public SBSSection getSourceSection() {
-        return sourceSection;
+        return this.sourceSection;
     }
 
     public void setSourceSection(SBSSection sourceSection) {
@@ -36,7 +36,7 @@ public class SectionTransfer {
     }
 
     public LabVessel getTargetVessel() {
-        return targetVessel;
+        return this.targetVessel;
     }
 
     public void setTargetVessel(LabVessel targetVessel) {
@@ -44,7 +44,7 @@ public class SectionTransfer {
     }
 
     public SBSSection getTargetSection() {
-        return targetSection;
+        return this.targetSection;
     }
 
     public void setTargetSection(SBSSection targetSection) {

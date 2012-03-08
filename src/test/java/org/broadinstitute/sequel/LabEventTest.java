@@ -13,6 +13,7 @@ import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.vessel.PlateWell;
+import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.WellName;
@@ -21,12 +22,14 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Test messaging
  */
+@SuppressWarnings("FeatureEnvy")
 public class LabEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
@@ -48,22 +51,26 @@ public class LabEventTest {
         labEventFactory.setPersonDAO(new PersonDAO());
         LabEventHandler labEventHandler = new LabEventHandler();
 
+        // ShearingTransfer
+        String shearPlateBarcode = "ShearPlate";
         PlateTransferEventType shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate(
-                new ArrayList<String>(mapBarcodeToTube.keySet()), "ShearingTransfer", "KioskRack", "ShearPlate");
-        LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsDbFree(
+                "ShearingTransfer", "KioskRack", new ArrayList<String>(mapBarcodeToTube.keySet()), shearPlateBarcode);
+        LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                 shearingTransferEventJaxb, mapBarcodeToTube, null);
         labEventHandler.processEvent(shearingTransferEventEntity);
-
+        // asserts
         StaticPlate shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(shearingPlate.getSampleInstances().size(),
                 NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
 
+        // PostShearingTransferCleanup
+        String shearCleanPlateBarcode = "ShearCleanPlate";
         PlateTransferEventType postShearingTransferCleanupEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                "PostShearingTransferCleanup", "ShearPlate", "ShearCleanPlate");
-        LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsDbFree(
+                "PostShearingTransferCleanup", shearPlateBarcode, shearCleanPlateBarcode);
+        LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                 postShearingTransferCleanupEventJaxb, shearingPlate, null);
         labEventHandler.processEvent(postShearingTransferCleanupEntity);
-
+        // asserts
         StaticPlate shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(shearingCleanupPlate.getSampleInstances().size(),
                 NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
@@ -71,26 +78,55 @@ public class LabEventTest {
         Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
         Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
 
+        // IndexedAdapterLigation
+        String indexPlateBarcode = "IndexPlate";
         PlateTransferEventType indexedAdapterLigationJaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                "IndexedAdapterLigation", "IndexPlate", "ShearCleanPlate");
-        StaticPlate indexPlate = new StaticPlate("IndexPlate");
-        PlateWell plateWell = new PlateWell(indexPlate, new WellName("A01"));
+                "IndexedAdapterLigation", indexPlateBarcode, shearCleanPlateBarcode);
+        StaticPlate indexPlate = new StaticPlate(indexPlateBarcode);
+        PlateWell plateWellA01 = new PlateWell(indexPlate, new WellName("A01"));
         MolecularIndexReagent index301 = new MolecularIndexReagent(new IndexEnvelope("ATCGATCG", null, "tagged_301"));
-        plateWell.addReagent(index301);
-        indexPlate.addWell(plateWell, "A01");
-        plateWell = new PlateWell(indexPlate, new WellName("A02"));
+        plateWellA01.addReagent(index301);
+        indexPlate.addWell(plateWellA01, "A01");
+        PlateWell plateWellA02 = new PlateWell(indexPlate, new WellName("A02"));
         IndexEnvelope index502 = new IndexEnvelope("TCGATCGA", null, "tagged_502");
-        plateWell.addReagent(new MolecularIndexReagent(index502));
-        indexPlate.addWell(plateWell, "A02");
-        LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLimsDbFree(
+        plateWellA02.addReagent(new MolecularIndexReagent(index502));
+        indexPlate.addWell(plateWellA02, "A02");
+        LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                 indexedAdapterLigationJaxb, indexPlate, shearingCleanupPlate);
         labEventHandler.processEvent(indexedAdapterLigationEntity);
-
+        // asserts
         Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getSampleInstancesInWell("A01");
         PlateWell plateWellA1PostIndex = shearingCleanupPlate.getWellAtPosition("A01");
         Assert.assertEquals(plateWellA1PostIndex.getAppliedReagents().iterator().next(), index301, "Wrong reagent");
         SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
         Assert.assertEquals(sampleInstance.getMolecularState().getMolecularEnvelope().get3PrimeAttachment().getAppendageName(), "tagged_301", "Wrong index");
+
+        // PondRegistration
+        List<String> pondRegTubeBarcodes = new ArrayList<String>();
+        for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
+            pondRegTubeBarcodes.add("PondReg" + rackPosition);
+        }
+        PlateTransferEventType pondRegistrationJaxb = bettaLimsMessageFactory.buildPlateToRack(
+                "PondRegistration", shearCleanPlateBarcode, "PondReg", pondRegTubeBarcodes);
+        LabEvent pondRegistrationEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(
+                pondRegistrationJaxb, shearingCleanupPlate, null);
+        labEventHandler.processEvent(pondRegistrationEntity);
+        // asserts
+        RackOfTubes pondRegRack = (RackOfTubes) pondRegistrationEntity.getTargetLabVessels().iterator().next();
+        Assert.assertEquals(pondRegRack.getSampleInstances().size(),
+                NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
+/*
+        Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getSampleInstancesInWell("A08");
+        Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in well");
+        Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
+*/
+
+        // PreSelectionPool
+//        bettaLimsMessageFactory.buildRackToRack("PreSelectionPool", );
+        //asserts
+        // tube has two sample instances
+        // indexes
+
         /*
         Queries:
             project -> samples

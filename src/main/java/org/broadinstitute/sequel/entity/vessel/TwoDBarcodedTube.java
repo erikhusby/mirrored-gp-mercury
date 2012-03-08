@@ -39,11 +39,13 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
              throw new IllegalArgumentException("twoDBarcode must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
         }
         if (sheet == null) {
-             throw new IllegalArgumentException("sheet must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
+            // todo jmt decide how to follow the spirit of this
+//             throw new IllegalArgumentException("sheet must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
+        } else {
+            getSampleSheets().add(sheet);
+            sheet.addToVessel(this);
         }
         this.twoDBarcode = twoDBarcode;
-        getSampleSheets().add(sheet);
-        sheet.addToVessel(this);
     }
 
 

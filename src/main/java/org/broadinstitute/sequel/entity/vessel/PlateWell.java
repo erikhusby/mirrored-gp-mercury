@@ -17,21 +17,19 @@ import java.util.Set;
 public class PlateWell extends AbstractLabVessel {
 
     private StaticPlate plate;
+    private WellName wellName;
     
     private Set<Reagent> appliedReagents = new HashSet<Reagent>();
     
     public PlateWell(StaticPlate p,WellName wellName) {
         super(p.getLabel() + wellName);
-        plate = p;
-    }
-
-    protected PlateWell(String label) {
-        super(label);
+        this.plate = p;
+        this.wellName = wellName;
     }
 
     @Override
     public LabVessel getContainingVessel() {
-        return plate;        
+        return this.plate;
     }
 
     @Override
@@ -66,16 +64,25 @@ public class PlateWell extends AbstractLabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
+        return ((StaticPlate)getContainingVessel()).getSampleInstancesInWell(this.wellName.getWellName());
+/*
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        for (SampleSheet sampleSheet : getSampleSheets()) {
+        Collection<SampleSheet> sampleSheets;
+        if(getSampleSheets().isEmpty()) {
+            ((AbstractLabVessel) this.getContainingVessel()).getS
+        } else {
+            sampleSheets = getSampleSheets();
+        }
+        for (SampleSheet sampleSheet : sampleSheets) {
             for (SampleInstance sampleInstance : sampleSheet.getSampleInstances()) {
-                for (Reagent appliedReagent : appliedReagents) {
+                for (Reagent appliedReagent : this.appliedReagents) {
                     sampleInstance.getMolecularState().getMolecularEnvelope().surroundWith(appliedReagent.getMolecularEnvelopeDelta());
                 }
             }
             sampleInstances.addAll(sampleSheet.getSampleInstances());
         }
         return sampleInstances;
+*/
     }
 
     @Override
@@ -120,12 +127,12 @@ public class PlateWell extends AbstractLabVessel {
 
     @Override
     public void applyReagent(Reagent reagent) {
-        appliedReagents.add(reagent);
+        this.appliedReagents.add(reagent);
     }
 
     @Override
     public Collection<Reagent> getAppliedReagents() {
-        return appliedReagents;
+        return this.appliedReagents;
     }
 
     @Override

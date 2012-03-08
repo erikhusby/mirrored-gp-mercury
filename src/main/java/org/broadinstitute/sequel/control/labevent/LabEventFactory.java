@@ -39,6 +39,8 @@ public class LabEventFactory {
                 MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
         mapMessageNameToEventType.put("IndexedAdapterLigation", new LabEventType(true, false,
                 MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
+        mapMessageNameToEventType.put("PondRegistration", new LabEventType(false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
     }
     
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDao;
@@ -72,10 +74,10 @@ public class LabEventFactory {
         // todo jmt hash the tube positions, fetch any existing tube formation
         StaticPlate targetPlate = staticPlateDAO.findByBarcode(plateTransferEvent.getPlate().getBarcode());
         
-        return buildFromBettaLimsDbFree(plateTransferEvent, mapBarcodeToSourceTubes, targetPlate);
+        return buildFromBettaLimsRackToPlateDbFree(plateTransferEvent, mapBarcodeToSourceTubes, targetPlate);
     }
 
-    public LabEvent buildFromBettaLimsDbFree(
+    public LabEvent buildFromBettaLimsRackToPlateDbFree(
             PlateTransferEventType plateTransferEvent,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
             StaticPlate targetPlate) {
@@ -97,7 +99,27 @@ public class LabEventFactory {
         return labEvent;
     }
 
-    public LabEvent buildFromBettaLimsDbFree(
+    public LabEvent buildFromBettaLimsPlateToRackDbFree(
+            PlateTransferEventType plateTransferEvent,
+            StaticPlate sourcePlate,
+            Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes) {
+        LabEvent labEvent = constructReferenceData(plateTransferEvent);
+        RackOfTubes rackOfTubes = new RackOfTubes(plateTransferEvent.getSourcePlate().getBarcode());
+        for (ReceptacleType receptacleType : plateTransferEvent.getPositionMap().getReceptacle()) {
+            TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTargetTubes == null ? null :
+                    mapBarcodeToTargetTubes.get(receptacleType.getBarcode());
+            if(twoDBarcodedTube == null) {
+                twoDBarcodedTube = new TwoDBarcodedTube(receptacleType.getBarcode(), null);
+            }
+            rackOfTubes.addContainedVessel(twoDBarcodedTube, receptacleType.getPosition());
+        }
+
+        labEvent.addSourceLabVessel(sourcePlate);
+        labEvent.addTargetLabVessel(rackOfTubes);
+        return labEvent;
+    }
+
+    public LabEvent buildFromBettaLimsPlateToPlateDbFree(
             PlateTransferEventType plateTransferEvent,
             StaticPlate sourcePlate,
             StaticPlate targetPlate) {
@@ -120,7 +142,7 @@ public class LabEventFactory {
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             barcodes.add(receptacleType.getBarcode());
         }
-        return twoDBarcodedTubeDao.findByBarcodes(barcodes);
+        return this.twoDBarcodedTubeDao.findByBarcodes(barcodes);
     }
 
     public LabEvent buildFromBettaLims(PlateCherryPickEvent plateCherryPickEvent) {
@@ -148,7 +170,7 @@ public class LabEventFactory {
             throw new RuntimeException("Unexpected event type " + stationEventType.getEventType());
         }
         return new GenericLabEvent(labEventType, stationEventType.getStart().toGregorianCalendar().getTime(),
-                stationEventType.getStation(), personDAO.findByName(stationEventType.getOperator()));
+                stationEventType.getStation(), this.personDAO.findByName(stationEventType.getOperator()));
     }
 
     public void setTwoDBarcodedTubeDao(TwoDBarcodedTubeDAO twoDBarcodedTubeDao) {
