@@ -3,7 +3,7 @@ package org.broadinstitute.sequel.control.jira.issue;
 
 import java.io.Serializable;
 
-public class CreateResponse implements Serializable {
+public class CreateIssueResponse implements Serializable {
     
     private String id;
     
