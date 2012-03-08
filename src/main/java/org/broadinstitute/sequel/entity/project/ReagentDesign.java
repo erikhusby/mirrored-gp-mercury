@@ -2,7 +2,7 @@ package org.broadinstitute.sequel.entity.project;
 
 /**
  * A ReagentDesign is the name of magical
- * elixers, such as Baits and CATs, which
+ * elixirs, such as Baits and CATs, which
  * are ordered from companies like IDT
  * or brewed in-house.
  */
