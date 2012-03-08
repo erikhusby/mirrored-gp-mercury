@@ -1,7 +1,9 @@
 package org.broadinstitute.sequel.control.jira;
 
+import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.AbstractJerseyClientService;
@@ -22,10 +24,15 @@ public class JiraServiceImpl extends AbstractJerseyClientService implements Jira
 
     private Log logger = LogFactory.getLog(JiraServiceImpl.class);
 
-    public JiraServiceImpl() {
-        super(true);
+    @Override
+    protected void customizeConfig(ClientConfig clientConfig) {
+        supportJson(clientConfig);
     }
 
+    @Override
+    protected void customizeClient(Client client) {
+        specifyHttpAuthCredentials(client, connectionParameters);
+    }
 
     @Override
     public CreateResponse createIssue(String key, CreateRequest.Fields.Issuetype.IssuetypeName issuetypeName, String summary, String description) throws IOException {
@@ -42,7 +49,7 @@ public class JiraServiceImpl extends AbstractJerseyClientService implements Jira
 
         logger.warn("URL is " + urlString);
 
-        WebResource webResource = getClient(connectionParameters).resource(urlString);
+        WebResource webResource = getJerseyClient().resource(urlString);
 
         GenericType<CreateResponse> createResponseGenericType = new GenericType<CreateResponse>() {};
 
