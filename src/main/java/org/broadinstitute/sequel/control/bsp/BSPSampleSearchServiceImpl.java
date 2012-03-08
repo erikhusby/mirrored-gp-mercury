@@ -1,7 +1,9 @@
 package org.broadinstitute.sequel.control.bsp;
 
+import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,13 +26,15 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     @Inject
     private BSPConnectionParameters connParams;
 
-    public BSPSampleSearchServiceImpl() {}
+    @Override
+    protected void customizeConfig(ClientConfig clientConfig) {
+        // noop
+    }
 
-    public BSPSampleSearchServiceImpl(BSPConnectionParameters params) {
-        if (params == null) {
-             throw new NullPointerException("params cannot be null.");
-        }
-        this.connParams = params;
+
+    @Override
+    protected void customizeClient(Client client) {
+        specifyHttpAuthCredentials(client, connParams);
     }
 
 
@@ -54,7 +58,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
         
         _logger.info(String.format("url string is '%s'", urlString));
         
-        WebResource webResource = getClient(connParams).resource(urlString);
+        WebResource webResource = getJerseyClient().resource(urlString);
 
 
         List<String> queryParameters = new ArrayList<String>();
