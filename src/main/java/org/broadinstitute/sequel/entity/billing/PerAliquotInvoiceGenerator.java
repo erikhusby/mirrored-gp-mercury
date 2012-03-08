@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.billing;
 
 
+import org.broadinstitute.sequel.control.quote.Quote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;

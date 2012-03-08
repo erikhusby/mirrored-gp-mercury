@@ -57,7 +57,7 @@ import java.util.Collection;
  * thing to pay attention to.  I suspect that the capacity
  * requirements are vague enough and volatile enough
  * week-to-week that we'll avoid them most of the
- * time and just have every queue extend from AbstractFIFOLabWorkQueue.
+ * time and just have every queue extend from FIFOLabWorkQueue.
  *
  * We should probabl refactor this into a ReadableWorkQueue
  * and WriteableWorkQueue to deal with things like BSP,

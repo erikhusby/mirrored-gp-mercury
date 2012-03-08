@@ -30,6 +30,8 @@ public class BSPSample implements StartingSample {
     private final String sampleName;
 
     private Project project;
+    
+    private String patientId;
 
     @Inject
     BSPSampleSearchService service;
@@ -40,11 +42,51 @@ public class BSPSample implements StartingSample {
      * in which the sample resides?
      * @param sampleName
      */
-    public BSPSample(String sampleName,Project p,BSPSampleSearchService bspSearchService) {
+    public BSPSample(String sampleName,
+                     Project p,
+                     BSPSampleSearchService bspSearchService) {
         this.sampleName = sampleName;
         this.project = p;
         this.service = bspSearchService;
+    }
 
+    /**
+     * Fetches all fields live from
+     * #service
+     */
+    private void fetchAllFields() {
+        if (service == null) {
+            throw new RuntimeException("No BSP service has been declared.");
+        }
+        else {
+            Collection<String> sampleNames = new HashSet<String>();
+            sampleNames.add(sampleName);
+            // todo query multiple attributes at once for better efficiency.
+            // don't just copy paste this!
+            List<String[]> results = service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PARTICIPANT_ID);
+
+            if (results == null) {
+                throw new RuntimeException("Sample " + sampleName + " not found in BSP");
+            }
+            if (results.isEmpty()) {
+                throw new RuntimeException("Sample " + sampleName + " not found in BSP");
+            }
+            Set<String> patientIds = new HashSet<String>();
+            for (String[] result : results) {
+                if (result == null) {
+                    throw new RuntimeException("No patient id for sample " + sampleName);
+                }
+                if (result.length < 1) {
+                    throw new RuntimeException("No patient id for sample " + sampleName);
+                }
+                patientIds.add(result[0]);
+            }
+
+            if (patientIds.size() > 1) {
+                throw new RuntimeException("Multiple patient ids found for sample " + sampleName);
+            }
+            patientId = patientIds.iterator().next();
+        }
     }
 
     @Override
@@ -59,39 +101,10 @@ public class BSPSample implements StartingSample {
 
     @Override
     public String getPatientId() {
-        if (service == null) {
-            throw new RuntimeException("No BSP service has been declared.");
+        if (patientId == null) {
+            fetchAllFields();
         }
-        Collection<String> sampleNames = new HashSet<String>();
-        sampleNames.add(sampleName);
-        List<String[]> results = service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PARTICIPANT_ID);
-        
-        if (results == null) {
-            throw new RuntimeException("Sample " + sampleName + " not found in BSP");
-        }
-        if (results.isEmpty()) {
-            throw new RuntimeException("Sample " + sampleName + " not found in BSP");
-        }
-        Set<String> patientIds = new HashSet<String>();
-        
-        for (String[] result : results) {
-            if (result == null) {
-                throw new RuntimeException("No patient id for sample " + sampleName);
-            }
-            if (result.length < 1) {
-                throw new RuntimeException("No patient id for sample " + sampleName);
-            }
-            patientIds.add(result[0]);
-        }
-        
-        if (patientIds.isEmpty()) {
-            throw new RuntimeException("No patient id for sample " + sampleName);
-        }
-        if (patientIds.size() > 1) {
-            throw new RuntimeException("Multiple patient ids found for sample " + sampleName);
-        }
-
-        return patientIds.iterator().next();
+        return patientId;
     }
 
     @Override

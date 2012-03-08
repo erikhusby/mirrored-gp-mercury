@@ -10,7 +10,15 @@ import java.util.Set;
 
 public class QuoteServiceTest {
 
-    @Test
+    @Test(groups = {"ExternalIntegration"})
+    public void test_get_all_price_items() throws Exception {
+        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams(QuoteConnectionParameters.GET_ALL_PRICE_ITEMS));
+        PriceList priceList = service.getAllPriceItems();
+        Assert.assertFalse(priceList.getPriceList().isEmpty());
+
+    }
+
+    @Test(groups = {"ExternalIntegration"})
     public void test_get_a_quote() throws Exception {
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams(QuoteConnectionParameters.GET_SINGLE_QUOTE_URL));
         Quote quote = service.getQuoteFromQuoteServer("DNA3CD");
@@ -28,7 +36,7 @@ public class QuoteServiceTest {
 
     }
 
-    @Test
+    @Test(groups = {"ExternalIntegration"})
     public void test_get_all_quotes_for_sequencing() throws Exception {
 
         boolean caught = false;

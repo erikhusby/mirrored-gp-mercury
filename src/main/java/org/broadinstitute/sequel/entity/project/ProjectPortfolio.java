@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
-import org.broadinstitute.sequel.entity.billing.Quote;
+import org.broadinstitute.sequel.control.quote.Quote;
 
 /**
  * A portfolio is a container for projects.

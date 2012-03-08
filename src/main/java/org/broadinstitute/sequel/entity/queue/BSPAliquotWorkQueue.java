@@ -1,11 +1,14 @@
 package org.broadinstitute.sequel.entity.queue;
 
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.control.bsp.BSPConnector;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
+import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -22,8 +25,8 @@ import java.util.HashSet;
  * Unlike other queues, which we treat as
  * static singletons, the the BSP queue
  * is used to build a single plate at
- * a time.  So {@link LabWorkQueue#add(org.broadinstitute.sequel.entity.vessel.LabVessel, T) add} and
- * {@link LabWorkQueue#remove(org.broadinstitute.sequel.entity.vessel.LabVessel, T) remove} are
+ * a time.  So {@link LabWorkQueue#add(org.broadinstitute.sequel.entity.vessel.LabVessel, LabWorkQueueParameters, org.broadinstitute.sequel.entity.project.SequencingPlanDetail)} and
+ * {@link LabWorkQueue#startWork(org.broadinstitute.sequel.entity.vessel.LabVessel, LabWorkQueueParameters, org.broadinstitute.sequel.entity.project.WorkflowDescription, org.broadinstitute.sequel.entity.person.Person)} are
  * used to build a list which is then sent to
  * BSP when we call some method.
  */
@@ -31,7 +34,7 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
 
     // Can we first make db-free unit tests and then play some
     // CDI configuration to turn them into various flavors
-    // of integration tests for free?  Just change the beans.xml
+    // of integration tests for free?  Just change the beans.crap.xml
     // file you're using to run the same tests with or without
     // BSP connectivity.  Could you do the same with db access?
     private BSPConnector bspConnector;
@@ -44,7 +47,7 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
      * that are specific to GSP are used by PMs (to add
      * stuff) and by GSP lab staff (to process samples),
      * but the BSP queue is only used in GSP to
-     * add stuff.  So when you {@link LabWorkQueue#add(org.broadinstitute.sequel.entity.vessel.LabVessel, T) add stuff},
+     * add stuff.  So when you {@link LabWorkQueue#add(org.broadinstitute.sequel.entity.vessel.LabVessel, LabWorkQueueParameters, org.broadinstitute.sequel.entity.project.SequencingPlanDetail)} ) add stuff},
      * you're only adding it to the session.  
      * 
      * In other words, an instance of this class is
@@ -53,7 +56,7 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
      * shared across instances.
      * 
      * Put another way, the PMs are building a set
-     * of {@link Goop}s that will be plated together
+     * of {@link org.broadinstitute.sequel.entity.sample.StartingSample}s that will be plated together
      * from BSP, whereas for {@link FullAccessLabWorkQueue}s,
      * they're dribbling {@link org.broadinstitute.sequel.entity.vessel.LabTangible (tubes/plates)}
      * one at a time, and letting the lab pull in whatever
@@ -68,8 +71,14 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
         return LabWorkQueueName.BSP_ALIQUOT;
     }
 
+
     @Override
-    public LabWorkQueueResponse add(LabVessel vessel, AliquotParameters aliquotParameters) {
+    public LabWorkQueueResponse startWork(LabVessel vessel, AliquotParameters workflowParameters, WorkflowDescription workflow, Person user) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public LabWorkQueueResponse add(LabVessel vessel, AliquotParameters aliquotParameters,SequencingPlanDetail sequencingPlan) {
         if (vessel == null) {
              throw new IllegalArgumentException("labTangible must be non-null in BSPAliquotWorkQueue.add");
         }
@@ -93,11 +102,6 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
     public Collection<MolecularStateRange> getMolecularStateRequirements() {
         throw new RuntimeException("I haven't been written yet.");
     }
-    
-    @Override
-    public LabWorkQueueResponse remove(LabVessel vessel, AliquotParameters bucket) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
 
     @Override
     public BSPPlatingResponse sendBatch() {
@@ -119,4 +123,13 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
         return platingResponse;
     }
 
+    @Override
+    public boolean isEmpty() {
+        return aliquotRequests.isEmpty();
+    }
+
+    @Override
+    public WorkflowEngine getWorkflowEngine() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 }

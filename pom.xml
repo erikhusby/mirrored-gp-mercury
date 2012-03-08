@@ -191,13 +191,27 @@
 
     </profiles>
     <dependencies>
+        <dependency>
+            <groupId>org.jboss.weld.se</groupId>
+            <artifactId>weld-se</artifactId>
+            <version>1.1.5.Final</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>javax.enterprise</groupId>
+            <artifactId>cdi-api</artifactId>
+            <version>1.0-SP2</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- glassfish-embedded-all must be before javaee-api -->
+        <!--
         <dependency>
             <groupId>org.glassfish.extras</groupId>
             <artifactId>glassfish-embedded-all</artifactId>
             <version>3.1.1</version>
             <scope>test</scope>
         </dependency>
+        -->
 	<dependency>
 	  <groupId>org.testng</groupId>
 	  <artifactId>testng</artifactId>
@@ -210,12 +224,14 @@
             <version>2.9</version>
             <scope>test</scope>
         </dependency>
+        <!--
         <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-api</artifactId>
             <version>6.0</version>
             <scope>provided</scope>
         </dependency>
+        -->
         <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
@@ -288,6 +304,11 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
             <version>1.8</version>
         </dependency>
     </dependencies>
