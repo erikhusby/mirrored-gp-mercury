@@ -43,6 +43,7 @@ public class ProjectPlan {
         this.project = project;
         this.planName = name;
         this.workflowDescription = workflowDescription;
+        project.addProjectPlan(this);
     }
 
     public Project getProject() {

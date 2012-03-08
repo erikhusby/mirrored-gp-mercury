@@ -209,4 +209,9 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
     public Collection<MolecularStateRange> getMolecularStateRequirements() {
         throw new RuntimeException("I haven't been written yet.");
     }
+
+    @Override
+    public WorkflowEngine getWorkflowEngine() {
+        return workflowEngine;
+    }
 }

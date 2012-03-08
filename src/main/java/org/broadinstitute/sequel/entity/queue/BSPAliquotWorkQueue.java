@@ -8,6 +8,7 @@ import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.control.bsp.BSPConnector;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
+import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -125,5 +126,10 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
     @Override
     public boolean isEmpty() {
         return aliquotRequests.isEmpty();
+    }
+
+    @Override
+    public WorkflowEngine getWorkflowEngine() {
+        throw new RuntimeException("I haven't been written yet.");
     }
 }
