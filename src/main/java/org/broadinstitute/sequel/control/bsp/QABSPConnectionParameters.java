@@ -33,4 +33,13 @@ public class QABSPConnectionParameters implements BSPConnectionParameters {
 	}
 
 
+    @Override
+    public String getUsername() {
+        return getSuperuserLogin();
+    }
+
+    @Override
+    public String getPassword() {
+        return getSuperuserPassword();
+    }
 }

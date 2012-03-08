@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.control.quote.Quote;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import java.util.Collection;
 import java.util.HashSet;
@@ -20,10 +21,12 @@ public class ProjectPlan {
     private String notes;
 
     // todo where does analysis type go here?
-    
+
     private Collection<PoolGroup> poolGroups = new HashSet<PoolGroup>();
 
     private Collection<ReagentDesign> reagentDesigns = new HashSet<ReagentDesign>();
+    
+    private Quote quote;
     
     public ProjectPlan(Project project,
                        String name,
@@ -40,6 +43,7 @@ public class ProjectPlan {
         this.project = project;
         this.planName = name;
         this.workflowDescription = workflowDescription;
+        project.addProjectPlan(this);
     }
 
     public Project getProject() {

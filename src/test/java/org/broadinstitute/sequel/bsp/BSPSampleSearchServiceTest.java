@@ -2,6 +2,8 @@ package org.broadinstitute.sequel.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.sequel.TestUtilities;
+import org.broadinstitute.sequel.WeldBooter;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
 import org.jboss.weld.environment.se.Weld;
@@ -10,28 +12,27 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class BSPSampleSearchServiceTest {
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.sequel.TestGroups.BOOT_WELD;
+
+public class BSPSampleSearchServiceTest extends WeldBooter {
 
     @SuppressWarnings("unused")
     private static final Log _logger = LogFactory.getLog(BSPSampleSearchServiceTest.class);
 
     BSPSampleSearchService service;
 
-    // todo figure out the right way to encapsulte weld SE startup,
-    // without cluttering the tests and putting @BeforeClass
-    // into every single group.
-
-    @BeforeClass(groups = "ExternalIntegration")
-    public void initWeld() {
-        WeldContainer weld = new Weld().initialize();
-        service = weld.instance().select(BSPSampleSearchService.class).get();
+    @BeforeClass
+    private void init() {
+        service = weldUtil.getFromContainer(BSPSampleSearchService.class);
     }
 
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void testBasic() {
         final String TEST_SAMPLE_ID = "SM-12CO4";
         String [] sampleIDs = new String [] {TEST_SAMPLE_ID};
@@ -42,7 +43,7 @@ public class BSPSampleSearchServiceTest {
     }
 
 
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void testLsidsToIds() {
         String [] lsids = {
                 "broadinstitute.org:bsp.prod.sample:UP6R",

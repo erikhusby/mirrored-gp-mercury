@@ -40,6 +40,7 @@ public class SequencingPlanDetail {
          this.sequencingTechnology = sequencingTechnology;
         this.coverageGoal = coverageGoal;
         this.projectPlan = projectPlan;
+        projectPlan.addSequencingDetail(this);
     }
 
     public ProjectPlan getProjectPlan() {

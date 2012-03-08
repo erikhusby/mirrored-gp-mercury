@@ -1,29 +1,33 @@
 package org.broadinstitute.sequel.org.broadinstitute.sequel.entity.bsp;
 
+import org.broadinstitute.sequel.WeldBooter;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.easymock.EasyMock;
-import org.jboss.weld.environment.se.Weld;
-import org.jboss.weld.environment.se.WeldContainer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class BSPSampleTest {
+import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
+public class BSPSampleTest extends WeldBooter {
+
+    BSPSampleSearchService service;
+
+    @BeforeClass
+    private void init() {
+        service = weldUtil.getFromContainer(BSPSampleSearchService.class);
+    }
     
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_patient_id_integration() {
-        WeldContainer weld = new Weld().initialize();
-        BSPSampleSearchService service = weld.instance().select(BSPSampleSearchService.class).get();
-        
-        BSPSample bspSample = new BSPSample("SM-12CO4",
+      BSPSample bspSample = new BSPSample("SM-12CO4",
                 null,
                 service);
         String patientId = bspSample.getPatientId();
@@ -32,7 +36,7 @@ public class BSPSampleTest {
         Assert.assertEquals("PT-2LK3",patientId);
     }
     
-    @Test(groups = {"DatabaseFree"})
+    @Test(groups = {DATABASE_FREE})
     public void test_patient_id_mock() {
         List<String[]> patiendIds = new ArrayList<String[]>(1);
         patiendIds.add(new String[] {"Bill the Cat"});
