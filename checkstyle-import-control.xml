@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!DOCTYPE import-control PUBLIC
+        "-//Puppy Crawl//DTD Import Control 1.1//EN"
+        "http://www.puppycrawl.com/dtds/import_control_1_1.dtd">
+
+<import-control pkg="org.broadinstitute.sequel">
+
+    <!--allow access to utility libraries -->
+    <allow pkg="java"/>
+    <allow pkg="sun"/>
+    <allow pkg="org.apache.commons"/>
+    <allow pkg="org.broadinstitute.sequel"/>
+
+    <subpackage name="bettalims">
+        <subpackage name="jaxb">
+            <allow pkg="javax.xml.bind"/>
+            <allow pkg="javax.xml.datatype"/>
+        </subpackage>
+    </subpackage>
+
+    <subpackage name="boundary">
+        <allow pkg="javax.enterprise.context"/>
+        <allow pkg="javax.enterprise.inject"/>
+    </subpackage>
+
+    <subpackage name="control">
+        <allow pkg="com.sun.jersey"/>
+        <allow pkg="javax.enterprise.context"/>
+        <allow pkg="javax.enterprise.inject"/>
+        <allow pkg="javax.net"/>
+        <allow pkg="javax.inject"/>
+        <allow pkg="javax.ws"/>
+        <allow pkg="javax.xml.bind"/>
+        <allow pkg="org.codehaus.jackson"/>
+        <subpackage name="dao">
+            <allow pkg="javax.persistence"/>
+        </subpackage>
+    </subpackage>
+
+    <subpackage name="entity">
+        <allow pkg="javax.persistence"/>
+        <!-- Only DAOs are allowed to access the EntityManager -->
+        <disallow class="javax.persistence.EntityManager"/>
+        <disallow class="javax.persistence.EntityManagerFactory"/>
+    </subpackage>
+
+</import-control>
