@@ -26,11 +26,21 @@ public class CreateIssueRequest implements Serializable {
             // the convention for enum instances is all-caps, but the JIRA 5 REST examples I've seen have specified
             // this value as mixed case.  In my limited experience with the JIRA 5 REST API it has proven to be
             // very sensitive to case.
-            
-            public static final String BUG = "Bug";
-            public static final String SEQUEL_PROJECT = "SequeL Project";
+
+            public static final Issuetype BUG = new Issuetype("Bug");
+
+            public static final Issuetype SEQUEL_PROJECT = new Issuetype("SequeL Project");
 
             private String name;
+
+            private Issuetype() {}
+
+            private Issuetype(String name) {
+                if (name == null) {
+                     throw new NullPointerException("name cannot be null.");
+                }
+                this.name = name;
+            }
 
             public String getName() {
                 return name;
@@ -110,14 +120,14 @@ public class CreateIssueRequest implements Serializable {
     }
 
 
-    public static CreateIssueRequest create(String key, String issuetypeName, String summary, String description) {
+    public static CreateIssueRequest create(String key, Fields.Issuetype issuetype, String summary, String description) {
         
         CreateIssueRequest ret = new CreateIssueRequest();
         
         Fields fields = ret.getFields();
 
         fields.getProject().setKey(key);
-        fields.getIssuetype().setName(issuetypeName);
+        fields.getIssuetype().setName(issuetype.getName());
         fields.setSummary(summary);
         fields.setDescription(description);
 

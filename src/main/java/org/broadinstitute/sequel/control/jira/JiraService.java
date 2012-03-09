@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.control.jira;
 
 
+import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.control.jira.issue.Visibility;
 
@@ -21,7 +22,7 @@ public interface JiraService {
      * @return
      * @throws IOException
      */
-    CreateIssueResponse createIssue(String projectPrefix, String issuetype, String summary, String description) throws IOException;
+    CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description) throws IOException;
 
 
     /**

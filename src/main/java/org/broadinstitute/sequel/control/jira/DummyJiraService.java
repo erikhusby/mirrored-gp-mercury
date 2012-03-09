@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.control.jira;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.control.jira.issue.Visibility;
 
@@ -20,7 +21,7 @@ public class DummyJiraService implements JiraService {
     private Log logger = LogFactory.getLog(DummyJiraService.class);
 
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, String issuetype, String summary, String description) throws IOException {
+    public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description) throws IOException {
         throw new RuntimeException("I haven't been written yet.");
     }
 
