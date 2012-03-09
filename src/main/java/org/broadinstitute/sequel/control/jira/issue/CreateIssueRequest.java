@@ -1,6 +1,9 @@
 package org.broadinstitute.sequel.control.jira.issue;
 
 
+import org.broadinstitute.sequel.control.jira.JsonUnderscoreToWhitespaceEnumSerializer;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
 import java.io.Serializable;
 
 public class CreateIssueRequest implements Serializable {
@@ -21,34 +24,14 @@ public class CreateIssueRequest implements Serializable {
         }
 
 
-        public static class Issuetype {
+        @JsonSerialize(using = JsonUnderscoreToWhitespaceEnumSerializer.class)
+        public enum Issuetype {
 
             // the convention for enum instances is all-caps, but the JIRA 5 REST examples I've seen have specified
             // this value as mixed case.  In my limited experience with the JIRA 5 REST API it has proven to be
             // very sensitive to case.
-
-            public static final Issuetype BUG = new Issuetype("Bug");
-
-            public static final Issuetype SEQUEL_PROJECT = new Issuetype("SequeL Project");
-
-            private String name;
-
-            private Issuetype() {}
-
-            private Issuetype(String name) {
-                if (name == null) {
-                     throw new NullPointerException("name cannot be null.");
-                }
-                this.name = name;
-            }
-
-            public String getName() {
-                return name;
-            }
-
-            public void setName(String name) {
-                this.name = name;
-            }
+            Bug,
+            SequeL_Project;
 
         }
 
@@ -97,7 +80,6 @@ public class CreateIssueRequest implements Serializable {
 
         public Fields() {
             this.project = new Project();
-            this.issuetype = new Issuetype();
         }
 
     }
@@ -127,7 +109,7 @@ public class CreateIssueRequest implements Serializable {
         Fields fields = ret.getFields();
 
         fields.getProject().setKey(key);
-        fields.getIssuetype().setName(issuetype.getName());
+        fields.setIssuetype(issuetype);
         fields.setSummary(summary);
         fields.setDescription(description);
 

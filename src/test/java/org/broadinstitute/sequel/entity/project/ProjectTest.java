@@ -41,7 +41,7 @@ public class ProjectTest {
         JiraService jiraService = weld.getFromContainer(JiraService.class);
         
         CreateIssueResponse response = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
-                CreateIssueRequest.Fields.Issuetype.SEQUEL_PROJECT,
+                CreateIssueRequest.Fields.Issuetype.SequeL_Project,
                 "Test run by " + System.getProperty("user.name") + " on " + new SimpleDateFormat("yyyy/MM/dd").format(new Date(System.currentTimeMillis())),
                 "Do lots of sequencing");
         assertNotNull(response);

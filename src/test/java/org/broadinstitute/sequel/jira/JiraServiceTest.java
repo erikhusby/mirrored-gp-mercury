@@ -31,7 +31,7 @@ public class JiraServiceTest extends WeldBooter {
         try {
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, CreateIssueRequest.Fields.Issuetype.BUG, "Summary created from SequeL", "Description created from SequeL" );
+                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, CreateIssueRequest.Fields.Issuetype.SequeL_Project, "Summary created from SequeL", "Description created from SequeL" );
 
             final String key = createIssueResponse.getTicketName();
 
