@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+
 /**
  * Test messaging
  */
@@ -33,7 +35,7 @@ import java.util.Set;
 public class LabEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
-    @Test
+    @Test(groups = {DATABASE_FREE})
     public void testHybridSelection() {
         // Hybrid selection transfers
         TestUtilities testUtilities = new TestUtilities();
@@ -74,7 +76,7 @@ public class LabEventTest {
         StaticPlate shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(shearingCleanupPlate.getSampleInstances().size(),
                 NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
-        Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getSampleInstancesInWell("A08");
+        Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getSampleInstancesInPosition("A08");
         Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
         Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
 
@@ -86,16 +88,16 @@ public class LabEventTest {
         PlateWell plateWellA01 = new PlateWell(indexPlate, new WellName("A01"));
         MolecularIndexReagent index301 = new MolecularIndexReagent(new IndexEnvelope("ATCGATCG", null, "tagged_301"));
         plateWellA01.addReagent(index301);
-        indexPlate.addWell(plateWellA01, "A01");
+        indexPlate.addContainedVessel(plateWellA01, "A01");
         PlateWell plateWellA02 = new PlateWell(indexPlate, new WellName("A02"));
         IndexEnvelope index502 = new IndexEnvelope("TCGATCGA", null, "tagged_502");
         plateWellA02.addReagent(new MolecularIndexReagent(index502));
-        indexPlate.addWell(plateWellA02, "A02");
+        indexPlate.addContainedVessel(plateWellA02, "A02");
         LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                 indexedAdapterLigationJaxb, indexPlate, shearingCleanupPlate);
         labEventHandler.processEvent(indexedAdapterLigationEntity);
         // asserts
-        Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getSampleInstancesInWell("A01");
+        Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getSampleInstancesInPosition("A01");
         PlateWell plateWellA1PostIndex = shearingCleanupPlate.getWellAtPosition("A01");
         Assert.assertEquals(plateWellA1PostIndex.getAppliedReagents().iterator().next(), index301, "Wrong reagent");
         SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
@@ -115,11 +117,9 @@ public class LabEventTest {
         RackOfTubes pondRegRack = (RackOfTubes) pondRegistrationEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(pondRegRack.getSampleInstances().size(),
                 NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
-/*
-        Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getSampleInstancesInWell("A08");
-        Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in well");
+        Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getSampleInstancesInPosition("A08");
+        Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
         Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
-*/
 
         // PreSelectionPool
 //        bettaLimsMessageFactory.buildRackToRack("PreSelectionPool", );

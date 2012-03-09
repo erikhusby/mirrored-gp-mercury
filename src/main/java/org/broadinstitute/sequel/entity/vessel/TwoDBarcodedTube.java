@@ -51,7 +51,7 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
 
     @Override
     public String getLabel() {
-        return twoDBarcode;
+        return this.twoDBarcode;
     }
 
     @Override
@@ -120,18 +120,8 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
     }
 
     @Override
-    public Collection<LabVessel> getContainedVessels() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void addContainedVessel(LabVessel child) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public String getLabCentricName() {
-        return twoDBarcode;
+        return this.twoDBarcode;
     }
 
     @Override
@@ -178,12 +168,12 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
     @Override
     public void logNote(StatusNote statusNote) {
         gLog.info(statusNote);
-        notes.add(statusNote);
+        this.notes.add(statusNote);
     }
 
     @Override
     public Collection<StatusNote> getAllStatusNotes() {
-        return notes;
+        return this.notes;
     }
 
     @Override

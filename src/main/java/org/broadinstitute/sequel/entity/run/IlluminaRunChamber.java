@@ -15,7 +15,10 @@ import org.broadinstitute.sequel.entity.billing.Priceable;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.vessel.AbstractLabVessel;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, RunChamber {
 
@@ -34,7 +37,7 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
 
     @Override
     public String getChamberName() {
-        return Integer.toString(laneNumber);
+        return Integer.toString(this.laneNumber);
     }
     
     public int getLaneNumber() {
@@ -43,26 +46,7 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
 
     @Override
     public RunConfiguration getRunConfiguration() {
-        return flowcell.getRunConfiguration();
-    }
-
-    /**
-     * The lane on a flowcell doesn't ever contain
-     * any other vessel.
-     * @return
-     */
-    @Override
-    public Collection<LabVessel> getContainedVessels() {
-        return Collections.emptyList();
-    }
-
-    /**
-     * Modelling problem: you can't add a lab
-     * vessel to a flowcell lane
-     */
-    @Override
-    public void addContainedVessel(LabVessel child) {
-        throw new RuntimeException("Can't do this!");
+        return this.flowcell.getRunConfiguration();
     }
 
     @Override
@@ -136,7 +120,7 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
 
     @Override
     public LabVessel getContainingVessel() {
-        return flowcell;
+        return this.flowcell;
     }
 
 

@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * A traditional plate.
  */
-public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
+public class StaticPlate extends AbstractLabVessel implements SBSSectionable, VesselContainer<PlateWell> {
 
     private Map<String, PlateWell> mapPositionToWell = new HashMap<String, PlateWell>();
 
@@ -35,17 +35,18 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
     }
 
     @Override
-    public Collection<LabVessel> getContainedVessels() {
-        throw new RuntimeException("I haven't been written yet.");
+    public LabVessel getVesselAtPosition(String position) {
+        return this.mapPositionToWell.get(position);
     }
 
     @Override
-    public void addContainedVessel(LabVessel child) {
-        throw new RuntimeException("Use addWell");
+    public Collection<PlateWell> getContainedVessels() {
+        return this.mapPositionToWell.values();
     }
 
-    public void addWell(PlateWell plateWell, String position) {
-        this.mapPositionToWell.put(position, plateWell);
+    @Override
+    public void addContainedVessel(PlateWell child, String position) {
+        this.mapPositionToWell.put(position, child);
     }
 
     @Override
@@ -74,7 +75,7 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
             }
         } else {
             for (String position : this.mapPositionToWell.keySet()) {
-                sampleInstances.addAll(getSampleInstancesInWell(position));
+                sampleInstances.addAll(getSampleInstancesInPosition(position));
             }
         }
         return sampleInstances;
@@ -130,10 +131,11 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public Set<SampleInstance> getSampleInstancesInWell(String wellPosition) {
+    // todo jmt should this be getWellAtPosition().getSampleInstances()? Perhaps not, because the wells may not exist
+    public Set<SampleInstance> getSampleInstancesInPosition(String wellPosition) {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if(getSampleSheetAuthorities().isEmpty()) {
-            return Collections.emptySet();
+            sampleInstances = Collections.emptySet();
         } else {
             for (LabVessel labVessel : getSampleSheetAuthorities()) {
                 // todo jmt generalize to handle rack and tube
@@ -187,7 +189,7 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable {
                         PlateWell plateWell = targetPlate.getWellAtPosition(targetWellName.getWellName());
                         if (plateWell == null) {
                             plateWell = new PlateWell(targetPlate, targetWellName);
-                            targetPlate.addWell(plateWell, targetWellName.getWellName());
+                            targetPlate.addContainedVessel(plateWell, targetWellName.getWellName());
                         }
                         plateWell.applyReagent(reagent);
                     }

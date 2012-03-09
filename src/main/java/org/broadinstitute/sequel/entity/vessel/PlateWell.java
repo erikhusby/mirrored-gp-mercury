@@ -10,7 +10,6 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,16 +29,6 @@ public class PlateWell extends AbstractLabVessel {
     @Override
     public LabVessel getContainingVessel() {
         return this.plate;
-    }
-
-    @Override
-    public Collection<LabVessel> getContainedVessels() {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public void addContainedVessel(LabVessel child) {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override
@@ -64,25 +53,7 @@ public class PlateWell extends AbstractLabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        return ((StaticPlate)getContainingVessel()).getSampleInstancesInWell(this.wellName.getWellName());
-/*
-        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        Collection<SampleSheet> sampleSheets;
-        if(getSampleSheets().isEmpty()) {
-            ((AbstractLabVessel) this.getContainingVessel()).getS
-        } else {
-            sampleSheets = getSampleSheets();
-        }
-        for (SampleSheet sampleSheet : sampleSheets) {
-            for (SampleInstance sampleInstance : sampleSheet.getSampleInstances()) {
-                for (Reagent appliedReagent : this.appliedReagents) {
-                    sampleInstance.getMolecularState().getMolecularEnvelope().surroundWith(appliedReagent.getMolecularEnvelopeDelta());
-                }
-            }
-            sampleInstances.addAll(sampleSheet.getSampleInstances());
-        }
-        return sampleInstances;
-*/
+        return ((StaticPlate)getContainingVessel()).getSampleInstancesInPosition(this.wellName.getWellName());
     }
 
     @Override

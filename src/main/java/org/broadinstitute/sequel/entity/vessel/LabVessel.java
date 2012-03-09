@@ -109,18 +109,6 @@ public interface LabVessel  {
      */
     public LabVessel getContainingVessel();
 
-    /**
-     * If this is a plate, this method could return
-     * the {@link org.broadinstitute.sequel.entity.vessel.PlateWell wells}.  If this thing
-     * is a {@link org.broadinstitute.sequel.entity.vessel.RackOfTubes}, this method could
-     * return the {@link org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube} tubes in
-     * the rack.
-     * @return
-     */
-    public Collection<? extends LabVessel> getContainedVessels();
-
-    public void addContainedVessel(LabVessel child);
-
     public void addMetric(LabMetric m);
 
     public Collection<LabMetric> getMetrics();
