@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.control.jira.issue;
 
 
-import org.broadinstitute.sequel.control.jira.JsonUnderscoreToWhitespaceEnumSerializer;
+import org.broadinstitute.sequel.control.jira.JsonUnderscoreToBlankEnumSerializer;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.io.Serializable;
@@ -24,7 +24,7 @@ public class CreateIssueRequest implements Serializable {
         }
 
 
-        @JsonSerialize(using = JsonUnderscoreToWhitespaceEnumSerializer.class)
+        @JsonSerialize(using = JsonUnderscoreToBlankEnumSerializer.class)
         public enum Issuetype {
 
             // the convention for enum instances is all-caps, but the JIRA 5 REST examples I've seen have specified
