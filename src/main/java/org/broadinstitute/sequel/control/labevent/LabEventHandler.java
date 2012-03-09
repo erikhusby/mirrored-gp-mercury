@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.control.labevent;
 
 
+import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -12,7 +13,6 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventMessage;
 
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +30,8 @@ public class LabEventHandler {
 
     PartiallyProcessedLabEventCache invalidMolecularState;
 
-    EntityManager em;
+    @Inject
+    private LabEventDao labEventDao;
 
     public HANDLER_RESPONSE handleEvent(LabEventMessage eventMessage) {
         // 0. write out the message to stable server-side storage,
@@ -41,7 +42,7 @@ public class LabEventHandler {
         LabEvent labEvent = createEvent(eventMessage);
         HANDLER_RESPONSE response = processEvent(labEvent);
         if (response == HANDLER_RESPONSE.OK) {
-            em.persist(labEvent);
+            this.labEventDao.persist(labEvent);
         }
         return response;
     }
