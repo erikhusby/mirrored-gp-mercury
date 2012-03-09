@@ -1,6 +1,9 @@
 package org.broadinstitute.sequel.control.jira;
 
 
+import javax.enterprise.inject.Default;
+
+@Default
 public class EriksDesktopJiraConnectionParameters implements JiraConnectionParameters {
 
     private String username = "mcovarr";

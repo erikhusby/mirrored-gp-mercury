@@ -3,7 +3,7 @@ package org.broadinstitute.sequel.control.jira.issue;
 
 import java.io.Serializable;
 
-public class CreateRequest implements Serializable {
+public class CreateIssueRequest implements Serializable {
 
     public static class Fields implements Serializable {
 
@@ -26,17 +26,27 @@ public class CreateRequest implements Serializable {
             // the convention for enum instances is all-caps, but the JIRA 5 REST examples I've seen have specified
             // this value as mixed case.  In my limited experience with the JIRA 5 REST API it has proven to be
             // very sensitive to case.
-            public enum IssuetypeName {
-                Bug
-            }
-            
-            private IssuetypeName name;
 
-            public IssuetypeName getName() {
+            public static final Issuetype BUG = new Issuetype("Bug");
+
+            public static final Issuetype SEQUEL_PROJECT = new Issuetype("SequeL Project");
+
+            private String name;
+
+            private Issuetype() {}
+
+            private Issuetype(String name) {
+                if (name == null) {
+                     throw new NullPointerException("name cannot be null.");
+                }
+                this.name = name;
+            }
+
+            public String getName() {
                 return name;
             }
 
-            public void setName(IssuetypeName name) {
+            public void setName(String name) {
                 this.name = name;
             }
 
@@ -105,19 +115,19 @@ public class CreateRequest implements Serializable {
     }
 
 
-    public CreateRequest() {
+    public CreateIssueRequest() {
         this.fields = new Fields();
     }
 
 
-    public static CreateRequest create(String key, Fields.Issuetype.IssuetypeName issuetypeName, String summary, String description) {
+    public static CreateIssueRequest create(String key, Fields.Issuetype issuetype, String summary, String description) {
         
-        CreateRequest ret = new CreateRequest();
+        CreateIssueRequest ret = new CreateIssueRequest();
         
         Fields fields = ret.getFields();
 
         fields.getProject().setKey(key);
-        fields.getIssuetype().setName(issuetypeName);
+        fields.getIssuetype().setName(issuetype.getName());
         fields.setSummary(summary);
         fields.setDescription(description);
 

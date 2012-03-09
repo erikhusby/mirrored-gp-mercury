@@ -1,3 +1,5 @@
 # Ignore these directories
 .idea
+.clover
 target
+SequeL.iml

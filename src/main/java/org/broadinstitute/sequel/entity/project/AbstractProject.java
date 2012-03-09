@@ -45,8 +45,7 @@ public abstract class AbstractProject implements Project, UserRemarkable {
         this.quotesCache = cache;
     }
 
-    @Override
-    public JiraTicket getJiraTicket() {
+    JiraTicket getJiraTicket() {
          return jiraTicket;
     }
 
@@ -292,6 +291,17 @@ public abstract class AbstractProject implements Project, UserRemarkable {
              throw new NullPointerException("grantDescription cannot be null."); 
         }
         grants.add(grantDescription);
+    }
+
+    @Override
+    public void addJiraComment(String comment) {
+        if (jiraTicket != null) {
+            jiraTicket.addComment(comment);
+        }
+        else {
+            // todo figure out tool for logging and alerting.
+            throw new RuntimeException("There is no jira ticket for " + projectName);
+        }
     }
 
     @Override

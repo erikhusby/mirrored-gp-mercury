@@ -119,11 +119,8 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         SequencingPlanDetail sequencingPlan = queuedWork.getSequencingPlan();
         ProjectPlan projectPlan = sequencingPlan.getProjectPlan();
         Project p = projectPlan.getProject();
-        JiraTicket ticket = p.getJiraTicket();
-        if (ticket != null) {
-            ticket.addComment(user.getFirstName() + " " + user.getLastName() + " has started work for plan '" +
+        p.addJiraComment(user.getFirstName() + " " + user.getLastName() + " has started work for plan '" +
                     projectPlan.getName() + "' for starter " + queuedWork.getLabVessel().getLabel());
-        }
     }
 
     @Override

@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
-import static org.broadinstitute.sequel.TestGroups.BOOT_WELD;
 
 public class BSPSampleSearchServiceTest extends WeldBooter {
 

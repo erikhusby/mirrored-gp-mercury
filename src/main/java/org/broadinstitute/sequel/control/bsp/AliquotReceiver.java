@@ -60,7 +60,7 @@ public class AliquotReceiver {
         BSPPlatingRequest platingRequest = resolveAliquotToPlatingRequest(source,aliquot,receipt);
 
         for (Project project : aliquot.getAllProjects()) {
-            project.getJiraTicket().addComment("Aliquot " + aliquot.getLabCentricName() + " derived from " + source.getLabCentricName() + " has been received.");
+            project.addJiraComment("Aliquot " + aliquot.getLabCentricName() + " derived from " + source.getLabCentricName() + " has been received.");
         }
 
         aliquot.logNote(new StatusNote(LabEventName.ALIQUOT_RECEIVED));

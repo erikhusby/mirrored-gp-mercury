@@ -218,16 +218,14 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
 
     @Override
     public void addNoteToProjects(String message) {
-        Collection<JiraTicket> ticketsToNotify = new HashSet<JiraTicket>();
+        Collection<Project> ticketsToNotify = new HashSet<Project>();
         for (SampleInstance sampleInstance : getSampleInstances()) {
             if (sampleInstance.getProject() != null) {
-                if (sampleInstance.getProject().getJiraTicket() != null) {
-                    ticketsToNotify.add(sampleInstance.getProject().getJiraTicket());
-                }
+                ticketsToNotify.add(sampleInstance.getProject());
             }
         }
-        for (JiraTicket jiraTicket : ticketsToNotify) {
-            jiraTicket.addComment(message);
+        for (Project project : ticketsToNotify) {
+            project.addJiraComment(message);
         }
     }
 }

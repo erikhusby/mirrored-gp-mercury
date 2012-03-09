@@ -1,5 +1,11 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.TestUtilities;
+import org.broadinstitute.sequel.WeldUtil;
+import org.broadinstitute.sequel.control.jira.DummyJiraService;
+import org.broadinstitute.sequel.control.jira.JiraService;
+import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.control.quote.*;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.person.Person;
@@ -16,17 +22,36 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.workflow.Workflow;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
-import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
 
 public class ProjectTest {
 
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void test_project_jira() throws Exception {
+        WeldUtil weld = TestUtilities.bootANewWeld();
+        JiraService jiraService = weld.getFromContainer(JiraService.class);
+        
+        CreateIssueResponse response = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
+                CreateIssueRequest.Fields.Issuetype.SEQUEL_PROJECT,
+                "Test run by " + System.getProperty("user.name") + " on " + new SimpleDateFormat("yyyy/MM/dd").format(new Date(System.currentTimeMillis())),
+                "Do lots of sequencing");
+        assertNotNull(response);
+        JiraTicket ticket = new JiraTicket(jiraService,response.getTicketName(),response.getId());
+        AbstractProject project = new BasicProject(ticket.getTicketName(),ticket);
+        project.addJiraComment("Comment added via Project");
+        assertTrue(response.getTicketName().startsWith(Project.JIRA_PROJECT_PREFIX));
+        // todo how to verify the comment was added?
+    }
+    
     @Test(groups = {DATABASE_FREE})
     public void test_simple_project() {
         AbstractProject project = projectManagerCreatesProject();
@@ -112,9 +137,7 @@ public class ProjectTest {
 
         assertTrue(lcWorkQueue.isEmpty());
 
-        assertEquals("work has stated",workflowInstance.getState().getState());
-
-        EasyMock.verify(project.getJiraTicket());
+        assertEquals("work has stated", workflowInstance.getState().getState());
     }
     
     /**
@@ -128,11 +151,7 @@ public class ProjectTest {
      * @return
      */
     private AbstractProject projectManagerCreatesProject() {
-        JiraTicket ticket = EasyMock.createMock(JiraTicket.class);
-        EasyMock.expect(ticket.addComment(EasyMock.contains("has started work for plan"))).andReturn(JiraTicket.JiraResponse.OK).times(1);
-        EasyMock.replay(ticket);
-
-        AbstractProject legacyProject = new BasicProject("Legacy Squid Project C203",ticket);
+        AbstractProject legacyProject = new BasicProject("Legacy Squid Project C203",new JiraTicket(new DummyJiraService(),"TP-0","0"));
         return legacyProject;
     }
 

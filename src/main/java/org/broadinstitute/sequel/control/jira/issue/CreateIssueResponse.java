@@ -3,10 +3,10 @@ package org.broadinstitute.sequel.control.jira.issue;
 
 import java.io.Serializable;
 
-public class CreateResponse implements Serializable {
+public class CreateIssueResponse implements Serializable {
     
     private String id;
-    
+
     private String key;
     
     private String self;
@@ -20,6 +20,10 @@ public class CreateResponse implements Serializable {
         this.id = id;
     }
 
+    public String getTicketName() {
+        return key;
+    }
+    
     public String getKey() {
         return key;
     }

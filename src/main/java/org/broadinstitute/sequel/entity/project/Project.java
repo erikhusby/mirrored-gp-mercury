@@ -21,6 +21,8 @@ import java.util.Collection;
 // maybe even just a single class
 public interface Project {
 
+   public static final String JIRA_PROJECT_PREFIX = "TP";
+    
     /**
      * Is this project considered
      * "in play"?  This is a slight
@@ -46,7 +48,7 @@ public interface Project {
      * They can configure jira to match their workflow.
      * @return
      */
-    public JiraTicket getJiraTicket();
+    public void addJiraComment(String comment);
 
     public boolean isDevelopment();
 
