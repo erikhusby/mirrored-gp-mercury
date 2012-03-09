@@ -35,20 +35,6 @@ public class JiraTicket {
         this.jiraService = jiraService;
     }
 
-    /*
-    public JiraTicket(String ticketName,
-                      String ticketId) {
-        if (ticketName == null) {
-             throw new NullPointerException("ticketName cannot be null."); 
-        }
-        if (ticketId == null) {
-             throw new NullPointerException("ticketId cannot be null."); 
-        }
-        this.ticketName = ticketName;
-        this.ticketId = ticketId;
-    }
-    */
-    
     public String getTicketName() {
         return ticketName;
     }
