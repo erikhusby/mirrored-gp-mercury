@@ -162,7 +162,7 @@ public class LabEventHandler {
         }
         for (Map.Entry<Project, Collection<StartingSample>> entry : samplesForProject.entrySet()) {
             String message = entry.getValue().size() + " aliquots for " + entry.getKey().getProjectName() + " have been processed through the " + event.getEventName() + " event";
-            entry.getKey().getJiraTicket().addComment(message);
+            entry.getKey().addJiraComment(message);
         }
     }
     

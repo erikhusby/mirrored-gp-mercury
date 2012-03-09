@@ -4,6 +4,7 @@ package org.broadinstitute.sequel;
 import org.broadinstitute.sequel.control.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.control.bsp.MockBSPConnector;
 import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
+import org.broadinstitute.sequel.control.jira.DummyJiraService;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.quote.PriceItem;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
@@ -13,6 +14,7 @@ import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.BasicProject;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.queue.AliquotParameters;
@@ -66,13 +68,12 @@ public class EndToEndTest  {
         String masterSample2 = "master sample2";
         String aliquot1Label = "aliquot1";
         String aliquot2Label = "aliquot2";
-        TestUtilities testUtilities = new TestUtilities();
         PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
         final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
                 "7.0",
                 priceItem);
-        Project project = new BasicProject("Project1", testUtilities.createMockJiraTicket());
-        Project project2 = new BasicProject("Project2", testUtilities.createMockJiraTicket());
+        Project project = new BasicProject("Project1",new JiraTicket(new DummyJiraService(),"TP-0","0"));
+        Project project2 = new BasicProject("Project2", new JiraTicket(new DummyJiraService(),"TP-1","1"));
 
         LabVessel stock1 = createBSPStock(masterSample1,"00001234",project);
         LabVessel stock2 = createBSPStock(masterSample2,"00005678",project2);
@@ -143,8 +144,6 @@ public class EndToEndTest  {
 
         Assert.assertEquals(aliquotParameters2,platingRequest2.getAliquotParameters());
         Assert.assertEquals(project2,aliquot2Tube.getAllProjects().iterator().next());
-
-        EasyMock.verify(project.getJiraTicket());
 
         Assert.assertFalse(aliquotTube.getAllStatusNotes().isEmpty());
         Assert.assertFalse(aliquot2Tube.getAllStatusNotes().isEmpty());

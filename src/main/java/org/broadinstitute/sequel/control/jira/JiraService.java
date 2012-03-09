@@ -6,23 +6,22 @@ import org.broadinstitute.sequel.control.jira.issue.Visibility;
 
 import java.io.IOException;
 
-import static org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest.Fields.Issuetype.Name;
 
 public interface JiraService {
 
 
     /**
-     * Create an issue with a project prefix specified by key; i.e. for this method key would be 'TP' and not 'TP-5' for
+     * Create an issue with a project prefix specified by projectPrefix; i.e. for this method projectPrefix would be 'TP' and not 'TP-5' for
      * the JIRA project TestProject having prefix TP.
      *
-     * @param key
+     * @param projectPrefix
      * @param issuetype
      * @param summary
      * @param description
      * @return
      * @throws IOException
      */
-    CreateIssueResponse createIssue(String key, Name issuetype, String summary, String description) throws IOException;
+    CreateIssueResponse createIssue(String projectPrefix, String issuetype, String summary, String description) throws IOException;
 
 
     /**

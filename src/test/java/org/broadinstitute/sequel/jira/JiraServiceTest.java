@@ -3,8 +3,10 @@ package org.broadinstitute.sequel.jira;
 
 import org.broadinstitute.sequel.WeldBooter;
 import org.broadinstitute.sequel.control.jira.JiraService;
+import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.control.jira.issue.Visibility;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -12,7 +14,6 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
-import static org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest.Fields.Issuetype.Name.Bug;
 
 @Test(groups = EXTERNAL_INTEGRATION)
 public class JiraServiceTest extends WeldBooter {
@@ -30,9 +31,9 @@ public class JiraServiceTest extends WeldBooter {
         try {
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue("TP", Bug, "Summary created from SequeL", "Description created from SequeL" );
+                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, CreateIssueRequest.Fields.Issuetype.BUG, "Summary created from SequeL", "Description created from SequeL" );
 
-            final String key = createIssueResponse.getKey();
+            final String key = createIssueResponse.getTicketName();
 
             Assert.assertNotNull(key);
 

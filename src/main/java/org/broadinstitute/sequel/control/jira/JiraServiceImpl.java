@@ -13,12 +13,11 @@ import org.broadinstitute.sequel.control.jira.issue.Visibility;
 import org.broadinstitute.sequel.control.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.sequel.control.jira.issue.comment.AddCommentResponse;
 
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
 
-import static org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest.Fields.Issuetype.Name;
-
-
+@Default
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
     
     @Inject
@@ -58,9 +57,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
 
     @Override
-    public CreateIssueResponse createIssue(String key, Name issuetypeName, String summary, String description) throws IOException {
+    public CreateIssueResponse createIssue(String projectPrefix, String issuetypeName, String summary, String description) throws IOException {
 
-        CreateIssueRequest issueRequest = CreateIssueRequest.create(key, issuetypeName, summary, description);
+        CreateIssueRequest issueRequest = CreateIssueRequest.create(projectPrefix, issuetypeName, summary, description);
 
         String urlString = getBaseUrl() + "/issue/";
         logger.debug("createIssue URL is " + urlString);
@@ -100,7 +99,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         WebResource webResource = getJerseyClient().resource(urlString);
 
         // don't really care about the response, not sure why JIRA sends us back so much stuff...
-        post(webResource, addCommentRequest, new GenericType<AddCommentResponse>(){});
+        post(webResource, addCommentRequest, new GenericType<AddCommentResponse>() {
+        });
                 
 
     }

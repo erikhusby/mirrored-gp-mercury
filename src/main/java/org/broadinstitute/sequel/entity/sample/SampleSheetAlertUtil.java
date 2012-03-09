@@ -60,7 +60,7 @@ public class SampleSheetAlertUtil {
             for (String aliquotName: entry.getValue()) {
                 messageBuilder.append(aliquotName).append("\n");
             }
-            entry.getKey().getJiraTicket().addComment(messageBuilder.toString());
+            entry.getKey().addJiraComment(messageBuilder.toString());
         }
 
     }
