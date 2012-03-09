@@ -92,10 +92,16 @@
                         <artifactId>maven-clover2-plugin</artifactId>
                         <configuration>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
-                            <includesAllSourceRoots>true</includesAllSourceRoots>
+                            <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
                         </configuration>
                         <executions>
+                            <execution>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>instrument</goal>
+                                </goals>
+                            </execution>
                             <execution>
                                 <id>clover</id>
                                 <phase>verify</phase>
