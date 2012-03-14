@@ -184,15 +184,29 @@
                         <artifactId>maven-clover2-plugin</artifactId>
                         <configuration>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
-                            <includesAllSourceRoots>true</includesAllSourceRoots>
+                            <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
                         </configuration>
                         <executions>
                             <execution>
+                                <id>generate-sources</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>instrument</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>verify</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                    <goal>log</goal>
+                                </goals>
+                            </execution>
+                            <execution>
                                 <id>site</id>
                                 <phase>pre-site</phase>
                                 <goals>
-                                    <goal>aggregate</goal>
                                     <goal>save-history</goal>
                                     <goal>reset</goal>
                                 </goals>
