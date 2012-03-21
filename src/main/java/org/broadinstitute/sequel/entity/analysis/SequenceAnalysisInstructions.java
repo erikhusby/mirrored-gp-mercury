@@ -17,5 +17,14 @@ public interface SequenceAnalysisInstructions {
 
     public AggregationInstructions getAggregationInstructions();
 
+    /**
+     * In squid, PMs have to put all samples from the same
+     * patient together in a single project to enable co-cleaning
+     * because picard/zamboni co-cleans all samples in a project.
+     *
+     * We want to change this so that PMs can make a project
+     * be anything they want, but configure co-cleaning independently.
+     * @return
+     */
     public CoCleaningInstructions getCoCleaningInstructions();
 }
