@@ -16,4 +16,6 @@ public interface SequenceAnalysisInstructions {
     public ReferenceSequence getReferenceSequence();
 
     public AggregationInstructions getAggregationInstructions();
+
+    public CoCleaningInstructions getCoCleaningInstructions();
 }
