@@ -38,6 +38,17 @@
         </site>
     </distributionManagement>
 
+    <developers>
+        <developer>
+            <name>Andrew Zimmer</name>
+            <email>andrew@broadinstitute.org</email>
+            <roles>
+                <role>Architect</role>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
+
     <repositories>
         <repository>
             <id>java.net2</id>
