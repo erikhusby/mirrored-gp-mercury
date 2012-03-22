@@ -197,4 +197,6 @@ public interface Project {
     
     public Collection<BSPPlatingRequest> getPendingPlatingRequests();
 
+    public SampleAnalysisBuddies getAnalysisBuddies(StartingSample sample);
+
 }

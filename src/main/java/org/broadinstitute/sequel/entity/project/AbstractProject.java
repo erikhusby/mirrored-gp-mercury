@@ -305,6 +305,11 @@ public abstract class AbstractProject implements Project, UserRemarkable {
     }
 
     @Override
+    public SampleAnalysisBuddies getAnalysisBuddies(StartingSample sample) {
+        throw new RuntimeException("not implemented");
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Project)) return false;
