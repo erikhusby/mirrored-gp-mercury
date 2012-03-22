@@ -1,6 +1,10 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.control.quote.PriceItem;
+import org.broadinstitute.sequel.entity.labevent.LabEventName;
+import org.broadinstitute.sequel.entity.labevent.LabEventType;
+
+import java.util.Map;
 
 /**
  * A stub description of the end-to-end
@@ -13,29 +17,32 @@ public class WorkflowDescription {
 
     private final String version;
 
-    private PriceItem priceItem;
+    private Map<LabEventName,PriceItem> priceItemForEvent;
     
     public WorkflowDescription(String workflowName,
                                String version,
-                               PriceItem priceItem) {
+                               Map<LabEventName,PriceItem> billableEvents) {
         if (workflowName == null) {
              throw new IllegalArgumentException("workflowName must be non-null in WorkflowDescription.WorkflowDescription");
         }
         this.workflowName = workflowName;
         this.version = version;
-        this.priceItem = priceItem;  // nullable for dev work
+        this.priceItemForEvent = billableEvents;
     }
-
-    public PriceItem getPriceItem() {
-        return priceItem;
-    }
-
+    
     public String getWorkflowName() {
         return workflowName;
     }
     
     public String getWorkflowVersion() {
         return version;
+    }
+    
+    public PriceItem getPriceItem(LabEventName eventName) {
+        if (eventName == null) {
+            throw new NullPointerException("eventName cannot be null");
+        }
+        return priceItemForEvent.get(eventName);
     }
 
 }

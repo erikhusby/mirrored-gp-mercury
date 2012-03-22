@@ -8,6 +8,7 @@ import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.control.quote.*;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
@@ -25,9 +26,7 @@ import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
+import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
@@ -163,7 +162,10 @@ public class ProjectTest {
      */
     private ProjectPlan projectManagerAddsProjectPlan(Project project) {
         PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
-        WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6",priceItem);
+
+        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
+        billableEvents.put(LabEventName.SAGE_UNLOADED,priceItem);
+        WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6",billableEvents);
         ProjectPlan plan = new ProjectPlan(project,project.getProjectName() + " Plan",workflow);
         
         

@@ -23,11 +23,6 @@ public class MetricEvent extends AbstractLabEvent {
     }
 
     @Override
-    public boolean isBillable() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Collection<SampleSheet> getAllSampleSheets() {
         throw new RuntimeException("I haven't been written yet.");
     }

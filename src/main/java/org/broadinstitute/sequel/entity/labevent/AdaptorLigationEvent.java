@@ -42,11 +42,6 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
        return LabEventName.ADAPTOR_LIGATION;
     }
 
-    @Override
-    public boolean isBillable() {
-        return true;
-    }
-
     /**
      * Sources ar expected to have sample information
      * but no adaptor.

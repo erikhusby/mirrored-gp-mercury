@@ -33,11 +33,6 @@ public class SimpleUserEvent extends AbstractLabEvent {
     }
 
     @Override
-    public boolean isBillable() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public void applyMolecularStateChanges() throws InvalidMolecularStateException {
         throw new RuntimeException("I haven't been written yet.");
     }

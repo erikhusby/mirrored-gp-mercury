@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.control.quote.Quote;
+import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import java.util.Collection;
 import java.util.HashSet;
@@ -71,6 +72,10 @@ public class ProjectPlan {
 
     public Collection<PoolGroup> getPoolGroups() {
         return poolGroups;
+    }
+    
+    public Quote getQuote() {
+        return quote;
     }
     
     public void addStarter(LabVessel vessel) {

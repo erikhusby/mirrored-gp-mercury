@@ -1,9 +1,16 @@
 package org.broadinstitute.sequel.entity.labevent;
 
+import org.broadinstitute.sequel.control.quote.PriceItem;
+import org.broadinstitute.sequel.control.quote.Quote;
 import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.workflow.Workflow;
+import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
 import java.util.Collection;
 import java.util.Date;
@@ -25,10 +32,30 @@ public class GenericLabEvent extends AbstractLabEvent {
     public LabEventName getEventName() {
         return LabEventName.GENERIC;
     }
+    
+    public void doFinances() {
+        WorkflowEngine wfEngine = new WorkflowEngine();
+        for (LabVessel source : getSourceLabVessels()) {
+            for (SampleInstance sampleInstance : source.getSampleInstances()) {
+                Collection<ProjectPlan> projectPlans = wfEngine.getActiveProjectPlans(sampleInstance);
+                if (projectPlans.isEmpty()) {
+                    if (projectPlans.size() > 1) {
+                        throw new RuntimeException("Workflow is ambiguous; I can't bill!");
+                    }
+                    ProjectPlan projectPlan = projectPlans.iterator().next();
+                    PriceItem priceItem = projectPlan.getWorkflowDescription().getPriceItem(getEventName());
+                    Quote quote = projectPlan.getQuote();
+                    /** do we use true sample (aliquot) here, or {@link org.broadinstitute.sequel.entity.project.SampleAnalysisBuddies}? */
 
-    @Override
-    public boolean isBillable() {
-        return false;
+                    if (PriceItem.SAMPLE_UNITS.equalsIgnoreCase(priceItem.getUnits())) {
+                        quote.registerWork(priceItem,1.0,null,null,null);
+                    }
+                    else {
+                        throw new RuntimeException("I don't know how to bill in " + priceItem.getUnits() + " units.");
+                    }
+                }
+            }
+        }
     }
 
     /**

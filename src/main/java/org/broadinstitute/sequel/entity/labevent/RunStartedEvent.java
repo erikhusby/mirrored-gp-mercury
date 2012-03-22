@@ -17,11 +17,6 @@ public class RunStartedEvent extends AbstractLabEvent {
     }
 
     @Override
-    public boolean isBillable() {
-        return false;
-    }
-
-    @Override
     public Collection<SampleSheet> getAllSampleSheets() {
         throw new RuntimeException("I haven't been written yet.");
     }

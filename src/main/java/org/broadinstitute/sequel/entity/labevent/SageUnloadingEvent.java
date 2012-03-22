@@ -23,11 +23,6 @@ public class SageUnloadingEvent extends AbstractLabEvent implements Priceable {
     }
 
     @Override
-    public boolean isBillable() {
-        return true;
-    }
-
-    @Override
     public Invoice getInvoice() {
         return invoice;
     }

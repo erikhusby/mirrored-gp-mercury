@@ -8,6 +8,8 @@ public class PriceItem {
 
     public static final String GSP_PLATFORM_NAME = "DNA Sequencing";
 
+    public static final String SAMPLE_UNITS = "Sample";
+    
     @XmlAttribute(name = "platform")
     private String platform;
 

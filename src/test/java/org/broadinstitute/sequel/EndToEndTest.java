@@ -33,7 +33,9 @@ import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
@@ -68,10 +70,13 @@ public class EndToEndTest  {
         String masterSample2 = "master sample2";
         String aliquot1Label = "aliquot1";
         String aliquot2Label = "aliquot2";
+        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
+
         PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
+        billableEvents.put(LabEventName.ADAPTOR_LIGATION,priceItem);
         final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
                 "7.0",
-                priceItem);
+                billableEvents);
         Project project = new BasicProject("Project1",new JiraTicket(new DummyJiraService(),"TP-0","0"));
         Project project2 = new BasicProject("Project2", new JiraTicket(new DummyJiraService(),"TP-1","1"));
 
