@@ -5,7 +5,6 @@ import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.AbstractLabVessel;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.vessel.SBSSection;
 
 import java.util.Collection;
 import java.util.Date;
@@ -39,18 +38,18 @@ public abstract class AbstractLabEvent implements LabEvent {
 
     @Override
     public Collection<LabVessel> getTargetLabVessels() {
-        return targetLabVessels;
+        return this.targetLabVessels;
     }
 
     @Override
     public Collection<LabVessel> getSourceLabVessels() {
-        return sourceLabVessels;
+        return this.sourceLabVessels;
     }
 
     @Override
     public Collection<LabVessel> getSourcesForTarget(LabVessel targetVessel) {
         // todo jmt need some kind of mapping for cherry picks
-        return sourceLabVessels;
+        return this.sourceLabVessels;
     }
 
     @Override
@@ -61,39 +60,41 @@ public abstract class AbstractLabEvent implements LabEvent {
     @Override
     public Collection<LabVessel> getAllLabVessels() {
         Set<LabVessel> allLabVessels = new HashSet<LabVessel>();
-        allLabVessels.addAll(sourceLabVessels);
-        allLabVessels.addAll(targetLabVessels);
+        allLabVessels.addAll(this.sourceLabVessels);
+        allLabVessels.addAll(this.targetLabVessels);
         return allLabVessels;
     }
 
     @Override
     public String getEventLocation() {
-        return eventLocation;
+        return this.eventLocation;
     }
 
     @Override
     public Person getEventOperator() {
-        return eventOperator;
+        return this.eventOperator;
     }
 
     @Override
     public Date getEventDate() {
-        return eventDate;
+        return this.eventDate;
     }
 
     @Override
     public Collection<Reagent> getReagents() {
-        return reagents;
+        return this.reagents;
     }
 
     @Override
     public void addTargetLabVessel(LabVessel targetVessel) {
-        if(sourceLabVessels.isEmpty()) {
+        // todo jmt move to SectionTransfer?
+        if(this.sourceLabVessels.isEmpty()) {
             // todo jmt method for adding source / target pairs
             throw new RuntimeException("Add source lab vessels first");
         }
+/*
         if(targetVessel.getTransfersTo().isEmpty()) {
-            for (LabVessel sourceLabVessel : sourceLabVessels) {
+            for (LabVessel sourceLabVessel : this.sourceLabVessels) {
                 if (((AbstractLabVessel) sourceLabVessel).getSampleSheetAuthorities().isEmpty()) {
                     if(sourceLabVessel.getReagentContents().isEmpty()) {
                         ((AbstractLabVessel)targetVessel).getSampleSheetAuthorities().add(sourceLabVessel);
@@ -103,13 +104,18 @@ public abstract class AbstractLabEvent implements LabEvent {
                             ((AbstractLabVessel) sourceLabVessel).getSampleSheetAuthorities());
                 }
             }
+        } else {
+            // pooling
+
         }
-        targetLabVessels.add(targetVessel);
+*/
+        targetVessel.getTransfersTo().add(this);
+        this.targetLabVessels.add(targetVessel);
     }
 
     @Override
     public void addSourceLabVessel(LabVessel sourceVessel) {
-        sourceLabVessels.add(sourceVessel);
+        this.sourceLabVessels.add(sourceVessel);
     }
 
     @Override
@@ -131,7 +137,7 @@ public abstract class AbstractLabEvent implements LabEvent {
 
     @Override
     public Set<SectionTransfer> getSectionTransfers() {
-        return sectionTransfers;
+        return this.sectionTransfers;
     }
 
     public void setSectionTransfers(Set<SectionTransfer> sectionTransfers) {

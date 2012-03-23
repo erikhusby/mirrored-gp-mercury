@@ -45,6 +45,7 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
     @Override
     public void addContainedVessel(TwoDBarcodedTube child, String position) {
         this.mapPositionToTube.put(position, child);
+        child.getRacksOfTubes().add(this);
     }
 
     @Override
