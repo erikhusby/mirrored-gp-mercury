@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.sample;
 
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
@@ -115,63 +116,35 @@ public interface SampleInstance  {
     /**
      *
      * Major assumption: an aliquot for a production
-     * process is only ever used for a single project.
-     *
-     * The aliquot could be used across sequencing
-     * technologies, but the project is always the
-     * same.
-     *
+     * process is only ever used for a single {@link Project}.
+     * It can be used for multiple {@link org.broadinstitute.sequel.entity.project.ProjectPlan}s
+     * within the same {@link Project}, however, and so
+     * the challenge here is to map a {@link SampleInstance}
+     * to a single {@link org.broadinstitute.sequel.entity.project.ProjectPlan} 
+     * whenever possible, and tolerate ambiguity when necessary,
+     * for example for "universal LC" with Fluidigm.
+     * 
      * Can be empty for control samples.
-     *
-     * This one-to-one doesn't work for tech dev,
-     * however, so we have to figure that one out.
-     *
-     * Some parts of the app may throw exceptions
-     * if they see multiple active projects.  Maybe
-     * when there's >1 active project, our code
-     * writes a nice note and adds it to the jira
-     * ticket for the project so that people
-     * can get an early heads up that it looks
-     * like we're in trouble.  We have to allow for
-     * this semi-dirty state for dev work primarily.
-     *
-     * In the current squid, we don't let this ambiguity
-     * live past the designation.  Instead, we guess.
-     * That makes for some awful problems.  In the new model,
-     * we should let this ambiguity persist as long as
-     * necessary, and gently nudge watchers of various
-     * tickets throughout the process.  By the time
-     * the analysis pipeline wakes up, if there are
-     * multiple projects for an aliquot, we'll barf
-     * loudly.  The billing app allows for this
-     * ambiguoity right up until a bill is issued.
-     *
-     * In the current squid, most of the "wrong work request"
-     * problems come up as a result of two things:
-     * 1. Concurrent dev and production work on the
-     * same aliquot.  This can be resolved with the
-     * "dev aliquots" feature, which basically
-     * pins a "I'm for dev!" bit on a library.  Implementations
-     * of SampleAliquot can examine the vessel they're in
-     * to see if the "I'm dev" bit is present.  If it is,
-     * then only the "dev" project will be selected.
-     *
-     * 2. Concurrent work requests for both test
-     * sequencing and production sequencing, aggregated
-     * to different projects.  This requires a different
-     * approach.  Instead, why not have two different
-     * {@link org.broadinstitute.sequel.entity.queue.FullAccessLabWorkQueue}s, one for test seq
-     * and one for production sequencing, and have
-     * the system know when a run is a test run.  For a test
-     * run, we can aggregate things differently by
-     * code, not by project.  Test run data could
-     * be aggregated into the same project but marked
-     * as test run data so that it could be excluded
-     * from bass/submissions.
-     *
+     * 
+     * It's critical that reworks (topoffs in particular)
+     * are <b>not implemented by a new {@link org.broadinstitute.sequel.entity.project.ProjectPlan}!</b>
+     * Instead, topoffs are just another entry into the appropriate
+     * {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}.
+     * If you want to know the status of your topoff work,
+     * look in the {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue},
+     * or search jira to see what jira tickets exist starting
+     * from the {@link org.broadinstitute.sequel.entity.vessel.LabVessel} 
+     * that you put into the queue.
+     * 
+     * If there's more than one possible project for this
+     * {@link SampleInstance}, an exception is thrown.
+     * If your client can tolerate this ambiguity, use
+     * {@link #getAllProjects()}.
      * @return
      */
-    public Project getProject();
+    public ProjectPlan getSingleProjectPlan();
+    
+    public Collection<ProjectPlan> getAllProjectPlans();
 
     /**
      * What is the molecular state  of this
