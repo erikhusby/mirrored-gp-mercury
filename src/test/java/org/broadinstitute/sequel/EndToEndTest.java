@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.control.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.control.bsp.MockBSPConnector;
 import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
 import org.broadinstitute.sequel.control.jira.DummyJiraService;
+import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.quote.PriceItem;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
@@ -73,11 +74,12 @@ public class EndToEndTest  {
         billableEvents.put(LabEventName.ADAPTOR_LIGATION,priceItem);
         final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
                 "7.0",
-                billableEvents);
+                billableEvents,
+                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         Project project = new BasicProject("Project1",new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        ProjectPlan plan1 = new ProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS","2.3",null));
+        ProjectPlan plan1 = new ProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS","2.3",null,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         Project project2 = new BasicProject("Project2", new JiraTicket(new DummyJiraService(),"TP-1","1"));
-        ProjectPlan plan2 = new ProjectPlan(project2,"Plan for "  + project2.getProjectName(),new WorkflowDescription("WGS","2.3",null));
+        ProjectPlan plan2 = new ProjectPlan(project2,"Plan for "  + project2.getProjectName(),new WorkflowDescription("WGS","2.3",null,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
         LabVessel stock1 = createBSPStock(masterSample1,"00001234",plan1);
         LabVessel stock2 = createBSPStock(masterSample2,"00005678",plan2);
@@ -109,8 +111,8 @@ public class EndToEndTest  {
         BSPPlatingResponse platingResponse = aliquotWorkQueue.sendBatch();
 
         Assert.assertFalse(plan1.getPendingPlatingRequests().isEmpty());
-        Assert.assertEquals(1,plan1.getPendingPlatingRequests().size());
-        Assert.assertEquals(1,plan2.getPendingPlatingRequests().size());
+        Assert.assertEquals(1, plan1.getPendingPlatingRequests().size());
+        Assert.assertEquals(1, plan2.getPendingPlatingRequests().size());
 
         BSPPlatingReceipt project1PlatingReceipt = plan1.getPendingPlatingRequests().iterator().next().getReceipt();
         BSPPlatingReceipt project2PlatingReceipt = plan2.getPendingPlatingRequests().iterator().next().getReceipt();

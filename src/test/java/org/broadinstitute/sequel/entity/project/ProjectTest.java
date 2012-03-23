@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
+import com.gargoylesoftware.htmlunit.CollectingAlertHandler;
 import org.broadinstitute.sequel.TestUtilities;
 import org.broadinstitute.sequel.WeldUtil;
 import org.broadinstitute.sequel.control.jira.DummyJiraService;
@@ -10,10 +11,7 @@ import org.broadinstitute.sequel.control.quote.*;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueueResponse;
+import org.broadinstitute.sequel.entity.queue.*;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -25,6 +23,7 @@ import org.broadinstitute.sequel.entity.workflow.Workflow;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -51,8 +50,10 @@ public class ProjectTest {
         // todo how to verify the comment was added?
     }
     
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_simple_project() {
+        WeldUtil weld = TestUtilities.bootANewWeld();
+        JiraService jiraService = weld.getFromContainer(JiraService.class);
         AbstractProject project = projectManagerCreatesProject();
         projectManagerAddsFundingSourceToProject(project,"NHGRI");
         ProjectPlan plan = projectManagerAddsProjectPlan(project);
@@ -124,16 +125,28 @@ public class ProjectTest {
 
         // PM would pick the queue from a drop down,
         // filtered by the {@link WorkflowDescription}?
-        LabWorkQueue lcWorkQueue = createLabWorkQueue();
+        LabWorkQueue<LcSetParameters> lcWorkQueue = createLabWorkQueue();
 
         assertTrue(lcWorkQueue.isEmpty());
-        
-        Workflow workflowInstance = projectManagerEnquesLabWork(starter,plan,lcWorkQueue);
+
+        LcSetParameters lcSetParameters = new LcSetParameters();
+        Workflow workflowInstance = projectManagerEnquesLabWork(starter,plan,lcSetParameters,lcWorkQueue);
 
         assertFalse(lcWorkQueue.isEmpty());
-        
-        labStaffStartsWork(starter,plan.getWorkflowDescription(),lcWorkQueue);
 
+        Collection<LabVessel> allStarters = new HashSet<LabVessel>();
+        allStarters.add(starter);
+
+
+
+        CreateIssueResponse jiraTicket = labStaffStartsWork(allStarters,
+                plan.getWorkflowDescription(),
+                lcWorkQueue,
+                lcSetParameters,
+                jiraService);
+
+        assertTrue(jiraTicket.getTicketName().startsWith(plan.getWorkflowDescription().getJiraProjectPrefix()));
+        
         assertTrue(lcWorkQueue.isEmpty());
 
         assertEquals("work has stated", workflowInstance.getState().getState());
@@ -165,7 +178,7 @@ public class ProjectTest {
 
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         billableEvents.put(LabEventName.SAGE_UNLOADED,priceItem);
-        WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6",billableEvents);
+        WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6",billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         ProjectPlan plan = new ProjectPlan(project,project.getProjectName() + " Plan",workflow);
         
         
@@ -216,14 +229,15 @@ public class ProjectTest {
         return bait;
     }
     
-    private LabWorkQueue createLabWorkQueue() {
+    private LabWorkQueue<LcSetParameters> createLabWorkQueue() {
         WorkflowEngine workflowEngine = new WorkflowEngine();
-        LabWorkQueue labWorkQueue = new FIFOLabWorkQueue(LabWorkQueueName.LC,workflowEngine);
+        LabWorkQueue<LcSetParameters> labWorkQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,workflowEngine);
         return labWorkQueue;
     }
 
     private Workflow projectManagerEnquesLabWork(LabVessel starter,
                                              ProjectPlan projectPlan,
+                                             LabWorkQueueParameters queueParameters,
                                              LabWorkQueue labWorkQueue) {
        
         WorkflowEngine workflowEngine = labWorkQueue.getWorkflowEngine();
@@ -231,7 +245,7 @@ public class ProjectTest {
         assertTrue(workflows.isEmpty());
         assertTrue(labWorkQueue.isEmpty());
 
-        labWorkQueue.add(starter,null,projectPlan.getPlanDetails().iterator().next());
+        labWorkQueue.add(starter,queueParameters,projectPlan.getPlanDetails().iterator().next());
 
         workflows = workflowEngine.getActiveWorkflows(starter,null);
         assertEquals(1, workflows.size());
@@ -246,14 +260,71 @@ public class ProjectTest {
     }
 
 
-    private void labStaffStartsWork(LabVessel vessel,
+    /**
+     * Lab user says "I'm going to start work on these tubes".
+     * The parameters are the same for each tube.
+     * @param vessels
+     * @param workflowDescription
+     * @param labWorkQueue
+     * @param lcSetParameters
+     * @param jiraService
+     * @return
+     */
+    private CreateIssueResponse labStaffStartsWork(Collection<LabVessel> vessels,
                                     WorkflowDescription workflowDescription,
-                                    LabWorkQueue labWorkQueue) {
-        LabWorkQueueResponse queueResponse = labWorkQueue.startWork(vessel,
-                null,
-                workflowDescription,
-                new Person("tony","Tony","Hawk"));
+                                    LabWorkQueue<LcSetParameters> labWorkQueue,
+                                    LcSetParameters lcSetParameters,
+                                    JiraService jiraService) {
+        Person tonyHawk = new Person("tony","Tony","Hawk");
+        for (LabVessel vessel : vessels) {
+            LabWorkQueueResponse queueResponse = labWorkQueue.startWork(vessel,
+                    lcSetParameters,
+                    workflowDescription,
+                    tonyHawk);
+        }
+        return createJiraTicket(vessels,workflowDescription,lcSetParameters,jiraService);
+    }
+    
+    private CreateIssueResponse createJiraTicket(Collection<LabVessel> vessels,
+                                  WorkflowDescription workflowDescription,
+                                  LcSetParameters lcSetParameters,
+                                  JiraService jiraService) {
+        Collection<Project> allProjects = new HashSet<Project>();
+        for (LabVessel vessel : vessels) {
+            for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
+                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+                    allProjects.add(projectPlan.getProject());
+                }
+            }
+        }
         
+        String ticketTitle = null;
+        StringBuilder ticketDetails = new StringBuilder();
+        if (allProjects.size() == 1) {
+            Project singleProject = allProjects.iterator().next();
+            ticketTitle = "Work for " + singleProject.getProjectName();
+            ticketDetails.append(singleProject.getProjectName());
+        }
+        else {
+            ticketTitle = "Work for " + allProjects.size() + " projects";
+            for (Project project : allProjects) {
+                ticketDetails.append(project.getProjectName()).append(" ");
+            }
+        }
+        
+        CreateIssueResponse jiraTicketCreationResponse =  null;
+        
+        try {
+            jiraTicketCreationResponse = jiraService.createIssue(workflowDescription.getJiraProjectPrefix(),
+                    workflowDescription.getJiraIssueType(),
+                    ticketTitle,
+                    ticketDetails.toString());
+            // todo use #lcSetParameters to add more details to the ticket
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed to create jira ticket",e);
+        }
+        return jiraTicketCreationResponse;
     }
 
     private void projectManagerAddsFundingSourceToProject(AbstractProject project,

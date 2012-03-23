@@ -52,4 +52,5 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
     public boolean isEmpty();
     
     public WorkflowEngine getWorkflowEngine();
+
 }

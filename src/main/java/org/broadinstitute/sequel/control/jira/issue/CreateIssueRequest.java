@@ -31,8 +31,8 @@ public class CreateIssueRequest implements Serializable {
             // this value as mixed case.  In my limited experience with the JIRA 5 REST API it has proven to be
             // very sensitive to case.
             Bug,
-            SequeL_Project;
-
+            SequeL_Project,
+            Whole_Exome_HybSel
         }
 
         

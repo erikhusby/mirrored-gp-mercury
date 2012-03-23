@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.quote.PriceItem;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.labevent.LabEventType;
@@ -18,16 +19,20 @@ public class WorkflowDescription {
     private final String version;
 
     private Map<LabEventName,PriceItem> priceItemForEvent;
-    
+
+    private CreateIssueRequest.Fields.Issuetype issueType;
+
     public WorkflowDescription(String workflowName,
                                String version,
-                               Map<LabEventName,PriceItem> billableEvents) {
+                               Map<LabEventName,PriceItem> billableEvents,
+                               CreateIssueRequest.Fields.Issuetype issueType) {
         if (workflowName == null) {
              throw new IllegalArgumentException("workflowName must be non-null in WorkflowDescription.WorkflowDescription");
         }
         this.workflowName = workflowName;
         this.version = version;
         this.priceItemForEvent = billableEvents;
+        this.issueType = issueType;
     }
     
     public String getWorkflowName() {
@@ -43,6 +48,14 @@ public class WorkflowDescription {
             throw new NullPointerException("eventName cannot be null");
         }
         return priceItemForEvent.get(eventName);
+    }
+
+    public String getJiraProjectPrefix() {
+        return "LCSET";
+    }
+
+    public CreateIssueRequest.Fields.Issuetype getJiraIssueType() {
+        return issueType;
     }
 
 }
