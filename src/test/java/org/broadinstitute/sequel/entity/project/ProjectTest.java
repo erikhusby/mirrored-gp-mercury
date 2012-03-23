@@ -54,7 +54,7 @@ public class ProjectTest {
     public void test_simple_project() {
         WeldUtil weld = TestUtilities.bootANewWeld();
         JiraService jiraService = weld.getFromContainer(JiraService.class);
-        AbstractProject project = projectManagerCreatesProject();
+        AbstractProject project = projectManagerCreatesProject(jiraService);
         projectManagerAddsFundingSourceToProject(project,"NHGRI");
         ProjectPlan plan = projectManagerAddsProjectPlan(project);
         ReagentDesign bait = projectManagerAddsBait(plan);
@@ -137,8 +137,6 @@ public class ProjectTest {
         Collection<LabVessel> allStarters = new HashSet<LabVessel>();
         allStarters.add(starter);
 
-
-
         CreateIssueResponse jiraTicket = labStaffStartsWork(allStarters,
                 plan.getWorkflowDescription(),
                 lcWorkQueue,
@@ -150,6 +148,15 @@ public class ProjectTest {
         assertTrue(lcWorkQueue.isEmpty());
 
         assertEquals("work has stated", workflowInstance.getState().getState());
+        
+        StringBuilder projectJiraMessage = new StringBuilder(jiraTicket.getTicketName() + " has been created for the following samples:");
+        for (LabVessel vessel : allStarters) {
+            for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
+                projectJiraMessage.append(sampleInstance.getStartingSample().getSampleName()).append(" ");
+            }
+        }
+        
+        project.addJiraComment(projectJiraMessage.toString());
     }
     
     /**
@@ -162,8 +169,20 @@ public class ProjectTest {
      * problem.
      * @return
      */
-    private AbstractProject projectManagerCreatesProject() {
-        AbstractProject legacyProject = new BasicProject("Legacy Squid Project C203",new JiraTicket(new DummyJiraService(),"TP-0","0"));
+    private AbstractProject projectManagerCreatesProject(JiraService jiraService) {
+        String projectName = "Legacy Squid Project C203";
+        CreateIssueResponse jiraResponse = null;
+
+        try {
+            jiraResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
+                    CreateIssueRequest.Fields.Issuetype.SequeL_Project,
+                    projectName,
+                    "Created by " + getClass().getCanonicalName());
+        }
+        catch(IOException e ) {
+            throw new RuntimeException("Cannot create jira ticket",e);
+        }
+        AbstractProject legacyProject = new BasicProject(projectName,new JiraTicket(jiraService,jiraResponse.getTicketName(),jiraResponse.getId()));
         return legacyProject;
     }
 

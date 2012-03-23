@@ -17,6 +17,8 @@ public class JiraTicket {
     
     @Inject
     JiraService jiraService;
+
+    public JiraTicket() {}
     
     public JiraTicket(JiraService jiraService,
                       String ticketName,

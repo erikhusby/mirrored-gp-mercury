@@ -22,6 +22,17 @@ public class WorkflowDescription {
 
     private CreateIssueRequest.Fields.Issuetype issueType;
 
+    /**
+     * 
+     * @param workflowName
+     * @param version
+     * @param billableEvents
+     * @param issueType the <i>first</i> type of issue
+     *                  created when this stuff hits
+     *                  the lab.  Subsequent ticket
+     *                  creation is owned by either {@link org.broadinstitute.sequel.entity.workflow.WorkflowEngine}
+     *                  or {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}.
+     */
     public WorkflowDescription(String workflowName,
                                String version,
                                Map<LabEventName,PriceItem> billableEvents,
