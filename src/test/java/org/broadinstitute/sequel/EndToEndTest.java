@@ -13,10 +13,7 @@ import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
-import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.queue.BSPAliquotWorkQueue;
 import org.broadinstitute.sequel.entity.run.RunCartridge;
@@ -48,19 +45,19 @@ public class EndToEndTest  {
     //@Inject
     LabEventHandler handler;
 
-    private LabVessel createBSPStock(String sampleName,String tubeBarcode,Project project) {
+    private LabVessel createBSPStock(String sampleName,String tubeBarcode,ProjectPlan projectPlan) {
         SampleSheet sampleSheet = new SampleSheetImpl();
         // this seems redundant: we're adding a sample sheet with only the stock
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        sampleSheet.addStartingSample(new BSPSample(sampleName, project,null));
+        sampleSheet.addStartingSample(new BSPSample(sampleName, projectPlan,null));
         return new TwoDBarcodedTube(tubeBarcode,sampleSheet);
     }
     
-    private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode,Project project) {
+    private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode,ProjectPlan projectPlan) {
         // yowza, it's the same code!
-        return createBSPStock(aliquotName,tubeBarcode,project);
+        return createBSPStock(aliquotName,tubeBarcode,projectPlan);
     }
     
     @Test(groups = {DATABASE_FREE})
@@ -78,10 +75,12 @@ public class EndToEndTest  {
                 "7.0",
                 billableEvents);
         Project project = new BasicProject("Project1",new JiraTicket(new DummyJiraService(),"TP-0","0"));
+        ProjectPlan plan1 = new ProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS","2.3",null));
         Project project2 = new BasicProject("Project2", new JiraTicket(new DummyJiraService(),"TP-1","1"));
+        ProjectPlan plan2 = new ProjectPlan(project2,"Plan for "  + project2.getProjectName(),new WorkflowDescription("WGS","2.3",null));
 
-        LabVessel stock1 = createBSPStock(masterSample1,"00001234",project);
-        LabVessel stock2 = createBSPStock(masterSample2,"00005678",project2);
+        LabVessel stock1 = createBSPStock(masterSample1,"00001234",plan1);
+        LabVessel stock2 = createBSPStock(masterSample2,"00005678",plan2);
 
         BSPAliquotWorkQueue aliquotWorkQueue = new BSPAliquotWorkQueue(new MockBSPConnector());
 
@@ -101,20 +100,20 @@ public class EndToEndTest  {
                                                 // a user gesture would add the aliquot queue to the project
         
         // request an aliquot from bsp
-        AliquotParameters aliquotParameters = new AliquotParameters(project,0.9f,0.6f);
-        AliquotParameters aliquotParameters2 = new AliquotParameters(project2,1.9f,2.6f);
+        AliquotParameters aliquotParameters = new AliquotParameters(plan1,0.9f,0.6f);
+        AliquotParameters aliquotParameters2 = new AliquotParameters(plan2,1.9f,2.6f);
         
         aliquotWorkQueue.add(stock1,aliquotParameters,null);
         aliquotWorkQueue.add(stock2,aliquotParameters2,null);
 
         BSPPlatingResponse platingResponse = aliquotWorkQueue.sendBatch();
 
-        Assert.assertFalse(project.getPendingPlatingRequests().isEmpty());
-        Assert.assertEquals(1,project.getPendingPlatingRequests().size());
-        Assert.assertEquals(1,project2.getPendingPlatingRequests().size());
+        Assert.assertFalse(plan1.getPendingPlatingRequests().isEmpty());
+        Assert.assertEquals(1,plan1.getPendingPlatingRequests().size());
+        Assert.assertEquals(1,plan2.getPendingPlatingRequests().size());
 
-        BSPPlatingReceipt project1PlatingReceipt = project.getPendingPlatingRequests().iterator().next().getReceipt();
-        BSPPlatingReceipt project2PlatingReceipt = project2.getPendingPlatingRequests().iterator().next().getReceipt();
+        BSPPlatingReceipt project1PlatingReceipt = plan1.getPendingPlatingRequests().iterator().next().getReceipt();
+        BSPPlatingReceipt project2PlatingReceipt = plan2.getPendingPlatingRequests().iterator().next().getReceipt();
 
         // both samples went into the same plating request; they should
         // have the same receipt.
@@ -131,8 +130,8 @@ public class EndToEndTest  {
         BSPPlatingRequest platingRequest = new AliquotReceiver().receiveAliquot(stock1,aliquotTube,platingResponse.getReceipt());
         BSPPlatingRequest platingRequest2 = new AliquotReceiver().receiveAliquot(stock2,aliquot2Tube,platingResponse.getReceipt());
 
-        Assert.assertTrue(project.getPendingPlatingRequests().isEmpty());
-        Assert.assertTrue(project2.getPendingPlatingRequests().isEmpty());
+        Assert.assertTrue(plan1.getPendingPlatingRequests().isEmpty());
+        Assert.assertTrue(plan2.getPendingPlatingRequests().isEmpty());
         Assert.assertNotNull(platingRequest);
         Assert.assertFalse(aliquot2Tube.getAllProjects().isEmpty()); // after receiving the aliquot,
                                                                    // we should know the project
@@ -216,7 +215,7 @@ public class EndToEndTest  {
     }
 
     private void checkForSampleProjectData(SequencingRun srun,
-                                          Project p,
+                                          ProjectPlan projectPlan,
                                           StartingSample sam,
                                           int numberOfSampleSheetsPerSample,
                                           MolecularEnvelope expectedEnvelope) {
@@ -242,8 +241,8 @@ public class EndToEndTest  {
                         }
 
 
-                        Project project = sampleInstance.getProject();
-                        if (project.equals(p)) {
+                        ProjectPlan fetchedPlan = sampleInstance.getSingleProjectPlan();
+                        if (projectPlan.equals(fetchedPlan)) {
                             foundProject = true;
                         }
                     }

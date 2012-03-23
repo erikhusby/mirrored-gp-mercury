@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.sample;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 
 import javax.persistence.Transient;
@@ -39,9 +40,9 @@ public interface StartingSample {
 
     public MolecularState getRootMolecularState();
 
-    public Project getRootProject();
+    public ProjectPlan getRootProjectPlan();
     
-    public void setRootProject(Project rootProject);
+    public void setRootProjectPlan(ProjectPlan rootProjectPlan);
 
     public Collection<ReadBucket> getRootReadBuckets();
 

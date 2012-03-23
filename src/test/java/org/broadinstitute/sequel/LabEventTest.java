@@ -7,9 +7,7 @@ import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.reagent.IndexEnvelope;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -41,10 +39,11 @@ public class LabEventTest {
     public void testHybridSelection() {
         // Hybrid selection transfers
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
+        ProjectPlan projectPlan = new ProjectPlan(project,"To test hybrid selection",new WorkflowDescription("HS","8.0",null));
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             SampleSheetImpl sampleSheet = new SampleSheetImpl();
-            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, project, null));
+            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, projectPlan, null));
             String barcode = "R" + rackPosition;
             mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
         }

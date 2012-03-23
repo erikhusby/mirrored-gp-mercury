@@ -64,7 +64,7 @@ public class ProjectTest {
         // maybe by running a stored search in BSP,
         // or maybe by dumping in a list of root
         // sample ids.
-        LabVessel starter = makeRootSample("000029103912",project);
+        LabVessel starter = makeRootSample("000029103912",plan);
         StartingSample startingSample = starter.getSampleInstances().iterator().next().getStartingSample();
         projectManagerAddsStartersToPlan(starter,plan);
 
@@ -101,7 +101,7 @@ public class ProjectTest {
 
         for (SampleInstance sampleInstance : sampleInstances) {
             assertEquals(startingSample,sampleInstance.getStartingSample());
-            assertEquals(project,sampleInstance.getProject());
+            assertEquals(project,sampleInstance.getSingleProjectPlan().getProject());
         }
 
         assertEquals(plan.getName(),project.getProjectName() + " Plan",plan.getName());
@@ -184,9 +184,9 @@ public class ProjectTest {
                 projectPlan);
     }
     
-    private LabVessel makeRootSample(String sampleName,Project project) {
+    private LabVessel makeRootSample(String sampleName,ProjectPlan projectPlan) {
         SampleSheetImpl sampleSheet = new SampleSheetImpl();
-        StartingSample startingSample = new BSPSample("BSPRoot123",project,null);
+        StartingSample startingSample = new BSPSample("BSPRoot123",projectPlan,null);
         sampleSheet.addStartingSample(startingSample);
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose

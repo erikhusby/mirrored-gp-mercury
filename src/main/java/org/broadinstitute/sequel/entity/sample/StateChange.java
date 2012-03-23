@@ -4,6 +4,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 
 import java.util.Collection;
@@ -31,7 +32,7 @@ public class StateChange {
         throw new RuntimeException("Method not yet implemented.");
     }
     
-    public Project getProjectOverride() {
+    public ProjectPlan getProjectPlanOverride() {
         throw new RuntimeException("Method not yet implemented.");
     }
 

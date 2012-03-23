@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.control.quote.Quote;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import java.util.Collection;
@@ -26,7 +27,9 @@ public class ProjectPlan {
     private Collection<PoolGroup> poolGroups = new HashSet<PoolGroup>();
 
     private Collection<ReagentDesign> reagentDesigns = new HashSet<ReagentDesign>();
-    
+
+    private final Collection<BSPPlatingRequest> platingRequests = new HashSet<BSPPlatingRequest>();
+
     private Quote quote;
     
     public ProjectPlan(Project project,
@@ -99,6 +102,23 @@ public class ProjectPlan {
 
     public Collection<SequencingPlanDetail> getPlanDetails() {
         return planDetails;
+    }
+
+    public void addPlatingRequest(BSPPlatingRequest platingRequest) {
+        if (platingRequest == null) {
+            throw new IllegalArgumentException("platingRequest must be non-null in AbstractProject.addPlatingRequest");
+        }
+        platingRequests.add(platingRequest);
+    }
+
+    public Collection<BSPPlatingRequest> getPendingPlatingRequests() {
+        final Collection<BSPPlatingRequest> pendingRequests = new HashSet<BSPPlatingRequest>();
+        for (BSPPlatingRequest platingRequest : platingRequests) {
+            if (!platingRequest.isFulfilled()) {
+                pendingRequests.add(platingRequest);
+            }
+        }
+        return pendingRequests;
     }
 
     /**

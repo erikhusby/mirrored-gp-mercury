@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.sample;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
@@ -20,7 +21,7 @@ public class SampleInstanceImpl implements SampleInstance {
     
     private GSP_CONTROL_ROLE controlRole;
     
-    private Project project;
+    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
     
     private Collection<ReadBucket> readBuckets = new HashSet<ReadBucket>();
     
@@ -28,12 +29,12 @@ public class SampleInstanceImpl implements SampleInstance {
     
     public SampleInstanceImpl(StartingSample sample,
                               GSP_CONTROL_ROLE controlRole,
-                              Project project,
+                              ProjectPlan projectPlan,
                               MolecularState molecularState,
                               WorkflowDescription workflowDescription) {
         this.sample = sample;
         this.controlRole = controlRole;
-        this.project = project;
+        projectPlans.add(projectPlan);
         this.molecularState = molecularState;
     }
     
@@ -48,8 +49,21 @@ public class SampleInstanceImpl implements SampleInstance {
     }
 
     @Override
-    public Project getProject() {
-        return project;
+    public ProjectPlan getSingleProjectPlan() {
+        if (projectPlans.isEmpty()) {
+            return null;
+        }
+        else if (projectPlans.size() <= 1) {
+            return projectPlans.iterator().next();
+        }
+        else {
+            throw new RuntimeException("There are " + projectPlans.size() + " possible project plans for " + this);
+        }
+    }
+
+    @Override
+    public Collection<ProjectPlan> getAllProjectPlans() {
+        return projectPlans;
     }
 
     @Override
@@ -67,8 +81,8 @@ public class SampleInstanceImpl implements SampleInstance {
             if (change.getControlRole() != null) {
                 controlRole = change.getControlRole();
             }
-            if (change.getProjectOverride() != null) {
-                project = change.getProjectOverride();
+            if (change.getProjectPlanOverride() != null) {
+                projectPlans.add(change.getProjectPlanOverride());
             }
             if (change.getReadBucketOverrides() != null) {
                 readBuckets.clear();

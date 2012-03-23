@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.control.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.project.Project;
@@ -31,7 +32,7 @@ public class BSPSample implements StartingSample {
 
     private  String sampleName;
 
-    private Project project;
+    private ProjectPlan projectPlan;
     
     private String patientId;
 
@@ -62,17 +63,17 @@ public class BSPSample implements StartingSample {
      * @param sampleName
      */
     public BSPSample(String sampleName,
-                     Project p,
+                     ProjectPlan plan,
                      BSPSampleDataFetcher dataFetcher) {
-        this(sampleName,p);
+        this(sampleName,plan);
         this.dataFetcher = dataFetcher;
     }
     
     public BSPSample(String sampleName,
-                     Project p) {
+                     ProjectPlan plan) {
         this();
         this.sampleName = sampleName;
-        this.project = p;
+        this.projectPlan = plan;
     }
 
 
@@ -137,8 +138,13 @@ public class BSPSample implements StartingSample {
     }
 
     @Override
-    public Project getRootProject() {
-        return project;
+    public ProjectPlan getRootProjectPlan() {
+        return projectPlan;
+    }
+
+    @Override
+    public void setRootProjectPlan(ProjectPlan rootProjectPlan) {
+        this.projectPlan = rootProjectPlan;
     }
 
     @Override
@@ -153,11 +159,7 @@ public class BSPSample implements StartingSample {
 
     @Override
     public SampleInstanceImpl createSampleInstance() {
-        return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE, project, new MolecularStateImpl(), null);
+        return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE, projectPlan, new MolecularStateImpl(), null);
     }
 
-    @Override
-    public void setRootProject(Project rootProject) {
-        this.project = rootProject;
-    }
 }

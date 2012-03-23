@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.control.labevent;
 
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.labevent.PartiallyProcessedLabEventCache;
@@ -152,13 +153,16 @@ public class LabEventHandler {
         Map<Project,Collection<StartingSample>> samplesForProject = new HashMap<Project,Collection<StartingSample>>();
         for (LabVessel container : event.getAllLabVessels()) {
             for (SampleInstance sampleInstance: container.getSampleInstances()) {
-                Project p = sampleInstance.getProject();
-                if (!samplesForProject.containsKey(p)) {
-                    samplesForProject.put(p,new HashSet<StartingSample>());
+                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+                    Project p = projectPlan.getProject();
+                    if (!samplesForProject.containsKey(p)) {
+                        samplesForProject.put(p,new HashSet<StartingSample>());
+                    }
+                    if (p.getCheckpointableEvents().contains(event.getEventName())) {
+                        samplesForProject.get(p).add(sampleInstance.getStartingSample());
+                    }
                 }
-                if (p.getCheckpointableEvents().contains(event.getEventName())) {
-                    samplesForProject.get(p).add(sampleInstance.getStartingSample());
-                }
+
             }
         }
         for (Map.Entry<Project, Collection<StartingSample>> entry : samplesForProject.entrySet()) {

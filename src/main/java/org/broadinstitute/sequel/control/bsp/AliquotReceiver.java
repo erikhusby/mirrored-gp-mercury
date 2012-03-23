@@ -103,7 +103,7 @@ public class AliquotReceiver {
                     possibleRequest.setFulfilled(true);
                     for (SampleSheet sampleSheet : aliquot.getSampleSheets()) {
                         for (StartingSample startingSample : sampleSheet.getStartingSamples()) {
-                            startingSample.setRootProject(possibleRequest.getAliquotParameters().getProject());
+                            startingSample.setRootProjectPlan(possibleRequest.getAliquotParameters().getProjectPlan());
                         }
                     }
 

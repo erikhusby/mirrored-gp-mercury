@@ -139,11 +139,15 @@ public interface SampleInstance  {
      * If there's more than one possible project for this
      * {@link SampleInstance}, an exception is thrown.
      * If your client can tolerate this ambiguity, use
-     * {@link #getAllProjects()}.
+     * {@link #getAllProjectPlans()}.
      * @return
      */
     public ProjectPlan getSingleProjectPlan();
-    
+
+    /**
+     * @see #getSingleProjectPlan()
+     * @return
+     */
     public Collection<ProjectPlan> getAllProjectPlans();
 
     /**
