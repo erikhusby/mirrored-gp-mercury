@@ -211,4 +211,5 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
     public WorkflowEngine getWorkflowEngine() {
         return workflowEngine;
     }
+
 }

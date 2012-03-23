@@ -72,6 +72,23 @@ public class Quote {
         this.approvalStatus = approvalStatus;
     }
 
+    /**
+     * Register work against this quote.
+     * @param priceItem
+     * @param  callbackURL url for quote server user to drill into
+     *                     to get more details about this when the review
+     *                     the bill
+     * @param callbackURLObjectType key for a url parameter
+     * @param callbackURLObjectValue value for the url parameter
+     */
+    public void registerWork(PriceItem priceItem,
+                             double quantity,
+                             String callbackURL,
+                             String callbackURLObjectType,
+                             String callbackURLObjectValue) {
+        throw new RuntimeException("not implemented");
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

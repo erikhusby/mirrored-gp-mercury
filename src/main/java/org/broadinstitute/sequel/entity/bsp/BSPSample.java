@@ -2,9 +2,11 @@ package org.broadinstitute.sequel.entity.bsp;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.sequel.control.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.project.Project;
@@ -13,7 +15,7 @@ import org.broadinstitute.sequel.entity.sample.SampleInstanceImpl;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateImpl;
 
-import javax.inject.Inject;
+import javax.persistence.PostLoad;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -21,20 +23,38 @@ import java.util.Set;
 
 /**
  * The basic plan here is to store only the
- * name then
+ * name of the sample, and then have
+ * a service lookup the real data from bsp.
  */
 public class BSPSample implements StartingSample {
 
     private static Log gLog = LogFactory.getLog(BSPSample.class);
 
-    private final String sampleName;
+    private  String sampleName;
 
-    private Project project;
+    private ProjectPlan projectPlan;
     
     private String patientId;
 
-    @Inject
-    BSPSampleSearchService service;
+    /**
+     * Conceptually we want this injected by the framework,
+     * but injecting something with CDI into a hibernate
+     * entity is a bit weird.  So we're going to try
+     * using the @PostLoad annotation to instantiate
+     * this service whenever we fetch one of these from
+     * the database or new one up.
+     */
+    BSPSampleDataFetcher dataFetcher;
+
+    private boolean hasFetched;
+
+    public BSPSample() {
+        // we're calling the @PostLoad method
+        // so that when we new up one of these,
+        // we pickup the right service for fetching
+        // data from bsp.
+        initializeDataFetcher();
+    }
 
     /**
      * Is there a distinction in BSP between
@@ -43,52 +63,49 @@ public class BSPSample implements StartingSample {
      * @param sampleName
      */
     public BSPSample(String sampleName,
-                     Project p,
-                     BSPSampleSearchService bspSearchService) {
+                     ProjectPlan plan,
+                     BSPSampleDataFetcher dataFetcher) {
+        this(sampleName,plan);
+        this.dataFetcher = dataFetcher;
+    }
+    
+    public BSPSample(String sampleName,
+                     ProjectPlan plan) {
+        this();
         this.sampleName = sampleName;
-        this.project = p;
-        this.service = bspSearchService;
+        this.projectPlan = plan;
+    }
+
+
+    // todo make sure we hit this with an integration test
+    @PostLoad
+    void initializeDataFetcher() {
+        if (dataFetcher == null) {
+            dataFetcher = new BSPSampleDataFetcher();
+        }
     }
 
     /**
      * Fetches all fields live from
-     * #service
+     * {@link #dataFetcher}
      */
-    private void fetchAllFields() {
-        if (service == null) {
-            throw new RuntimeException("No BSP service has been declared.");
-        }
-        else {
-            Collection<String> sampleNames = new HashSet<String>();
-            sampleNames.add(sampleName);
-            // todo query multiple attributes at once for better efficiency.
-            // don't just copy paste this!
-            List<String[]> results = service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PARTICIPANT_ID);
-
-            if (results == null) {
-                throw new RuntimeException("Sample " + sampleName + " not found in BSP");
+    private void fetchAllFieldsIfUnfetched() {
+        if (!hasFetched) {
+            if (dataFetcher != null) {
+                dataFetcher.fetchFieldsFromBSP(sampleName);
+                patientId = dataFetcher.getPatientId();
+                hasFetched = true;
             }
-            if (results.isEmpty()) {
-                throw new RuntimeException("Sample " + sampleName + " not found in BSP");
-            }
-            Set<String> patientIds = new HashSet<String>();
-            for (String[] result : results) {
-                if (result == null) {
-                    throw new RuntimeException("No patient id for sample " + sampleName);
-                }
-                if (result.length < 1) {
-                    throw new RuntimeException("No patient id for sample " + sampleName);
-                }
-                patientIds.add(result[0]);
-            }
-
-            if (patientIds.size() > 1) {
-                throw new RuntimeException("Multiple patient ids found for sample " + sampleName);
-            }
-            patientId = patientIds.iterator().next();
         }
     }
 
+    public void setSampleName(String sampleName) {
+        if (sampleName == null) {
+            throw new NullPointerException("sampleName cannot be null.");
+        }
+        this.sampleName = sampleName;
+    }
+    
     @Override
     public String getContainerId() {
         return sampleName;
@@ -101,9 +118,7 @@ public class BSPSample implements StartingSample {
 
     @Override
     public String getPatientId() {
-        if (patientId == null) {
-            fetchAllFields();
-        }
+        fetchAllFieldsIfUnfetched();
         return patientId;
     }
 
@@ -123,8 +138,13 @@ public class BSPSample implements StartingSample {
     }
 
     @Override
-    public Project getRootProject() {
-        return project;
+    public ProjectPlan getRootProjectPlan() {
+        return projectPlan;
+    }
+
+    @Override
+    public void setRootProjectPlan(ProjectPlan rootProjectPlan) {
+        this.projectPlan = rootProjectPlan;
     }
 
     @Override
@@ -139,11 +159,7 @@ public class BSPSample implements StartingSample {
 
     @Override
     public SampleInstanceImpl createSampleInstance() {
-        return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE, project, new MolecularStateImpl(), null);
+        return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE, projectPlan, new MolecularStateImpl(), null);
     }
 
-    @Override
-    public void setRootProject(Project rootProject) {
-        this.project = rootProject;
-    }
 }

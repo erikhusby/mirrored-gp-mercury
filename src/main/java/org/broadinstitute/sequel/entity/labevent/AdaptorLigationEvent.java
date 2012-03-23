@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.labevent;
 
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.LabMetric;
 import org.broadinstitute.sequel.entity.vessel.LabMetricRange;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
@@ -42,11 +43,6 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
        return LabEventName.ADAPTOR_LIGATION;
     }
 
-    @Override
-    public boolean isBillable() {
-        return true;
-    }
-
     /**
      * Sources ar expected to have sample information
      * but no adaptor.
@@ -66,10 +62,12 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
                     // if we have pooling, we expect indexes
                     if (tangible.getSampleInstances().size() > 1) {
                         if (molEnvelope == null) {
-                            Project p = sampleInstance.getProject();
-                            // is this a fatal error?  or just an alert?
-                            // do we throw the exception?  or alert?  or both?
-                            p.sendAlert("No index for " + sampleInstance.getStartingSample().getSampleName() + " in " + getEventName());
+                            for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+                                Project p = projectPlan.getProject();
+                                // is this a fatal error?  or just an alert?
+                                // do we throw the exception?  or alert?  or both?
+                                p.sendAlert("No index for " + sampleInstance.getStartingSample().getSampleName() + " in " + getEventName());
+                            }
                         }
                     }
 

@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.sample;
 
 
 
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.Project;
@@ -41,17 +42,19 @@ public class SampleSheetAlertUtil {
         // to make a single message that references each sample in a project
         final Map<Project,Collection<String>> samplesByProject = new HashMap<Project,Collection<String>>();
          for (SampleInstance samInstance: labTangible.getSampleInstances()) {
-            Project p = samInstance.getProject();
-            boolean useProject = true;
-            if (p.isDevelopment() && !includeDev) {
-                useProject = false;
-            }
-            if (useProject) {
-                if (!samplesByProject.containsKey(p)) {
-                    samplesByProject.put(p,new HashSet<String>());
-                }
-                samplesByProject.get(p).add(samInstance.getStartingSample().getSampleName());
-            }
+             for (ProjectPlan projectPlan : samInstance.getAllProjectPlans()) {
+                 Project p = projectPlan.getProject();
+                 boolean useProject = true;
+                 if (p.isDevelopment() && !includeDev) {
+                     useProject = false;
+                 }
+                 if (useProject) {
+                     if (!samplesByProject.containsKey(p)) {
+                         samplesByProject.put(p,new HashSet<String>());
+                     }
+                     samplesByProject.get(p).add(samInstance.getStartingSample().getSampleName());
+                 }
+             }
         }
 
         for (Map.Entry<Project,Collection<String>> entry: samplesByProject.entrySet()) {

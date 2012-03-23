@@ -49,13 +49,6 @@ public interface LabEvent {
     public LabEventName getEventName();
 
     /**
-     * Billing UI is going to want to see
-     * all billable events together.
-     * @return
-     */
-    public boolean isBillable();
-
-    /**
      * This is the change to sample state that this
      * operation accomplishes.
      *

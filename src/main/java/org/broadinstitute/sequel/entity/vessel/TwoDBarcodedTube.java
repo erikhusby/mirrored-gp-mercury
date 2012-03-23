@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.broadinstitute.sequel.entity.labevent.Failure;
@@ -177,8 +178,12 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
     public Collection<Project> getAllProjects() {
         Collection<Project> allProjects = new HashSet<Project>();
         for (SampleInstance sampleInstance : getSampleInstances()) {
-            if (sampleInstance.getProject() != null) {
-                allProjects.add(sampleInstance.getProject());
+            if (sampleInstance.getAllProjectPlans() != null) {
+                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+                    if (projectPlan != null) {
+                        allProjects.add(projectPlan.getProject());
+                    }
+                }
             }
         }
         return allProjects;

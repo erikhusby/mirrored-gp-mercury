@@ -28,8 +28,6 @@ public abstract class AbstractProject implements Project, UserRemarkable {
     JiraTicket jiraTicket;
 
     private boolean active;
-
-    private final Collection<BSPPlatingRequest> platingRequests = new HashSet<BSPPlatingRequest>();
     
     public Collection<LabVessel> starters = new HashSet<LabVessel>();
     
@@ -248,24 +246,6 @@ public abstract class AbstractProject implements Project, UserRemarkable {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public void addPlatingRequest(BSPPlatingRequest platingRequest) {
-        if (platingRequest == null) {
-             throw new IllegalArgumentException("platingRequest must be non-null in AbstractProject.addPlatingRequest");
-        }
-        platingRequests.add(platingRequest);
-    }
-
-    @Override
-    public Collection<BSPPlatingRequest> getPendingPlatingRequests() {
-        final Collection<BSPPlatingRequest> pendingRequests = new HashSet<BSPPlatingRequest>();
-        for (BSPPlatingRequest platingRequest : platingRequests) {
-            if (!platingRequest.isFulfilled()) {
-                pendingRequests.add(platingRequest);
-            }
-        }
-        return pendingRequests;
-    }
 
     @Override
     public Collection<LabVessel> getAllStarters() {
@@ -302,6 +282,11 @@ public abstract class AbstractProject implements Project, UserRemarkable {
             // todo figure out tool for logging and alerting.
             throw new RuntimeException("There is no jira ticket for " + projectName);
         }
+    }
+
+    @Override
+    public SampleAnalysisBuddies getAnalysisBuddies(StartingSample sample) {
+        throw new RuntimeException("not implemented");
     }
 
     @Override

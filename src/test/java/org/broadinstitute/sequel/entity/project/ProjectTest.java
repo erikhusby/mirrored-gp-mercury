@@ -1,18 +1,19 @@
 package org.broadinstitute.sequel.entity.project;
 
+import com.gargoylesoftware.htmlunit.CollectingAlertHandler;
 import org.broadinstitute.sequel.TestUtilities;
 import org.broadinstitute.sequel.WeldUtil;
+import org.broadinstitute.sequel.control.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.control.bsp.QABSPConnectionParameters;
 import org.broadinstitute.sequel.control.jira.DummyJiraService;
 import org.broadinstitute.sequel.control.jira.JiraService;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.control.quote.*;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueueResponse;
+import org.broadinstitute.sequel.entity.queue.*;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -24,10 +25,9 @@ import org.broadinstitute.sequel.entity.workflow.Workflow;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
+import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
@@ -52,9 +52,12 @@ public class ProjectTest {
         // todo how to verify the comment was added?
     }
     
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_simple_project() {
-        AbstractProject project = projectManagerCreatesProject();
+        WeldUtil weld = TestUtilities.bootANewWeld();
+        JiraService jiraService = weld.getFromContainer(JiraService.class);
+        BSPSampleDataFetcher bspFetcher = weld.getFromContainer(BSPSampleDataFetcher.class);
+        AbstractProject project = projectManagerCreatesProject(jiraService);
         projectManagerAddsFundingSourceToProject(project,"NHGRI");
         ProjectPlan plan = projectManagerAddsProjectPlan(project);
         ReagentDesign bait = projectManagerAddsBait(plan);
@@ -65,25 +68,31 @@ public class ProjectTest {
         // maybe by running a stored search in BSP,
         // or maybe by dumping in a list of root
         // sample ids.
-        LabVessel starter = makeRootSample("000029103912",project);
-        StartingSample startingSample = starter.getSampleInstances().iterator().next().getStartingSample();
-        projectManagerAddsStartersToPlan(starter,plan);
+        LabVessel starter1 = makeRootSample("SM-1P3WY",plan,bspFetcher);
+        LabVessel starter2 = makeRootSample("SM-1P3XN",plan,bspFetcher);
+        Collection<LabVessel> allStarters = new HashSet<LabVessel>();
 
-        assertFalse(project.getAllStarters() == null);
+        allStarters.add(starter1);
+        allStarters.add(starter2);
 
-        assertEquals(1,project.getAllStarters().size());
+        int numStartersExpected = 1;
+        for (LabVessel starter : allStarters) {
+            projectManagerAddsStartersToPlan(starter,plan);
 
-        for (LabVessel vessel : project.getAllStarters()) {
-            assertEquals(starter,vessel);
+            assertFalse(project.getAllStarters() == null);
+
+            assertEquals(numStartersExpected,project.getAllStarters().size());
+
+            assertTrue(project.getAllStarters().contains(starter));
+
+            assertFalse(plan.getStarters().isEmpty());
+            assertEquals(numStartersExpected,plan.getStarters().size());
+
+            assertTrue(plan.getStarters().contains(starter));
+
+            numStartersExpected++;
         }
-
-        assertFalse(plan.getStarters().isEmpty());
-        assertEquals(1,plan.getStarters().size());
-
-        for (LabVessel vessel : plan.getStarters()) {
-            assertEquals(starter,vessel);
-        }
-
+       
         assertFalse(plan.getReagentDesigns() == null);
         assertEquals(1,plan.getReagentDesigns().size());
 
@@ -98,12 +107,23 @@ public class ProjectTest {
             sampleInstances.addAll(vessel.getSampleInstances());
         }
 
-        assertEquals(1,sampleInstances.size());
+        assertEquals(2,sampleInstances.size());
 
-        for (SampleInstance sampleInstance : sampleInstances) {
-            assertEquals(startingSample,sampleInstance.getStartingSample());
-            assertEquals(project,sampleInstance.getProject());
+        for (LabVessel starter : allStarters) {
+            boolean foundIt = false;
+            for (SampleInstance sampleInstance : sampleInstances) {
+                StartingSample startingSample = starter.getSampleInstances().iterator().next().getStartingSample();
+                if (startingSample.equals(sampleInstance.getStartingSample())) {
+                    if (starter.getSampleInstances().iterator().next().getSingleProjectPlan().equals(sampleInstance.getSingleProjectPlan())) {
+                        foundIt  = true;
+                    }
+                }
+            }
+            if (!foundIt) {
+                fail("Can't find starting sample or project plan relationship for " + starter.getLabCentricName());
+            }
         }
+        
 
         assertEquals(plan.getName(),project.getProjectName() + " Plan",plan.getName());
 
@@ -125,19 +145,70 @@ public class ProjectTest {
 
         // PM would pick the queue from a drop down,
         // filtered by the {@link WorkflowDescription}?
-        LabWorkQueue lcWorkQueue = createLabWorkQueue();
+        LabWorkQueue<LcSetParameters> lcWorkQueue = createLabWorkQueue();
 
         assertTrue(lcWorkQueue.isEmpty());
-        
-        Workflow workflowInstance = projectManagerEnquesLabWork(starter,plan,lcWorkQueue);
+
+        LcSetParameters lcSetParameters = new LcSetParameters();
+        Workflow workflowInstance = null;
+        assertTrue(lcWorkQueue.isEmpty());
+        for (LabVessel starter : allStarters) {
+            workflowInstance = projectManagerEnquesLabWork(starter,plan,lcSetParameters,lcWorkQueue);
+        }
 
         assertFalse(lcWorkQueue.isEmpty());
-        
-        labStaffStartsWork(starter,plan.getWorkflowDescription(),lcWorkQueue);
 
+
+
+        JiraTicket jiraTicket = labStaffStartsWork(allStarters,
+                plan.getWorkflowDescription(),
+                lcWorkQueue,
+                lcSetParameters,
+                jiraService);
+
+        assertTrue(jiraTicket.getTicketName().startsWith(plan.getWorkflowDescription().getJiraProjectPrefix()));
+        
         assertTrue(lcWorkQueue.isEmpty());
 
         assertEquals("work has stated", workflowInstance.getState().getState());
+
+        postSomethingFunToJira(jiraTicket,allStarters,project);
+        
+        Collection<LabVessel> reworkVessels = new HashSet<LabVessel>();
+        reworkVessels.add(allStarters.iterator().next());
+
+        // post notice of the LC set ticket back to the project
+        JiraTicket jiraTicketForRework = labStaffStartsWork(reworkVessels,
+                plan.getWorkflowDescription(),
+                lcWorkQueue,
+                lcSetParameters,
+                jiraService);
+
+        // oh dear, one sample ended up getting reworked.
+        postSomethingFunToJira(jiraTicketForRework,reworkVessels,project);
+        
+        assertEquals(2,plan.getJiraTickets().size());
+        
+        assertTrue(plan.getJiraTickets().contains(jiraTicket));
+        assertTrue(plan.getJiraTickets().contains(jiraTicketForRework));
+
+    }
+    
+    private void postSomethingFunToJira(JiraTicket jiraTicket,
+                                        Collection<LabVessel> vessels,
+                                        Project project) {
+        StringBuilder projectJiraMessage = new StringBuilder(jiraTicket.getTicketName() + " has been created for the following samples:\n");
+        for (LabVessel vessel : vessels) {
+            for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
+                StartingSample startingSample = sampleInstance.getStartingSample();
+                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+                    projectPlan.addJiraTicket(jiraTicket);
+                }
+                String sampleURL = "[" + startingSample.getSampleName() + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + startingSample.getSampleName() + "]";
+                projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n").append("** Paid for by ").append(sampleInstance.getSingleProjectPlan().getQuote().getQuoteFunding().getFundingLevel().getFunding().getGrantDescription()).append("\n");
+            }
+        }
+        project.addJiraComment(projectJiraMessage.toString());
     }
     
     /**
@@ -150,8 +221,20 @@ public class ProjectTest {
      * problem.
      * @return
      */
-    private AbstractProject projectManagerCreatesProject() {
-        AbstractProject legacyProject = new BasicProject("Legacy Squid Project C203",new JiraTicket(new DummyJiraService(),"TP-0","0"));
+    private AbstractProject projectManagerCreatesProject(JiraService jiraService) {
+        String projectName = "Legacy Squid Project C203";
+        CreateIssueResponse jiraResponse = null;
+
+        try {
+            jiraResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
+                    CreateIssueRequest.Fields.Issuetype.SequeL_Project,
+                    projectName,
+                    "Created by " + getClass().getCanonicalName());
+        }
+        catch(IOException e ) {
+            throw new RuntimeException("Cannot create jira ticket",e);
+        }
+        AbstractProject legacyProject = new BasicProject(projectName,new JiraTicket(jiraService,jiraResponse.getTicketName(),jiraResponse.getId()));
         return legacyProject;
     }
 
@@ -163,9 +246,12 @@ public class ProjectTest {
      */
     private ProjectPlan projectManagerAddsProjectPlan(Project project) {
         PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
-        WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6",priceItem);
+
+        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
+        billableEvents.put(LabEventName.SAGE_UNLOADED,priceItem);
+        WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6",billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         ProjectPlan plan = new ProjectPlan(project,project.getProjectName() + " Plan",workflow);
-        
+        plan.setQuote(new Quote("DNA23",new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
         
         return plan;
     }
@@ -182,9 +268,9 @@ public class ProjectTest {
                 projectPlan);
     }
     
-    private LabVessel makeRootSample(String sampleName,Project project) {
+    private LabVessel makeRootSample(String sampleName,ProjectPlan projectPlan,BSPSampleDataFetcher bspFetcher) {
         SampleSheetImpl sampleSheet = new SampleSheetImpl();
-        StartingSample startingSample = new BSPSample("BSPRoot123",project,null);
+        StartingSample startingSample = new BSPSample(sampleName,projectPlan,bspFetcher);
         sampleSheet.addStartingSample(startingSample);
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose
@@ -214,22 +300,22 @@ public class ProjectTest {
         return bait;
     }
     
-    private LabWorkQueue createLabWorkQueue() {
+    private LabWorkQueue<LcSetParameters> createLabWorkQueue() {
         WorkflowEngine workflowEngine = new WorkflowEngine();
-        LabWorkQueue labWorkQueue = new FIFOLabWorkQueue(LabWorkQueueName.LC,workflowEngine);
+        LabWorkQueue<LcSetParameters> labWorkQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,workflowEngine);
         return labWorkQueue;
     }
 
     private Workflow projectManagerEnquesLabWork(LabVessel starter,
                                              ProjectPlan projectPlan,
+                                             LabWorkQueueParameters queueParameters,
                                              LabWorkQueue labWorkQueue) {
        
         WorkflowEngine workflowEngine = labWorkQueue.getWorkflowEngine();
         Collection<Workflow> workflows = workflowEngine.getActiveWorkflows(starter,null);
-        assertTrue(workflows.isEmpty());
-        assertTrue(labWorkQueue.isEmpty());
 
-        labWorkQueue.add(starter,null,projectPlan.getPlanDetails().iterator().next());
+
+        labWorkQueue.add(starter,queueParameters,projectPlan.getPlanDetails().iterator().next());
 
         workflows = workflowEngine.getActiveWorkflows(starter,null);
         assertEquals(1, workflows.size());
@@ -244,14 +330,93 @@ public class ProjectTest {
     }
 
 
-    private void labStaffStartsWork(LabVessel vessel,
+    /**
+     * Lab user says "I'm going to start work on these tubes".
+     * The parameters are the same for each tube because the
+     * "batch" that the user is starting consists of samples
+     * that are all undergoing the same process, at least
+     * for this lab user's portion of the process.
+     *
+     * This implies that the jira ticket that is created for this
+     * portion of the process exists only for this portion
+     * of the process.  Put another way, if there is a lab group
+     * that does preflight, perhaps we have a preflight ticket
+     * for each rack that they work on.  Perhaps after three preflight
+     * tickets are done, the samples are batched together
+     * for another team, which creates a ticket for a different
+     * batch.
+     *
+     * Or perhaps the same batch exists all the way from BSP
+     * aliquoting through sequencing.  If the lab uses a single
+     * batch/ticket all the way through, then a {@link LabWorkQueue}
+     * could just require an existing ticket instead of creating
+     * a new one on the fly.
+     * @param vessels
+     * @param workflowDescription
+     * @param labWorkQueue
+     * @param lcSetParameters
+     * @param jiraService
+     * @return
+     */
+    private JiraTicket labStaffStartsWork(Collection<LabVessel> vessels,
                                     WorkflowDescription workflowDescription,
-                                    LabWorkQueue labWorkQueue) {
-        LabWorkQueueResponse queueResponse = labWorkQueue.startWork(vessel,
-                null,
-                workflowDescription,
-                new Person("tony","Tony","Hawk"));
+                                    LabWorkQueue<LcSetParameters> labWorkQueue,
+                                    LcSetParameters lcSetParameters,
+                                    JiraService jiraService) {
+        Person tonyHawk = new Person("tony","Tony","Hawk");
+        for (LabVessel vessel : vessels) {
+            LabWorkQueueResponse queueResponse = labWorkQueue.startWork(vessel,
+                    lcSetParameters,
+                    workflowDescription,
+                    tonyHawk);
+        }
+        CreateIssueResponse jiraResponse = createJiraTicket(vessels,workflowDescription,lcSetParameters,jiraService);
+
+        JiraTicket ticket = new JiraTicket(jiraService,jiraResponse.getTicketName(),jiraResponse.getId());
+
+        return ticket;
+    }
+    
+    private CreateIssueResponse createJiraTicket(Collection<LabVessel> vessels,
+                                  WorkflowDescription workflowDescription,
+                                  LcSetParameters lcSetParameters,
+                                  JiraService jiraService) {
+        Collection<Project> allProjects = new HashSet<Project>();
+        for (LabVessel vessel : vessels) {
+            for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
+                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+                    allProjects.add(projectPlan.getProject());
+                }
+            }
+        }
         
+        String ticketTitle = null;
+        StringBuilder ticketDetails = new StringBuilder();
+        if (allProjects.size() == 1) {
+            Project singleProject = allProjects.iterator().next();
+            ticketTitle = "Work for " + singleProject.getProjectName();
+            ticketDetails.append(singleProject.getProjectName());
+        }
+        else {
+            ticketTitle = "Work for " + allProjects.size() + " projects";
+            for (Project project : allProjects) {
+                ticketDetails.append(project.getProjectName()).append(" ");
+            }
+        }
+        
+        CreateIssueResponse jiraTicketCreationResponse =  null;
+        
+        try {
+            jiraTicketCreationResponse = jiraService.createIssue(workflowDescription.getJiraProjectPrefix(),
+                    workflowDescription.getJiraIssueType(),
+                    ticketTitle,
+                    ticketDetails.toString());
+            // todo use #lcSetParameters to add more details to the ticket
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed to create jira ticket",e);
+        }
+        return jiraTicketCreationResponse;
     }
 
     private void projectManagerAddsFundingSourceToProject(AbstractProject project,

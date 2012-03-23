@@ -47,7 +47,7 @@ public class PerAliquotInvoiceGenerator implements InvoiceGenerator {
             if (!quotesForAliquots.containsKey(sampleInstance.getStartingSample())) {
                 quotesForAliquots.put(sampleInstance.getStartingSample(),new HashSet<Quote>());
             }
-            Project p = sampleInstance.getProject();
+            Project p = sampleInstance.getSingleProjectPlan().getProject();
             quotesForAliquots.get(sampleInstance.getStartingSample()).addAll(p.getAvailableQuotes());
         }
 

@@ -193,8 +193,6 @@ public interface Project {
      */
     public Collection<LabEventName> getCheckpointableEvents();
 
-    public void addPlatingRequest(BSPPlatingRequest platingRequest);
-    
-    public Collection<BSPPlatingRequest> getPendingPlatingRequests();
+    public SampleAnalysisBuddies getAnalysisBuddies(StartingSample sample);
 
 }

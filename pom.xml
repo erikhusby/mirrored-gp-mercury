@@ -32,11 +32,22 @@
 
     <distributionManagement>
         <site>
-            <id>${artifactId}.website</id>
+            <id>${project.artifactId}.website</id>
             <name>${project.name} Website</name>
             <url>file://${site.path}/${project.artifactId}</url>
         </site>
     </distributionManagement>
+
+    <developers>
+        <developer>
+            <name>Andrew Zimmer</name>
+            <email>andrew@broadinstitute.org</email>
+            <roles>
+                <role>Architect</role>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
 
     <repositories>
         <repository>
@@ -132,7 +143,7 @@
                         <artifactId>maven-clover2-plugin</artifactId>
                         <configuration>
                             <fullRunEvery>60</fullRunEvery>
-                            <snapshot>${user.home}/.clover/${groupId}-${artifactId}/clover.snapshot</snapshot>
+                            <snapshot>${user.home}/.clover/${project.groupId}-${project.artifactId}/clover.snapshot</snapshot>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>true</includesAllSourceRoots>
                         </configuration>
@@ -184,15 +195,29 @@
                         <artifactId>maven-clover2-plugin</artifactId>
                         <configuration>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
-                            <includesAllSourceRoots>true</includesAllSourceRoots>
+                            <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
                         </configuration>
                         <executions>
                             <execution>
+                                <id>generate-sources</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>instrument</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>verify</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                    <goal>log</goal>
+                                </goals>
+                            </execution>
+                            <execution>
                                 <id>site</id>
                                 <phase>pre-site</phase>
                                 <goals>
-                                    <goal>aggregate</goal>
                                     <goal>save-history</goal>
                                     <goal>reset</goal>
                                 </goals>
@@ -331,11 +356,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.oracle</groupId>
-            <artifactId>ojdbc</artifactId>
-            <version>6-11.2.0.1.0</version>
-        </dependency>
-        <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>2.5</version>
@@ -416,11 +436,6 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.12</version>
                 </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-report-plugin</artifactId>
-                    <version>2.12</version>
-                </plugin>
 
                 <plugin>
                     <groupId>com.sun.tools.xjc.maven2</groupId>
@@ -430,9 +445,10 @@
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jxr-plugin</artifactId>
-                    <version>2.3</version>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>2.7.1</version>
                 </plugin>
+
             </plugins>
         </pluginManagement>
 
@@ -469,6 +485,13 @@
                     </includeBindings>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <configuration>
+                    <targetJdk>1.6</targetJdk>
+                </configuration>
+            </plugin>
 
         </plugins>
 
@@ -479,6 +502,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.12</version>
+
                 <reportSets>
                     <reportSet>
                         <reports>
@@ -491,11 +516,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.3</version>
+
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8.1</version>
                 <configuration>
                     <quiet>true</quiet>
                     <minmemory>1024</minmemory>
@@ -503,6 +531,31 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.9.1</version>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <propertyExpansion>checkstyle.importcontrol.file=checkstyle-import-control.xml</propertyExpansion>
+                    <failOnViolation>false</failOnViolation>
+                </configuration>
+                <reportSets>
+                        <reportSet>
+                            <reports>
+                                <report>checkstyle</report>
+                            </reports>
+                        </reportSet>
+                    </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>2.7.1</version>
+                <configuration>
+                    <targetJdk>1.6</targetJdk>
+                </configuration>
+            </plugin>
         </plugins>
     </reporting>
 

@@ -1,7 +1,11 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.control.quote.Quote;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
+import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.hibernate.loader.collection.CollectionInitializer;
+
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -25,7 +29,11 @@ public class ProjectPlan {
     private Collection<PoolGroup> poolGroups = new HashSet<PoolGroup>();
 
     private Collection<ReagentDesign> reagentDesigns = new HashSet<ReagentDesign>();
+
+    private final Collection<BSPPlatingRequest> platingRequests = new HashSet<BSPPlatingRequest>();
     
+    private final Collection<JiraTicket> jiraTickets = new HashSet<JiraTicket>();
+
     private Quote quote;
     
     public ProjectPlan(Project project,
@@ -73,6 +81,14 @@ public class ProjectPlan {
         return poolGroups;
     }
     
+    public Quote getQuote() {
+        return quote;
+    }
+    
+    public void setQuote(Quote quote) {
+        this.quote = quote;
+    }
+    
     public void addStarter(LabVessel vessel) {
         if (vessel == null) {
             throw new NullPointerException("vessel cannot be null.");
@@ -94,6 +110,36 @@ public class ProjectPlan {
 
     public Collection<SequencingPlanDetail> getPlanDetails() {
         return planDetails;
+    }
+
+    public void addPlatingRequest(BSPPlatingRequest platingRequest) {
+        if (platingRequest == null) {
+            throw new IllegalArgumentException("platingRequest must be non-null in AbstractProject.addPlatingRequest");
+        }
+        platingRequests.add(platingRequest);
+    }
+
+    public Collection<BSPPlatingRequest> getPendingPlatingRequests() {
+        final Collection<BSPPlatingRequest> pendingRequests = new HashSet<BSPPlatingRequest>();
+        for (BSPPlatingRequest platingRequest : platingRequests) {
+            if (!platingRequest.isFulfilled()) {
+                pendingRequests.add(platingRequest);
+            }
+        }
+        return pendingRequests;
+    }
+    
+    public void addJiraTicket(JiraTicket jiraTicket) {
+        jiraTickets.add(jiraTicket);
+    }
+
+    /**
+     * What are all the jira tickets that were used
+     * for this plan?
+     * @return
+     */
+    public Collection<JiraTicket> getJiraTickets() {
+        return jiraTickets;
     }
 
     /**
