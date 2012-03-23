@@ -160,7 +160,7 @@ public class ProjectTest {
 
 
 
-        CreateIssueResponse jiraTicket = labStaffStartsWork(allStarters,
+        JiraTicket jiraTicket = labStaffStartsWork(allStarters,
                 plan.getWorkflowDescription(),
                 lcWorkQueue,
                 lcSetParameters,
@@ -171,16 +171,43 @@ public class ProjectTest {
         assertTrue(lcWorkQueue.isEmpty());
 
         assertEquals("work has stated", workflowInstance.getState().getState());
+
+        postSomethingFunToJira(jiraTicket,allStarters,project);
         
+        Collection<LabVessel> reworkVessels = new HashSet<LabVessel>();
+        reworkVessels.add(allStarters.iterator().next());
+
+        // post notice of the LC set ticket back to the project
+        JiraTicket jiraTicketForRework = labStaffStartsWork(reworkVessels,
+                plan.getWorkflowDescription(),
+                lcWorkQueue,
+                lcSetParameters,
+                jiraService);
+
+        // oh dear, one sample ended up getting reworked.
+        postSomethingFunToJira(jiraTicketForRework,reworkVessels,project);
+        
+        assertEquals(2,plan.getJiraTickets().size());
+        
+        assertTrue(plan.getJiraTickets().contains(jiraTicket));
+        assertTrue(plan.getJiraTickets().contains(jiraTicketForRework));
+
+    }
+    
+    private void postSomethingFunToJira(JiraTicket jiraTicket,
+                                        Collection<LabVessel> vessels,
+                                        Project project) {
         StringBuilder projectJiraMessage = new StringBuilder(jiraTicket.getTicketName() + " has been created for the following samples:\n");
-        for (LabVessel vessel : allStarters) {
+        for (LabVessel vessel : vessels) {
             for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
                 StartingSample startingSample = sampleInstance.getStartingSample();
+                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+                    projectPlan.addJiraTicket(jiraTicket);
+                }
                 String sampleURL = "[" + startingSample.getSampleName() + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + startingSample.getSampleName() + "]";
                 projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n").append("** Paid for by ").append(sampleInstance.getSingleProjectPlan().getQuote().getQuoteFunding().getFundingLevel().getFunding().getGrantDescription()).append("\n");
             }
         }
-        
         project.addJiraComment(projectJiraMessage.toString());
     }
     
@@ -331,7 +358,7 @@ public class ProjectTest {
      * @param jiraService
      * @return
      */
-    private CreateIssueResponse labStaffStartsWork(Collection<LabVessel> vessels,
+    private JiraTicket labStaffStartsWork(Collection<LabVessel> vessels,
                                     WorkflowDescription workflowDescription,
                                     LabWorkQueue<LcSetParameters> labWorkQueue,
                                     LcSetParameters lcSetParameters,
@@ -343,7 +370,11 @@ public class ProjectTest {
                     workflowDescription,
                     tonyHawk);
         }
-        return createJiraTicket(vessels,workflowDescription,lcSetParameters,jiraService);
+        CreateIssueResponse jiraResponse = createJiraTicket(vessels,workflowDescription,lcSetParameters,jiraService);
+
+        JiraTicket ticket = new JiraTicket(jiraService,jiraResponse.getTicketName(),jiraResponse.getId());
+
+        return ticket;
     }
     
     private CreateIssueResponse createJiraTicket(Collection<LabVessel> vessels,

@@ -57,4 +57,24 @@ public class JiraTicket {
             throw new RuntimeException("Could not log message '" + text + "' to jira ticket " + ticketName + ".  Is the jira server okay?",e);
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        JiraTicket that = (JiraTicket) o;
+
+        if (ticketId != null ? !ticketId.equals(that.ticketId) : that.ticketId != null) return false;
+        if (ticketName != null ? !ticketName.equals(that.ticketName) : that.ticketName != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = ticketName != null ? ticketName.hashCode() : 0;
+        result = 31 * result + (ticketId != null ? ticketId.hashCode() : 0);
+        return result;
+    }
 }
