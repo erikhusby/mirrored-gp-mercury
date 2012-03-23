@@ -177,7 +177,7 @@ public class ProjectTest {
             for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
                 StartingSample startingSample = sampleInstance.getStartingSample();
                 String sampleURL = "[" + startingSample.getSampleName() + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + startingSample.getSampleName() + "]";
-                projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n");
+                projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n").append("** Paid for by ").append(sampleInstance.getSingleProjectPlan().getQuote().getQuoteFunding().getFundingLevel().getFunding().getGrantDescription()).append("\n");
             }
         }
         
@@ -224,7 +224,7 @@ public class ProjectTest {
         billableEvents.put(LabEventName.SAGE_UNLOADED,priceItem);
         WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6",billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         ProjectPlan plan = new ProjectPlan(project,project.getProjectName() + " Plan",workflow);
-        
+        plan.setQuote(new Quote("DNA23",new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
         
         return plan;
     }

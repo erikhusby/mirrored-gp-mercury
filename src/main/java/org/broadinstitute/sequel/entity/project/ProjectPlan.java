@@ -81,6 +81,10 @@ public class ProjectPlan {
         return quote;
     }
     
+    public void setQuote(Quote quote) {
+        this.quote = quote;
+    }
+    
     public void addStarter(LabVessel vessel) {
         if (vessel == null) {
             throw new NullPointerException("vessel cannot be null.");
