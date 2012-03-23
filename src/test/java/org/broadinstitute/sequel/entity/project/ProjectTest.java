@@ -262,7 +262,25 @@ public class ProjectTest {
 
     /**
      * Lab user says "I'm going to start work on these tubes".
-     * The parameters are the same for each tube.
+     * The parameters are the same for each tube because the
+     * "batch" that the user is starting consists of samples
+     * that are all undergoing the same process, at least
+     * for this lab user's portion of the process.
+     *
+     * This implies that the jira ticket that is created for this
+     * portion of the process exists only for this portion
+     * of the process.  Put another way, if there is a lab group
+     * that does preflight, perhaps we have a preflight ticket
+     * for each rack that they work on.  Perhaps after three preflight
+     * tickets are done, the samples are batched together
+     * for another team, which creates a ticket for a different
+     * batch.
+     *
+     * Or perhaps the same batch exists all the way from BSP
+     * aliquoting through sequencing.  If the lab uses a single
+     * batch/ticket all the way through, then a {@link LabWorkQueue}
+     * could just require an existing ticket instead of creating
+     * a new one on the fly.
      * @param vessels
      * @param workflowDescription
      * @param labWorkQueue
