@@ -156,7 +156,9 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
         for (SampleInstance sampleInstance : getSampleInstances()) {
             if (sampleInstance.getAllProjectPlans() != null) {
                 for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-                    allProjects.add(projectPlan.getProject());
+                    if (projectPlan != null) {
+                        allProjects.add(projectPlan.getProject());
+                    }
                 }
             }
         }
