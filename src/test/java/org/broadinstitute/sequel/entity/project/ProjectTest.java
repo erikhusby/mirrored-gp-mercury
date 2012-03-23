@@ -3,6 +3,8 @@ package org.broadinstitute.sequel.entity.project;
 import com.gargoylesoftware.htmlunit.CollectingAlertHandler;
 import org.broadinstitute.sequel.TestUtilities;
 import org.broadinstitute.sequel.WeldUtil;
+import org.broadinstitute.sequel.control.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.control.bsp.QABSPConnectionParameters;
 import org.broadinstitute.sequel.control.jira.DummyJiraService;
 import org.broadinstitute.sequel.control.jira.JiraService;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
@@ -54,6 +56,7 @@ public class ProjectTest {
     public void test_simple_project() {
         WeldUtil weld = TestUtilities.bootANewWeld();
         JiraService jiraService = weld.getFromContainer(JiraService.class);
+        BSPSampleDataFetcher bspFetcher = weld.getFromContainer(BSPSampleDataFetcher.class);
         AbstractProject project = projectManagerCreatesProject(jiraService);
         projectManagerAddsFundingSourceToProject(project,"NHGRI");
         ProjectPlan plan = projectManagerAddsProjectPlan(project);
@@ -65,25 +68,31 @@ public class ProjectTest {
         // maybe by running a stored search in BSP,
         // or maybe by dumping in a list of root
         // sample ids.
-        LabVessel starter = makeRootSample("000029103912",plan);
-        StartingSample startingSample = starter.getSampleInstances().iterator().next().getStartingSample();
-        projectManagerAddsStartersToPlan(starter,plan);
+        LabVessel starter1 = makeRootSample("SM-1P3WY",plan,bspFetcher);
+        LabVessel starter2 = makeRootSample("SM-1P3XN",plan,bspFetcher);
+        Collection<LabVessel> allStarters = new HashSet<LabVessel>();
 
-        assertFalse(project.getAllStarters() == null);
+        allStarters.add(starter1);
+        allStarters.add(starter2);
 
-        assertEquals(1,project.getAllStarters().size());
+        int numStartersExpected = 1;
+        for (LabVessel starter : allStarters) {
+            projectManagerAddsStartersToPlan(starter,plan);
 
-        for (LabVessel vessel : project.getAllStarters()) {
-            assertEquals(starter,vessel);
+            assertFalse(project.getAllStarters() == null);
+
+            assertEquals(numStartersExpected,project.getAllStarters().size());
+
+            assertTrue(project.getAllStarters().contains(starter));
+
+            assertFalse(plan.getStarters().isEmpty());
+            assertEquals(numStartersExpected,plan.getStarters().size());
+
+            assertTrue(plan.getStarters().contains(starter));
+
+            numStartersExpected++;
         }
-
-        assertFalse(plan.getStarters().isEmpty());
-        assertEquals(1,plan.getStarters().size());
-
-        for (LabVessel vessel : plan.getStarters()) {
-            assertEquals(starter,vessel);
-        }
-
+       
         assertFalse(plan.getReagentDesigns() == null);
         assertEquals(1,plan.getReagentDesigns().size());
 
@@ -98,12 +107,23 @@ public class ProjectTest {
             sampleInstances.addAll(vessel.getSampleInstances());
         }
 
-        assertEquals(1,sampleInstances.size());
+        assertEquals(2,sampleInstances.size());
 
-        for (SampleInstance sampleInstance : sampleInstances) {
-            assertEquals(startingSample,sampleInstance.getStartingSample());
-            assertEquals(project,sampleInstance.getSingleProjectPlan().getProject());
+        for (LabVessel starter : allStarters) {
+            boolean foundIt = false;
+            for (SampleInstance sampleInstance : sampleInstances) {
+                StartingSample startingSample = starter.getSampleInstances().iterator().next().getStartingSample();
+                if (startingSample.equals(sampleInstance.getStartingSample())) {
+                    if (starter.getSampleInstances().iterator().next().getSingleProjectPlan().equals(sampleInstance.getSingleProjectPlan())) {
+                        foundIt  = true;
+                    }
+                }
+            }
+            if (!foundIt) {
+                fail("Can't find starting sample or project plan relationship for " + starter.getLabCentricName());
+            }
         }
+        
 
         assertEquals(plan.getName(),project.getProjectName() + " Plan",plan.getName());
 
@@ -130,12 +150,15 @@ public class ProjectTest {
         assertTrue(lcWorkQueue.isEmpty());
 
         LcSetParameters lcSetParameters = new LcSetParameters();
-        Workflow workflowInstance = projectManagerEnquesLabWork(starter,plan,lcSetParameters,lcWorkQueue);
+        Workflow workflowInstance = null;
+        assertTrue(lcWorkQueue.isEmpty());
+        for (LabVessel starter : allStarters) {
+            workflowInstance = projectManagerEnquesLabWork(starter,plan,lcSetParameters,lcWorkQueue);
+        }
 
         assertFalse(lcWorkQueue.isEmpty());
 
-        Collection<LabVessel> allStarters = new HashSet<LabVessel>();
-        allStarters.add(starter);
+
 
         CreateIssueResponse jiraTicket = labStaffStartsWork(allStarters,
                 plan.getWorkflowDescription(),
@@ -149,10 +172,12 @@ public class ProjectTest {
 
         assertEquals("work has stated", workflowInstance.getState().getState());
         
-        StringBuilder projectJiraMessage = new StringBuilder(jiraTicket.getTicketName() + " has been created for the following samples:");
+        StringBuilder projectJiraMessage = new StringBuilder(jiraTicket.getTicketName() + " has been created for the following samples:\n");
         for (LabVessel vessel : allStarters) {
             for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
-                projectJiraMessage.append(sampleInstance.getStartingSample().getSampleName()).append(" ");
+                StartingSample startingSample = sampleInstance.getStartingSample();
+                String sampleURL = "[" + startingSample.getSampleName() + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + startingSample.getSampleName() + "]";
+                projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n");
             }
         }
         
@@ -216,9 +241,9 @@ public class ProjectTest {
                 projectPlan);
     }
     
-    private LabVessel makeRootSample(String sampleName,ProjectPlan projectPlan) {
+    private LabVessel makeRootSample(String sampleName,ProjectPlan projectPlan,BSPSampleDataFetcher bspFetcher) {
         SampleSheetImpl sampleSheet = new SampleSheetImpl();
-        StartingSample startingSample = new BSPSample("BSPRoot123",projectPlan,null);
+        StartingSample startingSample = new BSPSample(sampleName,projectPlan,bspFetcher);
         sampleSheet.addStartingSample(startingSample);
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose
@@ -261,8 +286,7 @@ public class ProjectTest {
        
         WorkflowEngine workflowEngine = labWorkQueue.getWorkflowEngine();
         Collection<Workflow> workflows = workflowEngine.getActiveWorkflows(starter,null);
-        assertTrue(workflows.isEmpty());
-        assertTrue(labWorkQueue.isEmpty());
+
 
         labWorkQueue.add(starter,queueParameters,projectPlan.getPlanDetails().iterator().next());
 
