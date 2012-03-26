@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.bsp;
+package org.broadinstitute.sequel.infrastructure.bsp;
 
 import javax.enterprise.inject.Default;
 

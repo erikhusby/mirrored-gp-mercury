@@ -1,8 +1,5 @@
-package org.broadinstitute.sequel.control.bsp;
+package org.broadinstitute.sequel.infrastructure.bsp;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.SessionScoped;
-import javax.inject.Named;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

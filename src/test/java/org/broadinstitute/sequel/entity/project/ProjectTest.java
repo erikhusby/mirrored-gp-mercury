@@ -1,11 +1,8 @@
 package org.broadinstitute.sequel.entity.project;
 
-import com.gargoylesoftware.htmlunit.CollectingAlertHandler;
 import org.broadinstitute.sequel.TestUtilities;
 import org.broadinstitute.sequel.WeldUtil;
-import org.broadinstitute.sequel.control.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.control.bsp.QABSPConnectionParameters;
-import org.broadinstitute.sequel.control.jira.DummyJiraService;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.control.jira.JiraService;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
@@ -29,7 +26,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
 
@@ -270,7 +266,7 @@ public class ProjectTest {
     
     private LabVessel makeRootSample(String sampleName,ProjectPlan projectPlan,BSPSampleDataFetcher bspFetcher) {
         SampleSheetImpl sampleSheet = new SampleSheetImpl();
-        StartingSample startingSample = new BSPSample(sampleName,projectPlan,bspFetcher);
+        StartingSample startingSample = new BSPSample(sampleName,projectPlan,bspFetcher.fetchFromBSP(sampleName));
         sampleSheet.addStartingSample(startingSample);
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose

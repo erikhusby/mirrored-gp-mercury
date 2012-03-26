@@ -1,8 +1,8 @@
 package org.broadinstitute.sequel;
 
 
-import org.broadinstitute.sequel.control.bsp.AliquotReceiver;
-import org.broadinstitute.sequel.control.bsp.MockBSPConnector;
+import org.broadinstitute.sequel.infrastructure.bsp.AliquotReceiver;
+import org.broadinstitute.sequel.infrastructure.bsp.MockBSPConnector;
 import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
 import org.broadinstitute.sequel.control.jira.DummyJiraService;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
@@ -27,7 +27,6 @@ import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.bsp;
+package org.broadinstitute.sequel.infrastructure.bsp;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -9,8 +9,6 @@ import java.util.Set;
 public class BSPSampleDataFetcher {
     
     @Inject BSPSampleSearchService service;
-    
-    private String patientId;
 
     public BSPSampleDataFetcher() {}
 
@@ -21,7 +19,7 @@ public class BSPSampleDataFetcher {
         this.service = service;
     }
 
-    public void fetchFieldsFromBSP(String sampleName) {
+    public BSPSampleDTO fetchFromBSP(String sampleName) {
         if (service == null) {
             throw new RuntimeException("No BSP service has been declared.");
         }
@@ -52,13 +50,12 @@ public class BSPSampleDataFetcher {
             if (patientIds.size() > 1) {
                 throw new RuntimeException("Multiple patient ids found for sample " + sampleName);
             }
-            patientId = patientIds.iterator().next();
+            String patientId = patientIds.iterator().next();
+
+            return new BSPSampleDTO(null,null,null,null,patientId,null);
         }
     }
     
-    public String getPatientId() {
-        return patientId;
-    }
-    
+
 
 }

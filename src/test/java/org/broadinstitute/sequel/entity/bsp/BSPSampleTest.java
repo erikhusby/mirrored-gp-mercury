@@ -1,10 +1,9 @@
 package org.broadinstitute.sequel.entity.bsp;
 
 import org.broadinstitute.sequel.WeldBooter;
-import org.broadinstitute.sequel.control.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.control.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -31,7 +30,7 @@ public class BSPSampleTest extends WeldBooter {
         String sampleName = "SM-12CO4";
         BSPSample bspSample = new BSPSample(sampleName,
                 null,
-                fetcher);
+                fetcher.fetchFromBSP(sampleName));
         String patientId = bspSample.getPatientId();
 
         Assert.assertNotNull(patientId);
@@ -51,7 +50,8 @@ public class BSPSampleTest extends WeldBooter {
         ).andReturn(patiendIds).atLeastOnce();
 
         EasyMock.replay(service);
-        BSPSample sample = new BSPSample("Sample1",null,new BSPSampleDataFetcher(service));
+        String sampleName = "Sample1";
+        BSPSample sample = new BSPSample(sampleName,null,new BSPSampleDataFetcher(service).fetchFromBSP(sampleName));
         Assert.assertEquals(patiendIds.iterator().next()[0],sample.getPatientId());
     }
 }

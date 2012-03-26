@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.bsp;
+package org.broadinstitute.sequel.infrastructure.bsp;
 
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;

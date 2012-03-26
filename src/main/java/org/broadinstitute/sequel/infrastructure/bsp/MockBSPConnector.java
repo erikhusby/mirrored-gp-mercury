@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.bsp;
+package org.broadinstitute.sequel.infrastructure.bsp;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
