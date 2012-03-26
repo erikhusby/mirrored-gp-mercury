@@ -190,6 +190,15 @@ public class ProjectTest {
         assertTrue(plan.getJiraTickets().contains(jiraTicket));
         assertTrue(plan.getJiraTickets().contains(jiraTicketForRework));
 
+        assertEquals(2,starter1.getJiraTickets().size());
+        assertEquals(1,starter2.getJiraTickets().size());
+        
+        assertTrue(starter1.getJiraTickets().contains(jiraTicket));
+        assertTrue(starter1.getJiraTickets().contains(jiraTicketForRework));
+        
+        assertTrue(starter2.getJiraTickets().contains(jiraTicket));
+        assertFalse(starter2.getJiraTickets().contains(jiraTicketForRework));
+
     }
     
     private void postSomethingFunToJira(JiraTicket jiraTicket,
@@ -373,6 +382,9 @@ public class ProjectTest {
         CreateIssueResponse jiraResponse = createJiraTicket(vessels,workflowDescription,lcSetParameters,jiraService);
 
         JiraTicket ticket = new JiraTicket(jiraService,jiraResponse.getTicketName(),jiraResponse.getId());
+        for (LabVessel vessel : vessels) {
+            vessel.addJiraTicket(ticket);
+        }
 
         return ticket;
     }
@@ -412,6 +424,7 @@ public class ProjectTest {
                     ticketTitle,
                     ticketDetails.toString());
             // todo use #lcSetParameters to add more details to the ticket
+
         }
         catch (IOException e) {
             throw new RuntimeException("Failed to create jira ticket",e);

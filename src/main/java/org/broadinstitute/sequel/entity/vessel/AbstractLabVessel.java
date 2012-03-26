@@ -23,6 +23,8 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
 
     private String label;
 
+    private final Collection<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
+    
     private final Collection<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
 
     /** SampleInstances in this vessel.  If null, follow {@link #sampleSheetAuthorities}*/
@@ -230,5 +232,17 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
         for (Project project : ticketsToNotify) {
             project.addJiraComment(message);
         }
+    }
+
+    @Override
+    public void addJiraTicket(JiraTicket jiraTicket) {
+        if (jiraTicket != null) {
+            ticketsCreated.add(jiraTicket);
+        }
+    }
+
+    @Override
+    public Collection<JiraTicket> getJiraTickets() {
+        return ticketsCreated;
     }
 }

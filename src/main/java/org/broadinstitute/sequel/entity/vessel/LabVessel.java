@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.vessel;
 
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.broadinstitute.sequel.entity.labevent.Failure;
@@ -269,5 +270,22 @@ public interface LabVessel  {
     public Collection<Reagent> getAppliedReagents();
     
     public void addNoteToProjects(String message);
+
+    /**
+     * When a {@link org.broadinstitute.sequel.entity.project.JiraTicket} is created for a 
+     * {@link org.broadinstitute.sequel.entity.vessel.LabVessel}, let's 
+     * remember that fact.  It'll be useful when someone wants
+     * to know all the lab work that was done for
+     * a {@link org.broadinstitute.sequel.entity.sample.StartingSample}.
+     * @param jiraTicket
+     */
+    public void addJiraTicket(JiraTicket jiraTicket);
+
+    /**
+     * Get all the {@link JiraTicket jira tickets} that were started
+     * with this {@link LabVessel}
+     * @return
+     */
+    public Collection<JiraTicket> getJiraTickets();
 
 }
