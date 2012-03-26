@@ -28,7 +28,11 @@ public class BSPSampleDataFetcher {
             sampleNames.add(sampleName);
             // todo query multiple attributes at once for better efficiency.
             // don't just copy paste this!
-            List<String[]> results = service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PARTICIPANT_ID);
+            List<String[]> results = service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PARTICIPANT_ID,
+                    BSPSampleSearchColumn.ROOT_SAMPLE,
+                    BSPSampleSearchColumn.STOCK_SAMPLE,
+                    BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
+                    BSPSampleSearchColumn.COLLECTION);
 
             if (results == null) {
                 throw new RuntimeException("Sample " + sampleName + " not found in BSP");
@@ -36,23 +40,19 @@ public class BSPSampleDataFetcher {
             if (results.isEmpty()) {
                 throw new RuntimeException("Sample " + sampleName + " not found in BSP");
             }
-            Set<String> patientIds = new HashSet<String>();
-            for (String[] result : results) {
-                if (result == null) {
-                    throw new RuntimeException("No patient id for sample " + sampleName);
-                }
-                if (result.length < 1) {
-                    throw new RuntimeException("No patient id for sample " + sampleName);
-                }
-                patientIds.add(result[0]);
+            if (results.size() > 1) {
+                throw new RuntimeException(results.size() + " sample results from BSP.  We were expecting just one.");
             }
+            
+            String[] columns = results.iterator().next();
+            String patientId = columns[0];
+            String rootSample = columns[1];
+            String stockSample = columns[2];
+            String collaboratorSampleId = columns[3];
+            String collection = columns[4];
 
-            if (patientIds.size() > 1) {
-                throw new RuntimeException("Multiple patient ids found for sample " + sampleName);
-            }
-            String patientId = patientIds.iterator().next();
 
-            return new BSPSampleDTO(null,null,null,null,patientId,null);
+            return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,null,collaboratorSampleId,collection);
         }
     }
     

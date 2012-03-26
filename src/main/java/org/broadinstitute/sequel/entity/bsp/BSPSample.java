@@ -31,10 +31,7 @@ public class BSPSample implements StartingSample {
 
     private BSPSampleDTO bspDTO;
 
-    public BSPSample() {
-
-    }
-
+    public BSPSample() {}
     /**
      * Is there a distinction in BSP between
      * the name of the sample and the container
@@ -52,14 +49,6 @@ public class BSPSample implements StartingSample {
                      ProjectPlan plan) {
         this.sampleName = sampleName;
         this.projectPlan = plan;
-    }
-
-
-    public void setSampleName(String sampleName) {
-        if (sampleName == null) {
-            throw new NullPointerException("sampleName cannot be null.");
-        }
-        this.sampleName = sampleName;
     }
 
     @Override
