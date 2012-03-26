@@ -136,6 +136,7 @@ public class ProjectTest {
 
         assertEquals(30,((XFoldCoverage)sequencingDetail.getCoverageGoal()).getCoverageDepth());
 
+
         Collection<Quote> quotes = project.getAvailableQuotes();
 
         assertEquals(2,quotes.size());
@@ -421,7 +422,12 @@ public class ProjectTest {
     private void projectManagerAddsFundingSourceToProject(AbstractProject project,
                                                           String grantName) {
         project.addGrant(grantName);
-        project.setQuotesCache(buildQuotesCache());
+        QuotesCache quotesCache = buildQuotesCache();
+        for (org.broadinstitute.sequel.infrastructure.quote.Quote quoteDTO: quotesCache.getQuotes()) {
+            if (grantName.equalsIgnoreCase(quoteDTO.getQuoteFunding().getFundingLevel().getFunding().getGrantDescription())) {
+                project.addAvailableQuote(new Quote(quoteDTO.getAlphanumericId(),quoteDTO));
+            }
+        }
     }
 
     

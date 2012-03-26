@@ -37,6 +37,8 @@ public abstract class AbstractProject implements Project, UserRemarkable {
     private Collection<String> grants = new HashSet<String>();
     
     private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
+    
+    private Collection<Quote> availableQuotes = new HashSet<Quote>();
 
     public void setQuotesCache(QuotesCache cache) {
         this.quotesCache = cache;
@@ -65,6 +67,9 @@ public abstract class AbstractProject implements Project, UserRemarkable {
         throw new RuntimeException("I haven't been written yet.");
     }
 
+    public void addAvailableQuote(Quote quote) {
+        this.availableQuotes.add(quote);
+    }
     
 
     @Override
@@ -104,7 +109,7 @@ public abstract class AbstractProject implements Project, UserRemarkable {
 
     @Override
     public Collection<Quote> getAvailableQuotes() {
-        throw new RuntimeException("I haven't been written yet.");
+        return availableQuotes;
     }
 
     @Override
