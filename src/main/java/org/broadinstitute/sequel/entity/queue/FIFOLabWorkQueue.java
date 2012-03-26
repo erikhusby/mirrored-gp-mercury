@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.queue;
 
 
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.workflow.Workflow;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.person.Person;
@@ -9,13 +10,19 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.workflow.WorkflowState;
+import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
  * Add things in and they come out in fifo
  * order.  Probably most queues in the lab
- * will work this way initially.
+ * will work this way initially.  This queue
+ * automatically creates a {@link JiraTicket}
+ * for every batch of {@link LabVessel}s 
+ * when {@link #startWork(java.util.Collection, LabWorkQueueParameters, org.broadinstitute.sequel.entity.project.WorkflowDescription, org.broadinstitute.sequel.entity.person.Person)} is called.
  */
 public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullAccessLabWorkQueue<T> {
 
@@ -26,8 +33,11 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
     
     private WorkflowEngine workflowEngine;
     
+    private JiraService jiraService;
+    
     public FIFOLabWorkQueue(LabWorkQueueName name,
-                            WorkflowEngine workflowEngine) {
+                            WorkflowEngine workflowEngine,
+                            JiraService jiraService) {
         if (name == null) {
              throw new NullPointerException("name cannot be null.");
         }
@@ -36,10 +46,70 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         }
         this.name = name;
         this.workflowEngine = workflowEngine;
+        this.jiraService = jiraService;
     }
 
+
     @Override
-    public LabWorkQueueResponse startWork(LabVessel vessel, 
+    public JiraLabWorkQueueResponse startWork(Collection<LabVessel> vessels, T workflowParameters, WorkflowDescription workflow, Person user) {
+        for (LabVessel vessel : vessels) {
+            startWork(vessel,workflowParameters,workflow,user);
+        }
+
+        CreateIssueResponse jiraResponse = createJiraTicket(vessels,workflow,workflowParameters,jiraService);
+
+        JiraTicket ticket = new JiraTicket(jiraService,jiraResponse.getTicketName(),jiraResponse.getId());
+        for (LabVessel vessel : vessels) {
+            vessel.addJiraTicket(ticket);
+        }
+        
+        return new JiraLabWorkQueueResponse("OK",ticket);
+    }
+
+    private CreateIssueResponse createJiraTicket(Collection<LabVessel> vessels,
+                                                 WorkflowDescription workflowDescription,
+                                                 T parameters,
+                                                 JiraService jiraService) {
+        Collection<Project> allProjects = new HashSet<Project>();
+        for (LabVessel vessel : vessels) {
+            for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
+                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+                    allProjects.add(projectPlan.getProject());
+                }
+            }
+        }
+
+        String ticketTitle = null;
+        StringBuilder ticketDetails = new StringBuilder();
+        if (allProjects.size() == 1) {
+            Project singleProject = allProjects.iterator().next();
+            ticketTitle = "Work for " + singleProject.getProjectName();
+            ticketDetails.append(singleProject.getProjectName());
+        }
+        else {
+            ticketTitle = "Work for " + allProjects.size() + " projects";
+            for (Project project : allProjects) {
+                ticketDetails.append(project.getProjectName()).append(" ");
+            }
+        }
+
+        CreateIssueResponse jiraTicketCreationResponse =  null;
+
+        try {
+            jiraTicketCreationResponse = jiraService.createIssue(workflowDescription.getJiraProjectPrefix(),
+                    workflowDescription.getJiraIssueType(),
+                    ticketTitle,
+                    ticketDetails.toString());
+            // todo use #lcSetParameters to add more details to the ticket
+
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed to create jira ticket",e);
+        }
+        return jiraTicketCreationResponse;
+    }
+
+    public void startWork(LabVessel vessel, 
                                           T workflowParameters, 
                                           WorkflowDescription workflow,
                                           Person user) {
@@ -78,11 +148,8 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
                 break;
             }
         }
-        if (foundIt) {
-            return new StandardLabWorkQueueResponse("OK");
-        }
-        else {
-            return new StandardLabWorkQueueResponse(vessel.getLabel() + " has not been queued for work.  Proceed at your own risk");
+        if (!foundIt) {
+            // todo log this somewhere
         }
     }
     
