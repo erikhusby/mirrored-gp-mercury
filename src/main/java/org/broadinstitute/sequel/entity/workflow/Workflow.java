@@ -1,10 +1,6 @@
 package org.broadinstitute.sequel.entity.workflow;
 
-import org.broadinstitute.sequel.control.quote.PriceItem;
-import org.broadinstitute.sequel.control.quote.Quote;
-import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueueParameters;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;

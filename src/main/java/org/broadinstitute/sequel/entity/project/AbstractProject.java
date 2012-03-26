@@ -1,10 +1,9 @@
 package org.broadinstitute.sequel.entity.project;
 
 
-import org.broadinstitute.sequel.control.quote.Quote;
-import org.broadinstitute.sequel.control.quote.QuotesCache;
+import org.broadinstitute.sequel.entity.billing.Quote;
+import org.broadinstitute.sequel.infrastructure.quote.QuotesCache;
 import org.broadinstitute.sequel.entity.analysis.SequenceAnalysisInstructions;
-import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.Stalker;
 import org.broadinstitute.sequel.entity.notice.UserRemarkable;
@@ -105,14 +104,7 @@ public abstract class AbstractProject implements Project, UserRemarkable {
 
     @Override
     public Collection<Quote> getAvailableQuotes() {
-        Set<Quote> quotes = new HashSet<Quote>();
-        if (quotesCache == null) {
-            throw new RuntimeException("Cached quote server data is not available");
-        }
-        for (String grant : grants) {
-            quotes.addAll(quotesCache.getQuotesForGrantDescription(grant));
-        }
-        return quotes;
+        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

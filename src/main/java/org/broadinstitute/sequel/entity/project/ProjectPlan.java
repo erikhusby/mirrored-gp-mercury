@@ -1,10 +1,8 @@
 package org.broadinstitute.sequel.entity.project;
 
-import org.broadinstitute.sequel.control.quote.Quote;
+import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
-import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.hibernate.loader.collection.CollectionInitializer;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -81,8 +79,8 @@ public class ProjectPlan {
         return poolGroups;
     }
     
-    public Quote getQuote() {
-        return quote;
+    public org.broadinstitute.sequel.infrastructure.quote.Quote getQuoteDTO() {
+        return quote.getQuote();
     }
     
     public void setQuote(Quote quote) {

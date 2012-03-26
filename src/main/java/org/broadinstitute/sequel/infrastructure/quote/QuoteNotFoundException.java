@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.quote;
+package org.broadinstitute.sequel.infrastructure.quote;
 
 public class QuoteNotFoundException extends Exception {
 

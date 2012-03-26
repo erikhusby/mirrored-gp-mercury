@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.quote;
+package org.broadinstitute.sequel.infrastructure.quote;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;

@@ -7,7 +7,7 @@ import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
 import org.broadinstitute.sequel.control.jira.DummyJiraService;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
-import org.broadinstitute.sequel.control.quote.PriceItem;
+import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
@@ -69,7 +69,7 @@ public class EndToEndTest  {
         String aliquot2Label = "aliquot2";
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
 
-        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
+        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars", PriceItem.GSP_PLATFORM_NAME);
         billableEvents.put(LabEventName.ADAPTOR_LIGATION,priceItem);
         final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
                 "7.0",

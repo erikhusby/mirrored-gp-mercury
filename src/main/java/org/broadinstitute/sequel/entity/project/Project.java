@@ -1,14 +1,13 @@
 package org.broadinstitute.sequel.entity.project;
 
 
-import org.broadinstitute.sequel.control.quote.Quote;
+import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.run.SequenceAccessControlModel;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.analysis.SequenceAnalysisInstructions;
-import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.Stalker;
 import org.broadinstitute.sequel.entity.run.CapacityDimension;

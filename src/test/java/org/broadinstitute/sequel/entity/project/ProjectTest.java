@@ -6,7 +6,6 @@ import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.control.jira.JiraService;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.control.quote.*;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.person.Person;
@@ -20,6 +19,8 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.workflow.Workflow;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
+import org.broadinstitute.sequel.entity.billing.Quote;
+import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -201,7 +202,7 @@ public class ProjectTest {
                     projectPlan.addJiraTicket(jiraTicket);
                 }
                 String sampleURL = "[" + startingSample.getSampleName() + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + startingSample.getSampleName() + "]";
-                projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n").append("** Paid for by ").append(sampleInstance.getSingleProjectPlan().getQuote().getQuoteFunding().getFundingLevel().getFunding().getGrantDescription()).append("\n");
+                projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n").append("** Paid for by ").append(sampleInstance.getSingleProjectPlan().getQuoteDTO().getQuoteFunding().getFundingLevel().getFunding().getGrantDescription()).append("\n");
             }
         }
         project.addJiraComment(projectJiraMessage.toString());
@@ -247,7 +248,9 @@ public class ProjectTest {
         billableEvents.put(LabEventName.SAGE_UNLOADED,priceItem);
         WorkflowDescription workflow = new WorkflowDescription("HybridSelection","9.6",billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         ProjectPlan plan = new ProjectPlan(project,project.getProjectName() + " Plan",workflow);
-        plan.setQuote(new Quote("DNA23",new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
+        String quoteId = "DNA23";
+        plan.setQuote(new Quote(quoteId,
+                new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteId,new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))))));
         
         return plan;
     }
@@ -424,9 +427,9 @@ public class ProjectTest {
     
     private QuotesCache buildQuotesCache() {
         Quotes quotes = new Quotes();
-        quotes.addQuote(new Quote("GF128",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
-        quotes.addQuote(new Quote("GF129",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
-        quotes.addQuote(new Quote("GF130",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
+        quotes.addQuote(new org.broadinstitute.sequel.infrastructure.quote.Quote("GF128",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
+        quotes.addQuote(new  org.broadinstitute.sequel.infrastructure.quote.Quote("GF129",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
+        quotes.addQuote(new  org.broadinstitute.sequel.infrastructure.quote.Quote("GF130",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
         return new QuotesCache(quotes);
     }
 }

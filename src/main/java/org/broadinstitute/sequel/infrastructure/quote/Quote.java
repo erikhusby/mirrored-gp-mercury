@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.quote;
+package org.broadinstitute.sequel.infrastructure.quote;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
