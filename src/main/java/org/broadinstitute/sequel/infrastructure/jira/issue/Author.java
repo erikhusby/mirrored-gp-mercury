@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.jira.issue;
+package org.broadinstitute.sequel.infrastructure.jira.issue;
 
 import java.io.Serializable;
 import java.util.Map;

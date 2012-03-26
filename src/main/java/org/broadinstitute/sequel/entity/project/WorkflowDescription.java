@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 

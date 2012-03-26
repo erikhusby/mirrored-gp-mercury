@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.jira;
+package org.broadinstitute.sequel.infrastructure.jira;
 
 
 import javax.enterprise.inject.Default;

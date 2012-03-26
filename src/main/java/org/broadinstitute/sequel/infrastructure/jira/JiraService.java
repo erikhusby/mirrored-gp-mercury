@@ -1,9 +1,9 @@
-package org.broadinstitute.sequel.control.jira;
+package org.broadinstitute.sequel.infrastructure.jira;
 
 
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.control.jira.issue.Visibility;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 
 import java.io.IOException;
 

@@ -1,7 +1,7 @@
-package org.broadinstitute.sequel.control.jira.issue;
+package org.broadinstitute.sequel.infrastructure.jira.issue;
 
 
-import org.broadinstitute.sequel.control.jira.JsonUnderscoreToBlankEnumSerializer;
+import org.broadinstitute.sequel.infrastructure.jira.JsonUnderscoreToBlankEnumSerializer;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.io.Serializable;

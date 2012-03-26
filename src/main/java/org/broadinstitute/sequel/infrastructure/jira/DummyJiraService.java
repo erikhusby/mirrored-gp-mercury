@@ -1,10 +1,10 @@
-package org.broadinstitute.sequel.control.jira;
+package org.broadinstitute.sequel.infrastructure.jira;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.control.jira.issue.Visibility;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Dummy implementation that writes calls
  * to {@link #addComment(String, String)}  and
- * {@link #addComment(String, String, org.broadinstitute.sequel.control.jira.issue.Visibility.Type, org.broadinstitute.sequel.control.jira.issue.Visibility.Value)}
+ * {@link #addComment(String, String, org.broadinstitute.sequel.infrastructure.jira.issue.Visibility.Type, org.broadinstitute.sequel.infrastructure.jira.issue.Visibility.Value)}
  * to a logger.  {@link #createIssue(String, String, String, String)}  throws an exception.
  */
 @Alternative

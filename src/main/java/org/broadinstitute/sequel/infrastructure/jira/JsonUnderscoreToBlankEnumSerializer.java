@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.jira;
+package org.broadinstitute.sequel.infrastructure.jira;
 
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonProcessingException;

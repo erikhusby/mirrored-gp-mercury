@@ -1,7 +1,7 @@
-package org.broadinstitute.sequel.control.jira.issue.comment;
+package org.broadinstitute.sequel.infrastructure.jira.issue.comment;
 
 
-import org.broadinstitute.sequel.control.jira.issue.Visibility;
+import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 
 import java.io.Serializable;
 

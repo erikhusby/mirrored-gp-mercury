@@ -2,8 +2,8 @@ package org.broadinstitute.sequel;
 
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
-import org.broadinstitute.sequel.control.jira.DummyJiraService;
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;

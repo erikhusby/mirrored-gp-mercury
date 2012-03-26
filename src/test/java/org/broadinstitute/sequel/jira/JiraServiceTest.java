@@ -2,10 +2,10 @@ package org.broadinstitute.sequel.jira;
 
 
 import org.broadinstitute.sequel.WeldBooter;
-import org.broadinstitute.sequel.control.jira.JiraService;
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.control.jira.issue.Visibility;
+import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;

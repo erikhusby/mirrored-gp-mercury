@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.control.jira;
+package org.broadinstitute.sequel.infrastructure.jira;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.GenericType;
@@ -7,11 +7,11 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.AbstractJsonJerseyClientService;
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.control.jira.issue.Visibility;
-import org.broadinstitute.sequel.control.jira.issue.comment.AddCommentRequest;
-import org.broadinstitute.sequel.control.jira.issue.comment.AddCommentResponse;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
+import org.broadinstitute.sequel.infrastructure.jira.issue.comment.AddCommentRequest;
+import org.broadinstitute.sequel.infrastructure.jira.issue.comment.AddCommentResponse;
 
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
