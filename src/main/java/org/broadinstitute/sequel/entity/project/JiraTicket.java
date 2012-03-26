@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.entity.project;
 
-import org.broadinstitute.sequel.control.jira.JiraService;
 
+import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import javax.inject.Inject;
 import java.io.IOException;
 
@@ -14,8 +14,7 @@ public class JiraTicket {
     private String ticketName;
     
     private String ticketId;
-    
-    @Inject
+
     JiraService jiraService;
 
     public JiraTicket() {}

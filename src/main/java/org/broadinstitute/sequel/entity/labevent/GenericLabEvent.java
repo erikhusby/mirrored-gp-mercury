@@ -1,15 +1,13 @@
 package org.broadinstitute.sequel.entity.labevent;
 
-import org.broadinstitute.sequel.control.quote.PriceItem;
-import org.broadinstitute.sequel.control.quote.Quote;
+import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
+import org.broadinstitute.sequel.infrastructure.quote.Quote;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.workflow.Workflow;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
 import java.util.Collection;
@@ -44,10 +42,13 @@ public class GenericLabEvent extends AbstractLabEvent {
                     }
                     ProjectPlan projectPlan = projectPlans.iterator().next();
                     PriceItem priceItem = projectPlan.getWorkflowDescription().getPriceItem(getEventName());
-                    Quote quote = projectPlan.getQuote();
+                    Quote quote = projectPlan.getQuoteDTO();
                     /** do we use true sample (aliquot) here, or {@link org.broadinstitute.sequel.entity.project.SampleAnalysisBuddies}? */
 
                     if (PriceItem.SAMPLE_UNITS.equalsIgnoreCase(priceItem.getUnits())) {
+                        // todo this is a transaction problem.  instead send a CDI event
+                        // out here and when the sequel transaction completes,
+                        // have the event processor post the changes to quote server
                         quote.registerWork(priceItem,1.0,null,null,null);
                     }
                     else {

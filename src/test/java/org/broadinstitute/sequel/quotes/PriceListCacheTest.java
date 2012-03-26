@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.quotes;
 
-import org.broadinstitute.sequel.control.bsp.QABSPConnectionParameters;
-import org.broadinstitute.sequel.control.quote.*;
+import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

@@ -1,13 +1,13 @@
 package org.broadinstitute.sequel;
 
 
-import org.broadinstitute.sequel.control.bsp.AliquotReceiver;
-import org.broadinstitute.sequel.control.bsp.MockBSPConnector;
+import org.broadinstitute.sequel.infrastructure.bsp.AliquotReceiver;
+import org.broadinstitute.sequel.infrastructure.bsp.MockBSPConnector;
 import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
-import org.broadinstitute.sequel.control.jira.DummyJiraService;
-import org.broadinstitute.sequel.control.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
-import org.broadinstitute.sequel.control.quote.PriceItem;
+import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
@@ -27,7 +27,6 @@ import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -70,7 +69,7 @@ public class EndToEndTest  {
         String aliquot2Label = "aliquot2";
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
 
-        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
+        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars", PriceItem.GSP_PLATFORM_NAME);
         billableEvents.put(LabEventName.ADAPTOR_LIGATION,priceItem);
         final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
                 "7.0",

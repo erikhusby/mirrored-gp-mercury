@@ -2,17 +2,13 @@ package org.broadinstitute.sequel.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.sequel.TestUtilities;
 import org.broadinstitute.sequel.WeldBooter;
-import org.broadinstitute.sequel.control.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.sequel.control.bsp.BSPSampleSearchService;
-import org.jboss.weld.environment.se.Weld;
-import org.jboss.weld.environment.se.WeldContainer;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;

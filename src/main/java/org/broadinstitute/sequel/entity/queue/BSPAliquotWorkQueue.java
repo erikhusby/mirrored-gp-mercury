@@ -5,7 +5,7 @@ import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
-import org.broadinstitute.sequel.control.bsp.BSPConnector;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPConnector;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
