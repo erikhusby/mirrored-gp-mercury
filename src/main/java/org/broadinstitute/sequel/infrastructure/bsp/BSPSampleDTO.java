@@ -16,6 +16,10 @@ public class BSPSampleDTO {
     
     private final String collection;
     
+    private final String volume;
+    
+    private final String concentration;
+    
     public BSPSampleDTO(String containerId,
                         String stockSample,
                         String rootSample,
@@ -23,13 +27,27 @@ public class BSPSampleDTO {
                         String patientId,
                         String organism,
                         String collaboratorsSampleName,
-                        String collection) {
+                        String collection,
+                        String volume,
+                        String concentration) {
         this.stockSample = stockSample;
         this.rootSample = rootSample;
         this.patientId = patientId;
         this.collaboratorsSampleName = collaboratorsSampleName;
         this.collection = collection;
+        this.volume = volume;
+        this.concentration = concentration;
         
+    }
+   
+    public String getVolume() {
+        // todo strongly type, figure out units
+        return volume;
+    }
+    
+    public String getConcentration() {
+        // todo strongly type, figure out units
+        return concentration;
     }
     
     public String getRootSample() {

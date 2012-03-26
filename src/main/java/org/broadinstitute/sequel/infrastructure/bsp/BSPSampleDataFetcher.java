@@ -32,7 +32,9 @@ public class BSPSampleDataFetcher {
                     BSPSampleSearchColumn.ROOT_SAMPLE,
                     BSPSampleSearchColumn.STOCK_SAMPLE,
                     BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
-                    BSPSampleSearchColumn.COLLECTION);
+                    BSPSampleSearchColumn.COLLECTION,
+                    BSPSampleSearchColumn.VOLUME,
+                    BSPSampleSearchColumn.CONCENTRATION);
 
             if (results == null) {
                 throw new RuntimeException("Sample " + sampleName + " not found in BSP");
@@ -50,9 +52,11 @@ public class BSPSampleDataFetcher {
             String stockSample = columns[2];
             String collaboratorSampleId = columns[3];
             String collection = columns[4];
+            String volume = columns[5];
+            String concentration = columns[6];
 
 
-            return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,null,collaboratorSampleId,collection);
+            return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,null,collaboratorSampleId,collection,volume,concentration);
         }
     }
     
