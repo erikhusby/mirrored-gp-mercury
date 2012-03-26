@@ -44,6 +44,10 @@ public class BSPSample implements StartingSample {
      * this service whenever we fetch one of these from
      * the database or new one up.
      */
+    // todo move out to infrastructure, along with
+    // service.  have service return a single bean
+    // that contains all the necessary fields, and
+    // pass in the bean or grab it in @PostLoad
     BSPSampleDataFetcher dataFetcher;
 
     private boolean hasFetched;

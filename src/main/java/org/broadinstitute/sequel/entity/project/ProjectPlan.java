@@ -130,6 +130,8 @@ public class ProjectPlan {
     }
     
     public void addJiraTicket(JiraTicket jiraTicket) {
+        // should this also link this ticket to
+        // the project's ticket?
         jiraTickets.add(jiraTicket);
     }
 

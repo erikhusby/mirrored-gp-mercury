@@ -48,6 +48,9 @@ public class GenericLabEvent extends AbstractLabEvent {
                     /** do we use true sample (aliquot) here, or {@link org.broadinstitute.sequel.entity.project.SampleAnalysisBuddies}? */
 
                     if (PriceItem.SAMPLE_UNITS.equalsIgnoreCase(priceItem.getUnits())) {
+                        // todo this is a transaction problem.  instead send a CDI event
+                        // out here and when the sequel transaction completes,
+                        // have the event processor post the changes to quote server
                         quote.registerWork(priceItem,1.0,null,null,null);
                     }
                     else {
