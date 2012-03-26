@@ -51,6 +51,12 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
 
 
     @Override
+    /**
+     * Starts work for all the vessels, and creates a
+     * new {@link JiraTicket} for the batch.  The details
+     * of the {@link JiraTicket} are controlled at least in
+     * part by {@link T the parameters for the queue}.
+     */
     public JiraLabWorkQueueResponse startWork(Collection<LabVessel> vessels, T workflowParameters, WorkflowDescription workflow, Person user) {
         for (LabVessel vessel : vessels) {
             startWork(vessel,workflowParameters,workflow,user);
