@@ -22,6 +22,7 @@ import java.util.HashSet;
  * what, you ask, do we do to ensure that we track this "rework"
  * as a separate entity?  Answer: look at the {@link JiraTicket} that
  * was created when the lab work was started.
+ *
  */
 public class ProjectPlan {
 
