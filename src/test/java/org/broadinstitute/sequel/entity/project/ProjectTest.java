@@ -266,7 +266,7 @@ public class ProjectTest {
     
     private LabVessel makeRootSample(String sampleName,ProjectPlan projectPlan,BSPSampleDataFetcher bspFetcher) {
         SampleSheetImpl sampleSheet = new SampleSheetImpl();
-        StartingSample startingSample = new BSPSample(sampleName,projectPlan,bspFetcher.fetchFromBSP(sampleName));
+        StartingSample startingSample = new BSPSample(sampleName,projectPlan,bspFetcher.fetchSingleSampleFromBSP(sampleName));
         sampleSheet.addStartingSample(startingSample);
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose

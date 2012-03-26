@@ -59,6 +59,10 @@ public class BSPSample implements StartingSample {
         this.projectPlan = plan;
     }
 
+    public void setBspDTO(BSPSampleDTO dto) {
+        this.bspDTO = dto;
+    }
+
     @Override
     public void logNote(StatusNote note) {
         throw new RuntimeException("I haven't been written yet.");
@@ -104,6 +108,10 @@ public class BSPSample implements StartingSample {
 
     @Override
     @Transient
+    /**
+     * Gets the container id from the underlying
+     * BSP DTO.
+     */
     public String getContainerId() {
         return bspDTO.getContainerId();
     }
@@ -115,12 +123,20 @@ public class BSPSample implements StartingSample {
 
     @Override
     @Transient
+    /**
+     * Gets the patient id from the underlying
+     * BSP DTO.
+     */
     public String getPatientId() {
         return bspDTO.getPatientId();
     }
 
     @Override
     @Transient
+    /**
+     * Gets the organism name from the
+     * underlying BSP DTO.
+     */
     public String getOrganism() {
         return bspDTO.getOrganism();
     }

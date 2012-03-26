@@ -6,12 +6,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Wrapper around {@link BSPSampleSearchService} that
+ * does a bit more object-ifying and type-safety.
+ */
 public class BSPSampleDataFetcher {
     
     @Inject BSPSampleSearchService service;
 
     public BSPSampleDataFetcher() {}
 
+    /**
+     * New one up using the given service.
+     * @param service
+     */
     public BSPSampleDataFetcher(BSPSampleSearchService service) {
         if (service == null) {
              throw new NullPointerException("service cannot be null.");
@@ -19,8 +27,13 @@ public class BSPSampleDataFetcher {
         this.service = service;
     }
 
+    /**
+     * Fetch the data from BSP for the given sample.
+     * @param sampleName
+     * @return
+     */
     // todo expose bulk fetch
-    public BSPSampleDTO fetchFromBSP(String sampleName) {
+    public BSPSampleDTO fetchSingleSampleFromBSP(String sampleName) {
         if (service == null) {
             throw new RuntimeException("No BSP service has been declared.");
         }

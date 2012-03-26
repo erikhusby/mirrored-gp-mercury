@@ -30,7 +30,7 @@ public class BSPSampleTest extends WeldBooter {
         String sampleName = "SM-12CO4";
         BSPSample bspSample = new BSPSample(sampleName,
                 null,
-                fetcher.fetchFromBSP(sampleName));
+                fetcher.fetchSingleSampleFromBSP(sampleName));
         String patientId = bspSample.getPatientId();
 
         Assert.assertNotNull(patientId);
@@ -41,17 +41,25 @@ public class BSPSampleTest extends WeldBooter {
     
     @Test(groups = {DATABASE_FREE})
     public void test_patient_id_mock() {
-        List<String[]> patiendIds = new ArrayList<String[]>(1);
-        patiendIds.add(new String[] {"Bill the Cat"});
+        List<String[]> resultColumns = new ArrayList<String[]>(1);
+        resultColumns.add(new String[] {"Bill the Cat","2","3","4","5","6","7"});
         BSPSampleSearchService service = EasyMock.createMock(BSPSampleSearchService.class);
+        Collection<String> samplesNames = new ArrayList<String>();
+        String sampleName = "Sample1";
+        samplesNames.add(sampleName);
         EasyMock.expect(service.runSampleSearch(
                 (Collection<String>) EasyMock.anyObject(),
-                (BSPSampleSearchColumn) EasyMock.anyObject())
-        ).andReturn(patiendIds).atLeastOnce();
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject())
+        ).andReturn(resultColumns).atLeastOnce();
 
         EasyMock.replay(service);
-        String sampleName = "Sample1";
-        BSPSample sample = new BSPSample(sampleName,null,new BSPSampleDataFetcher(service).fetchFromBSP(sampleName));
-        Assert.assertEquals(patiendIds.iterator().next()[0],sample.getPatientId());
+        BSPSample sample = new BSPSample(sampleName,null,new BSPSampleDataFetcher(service).fetchSingleSampleFromBSP(sampleName));
+        Assert.assertEquals(resultColumns.iterator().next()[0],sample.getPatientId());
     }
 }
