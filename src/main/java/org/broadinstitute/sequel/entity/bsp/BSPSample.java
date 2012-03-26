@@ -14,6 +14,7 @@ import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateImpl;
 
 import javax.persistence.PostLoad;
+import javax.persistence.Transient;
 import java.util.Collection;
 
 /**
@@ -37,6 +38,13 @@ public class BSPSample implements StartingSample {
      * the name of the sample and the container
      * in which the sample resides?
      * @param sampleName
+     * @param  plan
+     * @param  bspDTO The DTO fetched from {@link BSPSampleDataFetcher}.
+     *                If you're creating lots of these objects, you should probably
+     *                do a bulk fetch of all the samples.  Or maybe you don't
+     *                want to fetch the BSP data at all unless the user
+     *                drills into it.  Either way, you have some decisions to make
+     *                about performance.
      */
     public BSPSample(String sampleName,
                      ProjectPlan plan,
@@ -86,7 +94,16 @@ public class BSPSample implements StartingSample {
         return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE, projectPlan, new MolecularStateImpl(), null);
     }
 
+    @Transient
+    /**
+     * Has the underlying BSP DTO been initialized?
+     */
+    public boolean hasBSPDTOBeenInitialized() {
+        return bspDTO != null;
+    }
+
     @Override
+    @Transient
     public String getContainerId() {
         return bspDTO.getContainerId();
     }
@@ -97,11 +114,13 @@ public class BSPSample implements StartingSample {
     }
 
     @Override
+    @Transient
     public String getPatientId() {
         return bspDTO.getPatientId();
     }
 
     @Override
+    @Transient
     public String getOrganism() {
         return bspDTO.getOrganism();
     }

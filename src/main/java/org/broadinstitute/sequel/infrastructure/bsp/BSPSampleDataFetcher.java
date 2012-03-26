@@ -19,6 +19,7 @@ public class BSPSampleDataFetcher {
         this.service = service;
     }
 
+    // todo expose bulk fetch
     public BSPSampleDTO fetchFromBSP(String sampleName) {
         if (service == null) {
             throw new RuntimeException("No BSP service has been declared.");
@@ -54,7 +55,6 @@ public class BSPSampleDataFetcher {
             String collection = columns[4];
             String volume = columns[5];
             String concentration = columns[6];
-
 
             return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,null,collaboratorSampleId,collection,volume,concentration);
         }

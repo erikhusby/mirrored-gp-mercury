@@ -1,10 +1,12 @@
 package org.broadinstitute.sequel.infrastructure.bsp;
 
+import java.io.Serializable;
+
 /**
  * A simple DTO for fetching commonly used 
  * data from BSP.
  */
-public class BSPSampleDTO {
+public class BSPSampleDTO implements Serializable {
 
     private final String patientId;
     
