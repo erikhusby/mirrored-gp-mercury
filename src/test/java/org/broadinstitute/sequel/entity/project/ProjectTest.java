@@ -23,6 +23,7 @@ import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.testng.annotations.Test;
 
+
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -46,6 +47,7 @@ public class ProjectTest {
         AbstractProject project = new BasicProject(ticket.getTicketName(),ticket);
         project.addJiraComment("Comment added via Project");
         assertTrue(response.getTicketName().startsWith(Project.JIRA_PROJECT_PREFIX));
+
         // todo how to verify the comment was added?
     }
     
@@ -313,6 +315,18 @@ public class ProjectTest {
         return labWorkQueue;
     }
 
+    /**
+     * The UI would have a {@link ProjectPlan} context.  The PM adds
+     * a starter to the plan and chooses the {@link LcSetParameters}
+     * work queue parameters exactly as they are currently expressed
+     * in Jira.  In other words, the "queueing" UI is a thin wrapper
+     * around Jira that adds SequeL project context.
+     * @param starter
+     * @param projectPlan
+     * @param queueParameters
+     * @param labWorkQueue
+     * @return
+     */
     private Workflow projectManagerEnquesLabWork(LabVessel starter,
                                              ProjectPlan projectPlan,
                                              LabWorkQueueParameters queueParameters,
