@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.entity.labevent.Failure;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.Stalker;
 import org.broadinstitute.sequel.entity.notice.UserRemarks;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
@@ -21,6 +22,8 @@ public abstract class AbstractLabVessel implements LabVessel {
 
     private String label;
 
+    private final Collection<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
+    
     private final Collection<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
 
     /** SampleInstances in this vessel.  If null, follow {@link #sampleSheetAuthorities}*/
@@ -155,6 +158,18 @@ public abstract class AbstractLabVessel implements LabVessel {
         for (Project project : ticketsToNotify) {
             project.addJiraComment(message);
         }
+    }
+
+    @Override
+    public void addJiraTicket(JiraTicket jiraTicket) {
+        if (jiraTicket != null) {
+            ticketsCreated.add(jiraTicket);
+        }
+    }
+
+    @Override
+    public Collection<JiraTicket> getJiraTickets() {
+        return ticketsCreated;
     }
 
     public UserRemarks getUserRemarks() {

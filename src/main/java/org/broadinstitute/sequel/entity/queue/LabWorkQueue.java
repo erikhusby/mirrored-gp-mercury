@@ -40,11 +40,11 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
     /**
      * Remove the tangible from the given bucket.
      *
-     * @param vessel
+     * @param vessels
      * @param workflowParameters
      * @return
      */
-    public LabWorkQueueResponse startWork(LabVessel vessel,
+    public LabWorkQueueResponse startWork(Collection<LabVessel> vessels,
                                           T workflowParameters,
                                           WorkflowDescription workflow,
                                           Person user);

@@ -73,7 +73,7 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
 
 
     @Override
-    public LabWorkQueueResponse startWork(LabVessel vessel, AliquotParameters workflowParameters, WorkflowDescription workflow, Person user) {
+    public LabWorkQueueResponse startWork(Collection<LabVessel> vessels, AliquotParameters workflowParameters, WorkflowDescription workflow, Person user) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
