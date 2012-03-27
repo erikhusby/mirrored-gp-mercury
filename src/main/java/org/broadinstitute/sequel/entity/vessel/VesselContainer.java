@@ -7,7 +7,7 @@ import java.util.Collection;
  */
 public interface VesselContainer<T extends LabVessel> {
     // todo jmt enum for positions
-    LabVessel getVesselAtPosition(String position);
+    T getVesselAtPosition(String position);
     /**
      * If this is a plate, this method could return
      * the {@link PlateWell wells}.  If this thing

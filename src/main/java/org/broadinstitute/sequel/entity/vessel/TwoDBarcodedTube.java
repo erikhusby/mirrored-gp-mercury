@@ -14,8 +14,10 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class TwoDBarcodedTube extends AbstractLabVessel {
@@ -23,6 +25,8 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
     private static Log gLog = LogFactory.getLog(TwoDBarcodedTube.class);
     
     private String twoDBarcode;
+
+    private List<RackOfTubes> racksOfTubes = new ArrayList<RackOfTubes>();
     
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
     
@@ -75,10 +79,12 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
         throw new RuntimeException("I haven't been written yet.");
     }
 
+/*
     @Override
     public Collection<Reagent> getReagentContents() {
         throw new RuntimeException("I haven't been written yet.");
     }
+*/
 
     @Override
     public void addReagent(Reagent reagent) {
@@ -141,11 +147,29 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
         return sheet.getSampleInstances(this);
     }
 
+    // rack.getSampleInstancesInPosition
+    //   if tube-level authority
+    //   if rack-level authority
+    //   for each other rack
+    //     rack.getSampleInstancesInPosition
+
+    // a sequence of ALL96 plate to ALL96 plate transfers can be compressed, because the wells can't move
+    // in a transfer to or from a rack, the tubes could change position
+    // working backwards:
+    // pooling transfer is a cherry pick, so authority has to be established tube to tube
+    // normalized catch registration is plate to rack, the source wells can't move
+    // hybridization is rack to plate, the tubes can move
     @Override
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        for (SampleSheet sampleSheet : getSampleSheets()) {
-            sampleInstances.addAll(sampleSheet.getSampleInstances(this));
+        if(getSampleSheets().isEmpty()) {
+            for (LabVessel labVessel : getSampleSheetAuthorities()) {
+                sampleInstances.addAll(labVessel.getSampleInstances());
+            }
+        } else {
+            for (SampleSheet sampleSheet : getSampleSheets()) {
+                sampleInstances.addAll(sampleSheet.getSampleInstances(this));
+            }
         }
         return sampleInstances;
     }
@@ -204,5 +228,13 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
     @Override
     public void applyTransfer(SectionTransfer sectionTransfer) {
         throw new RuntimeException("Method not yet implemented.");
+    }
+
+    public List<RackOfTubes> getRacksOfTubes() {
+        return this.racksOfTubes;
+    }
+
+    public void setRacksOfTubes(List<RackOfTubes> racksOfTubes) {
+        this.racksOfTubes = racksOfTubes;
     }
 }

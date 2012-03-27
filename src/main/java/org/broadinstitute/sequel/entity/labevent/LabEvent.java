@@ -160,7 +160,7 @@ public interface LabEvent {
      * {@link org.broadinstitute.sequel.entity.sample.SampleSheet}s
      *
      * Useful for sending out alerts about
-     * the event.  Otherwise clients have to interate
+     * the event.  Otherwise clients have to iterate
      * over containers and iterate over sample
      * sheets
      * @return

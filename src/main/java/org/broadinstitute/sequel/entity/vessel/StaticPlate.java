@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,7 +34,7 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
     }
 
     @Override
-    public LabVessel getVesselAtPosition(String position) {
+    public PlateWell getVesselAtPosition(String position) {
         return this.mapPositionToWell.get(position);
     }
 
@@ -56,6 +55,11 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
 
     @Override
     public SBSSection getSection() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void applyTransfer(SectionTransfer sectionTransfer) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -143,7 +147,7 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
                     RackOfTubes rackOfTubes = (RackOfTubes) labVessel;
                     Set<SampleInstance> sampleInstancesInPosition = rackOfTubes.getSampleInstancesInPosition(wellPosition);
                     for (SampleInstance sampleInstance : sampleInstancesInPosition) {
-                        PlateWell wellAtPosition = getWellAtPosition(wellPosition);
+                        LabVessel wellAtPosition = getVesselAtPosition(wellPosition);
                         if (wellAtPosition != null) {
                             for (Reagent reagent : wellAtPosition.getAppliedReagents()) {
                                 if(reagent.getMolecularEnvelopeDelta() != null) {
@@ -165,6 +169,7 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
         return sampleInstances;
     }
 
+/*
     public PlateWell getWellAtPosition(String position) {
         return this.mapPositionToWell.get(position);
     }
@@ -173,6 +178,8 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
         return this.mapPositionToWell;
     }
 
+*/
+/*
     @Override
     public void applyTransfer(SectionTransfer sectionTransfer) {
         List<WellName> wells = sectionTransfer.getSourceSection().getWells();
@@ -197,4 +204,5 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
             }
         }
     }
+*/
 }

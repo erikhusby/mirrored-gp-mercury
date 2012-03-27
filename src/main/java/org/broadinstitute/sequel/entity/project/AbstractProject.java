@@ -2,11 +2,11 @@ package org.broadinstitute.sequel.entity.project;
 
 
 import org.broadinstitute.sequel.entity.billing.Quote;
+import org.broadinstitute.sequel.entity.notice.UserRemarks;
 import org.broadinstitute.sequel.infrastructure.quote.QuotesCache;
 import org.broadinstitute.sequel.entity.analysis.SequenceAnalysisInstructions;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.Stalker;
-import org.broadinstitute.sequel.entity.notice.UserRemarkable;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.run.CapacityDimension;
@@ -16,9 +16,10 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
+import javax.persistence.Embedded;
 import java.util.*;
 
-public abstract class AbstractProject implements Project, UserRemarkable {
+public abstract class AbstractProject implements Project {
 
     private QuotesCache quotesCache;
     
@@ -39,6 +40,9 @@ public abstract class AbstractProject implements Project, UserRemarkable {
     private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
     
     private Collection<Quote> availableQuotes = new HashSet<Quote>();
+
+    @Embedded
+    private UserRemarks userRemarks;
 
     public void setQuotesCache(QuotesCache cache) {
         this.quotesCache = cache;
@@ -124,81 +128,6 @@ public abstract class AbstractProject implements Project, UserRemarkable {
 
     @Override
     public CapacityDimension getDefaultCapacityDimension() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserStatus(Person user, String status) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void getUserStatus(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void addUserNote(Person user, String note) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<String> getUserNotes(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public boolean isUserFlagged(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserFlag(Person user, boolean isFlagged) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public INTERESTINGNESS getUserInterestLevel(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserInterestLevel(Person user, INTERESTINGNESS interestLevel) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<String> getAllNotes() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void hasUserUpdate(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserUpdate(Person user, boolean isNew) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Date getUserCheckbackDate(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserCheckbackDate(Person user, Date targetDate) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserCategory(Person user, String category) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public String getUserCategory(Person user) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -301,5 +230,9 @@ public abstract class AbstractProject implements Project, UserRemarkable {
     @Override
     public int hashCode() {
         return projectName != null ? projectName.hashCode() : 0;
+    }
+
+    public UserRemarks getUserRemarks() {
+        return userRemarks;
     }
 }

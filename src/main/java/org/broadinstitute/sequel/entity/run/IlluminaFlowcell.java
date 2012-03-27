@@ -3,7 +3,6 @@ package org.broadinstitute.sequel.entity.run;
 
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
-import org.broadinstitute.sequel.entity.notice.UserRemarkable;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -15,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
-public class IlluminaFlowcell extends AbstractRunCartridge implements UserRemarkable {
+public class IlluminaFlowcell extends AbstractRunCartridge {
 
     private Collection<RunChamber> runChambers = new ArrayList<RunChamber>();
 

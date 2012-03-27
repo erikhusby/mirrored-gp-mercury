@@ -1,25 +1,24 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 
-import org.broadinstitute.sequel.entity.notice.UserRemarkable;
-import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.notice.Stalker;
-import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.labevent.Failure;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.entity.notice.Stalker;
+import org.broadinstitute.sequel.entity.notice.UserRemarks;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.reagent.Reagent;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
+import javax.persistence.Embedded;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
+public abstract class AbstractLabVessel implements LabVessel {
 
     private String label;
 
@@ -54,6 +53,9 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
     private final Collection<Stalker> stalkers = new HashSet<Stalker>();
     
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
+
+    @Embedded
+    private UserRemarks userRemarks;
 
     protected AbstractLabVessel(String label) {
         this.label = label;
@@ -98,82 +100,6 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
     public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode, SampleInstance sampleInstance) {
         throw new RuntimeException("I haven't been written yet.");
     }
-
-    @Override
-    public void setUserStatus(Person user, String status) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void getUserStatus(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void addUserNote(Person user, String note) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<String> getUserNotes(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public boolean isUserFlagged(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserFlag(Person user, boolean isFlagged) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public INTERESTINGNESS getUserInterestLevel(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserInterestLevel(Person user, INTERESTINGNESS interestLevel) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<String> getAllNotes() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void hasUserUpdate(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserUpdate(Person user, boolean isNew) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Date getUserCheckbackDate(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserCheckbackDate(Person user, Date targetDate) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void setUserCategory(Person user, String category) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public String getUserCategory(Person user) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
 
     @Override
     public boolean isProgeny(LabVessel ancestor) {
@@ -244,5 +170,9 @@ public abstract class AbstractLabVessel implements LabVessel, UserRemarkable {
     @Override
     public Collection<JiraTicket> getJiraTickets() {
         return ticketsCreated;
+    }
+
+    public UserRemarks getUserRemarks() {
+        return userRemarks;
     }
 }

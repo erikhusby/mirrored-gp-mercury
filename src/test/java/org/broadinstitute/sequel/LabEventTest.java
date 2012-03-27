@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel;
 
+//import com.jprofiler.api.agent.Controller;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
@@ -22,6 +23,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +40,9 @@ public class LabEventTest {
 
     @Test(groups = {DATABASE_FREE})
     public void testHybridSelection() {
-        // Hybrid selection transfers
+//        Controller.startCPURecording(true);
+
+        // starting rack
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
         ProjectPlan projectPlan = new ProjectPlan(project,"To test hybrid selection",new WorkflowDescription("HS","8.0",null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
@@ -99,20 +103,23 @@ public class LabEventTest {
         labEventHandler.processEvent(indexedAdapterLigationEntity);
         // asserts
         Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getSampleInstancesInPosition("A01");
-        PlateWell plateWellA1PostIndex = shearingCleanupPlate.getWellAtPosition("A01");
+        PlateWell plateWellA1PostIndex = shearingCleanupPlate.getVesselAtPosition("A01");
         Assert.assertEquals(plateWellA1PostIndex.getAppliedReagents().iterator().next(), index301, "Wrong reagent");
         SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
-        Assert.assertEquals(sampleInstance.getMolecularState().getMolecularEnvelope().get3PrimeAttachment().getAppendageName(), "tagged_301", "Wrong index");
+        Assert.assertEquals(sampleInstance.getMolecularState().getMolecularEnvelope().get3PrimeAttachment().getAppendageName(),
+                "tagged_301", "Wrong index");
 
         // PondRegistration
         List<String> pondRegTubeBarcodes = new ArrayList<String>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             pondRegTubeBarcodes.add("PondReg" + rackPosition);
         }
+        String pondRegRackBarcode = "PondReg";
         PlateTransferEventType pondRegistrationJaxb = bettaLimsMessageFactory.buildPlateToRack(
-                "PondRegistration", shearCleanPlateBarcode, "PondReg", pondRegTubeBarcodes);
+                "PondRegistration", shearCleanPlateBarcode, pondRegRackBarcode, pondRegTubeBarcodes);
+        Map<String, TwoDBarcodedTube> mapBarcodeToPondRegTube = new HashMap<String, TwoDBarcodedTube>();
         LabEvent pondRegistrationEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(
-                pondRegistrationJaxb, shearingCleanupPlate, null);
+                pondRegistrationJaxb, shearingCleanupPlate, mapBarcodeToPondRegTube);
         labEventHandler.processEvent(pondRegistrationEntity);
         // asserts
         RackOfTubes pondRegRack = (RackOfTubes) pondRegistrationEntity.getTargetLabVessels().iterator().next();
@@ -123,8 +130,30 @@ public class LabEventTest {
         Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
 
         // PreSelectionPool
-//        bettaLimsMessageFactory.buildRackToRack("PreSelectionPool", );
+        List<String> preSelPoolBarcodes = new ArrayList<String>();
+        for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK / 2; rackPosition++) {
+            preSelPoolBarcodes.add("PreSelPool" + rackPosition);
+        }
+        Map<String, TwoDBarcodedTube> mapBarcodeToPreSelPoolTube = new HashMap<String, TwoDBarcodedTube>();
+        PlateTransferEventType preSelPoolJaxb = bettaLimsMessageFactory.buildRackToRack("PreSelectionPool",
+                pondRegRackBarcode, pondRegTubeBarcodes.subList(0, NUM_POSITIONS_IN_RACK / 2), "PreSelPool", preSelPoolBarcodes);
+        LabEvent preSelPoolEntity = labEventFactory.buildFromBettaLimsRackToRackDbFree(preSelPoolJaxb,
+                pondRegRack, mapBarcodeToPreSelPoolTube);
+        labEventHandler.processEvent(preSelPoolEntity);
+        preSelPoolJaxb = bettaLimsMessageFactory.buildRackToRack("PreSelectionPool", pondRegRackBarcode,
+                pondRegTubeBarcodes.subList(NUM_POSITIONS_IN_RACK / 2, NUM_POSITIONS_IN_RACK), "PreSelPool", preSelPoolBarcodes);
+        // todo jmt, should this be one event?
+        preSelPoolEntity = labEventFactory.buildFromBettaLimsRackToRackDbFree(preSelPoolJaxb,
+                pondRegRack, mapBarcodeToPreSelPoolTube);
+        labEventHandler.processEvent(preSelPoolEntity);
         //asserts
+        RackOfTubes preSelPoolRack = (RackOfTubes) preSelPoolEntity.getTargetLabVessels().iterator().next();
+//        Assert.assertEquals(preSelPoolRack.getSampleInstances().size(),
+//                NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
+//        Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getSampleInstancesInPosition("A08");
+//        Assert.assertEquals(sampleInstancesInPreSelPoolWell.size(), 2, "Wrong number of sample instances in position");
+
+//        Controller.stopCPURecording();
         // tube has two sample instances
         // indexes
 

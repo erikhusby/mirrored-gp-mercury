@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.control.labevent;
 
+import org.broadinstitute.sequel.bettalims.jaxb.PlateType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
@@ -41,6 +42,8 @@ public class LabEventFactory {
                 MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
         mapMessageNameToEventType.put("PondRegistration", new LabEventType(false, true,
                 MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
+        mapMessageNameToEventType.put("PreSelectionPool", new LabEventType(false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
     }
     
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDao;
@@ -72,7 +75,7 @@ public class LabEventFactory {
             mapBarcodeToSourceTubes = findTubesByBarcodes(plateTransferEvent.getSourcePositionMap());
         }
         // todo jmt hash the tube positions, fetch any existing tube formation
-        StaticPlate targetPlate = staticPlateDAO.findByBarcode(plateTransferEvent.getPlate().getBarcode());
+        StaticPlate targetPlate = this.staticPlateDAO.findByBarcode(plateTransferEvent.getPlate().getBarcode());
         
         return buildFromBettaLimsRackToPlateDbFree(plateTransferEvent, mapBarcodeToSourceTubes, targetPlate);
     }
@@ -82,20 +85,46 @@ public class LabEventFactory {
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
             StaticPlate targetPlate) {
         LabEvent labEvent = constructReferenceData(plateTransferEvent);
-        RackOfTubes rackOfTubes = new RackOfTubes(plateTransferEvent.getSourcePlate().getBarcode());
-        for (ReceptacleType receptacleType : plateTransferEvent.getSourcePositionMap().getReceptacle()) {
-            TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToSourceTubes.get(receptacleType.getBarcode());
-            if(twoDBarcodedTube == null) {
-                twoDBarcodedTube = new TwoDBarcodedTube(receptacleType.getBarcode(), null);
-            }
-            rackOfTubes.addContainedVessel(twoDBarcodedTube, receptacleType.getPosition());
-        }
+        RackOfTubes rackOfTubes = buildRack(mapBarcodeToSourceTubes, plateTransferEvent.getSourcePlate(), plateTransferEvent.getSourcePositionMap());
         if(targetPlate == null) {
             targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode());
         }
 
         labEvent.addSourceLabVessel(rackOfTubes);
         labEvent.addTargetLabVessel(targetPlate);
+        labEvent.getSectionTransfers().add(new SectionTransfer(
+                rackOfTubes, SBSSection.valueOf(plateTransferEvent.getSourcePlate().getSection()),
+                targetPlate, SBSSection.valueOf(plateTransferEvent.getPlate().getSection())));
+        return labEvent;
+    }
+
+    private RackOfTubes buildRack(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, PlateType plate, PositionMapType positionMap) {
+        RackOfTubes rackOfTubes = new RackOfTubes(plate.getBarcode());
+        for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
+            TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
+            if(twoDBarcodedTube == null) {
+                twoDBarcodedTube = new TwoDBarcodedTube(receptacleType.getBarcode(), null);
+                mapBarcodeToTubes.put(receptacleType.getBarcode(), twoDBarcodedTube);
+            }
+            rackOfTubes.addContainedVessel(twoDBarcodedTube, receptacleType.getPosition());
+        }
+        return rackOfTubes;
+    }
+
+    public LabEvent buildFromBettaLimsRackToRackDbFree(
+            PlateTransferEventType plateTransferEvent,
+            RackOfTubes sourceRack,
+            Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes) {
+        LabEvent labEvent = constructReferenceData(plateTransferEvent);
+
+        RackOfTubes targetRackOfTubes = buildRack(mapBarcodeToTargetTubes, plateTransferEvent.getPlate(),
+                plateTransferEvent.getPositionMap());
+
+        labEvent.addSourceLabVessel(sourceRack);
+        labEvent.addTargetLabVessel(targetRackOfTubes);
+        labEvent.getSectionTransfers().add(new SectionTransfer(
+                sourceRack, SBSSection.valueOf(plateTransferEvent.getSourcePlate().getSection()),
+                targetRackOfTubes, SBSSection.valueOf(plateTransferEvent.getPlate().getSection())));
         return labEvent;
     }
 
@@ -104,18 +133,14 @@ public class LabEventFactory {
             StaticPlate sourcePlate,
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes) {
         LabEvent labEvent = constructReferenceData(plateTransferEvent);
-        RackOfTubes rackOfTubes = new RackOfTubes(plateTransferEvent.getSourcePlate().getBarcode());
-        for (ReceptacleType receptacleType : plateTransferEvent.getPositionMap().getReceptacle()) {
-            TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTargetTubes == null ? null :
-                    mapBarcodeToTargetTubes.get(receptacleType.getBarcode());
-            if(twoDBarcodedTube == null) {
-                twoDBarcodedTube = new TwoDBarcodedTube(receptacleType.getBarcode(), null);
-            }
-            rackOfTubes.addContainedVessel(twoDBarcodedTube, receptacleType.getPosition());
-        }
+        RackOfTubes rackOfTubes = buildRack(mapBarcodeToTargetTubes, plateTransferEvent.getPlate(),
+                plateTransferEvent.getPositionMap());
 
         labEvent.addSourceLabVessel(sourcePlate);
         labEvent.addTargetLabVessel(rackOfTubes);
+        labEvent.getSectionTransfers().add(new SectionTransfer(
+                sourcePlate, SBSSection.valueOf(plateTransferEvent.getSourcePlate().getSection()),
+                rackOfTubes, SBSSection.valueOf(plateTransferEvent.getPlate().getSection())));
         return labEvent;
     }
 

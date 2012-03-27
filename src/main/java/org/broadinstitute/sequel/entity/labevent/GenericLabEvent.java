@@ -146,7 +146,7 @@ public class GenericLabEvent extends AbstractLabEvent {
         }
 
         for (SectionTransfer sectionTransfer : getSectionTransfers()) {
-            sectionTransfer.getTargetVessel().applyTransfer(sectionTransfer);
+            sectionTransfer.applyTransfer();
         }
     }
 
