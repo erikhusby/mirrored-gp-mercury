@@ -16,6 +16,7 @@ import java.util.List;
 /**
  * Represents a transfer between two sections.
  */
+@SuppressWarnings("rawtypes")
 public class SectionTransfer {
     private VesselContainer sourceVesselContainer;
     private SBSSection sourceSection;
@@ -75,7 +76,7 @@ public class SectionTransfer {
                     for (Reagent reagent : reagents) {
                         LabVessel plateWell = this.targetVesselContainer.getVesselAtPosition(targetWellName.getWellName());
                         if (plateWell == null) {
-                            plateWell = new PlateWell((StaticPlate) this.targetVesselContainer, targetWellName);
+                            plateWell = new PlateWell((StaticPlate) this.targetVesselContainer.getEmbedder(), targetWellName);
                             this.targetVesselContainer.addContainedVessel(plateWell, targetWellName.getWellName());
                         }
                         plateWell.applyReagent(reagent);
@@ -84,9 +85,10 @@ public class SectionTransfer {
             }
         }
         // if source container is mutable, or sections are different: establish authorities at contained vessel level, based on section
-        LabVessel sourceVessel = (LabVessel) this.sourceVesselContainer;
+        LabVessel sourceVessel = this.sourceVesselContainer.getEmbedder();
         // todo jmt, rather than checking for incoming transfers, check for other position maps?
-        if((this.sourceVesselContainer instanceof RackOfTubes && !sourceVessel.getTransfersTo().isEmpty()) || this.sourceSection != this.targetSection) {
+        if((this.sourceVesselContainer.getEmbedder() instanceof RackOfTubes && !sourceVessel.getTransfersTo().isEmpty()) ||
+                this.sourceSection != this.targetSection) {
             List<WellName> positions = this.sourceSection.getWells();
             for (int wellIndex = 0; wellIndex < positions.size(); wellIndex++) {
                 WellName sourceWellName = positions.get(wellIndex);
@@ -104,13 +106,14 @@ public class SectionTransfer {
                 }
             }
         } else {
-            if (((AbstractLabVessel) this.sourceVesselContainer).getSampleSheetAuthorities().isEmpty()) {
+            // todo jmt fix casts to AbstractLabVessel
+            if (((AbstractLabVessel) this.sourceVesselContainer.getEmbedder()).getSampleSheetAuthorities().isEmpty()) {
                 if(sourceVessel.getReagentContents().isEmpty()) {
-                    ((AbstractLabVessel)this.targetVesselContainer).getSampleSheetAuthorities().add(sourceVessel);
+                    ((AbstractLabVessel)this.targetVesselContainer.getEmbedder()).getSampleSheetAuthorities().add(sourceVessel);
                 }
             } else {
-                ((AbstractLabVessel)this.targetVesselContainer).getSampleSheetAuthorities().addAll(
-                        ((AbstractLabVessel) this.sourceVesselContainer).getSampleSheetAuthorities());
+                ((AbstractLabVessel)this.targetVesselContainer.getEmbedder()).getSampleSheetAuthorities().addAll(
+                        ((AbstractLabVessel) this.sourceVesselContainer.getEmbedder()).getSampleSheetAuthorities());
             }
         }
 

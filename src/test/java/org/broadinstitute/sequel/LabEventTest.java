@@ -3,13 +3,17 @@ package org.broadinstitute.sequel;
 //import com.jprofiler.api.agent.Controller;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
+import org.broadinstitute.sequel.entity.project.BasicProject;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.reagent.IndexEnvelope;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -93,17 +97,17 @@ public class LabEventTest {
         PlateWell plateWellA01 = new PlateWell(indexPlate, new WellName("A01"));
         MolecularIndexReagent index301 = new MolecularIndexReagent(new IndexEnvelope("ATCGATCG", null, "tagged_301"));
         plateWellA01.addReagent(index301);
-        indexPlate.addContainedVessel(plateWellA01, "A01");
+        indexPlate.getVesselContainer().addContainedVessel(plateWellA01, "A01");
         PlateWell plateWellA02 = new PlateWell(indexPlate, new WellName("A02"));
         IndexEnvelope index502 = new IndexEnvelope("TCGATCGA", null, "tagged_502");
         plateWellA02.addReagent(new MolecularIndexReagent(index502));
-        indexPlate.addContainedVessel(plateWellA02, "A02");
+        indexPlate.getVesselContainer().addContainedVessel(plateWellA02, "A02");
         LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                 indexedAdapterLigationJaxb, indexPlate, shearingCleanupPlate);
         labEventHandler.processEvent(indexedAdapterLigationEntity);
         // asserts
         Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getSampleInstancesInPosition("A01");
-        PlateWell plateWellA1PostIndex = shearingCleanupPlate.getVesselAtPosition("A01");
+        PlateWell plateWellA1PostIndex = shearingCleanupPlate.getVesselContainer().getVesselAtPosition("A01");
         Assert.assertEquals(plateWellA1PostIndex.getAppliedReagents().iterator().next(), index301, "Wrong reagent");
         SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
         Assert.assertEquals(sampleInstance.getMolecularState().getMolecularEnvelope().get3PrimeAttachment().getAppendageName(),

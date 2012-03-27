@@ -1,32 +1,26 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.sample.StateChange;
-import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.sample.StateChange;
 
+import javax.persistence.Embedded;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * A rack of tubes
  */
-public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, VesselContainer<TwoDBarcodedTube> {
+public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
 
-    /* rack holds tubes, tubes can be removed
-     * plate holds wells, wells can't be removed
-     * flowcell holds lanes
-     * PTP holds regions
-     * smartpac holds smrtcells, smrtcells are removed, but not replaced
-     * striptube holds tubes, tubes can't be removed, don't have barcodes */
-    private Map<String, TwoDBarcodedTube> mapPositionToTube = new HashMap<String, TwoDBarcodedTube>();
+    @Embedded
+    private VesselContainer<TwoDBarcodedTube> vesselContainer = new VesselContainer<TwoDBarcodedTube>(this);
 
     public RackOfTubes(String label) {
         super(label);
@@ -35,22 +29,6 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
     @Override
     public LabVessel getContainingVessel() {
         throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<TwoDBarcodedTube> getContainedVessels() {
-        return this.mapPositionToTube.values();
-    }
-
-    @Override
-    public void addContainedVessel(TwoDBarcodedTube child, String position) {
-        this.mapPositionToTube.put(position, child);
-        child.getRacksOfTubes().add(this);
-    }
-
-    @Override
-    public TwoDBarcodedTube getVesselAtPosition(String position) {
-        return this.mapPositionToTube.get(position);
     }
 
     @Override
@@ -72,7 +50,7 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if(getSampleSheetAuthorities().isEmpty()) {
-            for (LabVessel labVessel : getContainedVessels()) {
+            for (LabVessel labVessel : this.vesselContainer.getContainedVessels()) {
                 sampleInstances.addAll(labVessel.getSampleInstances());
             }
         } else {
@@ -86,7 +64,7 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
     public Set<SampleInstance> getSampleInstancesInPosition(String rackPosition) {
         Set<SampleInstance> sampleInstances;
         if(getSampleSheetAuthorities().isEmpty()) {
-            TwoDBarcodedTube twoDBarcodedTube = this.mapPositionToTube.get(rackPosition);
+            TwoDBarcodedTube twoDBarcodedTube = this.vesselContainer.getVesselAtPosition(rackPosition);
             sampleInstances = twoDBarcodedTube.getSampleInstances();
         } else {
             sampleInstances = new HashSet<SampleInstance>();
@@ -94,8 +72,8 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
                 // todo jmt add getSampleInstancesInPosition to VesselContainer
                 if(labVessel instanceof StaticPlate) {
                     sampleInstances.addAll(((StaticPlate) labVessel).getSampleInstancesInPosition(rackPosition));
-                } else if(labVessel instanceof VesselContainer) {
-                    sampleInstances.addAll(((VesselContainer) labVessel).getVesselAtPosition(rackPosition).getSampleInstances());
+                } else if(labVessel instanceof VesselContainerEmbedder) {
+                    sampleInstances.addAll(((VesselContainerEmbedder) labVessel).getVesselContainer().getVesselAtPosition(rackPosition).getSampleInstances());
                 }
             }
         }
@@ -155,7 +133,7 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
     @Override
     public Collection<SampleSheet> getSampleSheets() {
         Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
-        for (TwoDBarcodedTube twoDBarcodedTube : this.mapPositionToTube.values()) {
+        for (TwoDBarcodedTube twoDBarcodedTube : this.vesselContainer.getContainedVessels()) {
             sampleSheets.addAll(twoDBarcodedTube.getSampleSheets());
         }
         return sampleSheets;
@@ -164,5 +142,13 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
     @Override
     public void applyTransfer(SectionTransfer sectionTransfer) {
         throw new RuntimeException("Method not yet implemented.");
+    }
+
+    public VesselContainer<TwoDBarcodedTube> getVesselContainer() {
+        return this.vesselContainer;
+    }
+
+    public void setVesselContainer(VesselContainer<TwoDBarcodedTube> vesselContainer) {
+        this.vesselContainer = vesselContainer;
     }
 }

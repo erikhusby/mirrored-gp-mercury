@@ -1,28 +1,27 @@
 package org.broadinstitute.sequel.entity.vessel;
 
-
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.sample.StateChange;
 
+import javax.persistence.Embedded;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
  * A traditional plate.
  */
-public class StaticPlate extends AbstractLabVessel implements SBSSectionable, VesselContainer<PlateWell> {
+public class StaticPlate extends AbstractLabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell> {
 
-    private Map<String, PlateWell> mapPositionToWell = new HashMap<String, PlateWell>();
+    @Embedded
+    private VesselContainer<PlateWell> vesselContainer = new VesselContainer<PlateWell>(this);
 
     public StaticPlate(String label) {
         super(label);
@@ -31,21 +30,6 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
     @Override
     public LabVessel getContainingVessel() {
         throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public PlateWell getVesselAtPosition(String position) {
-        return this.mapPositionToWell.get(position);
-    }
-
-    @Override
-    public Collection<PlateWell> getContainedVessels() {
-        return this.mapPositionToWell.values();
-    }
-
-    @Override
-    public void addContainedVessel(PlateWell child, String position) {
-        this.mapPositionToWell.put(position, child);
     }
 
     @Override
@@ -71,14 +55,14 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
     @Override
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if (this.mapPositionToWell.isEmpty()) {
+        if (this.vesselContainer.getContainedVessels().isEmpty()) {
             for (LabVessel labVessel : getSampleSheetAuthorities()) {
                 for (SampleSheet sampleSheet : labVessel.getSampleSheets()) {
                     sampleInstances.addAll(sampleSheet.getSampleInstances());
                 }
             }
         } else {
-            for (String position : this.mapPositionToWell.keySet()) {
+            for (String position : this.vesselContainer.getPositions()) {
                 sampleInstances.addAll(getSampleInstancesInPosition(position));
             }
         }
@@ -147,7 +131,7 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
                     RackOfTubes rackOfTubes = (RackOfTubes) labVessel;
                     Set<SampleInstance> sampleInstancesInPosition = rackOfTubes.getSampleInstancesInPosition(wellPosition);
                     for (SampleInstance sampleInstance : sampleInstancesInPosition) {
-                        LabVessel wellAtPosition = getVesselAtPosition(wellPosition);
+                        LabVessel wellAtPosition = this.getVesselContainer().getVesselAtPosition(wellPosition);
                         if (wellAtPosition != null) {
                             for (Reagent reagent : wellAtPosition.getAppliedReagents()) {
                                 if(reagent.getMolecularEnvelopeDelta() != null) {
@@ -169,40 +153,11 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
         return sampleInstances;
     }
 
-/*
-    public PlateWell getWellAtPosition(String position) {
-        return this.mapPositionToWell.get(position);
+    public VesselContainer<PlateWell> getVesselContainer() {
+        return this.vesselContainer;
     }
 
-    public Map<String, PlateWell> getMapPositionToWell() {
-        return this.mapPositionToWell;
+    public void setVesselContainer(VesselContainer<PlateWell> vesselContainer) {
+        this.vesselContainer = vesselContainer;
     }
-
-*/
-/*
-    @Override
-    public void applyTransfer(SectionTransfer sectionTransfer) {
-        List<WellName> wells = sectionTransfer.getSourceSection().getWells();
-        StaticPlate sourcePlate = (StaticPlate) sectionTransfer.getSourceVessel();
-        StaticPlate targetPlate = (StaticPlate) sectionTransfer.getTargetVessel();
-        for (int wellIndex = 0; wellIndex < wells.size(); wellIndex++) {
-            WellName sourceWellName = wells.get(wellIndex);
-            WellName targetWellName = sectionTransfer.getTargetSection().getWells().get(wellIndex);
-            if (!sourcePlate.getMapPositionToWell().isEmpty()) {
-                PlateWell sourceWell = sourcePlate.getWellAtPosition(sourceWellName.getWellName());
-                if (sourceWell != null) {
-                    Collection<Reagent> reagents = sourceWell.getReagentContents();
-                    for (Reagent reagent : reagents) {
-                        PlateWell plateWell = targetPlate.getWellAtPosition(targetWellName.getWellName());
-                        if (plateWell == null) {
-                            plateWell = new PlateWell(targetPlate, targetWellName);
-                            targetPlate.addContainedVessel(plateWell, targetWellName.getWellName());
-                        }
-                        plateWell.applyReagent(reagent);
-                    }
-                }
-            }
-        }
-    }
-*/
 }
