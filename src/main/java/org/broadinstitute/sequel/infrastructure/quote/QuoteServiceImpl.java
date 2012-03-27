@@ -21,6 +21,10 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         connectionParameters = quoteConnectionParameters;
     }
 
+    @Override
+    public String registerNewWork(Quote quote, PriceItem priceItem, double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {

@@ -15,7 +15,12 @@ public interface QuoteService {
      * @return If the quote exists the return value will be a quote object. Otherwise null.
      */
 
-    Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException;
+    public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException;
 
-
+    public String registerNewWork(Quote quote,
+                                  PriceItem priceItem,
+                                  double numWorkUnits,
+                                  String callbackUrl,
+                                  String callbackParameterName,
+                                  String callbackParameterValue);
 }

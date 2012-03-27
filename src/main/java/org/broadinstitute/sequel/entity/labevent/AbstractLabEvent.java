@@ -143,4 +143,14 @@ public abstract class AbstractLabEvent implements LabEvent {
     public void setSectionTransfers(Set<SectionTransfer> sectionTransfers) {
         this.sectionTransfers = sectionTransfers;
     }
+
+    @Override
+    public String getQuoteServerBatchId() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void setQuoteServerBatchId(String batchId) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
 }
