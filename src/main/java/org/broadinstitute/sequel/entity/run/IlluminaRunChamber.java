@@ -10,8 +10,6 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.entity.billing.Invoice;
-import org.broadinstitute.sequel.entity.billing.Priceable;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.vessel.AbstractLabVessel;
 
@@ -20,7 +18,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, RunChamber {
+public class IlluminaRunChamber extends AbstractLabVessel implements  RunChamber {
 
     private IlluminaFlowcell flowcell;
     
@@ -64,48 +62,10 @@ public class IlluminaRunChamber extends AbstractLabVessel implements Priceable, 
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public String getLabNameOfPricedItem() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Invoice getInvoice() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
         throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Date getPriceableCreationDate() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public String getPriceListItemName() {
-        String priceItem = "none";
-        IlluminaRunConfiguration runConfig = (IlluminaRunConfiguration)getRunConfiguration();
-        if (runConfig.getReadLength() == 76) {
-            priceItem = "Illumina 76bp";
-        }
-        else {
-            // do some stuff...
-        }
-        return priceItem;
-    }
-
-    @Override
-    public int getMaximumSplitFactor() {
-        final Set<SampleInstance> aliquotInstances = new HashSet<SampleInstance>();
-        aliquotInstances.addAll(getSampleInstances());
-        return aliquotInstances.size();
-        // or maybe we should count inique indexes?
-
-        // or maybe the billing app should show both # samples and # indexes
-        // in case there is an inconsistency?
     }
 
     /**
