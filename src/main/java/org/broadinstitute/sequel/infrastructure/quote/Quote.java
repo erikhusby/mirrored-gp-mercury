@@ -89,4 +89,8 @@ public class Quote {
     public int hashCode() {
         return alphanumericId != null ? alphanumericId.hashCode() : 0;
     }
+    
+    public String toString() {
+        return alphanumericId;
+    }
 }

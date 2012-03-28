@@ -35,7 +35,7 @@ public class PerSampleBillableFactory {
      * @param event
      * @return
      */
-    public Billable createBillable(final LabEvent event) {
+    public static Billable createBillable(final LabEvent event) {
         final Map<QuotePriceItem,Double> workItemsPerQuote = new HashMap<QuotePriceItem, Double>();
         final Collection<StartingSample> samplesBilledAlready = new HashSet<StartingSample>();
         for (LabVessel source : event.getSourceLabVessels()) {

@@ -7,18 +7,47 @@ package org.broadinstitute.sequel.infrastructure.quote;
  */
 public class QuotePriceItem {
     
+    private final Quote quote;
+
+    private final PriceItem priceItem;
+    
     public QuotePriceItem(Quote quote,
                           PriceItem priceItem) {
-        throw new RuntimeException("I haven't been implemented");
+        if (quote == null) {
+            throw new NullPointerException("quote cannot be null");
+        }
+        if (priceItem == null) {
+            throw new NullPointerException("priceItem cannot be null");
+        }
+        this.quote = quote;
+        this.priceItem = priceItem;
     }
     
     public Quote getQuote() {
-        throw new RuntimeException("I haven't been implemented");
+        return quote;
     }
     
     public PriceItem getPriceItem() {
-        throw new RuntimeException("I haven't been implemented");
+        return priceItem;
     }
 
-    // todo equals and hashcode
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        QuotePriceItem that = (QuotePriceItem) o;
+
+        if (!priceItem.equals(that.priceItem)) return false;
+        if (!quote.equals(that.quote)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = quote.hashCode();
+        result = 31 * result + priceItem.hashCode();
+        return result;
+    }
 }
