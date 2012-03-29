@@ -12,7 +12,7 @@ public class QuoteServiceTest {
 
     @Test(groups = {"ExternalIntegration"})
     public void test_get_all_price_items() throws Exception {
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams(QuoteConnectionParameters.GET_ALL_PRICE_ITEMS));
+        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
         PriceList priceList = service.getAllPriceItems();
         Assert.assertFalse(priceList.getPriceList().isEmpty());
 
@@ -20,7 +20,7 @@ public class QuoteServiceTest {
 
     @Test(groups = {"ExternalIntegration"})
     public void test_get_a_quote() throws Exception {
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams(QuoteConnectionParameters.GET_SINGLE_QUOTE_URL));
+        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
         Quote quote = service.getQuoteFromQuoteServer("DNA3CD");
         Assert.assertNotNull(quote);
         Assert.assertEquals("Regev ChIP Sequencing 8-1-2011", quote.getName());
@@ -41,7 +41,7 @@ public class QuoteServiceTest {
 
         boolean caught = false;
 
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams(QuoteConnectionParameters.GET_ALL_SEQUENCING_QUOTES_URL));
+        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
         Quotes quotes = service.getAllSequencingPlatformQuotes();
         Assert.assertNotNull(quotes);
         Assert.assertFalse(quotes.getQuotes().isEmpty());

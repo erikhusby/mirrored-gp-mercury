@@ -1,28 +1,27 @@
 package org.broadinstitute.sequel.infrastructure.quote;
 
 
+import javax.enterprise.inject.Alternative;
+
 /**
  * Need to figure out how to use CDI/weld to inject this properly.
  */
+@Alternative
 public class ProductionQuoteConnectionParams implements QuoteConnectionParameters {
 
 
     private final String PRODUCTION_HOST = "https://broadinstitute.org";
 
-    private final String url;
     private final String username = "rnordin@broadinstitute.org";
     private final String password = "Squ1d_us3r";
 
 
-    public ProductionQuoteConnectionParams(String path) {
-        if (path == null) {
-            throw new NullPointerException("URL cannot be null.");
-        }
-        this.url = PRODUCTION_HOST + path;
+    public ProductionQuoteConnectionParams() {
+       
     }
     
-    public String getUrl() {
-        return url;
+    public String getUrl(String path) {
+        return PRODUCTION_HOST + path;
     }
 
 

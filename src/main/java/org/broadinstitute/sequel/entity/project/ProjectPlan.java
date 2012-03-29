@@ -96,7 +96,11 @@ public class ProjectPlan {
     }
     
     public org.broadinstitute.sequel.infrastructure.quote.Quote getQuoteDTO() {
-        return quote.getQuote();
+        org.broadinstitute.sequel.infrastructure.quote.Quote quoteDTO = null;
+        if (quote != null) {
+            quoteDTO = quote.getQuote();
+        }
+        return quoteDTO;
     }
     
     public void setQuote(Quote quote) {

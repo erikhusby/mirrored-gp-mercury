@@ -45,26 +45,28 @@ public class PerSampleBillableFactory {
                 
                 PriceItem priceItem = projectPlan.getWorkflowDescription().getPriceItem(event.getEventName());
                 org.broadinstitute.sequel.infrastructure.quote.Quote quote = projectPlan.getQuoteDTO();
-                /** do we use true sample (aliquot) here, or {@link org.broadinstitute.sequel.entity.project.SampleAnalysisBuddies}? */
+                if (quote != null) {
+                    /** do we use true sample (aliquot) here, or {@link org.broadinstitute.sequel.entity.project.SampleAnalysisBuddies}? */
 
-                if (PriceItem.SAMPLE_UNITS.equalsIgnoreCase(priceItem.getUnits())) {
-                    // todo this is a transaction problem.  instead send a CDI event
-                    // out here and when the sequel transaction completes,
-                    // have the event processor post the changes to quote server
-                    if (!samplesBilledAlready.contains(sample)) {
-                        QuotePriceItem quotePriceItem = new QuotePriceItem(quote,priceItem);
-                        if (!workItemsPerQuote.containsKey(quotePriceItem)) {
-                            workItemsPerQuote.put(quotePriceItem,1d);
+                    if (PriceItem.SAMPLE_UNITS.equalsIgnoreCase(priceItem.getUnits())) {
+                        // todo this is a transaction problem.  instead send a CDI event
+                        // out here and when the sequel transaction completes,
+                        // have the event processor post the changes to quote server
+                        if (!samplesBilledAlready.contains(sample)) {
+                            QuotePriceItem quotePriceItem = new QuotePriceItem(quote,priceItem);
+                            if (!workItemsPerQuote.containsKey(quotePriceItem)) {
+                                workItemsPerQuote.put(quotePriceItem,1d);
+                            }
+                            else {
+                                double workItems = workItemsPerQuote.remove(quotePriceItem);
+                                workItemsPerQuote.put(quotePriceItem,++workItems);
+                            }
+                            samplesBilledAlready.add(sample);
                         }
-                        else {
-                            double workItems = workItemsPerQuote.remove(quotePriceItem);
-                            workItemsPerQuote.put(quotePriceItem,++workItems);
-                        }
-                        samplesBilledAlready.add(sample);
                     }
-                }
-                else {
-                    throw new RuntimeException("I don't know how to bill in " + priceItem.getUnits() + " units.");
+                    else {
+                        throw new RuntimeException("I don't know how to bill in " + priceItem.getUnits() + " units.");
+                    }
                 }
             }
         }

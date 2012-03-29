@@ -2,6 +2,9 @@ package org.broadinstitute.sequel.entity.billing;
 
 
 import org.broadinstitute.sequel.BettaLimsMessageFactory;
+import org.broadinstitute.sequel.TestUtilities;
+import org.broadinstitute.sequel.WeldBooter;
+import org.broadinstitute.sequel.WeldUtil;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
@@ -25,6 +28,8 @@ import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import javax.enterprise.inject.Produces;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -132,6 +137,7 @@ public class PerSampleBillableFactoryTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void test_billing() {
+        WeldUtil weldUtil = TestUtilities.bootANewWeld();
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         String expectedBatchId = "QuoteWorkItemBatchId123";
         ProjectPlan plan1 = createProjectPlan("Project1","Plan1","DNA33",billableEvents);
@@ -163,5 +169,24 @@ public class PerSampleBillableFactoryTest {
         Assert.assertEquals(labEvent.getQuoteServerBatchId(),expectedBatchId);
         EasyMock.verify(service);
 
+        // now we'll verify that the handler sends a new billing
+        // event via CDI to the Biller
+        String workBatchId = "workBatch1";
+        labEvent.setQuoteServerBatchId(null);
+        QuoteService quoteService = createQuoteService(workBatchId,2);
+        weldUtil.getFromContainer(Biller.class).setQuoteService(quoteService);  // there has to be a better way to do this.
+                                                                                // how can we configure injection of particular
+                                                                                // classes from within a single unit test?
+        weldUtil.getFromContainer(LabEventHandler.class).processEvent(labEvent);
+        EasyMock.verify(service);
+        Assert.assertEquals(labEvent.getQuoteServerBatchId(),workBatchId);
+    }
+
+    private QuoteService createQuoteService(String workBatchId,int numCalls) {
+        QuoteService service = EasyMock.createMock(QuoteService.class);
+        EasyMock.expect(service.registerNewWork((org.broadinstitute.sequel.infrastructure.quote.Quote)EasyMock.anyObject(),(PriceItem)EasyMock.anyObject(),EasyMock.anyDouble(),(String)EasyMock.anyObject(),(String)EasyMock.anyObject(),(String)EasyMock.anyObject())).andReturn(workBatchId).times(numCalls);
+        EasyMock.replay(service);
+
+        return service;
     }
 }
