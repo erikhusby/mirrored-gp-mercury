@@ -3,17 +3,14 @@ package org.broadinstitute.sequel;
 //import com.jprofiler.api.agent.Controller;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
-import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.reagent.IndexEnvelope;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -23,6 +20,7 @@ import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.WellName;
+import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -47,8 +45,9 @@ public class LabEventTest {
 //        Controller.startCPURecording(true);
 
         // starting rack
+        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        ProjectPlan projectPlan = new ProjectPlan(project,"To test hybrid selection",new WorkflowDescription("HS","8.0",null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+        ProjectPlan projectPlan = new ProjectPlan(project,"To test hybrid selection",new WorkflowDescription("HS","8.0",billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             SampleSheetImpl sampleSheet = new SampleSheetImpl();

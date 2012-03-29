@@ -63,7 +63,7 @@ public class QuotesCacheTest {
     public void test_known_good_funding_sources() throws Exception {
 
         long start = System.currentTimeMillis();
-        QuotesCache cache = new QuotesCache(new QuoteServiceImpl(new QAQuoteConnectionParams(QuoteConnectionParameters.GET_ALL_SEQUENCING_QUOTES_URL)).getAllSequencingPlatformQuotes());
+        QuotesCache cache = new QuotesCache(new QuoteServiceImpl(new QAQuoteConnectionParams()).getAllSequencingPlatformQuotes());
         System.out.println("Quotes call took " + (System.currentTimeMillis() - start) + "ms");
         
         Funding nhgriGrant = new Funding(Funding.FUNDS_RESERVATION,"NHGRI_NIH_LANDER");

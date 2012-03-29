@@ -36,6 +36,9 @@ public abstract class AbstractLabEvent implements LabEvent {
     // todo jmt need transfers between positions, for cherry picks
     // Also need tube to tube transfers, or will they always be in a rack?
 
+    private String quoteServerBatchId;
+    
+    
     @Override
     public Collection<LabVessel> getTargetLabVessels() {
         return this.targetLabVessels;
@@ -142,5 +145,15 @@ public abstract class AbstractLabEvent implements LabEvent {
 
     public void setSectionTransfers(Set<SectionTransfer> sectionTransfers) {
         this.sectionTransfers = sectionTransfers;
+    }
+
+    @Override
+    public String getQuoteServerBatchId() {
+        return quoteServerBatchId;
+    }
+
+    @Override
+    public void setQuoteServerBatchId(String batchId) {
+        this.quoteServerBatchId = batchId;
     }
 }

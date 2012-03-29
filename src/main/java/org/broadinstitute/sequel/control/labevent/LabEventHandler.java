@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.control.labevent;
 
 
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
+import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
@@ -12,7 +13,10 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventMessage;
+import org.broadinstitute.sequel.infrastructure.quote.Billable;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,6 +34,9 @@ public class LabEventHandler {
     PartiallyProcessedLabEventCache unanchored;
 
     PartiallyProcessedLabEventCache invalidMolecularState;
+    
+    @Inject
+    Event<Billable> billableEvents;
 
     @Inject
     private LabEventDao labEventDao;
@@ -134,12 +141,26 @@ public class LabEventHandler {
         try {
             labEvent.applyMolecularStateChanges();
             enqueueForPostProcessing(labEvent);
-            notifyCheckpoints(labEvent);
+            //notifyCheckpoints(labEvent);
+
+            // todo figure out how to get the handler transaction
+            // and the billing transaction isolated properly: http://docs.jboss.org/weld/reference/1.1.0.Final/en-US/html/events.html#d0e4075
+            // only bill if the persistence succeeds on the sequel side.
+
+            //Billable billable = labEvent.getBillable();
+            Billable billable = PerSampleBillableFactory.createBillable(labEvent);
+            if (billable != null) {
+                if (billableEvents != null) {
+                    billableEvents.fire(billable);
+                }
+            }
             return HANDLER_RESPONSE.OK;
         }
         catch(InvalidMolecularStateException e) {
             return HANDLER_RESPONSE.ERROR;
         }
+
+
     }
 
     /**

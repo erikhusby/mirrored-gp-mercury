@@ -10,8 +10,6 @@ import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.SampleSheetAlertUtil;
-import org.broadinstitute.sequel.entity.billing.Invoice;
-import org.broadinstitute.sequel.entity.billing.Priceable;
 
 import java.util.Collection;
 import java.util.Date;
@@ -22,16 +20,15 @@ import java.util.HashSet;
  * write a {@link LabEvent}.
  * 
  * This is outdated.  Look at the {@link LabEvent} in
- * {@link org.broadinstitute.sequel.EndToEndTest.GenericLabEvent} to
+ * {@link GenericLabEvent} to
  * get a different (perhaps better) take on this.
  */
-public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable {
+public class AdaptorLigationEvent extends AbstractLabEvent  {
 
     private LabEventConfiguration eventConfiguration;
 
     private MolecularEnvelope adaptor;
-    
-    private Invoice invoice;
+
 
     public AdaptorLigationEvent(LabEventConfiguration eventConfig,MolecularEnvelope adaptor) {
         this.eventConfiguration = eventConfig;
@@ -117,40 +114,4 @@ public class AdaptorLigationEvent extends AbstractLabEvent implements Priceable 
         
     }
 
-    @Override
-    public String getPriceListItemName() {
-        return "Adaptor Ligation";
-    }
-
-    @Override
-    public String getLabNameOfPricedItem() {
-        return getPriceListItemName();
-    }
-
-    @Override
-    public int getMaximumSplitFactor() {
-        Collection<StartingSample> aliquots = new HashSet<StartingSample>();
-        for (LabVessel source: getSourceLabVessels()) {
-            for (SampleInstance aliquotInstance: source.getSampleInstances()) {
-                aliquots.add(aliquotInstance.getStartingSample());
-            }
-        }
-        return aliquots.size();
-    }
-
-    @Override
-    public Invoice getInvoice() {
-        return invoice;
-    }
-
-
-    @Override
-    public Date getPriceableCreationDate() {
-        return getEventDate();
-    }
-
-    @Override
-    public Collection<SampleInstance> getSampleInstances() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
 }

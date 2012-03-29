@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -17,7 +18,7 @@ public class WorkflowDescription {
 
     private final String version;
 
-    private Map<LabEventName,PriceItem> priceItemForEvent;
+    private Map<LabEventName,PriceItem> priceItemForEvent = new HashMap<LabEventName, PriceItem>();
 
     private CreateIssueRequest.Fields.Issuetype issueType;
 

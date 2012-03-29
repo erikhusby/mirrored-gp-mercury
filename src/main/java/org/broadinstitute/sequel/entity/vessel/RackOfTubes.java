@@ -48,10 +48,19 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
+        // todo jmt change this to call VesselContainer.getSampleInstancesInPosition for all positions
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if(getSampleSheetAuthorities().isEmpty()) {
-            for (LabVessel labVessel : this.vesselContainer.getContainedVessels()) {
-                sampleInstances.addAll(labVessel.getSampleInstances());
+            if(getTransfersTo().isEmpty()) {
+                for (LabVessel labVessel : this.vesselContainer.getContainedVessels()) {
+                    sampleInstances.addAll(labVessel.getSampleInstances());
+                }
+            } else {
+                for (LabEvent labEvent : getTransfersTo()) {
+                    for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                        sectionTransfer.getSourceVesselContainer();
+                    }
+                }
             }
         } else {
             for (LabVessel labVessel : getSampleSheetAuthorities()) {

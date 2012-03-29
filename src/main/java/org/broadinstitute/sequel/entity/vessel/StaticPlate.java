@@ -54,6 +54,7 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
+        // todo jmt change this to call VesselContainer.getSampleInstancesInPosition for all positions
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if (this.vesselContainer.getContainedVessels().isEmpty()) {
             for (LabVessel labVessel : getSampleSheetAuthorities()) {

@@ -321,6 +321,10 @@ public class ProjectTest {
      * work queue parameters exactly as they are currently expressed
      * in Jira.  In other words, the "queueing" UI is a thin wrapper
      * around Jira that adds SequeL project context.
+     *
+     * Using the createmeta jira webservice, we can discover the
+     * fields required for the queue so that when a PM adds stuff
+     * to a queue, they pick the appropriate fields.
      * @param starter
      * @param projectPlan
      * @param queueParameters

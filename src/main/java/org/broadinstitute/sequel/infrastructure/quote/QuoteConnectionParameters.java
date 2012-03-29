@@ -9,7 +9,7 @@ public interface QuoteConnectionParameters extends UsernameAndPassword {
     public static final String GET_ALL_SEQUENCING_QUOTES_URL = "/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true";
     public static final String GET_ALL_PRICE_ITEMS = "/quotes/ws/portals/private/get_price_list";
     
-    String getUrl();
+    String getUrl(String path);
 
     String getUsername();
 

@@ -168,4 +168,8 @@ public interface LabEvent {
     public Collection<SampleSheet> getAllSampleSheets();
 
     Set<SectionTransfer> getSectionTransfers();
+    
+    public void setQuoteServerBatchId(String batchId);
+    
+    public String getQuoteServerBatchId();
 }

@@ -8,19 +8,27 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.sequel.control.AbstractJerseyClientService;
 
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 
+@Default
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
 
     @Inject
     private QuoteConnectionParameters connectionParameters;
 
 
+    public QuoteServiceImpl() {}
+
     public QuoteServiceImpl(QuoteConnectionParameters quoteConnectionParameters) {
         connectionParameters = quoteConnectionParameters;
     }
 
+    @Override
+    public String registerNewWork(Quote quote, PriceItem priceItem, double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
@@ -52,7 +60,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
            return(null);
         }
 
-        WebResource resource = getJerseyClient().resource(connectionParameters.getUrl() + id);
+        String url = connectionParameters.getUrl(QuoteConnectionParameters.GET_SINGLE_QUOTE_URL);
+        WebResource resource = getJerseyClient().resource(url + id);
 
         try
         {
@@ -80,7 +89,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-        WebResource resource = getJerseyClient().resource(connectionParameters.getUrl());
+        String url = connectionParameters.getUrl(QuoteConnectionParameters.GET_ALL_PRICE_ITEMS);
+        WebResource resource = getJerseyClient().resource(url);
         PriceList prices = null;
         try
         {
@@ -88,7 +98,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
         catch(UniformInterfaceException e)
         {
-            throw new QuoteNotFoundException("Could not find price list at " + connectionParameters.getUrl());
+            throw new QuoteNotFoundException("Could not find price list at " + url);
         }
         catch(ClientHandlerException e)
         {
@@ -106,8 +116,9 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
      * @throws QuoteNotFoundException
      */
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
-
-        WebResource resource = getJerseyClient().resource(connectionParameters.getUrl());
+        String url = connectionParameters.getUrl(QuoteConnectionParameters.GET_ALL_SEQUENCING_QUOTES_URL);
+        
+        WebResource resource = getJerseyClient().resource(url);
 
         Quotes quotes = null;
         try
@@ -116,7 +127,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
         catch(UniformInterfaceException e)
         {
-            throw new QuoteNotFoundException("Could not find quotes for sequencing at " + connectionParameters.getUrl());
+            throw new QuoteNotFoundException("Could not find quotes for sequencing at " + url);
         }
         catch(ClientHandlerException e)
         {
