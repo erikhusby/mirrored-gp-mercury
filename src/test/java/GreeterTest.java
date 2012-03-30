@@ -16,9 +16,9 @@ public class GreeterTest extends Arquillian {
     @Deployment
     public static JavaArchive createDeployment() {
         JavaArchive archive = ShrinkWrap.create(JavaArchive.class)
-                .addClasses(Greeter.class, PhraseBuilder.class)
+//                .addClasses(Greeter.class, PhraseBuilder.class)
+                .addPackages(true, "")
                 .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
-        System.out.println(archive.toString(true));
         return archive;
     }
 

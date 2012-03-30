@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.TestUtilities;
+import org.broadinstitute.sequel.WeldBooter;
 import org.broadinstitute.sequel.WeldUtil;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
@@ -24,6 +25,7 @@ import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.testng.annotations.Test;
 
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -31,12 +33,18 @@ import java.util.*;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
 
-public class ProjectTest {
+public class ProjectTest extends WeldBooter {
+
+    @Inject
+    private JiraService jiraService;
+
+    @Inject
+    private BSPSampleDataFetcher bspFetcher;
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {
-        WeldUtil weld = TestUtilities.bootANewWeld();
-        JiraService jiraService = weld.getFromContainer(JiraService.class);
+//        WeldUtil weld = TestUtilities.bootANewWeld();
+//        jiraService = weld.getFromContainer(JiraService.class);
         
         CreateIssueResponse response = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
                 CreateIssueRequest.Fields.Issuetype.SequeL_Project,
@@ -53,9 +61,9 @@ public class ProjectTest {
     
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_simple_project() {
-        WeldUtil weld = TestUtilities.bootANewWeld();
-        JiraService jiraService = weld.getFromContainer(JiraService.class);
-        BSPSampleDataFetcher bspFetcher = weld.getFromContainer(BSPSampleDataFetcher.class);
+//        WeldUtil weld = TestUtilities.bootANewWeld();
+//        JiraService jiraService = weld.getFromContainer(JiraService.class);
+//        bspFetcher = weld.getFromContainer(BSPSampleDataFetcher.class);
         AbstractProject project = projectManagerCreatesProject(jiraService);
         projectManagerAddsFundingSourceToProject(project,"NHGRI");
         ProjectPlan plan = projectManagerAddsProjectPlan(project);
@@ -67,8 +75,8 @@ public class ProjectTest {
         // maybe by running a stored search in BSP,
         // or maybe by dumping in a list of root
         // sample ids.
-        LabVessel starter1 = makeRootSample("SM-1P3WY",plan,bspFetcher);
-        LabVessel starter2 = makeRootSample("SM-1P3XN",plan,bspFetcher);
+        LabVessel starter1 = makeRootSample("SM-1P3WY",plan, bspFetcher);
+        LabVessel starter2 = makeRootSample("SM-1P3XN",plan, bspFetcher);
         Collection<LabVessel> allStarters = new HashSet<LabVessel>();
 
         allStarters.add(starter1);

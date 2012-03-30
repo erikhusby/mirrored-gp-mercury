@@ -9,6 +9,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -20,12 +21,13 @@ public class BSPSampleSearchServiceTest extends WeldBooter {
     @SuppressWarnings("unused")
     private static final Log _logger = LogFactory.getLog(BSPSampleSearchServiceTest.class);
 
+    @Inject
     BSPSampleSearchService service;
 
-    @BeforeClass
-    private void init() {
-        service = weldUtil.getFromContainer(BSPSampleSearchService.class);
-    }
+//    @BeforeClass
+//    private void init() {
+//        service = weldUtil.getFromContainer(BSPSampleSearchService.class);
+//    }
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void testBasic() {

@@ -9,6 +9,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -18,12 +19,13 @@ import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 public class BSPSampleTest extends WeldBooter {
 
+    @Inject
     BSPSampleDataFetcher fetcher;
 
-    @BeforeClass
-    private void init() {
-        fetcher = weldUtil.getFromContainer(BSPSampleDataFetcher.class);
-    }
+//    @BeforeClass
+//    private void init() {
+//        fetcher = weldUtil.getFromContainer(BSPSampleDataFetcher.class);
+//    }
     
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_patient_id_integration() {

@@ -11,6 +11,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
@@ -18,12 +19,13 @@ import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 @Test(groups = EXTERNAL_INTEGRATION)
 public class JiraServiceTest extends WeldBooter {
 
+    @Inject
     private JiraService service;
 
-    @BeforeClass
-    public void initWeld() {
-        service = weldUtil.getFromContainer(JiraService.class);
-    }
+//    @BeforeClass
+//    public void initWeld() {
+//        service = weldUtil.getFromContainer(JiraService.class);
+//    }
 
 
     public void testCreation() {
