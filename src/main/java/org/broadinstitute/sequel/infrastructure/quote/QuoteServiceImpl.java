@@ -1,16 +1,17 @@
 package org.broadinstitute.sequel.infrastructure.quote;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.sequel.control.AbstractJerseyClientService;
 
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
 @Default
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
@@ -18,6 +19,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     @Inject
     private QuoteConnectionParameters connectionParameters;
 
+    static final String WORK_ITEM_ID = "workItemId\t";
 
     public QuoteServiceImpl() {}
 
@@ -27,9 +29,75 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     @Override
     public String registerNewWork(Quote quote, PriceItem priceItem, double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
-        throw new RuntimeException("I haven't been written yet.");
+        // see https://iwww.broadinstitute.org/blogs/quote/?page_id=272 for details
+        String url = connectionParameters.getUrl(QuoteConnectionParameters.REGISTER_WORK);
+        MultivaluedMap<String,String> params = new MultivaluedMapImpl();
+        params.add("quote_alpha_id", quote.getAlphanumericId());
+        params.add("platform_name",priceItem.getPlatform());
+        params.add("category_name",priceItem.getCategoryName());
+        params.add("price_item_name",priceItem.getName());
+        params.add("quantity",Double.toString(numWorkUnits));
+        params.add("complete",Boolean.TRUE.toString());
+        params.add("url",callbackUrl);
+        params.add("object_type",callbackParameterName);
+        params.add("object_value",callbackParameterValue);
+
+
+        WebResource resource = getJerseyClient().resource(url);
+        resource.accept(MediaType.TEXT_PLAIN);
+        resource.queryParams(params);
+        ClientResponse response = resource.queryParams(params).get(ClientResponse.class);
+
+        return registerNewWork(response,quote, priceItem,numWorkUnits,callbackUrl,callbackParameterName,callbackParameterValue);
+
     }
 
+
+    /**
+     * Package visibility for negative testing
+     * @return
+     */
+    String registerNewWork(ClientResponse response,Quote quote, PriceItem priceItem, double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+        if (response == null) {
+            throwQuoteServerFailureException(quote, priceItem,numWorkUnits);
+        }
+        else {
+            if (response.getClientResponseStatus() != ClientResponse.Status.OK) {
+                throw new RuntimeException("Quote server returned " + response.getClientResponseStatus() + ".  Registering work for " + numWorkUnits + " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() + " appears to have failed.");
+            }
+        }
+
+        String output = response.getEntity(String.class);
+        String workItemId = null;
+
+        if (output == null) {
+            throwQuoteServerFailureException(quote, priceItem,numWorkUnits);
+        }
+
+        if (!output.contains(WORK_ITEM_ID)) {
+            StringBuilder builder = new StringBuilder();
+            builder.append("Quote server returned the following:\n").append(output).append("\n").append("This is not what SequeL expected, so we're not sure what the status of billing is.  This happened while registering work for " + numWorkUnits + " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() + ".");
+            throw new RuntimeException(builder.toString());
+        }
+        else {
+            String[] split = output.split(WORK_ITEM_ID);
+            if (split.length != 2) {
+                throwQuoteServerFailureException(quote, priceItem,numWorkUnits);
+            }
+            else {
+                workItemId = split[1].trim();
+                if (workItemId.isEmpty() || workItemId == null) {
+                    throwQuoteServerFailureException(quote, priceItem,numWorkUnits);
+                }
+            }
+        }
+        return workItemId;
+    }
+
+    private void throwQuoteServerFailureException(Quote quote,PriceItem priceItem,double numWorkUnits) {
+        throw new RuntimeException("Quote server did not return the appropriate response.  Registering work for " + numWorkUnits + " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() + " appears to have failed.");    
+    }
+    
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
         acceptAllServerCertificates(clientConfig);
