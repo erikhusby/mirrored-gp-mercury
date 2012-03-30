@@ -352,14 +352,6 @@
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
-
-<!--
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-simple</artifactId>
-                <version>1.6.4</version>
-            </dependency>
--->
         </dependencies>
     </dependencyManagement>
 
