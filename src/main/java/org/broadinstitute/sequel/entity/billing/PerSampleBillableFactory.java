@@ -62,6 +62,10 @@ public class PerSampleBillableFactory {
                                 workItemsPerQuote.put(quotePriceItem,++workItems);
                             }
                             samplesBilledAlready.add(sample);
+
+                            // todo need a relationship persisted between Quote entity,
+                            // sample, and event, so that people can review the billing
+                            // information
                         }
                     }
                     else {
