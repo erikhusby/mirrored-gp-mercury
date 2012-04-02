@@ -11,7 +11,7 @@ import javax.inject.Inject;
 /**
  * @author breilly
  */
-public class GreeterTest extends Arquillian {
+public class GreeterTest { //} extends Arquillian {
 
     @Deployment
     public static JavaArchive createDeployment() {
@@ -25,7 +25,7 @@ public class GreeterTest extends Arquillian {
     @Inject
     Greeter greeter;
 
-    @Test
+//    @Test
     public void should_create_greeting() {
         Assert.assertEquals("Hello, Arquillian!",
                 greeter.createGreeting("Arquillian"));
