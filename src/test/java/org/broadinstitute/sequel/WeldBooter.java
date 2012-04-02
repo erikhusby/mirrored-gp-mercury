@@ -17,12 +17,22 @@ public class WeldBooter extends Arquillian {
 
     @Deployment
     public static JavaArchive createDeployment() {
+/*
         JavaArchive archive = ShrinkWrap.create(JavaArchive.class)
                 .addPackages(true, "")
                 .addAsManifestResource(new File("src/test/resources/META-INF/beans.xml"))
                 ;
+*/
+        JavaArchive archive = createBaseDeployment()
+                .addPackages(true, "")
+                ;
 //        System.out.println(archive.toString(true));
         return archive;
+    }
+
+    public static JavaArchive createBaseDeployment() {
+        return ShrinkWrap.create(JavaArchive.class)
+                .addAsManifestResource(new File("src/test/resources/META-INF/beans.xml"));
     }
 
 /*

@@ -295,7 +295,7 @@
         <profile>
             <id>arquillian-weld-ee-embedded</id>
             <dependencies>
-                <!-- in liu of javax:javaee-api. see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode -->
+                <!-- in lieu of javax:javaee-api. see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode -->
                 <dependency>
                     <groupId>org.jboss.spec</groupId>
                     <artifactId>jboss-javaee-6.0</artifactId>
@@ -318,7 +318,7 @@
                 <dependency>
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-simple</artifactId>
-                    <version>1.6.4</version>
+                    <version>1.5.10</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -370,19 +370,23 @@
         </dependency>
 
         <!-- BEGIN ARQUILLIAN GLASSFISH: these can alternately go into a separate profile to allow for swappable testing containers -->
+<!--
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>
             <artifactId>arquillian-glassfish-embedded-3.1</artifactId>
             <version>1.0.0.CR2</version>
             <scope>test</scope>
         </dependency>
+-->
         <!-- glassfish-embedded-all would need to be part of a profile for running the web app if these are put into a separate profile for arquillian -->
+<!--
         <dependency>
             <groupId>org.glassfish.main.extras</groupId>
             <artifactId>glassfish-embedded-all</artifactId>
             <version>3.1.2</version>
             <scope>provided</scope>
         </dependency>
+-->
         <!-- END ARQUILLIAN GLASSFISH -->
 
         <dependency>

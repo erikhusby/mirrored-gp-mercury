@@ -4,7 +4,11 @@ import org.broadinstitute.sequel.TestUtilities;
 import org.broadinstitute.sequel.WeldBooter;
 import org.broadinstitute.sequel.WeldUtil;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchServiceImpl;
+import org.broadinstitute.sequel.infrastructure.bsp.QABSPConnectionParameters;
+import org.broadinstitute.sequel.infrastructure.jira.EriksDesktopJiraConnectionParameters;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
@@ -22,6 +26,8 @@ import org.broadinstitute.sequel.entity.workflow.Workflow;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.infrastructure.quote.*;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.testng.annotations.Test;
 
 
@@ -40,6 +46,20 @@ public class ProjectTest extends WeldBooter {
 
     @Inject
     private BSPSampleDataFetcher bspFetcher;
+
+/*
+    @Deployment
+    public static JavaArchive createDeployment() {
+        JavaArchive archive = WeldBooter.createBaseDeployment();
+        archive.addClasses(
+                JiraServiceImpl.class,
+                BSPSampleDataFetcher.class,
+                EriksDesktopJiraConnectionParameters.class,
+                BSPSampleSearchServiceImpl.class,
+                QABSPConnectionParameters.class);
+        return archive;
+    }
+*/
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {
