@@ -3,7 +3,6 @@ package org.broadinstitute.sequel.infrastructure.quote;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.sequel.control.AbstractJerseyClientService;
 
