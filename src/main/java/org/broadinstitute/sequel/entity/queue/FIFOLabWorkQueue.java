@@ -1,9 +1,8 @@
 package org.broadinstitute.sequel.entity.queue;
 
 
-import org.broadinstitute.sequel.entity.sample.PostProjectComment;
+import org.broadinstitute.sequel.entity.sample.JiraCommentUtil;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.workflow.Workflow;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.person.Person;
@@ -69,7 +68,8 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         for (LabVessel vessel : vessels) {
             vessel.addJiraTicket(ticket);
         }
-        PostProjectComment.postUpdate("Workflow update",user.getLogin() + " has created " + ticket.getTicketName() + " for the following samples:",vessels);
+        JiraCommentUtil.postUpdate("Workflow update", user.getLogin() + " has created " + ticket.getTicketName() + " for the following samples:", vessels);
+        JiraCommentUtil.postProjectOwnershipTableToTicket(vessels,ticket);
 
         return new JiraLabWorkQueueResponse("OK",ticket);
     }

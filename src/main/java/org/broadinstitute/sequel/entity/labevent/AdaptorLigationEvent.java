@@ -8,7 +8,7 @@ import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.entity.sample.PostProjectComment;
+import org.broadinstitute.sequel.entity.sample.JiraCommentUtil;
 
 import java.util.Collection;
 
@@ -67,7 +67,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent  {
 
                     float concentration  = sampleInstance.getMolecularState().getConcentration().floatValue();
                     if (concentration < eventConfiguration.getExpectedMolecularState().getMinConcentration()) {
-                        PostProjectComment.postUpdate("Concentration Update","Concentration " + concentration + " is out of range for " + tangible.getLabCentricName(), tangible);
+                        JiraCommentUtil.postUpdate("Concentration Update", "Concentration " + concentration + " is out of range for " + tangible.getLabCentricName(), tangible);
                     }
 
                     if (!sampleInstance.getMolecularState().getMolecularEnvelope().equals(eventConfiguration.getExpectedMolecularState().getMolecularEnvelope())) {
@@ -79,7 +79,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent  {
                                 LabVessel.MetricSearchMode.NEAREST,
                                 sampleInstance);
                         if (!someMetric.isInRange(thresholds)) {
-                            PostProjectComment.postUpdate("Concentration update",thresholds.getMetricName() + " disaster for " + tangible.getLabCentricName(), tangible);
+                            JiraCommentUtil.postUpdate("Concentration update", thresholds.getMetricName() + " disaster for " + tangible.getLabCentricName(), tangible);
                         }
                     }
                 }

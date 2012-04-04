@@ -6,6 +6,8 @@ import edu.mit.broad.prodinfo.squid.entity.HibernateUtil;
 import edu.mit.broad.prodinfo.squid.lc.entity.sample.LcSample;
 import edu.mit.broad.prodinfo.squid.lcset.entity.LcsetCart;
 import edu.mit.broad.prodinfo.squid.lcset.entity.LcsetCartSample;
+import edu.mit.broad.prodinfo.squid.party.entity.Party;
+import edu.mit.broad.prodinfo.squid.party.entity.PriviledgedParty;
 import edu.mit.broad.prodinfo.squid.project.entity.CoverageType;
 import edu.mit.broad.prodinfo.squid.project.entity.Initiative;
 import edu.mit.broad.prodinfo.squid.project.entity.SeqProject;
@@ -141,7 +143,10 @@ public class DumpFromSquidTest extends WeldBooter {
                         "Squid project " + cartProject.getProjectName());
 
                 JiraTicket projectTicket = new JiraTicket(jiraService,jiraResponse.getTicketName(),jiraResponse.getId());
-                BasicProject sequelProject = new BasicProject(cartProject.getName(),projectTicket);
+                Party person = cartProject.getCreateUser().getParty();
+                BasicProject sequelProject = new BasicProject(new Person(person.getName(),person.getName(),person.getName()),
+                        cartProject.getName(),
+                        projectTicket);
                 sequelProject.addProjectPlan(new ProjectPlan(sequelProject,
                         "Squid cart " + cart.getName(),
                         workflowDescription));

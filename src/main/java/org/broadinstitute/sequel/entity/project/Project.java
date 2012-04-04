@@ -195,5 +195,7 @@ public interface Project {
     public Collection<LabEventName> getCheckpointableEvents();
 
     public SampleAnalysisBuddies getAnalysisBuddies(StartingSample sample);
+    
+    public Person getPlatformOwner();
 
 }

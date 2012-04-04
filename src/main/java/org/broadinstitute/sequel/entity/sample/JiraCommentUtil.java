@@ -18,7 +18,7 @@ import java.util.Map;
  * Utility methods for sending human readable updates
  * about samples to project managers
  */
-public class PostProjectComment {
+public class JiraCommentUtil {
 
     /**
      * Sends an alert with the message text to every project
@@ -41,7 +41,8 @@ public class PostProjectComment {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
         final Map<Project,Collection<String>> samplesByProject = new HashMap<Project,Collection<String>>();
-
+        final Collection<StartingSample> allStarters = new HashSet<StartingSample>();
+        
         for (LabVessel vessel : vessels) {
             for (SampleInstance samInstance: vessel.getSampleInstances()) {
                 for (ProjectPlan projectPlan : samInstance.getAllProjectPlans()) {
@@ -50,6 +51,7 @@ public class PostProjectComment {
                         samplesByProject.put(p,new HashSet<String>());
                     }
                     samplesByProject.get(p).add(samInstance.getStartingSample().getSampleName());
+                    allStarters.add(samInstance.getStartingSample());
                 }
             }
         }
@@ -72,7 +74,7 @@ public class PostProjectComment {
                 messageBuilder.append("|");
             }
             messageBuilder.append("\n");
-            messageBuilder.append("h6.").append("There are " + (samplesByProject.keySet().size() - 1) + " other projects in this batch.");
+            messageBuilder.append("h6.").append("There are " + (samplesByProject.keySet().size()) + " projects in this batch, representing " + allStarters.size() + " total samples.");
             messageBuilder.append("{panel}");
             // todo include total sample count from other projects, total sample count in batch.
             entry.getKey().addJiraComment(messageBuilder.toString());
@@ -104,4 +106,37 @@ public class PostProjectComment {
         
     }
 
+    public static void postProjectOwnershipTableToTicket(Collection<LabVessel> labVessels,
+                                                   JiraTicket ticket) {
+        // keep a list of sample names for each project because we're going
+        // to make a single message that references each sample in a project
+        final Map<Project,Collection<String>> samplesByProject = new HashMap<Project,Collection<String>>();
+        final Collection<StartingSample> allStarters = new HashSet<StartingSample>();
+
+        for (LabVessel vessel : labVessels) {
+            for (SampleInstance samInstance: vessel.getSampleInstances()) {
+                for (ProjectPlan projectPlan : samInstance.getAllProjectPlans()) {
+                    Project p = projectPlan.getProject();
+                    if (!samplesByProject.containsKey(p)) {
+                        samplesByProject.put(p,new HashSet<String>());
+                    }
+                    samplesByProject.get(p).add(samInstance.getStartingSample().getSampleName());
+                    allStarters.add(samInstance.getStartingSample());
+                }
+            }
+        }
+
+        StringBuilder messageBuilder = new StringBuilder("{panel:title=Project Ownership}");
+        messageBuilder.append("\n");
+        messageBuilder.append("||Sample||Project||Owner||").append("\n");
+
+        for (Map.Entry<Project,Collection<String>> entry: samplesByProject.entrySet()) {
+            for (String sampleName: entry.getValue()) {
+                String sampleURL = "[" + sampleName + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + sampleName+ "]";
+                messageBuilder.append("|").append(sampleURL).append("|").append(entry.getKey().getProjectName()).append("|").append(entry.getKey().getPlatformOwner().getLogin()).append("|").append("\n");
+            }
+        }
+        messageBuilder.append("{panel}");
+        ticket.addComment(messageBuilder.toString());
+    }
 }
