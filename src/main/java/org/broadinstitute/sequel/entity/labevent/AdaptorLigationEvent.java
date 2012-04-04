@@ -3,17 +3,14 @@ package org.broadinstitute.sequel.entity.labevent;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.LabMetric;
 import org.broadinstitute.sequel.entity.vessel.LabMetricRange;
-import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.entity.sample.SampleSheetAlertUtil;
+import org.broadinstitute.sequel.entity.sample.PostProjectComment;
 
 import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
 
 /**
  * A very early thought about how one might
@@ -70,7 +67,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent  {
 
                     float concentration  = sampleInstance.getMolecularState().getConcentration().floatValue();
                     if (concentration < eventConfiguration.getExpectedMolecularState().getMinConcentration()) {
-                        SampleSheetAlertUtil.doAlert("Concentration " + concentration + " is out of range for " + tangible.getLabCentricName(), tangible, true);
+                        PostProjectComment.postUpdate("Concentration " + concentration + " is out of range for " + tangible.getLabCentricName(), tangible);
                     }
 
                     if (!sampleInstance.getMolecularState().getMolecularEnvelope().equals(eventConfiguration.getExpectedMolecularState().getMolecularEnvelope())) {
@@ -82,7 +79,7 @@ public class AdaptorLigationEvent extends AbstractLabEvent  {
                                 LabVessel.MetricSearchMode.NEAREST,
                                 sampleInstance);
                         if (!someMetric.isInRange(thresholds)) {
-                            SampleSheetAlertUtil.doAlert(thresholds.getMetricName() + " disaster for " + tangible.getLabCentricName(), tangible, true);
+                            PostProjectComment.postUpdate(thresholds.getMetricName() + " disaster for " + tangible.getLabCentricName(), tangible);
                         }
                     }
                 }

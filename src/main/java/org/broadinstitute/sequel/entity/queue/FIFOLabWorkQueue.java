@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.queue;
 
 
+import org.broadinstitute.sequel.entity.sample.PostProjectComment;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.workflow.Workflow;
@@ -68,6 +69,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         for (LabVessel vessel : vessels) {
             vessel.addJiraTicket(ticket);
         }
+        PostProjectComment.postUpdate(user.getLogin() + " has created " + ticket.getTicketName() + " for the following samples:",vessels);
 
         return new JiraLabWorkQueueResponse("OK",ticket);
     }
@@ -148,8 +150,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
                 }
             }
             if (foundIt) {
-                requestedWork.remove(queuedWork);                
-                //notifyJiraThatWorkHasStarted(queuedWork, user);
+                requestedWork.remove(queuedWork);
                 applyWorkflowStateChange(vessel,workflow);
                 break;
             }
@@ -185,15 +186,6 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         // both.
         Workflow workflow = activeWorkflows.iterator().next();
         workflow.setState(new WorkflowState("work has stated"));
-    }
-    
-    private void notifyJiraThatWorkHasStarted(WorkQueueEntry queuedWork, Person user) {
-        queuedWork.addWorkStarted(user);
-        SequencingPlanDetail sequencingPlan = queuedWork.getSequencingPlan();
-        ProjectPlan projectPlan = sequencingPlan.getProjectPlan();
-        Project p = projectPlan.getProject();
-        p.addJiraComment(user.getFirstName() + " " + user.getLastName() + " has started work for plan '" +
-                    projectPlan.getName() + "' for starter " + queuedWork.getLabVessel().getLabel());
     }
 
     @Override

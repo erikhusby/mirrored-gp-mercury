@@ -50,12 +50,16 @@ public class Person {
         return lastName;
     }
 
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
+    
     /**
      * LDAP user name
      * @return
      */
     public String getLogin() {
-        throw new RuntimeException("Method not yet implemented.");
+        return username;
     }
 
     public boolean canLogin() {
