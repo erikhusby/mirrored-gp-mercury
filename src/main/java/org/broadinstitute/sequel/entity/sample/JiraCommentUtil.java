@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.sample;
 
 
 
+import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -133,7 +134,12 @@ public class JiraCommentUtil {
         for (Map.Entry<Project,Collection<String>> entry: samplesByProject.entrySet()) {
             for (String sampleName: entry.getValue()) {
                 String sampleURL = "[" + sampleName + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + sampleName+ "]";
-                messageBuilder.append("|").append(sampleURL).append("|").append(entry.getKey().getProjectName()).append("|").append(entry.getKey().getPlatformOwner().getLogin()).append("|").append("\n");
+                Person projectOwner = entry.getKey().getPlatformOwner();
+                String userName = null;
+                if (projectOwner != null) {
+                    userName = projectOwner.getLogin();
+                }
+                messageBuilder.append("|").append(sampleURL).append("|").append(entry.getKey().getProjectName()).append("|").append(userName).append("|").append("\n");
             }
         }
         messageBuilder.append("{panel}");

@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel;
 
 
+/*
 import edu.mit.broad.prodinfo.squid.bettalims.TransferEntityTraverser;
 import edu.mit.broad.prodinfo.squid.bettalims.entity.Plate;
 import edu.mit.broad.prodinfo.squid.bettalims.entity.ReceptacleTransferEvent;
@@ -19,6 +20,7 @@ import edu.mit.broad.prodinfo.squid.project.entity.SeqProject;
 import edu.mit.broad.prodinfo.squid.quant.entity.LibraryQuant;
 import edu.mit.broad.prodinfo.squid.services.labopsjira.samples.LcSetSampleDataServiceImpl;
 import edu.mit.broad.prodinfo.squid.workrequest.entity.*;
+*/
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
@@ -42,7 +44,6 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 import org.hibernate.Hibernate;
-import org.junit.runner.RunWith;
 import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
@@ -50,6 +51,12 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import java.util.*;
 
+/**
+ * Commented out because it's an experiment
+ * aimed at exporting squid data into
+ * sequel.  Look at sequel's pom.xml for
+ * instructions on how to import squid.
+ */
 public class DumpFromSquidTest extends WeldBooter {
 
     /**
@@ -83,6 +90,7 @@ public class DumpFromSquidTest extends WeldBooter {
 
      */
 
+    /*
     @Test
     public void get_from_squid() throws Exception {
 
@@ -92,48 +100,6 @@ public class DumpFromSquidTest extends WeldBooter {
         EntityManager em = Persistence.createEntityManagerFactory("SquidSequeL").createEntityManager();
         WorkRequest wr = em.find(WorkRequest.class,25030L);
 
-        /*
-        Set<Initiative> initiatves = new HashSet<Initiative>();
-
-        Project project = new BasicProject("Foo",null);
-        
-        ProjectPlan plan = new ProjectPlan(project,"Squid WR " + wr.getWorkRequestId(),new WorkflowDescription(
-                wr.getWorkRequestType().getWorkRequestDomain().getName() + " " + wr.getWorkRequestType().getName(),
-                null,
-                null,
-                null));
-
-        if (HibernateUtil.proxySafeIsInstance(wr, SolexaWorkRequest.class)) {
-            String hybSelDesign = HibernateUtil.proxySafeCast(wr,SolexaWorkRequest.class).getHybSelDesign().getName();
-            plan.addReagentDesign(new ReagentDesign(hybSelDesign,ReagentDesign.REAGENT_TYPE.BAIT));
-        }
-
-        
-        Collection<LcSampleWorkReqCheckout> checkouts = LcSampleWorkReqCheckout.findByWorkRequest(wr,em);
-        
-        for (AbstractWorkRequestMaterial workRequestMaterial : wr.getWorkRequestMaterials()) {
-            LcSample sam = workRequestMaterial.getLcSample();
-            String derivedFrom = sam.getDerivedFrom();
-            LcSample parentSample = sam.getParentSample();
-            initiatves.add(workRequestMaterial.getProject().getInitiative());
-            String bspSampleName = sam.getLsid().split("broadinstitute.org:bsp.prod.sample:")[1];
-            BSPSampleDTO bspDTO = bspLookup.fetchSingleSampleFromBSP(bspSampleName);
-            plan.setQuote(new Quote(workRequestMaterial.getQuoteId(),quoteService.getQuoteFromQuoteServer(workRequestMaterial.getQuoteId())));
-            SampleSheet sampleSheet = new SampleSheetImpl();
-            sampleSheet.addStartingSample(new BSPSample(bspSampleName,plan));
-            plan.addStarter(new TwoDBarcodedTube(bspSampleName,sampleSheet));
-            System.out.println(bspDTO.getCollection());
-
-            for (LcSampleWorkReqCheckout checkout : checkouts) {
-                if (checkout.getWorkRequestMaterial().equals(workRequestMaterial)) {
-                    System.out.println("Checkout from " + workRequestMaterial.getLcSample().getRootLsid() + " to " + checkout.getAliquot().getLsid());
-                }
-                Collection<ReceptacleTransferEvent> transfers = checkout.getSeqContent().getReceptacle().getReceptacleTransferEventsThisAsSource();
-                System.out.println(transfers.size() + " transfers from " + checkout.getAliquot().getLsid());
-            }
-        }
-
-        */
         LcsetCart cart = em.find(LcsetCart.class,1422L);
         Map<String,BasicProject> projectsByName = new HashMap<String, BasicProject>();
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
@@ -228,19 +194,12 @@ public class DumpFromSquidTest extends WeldBooter {
 
     }
 
+    // copied from LcSetService
     private static class FindAllQuantsCriteria implements TransferEntityTraverser.TransferCriteria {
 
-        /**
-         * LibraryQuant does not implement equals/hashcode.  We're dealing solely with persistent or detached
-         * instances, so the LibraryQuant Long PK should be usable as a unique identifier.
-         */
         private Map<Long, LibraryQuant> libraryQuants = new HashMap<Long, LibraryQuant>();
 
-        /**
-         * Constructor to initialize with the quants associated with this receptacle
-         *
-         * @param receptacle
-         */
+
         public FindAllQuantsCriteria(Receptacle receptacle) {
             for (LibraryQuant quant : receptacle.getLibraryQuants())
                 libraryQuants.put(quant.getQuantId(), quant);
@@ -266,4 +225,5 @@ public class DumpFromSquidTest extends WeldBooter {
             return libraryQuants.values();
         }
     }
+    */
 }

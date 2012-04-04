@@ -13,12 +13,14 @@
     <!-- uncomment this to enable squid integration.
     copy your local squid_app subdirs to the "sequel"
     directory -->
+    <!--
     <parent>
         <groupId>edu.mit.broad</groupId>
         <artifactId>prodinfo</artifactId>
         <version>1.2-SNAPSHOT</version>
         <relativePath>../prodinfo/pom.xml</relativePath>
     </parent>
+    -->
 
     <name>SequeL</name>
     <description>The next generation Squid.</description>
@@ -310,8 +312,10 @@
             <version>1.1.5.Final</version>
             <type>jar</type>
         </dependency>
+        <!-- uncomment this to enable squid integration -->
+        <!--
         <dependency>
-            <!-- uncomment this to enable squid integration -->
+
             <groupId>Squid</groupId>
             <artifactId>SquidEntities</artifactId>
             <version>${build.version}</version>
@@ -328,6 +332,7 @@
             <version>1.0-SP2</version>
             <scope>provided</scope>
         </dependency>
+        -->
         <!-- glassfish-embedded-all must be before javaee-api -->
         <!--
         <dependency>
