@@ -9,6 +9,17 @@
     <version>1.0-SNAPSHOT</version>
     <inceptionYear>2012</inceptionYear>
 
+
+    <!-- uncomment this to enable squid integration.
+    copy your local squid_app subdirs to the "sequel"
+    directory -->
+    <parent>
+        <groupId>edu.mit.broad</groupId>
+        <artifactId>prodinfo</artifactId>
+        <version>1.2-SNAPSHOT</version>
+        <relativePath>../prodinfo/pom.xml</relativePath>
+    </parent>
+
     <name>SequeL</name>
     <description>The next generation Squid.</description>
 
@@ -300,6 +311,13 @@
             <type>jar</type>
         </dependency>
         <dependency>
+            <!-- uncomment this to enable squid integration -->
+            <groupId>Squid</groupId>
+            <artifactId>SquidEntities</artifactId>
+            <version>${build.version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
             <version>1.0-SP2</version>
@@ -326,6 +344,9 @@
             <version>2.9</version>
             <scope>test</scope>
         </dependency>
+
+
+
         <!--
         <dependency>
             <groupId>javax</groupId>
@@ -368,7 +389,7 @@
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>3.6.1.Final</version>
+            <version>4.1.0.Final</version>
         </dependency>
         <dependency>
             <groupId>org.hibernate</groupId>
@@ -378,7 +399,7 @@
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
-            <version>3.6.1.Final</version>
+            <version>4.1.0.Final</version>
             <exclusions>
                 <!-- using cglib-nodep instead -->
                 <exclusion>

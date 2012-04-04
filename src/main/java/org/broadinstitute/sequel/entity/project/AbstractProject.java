@@ -228,6 +228,11 @@ public abstract class AbstractProject implements Project {
     }
 
     @Override
+    public Collection<ProjectPlan> getAllPlans() {
+        return projectPlans;
+    }
+
+    @Override
     public int hashCode() {
         return projectName != null ? projectName.hashCode() : 0;
     }

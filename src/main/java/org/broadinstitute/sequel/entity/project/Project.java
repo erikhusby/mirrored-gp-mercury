@@ -66,6 +66,8 @@ public interface Project {
     
     public void addProjectPlan(ProjectPlan projectPlan);
 
+    public Collection<ProjectPlan> getAllPlans();
+
     public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription);
 
     public Collection<LabVessel> getAllVessels();

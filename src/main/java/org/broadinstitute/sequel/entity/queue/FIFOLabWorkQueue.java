@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.queue;
 
 
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.workflow.Workflow;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.person.Person;
@@ -49,7 +50,6 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         this.jiraService = jiraService;
     }
 
-
     @Override
     /**
      * Starts work for all the vessels, and creates a
@@ -68,7 +68,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         for (LabVessel vessel : vessels) {
             vessel.addJiraTicket(ticket);
         }
-        
+
         return new JiraLabWorkQueueResponse("OK",ticket);
     }
 
@@ -149,7 +149,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
             }
             if (foundIt) {
                 requestedWork.remove(queuedWork);                
-                notifyJiraThatWorkHasStarted(queuedWork, user);
+                //notifyJiraThatWorkHasStarted(queuedWork, user);
                 applyWorkflowStateChange(vessel,workflow);
                 break;
             }
