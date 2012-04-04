@@ -318,6 +318,11 @@
             <type>jar</type>
         </dependency>
         <dependency>
+            <groupId>edu.mit.broad.prodinfo</groupId>
+            <artifactId>squidServices</artifactId>
+            <version>${build.version}</version>
+        </dependency>
+        <dependency>
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
             <version>1.0-SP2</version>

@@ -1,8 +1,13 @@
 package org.broadinstitute.sequel;
 
 
+import edu.mit.broad.prodinfo.squid.bettalims.TransferEntityTraverser;
+import edu.mit.broad.prodinfo.squid.bettalims.entity.Plate;
 import edu.mit.broad.prodinfo.squid.bettalims.entity.ReceptacleTransferEvent;
+import edu.mit.broad.prodinfo.squid.bettalims.entity.StationEvent;
+import edu.mit.broad.prodinfo.squid.bettalims.entity.WellDescription;
 import edu.mit.broad.prodinfo.squid.entity.HibernateUtil;
+import edu.mit.broad.prodinfo.squid.lc.entity.receptacle.Receptacle;
 import edu.mit.broad.prodinfo.squid.lc.entity.sample.LcSample;
 import edu.mit.broad.prodinfo.squid.lcset.entity.LcsetCart;
 import edu.mit.broad.prodinfo.squid.lcset.entity.LcsetCartSample;
@@ -11,6 +16,8 @@ import edu.mit.broad.prodinfo.squid.party.entity.PriviledgedParty;
 import edu.mit.broad.prodinfo.squid.project.entity.CoverageType;
 import edu.mit.broad.prodinfo.squid.project.entity.Initiative;
 import edu.mit.broad.prodinfo.squid.project.entity.SeqProject;
+import edu.mit.broad.prodinfo.squid.quant.entity.LibraryQuant;
+import edu.mit.broad.prodinfo.squid.services.labopsjira.samples.LcSetSampleDataServiceImpl;
 import edu.mit.broad.prodinfo.squid.workrequest.entity.*;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
@@ -22,6 +29,7 @@ import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
 import org.broadinstitute.sequel.entity.queue.LcSetParameters;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -129,6 +137,7 @@ public class DumpFromSquidTest extends WeldBooter {
         LcsetCart cart = em.find(LcsetCart.class,1422L);
         Map<String,BasicProject> projectsByName = new HashMap<String, BasicProject>();
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
+        Map<String,Collection<LibraryQuant>> quantsForBspSample = new HashMap<String, Collection<LibraryQuant>>();
         WorkflowDescription workflowDescription = new WorkflowDescription("HS","7.0",billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         for (LcsetCartSample cartSample : cart.getLcsetCartSamples()) {
             String quoteAlpha = cartSample.getSequencingQuote();
@@ -164,6 +173,19 @@ public class DumpFromSquidTest extends WeldBooter {
             
             projectPlan.addStarter(bspTube);
             projectPlan.addReagentDesign(new ReagentDesign(cart.getHybselBaitDesign().getName(), ReagentDesign.REAGENT_TYPE.BAIT));
+
+            for (LcSampleWorkReqCheckout checkout: LcSampleWorkReqCheckout.findByWorkRequest(cart.getWorkRequest(), em)){
+                String bspName = checkout.getWorkRequestMaterial().getLcSample().getLsid().split("broadinstitute.org:bsp.prod.sample:")[1];
+                if (bspName.equals(bspSampleName)) {
+                    Receptacle aliquot = checkout.getSeqContent().getReceptacle();
+                    FindAllQuantsCriteria quantFinder = new FindAllQuantsCriteria(aliquot);
+                    new TransferEntityTraverser().recurseChildTransfers(aliquot,quantFinder);
+                    Collection<LibraryQuant> quants = quantFinder.getLibraryQuants();
+                    System.out.println("Found " + quants.size() + " quants for " +bspName);
+
+                    quantsForBspSample.put(bspName,quants);
+                }
+            }
         }
 
         // create jira tickets for each project
@@ -194,6 +216,54 @@ public class DumpFromSquidTest extends WeldBooter {
         // quant attachments: when uploaded, dump to project ticket.  Highlight quant out of range for
         // a single sample, rollover to show tumor/normal, case/control?
 
+        for (LabVessel starter : allStarters) {
+            for (SampleInstance sampleInstance : starter.getSampleInstances()) {
+                String sampleName = sampleInstance.getStartingSample().getSampleName();
+                if (quantsForBspSample.containsKey(sampleName)) {
+                    sampleInstance.getSingleProjectPlan().getProject().addJiraComment("Quant " + quantsForBspSample.get(sampleName).iterator().next().getQuantValue());
+                }
+            }    
+        }
 
+
+    }
+
+    private static class FindAllQuantsCriteria implements TransferEntityTraverser.TransferCriteria {
+
+        /**
+         * LibraryQuant does not implement equals/hashcode.  We're dealing solely with persistent or detached
+         * instances, so the LibraryQuant Long PK should be usable as a unique identifier.
+         */
+        private Map<Long, LibraryQuant> libraryQuants = new HashMap<Long, LibraryQuant>();
+
+        /**
+         * Constructor to initialize with the quants associated with this receptacle
+         *
+         * @param receptacle
+         */
+        public FindAllQuantsCriteria(Receptacle receptacle) {
+            for (LibraryQuant quant : receptacle.getLibraryQuants())
+                libraryQuants.put(quant.getQuantId(), quant);
+        }
+
+
+        @Override
+        public boolean evaluatePlateWell(Plate plate, WellDescription wellDescription, int hopCount, StationEvent stationEvent) {
+            return true;
+        }
+
+        @Override
+        public boolean evaluateReceptacle(Receptacle receptacle, int hopCount, StationEvent stationEvent) {
+
+            for (LibraryQuant quant : receptacle.getLibraryQuants()) {
+                libraryQuants.put(quant.getQuantId(), quant);
+            }
+
+            return true;
+        }
+
+        public Collection<LibraryQuant> getLibraryQuants() {
+            return libraryQuants.values();
+        }
     }
 }
