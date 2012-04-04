@@ -35,7 +35,8 @@ public class PostProjectComment {
      * @param  message the text of the message
      * @param vessels the containers used in the operation
      */
-    public static void postUpdate(String message,
+    public static void postUpdate(String title,
+                                  String message,
                                   Collection<LabVessel> vessels) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
@@ -54,13 +55,25 @@ public class PostProjectComment {
         }
         
         for (Map.Entry<Project,Collection<String>> entry: samplesByProject.entrySet()) {
-            StringBuilder messageBuilder = new StringBuilder(message);
+            StringBuilder messageBuilder = new StringBuilder("{panel:title=" + title + "}");
+            messageBuilder.append(message);
             messageBuilder.append("\n");
+            
+            int sampleCount = 0;
             for (String sampleName: entry.getValue()) {
                 String sampleURL = "[" + sampleName + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + sampleName+ "]";
-                messageBuilder.append(" * ").append(sampleURL).append("\n");
+                messageBuilder.append("|").append(sampleURL);
+                sampleCount++;
+                if (sampleCount % 6 == 0) {
+                    messageBuilder.append("|").append("\n");
+                }
             }
-            messageBuilder.append("There are " + (samplesByProject.keySet().size() - 1) + " other projects in this batch.");
+            if (!messageBuilder.toString().trim().endsWith("|")) {
+                messageBuilder.append("|");
+            }
+            messageBuilder.append("\n");
+            messageBuilder.append("h6.").append("There are " + (samplesByProject.keySet().size() - 1) + " other projects in this batch.");
+            messageBuilder.append("{panel}");
             // todo include total sample count from other projects, total sample count in batch.
             entry.getKey().addJiraComment(messageBuilder.toString());
         }
@@ -82,11 +95,12 @@ public class PostProjectComment {
      * @param  message the text of the message
      * @param vessel the container used in the operation
      */
-    public static void postUpdate(String message,
+    public static void postUpdate(String title,
+                                  String message,
                                   LabVessel vessel) {
         Collection<LabVessel> vessels = new HashSet<LabVessel>();
         vessels.add(vessel);
-        postUpdate(message,vessels);
+        postUpdate(title,message,vessels);
         
     }
 

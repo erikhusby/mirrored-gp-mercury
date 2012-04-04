@@ -69,7 +69,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         for (LabVessel vessel : vessels) {
             vessel.addJiraTicket(ticket);
         }
-        PostProjectComment.postUpdate(user.getLogin() + " has created " + ticket.getTicketName() + " for the following samples:",vessels);
+        PostProjectComment.postUpdate("Workflow update",user.getLogin() + " has created " + ticket.getTicketName() + " for the following samples:",vessels);
 
         return new JiraLabWorkQueueResponse("OK",ticket);
     }

@@ -6,9 +6,9 @@ import javax.enterprise.inject.Default;
 @Default
 public class EriksDesktopJiraConnectionParameters implements JiraConnectionParameters {
 
-    private String username = "mcovarr";
+    private String username = "sequel";
 
-    private String password = "changeme";
+    private String password = "sequel";
     
     private int port = 8080;
 
