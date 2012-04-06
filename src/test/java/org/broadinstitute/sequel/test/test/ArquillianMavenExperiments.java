@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.test;
+package org.broadinstitute.sequel.test.test;
 
 import org.broadinstitute.sequel.test.DeploymentBuilder;
 import org.broadinstitute.sequel.test.beans.SimpleService;

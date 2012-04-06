@@ -1,5 +1,6 @@
-package org.broadinstitute.sequel.test;
+package org.broadinstitute.sequel.test.test;
 
+import org.broadinstitute.sequel.test.DeploymentBuilder;
 import org.broadinstitute.sequel.test.beans.SimpleService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -12,18 +13,17 @@ import javax.inject.Inject;
 /**
  * @author breilly
  */
-public class DeploymentBuilderTest extends Arquillian {
+public class DeploymentBuilderBeansXmlOverrideTest extends Arquillian {
 
     @Inject
     private SimpleService service;
 
     @Deployment
     public static WebArchive makeArchive() {
-        return DeploymentBuilder.buildSequelWar().addPackage("org.broadinstitute.sequel.test.beans");
-    }
+        return DeploymentBuilder.buildSequelWarWithAlternatives("org.broadinstitute.sequel.test.beans.AlternativeSimpleServiceImpl").addPackage("org.broadinstitute.sequel.test.beans");    }
 
     @Test
     public void testInjection() {
-        Assert.assertEquals(service.getName(), "SimpleServiceImpl");
+        Assert.assertEquals(service.getName(), "AlternativeSimpleServiceImpl");
     }
 }
