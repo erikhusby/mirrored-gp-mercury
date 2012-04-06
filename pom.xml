@@ -7,6 +7,7 @@
     <groupId>SequeL</groupId>
     <artifactId>SequeL</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
     <name>SequeL</name>
@@ -50,21 +51,28 @@
     </developers>
 
     <repositories>
+        <!-- Is this needed anymore? We have jboss-javaee-6.0 in lieu of javaee-api (see https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode) -->
         <repository>
             <id>java.net2</id>
             <name>Repository hosting the jee6 artifacts</name>
             <url>http://download.java.net/maven/2</url>
         </repository>
+
+        <!-- JBoss Repository for Arquillian, Hibernate, etc. -->
         <repository>
             <id>JBoss</id>
             <name>JBoss Repository</name>
             <url>https://repository.jboss.org/nexus/content/groups/public/</url>
         </repository>
+
+        <!-- Is this needed anymore? Glassfish libraries and plugins seem to be in the maven central repository. -->
         <repository>
             <id>Glassfish</id>
             <name>Glassfish Repository</name>
             <url>http://download.java.net/maven/glassfish</url>
         </repository>
+
+        <!-- PrimeFaces Repository for PrimeFaces and themes -->
         <repository>
             <id>prime-repo</id>
             <name>PrimeFaces Maven Repository</name>
@@ -89,8 +97,6 @@
 
         <site.url>http://prodinfosvn.broadinstitute.org:8000/m2-projects</site.url>
         <site.path>/prodinfo/releng/m2-projects</site.path>
-
-
     </properties>
 
     <profiles>
@@ -293,7 +299,7 @@
             </profile>
 
         <profile>
-            <id>arquillian-weld-ee-embedded</id>
+            <id>arquillian-weld</id>
             <dependencies>
                 <!-- in lieu of javax:javaee-api. see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode -->
                 <dependency>
@@ -306,7 +312,7 @@
                 <dependency>
                     <groupId>org.jboss.arquillian.container</groupId>
                     <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
-                    <version>1.0.0.CR2</version>
+                    <version>1.0.0.CR3</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
@@ -325,12 +331,12 @@
         </profile>
 
         <profile>
-            <id>arquillian-glassfish-embedded</id>
+            <id>arquillian-glassfish</id>
             <dependencies>
                 <dependency>
                     <groupId>org.jboss.arquillian.container</groupId>
                     <artifactId>arquillian-glassfish-embedded-3.1</artifactId>
-                    <version>1.0.0.CR2</version>
+                    <version>1.0.0.CR3</version>
                     <scope>test</scope>
                 </dependency>
                 <dependency>
@@ -340,6 +346,50 @@
                     <scope>provided</scope>
                 </dependency>
             </dependencies>
+        </profile>
+
+        <profile>
+            <id>run-embedded</id>
+            <!--<activation>-->
+                <!--<activeByDefault>true</activeByDefault>-->
+            <!--</activation>-->
+            <dependencies>
+                <dependency>
+                    <groupId>org.glassfish.main.extras</groupId>
+                    <artifactId>glassfish-embedded-all</artifactId>
+                    <version>3.1.2</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.glassfish.embedded</groupId>
+                        <artifactId>maven-embedded-glassfish-plugin</artifactId>
+                        <version>3.1.2</version>
+                        <configuration>
+                            <app>${project.build.directory}/${build.finalName}.war</app>
+                            <port>8080</port>
+                            <contextRoot>SequeL</contextRoot>
+                            <autoDelete>true</autoDelete>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
@@ -363,9 +413,24 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- BEGIN arquillian -->
         <dependency>
             <groupId>org.jboss.arquillian.testng</groupId>
             <artifactId>arquillian-testng-container</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.resolver</groupId>
+            <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+            <version>1.1.0-alpha-1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.resolver</groupId>
+            <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+            <version>1.1.0-alpha-1</version>
             <scope>test</scope>
         </dependency>
 
@@ -388,6 +453,7 @@
         </dependency>
 -->
         <!-- END ARQUILLIAN GLASSFISH -->
+        <!-- END arquillian -->
 
         <dependency>
             <groupId>commons-collections</groupId>
@@ -402,12 +468,19 @@
             <scope>test</scope>
         </dependency>
 
-
+        <!-- BEGIN primefaces -->
         <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
             <version>3.2</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.primefaces.themes</groupId>
+            <artifactId>pepper-grinder</artifactId>
+            <version>1.0.4</version>
+        </dependency>
+        <!-- END primefaces -->
 
         <dependency>
             <groupId>log4j</groupId>
@@ -547,6 +620,20 @@
                     <targetJdk>1.6</targetJdk>
                 </configuration>
             </plugin>
+
+<!--
+            <plugin>
+                <groupId>org.glassfish.embedded</groupId>
+                <artifactId>maven-embedded-glassfish-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <app>${project.build.directory}/${build.finalName}.war</app>
+                    <port>8080</port>
+                    <contextRoot>SequeL</contextRoot>
+                    <autoDelete>true</autoDelete>
+                </configuration>
+            </plugin>
+-->
 
         </plugins>
 

@@ -1,14 +1,13 @@
 package org.broadinstitute.sequel.jira;
 
 
-import org.broadinstitute.sequel.WeldBooter;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.test.ContainerTest;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -17,16 +16,10 @@ import java.io.IOException;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 @Test(groups = EXTERNAL_INTEGRATION)
-public class JiraServiceTest extends WeldBooter {
+public class JiraServiceTest extends ContainerTest {
 
     @Inject
     private JiraService service;
-
-//    @BeforeClass
-//    public void initWeld() {
-//        service = weldUtil.getFromContainer(JiraService.class);
-//    }
-
 
     public void testCreation() {
 
