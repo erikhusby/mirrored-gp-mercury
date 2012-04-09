@@ -298,8 +298,24 @@
                 </build>
             </profile>
 
+        <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
-            <id>arquillian-weld</id>
+            <id>Java EE</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>javax</groupId>
+                    <artifactId>javaee-api</artifactId>
+                    <version>6.0</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>Arquillian-Weld</id>
             <dependencies>
                 <!-- in lieu of javax:javaee-api. see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode -->
                 <dependency>
@@ -331,7 +347,7 @@
         </profile>
 
         <profile>
-            <id>arquillian-glassfish</id>
+            <id>Arquillian-Glassfish</id>
             <dependencies>
                 <dependency>
                     <groupId>org.jboss.arquillian.container</groupId>
@@ -349,7 +365,7 @@
         </profile>
 
         <profile>
-            <id>run-embedded</id>
+            <id>Run-embedded</id>
             <!--<activation>-->
                 <!--<activeByDefault>true</activeByDefault>-->
             <!--</activation>-->

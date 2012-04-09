@@ -63,7 +63,7 @@ public abstract class AbstractProject implements Project {
 
     @Override
     public ProjectPriority getPriority() {
-        throw new RuntimeException("I haven't been written yet.");
+        return ProjectPriority.NORMAL;
     }
 
     @Override
@@ -176,6 +176,11 @@ public abstract class AbstractProject implements Project {
     @Override
     public Collection<LabVessel> getAllStarters() {
         return starters;
+    }
+
+    @Override
+    public Collection<ProjectPlan> getProjectPlans() {
+        return projectPlans;
     }
 
     @Override

@@ -63,7 +63,9 @@ public interface Project {
     public void sendAlert(String alertText);
 
     public Collection<LabVessel> getAllStarters();
-    
+
+    public Collection<ProjectPlan> getProjectPlans();
+
     public void addProjectPlan(ProjectPlan projectPlan);
 
     public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription);

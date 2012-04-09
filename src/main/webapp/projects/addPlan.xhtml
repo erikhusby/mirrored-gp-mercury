@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core" xmlns:p="http://primefaces.org/ui">
+<body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="projectName" value="#{projectPlanCreate.projectName}" required="true"/>
+                <f:event type="preRenderView" listener="#{projectPlanCreate.loadProject}"/>
+            </f:metadata>
+        </ui:define>
+        <ui:define name="title">Add Project Plan</ui:define>
+        <ui:define name="body">
+            <h:form>
+                <p>For project: #{projectPlanCreate.project.projectName}</p>
+                <h:panelGrid columns="2">
+                    <h:outputLabel for="projectPlanName">Plan Name: </h:outputLabel>
+                    <h:inputText id="projectPlanName" value="#{projectPlanCreate.projectPlanName}"/>
+                    <h:link value="Cancel" outcome="detail">
+                        <f:param name="projectName" value="#{projectPlanCreate.project.projectName}"/>
+                    </h:link>
+                    <p:commandButton value="Save" action="#{projectPlanCreate.addProjectPlan}"/>
+                </h:panelGrid>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+</body>
+</html>

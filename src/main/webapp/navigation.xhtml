@@ -5,14 +5,13 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:ui="http://java.sun.com/jsf/facelets">
 <body>
-    <ui:composition template="/layout.xhtml">
-        <ui:define name="title">Home</ui:define>
-        <ui:define name="body">
-            <p>Welcome to SequeL!</p>
-        </ui:define>
+    <ui:composition>
+        <h:link outcome="/index">Home</h:link>
+        <ul>
+            <li><h:link outcome="/projects/list">Projects</h:link></li>
+        </ul>
     </ui:composition>
 </body>
 </html>
