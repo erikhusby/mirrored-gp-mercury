@@ -20,8 +20,10 @@
             <h:panelGrid columns="2">
                 <h:panelGroup>Project Name: </h:panelGroup>
                 <h:outputText value="#{projectDetail.project.projectName}"/>
+
                 <h:panelGroup>Active Status: </h:panelGroup>
                 <h:outputText value="#{projectDetail.project.active ? 'Active' : 'Inactive'}"/>
+
                 <h:panelGroup>Priority: </h:panelGroup>
                 <h:outputText value="#{projectDetail.project.priority}"/>
             </h:panelGrid>
@@ -30,6 +32,9 @@
             <p:dataTable value="#{projectDetail.projectPlans}" var="plan">
                 <p:column headerText="Plan Name">
                     #{plan.name}
+                </p:column>
+                <p:column headerText="Workflow">
+                    #{plan.workflowDescription.workflowName}
                 </p:column>
             </p:dataTable>
 

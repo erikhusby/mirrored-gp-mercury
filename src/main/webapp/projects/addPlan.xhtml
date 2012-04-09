@@ -12,7 +12,7 @@
         <ui:define name="metadata">
             <f:metadata>
                 <f:viewParam name="projectName" value="#{projectPlanCreate.projectName}" required="true"/>
-                <f:event type="preRenderView" listener="#{projectPlanCreate.loadProject}"/>
+                <f:event type="preRenderView" listener="#{projectPlanCreate.beginAdd}"/>
             </f:metadata>
         </ui:define>
         <ui:define name="title">Add Project Plan</ui:define>
@@ -22,10 +22,17 @@
                 <h:panelGrid columns="2">
                     <h:outputLabel for="projectPlanName">Plan Name: </h:outputLabel>
                     <h:inputText id="projectPlanName" value="#{projectPlanCreate.projectPlanName}"/>
+
+                    <h:outputLabel for="workflowDescription">Workflow: </h:outputLabel>
+                    <p:selectOneMenu value="#{projectPlanCreate.workflowDescription}" effect="">
+                        <f:selectItem itemValue="null" itemLabel=""/>
+                        <f:selectItems value="#{projectPlanCreate.allWorkflowDescriptions}" var="w" itemLabel="#{w.workflowName}"/>
+                    </p:selectOneMenu>
+
                     <h:link value="Cancel" outcome="detail">
                         <f:param name="projectName" value="#{projectPlanCreate.project.projectName}"/>
                     </h:link>
-                    <p:commandButton value="Save" action="#{projectPlanCreate.addProjectPlan}"/>
+                    <p:commandButton value="Save" action="#{projectPlanCreate.addProjectPlan}" ajax="false"/>
                 </h:panelGrid>
             </h:form>
         </ui:define>
