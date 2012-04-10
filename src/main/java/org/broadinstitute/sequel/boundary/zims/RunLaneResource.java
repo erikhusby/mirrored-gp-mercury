@@ -15,7 +15,7 @@ import javax.ws.rs.QueryParam;
 import java.util.List;
 
 @Path("/RunLane")
-public class RunLane {
+public class RunLaneResource {
 
     @Inject
     private RunChamberDAO runChamberDAO;
