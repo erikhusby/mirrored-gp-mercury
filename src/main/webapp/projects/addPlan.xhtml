@@ -11,28 +11,30 @@
     <ui:composition template="/layout.xhtml">
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="projectName" value="#{projectPlanCreate.projectName}" required="true"/>
-                <f:event type="preRenderView" listener="#{projectPlanCreate.beginAdd}"/>
+                <f:viewParam name="projectName" value="#{projectDetail.projectName}" required="true"/>
+                <f:event type="preRenderView" listener="#{projectPlanForm.loadData}"/>
             </f:metadata>
         </ui:define>
         <ui:define name="title">Add Project Plan</ui:define>
         <ui:define name="body">
             <h:form>
-                <p>For project: #{projectPlanCreate.project.projectName}</p>
+                <p>For project: #{projectDetail.project.projectName}</p>
                 <h:panelGrid columns="2">
                     <h:outputLabel for="projectPlanName">Plan Name: </h:outputLabel>
-                    <h:inputText id="projectPlanName" value="#{projectPlanCreate.projectPlanName}"/>
+                    <h:inputText id="projectPlanName" value="#{projectPlanForm.projectPlanName}"/>
 
                     <h:outputLabel for="workflowDescription">Workflow: </h:outputLabel>
-                    <p:selectOneMenu value="#{projectPlanCreate.workflowDescription}" effect="">
+                    <p:selectOneMenu id="workflowDescription" value="#{projectPlanForm.workflowDescription}" effect="">
                         <f:selectItem itemValue="null" itemLabel=""/>
-                        <f:selectItems value="#{projectPlanCreate.allWorkflowDescriptions}" var="w" itemLabel="#{w.workflowName}"/>
+                        <f:selectItems value="#{workflowDescriptionBean.allWorkflowDescriptions}" var="w" itemLabel="#{w.workflowName}"/>
                     </p:selectOneMenu>
 
                     <h:link value="Cancel" outcome="detail">
-                        <f:param name="projectName" value="#{projectPlanCreate.project.projectName}"/>
+                        <f:param name="projectName" value="#{projectDetail.project.projectName}"/>
                     </h:link>
-                    <p:commandButton value="Save" action="#{projectPlanCreate.addProjectPlan}" ajax="false"/>
+                    <p:commandButton value="Save" action="#{projectPlanForm.create}" ajax="false">
+                        <f:param value="#{projectDetail.projectName}"/>
+                    </p:commandButton>
                 </h:panelGrid>
             </h:form>
         </ui:define>

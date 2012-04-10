@@ -11,7 +11,8 @@ import javax.faces.convert.FacesConverter;
 import javax.inject.Inject;
 
 /**
- * Faces converter for WorkflowDescription.
+ * Faces converter for WorkflowDescription. Allows WorkflowDescriptions to be
+ * used in select* components.
  *
  * This does not need to be configured beyond the @FacesConverter annotation,
  * either globally or at the point of usage, to be used. Injection of DAO relies

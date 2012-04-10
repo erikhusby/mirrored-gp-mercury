@@ -5,15 +5,17 @@ import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.presentation.AbstractJsfBean;
 
-import javax.enterprise.inject.Model;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author breilly
  */
-@Model
+@Named
+@RequestScoped
 public class ProjectDetail extends AbstractJsfBean {
 
     @Inject private DB db;
@@ -22,7 +24,9 @@ public class ProjectDetail extends AbstractJsfBean {
     private Project project;
 
     public void loadProject() {
-        project = db.findByProjectName(projectName);
+        if (project == null) {
+            project = db.findByProjectName(projectName);
+        }
     }
 
     public List<ProjectPlan> getProjectPlans() {

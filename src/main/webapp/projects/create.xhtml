@@ -14,9 +14,10 @@
             <h:form>
                 <h:panelGrid columns="2">
                     <h:outputLabel for="projectName">Projcet Name: </h:outputLabel>
-                    <p:inputText id="projectName" value="#{projectCreate.projectName}"/>
+                    <p:inputText id="projectName" value="#{projectForm.projectName}"/>
+
                     <h:link outcome="list" value="Cancel"/>
-                    <p:commandButton action="#{projectCreate.createProject}" value="Save" ajax="false"/>
+                    <p:commandButton value="Save" action="#{projectForm.create}" ajax="false"/>
                 </h:panelGrid>
             </h:form>
         </ui:define>

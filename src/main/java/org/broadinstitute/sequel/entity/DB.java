@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 
 import javax.enterprise.context.ApplicationScoped;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,7 +17,7 @@ import java.util.Map;
  * @author breilly
  */
 @ApplicationScoped
-public class DB {
+public class DB implements Serializable {
 
     private Map<String, Project> projects = new HashMap<String, Project>();
     private Map<String, WorkflowDescription> workflowDescriptions = new HashMap<String, WorkflowDescription>();
@@ -29,7 +30,7 @@ public class DB {
     // Project
 
     public void addProject(Project project) {
-        if (project.getProjectName() == null) {
+        if (project.getProjectName() == null || project.getProjectName().equals("")) {
             throw new IllegalArgumentException("Non-null constraint violation: Project.projectName");
         }
         if (projects.containsKey(project.getProjectName())) {
@@ -44,6 +45,10 @@ public class DB {
 
     public Project findByProjectName(String projectName) {
         return projects.get(projectName);
+    }
+
+    public void removeProject(String projectName) {
+        projects.remove(projectName);
     }
 
     // WorkflowDescription
