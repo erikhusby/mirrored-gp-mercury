@@ -74,6 +74,26 @@ public class LibraryBean {
 
     private DevExperimentData devExperimentData;
     
+    public LibraryBean(String project,
+                       String organism,
+                       Long squidWorkRequestId) {
+        this.project = project;
+        this.organism = organism;
+        this.workRequest = squidWorkRequestId;
+    }
+    
+    public Long getWorkRequest() {
+        return workRequest;
+    }
+    
+    public String getProject() {
+        return project;
+    }
+    
+    public String getOrganism() {
+        return organism;
+    }
+    
     
     
     
