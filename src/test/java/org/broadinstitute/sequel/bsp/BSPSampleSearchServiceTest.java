@@ -2,30 +2,32 @@ package org.broadinstitute.sequel.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.sequel.WeldBooter;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.sequel.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
-public class BSPSampleSearchServiceTest extends WeldBooter {
+public class BSPSampleSearchServiceTest extends ContainerTest {
 
     @SuppressWarnings("unused")
     private static final Log _logger = LogFactory.getLog(BSPSampleSearchServiceTest.class);
 
+    @Inject
     BSPSampleSearchService service;
 
-    @BeforeClass
-    private void init() {
-        service = weldUtil.getFromContainer(BSPSampleSearchService.class);
-    }
+//    @BeforeClass
+//    private void init() {
+//        service = weldUtil.getFromContainer(BSPSampleSearchService.class);
+//    }
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void testBasic() {

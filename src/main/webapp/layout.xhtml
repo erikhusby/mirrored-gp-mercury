@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ The Broad Institute
+  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
+  ~ This software and its documentation are copyright 2011 by the
+  ~ Broad Institute/Massachusetts Institute of Technology. All rights are
+  ~ reserved.
+  ~
+  ~ This software is supplied without any warranty or guaranteed support
+  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+  ~ use, misuse, or functionality.
+  -->
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<!--
+  Base JSF page template to be used in the "template" attribure of
+  ui:composition tags. Supports the following ui:define fragments:
+
+    metadata: an f:metadata element, and may also include f:event elements
+    title: text rendered in the window title
+    header: top header rendered in the window content area
+    content: page content wrapped by page template and navigation
+  -->
+<f:view contentType="text/html">
+    <ui:insert name="metadata"/>
+    <h:head>
+        <link href='http://fonts.googleapis.com/css?family=Lato|Arvo|PT+Sans|Cantarell|Open+Sans' rel='stylesheet' type='text/css'/>
+        <h:outputStylesheet library="css" name="styles.css"/>
+        <title>Squid : <ui:insert name="title"/></title>
+    </h:head>
+    <h:body>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 5px;">
+            <tr>
+                <td style="vertical-align: middle;">
+                    <h1>SequeL</h1>
+                </td>
+                <td>
+                    <img src="/images/broad_logo.png" alt="Broad Institute" align="right"/>
+                </td>
+            </tr>
+        </table>
+
+        <table width="100%">
+            <tr>
+                <td width="150px" valign="top">
+                    <ui:include src="navigation.xhtml"></ui:include>
+                </td>
+                <td>
+                    <div id="content">
+                        <p:panel>
+                            <f:facet name="header"><ui:insert name="title"/></f:facet>
+
+                            <!-- show messages/errors -->
+                            <h:messages/>
+
+                            <ui:insert name="body"/>
+                        </p:panel>
+
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <ui:debug/>
+    </h:body>
+</f:view>
+</html>

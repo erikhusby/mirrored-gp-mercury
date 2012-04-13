@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">Projects</ui:define>
+        <ui:define name="body">
+            <p:dataTable value="#{projectList.allProjects}" var="project">
+                <p:column headerText="Project Name">
+                    <h:link outcome="detail" value="#{project.projectName}">
+                        <f:param name="projectName" value="#{project.projectName}"/>
+                    </h:link>
+                </p:column>
+                <p:column headerText="Active Status">
+                    #{project.active ? 'Active' : 'Inactive'}
+                </p:column>
+                <p:column headerText="Priority">
+                    #{project.priority}
+                </p:column>
+            </p:dataTable>
+
+            <p><h:link outcome="create">Start a New Project...</h:link></p>
+        </ui:define>
+    </ui:composition>
+</body>
+</html>

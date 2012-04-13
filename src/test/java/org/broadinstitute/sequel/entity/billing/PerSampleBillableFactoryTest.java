@@ -2,9 +2,6 @@ package org.broadinstitute.sequel.entity.billing;
 
 
 import org.broadinstitute.sequel.BettaLimsMessageFactory;
-import org.broadinstitute.sequel.TestUtilities;
-import org.broadinstitute.sequel.WeldBooter;
-import org.broadinstitute.sequel.WeldUtil;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
@@ -25,11 +22,13 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.sequel.test.ContainerTest;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -38,8 +37,13 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class PerSampleBillableFactoryTest {
+public class PerSampleBillableFactoryTest extends ContainerTest {
 
+    @Inject
+    private Biller biller;
+
+    @Inject
+    private LabEventHandler labEventHandler;
 
     /**
      * Add expectations to {@link QuoteService#registerNewWork(org.broadinstitute.sequel.infrastructure.quote.Quote, org.broadinstitute.sequel.infrastructure.quote.PriceItem, double, String, String, String)}
@@ -137,7 +141,6 @@ public class PerSampleBillableFactoryTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void test_billing() {
-        WeldUtil weldUtil = TestUtilities.bootANewWeld();
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         String expectedBatchId = "QuoteWorkItemBatchId123";
         ProjectPlan plan1 = createProjectPlan("Project1","Plan1","DNA33",billableEvents);
@@ -174,10 +177,10 @@ public class PerSampleBillableFactoryTest {
         String workBatchId = "workBatch1";
         labEvent.setQuoteServerBatchId(null);
         QuoteService quoteService = createQuoteService(workBatchId,2);
-        weldUtil.getFromContainer(Biller.class).setQuoteService(quoteService);  // there has to be a better way to do this.
+        biller.setQuoteService(quoteService);  // there has to be a better way to do this.
                                                                                 // how can we configure injection of particular
                                                                                 // classes from within a single unit test?
-        weldUtil.getFromContainer(LabEventHandler.class).processEvent(labEvent);
+        labEventHandler.processEvent(labEvent);
         EasyMock.verify(service);
         Assert.assertEquals(labEvent.getQuoteServerBatchId(),workBatchId);
     }

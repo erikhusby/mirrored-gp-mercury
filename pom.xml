@@ -7,6 +7,7 @@
     <groupId>SequeL</groupId>
     <artifactId>SequeL</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
 
@@ -63,21 +64,37 @@
     </developers>
 
     <repositories>
+        <!-- Is this needed anymore? We have jboss-javaee-6.0 in lieu of javaee-api (see https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode) -->
         <repository>
             <id>java.net2</id>
             <name>Repository hosting the jee6 artifacts</name>
             <url>http://download.java.net/maven/2</url>
         </repository>
+
+        <!-- JBoss Repository for Arquillian, Hibernate, etc. -->
         <repository>
             <id>JBoss</id>
             <name>JBoss Repository</name>
-            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+            <url>http://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </snapshots>
         </repository>
+
+        <!-- Is this needed anymore? Glassfish libraries and plugins seem to be in the maven central repository. -->
         <repository>
             <id>Glassfish</id>
             <name>Glassfish Repository</name>
             <url>http://download.java.net/maven/glassfish</url>
         </repository>
+
+        <!-- PrimeFaces Repository for PrimeFaces and themes -->
         <repository>
             <id>prime-repo</id>
             <name>PrimeFaces Maven Repository</name>
@@ -85,6 +102,23 @@
             <layout>default</layout>
         </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jboss-public-repository-group</id>
+            <name>JBoss Public Maven Repository Group</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
     <properties>
         <!-- Clover -->
@@ -103,7 +137,7 @@
         <site.url>http://prodinfosvn.broadinstitute.org:8000/m2-projects</site.url>
         <site.path>/prodinfo/releng/m2-projects</site.path>
 
-
+        <seam.version>3.1.0.Final</seam.version>
     </properties>
 
     <profiles>
@@ -304,13 +338,154 @@
                     </plugins>
                 </build>
             </profile>
+
+        <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
+        <profile>
+            <id>JavaEE</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>javax</groupId>
+                    <artifactId>javaee-api</artifactId>
+                    <version>6.0</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>Arquillian-Weld</id>
+            <dependencies>
+                <!-- For Arquillian Weld embedded, use org.jboss.spec:jboss-javaee-6.0 in lieu of javax:javaee-api.
+                     see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
+                -->
+                <dependency>
+                    <groupId>org.jboss.spec</groupId>
+                    <artifactId>jboss-javaee-6.0</artifactId>
+                    <version>1.0.0.Final</version>
+                    <type>pom</type>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.arquillian.container</groupId>
+                    <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
+                    <version>1.0.0.CR3</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.weld</groupId>
+                    <artifactId>weld-core</artifactId>
+                    <version>1.1.1.Final</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                    <version>1.5.10</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>Arquillian-Glassfish</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jboss.arquillian.container</groupId>
+                    <artifactId>arquillian-glassfish-embedded-3.1</artifactId>
+                    <version>1.0.0.CR3</version>
+                    <scope>test</scope>
+                </dependency>
+<!-- Possible workaround for problem discussed at https://community.jboss.org/message/729907
+                <dependency>
+                    <groupId>javax.enterprise</groupId>
+                    <artifactId>cdi-api</artifactId>
+                    <version>1.0</version>
+                    <scope>provided</scope>
+                </dependency>
+-->
+                <dependency>
+                    <groupId>org.glassfish.main.extras</groupId>
+                    <artifactId>glassfish-embedded-all</artifactId>
+                    <version>3.1.2</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>Run-Embedded</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.glassfish.main.extras</groupId>
+                    <artifactId>glassfish-embedded-all</artifactId>
+                    <version>3.1.2</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.glassfish.embedded</groupId>
+                        <artifactId>maven-embedded-glassfish-plugin</artifactId>
+                        <version>3.1.2</version>
+                        <configuration>
+                            <app>${project.build.directory}/${project.build.finalName}.war</app>
+                            <port>8080</port>
+                            <contextRoot>/</contextRoot>
+                            <autoDelete>true</autoDelete>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jboss.arquillian</groupId>
+                <artifactId>arquillian-bom</artifactId>
+                <version>1.0.0.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- this is needed for any seam 3 dependencies to work -->
+<!--
+            <dependency>
+                <groupId>org.jboss.seam</groupId>
+                <artifactId>seam-bom</artifactId>
+                <version>${seam.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+-->
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
-            <groupId>org.jboss.weld.se</groupId>
-            <artifactId>weld-se</artifactId>
-            <version>1.1.5.Final</version>
-            <type>jar</type>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.1.1</version>
+            <scope>test</scope>
         </dependency>
         <!-- uncomment this to enable squid integration -->
         <!--
@@ -326,28 +501,20 @@
             <artifactId>squidServices</artifactId>
             <version>${build.version}</version>
         </dependency>
-        <dependency>
-            <groupId>javax.enterprise</groupId>
-            <artifactId>cdi-api</artifactId>
-            <version>1.0-SP2</version>
-            <scope>provided</scope>
-        </dependency>
         -->
-        <!-- glassfish-embedded-all must be before javaee-api -->
-        <!--
+
         <dependency>
-            <groupId>org.glassfish.extras</groupId>
-            <artifactId>glassfish-embedded-all</artifactId>
-            <version>3.1.1</version>
+            <groupId>org.jboss.arquillian.testng</groupId>
+            <artifactId>arquillian-testng-container</artifactId>
             <scope>test</scope>
         </dependency>
-        -->
-	<dependency>
-	  <groupId>org.testng</groupId>
-	  <artifactId>testng</artifactId>
-	  <version>6.1.1</version>
-	  <scope>test</scope>
-	</dependency>
+
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+
         <dependency>
             <groupId>net.sourceforge.htmlunit</groupId>
             <artifactId>htmlunit</artifactId>
@@ -355,61 +522,113 @@
             <scope>test</scope>
         </dependency>
 
-
-
-        <!--
-        <dependency>
-            <groupId>javax</groupId>
-            <artifactId>javaee-api</artifactId>
-            <version>6.0</version>
-            <scope>provided</scope>
-        </dependency>
-        -->
+        <!-- BEGIN primefaces -->
         <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
-            <version>3.0.RC1</version>
+            <version>3.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.primefaces.themes</groupId>
+            <artifactId>pepper-grinder</artifactId>
+            <version>1.0.4</version>
+        </dependency>
+        <!-- END primefaces -->
+
+        <!-- BEGIN seam-faces -->
+<!--
+        <dependency>
+            <groupId>org.jboss.seam.faces</groupId>
+            <artifactId>seam-faces-api</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.5.9.RC1</version>
+            <groupId>org.jboss.seam.faces</groupId>
+            <artifactId>seam-faces</artifactId>
+            <version>3.1.0.Final</version>
+            <scope>runtime</scope>
         </dependency>
+-->
+
+<!--
+        <dependency>
+            <groupId>org.jboss.solder</groupId>
+            <artifactId>solder-api</artifactId>
+            <version>3.1.1.Final</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.solder</groupId>
+            <artifactId>solder-impl</artifactId>
+            <version>3.1.1.Final</version>
+            <scope>runtime</scope>
+        </dependency>
+-->
+
+        <!-- Various dependencies of seam-faces that don't get included transitively for some reason.
+             These are true required dependencies because seam-faces throws exceptions when they aren't present.
+             We may be able to remove these if we start using maven 3. -->
+        <!-- Or, they may only be needed for Glassfish: https://community.jboss.org/message/729907 -->
+<!--
+        <dependency>
+            <groupId>org.jboss.solder</groupId>
+            <artifactId>solder-logging</artifactId>
+            <version>3.1.1.Final</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>3.1.0.GA</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.ocpsoft</groupId>
+            <artifactId>prettyfaces-jsf2</artifactId>
+        </dependency>
+
+        <dependency>
+           <groupId>joda-time</groupId>
+           <artifactId>joda-time</artifactId>
+        </dependency>
+
+        <dependency>
+           <groupId>org.jboss.seam.security</groupId>
+           <artifactId>seam-security</artifactId>
+           <scope>runtime</scope>
+        </dependency>
+-->
+        <!-- END seam-faces -->
+
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
             <version>1.2.16</version>
         </dependency>
-        <dependency>
-            <groupId>org.hibernate.javax.persistence</groupId>
-            <artifactId>hibernate-jpa-2.0-api</artifactId>
-            <version>1.0.0.Final</version>
-            <scope>provided</scope>
-        </dependency>
+
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>2.5</version>
         </dependency>
+
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>1.1.1</version>
         </dependency>
+
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>4.1.0.Final</version>
+            <version>4.1.1.Final</version>
         </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-commons-annotations</artifactId>
-            <version>3.2.0.Final</version>
-        </dependency>
+
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
-            <version>4.1.0.Final</version>
+            <version>4.1.1.Final</version>
             <exclusions>
                 <!-- using cglib-nodep instead -->
                 <exclusion>
@@ -418,22 +637,26 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
             <version>1.3</version>
         </dependency>
+
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
             <version>3.0</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
             <version>1.8</version>
         </dependency>
+
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-json</artifactId>
@@ -523,7 +746,6 @@
                     <targetJdk>1.6</targetJdk>
                 </configuration>
             </plugin>
-
         </plugins>
 
     </build>
