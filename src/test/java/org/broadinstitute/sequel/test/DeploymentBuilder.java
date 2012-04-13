@@ -20,6 +20,14 @@ public class DeploymentBuilder {
         return war;
     }
 
+    public static WebArchive buildSequelCloverWar() {
+        WebArchive war = ShrinkWrap.create(ExplodedImporter.class, "SequeL.war")
+                .importDirectory("src/main/webapp")
+                .as(WebArchive.class)
+                .merge(importCloverMain(), "WEB-INF/classes");
+        return war;
+    }
+
     public static WebArchive buildSequelWar(String beansXml) {
         WebArchive war = ShrinkWrap.create(WebArchive.class, "SequeL.war")
                 .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
@@ -43,6 +51,13 @@ public class DeploymentBuilder {
     private static JavaArchive importMain() {
         return ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
                 .importDirectory("target/classes")
+                .importDirectory("src/main/resources")
+                .as(JavaArchive.class);
+    }
+
+    private static JavaArchive importCloverMain() {
+        return ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
+                .importDirectory("target/clover/classes")
                 .importDirectory("src/main/resources")
                 .as(JavaArchive.class);
     }

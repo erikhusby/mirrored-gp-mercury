@@ -62,7 +62,16 @@
         <repository>
             <id>JBoss</id>
             <name>JBoss Repository</name>
-            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+            <url>http://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </snapshots>
         </repository>
 
         <!-- Is this needed anymore? Glassfish libraries and plugins seem to be in the maven central repository. -->
@@ -81,6 +90,23 @@
         </repository>
     </repositories>
 
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jboss-public-repository-group</id>
+            <name>JBoss Public Maven Repository Group</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
     <properties>
         <!-- Clover -->
         <clover.plugin.version>3.1.2</clover.plugin.version>
@@ -97,6 +123,8 @@
 
         <site.url>http://prodinfosvn.broadinstitute.org:8000/m2-projects</site.url>
         <site.path>/prodinfo/releng/m2-projects</site.path>
+
+        <seam.version>3.1.0.Final</seam.version>
     </properties>
 
     <profiles>
@@ -300,7 +328,7 @@
 
         <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
-            <id>Java EE</id>
+            <id>JavaEE</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
@@ -317,7 +345,9 @@
         <profile>
             <id>Arquillian-Weld</id>
             <dependencies>
-                <!-- in lieu of javax:javaee-api. see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode -->
+                <!-- For Arquillian Weld embedded, use org.jboss.spec:jboss-javaee-6.0 in lieu of javax:javaee-api.
+                     see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
+                -->
                 <dependency>
                     <groupId>org.jboss.spec</groupId>
                     <artifactId>jboss-javaee-6.0</artifactId>
@@ -355,6 +385,14 @@
                     <version>1.0.0.CR3</version>
                     <scope>test</scope>
                 </dependency>
+<!-- Possible workaround for problem discussed at https://community.jboss.org/message/729907
+                <dependency>
+                    <groupId>javax.enterprise</groupId>
+                    <artifactId>cdi-api</artifactId>
+                    <version>1.0</version>
+                    <scope>provided</scope>
+                </dependency>
+-->
                 <dependency>
                     <groupId>org.glassfish.main.extras</groupId>
                     <artifactId>glassfish-embedded-all</artifactId>
@@ -365,10 +403,7 @@
         </profile>
 
         <profile>
-            <id>Run-embedded</id>
-            <!--<activation>-->
-                <!--<activeByDefault>true</activeByDefault>-->
-            <!--</activation>-->
+            <id>Run-Embedded</id>
             <dependencies>
                 <dependency>
                     <groupId>org.glassfish.main.extras</groupId>
@@ -384,9 +419,9 @@
                         <artifactId>maven-embedded-glassfish-plugin</artifactId>
                         <version>3.1.2</version>
                         <configuration>
-                            <app>${project.build.directory}/${build.finalName}.war</app>
+                            <app>${project.build.directory}/${project.build.finalName}.war</app>
                             <port>8080</port>
-                            <contextRoot>SequeL</contextRoot>
+                            <contextRoot>/</contextRoot>
                             <autoDelete>true</autoDelete>
                         </configuration>
                         <executions>
@@ -414,10 +449,21 @@
             <dependency>
                 <groupId>org.jboss.arquillian</groupId>
                 <artifactId>arquillian-bom</artifactId>
-                <version>1.0.0.CR7</version>
-                <scope>import</scope>
+                <version>1.0.0.Final</version>
                 <type>pom</type>
+                <scope>import</scope>
             </dependency>
+
+            <!-- this is needed for any seam 3 dependencies to work -->
+<!--
+            <dependency>
+                <groupId>org.jboss.seam</groupId>
+                <artifactId>seam-bom</artifactId>
+                <version>${seam.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+-->
         </dependencies>
     </dependencyManagement>
 
@@ -429,47 +475,11 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- BEGIN arquillian -->
         <dependency>
             <groupId>org.jboss.arquillian.testng</groupId>
             <artifactId>arquillian-testng-container</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-            <version>1.1.0-alpha-1</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-            <version>1.1.0-alpha-1</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- BEGIN ARQUILLIAN GLASSFISH: these can alternately go into a separate profile to allow for swappable testing containers -->
-<!--
-        <dependency>
-            <groupId>org.jboss.arquillian.container</groupId>
-            <artifactId>arquillian-glassfish-embedded-3.1</artifactId>
-            <version>1.0.0.CR2</version>
-            <scope>test</scope>
-        </dependency>
--->
-        <!-- glassfish-embedded-all would need to be part of a profile for running the web app if these are put into a separate profile for arquillian -->
-<!--
-        <dependency>
-            <groupId>org.glassfish.main.extras</groupId>
-            <artifactId>glassfish-embedded-all</artifactId>
-            <version>3.1.2</version>
-            <scope>provided</scope>
-        </dependency>
--->
-        <!-- END ARQUILLIAN GLASSFISH -->
-        <!-- END arquillian -->
 
         <dependency>
             <groupId>commons-collections</groupId>
@@ -499,32 +509,40 @@
         <!-- END primefaces -->
 
         <!-- BEGIN seam-faces -->
+<!--
         <dependency>
             <groupId>org.jboss.seam.faces</groupId>
             <artifactId>seam-faces-api</artifactId>
-            <version>3.1.0.Final</version>
+            <scope>compile</scope>
         </dependency>
-
         <dependency>
             <groupId>org.jboss.seam.faces</groupId>
             <artifactId>seam-faces</artifactId>
             <version>3.1.0.Final</version>
             <scope>runtime</scope>
         </dependency>
+-->
 
-        <!-- various dependencies of seam-faces that don't get included transitively for some reason, even though seam-faces throws exceptions when these aren't present -->
+<!--
         <dependency>
             <groupId>org.jboss.solder</groupId>
             <artifactId>solder-api</artifactId>
             <version>3.1.1.Final</version>
+            <scope>compile</scope>
         </dependency>
-
         <dependency>
             <groupId>org.jboss.solder</groupId>
             <artifactId>solder-impl</artifactId>
             <version>3.1.1.Final</version>
+            <scope>runtime</scope>
         </dependency>
+-->
 
+        <!-- Various dependencies of seam-faces that don't get included transitively for some reason.
+             These are true required dependencies because seam-faces throws exceptions when they aren't present.
+             We may be able to remove these if we start using maven 3. -->
+        <!-- Or, they may only be needed for Glassfish: https://community.jboss.org/message/729907 -->
+<!--
         <dependency>
             <groupId>org.jboss.solder</groupId>
             <artifactId>solder-logging</artifactId>
@@ -532,10 +550,27 @@
         </dependency>
 
         <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>3.1.0.GA</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.ocpsoft</groupId>
             <artifactId>prettyfaces-jsf2</artifactId>
-            <version>3.3.3</version>
         </dependency>
+
+        <dependency>
+           <groupId>joda-time</groupId>
+           <artifactId>joda-time</artifactId>
+        </dependency>
+
+        <dependency>
+           <groupId>org.jboss.seam.security</groupId>
+           <artifactId>seam-security</artifactId>
+           <scope>runtime</scope>
+        </dependency>
+-->
         <!-- END seam-faces -->
 
         <dependency>
@@ -676,21 +711,6 @@
                     <targetJdk>1.6</targetJdk>
                 </configuration>
             </plugin>
-
-<!--
-            <plugin>
-                <groupId>org.glassfish.embedded</groupId>
-                <artifactId>maven-embedded-glassfish-plugin</artifactId>
-                <version>3.1.2</version>
-                <configuration>
-                    <app>${project.build.directory}/${build.finalName}.war</app>
-                    <port>8080</port>
-                    <contextRoot>SequeL</contextRoot>
-                    <autoDelete>true</autoDelete>
-                </configuration>
-            </plugin>
--->
-
         </plugins>
 
     </build>

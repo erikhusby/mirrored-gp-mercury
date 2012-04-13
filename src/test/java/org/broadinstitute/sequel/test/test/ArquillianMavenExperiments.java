@@ -10,7 +10,7 @@ import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
+//import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -139,15 +139,21 @@ public class ArquillianMavenExperiments extends Arquillian {
     }
 
     public static JavaArchive addMavenBuildOutput(JavaArchive archive) {
+/* commented out in order to remove dependency from maven
         return archive.as(MavenImporter.class)
                 .loadEffectivePom("pom.xml").importBuildOutput()
                 .as(JavaArchive.class);
+*/
+        return archive;
     }
 
     public static WebArchive addMavenBuildOutput(WebArchive archive) {
+/* commented out in order to remove dependency from maven
         return archive.as(MavenImporter.class)
                 .loadEffectivePom("pom.xml").importBuildOutput()
                 .as(WebArchive.class);
+*/
+        return archive;
     }
 
 //    @Test
