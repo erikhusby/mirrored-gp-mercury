@@ -4,6 +4,7 @@ import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * A library DTO for Zamboni.  Copied from
@@ -19,8 +20,8 @@ public class LibraryBean {
     private String initiative;
     
     private Long workRequest;
-    
-    private MolecularIndexingScheme indexingScheme;
+
+    private MolecularIndexingSchemeBean indexingScheme;
     
     private Boolean hasIndexingRead;
     
@@ -75,14 +76,14 @@ public class LibraryBean {
     
     private Boolean isPartOfDevExperiment;
 
-    private TZDevExperimentData devExperimentData;
+    private DevExperimentDataBean devExperimentData;
 
     public LibraryBean(String library, String project, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize, String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId, String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType, String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine, String bait, String individual, Double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl, String weirdness, Double preCircularizationDnaSize, Boolean partOfDevExperiment, TZDevExperimentData devExperimentData) {
         this.library = library;
         this.project = project;
         this.initiative = initiative;
         this.workRequest = workRequest;
-        this.indexingScheme = indexingScheme;
+        this.indexingScheme = new MolecularIndexingSchemeBean(indexingScheme);
         this.hasIndexingRead = hasIndexingRead;
         this.expectedInsertSize = expectedInsertSize;
         this.analysisType = analysisType;
@@ -108,7 +109,7 @@ public class LibraryBean {
         this.weirdness = weirdness;
         this.preCircularizationDnaSize = preCircularizationDnaSize;
         isPartOfDevExperiment = partOfDevExperiment;
-        this.devExperimentData = devExperimentData;
+        this.devExperimentData = new DevExperimentDataBean(devExperimentData);
     }
     
     public Long getWorkRequest() {
