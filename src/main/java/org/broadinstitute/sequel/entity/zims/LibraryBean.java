@@ -1,5 +1,8 @@
 package org.broadinstitute.sequel.entity.zims;
 
+import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
+import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -72,14 +75,40 @@ public class LibraryBean {
     
     private Boolean isPartOfDevExperiment;
 
-    private DevExperimentData devExperimentData;
-    
-    public LibraryBean(String project,
-                       String organism,
-                       Long squidWorkRequestId) {
+    private TZDevExperimentData devExperimentData;
+
+    public LibraryBean(String library, String project, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize, String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId, String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType, String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine, String bait, String individual, Double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl, String weirdness, Double preCircularizationDnaSize, Boolean partOfDevExperiment, TZDevExperimentData devExperimentData) {
+        this.library = library;
         this.project = project;
+        this.initiative = initiative;
+        this.workRequest = workRequest;
+        this.indexingScheme = indexingScheme;
+        this.hasIndexingRead = hasIndexingRead;
+        this.expectedInsertSize = expectedInsertSize;
+        this.analysisType = analysisType;
+        this.referenceSequence = referenceSequence;
+        this.referenceSequenceVersion = referenceSequenceVersion;
+        this.collaboratorSampleId = collaboratorSampleId;
+        this.collaborator = collaborator;
         this.organism = organism;
-        this.workRequest = squidWorkRequestId;
+        this.species = species;
+        this.strain = strain;
+        this.sampleLSID = sampleLSID;
+        this.tissueType = tissueType;
+        this.expectedPlasmid = expectedPlasmid;
+        this.aligner = aligner;
+        this.rrbsSizeRange = rrbsSizeRange;
+        this.restrictionEnzyme = restrictionEnzyme;
+        this.cellLine = cellLine;
+        this.bait = bait;
+        this.individual = individual;
+        this.labMeasuredInsertSize = labMeasuredInsertSize;
+        isPositiveControl = positiveControl;
+        isNegativeControl = negativeControl;
+        this.weirdness = weirdness;
+        this.preCircularizationDnaSize = preCircularizationDnaSize;
+        isPartOfDevExperiment = partOfDevExperiment;
+        this.devExperimentData = devExperimentData;
     }
     
     public Long getWorkRequest() {

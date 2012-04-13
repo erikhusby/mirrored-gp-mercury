@@ -70,10 +70,39 @@ public class RunLaneResource {
             }
             else {
                 for (TZamboniLane tZamboniLane : tRun.getLanes()) {
-                    for (TZamboniLibrary tZamboniLibrary : tZamboniLane.getLibraries()) {
-                        libraries.add(new LibraryBean(tZamboniLibrary.getProject(),
-                                tZamboniLibrary.getOrganism(),
-                                tZamboniLibrary.getWorkRequestId()));
+                    for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
+                        LibraryBean libBean = new LibraryBean(zamboniLibrary.getLibrary(),
+                                zamboniLibrary.getProject(),
+                                zamboniLibrary.getInitiative(),
+                                zamboniLibrary.getWorkRequestId(),
+                                zamboniLibrary.getMolecularIndexes(),
+                                zamboniLibrary.isHasIndexingRead(),
+                                zamboniLibrary.getExpectedInsertSize(),
+                                zamboniLibrary.getAnalysisType(),
+                                zamboniLibrary.getReferenceSequence(),
+                                zamboniLibrary.getReferenceSequenceVersion(),
+                                zamboniLibrary.getSampleAlias(),
+                                zamboniLibrary.getSampleCollaborator(),
+                                zamboniLibrary.getOrganism(),
+                                zamboniLibrary.getSpecies(),
+                                zamboniLibrary.getStrain(),
+                                zamboniLibrary.getLsid(),
+                                zamboniLibrary.getTissueType(),
+                                zamboniLibrary.getExpectedPlasmid(),
+                                zamboniLibrary.getAligner(),
+                                zamboniLibrary.getRrbsSizeRange(),
+                                zamboniLibrary.getRestrictionEnzyme(),
+                                zamboniLibrary.getCellLine(),
+                                zamboniLibrary.getBaitSetName(),
+                                zamboniLibrary.getIndividual(),
+                                zamboniLibrary.getLabMeasuredInsertSize(),
+                                zamboniLibrary.isPositiveControl(),
+                                zamboniLibrary.isNegativeControl(),
+                                zamboniLibrary.getWeirdness(),
+                                zamboniLibrary.getPrecircularizationDnaSize(),
+                                zamboniLibrary.isPartOfDevExperiment(),
+                                zamboniLibrary.getDevExperimentData());
+                        libraries.add(libBean);
                     }
                 }
             }
