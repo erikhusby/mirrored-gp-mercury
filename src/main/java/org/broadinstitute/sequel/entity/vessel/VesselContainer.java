@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.hibernate.annotations.Parent;
@@ -45,6 +47,11 @@ public class VesselContainer<T extends LabVessel> {
     public Set<SampleInstance> getSampleInstancesAtPosition(String position) {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if(this.sampleSheetAuthorities.isEmpty()) {
+            for (LabEvent labEvent : this.embedder.getTransfersTo()) {
+                for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                    sampleInstances.addAll(sectionTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(position));
+                }
+            }
             T vesselAtPosition = getVesselAtPosition(position);
             if(vesselAtPosition != null && !vesselAtPosition.getSampleSheets().isEmpty()) {
                 sampleInstances.addAll(vesselAtPosition.getSampleInstances());

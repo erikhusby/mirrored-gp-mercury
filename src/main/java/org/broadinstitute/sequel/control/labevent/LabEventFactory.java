@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Creates Lab Events
+ * Creates Lab Event entities from BettaLIMS JAXB beans
  */
 public class LabEventFactory {
 
@@ -125,6 +125,19 @@ public class LabEventFactory {
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourceRack.getVesselContainer(), SBSSection.valueOf(plateTransferEvent.getSourcePlate().getSection()),
                 targetRackOfTubes.getVesselContainer(), SBSSection.valueOf(plateTransferEvent.getPlate().getSection())));
+        return labEvent;
+    }
+
+    public LabEvent buildFromBettaLimsRackToRackDbFree(
+            PlateTransferEventType plateTransferEvent,
+            RackOfTubes sourceRack,
+            RackOfTubes targetRack) {
+        LabEvent labEvent = constructReferenceData(plateTransferEvent);
+        labEvent.addSourceLabVessel(sourceRack);
+        labEvent.addTargetLabVessel(targetRack);
+        labEvent.getSectionTransfers().add(new SectionTransfer(
+                sourceRack.getVesselContainer(), SBSSection.valueOf(plateTransferEvent.getSourcePlate().getSection()),
+                targetRack.getVesselContainer(), SBSSection.valueOf(plateTransferEvent.getPlate().getSection())));
         return labEvent;
     }
 
