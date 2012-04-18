@@ -54,6 +54,8 @@ public abstract class AbstractLabVessel implements LabVessel {
     
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
+    private Set<Reagent> appliedReagents = new HashSet<Reagent>();
+
     @Embedded
     private UserRemarks userRemarks;
 
@@ -174,5 +176,15 @@ public abstract class AbstractLabVessel implements LabVessel {
 
     public UserRemarks getUserRemarks() {
         return userRemarks;
+    }
+
+    @Override
+    public void applyReagent(Reagent reagent) {
+        this.appliedReagents.add(reagent);
+    }
+
+    @Override
+    public Collection<Reagent> getAppliedReagents() {
+        return this.appliedReagents;
     }
 }

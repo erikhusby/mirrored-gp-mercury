@@ -216,16 +216,6 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
     }
 
     @Override
-    public void applyReagent(Reagent r) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<Reagent> getAppliedReagents() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public void applyTransfer(SectionTransfer sectionTransfer) {
         throw new RuntimeException("Method not yet implemented.");
     }

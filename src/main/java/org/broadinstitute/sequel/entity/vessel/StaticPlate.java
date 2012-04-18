@@ -54,20 +54,7 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        // todo jmt change this to call VesselContainer.getSampleInstancesInPosition for all positions
-        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if (this.vesselContainer.getContainedVessels().isEmpty()) {
-            for (LabVessel labVessel : getSampleSheetAuthorities()) {
-                for (SampleSheet sampleSheet : labVessel.getSampleSheets()) {
-                    sampleInstances.addAll(sampleSheet.getSampleInstances());
-                }
-            }
-        } else {
-            for (String position : this.vesselContainer.getPositions()) {
-                sampleInstances.addAll(getSampleInstancesInPosition(position));
-            }
-        }
-        return sampleInstances;
+        return this.vesselContainer.getSampleInstances();
     }
 
     @Override
@@ -108,50 +95,6 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
     @Override
     public Float getConcentration() {
         throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void applyReagent(Reagent r) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<Reagent> getAppliedReagents() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    // todo jmt should this be getWellAtPosition().getSampleInstances()? Perhaps not, because the wells may not exist
-    public Set<SampleInstance> getSampleInstancesInPosition(String wellPosition) {
-        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if(getSampleSheetAuthorities().isEmpty()) {
-            sampleInstances = Collections.emptySet();
-        } else {
-            for (LabVessel labVessel : getSampleSheetAuthorities()) {
-                // todo jmt generalize to handle rack and tube
-                if (labVessel instanceof RackOfTubes) {
-                    RackOfTubes rackOfTubes = (RackOfTubes) labVessel;
-                    Set<SampleInstance> sampleInstancesInPosition = rackOfTubes.getSampleInstancesInPosition(wellPosition);
-                    for (SampleInstance sampleInstance : sampleInstancesInPosition) {
-                        LabVessel wellAtPosition = this.getVesselContainer().getVesselAtPosition(wellPosition);
-                        if (wellAtPosition != null) {
-                            for (Reagent reagent : wellAtPosition.getAppliedReagents()) {
-                                if(reagent.getMolecularEnvelopeDelta() != null) {
-                                    MolecularEnvelope molecularEnvelope = sampleInstance.getMolecularState().getMolecularEnvelope();
-                                    if(molecularEnvelope == null) {
-                                        sampleInstance.getMolecularState().setMolecularEnvelope(reagent.getMolecularEnvelopeDelta());
-                                    } else {
-                                        molecularEnvelope.surroundWith(reagent.getMolecularEnvelopeDelta());
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    sampleInstances.addAll(sampleInstancesInPosition);
-                }
-            }
-        }
-        return sampleInstances;
     }
 
     public VesselContainer<PlateWell> getVesselContainer() {

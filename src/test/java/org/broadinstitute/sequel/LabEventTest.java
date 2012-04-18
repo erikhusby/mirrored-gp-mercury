@@ -84,7 +84,7 @@ public class LabEventTest {
         StaticPlate shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(shearingCleanupPlate.getSampleInstances().size(),
                 NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
-        Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getSampleInstancesInPosition("A08");
+        Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition("A08");
         Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
         Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
 
@@ -105,7 +105,7 @@ public class LabEventTest {
                 indexedAdapterLigationJaxb, indexPlate, shearingCleanupPlate);
         labEventHandler.processEvent(indexedAdapterLigationEntity);
         // asserts
-        Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getSampleInstancesInPosition("A01");
+        Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition("A01");
         PlateWell plateWellA1PostIndex = shearingCleanupPlate.getVesselContainer().getVesselAtPosition("A01");
         Assert.assertEquals(plateWellA1PostIndex.getAppliedReagents().iterator().next(), index301, "Wrong reagent");
         SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
@@ -128,7 +128,7 @@ public class LabEventTest {
         RackOfTubes pondRegRack = (RackOfTubes) pondRegistrationEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(pondRegRack.getSampleInstances().size(),
                 NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
-        Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getSampleInstancesInPosition("A08");
+        Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getVesselContainer().getSampleInstancesAtPosition("A08");
         Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
         Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
 
