@@ -124,6 +124,22 @@ public class LibraryBean {
         return organism;
     }
     
+    public String getCollaboratorSampleName() {
+        return collaboratorSampleId;
+    }
+    
+    public String getSampleLSID() {
+        return sampleLSID;
+    }
+    
+    public String getCellLine() {
+        return cellLine;
+    }
+    
+    public String getIndividual() {
+        return individual;
+    }
+    
     
     
     
