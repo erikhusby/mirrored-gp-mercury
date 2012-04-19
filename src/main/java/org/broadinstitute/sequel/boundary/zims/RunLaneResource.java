@@ -14,19 +14,23 @@ import org.broadinstitute.sequel.entity.run.RunChamber;
 import org.broadinstitute.sequel.entity.run.SequencingRun;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
+import org.broadinstitute.sequel.entity.zims.LibrariesBean;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.List;
 
 @Path("/RunLane")
+@Stateless
 public class RunLaneResource {
 
     @Inject
@@ -40,8 +44,8 @@ public class RunLaneResource {
     
     @GET
     @Path("/query")
-    @Produces("application/json")
-    public List<LibraryBean> getLibraries(
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    public LibrariesBean getLibraries(
             @QueryParam("runName") String runName,
             @QueryParam("chamber") String chamber)
     {
@@ -118,7 +122,7 @@ public class RunLaneResource {
                 transport.close();
             }
         }
-        return libraries;
+        return new LibrariesBean(libraries);
     }
 
 }

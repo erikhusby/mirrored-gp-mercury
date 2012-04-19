@@ -1,23 +1,46 @@
 package org.broadinstitute.sequel.boundary.zims;
 
-
-import clover.org.apache.velocity.runtime.parser.node.ASTSetDirective;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
 import org.broadinstitute.sequel.WeldBooter;
+import org.broadinstitute.sequel.control.AbstractJerseyClientService;
+import org.broadinstitute.sequel.entity.zims.LibrariesBean;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import static org.testng.Assert.*;
+
+import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.test.RunEmbeddedSequel;
+import org.jboss.arquillian.test.api.ArquillianResource;
 import org.testng.annotations.Test;
 
+
+import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 import java.util.Collection;
 
-public class RunLaneResourceTest extends WeldBooter {
+
+public class RunLaneResourceTest extends RunEmbeddedSequel {
+
+    @Inject
+    RunLaneResource runLaneResource;
+
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_zims() {
-        RunLaneResource runLaneResource = weldUtil.getFromContainer(RunLaneResource.class);
-        Collection<LibraryBean> libraries = runLaneResource.getLibraries("110623_SL-HAU_0282_AFCB0152ACXX", "2");
+        System.out.println("Here i am");
+        String url = baseURL + "rest/RunLane/query";
+
+        LibrariesBean libs = Client.create().resource(url)
+                .queryParam("runName","110623_SL-HAU_0282_AFCB0152ACXX")
+                .queryParam("chamber","2")
+                .accept(MediaType.APPLICATION_XML).get(LibrariesBean.class);
+
+        assertNotNull(libs);
+        Collection<LibraryBean> libraries = libs.getLibraries();
+
         boolean foundSample1 = false;
         
         assertNotNull(libraries);
@@ -40,4 +63,5 @@ public class RunLaneResourceTest extends WeldBooter {
         
         assertTrue(foundSample1);
     }
+
 }

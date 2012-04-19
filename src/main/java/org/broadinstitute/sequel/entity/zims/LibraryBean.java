@@ -3,14 +3,14 @@ package org.broadinstitute.sequel.entity.zims;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.*;
 
 /**
  * A library DTO for Zamboni.  Copied from
  * LIMQuery.thrift from squidThriftService.
  */
-@XmlRootElement
+@XmlRootElement(name = "Library")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class LibraryBean {
     
     private String library;
@@ -18,9 +18,10 @@ public class LibraryBean {
     private String project;
     
     private String initiative;
-    
+        
     private Long workRequest;
 
+    @XmlElement(name = "MolecularIndexingScheme")
     private MolecularIndexingSchemeBean indexingScheme;
     
     private Boolean hasIndexingRead;
@@ -76,7 +77,10 @@ public class LibraryBean {
     
     private Boolean isPartOfDevExperiment;
 
+    @XmlElement(name = "DevExperimentData")
     private DevExperimentDataBean devExperimentData;
+
+    public LibraryBean() {}
 
     public LibraryBean(String library, String project, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize, String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId, String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType, String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine, String bait, String individual, Double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl, String weirdness, Double preCircularizationDnaSize, Boolean partOfDevExperiment, TZDevExperimentData devExperimentData) {
         this.library = library;

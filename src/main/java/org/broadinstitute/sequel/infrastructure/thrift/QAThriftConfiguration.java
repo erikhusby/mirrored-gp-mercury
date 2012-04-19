@@ -1,6 +1,9 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
 
+import javax.enterprise.inject.Default;
+
+@Default
 public class QAThriftConfiguration implements ThriftConfiguration {
 
     @Override
