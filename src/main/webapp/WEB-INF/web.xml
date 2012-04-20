@@ -54,6 +54,17 @@
         </form-login-config>
     </login-config>
 
+    <servlet>
+        <!--TODO:  Correct Base context root to be for any setting-->
+        <servlet-name>LogoutServlet</servlet-name>
+        <servlet-class>
+            org.broadinstitute.sequel.presentation.logout.LogoutServlet
+        </servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LogoutServlet</servlet-name>
+        <url-pattern>/logout</url-pattern>
+    </servlet-mapping>
 
 
 </web-app>
