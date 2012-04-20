@@ -48,45 +48,7 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        // todo jmt change this to call VesselContainer.getSampleInstancesInPosition for all positions
-        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if(getSampleSheetAuthorities().isEmpty()) {
-            if(getTransfersTo().isEmpty()) {
-                for (LabVessel labVessel : this.vesselContainer.getContainedVessels()) {
-                    sampleInstances.addAll(labVessel.getSampleInstances());
-                }
-            } else {
-                for (LabEvent labEvent : getTransfersTo()) {
-                    for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
-                        sectionTransfer.getSourceVesselContainer();
-                    }
-                }
-            }
-        } else {
-            for (LabVessel labVessel : getSampleSheetAuthorities()) {
-                sampleInstances.addAll(labVessel.getSampleInstances());
-            }
-        }
-        return sampleInstances;
-    }
-    
-    public Set<SampleInstance> getSampleInstancesInPosition(String rackPosition) {
-        Set<SampleInstance> sampleInstances;
-        if(getSampleSheetAuthorities().isEmpty()) {
-            TwoDBarcodedTube twoDBarcodedTube = this.vesselContainer.getVesselAtPosition(rackPosition);
-            sampleInstances = twoDBarcodedTube.getSampleInstances();
-        } else {
-            sampleInstances = new HashSet<SampleInstance>();
-            for (LabVessel labVessel : getSampleSheetAuthorities()) {
-                // todo jmt add getSampleInstancesInPosition to VesselContainer
-                if(labVessel instanceof StaticPlate) {
-                    sampleInstances.addAll(((StaticPlate) labVessel).getSampleInstancesInPosition(rackPosition));
-                } else if(labVessel instanceof VesselContainerEmbedder) {
-                    sampleInstances.addAll(((VesselContainerEmbedder) labVessel).getVesselContainer().getVesselAtPosition(rackPosition).getSampleInstances());
-                }
-            }
-        }
-        return sampleInstances;
+        return this.getVesselContainer().getSampleInstances();
     }
 
     @Override
@@ -126,16 +88,6 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
 
     @Override
     public Float getConcentration() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void applyReagent(Reagent r) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<Reagent> getAppliedReagents() {
         throw new RuntimeException("I haven't been written yet.");
     }
 

@@ -19,9 +19,9 @@ public class RunEmbeddedSequel extends Arquillian {
     }
 
     @ArquillianResource
-    URL baseURL;
+    protected URL baseURL;
 
-//    @Test
+    //@Test
     public void run() throws InterruptedException {
         System.out.println("Embedded SequeL started\n" + baseURL + "index.xhtml");
         // run for a year!

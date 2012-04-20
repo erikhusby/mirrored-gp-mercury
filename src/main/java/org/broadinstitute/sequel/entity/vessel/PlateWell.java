@@ -10,6 +10,7 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,8 +18,6 @@ public class PlateWell extends AbstractLabVessel {
 
     private StaticPlate plate;
     private WellName wellName;
-    
-    private Set<Reagent> appliedReagents = new HashSet<Reagent>();
     
     public PlateWell(StaticPlate p,WellName wellName) {
         super(p.getLabel() + wellName);
@@ -53,7 +52,7 @@ public class PlateWell extends AbstractLabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        return ((StaticPlate)getContainingVessel()).getSampleInstancesInPosition(this.wellName.getWellName());
+        return this.plate.getVesselContainer().getSampleInstancesAtPosition(this.wellName.getWellName());
     }
 
     @Override
@@ -94,16 +93,6 @@ public class PlateWell extends AbstractLabVessel {
     @Override
     public Float getConcentration() {
         throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void applyReagent(Reagent reagent) {
-        this.appliedReagents.add(reagent);
-    }
-
-    @Override
-    public Collection<Reagent> getAppliedReagents() {
-        return this.appliedReagents;
     }
 
     @Override

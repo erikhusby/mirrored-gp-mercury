@@ -87,7 +87,7 @@ public class SectionTransfer {
         // if source container is mutable, or sections are different: establish authorities at contained vessel level, based on section
         LabVessel sourceVessel = this.sourceVesselContainer.getEmbedder();
         // todo jmt, rather than checking for incoming transfers, check for other position maps?
-        if((this.sourceVesselContainer.getEmbedder() instanceof RackOfTubes && !sourceVessel.getTransfersTo().isEmpty()) ||
+        if(this.sourceVesselContainer.getEmbedder() instanceof RackOfTubes && !sourceVessel.getTransfersTo().isEmpty() ||
                 this.sourceSection != this.targetSection) {
             List<WellName> positions = this.sourceSection.getWells();
             for (int wellIndex = 0; wellIndex < positions.size(); wellIndex++) {
@@ -106,14 +106,13 @@ public class SectionTransfer {
                 }
             }
         } else {
-            // todo jmt fix casts to AbstractLabVessel
-            if (((AbstractLabVessel) this.sourceVesselContainer.getEmbedder()).getSampleSheetAuthorities().isEmpty()) {
+            if ( this.sourceVesselContainer.getSampleSheetAuthorities().isEmpty()) {
                 if(sourceVessel.getReagentContents().isEmpty()) {
-                    ((AbstractLabVessel)this.targetVesselContainer.getEmbedder()).getSampleSheetAuthorities().add(sourceVessel);
+                    this.targetVesselContainer.getSampleSheetAuthorities().add(this.sourceVesselContainer);
                 }
             } else {
-                ((AbstractLabVessel)this.targetVesselContainer.getEmbedder()).getSampleSheetAuthorities().addAll(
-                        ((AbstractLabVessel) this.sourceVesselContainer.getEmbedder()).getSampleSheetAuthorities());
+                this.targetVesselContainer.getSampleSheetAuthorities().addAll(
+                        this.sourceVesselContainer.getSampleSheetAuthorities());
             }
         }
 

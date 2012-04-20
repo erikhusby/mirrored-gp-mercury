@@ -48,6 +48,18 @@ public class DeploymentBuilder {
         return buildSequelWar(sb.toString());
     }
 
+    public static WebArchive buildSequelWarWithAlternatives(Class... alternatives) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<beans>\n")
+                .append("  <alternatives>\n");
+        for (Class alternative : alternatives) {
+            sb.append("    <class>").append(alternative.getName()).append("</class>\n");
+        }
+        sb.append("  </alternatives>\n")
+                .append("</beans>");
+        return buildSequelWar(sb.toString());
+    }
+
     private static JavaArchive importMain() {
         return ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
                 .importDirectory("target/classes")
