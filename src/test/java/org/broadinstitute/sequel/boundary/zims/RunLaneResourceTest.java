@@ -8,13 +8,19 @@ import org.broadinstitute.sequel.entity.zims.LibrariesBean;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import static org.testng.Assert.*;
 
+import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.test.DeploymentBuilder;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 
+import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 
@@ -28,6 +34,8 @@ public class RunLaneResourceTest extends ContainerTest {
     @Inject
     RunLaneResource runLaneResource;
 
+    @Inject ThriftConfiguration thriftConfig;
+    
     private final String RUN_NAME = "110623_SL-HAU_0282_AFCB0152ACXX";
     
     private final String CHAMBER = "2";
@@ -45,14 +53,13 @@ public class RunLaneResourceTest extends ContainerTest {
         
         doAssertions(libsBean.getLibraries());
     }
-
+    
     /**
      * Does the same test as {@link #test_zims_in_container()},
      * but does it over http.
      * @param baseUrl
      */
-    @Test(groups = EXTERNAL_INTEGRATION, 
-          dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = EXTERNAL_INTEGRATION,dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void test_zims_over_http(@ArquillianResource URL baseUrl) {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
@@ -91,5 +98,18 @@ public class RunLaneResourceTest extends ContainerTest {
             }
         }
         assertTrue(foundSample1);    
+    }
+
+    @Alternative
+    public static class MockThriftConfiguration implements ThriftConfiguration {
+        @Override
+        public String getHost() {
+            return "foo.com";
+        }
+
+        @Override
+        public int getPort() {
+            return 8003;
+        }
     }
 }

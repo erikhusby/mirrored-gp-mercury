@@ -27,6 +27,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Path("/RunLane")
@@ -41,7 +42,13 @@ public class RunLaneResource {
 
     @Inject
     ThriftConfiguration thriftConfiguration;
-    
+
+    public RunLaneResource() {}
+
+    public RunLaneResource(ThriftConfiguration thriftConfiguration) {
+        this.thriftConfiguration = thriftConfiguration;
+    }
+
     @GET
     @Path("/query")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
@@ -55,19 +62,27 @@ public class RunLaneResource {
         if (chamber == null) {
             throw new NullPointerException("chamber cannot be null");
         }
-        final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
 
         TTransport transport = new TSocket(thriftConfiguration.getHost(), thriftConfiguration.getPort());
         TProtocol protocol = new TBinaryProtocol(transport);
         LIMQueries.Client client = new LIMQueries.Client(protocol);
+
+        return getLibraries(client,transport,runName,chamber);
+    }
+
+    LibrariesBean getLibraries(LIMQueries.Client thriftClient,
+                                       TTransport thriftTransport,
+                                       String runName,
+                                       String chamber) {
+        final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
         try {
-            transport.open();
+            thriftTransport.open();
         }
         catch(TTransportException e) {
             throw new RuntimeException("Could not open transport for " + thriftConfiguration.getHost() + ":" + thriftConfiguration.getPort(),e);
         }
         try {
-            TZamboniRun tRun = client.fetchSingleLane(runName,new Short(chamber).shortValue());
+            TZamboniRun tRun = thriftClient.fetchSingleLane(runName,new Short(chamber).shortValue());
 
             if (tRun == null) {
                 throw new RuntimeException("Could not load run " + runName);
@@ -118,11 +133,10 @@ public class RunLaneResource {
             throw new RuntimeException("Failed to fetch run " + runName + " lane " + chamber,e);
         }
         finally {
-            if (transport != null) {
-                transport.close();
+            if (thriftTransport != null) {
+                thriftTransport.close();
             }
         }
         return new LibrariesBean(libraries);
     }
-
 }
