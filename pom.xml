@@ -342,9 +342,7 @@
         <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
             <id>JavaEE</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+
             <dependencies>
                 <dependency>
                     <groupId>javax</groupId>
@@ -391,6 +389,9 @@
 
         <profile>
             <id>Arquillian-Glassfish</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <dependencies>
                 <dependency>
                     <groupId>org.jboss.arquillian.container</groupId>
