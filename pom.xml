@@ -64,7 +64,6 @@
     </developers>
 
     <!--
-
     Glassfish 3.1.2 lists a decommissioned maven repository
     (maven.glassfish.org). To get around the checksum errors that this causes,
     developers must add this to their settings.xml until such time as we use a
@@ -80,10 +79,18 @@
     </mirrors>
 
     See: https://blogs.oracle.com/theaquarium/entry/some_maven_related_changes_when
-
     -->
 
     <repositories>
+        <repository>
+            <id>internal</id>
+            <name>Broad's Maven2 Custom Repository</name>
+            <layout>default</layout>
+            <url>http://prodinfosvn.broadinstitute.org:8000/m2-repository</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
 
         <!-- JBoss Repository for Arquillian, Hibernate, etc. -->
         <repository>
@@ -729,19 +736,19 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>1.8</version>
+            <version>1.12</version>
         </dependency>
 
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
-            <version>1.8</version>
+            <version>1.12</version>
         </dependency>
 
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-json</artifactId>
-            <version>1.8</version>
+            <version>1.12</version>
         </dependency>
         <dependency>
             <groupId>lims</groupId>
