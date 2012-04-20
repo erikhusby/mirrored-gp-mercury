@@ -15,12 +15,23 @@ public class MolecularIndexingSchemeBean {
    
     private String name;
     
-    private Map<IndexPosition,String> sequences;
+    private Map<IndexPositionBean,String> sequences;
 
      public MolecularIndexingSchemeBean() {}
 
     public MolecularIndexingSchemeBean(MolecularIndexingScheme indexingScheme) {
         this.name  = indexingScheme.getName();
-        this.sequences = indexingScheme.getSequences();
+        for (Map.Entry<IndexPosition, String> entry : indexingScheme.getSequences().entrySet()) {
+            IndexPosition thriftPosition = entry.getKey();
+            sequences.put(new IndexPositionBean(thriftPosition),entry.getValue());
+        }
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public Map<IndexPositionBean,String> getSequences() {
+        return sequences;
     }
 }
