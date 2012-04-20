@@ -58,6 +58,29 @@
     </servlet-mapping>
 -->
     <welcome-file-list>
-        <welcome-file>index.xhtml</welcome-file>
+        <welcome-file>/index.xhtml</welcome-file>
     </welcome-file-list>
+
+    <login-config>
+        <auth-method>FORM</auth-method>
+        <realm-name>crowd_custom_realm</realm-name>
+        <form-login-config>
+            <form-login-page>/login/login.xhtml</form-login-page>
+            <form-error-page>/login/login_error.xhtml</form-error-page>
+        </form-login-config>
+    </login-config>
+
+    <servlet>
+        <!--TODO:  Correct Base context root to be for any setting-->
+        <servlet-name>LogoutServlet</servlet-name>
+        <servlet-class>
+            org.broadinstitute.sequel.presentation.logout.LogoutServlet
+        </servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LogoutServlet</servlet-name>
+        <url-pattern>/logout</url-pattern>
+    </servlet-mapping>
+
+
 </web-app>
