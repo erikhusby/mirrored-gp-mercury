@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Created by IntelliJ IDEA.
+  User: scottmat
+  Date: 3/30/12
+  Time: 3:49 PM
+-->
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core">
+
+<ui:debug />
+
+
+    <h:head>
+        <title>SequeL Login Page</title>
+    </h:head>
+
+    <h:body>
+        Please enter your Broad Username and Password.
+
+        <!--#{requestScope}-->
+
+
+        <form method="POST" action="j_security_check">
+            <!--<h:form>-->
+
+            <h:messages />
+            <h:panelGrid columns="2">
+
+                <h:outputText value="UserName:" />
+
+                <!--<h:inputText label="Username:" value="#{userLogin.userName}" required="true" />-->
+                <input type="text" name="j_username" />
+
+                <h:outputText value="Password:" />
+
+                <!--<h:inputSecret label="Password:" value="#{userLogin.password}" required="true" />-->
+                <input type="password" name="j_password" />
+
+                <h:panelGroup />
+                <input type="submit" value="Login"/>
+                <!--<h:commandButton value="Login" action="/index" />-->
+            </h:panelGrid>
+        <!--</h:form>-->
+        </form>
+    </h:body>
+</html>
