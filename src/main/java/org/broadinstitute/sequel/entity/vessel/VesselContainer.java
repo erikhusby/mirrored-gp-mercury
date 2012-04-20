@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.broadinstitute.sequel.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
@@ -29,6 +30,7 @@ public class VesselContainer<T extends LabVessel> {
 
     private Set<VesselContainer> sampleSheetAuthorities = new HashSet<VesselContainer>();
 
+    @SuppressWarnings("InstanceVariableMayNotBeInitialized")
     @Parent
     private LabVessel embedder;
 
@@ -50,6 +52,11 @@ public class VesselContainer<T extends LabVessel> {
             for (LabEvent labEvent : this.embedder.getTransfersTo()) {
                 for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
                     sampleInstances.addAll(sectionTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(position));
+                }
+                for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
+                    if(cherryPickTransfer.getTargetPosition().equals(position)) {
+                        sampleInstances.addAll(cherryPickTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition()));
+                    }
                 }
             }
             T vesselAtPosition = getVesselAtPosition(position);
@@ -83,8 +90,19 @@ public class VesselContainer<T extends LabVessel> {
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if(this.sampleSheetAuthorities.isEmpty()) {
-            for (String position : this.mapPositionToVessel.keySet()) {
-                sampleInstances.addAll(getSampleInstancesAtPosition(position));
+            if (this.mapPositionToVessel.isEmpty()) {
+                // This plate has no wells in the database, because its transfers are all section based (i.e. no cherry picks)
+                for (LabEvent labEvent : this.embedder.getTransfersTo()) {
+                    for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
+                        if(labVessel instanceof VesselContainerEmbedder) {
+                            sampleInstances.addAll(((VesselContainerEmbedder) labVessel).getVesselContainer().getSampleInstances());
+                        }
+                    }
+                }
+            } else {
+                for (String position : this.mapPositionToVessel.keySet()) {
+                    sampleInstances.addAll(getSampleInstancesAtPosition(position));
+                }
             }
         } else {
             for (VesselContainer sampleSheetAuthority : this.sampleSheetAuthorities) {
