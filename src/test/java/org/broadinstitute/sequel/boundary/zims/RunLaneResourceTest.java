@@ -15,6 +15,7 @@ import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import static org.testng.Assert.*;
 
 import org.broadinstitute.sequel.entity.zims.MolecularIndexingSchemeBean;
+import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.broadinstitute.sequel.test.ContainerTest;
 import org.broadinstitute.sequel.test.DeploymentBuilder;
@@ -24,11 +25,13 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import javax.naming.InitialContext;
 import javax.ws.rs.core.MediaType;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
@@ -42,7 +45,7 @@ public class RunLaneResourceTest extends ContainerTest {
     @Inject
     RunLaneResource runLaneResource;
 
-    @Inject ThriftConfiguration thriftConfig;
+    final QAThriftConfiguration thriftConfig = new QAThriftConfiguration();
     
     private final String RUN_NAME = "110623_SL-HAU_0282_AFCB0152ACXX";
     
@@ -121,7 +124,8 @@ public class RunLaneResourceTest extends ContainerTest {
             }
         }
     }
-    
+
+    @BeforeClass
     private TZamboniLane getZamboniLane() throws Exception {
         TTransport transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
         TProtocol protocol = new TBinaryProtocol(transport);

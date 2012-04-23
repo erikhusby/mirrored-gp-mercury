@@ -13,6 +13,8 @@ public class IndexPositionBean {
 
     private String hint;
 
+    public IndexPositionBean() {}
+
     public IndexPositionBean(IndexPosition thriftPosition) {
         
         if (thriftPosition == IndexPosition.A) {
