@@ -46,7 +46,10 @@
                     <img src="/images/broad_logo.png" alt="Broad Institute" align="right"/>
                 </td>
                 <td>
-                    <a href="/logout" >Logout</a>
+                    <!--<h:link outcome="/logout">Logout" </h:link>-->
+                    <h:form>
+                        <h:commandLink action="#{securityBackingBean.logout}" value="Logout"/>
+                    </h:form>
                 </td>
             </tr>
         </table>

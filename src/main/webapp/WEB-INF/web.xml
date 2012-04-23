@@ -60,7 +60,6 @@
     <welcome-file-list>
         <welcome-file>/index.xhtml</welcome-file>
     </welcome-file-list>
-
     <login-config>
         <auth-method>FORM</auth-method>
         <realm-name>crowd_custom_realm</realm-name>
@@ -71,7 +70,6 @@
     </login-config>
 
     <servlet>
-        <!--TODO:  Correct Base context root to be for any setting-->
         <servlet-name>LogoutServlet</servlet-name>
         <servlet-class>
             org.broadinstitute.sequel.presentation.logout.LogoutServlet
