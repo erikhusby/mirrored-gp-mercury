@@ -35,6 +35,7 @@ public abstract class AbstractLabEvent implements LabEvent {
     private Set<SectionTransfer> sectionTransfers = new HashSet<SectionTransfer>();
     /** for random access transfers, e.g. MultiProbe */
     private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<CherryPickTransfer>();
+    private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<VesselToSectionTransfer>();
     // todo jmt tube to tube transfers, or will they always be in a rack?
 
     private String quoteServerBatchId;
@@ -155,6 +156,15 @@ public abstract class AbstractLabEvent implements LabEvent {
 
     public void setCherryPickTransfers(Set<CherryPickTransfer> cherryPickTransfers) {
         this.cherryPickTransfers = cherryPickTransfers;
+    }
+
+    @Override
+    public Set<VesselToSectionTransfer> getVesselToSectionTransfers() {
+        return vesselToSectionTransfers;
+    }
+
+    public void setVesselToSectionTransfers(Set<VesselToSectionTransfer> vesselToSectionTransfers) {
+        this.vesselToSectionTransfers = vesselToSectionTransfers;
     }
 
     @Override

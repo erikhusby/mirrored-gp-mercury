@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.bettalims.jaxb.PlateCherryPickEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateType;
 import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
+import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptacleType;
 
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -112,6 +113,23 @@ public class BettaLimsMessageFactory {
             plateTransferEvent.setPlate(buildPlate(targetRackBarcode));
 
             return plateTransferEvent;
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public ReceptaclePlateTransferEvent buildTubeToPlate(String eventType, String sourceTubeBarcode, String targetPlateBarcode) {
+        try {
+            ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
+            receptaclePlateTransferEvent.setEventType(eventType);
+            receptaclePlateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+
+            ReceptacleType sourceReceptacle = new ReceptacleType();
+            sourceReceptacle.setBarcode(sourceTubeBarcode);
+            receptaclePlateTransferEvent.setSourceReceptacle(sourceReceptacle);
+            receptaclePlateTransferEvent.setDestinationPlate(buildPlate(targetPlateBarcode));
+
+            return receptaclePlateTransferEvent;
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException(e);
         }

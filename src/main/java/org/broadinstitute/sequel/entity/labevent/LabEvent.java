@@ -174,4 +174,6 @@ public interface LabEvent {
     public String getQuoteServerBatchId();
 
     Set<CherryPickTransfer> getCherryPickTransfers();
+
+    Set<VesselToSectionTransfer> getVesselToSectionTransfers();
 }

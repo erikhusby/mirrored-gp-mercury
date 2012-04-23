@@ -79,18 +79,6 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-/*
-    @Override
-    public Collection<Reagent> getReagentContents() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-*/
-
-    @Override
-    public void addReagent(Reagent reagent) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
     @Override
     public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode, SampleInstance sampleInstance) {
         throw new RuntimeException("I haven't been written yet.");

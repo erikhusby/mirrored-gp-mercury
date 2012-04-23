@@ -10,6 +10,7 @@ import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
+import org.broadinstitute.sequel.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.SBSSection;
@@ -53,6 +54,8 @@ public class LabEventFactory {
         MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("NormalizedCatchRegistration", new LabEventType(false, true,
                 MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
         MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("PoolingTransfer", new LabEventType(false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("BaitSetup", new LabEventType(false, true,
                 MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
     }
     
@@ -276,6 +279,18 @@ public class LabEventFactory {
         return labEvent;
     }
 
+    public LabEvent buildVesselToSectionDbFree(ReceptaclePlateTransferEvent receptaclePlateTransferEvent,
+            TwoDBarcodedTube sourceTube, StaticPlate targetPlate, String targetSection) {
+        LabEvent labEvent = constructReferenceData(receptaclePlateTransferEvent);
+        if(targetPlate == null) {
+            targetPlate = new StaticPlate(receptaclePlateTransferEvent.getSourcePlate().getBarcode());
+        }
+        labEvent.addSourceLabVessel(sourceTube);
+        labEvent.addTargetLabVessel(targetPlate);
+        labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube, targetSection,
+                targetPlate.getVesselContainer()));
+        return labEvent;
+    }
 
     private Map<String, TwoDBarcodedTube> findTubesByBarcodes(PositionMapType positionMap) {
         List<String> barcodes = new ArrayList<String>();

@@ -3,6 +3,7 @@ package org.broadinstitute.sequel;
 //import com.jprofiler.api.agent.Controller;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateCherryPickEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
+import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
@@ -10,6 +11,7 @@ import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.reagent.GenericReagent;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -172,6 +174,12 @@ public class LabEventTest {
         StaticPlate hybridizationPlate = (StaticPlate) hybridizationEntity.getTargetLabVessels().iterator().next();
 
         // BaitSetup
+        String baitTubeBarcode = "Bait";
+        ReceptaclePlateTransferEvent baitSetupJaxb = bettaLimsMessageFactory.buildTubeToPlate("BaitSetup", baitTubeBarcode, hybridizationPlateBarcode);
+        TwoDBarcodedTube baitTube = new TwoDBarcodedTube(baitTubeBarcode);
+        baitTube.addReagent(new GenericReagent("BaitSet", "xyz"));
+        labEventFactory.buildVesselToSectionDbFree(baitSetupJaxb, baitTube, hybridizationPlate, "ALL96");
+
         // BaitAddition
 
         // NormalizedCatchRegistration
