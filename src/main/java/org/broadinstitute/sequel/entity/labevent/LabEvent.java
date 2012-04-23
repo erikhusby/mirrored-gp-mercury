@@ -172,4 +172,6 @@ public interface LabEvent {
     public void setQuoteServerBatchId(String batchId);
     
     public String getQuoteServerBatchId();
+
+    Set<CherryPickTransfer> getCherryPickTransfers();
 }

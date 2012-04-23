@@ -30,6 +30,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+
+/**
+ * Web service for fetching run data for Zamboni.
+ */
 @Path("/RunLane")
 @Stateless
 public class RunLaneResource {
@@ -71,9 +75,9 @@ public class RunLaneResource {
     }
 
     LibrariesBean getLibraries(LIMQueries.Client thriftClient,
-                                       TTransport thriftTransport,
-                                       String runName,
-                                       String chamber) {
+                               TTransport thriftTransport,
+                               String runName,
+                               String chamber) {
         final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
         try {
             thriftTransport.open();

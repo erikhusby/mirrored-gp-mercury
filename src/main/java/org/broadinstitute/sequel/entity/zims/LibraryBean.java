@@ -144,6 +144,17 @@ public class LibraryBean {
         return individual;
     }
     
+    public String getLibrary() {
+        return library;
+    }
+
+    public Double getPrecircularizationDnaSize() {
+        return preCircularizationDnaSize;
+    }
+
+    public MolecularIndexingSchemeBean getIndexingScheme() {
+        return indexingScheme;
+    }
     
     
     

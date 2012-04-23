@@ -7,6 +7,7 @@ import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.HashMap;
 import java.util.Map;
 
 @XmlRootElement(name = "MolecularIndexingScheme")
@@ -15,12 +16,23 @@ public class MolecularIndexingSchemeBean {
    
     private String name;
     
-    private Map<IndexPosition,String> sequences;
+    private Map<IndexPositionBean,String> sequences = new HashMap<IndexPositionBean, String>();
 
      public MolecularIndexingSchemeBean() {}
 
     public MolecularIndexingSchemeBean(MolecularIndexingScheme indexingScheme) {
         this.name  = indexingScheme.getName();
-        this.sequences = indexingScheme.getSequences();
+        for (Map.Entry<IndexPosition, String> entry : indexingScheme.getSequences().entrySet()) {
+            IndexPosition thriftPosition = entry.getKey();
+            sequences.put(new IndexPositionBean(thriftPosition),entry.getValue());
+        }
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public Map<IndexPositionBean,String> getSequences() {
+        return sequences;
     }
 }
