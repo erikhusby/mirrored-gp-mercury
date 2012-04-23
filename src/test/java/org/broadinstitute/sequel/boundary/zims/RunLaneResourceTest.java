@@ -47,7 +47,9 @@ public class RunLaneResourceTest extends ContainerTest {
 
     final QAThriftConfiguration thriftConfig = new QAThriftConfiguration();
     
-    private final String RUN_NAME = "110623_SL-HAU_0282_AFCB0152ACXX";
+    private final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
+    
+    //private final String RUN_NAME = "110623_SL-HAU_0282_AFCB0152ACXX";
     
     private final String CHAMBER = "2";
     
@@ -96,7 +98,13 @@ public class RunLaneResourceTest extends ContainerTest {
                 assertEquals(zLib.getCellLine(),libBean.getCellLine());
                 assertEquals(zLib.getSampleAlias(),libBean.getCollaboratorSampleName());
                 assertEquals(zLib.getIndividual(),libBean.getIndividual());
-                assertEquals(zLib.getOrganism(),libBean.getOrganism());
+                
+                if ("Human".equals(zLib.getOrganism())) {
+                    assertEquals(libBean.getOrganism(),"Homo : Homo sapiens");
+                }
+                else {
+                    assertEquals(zLib.getOrganism(),libBean.getOrganism());
+                }
                 assertEquals(zLib.getLsid(),libBean.getSampleLSID());
                 checkEquality(zLib.getMolecularIndexes(), libBean.getIndexingScheme());
             }
@@ -148,11 +156,9 @@ public class RunLaneResourceTest extends ContainerTest {
      * @param libraries
      */
     private void doAssertions(Collection<LibraryBean> libraries) throws Exception {
-        boolean foundSample1 = false;
-
         assertNotNull(libraries);
         assertFalse(libraries.isEmpty());
-        assertEquals(libraries.size(),12);
+        assertEquals(libraries.size(),94);
 
         TZamboniLane zamboniLane = getZamboniLane();
         
@@ -160,33 +166,6 @@ public class RunLaneResourceTest extends ContainerTest {
         for (TZamboniLibrary zLib : zamboniLane.getLibraries()) {
             doLibraryAssertions(zLib,libraries);    
         }
-        
-        for (LibraryBean library : libraries) {
-            assertEquals(library.getWorkRequest(),new Long(25661));
-            assertEquals(library.getProject(),"G1715");
-            assertEquals(library.getOrganism(),"Human");
-
-            if ("BROAD:SEQUENCING_SAMPLE:107508.0".equals(library.getSampleLSID())) {
-                foundSample1 = true;
-                assertEquals(library.getCollaboratorSampleName(),"BioSam 220");
-                assertEquals(library.getSampleLSID(),"BROAD:SEQUENCING_SAMPLE:107508.0");
-                assertEquals(library.getCellLine(),"Ewing Sarcoma");
-                assertEquals(library.getIndividual(),"Donor 77 - donor #4");
-            }
-        }
-        assertTrue(foundSample1);    
     }
 
-    @Alternative
-    public static class MockThriftConfiguration implements ThriftConfiguration {
-        @Override
-        public String getHost() {
-            return "foo.com";
-        }
-
-        @Override
-        public int getPort() {
-            return 8003;
-        }
-    }
 }
