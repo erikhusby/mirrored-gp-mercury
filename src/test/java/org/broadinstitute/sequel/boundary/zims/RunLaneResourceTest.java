@@ -2,16 +2,14 @@ package org.broadinstitute.sequel.boundary.zims;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
-import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
-import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.broadinstitute.sequel.WeldBooter;
 import org.broadinstitute.sequel.control.AbstractJerseyClientService;
+import org.broadinstitute.sequel.entity.zims.IndexPositionBean;
 import org.broadinstitute.sequel.entity.zims.LibrariesBean;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import static org.testng.Assert.*;
@@ -37,6 +35,7 @@ import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 import java.net.URL;
 import java.util.Collection;
+import java.util.Map;
 
 public class RunLaneResourceTest extends ContainerTest {
 
@@ -109,8 +108,13 @@ public class RunLaneResourceTest extends ContainerTest {
         }
         else {
             if (thriftScheme != null && beanScheme != null) {
-                assertEquals(thriftScheme.getName(),beanScheme.getName());
-                // todo position
+                assertEquals(beanScheme.getName(),thriftScheme.getName());
+                assertEquals(beanScheme.getSequences().size(),thriftScheme.getSequences().size());
+
+                for (Map.Entry<IndexPosition, String> thriftEntry : thriftScheme.getSequences().entrySet()) {
+                    String beanSequence = beanScheme.getSequences().get(new IndexPositionBean(thriftEntry.getKey()));
+                    assertEquals(beanSequence,thriftEntry.getValue());
+                }
             }
             else {
                 fail("Thrift scheme " + thriftScheme + " is different from scheme bean " + beanScheme);
