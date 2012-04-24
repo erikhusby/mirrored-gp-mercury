@@ -83,11 +83,6 @@ public class RunLaneResourceTest extends ContainerTest {
 
         assertNotNull(libs);
         doAssertions(libs.getLibraries());
-        
-        try {
-            Thread.sleep(5000000);
-        }
-        catch(InterruptedException e) {}
     }      
     
     private void doLibraryAssertions(TZamboniLibrary zLib,Collection<LibraryBean> libBeans) {
