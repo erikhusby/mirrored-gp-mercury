@@ -34,29 +34,4 @@ public class BSPSampleTest extends ContainerTest {
 
 
     }
-    
-    @Test(groups = {DATABASE_FREE})
-    public void test_patient_id_mock() {
-        List<String[]> resultColumns = new ArrayList<String[]>(1);
-        resultColumns.add(new String[] {"Bill the Cat","2","3","4","5","6","7","8"});
-        BSPSampleSearchService service = EasyMock.createMock(BSPSampleSearchService.class);
-        Collection<String> samplesNames = new ArrayList<String>();
-        String sampleName = "Sample1";
-        samplesNames.add(sampleName);
-        EasyMock.expect(service.runSampleSearch(
-                (Collection<String>) EasyMock.anyObject(),
-                (BSPSampleSearchColumn)EasyMock.anyObject(),
-                (BSPSampleSearchColumn)EasyMock.anyObject(),
-                (BSPSampleSearchColumn)EasyMock.anyObject(),
-                (BSPSampleSearchColumn)EasyMock.anyObject(),
-                (BSPSampleSearchColumn)EasyMock.anyObject(),
-                (BSPSampleSearchColumn)EasyMock.anyObject(),
-                (BSPSampleSearchColumn)EasyMock.anyObject(),
-                (BSPSampleSearchColumn)EasyMock.anyObject())
-        ).andReturn(resultColumns).atLeastOnce();
-
-        EasyMock.replay(service);
-        BSPSample sample = new BSPSample(sampleName,null,new BSPSampleDataFetcher(service).fetchSingleSampleFromBSP(sampleName));
-        Assert.assertEquals(resultColumns.iterator().next()[0],sample.getPatientId());
-    }
 }
