@@ -15,6 +15,7 @@ import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import static org.testng.Assert.*;
 
 import org.broadinstitute.sequel.entity.zims.MolecularIndexingSchemeBean;
+import org.broadinstitute.sequel.infrastructure.thrift.ProductionThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.broadinstitute.sequel.test.ContainerTest;
@@ -45,7 +46,7 @@ public class RunLaneResourceTest extends ContainerTest {
     @Inject
     RunLaneResource runLaneResource;
 
-    final QAThriftConfiguration thriftConfig = new QAThriftConfiguration();
+    final ThriftConfiguration thriftConfig = new QAThriftConfiguration();
     
     private final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
 
@@ -82,6 +83,11 @@ public class RunLaneResourceTest extends ContainerTest {
 
         assertNotNull(libs);
         doAssertions(libs.getLibraries());
+        
+        try {
+            Thread.sleep(5000000);
+        }
+        catch(InterruptedException e) {}
     }      
     
     private void doLibraryAssertions(TZamboniLibrary zLib,Collection<LibraryBean> libBeans) {
