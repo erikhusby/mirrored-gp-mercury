@@ -6,6 +6,11 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
+
+import java.util.Collection;
 
 /**
  * @author breilly
@@ -17,6 +22,7 @@ public class DeploymentBuilder {
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .merge(importMain(), "WEB-INF/classes");
+        war = addWarDependencies(war);
         return war;
     }
 
@@ -25,6 +31,7 @@ public class DeploymentBuilder {
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .merge(importCloverMain(), "WEB-INF/classes");
+        war = addWarDependencies(war);
         return war;
     }
 
@@ -72,5 +79,26 @@ public class DeploymentBuilder {
                 .importDirectory("target/clover/classes")
                 .importDirectory("src/main/resources")
                 .as(JavaArchive.class);
+    }
+
+    private static WebArchive addWarDependencies(WebArchive archive) {
+        return archive
+                .as(MavenImporter.class)
+                .loadEffectivePom("pom.xml", "JavaEE")
+                .importAnyDependencies(new MavenResolutionFilter() {
+                    @Override
+                    public boolean accept(MavenDependency dependency) {
+                        if (dependency == null) {
+                            return false;
+                        }
+                        return !dependency.getScope().equals("test") && !dependency.getScope().equals("provided");
+                    }
+
+                    @Override
+                    public MavenResolutionFilter configure(Collection<MavenDependency> dependencies) {
+                        return this;
+                    }
+                })
+                .as(WebArchive.class);
     }
 }
