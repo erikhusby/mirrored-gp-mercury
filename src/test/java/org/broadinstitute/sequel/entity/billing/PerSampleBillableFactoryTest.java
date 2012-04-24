@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -139,7 +139,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
      * of 12 samples and another work item in quote server
      * against the other quote for the other batch of 12.
      */
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_billing() {
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         String expectedBatchId = "QuoteWorkItemBatchId123";
