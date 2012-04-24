@@ -48,9 +48,7 @@ public class RunLaneResourceTest extends ContainerTest {
     final QAThriftConfiguration thriftConfig = new QAThriftConfiguration();
     
     private final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
-    
-    //private final String RUN_NAME = "110623_SL-HAU_0282_AFCB0152ACXX";
-    
+
     private final String CHAMBER = "2";
     
     private final String WEBSERVICE_URL = "rest/RunLane/query";
@@ -61,7 +59,7 @@ public class RunLaneResourceTest extends ContainerTest {
      */
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_zims_in_container() throws Exception {
-        LibrariesBean libsBean = runLaneResource.getLibraries("110623_SL-HAU_0282_AFCB0152ACXX", "2");
+        LibrariesBean libsBean = runLaneResource.getLibraries(RUN_NAME,CHAMBER);
         assertNotNull(libsBean);
         
         doAssertions(libsBean.getLibraries());
