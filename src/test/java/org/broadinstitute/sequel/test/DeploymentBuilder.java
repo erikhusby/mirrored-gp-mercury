@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.test;
 
+import org.broadinstitute.sequel.BettaLimsMessageFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
@@ -68,17 +69,28 @@ public class DeploymentBuilder {
     }
 
     private static JavaArchive importMain() {
-        return ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
+        JavaArchive archive = ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
                 .importDirectory("target/classes")
                 .importDirectory("src/main/resources")
                 .as(JavaArchive.class);
+        archive = addTestHelpers(archive);
+        return archive;
     }
 
     private static JavaArchive importCloverMain() {
-        return ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
+        JavaArchive archive = ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
                 .importDirectory("target/clover/classes")
                 .importDirectory("src/main/resources")
                 .as(JavaArchive.class);
+        archive = addTestHelpers(archive);
+        return archive;
+    }
+
+    private static JavaArchive addTestHelpers(JavaArchive archive) {
+        // TODO: put all test helpers into a single package or two to import all at once
+        return archive
+                .addClass(ContainerTest.class)
+                .addClass(BettaLimsMessageFactory.class);
     }
 
     private static WebArchive addWarDependencies(WebArchive archive) {
@@ -91,7 +103,12 @@ public class DeploymentBuilder {
                         if (dependency == null) {
                             return false;
                         }
-                        return !dependency.getScope().equals("test") && !dependency.getScope().equals("provided");
+                        // TODO: remove all test-scoped dependencies; optionally explicitly add certain test dependencies that we commit to supporting
+                        // TODO: remove exclusion of xerces, which is a workaround until all test-scoped dependencies are removed
+                        return
+//                                !dependency.getScope().equals("test") &&
+                                !dependency.getScope().equals("provided")
+                                && !dependency.getCoordinates().contains("xerces");
                     }
 
                     @Override
