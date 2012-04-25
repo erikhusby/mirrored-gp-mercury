@@ -11,10 +11,12 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.sequel.entity.run.IlluminaFlowcell;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.SBSSection;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
+import org.broadinstitute.sequel.entity.vessel.StripTube;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateCherryPickEvent;
@@ -37,26 +39,52 @@ import java.util.Map;
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass"})
 public class LabEventFactory {
 
+    public static final String SECTION_ALL_96 = "ALL96";
+
+    public static final String PHYS_TYPE_TUBE_RACK = "TubeRack";
+    public static final String PHYS_TYPE_EPPENDORF_96 = "Eppendorf96";
+    public static final String PHYS_TYPE_STRIP_TUBE_RACK_OF_12 = "StripTubeRackOf12";
+    public static final String PHYS_TYPE_STRIP_TUBE = "StripTube";
+
     private static final Map<String, LabEventType> MAP_MESSAGE_NAME_TO_EVENT_TYPE = new HashMap<String, LabEventType>();
+
     static {
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("ShearingTransfer", new LabEventType(false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("PostShearingTransferCleanup", new LabEventType(false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("IndexedAdapterLigation", new LabEventType(true, false,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("PondRegistration", new LabEventType(false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("PreSelectionPool", new LabEventType(false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("Hybridization", new LabEventType(false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("NormalizedCatchRegistration", new LabEventType(false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("PoolingTransfer", new LabEventType(false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put("BaitSetup", new LabEventType(false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA));
+        LabEventType shearingTransfer = new LabEventType("ShearingTransfer", false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(shearingTransfer.getName(), shearingTransfer);
+        LabEventType postShearingTransferCleanup = new LabEventType("PostShearingTransferCleanup", false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(postShearingTransferCleanup.getName(), postShearingTransferCleanup);
+        LabEventType indexedAdapterLigation = new LabEventType("IndexedAdapterLigation", true, false,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(indexedAdapterLigation.getName(), indexedAdapterLigation);
+        LabEventType pondRegistration = new LabEventType("PondRegistration", false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(pondRegistration.getName(), pondRegistration);
+        LabEventType preSelectionPool = new LabEventType("PreSelectionPool", false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(preSelectionPool.getName(), preSelectionPool);
+        LabEventType hybridization = new LabEventType("Hybridization", false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(hybridization.getName(), hybridization);
+        LabEventType normalizedCatchRegistration = new LabEventType("NormalizedCatchRegistration", false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(normalizedCatchRegistration.getName(), normalizedCatchRegistration);
+        LabEventType poolingTransfer = new LabEventType("PoolingTransfer", false, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(poolingTransfer.getName(), poolingTransfer);
+        LabEventType baitSetup = new LabEventType("BaitSetup", true, true,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(baitSetup.getName(), baitSetup);
+        LabEventType baitAddition = new LabEventType("BaitAddition", true, false,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(baitAddition.getName(), baitAddition);
+        LabEventType stripTubeBTransfer = new LabEventType("StripTubeBTransfer", true, false,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(stripTubeBTransfer.getName(), stripTubeBTransfer);
+        LabEventType flowcellTransfer = new LabEventType("FlowcellTransfer", true, false,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(flowcellTransfer.getName(), flowcellTransfer);
     }
     
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDao;
@@ -88,10 +116,13 @@ public class LabEventFactory {
      * @return entity
      */
     public LabEvent buildFromBettaLims(PlateCherryPickEvent plateCherryPickEvent) {
-        return buildCherryPickDbFree(null, null, null, null, null);
+        if(plateCherryPickEvent.getPlate().getPhysType().equals(PHYS_TYPE_STRIP_TUBE_RACK_OF_12)) {
+            return buildCherryPickRackToStripTubeDbFree(null, null, null, null, null);
+        }
+        return buildCherryPickRackToRackDbFree(null, null, null, null, null);
     }
 
-    public LabEvent buildCherryPickDbFree(PlateCherryPickEvent plateCherryPickEvent,
+    public LabEvent buildCherryPickRackToRackDbFree(PlateCherryPickEvent plateCherryPickEvent,
             Map<String, VesselContainer> mapBarcodeToSourceRack,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
             Map<String, VesselContainer> mapBarcodeToTargetRack,
@@ -119,11 +150,50 @@ public class LabEventFactory {
         return labEvent;
     }
 
+    public LabEvent buildCherryPickRackToStripTubeDbFree(PlateCherryPickEvent plateCherryPickEvent,
+            Map<String, VesselContainer> mapBarcodeToSourceRack,
+            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
+            Map<String, VesselContainer> mapBarcodeToTargetRack,
+            Map<String, StripTube> mapBarcodeToTargetStripTube) {
+        LabEvent labEvent = constructReferenceData(plateCherryPickEvent);
+        for (Map.Entry<String, VesselContainer> stringVesselContainerEntry : mapBarcodeToSourceRack.entrySet()) {
+            labEvent.addSourceLabVessel(stringVesselContainerEntry.getValue().getEmbedder());
+        }
+
+        for (Map.Entry<String, VesselContainer> stringVesselContainerEntry : mapBarcodeToTargetRack.entrySet()) {
+            if(stringVesselContainerEntry.getValue() == null) {
+                // todo jmt do we care about the strip tube holder?
+                RackOfTubes targetRack = new RackOfTubes(stringVesselContainerEntry.getKey());
+                stringVesselContainerEntry.setValue(targetRack.getVesselContainer());
+            }
+        }
+
+        Map<String, StripTube> mapPositionToStripTube = new HashMap<String, StripTube>();
+        for (ReceptacleType receptacleType : plateCherryPickEvent.getPositionMap().getReceptacle()) {
+            if(!receptacleType.getReceptacleType().equals(PHYS_TYPE_STRIP_TUBE)) {
+                throw new RuntimeException("Expected physType " + PHYS_TYPE_STRIP_TUBE + ", but received " + receptacleType.getReceptacleType());
+            }
+            StripTube stripTube = new StripTube(receptacleType.getBarcode());
+            labEvent.addTargetLabVessel(stripTube);
+            mapPositionToStripTube.put(receptacleType.getPosition(), stripTube);
+        }
+
+        for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+            String position = cherryPickSourceType.getDestinationWell().substring(1).replaceFirst("^0+(?!$)", "");
+            labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
+                    mapBarcodeToSourceRack.get(cherryPickSourceType.getBarcode()),
+                    cherryPickSourceType.getWell(),
+                    mapPositionToStripTube.get(position).getVesselContainer(),
+                    Integer.toString(cherryPickSourceType.getDestinationWell().charAt(0) - 'A' + 1)));
+        }
+        return labEvent;
+    }
+
     /**
-     * Builds a lab event entity from a JAXB plate event bean
-     * @param plateEventType JAXB event bean
-     * @return entity
-     */
+    * Builds a lab event entity from a JAXB plate event bean
+    * @param plateEventType JAXB event bean
+    * @return entity
+    */
     public LabEvent buildFromBettaLims(PlateEventType plateEventType) {
         LabEvent labEvent = constructReferenceData(plateEventType);
         return labEvent;
@@ -279,11 +349,31 @@ public class LabEventFactory {
         return labEvent;
     }
 
+    public LabEvent buildFromBettaLimsPlateToPlateDbFree(
+            PlateTransferEventType plateTransferEvent,
+            StripTube sourceStripTube,
+            IlluminaFlowcell targetFlowcell) {
+        LabEvent labEvent = constructReferenceData(plateTransferEvent);
+        if(targetFlowcell == null) {
+            // todo jmt what about MiSeq?
+            // todo jmt how to populate run configuration?
+            targetFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE,
+                    plateTransferEvent.getPlate().getBarcode(), null);
+        }
+
+        labEvent.addSourceLabVessel(sourceStripTube);
+        labEvent.addTargetLabVessel(targetFlowcell);
+        labEvent.getSectionTransfers().add(new SectionTransfer(
+                sourceStripTube.getVesselContainer(), SBSSection.valueOf(plateTransferEvent.getSourcePlate().getSection()),
+                targetFlowcell.getVesselContainer(), SBSSection.valueOf(plateTransferEvent.getPlate().getSection())));
+        return labEvent;
+    }
+
     public LabEvent buildVesselToSectionDbFree(ReceptaclePlateTransferEvent receptaclePlateTransferEvent,
             TwoDBarcodedTube sourceTube, StaticPlate targetPlate, String targetSection) {
         LabEvent labEvent = constructReferenceData(receptaclePlateTransferEvent);
         if(targetPlate == null) {
-            targetPlate = new StaticPlate(receptaclePlateTransferEvent.getSourcePlate().getBarcode());
+            targetPlate = new StaticPlate(receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
         }
         labEvent.addSourceLabVessel(sourceTube);
         labEvent.addTargetLabVessel(targetPlate);

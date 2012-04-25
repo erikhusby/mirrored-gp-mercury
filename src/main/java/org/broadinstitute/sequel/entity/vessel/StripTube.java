@@ -1,0 +1,119 @@
+package org.broadinstitute.sequel.entity.vessel;
+
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
+import org.broadinstitute.sequel.entity.notice.StatusNote;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.sample.StateChange;
+
+import javax.persistence.Embedded;
+import java.util.Collection;
+import java.util.Set;
+
+/**
+ * Represents a strip tube, several tubes molded into a single piece of plasticware, e.g. 8 tubes in the same formation
+ * as a rack column.  The Strip tube has a barcode, but each constituent tube does not.
+ */
+public class StripTube extends AbstractLabVessel implements VesselContainerEmbedder<StripTubeWell> {
+
+    public enum Positions {
+        ONE("1"),
+        TWO("2"),
+        THREE("3"),
+        FOUR("4"),
+        FIVE("5"),
+        SIX("6"),
+        SEVEN("7"),
+        EIGHT("8");
+
+        private String display;
+
+        Positions(String display) {
+            this.display = display;
+        }
+
+        public String getDisplay() {
+            return this.display;
+        }
+    }
+
+    @Embedded
+    VesselContainer<StripTubeWell> vesselContainer = new VesselContainer<StripTubeWell>(this);
+
+    public StripTube(String label) {
+        super(label);
+    }
+
+    // todo jmt remove these empty methods
+    @Override
+    public VesselContainer<StripTubeWell> getVesselContainer() {
+        return vesselContainer;
+    }
+
+    @Override
+    public void applyTransfer(SectionTransfer sectionTransfer) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void addStateChange(StateChange stateChange) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public Set<SampleInstance> getSampleInstances() {
+        return this.getVesselContainer().getSampleInstances();
+    }
+
+    @Override
+    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public Collection<StateChange> getStateChanges() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public LabVessel getContainingVessel() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public Collection<LabEvent> getEvents() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public Collection<Project> getAllProjects() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public StatusNote getLatestNote() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void logNote(StatusNote statusNote) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public Collection<StatusNote> getAllStatusNotes() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public Float getVolume() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public Float getConcentration() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+}

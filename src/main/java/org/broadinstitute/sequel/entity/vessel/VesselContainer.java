@@ -51,11 +51,16 @@ public class VesselContainer<T extends LabVessel> {
         if(this.sampleSheetAuthorities.isEmpty()) {
             for (LabEvent labEvent : this.embedder.getTransfersTo()) {
                 for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
-                    sampleInstances.addAll(sectionTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(position));
+                    Set sampleInstancesAtPosition = sectionTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(position);
+                    applyReagents(position, sampleInstancesAtPosition);
+                    sampleInstances.addAll(sampleInstancesAtPosition);
                 }
                 for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
                     if(cherryPickTransfer.getTargetPosition().equals(position)) {
-                        sampleInstances.addAll(cherryPickTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition()));
+                        Set sampleInstancesAtPosition = cherryPickTransfer.getSourceVesselContainer().
+                                getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition());
+                        applyReagents(position, sampleInstancesAtPosition);
+                        sampleInstances.addAll(sampleInstancesAtPosition);
                     }
                 }
             }
@@ -66,36 +71,40 @@ public class VesselContainer<T extends LabVessel> {
         } else {
             for (VesselContainer sampleSheetAuthority : this.sampleSheetAuthorities) {
                 Set<SampleInstance> sampleInstancesAtPosition = sampleSheetAuthority.getSampleInstancesAtPosition(position);
-                for (SampleInstance sampleInstance : sampleInstancesAtPosition) {
-                    LabVessel vesselAtPosition = this.getVesselAtPosition(position);
-                    if (vesselAtPosition != null) {
-                        for (Reagent reagent : vesselAtPosition.getAppliedReagents()) {
-                            if(reagent.getMolecularEnvelopeDelta() != null) {
-                                MolecularEnvelope molecularEnvelope = sampleInstance.getMolecularState().getMolecularEnvelope();
-                                if(molecularEnvelope == null) {
-                                    sampleInstance.getMolecularState().setMolecularEnvelope(reagent.getMolecularEnvelopeDelta());
-                                } else {
-                                    molecularEnvelope.surroundWith(reagent.getMolecularEnvelopeDelta());
-                                }
-                            }
-                        }
-                    }
-                }
+                applyReagents(position, sampleInstancesAtPosition);
                 sampleInstances.addAll(sampleInstancesAtPosition);
             }
         }
         return sampleInstances;
     }
-    
+
+    private void applyReagents(String position, Set<SampleInstance> sampleInstancesAtPosition) {
+        for (SampleInstance sampleInstance : sampleInstancesAtPosition) {
+            LabVessel vesselAtPosition = this.getVesselAtPosition(position);
+            if (vesselAtPosition != null) {
+                for (Reagent reagent : vesselAtPosition.getAppliedReagents()) {
+                    if(reagent.getMolecularEnvelopeDelta() != null) {
+                        MolecularEnvelope molecularEnvelope = sampleInstance.getMolecularState().getMolecularEnvelope();
+                        if(molecularEnvelope == null) {
+                            sampleInstance.getMolecularState().setMolecularEnvelope(reagent.getMolecularEnvelopeDelta());
+                        } else {
+                            molecularEnvelope.surroundWith(reagent.getMolecularEnvelopeDelta());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if(this.sampleSheetAuthorities.isEmpty()) {
             if (this.mapPositionToVessel.isEmpty()) {
                 // This plate has no wells in the database, because its transfers are all section based (i.e. no cherry picks)
                 for (LabEvent labEvent : this.embedder.getTransfersTo()) {
-                    for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
-                        if(labVessel instanceof VesselContainerEmbedder) {
-                            sampleInstances.addAll(((VesselContainerEmbedder) labVessel).getVesselContainer().getSampleInstances());
+                    for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
+                        if(sourceLabVessel instanceof VesselContainerEmbedder) {
+                            sampleInstances.addAll(((VesselContainerEmbedder) sourceLabVessel).getVesselContainer().getSampleInstances());
                         }
                     }
                 }

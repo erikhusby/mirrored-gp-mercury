@@ -106,13 +106,14 @@ public class SectionTransfer {
                 }
             }
         } else {
+            // todo jmt rationalize authorities
             if ( this.sourceVesselContainer.getSampleSheetAuthorities().isEmpty()) {
                 if(sourceVessel.getReagentContents().isEmpty()) {
-                    this.targetVesselContainer.getSampleSheetAuthorities().add(this.sourceVesselContainer);
+//                    this.targetVesselContainer.getSampleSheetAuthorities().add(this.sourceVesselContainer);
                 }
             } else {
-                this.targetVesselContainer.getSampleSheetAuthorities().addAll(
-                        this.sourceVesselContainer.getSampleSheetAuthorities());
+//                this.targetVesselContainer.getSampleSheetAuthorities().addAll(
+//                        this.sourceVesselContainer.getSampleSheetAuthorities());
             }
         }
 

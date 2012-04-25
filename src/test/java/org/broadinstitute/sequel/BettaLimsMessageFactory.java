@@ -7,6 +7,7 @@ import org.broadinstitute.sequel.bettalims.jaxb.PlateType;
 import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptacleType;
+import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -18,9 +19,6 @@ import java.util.List;
  */
 public class BettaLimsMessageFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
-    public static final String PHYS_TYPE_TUBE_RACK = "TubeRack";
-    public static final String SECTION_ALL_96 = "ALL96";
-    public static final String PHYS_TYPE_EPPENDORF_96 = "Eppendorf96";
 
     String buildWellName(int positionNumber) {
         @SuppressWarnings("NumericCastThatLosesPrecision")
@@ -55,24 +53,6 @@ public class BettaLimsMessageFactory {
         }
     }
 
-    private PlateType buildRack(String rackBarcode) {
-        PlateType sourceRack = new PlateType();
-        sourceRack.setBarcode(rackBarcode);
-        sourceRack.setPhysType(PHYS_TYPE_TUBE_RACK);
-        sourceRack.setSection(SECTION_ALL_96);
-        return sourceRack;
-    }
-
-    private PositionMapType buildPositionMap(List<String> tubeBarcodes) {
-        PositionMapType sourcePositionMap = new PositionMapType();
-        int rackPosition = 1;
-        for (String barcode : tubeBarcodes) {
-            addReceptacleToPositionMap(rackPosition, sourcePositionMap, barcode);
-            rackPosition++;
-        }
-        return sourcePositionMap;
-    }
-
     public PlateTransferEventType buildPlateToRack(String eventType, String plateBarcode, String rackBarcode,
             List<String> tubeBarcodes) {
         try {
@@ -89,14 +69,6 @@ public class BettaLimsMessageFactory {
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private PlateType buildPlate(String plateBarcode) {
-        PlateType sourcePlate = new PlateType();
-        sourcePlate.setBarcode(plateBarcode);
-        sourcePlate.setPhysType(PHYS_TYPE_EPPENDORF_96);
-        sourcePlate.setSection(SECTION_ALL_96);
-        return sourcePlate;
     }
 
     public PlateTransferEventType buildRackToRack(String eventType, String sourceRackBarcode, List<String> sourceTubeBarcodes,
@@ -198,11 +170,52 @@ public class BettaLimsMessageFactory {
         }
     }
 
-    private void addReceptacleToPositionMap(int rackPosition, PositionMapType targetPositionMap, String barcode) {
-        ReceptacleType receptacleType = new ReceptacleType();
-        receptacleType.setBarcode(barcode);
-        receptacleType.setPosition(buildWellName(rackPosition));
-        targetPositionMap.getReceptacle().add(receptacleType);
+    public PlateCherryPickEvent buildCherryPickToStripTube(String eventType, List<String> sourceRackBarcodes,
+            List<List<String>> sourceTubeBarcodes, String targetRackBarcode, List<String> targetStripTubeBarcodes,
+            List<CherryPick> cherryPicks) {
+        try {
+            PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
+            plateCherryPickEvent.setEventType(eventType);
+            plateCherryPickEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+
+            for (String sourceRackBarcode : sourceRackBarcodes) {
+                plateCherryPickEvent.getSourcePlate().add(buildRack(sourceRackBarcode));
+            }
+            for (List<String> sourceTubeBarcode : sourceTubeBarcodes) {
+                plateCherryPickEvent.getSourcePositionMap().add(buildPositionMap(sourceTubeBarcode));
+            }
+
+            PlateType targetRack = new PlateType();
+            targetRack.setBarcode(targetRackBarcode);
+            targetRack.setPhysType(LabEventFactory.PHYS_TYPE_STRIP_TUBE_RACK_OF_12);
+            targetRack.setSection(LabEventFactory.SECTION_ALL_96);
+            plateCherryPickEvent.setPlate(targetRack);
+
+            PositionMapType targetPositionMap = new PositionMapType();
+            int rackPosition = 1;
+            for (String barcode : targetStripTubeBarcodes) {
+                ReceptacleType receptacleType = new ReceptacleType();
+                receptacleType.setReceptacleType(LabEventFactory.PHYS_TYPE_STRIP_TUBE);
+                receptacleType.setBarcode(barcode);
+                receptacleType.setPosition(Integer.toString(rackPosition));
+                targetPositionMap.getReceptacle().add(receptacleType);
+                rackPosition++;
+            }
+            plateCherryPickEvent.setPositionMap(targetPositionMap);
+
+            for (CherryPick cherryPick : cherryPicks) {
+                CherryPickSourceType cherryPickSource = new CherryPickSourceType();
+                cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
+                cherryPickSource.setWell(cherryPick.getSourceWell());
+                cherryPickSource.setDestinationBarcode(cherryPick.getDestinationRackBarcode());
+                cherryPickSource.setDestinationWell(cherryPick.getDestinationWell());
+                plateCherryPickEvent.getSource().add(cherryPickSource);
+            }
+
+            return plateCherryPickEvent;
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public PlateTransferEventType buildPlateToPlate(String eventType, String sourcePlateBarcode, String targetPlateBarcode) {
@@ -219,5 +232,38 @@ public class BettaLimsMessageFactory {
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private PlateType buildRack(String rackBarcode) {
+        PlateType rack = new PlateType();
+        rack.setBarcode(rackBarcode);
+        rack.setPhysType(LabEventFactory.PHYS_TYPE_TUBE_RACK);
+        rack.setSection(LabEventFactory.SECTION_ALL_96);
+        return rack;
+    }
+
+    private PositionMapType buildPositionMap(List<String> tubeBarcodes) {
+        PositionMapType positionMap = new PositionMapType();
+        int rackPosition = 1;
+        for (String barcode : tubeBarcodes) {
+            addReceptacleToPositionMap(rackPosition, positionMap, barcode);
+            rackPosition++;
+        }
+        return positionMap;
+    }
+
+    private PlateType buildPlate(String plateBarcode) {
+        PlateType plate = new PlateType();
+        plate.setBarcode(plateBarcode);
+        plate.setPhysType(LabEventFactory.PHYS_TYPE_EPPENDORF_96);
+        plate.setSection(LabEventFactory.SECTION_ALL_96);
+        return plate;
+    }
+
+    private void addReceptacleToPositionMap(int rackPosition, PositionMapType targetPositionMap, String barcode) {
+        ReceptacleType receptacleType = new ReceptacleType();
+        receptacleType.setBarcode(barcode);
+        receptacleType.setPosition(buildWellName(rackPosition));
+        targetPositionMap.getReceptacle().add(receptacleType);
     }
 }

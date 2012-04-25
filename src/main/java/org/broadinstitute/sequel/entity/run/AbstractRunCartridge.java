@@ -19,16 +19,6 @@ public abstract class AbstractRunCartridge extends AbstractLabVessel implements 
     }
 
     @Override
-    public Collection<LabEvent> getTransfersFrom() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<LabEvent> getTransfersTo() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Collection<LabEvent> getEvents() {
         throw new RuntimeException("I haven't been written yet.");
     }

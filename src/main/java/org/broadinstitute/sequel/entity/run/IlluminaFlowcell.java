@@ -9,12 +9,15 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.vessel.VesselContainer;
+import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 
+import javax.persistence.Embedded;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
-public class IlluminaFlowcell extends AbstractRunCartridge {
+public class IlluminaFlowcell extends AbstractRunCartridge implements VesselContainerEmbedder<RunChamber> {
 
     private Collection<RunChamber> runChambers = new ArrayList<RunChamber>();
 
@@ -22,9 +25,17 @@ public class IlluminaFlowcell extends AbstractRunCartridge {
 
     private FLOWCELL_TYPE flowcellType;
 
+    @Embedded
+    VesselContainer<RunChamber> vesselContainer = new VesselContainer<RunChamber>(this);
+
     protected IlluminaFlowcell(String label) {
         super(label);
         this.flowcellBarcode = label;
+    }
+
+    @Override
+    public VesselContainer<RunChamber> getVesselContainer() {
+        return this.vesselContainer;
     }
 
     public enum FLOWCELL_TYPE {
@@ -90,7 +101,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        throw new RuntimeException("I haven't been written yet.");
+        return this.vesselContainer.getSampleInstances();
     }
 
     @Override

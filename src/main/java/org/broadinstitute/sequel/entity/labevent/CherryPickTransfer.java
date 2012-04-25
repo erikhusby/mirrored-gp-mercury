@@ -11,8 +11,6 @@ public class CherryPickTransfer {
     private VesselContainer targetVesselContainer;
     private String targetPosition;
 
-    // todo jmt source and target vessels too?
-
     public CherryPickTransfer(VesselContainer sourceVesselContainer, String sourcePosition,
             VesselContainer targetVesselContainer, String targetPosition) {
         this.sourceVesselContainer = sourceVesselContainer;
