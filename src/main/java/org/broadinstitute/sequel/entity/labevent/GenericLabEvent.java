@@ -1,15 +1,12 @@
 package org.broadinstitute.sequel.entity.labevent;
 
-import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
 
 /**
  * Most general form of lab event
@@ -134,7 +131,7 @@ public class GenericLabEvent extends AbstractLabEvent {
             throw new InvalidMolecularStateException("No sources.");
         }
         for (LabVessel source: getSourceLabVessels()) {
-            if (!labEventType.isExpectedEmptySources()) {
+            if (!this.labEventType.isExpectedEmptySources()) {
                 if (source.getSampleInstances().isEmpty()) {
                     throw new InvalidMolecularStateException("Source " + source.getLabCentricName() + " is empty");
                 }
@@ -155,7 +152,7 @@ public class GenericLabEvent extends AbstractLabEvent {
             throw new InvalidMolecularStateException("No destinations!");
         }
         for (LabVessel target: getTargetLabVessels()) {
-            if (!labEventType.isExpectedEmptyTargets()) {
+            if (!this.labEventType.isExpectedEmptyTargets()) {
                 if (target.getSampleInstances().isEmpty()) {
                     throw new InvalidMolecularStateException("Target " + target.getLabCentricName() + " is empty");
                 }
@@ -166,5 +163,9 @@ public class GenericLabEvent extends AbstractLabEvent {
     @Override
     public Collection<SampleSheet> getAllSampleSheets() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public LabEventType getLabEventType() {
+        return this.labEventType;
     }
 }

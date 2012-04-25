@@ -1,11 +1,20 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.workflow.WorkflowState;
+import org.broadinstitute.sequel.entity.workflow.WorkflowTransition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A stub description of the end-to-end
@@ -21,6 +30,9 @@ public class WorkflowDescription {
     private Map<LabEventName,PriceItem> priceItemForEvent = new HashMap<LabEventName, PriceItem>();
 
     private CreateIssueRequest.Fields.Issuetype issueType;
+
+    private Map<String, List<WorkflowTransition>> mapNameToTransitionList = new HashMap<String, List<WorkflowTransition>>();
+    private WorkflowState startState;
 
     /**
      * 
@@ -69,4 +81,45 @@ public class WorkflowDescription {
         return issueType;
     }
 
+    public List<String> validate(List<LabVessel> labVessels, String nextEventTypeName) {
+        List<String> errors = new ArrayList<String>();
+        List<WorkflowTransition> workflowTransitions = this.mapNameToTransitionList.get(nextEventTypeName);
+        Set<String> validPredecessorEventNames = new HashSet<String>();
+        boolean start = false;
+        for (WorkflowTransition workflowTransition : workflowTransitions) {
+            if(workflowTransition.getFromState().getState().equals("Start Event")) {
+                start = true;
+            }
+            for (WorkflowTransition predecessor : workflowTransition.getFromState().getEntries()) {
+                validPredecessorEventNames.add(predecessor.getEventTypeName());
+            }
+        }
+
+        for (LabVessel labVessel : labVessels) {
+            Set<String> actualEventNames = new HashSet<String>();
+            boolean found = false;
+            for (LabEvent labEvent : labVessel.getTransfersTo()) {
+                GenericLabEvent genericLabEvent = (GenericLabEvent) labEvent;
+                String actualEventName = genericLabEvent.getLabEventType().getName();
+                actualEventNames.add(actualEventName);
+                if(validPredecessorEventNames.contains(actualEventName)) {
+                    found = true;
+                    break;
+                }
+            }
+            if(!found && !start) {
+                errors.add("Vessel " + labVessel.getLabCentricName() + " has actual events " + actualEventNames +
+                        ", but none are predecessors to " + nextEventTypeName + ": " + validPredecessorEventNames);
+            }
+        }
+        return errors;
+    }
+
+    public void setStartState(WorkflowState startState) {
+        this.startState = startState;
+    }
+
+    public void setMapNameToTransitionList(Map<String, List<WorkflowTransition>> mapNameToTransitionList) {
+        this.mapNameToTransitionList = mapNameToTransitionList;
+    }
 }

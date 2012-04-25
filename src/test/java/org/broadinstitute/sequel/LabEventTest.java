@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.bettalims.jaxb.PlateCherryPickEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
+import org.broadinstitute.sequel.control.workflow.WorkflowParser;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
@@ -13,6 +14,7 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.reagent.GenericReagent;
 import org.broadinstitute.sequel.entity.run.IlluminaFlowcell;
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.StripTube;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
@@ -55,10 +57,17 @@ public class LabEventTest {
     public void testHybridSelection() {
 //        Controller.startCPURecording(true);
 
-        // starting rack
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        ProjectPlan projectPlan = new ProjectPlan(project,"To test hybrid selection",new WorkflowDescription("HS","8.0",billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+        WorkflowDescription workflowDescription = new WorkflowDescription("HS", "8.0", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        ProjectPlan projectPlan = new ProjectPlan(project,"To test hybrid selection", workflowDescription);
+
+        WorkflowParser workflowParser = new WorkflowParser(
+                Thread.currentThread().getContextClassLoader().getResourceAsStream("HybridSelection.bpmn"));
+        workflowDescription.setStartState(workflowParser.getStartState());
+        workflowDescription.setMapNameToTransitionList(workflowParser.getMapNameToTransitionList());
+
+        // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             SampleSheetImpl sampleSheet = new SampleSheetImpl();
@@ -73,18 +82,23 @@ public class LabEventTest {
         LabEventHandler labEventHandler = new LabEventHandler();
 
         // ShearingTransfer
+        List<String> errors = workflowDescription.validate(new ArrayList<LabVessel>(mapBarcodeToTube.values()), "ShearingTransfer");
+        Assert.assertEquals(errors, new ArrayList<String>(), "Workflow errors");
         String shearPlateBarcode = "ShearPlate";
         PlateTransferEventType shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate(
                 "ShearingTransfer", "KioskRack", new ArrayList<String>(mapBarcodeToTube.keySet()), shearPlateBarcode);
+        // for each vessel, get most recent event, check whether it's a predecessor to the proposed event
         LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                 shearingTransferEventJaxb, mapBarcodeToTube, null);
         labEventHandler.processEvent(shearingTransferEventEntity);
         // asserts
-        StaticPlate shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
+        final StaticPlate shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(shearingPlate.getSampleInstances().size(),
                 NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
 
         // PostShearingTransferCleanup
+        errors = workflowDescription.validate(new ArrayList<LabVessel>(){{add(shearingPlate);}}, "PostShearingTransferCleanup");
+        Assert.assertEquals(errors, new ArrayList<String>(), "Workflow errors");
         String shearCleanPlateBarcode = "ShearCleanPlate";
         PlateTransferEventType postShearingTransferCleanupEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
                 "PostShearingTransferCleanup", shearPlateBarcode, shearCleanPlateBarcode);
