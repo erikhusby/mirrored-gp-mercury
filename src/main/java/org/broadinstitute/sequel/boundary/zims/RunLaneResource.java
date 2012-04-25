@@ -133,7 +133,11 @@ public class RunLaneResource {
                                 zamboniLibrary.getWeirdness(),
                                 zamboniLibrary.getPrecircularizationDnaSize(),
                                 zamboniLibrary.isPartOfDevExperiment(),
-                                zamboniLibrary.getDevExperimentData());
+                                zamboniLibrary.getDevExperimentData(),
+                                zamboniLibrary.getGssrBarcode(),
+                                zamboniLibrary.getGssrBarcodes(),
+                                zamboniLibrary.getGssrSampleType(),
+                                zamboniLibrary.getTargetLaneCoverage());
                         libraries.add(libBean);
                     }
                 }

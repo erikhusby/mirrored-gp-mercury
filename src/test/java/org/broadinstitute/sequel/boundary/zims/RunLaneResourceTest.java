@@ -28,6 +28,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.yaml.snakeyaml.nodes.CollectionNode;
 
 
 import javax.enterprise.inject.Alternative;
@@ -68,7 +69,9 @@ public class RunLaneResourceTest extends ContainerTest {
     
     /**
      * Does the same test as {@link #test_zims_in_container()},
-     * but does it over http.
+     * but does it over http, which means it's actually checking
+     * that various annotations like {@link javax.xml.bind.annotation.XmlAttribute}
+     * are applied properly in {@link LibraryBean}.
      * @param baseUrl
      */
     @Test(groups = EXTERNAL_INTEGRATION,dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
@@ -89,6 +92,7 @@ public class RunLaneResourceTest extends ContainerTest {
         boolean foundIt = false;
 
         for (LibraryBean libBean : libBeans) {
+            assertNotNull(libBean.getLibrary());
             if (libBean.getLibrary().equals(zLib.getLibrary())) {
                 foundIt = true;
                 assertEquals(zLib.getPrecircularizationDnaSize(),libBean.getPrecircularizationDnaSize());
@@ -97,6 +101,24 @@ public class RunLaneResourceTest extends ContainerTest {
                 assertEquals(zLib.getCellLine(),libBean.getCellLine());
                 assertEquals(zLib.getSampleAlias(),libBean.getCollaboratorSampleName());
                 assertEquals(zLib.getIndividual(),libBean.getIndividual());
+                assertEquals(zLib.getAligner(),libBean.getAligner());
+                assertEquals(zLib.getAnalysisType(),libBean.getAnalysisType());
+                assertEquals(zLib.getBaitSetName(),libBean.getBaitSetName());
+                assertEquals(zLib.getExpectedInsertSize(),libBean.getExpectedInsertSize());
+                assertEquals(zLib.getGssrSampleType(),libBean.getGssrSampleType());
+                assertEquals(zLib.getInitiative(),libBean.getInitiative()); 
+                assertEquals(zLib.getLabMeasuredInsertSize(),libBean.getLabMeasuredInsertSize());
+                assertEquals(zLib.getLibrary(),libBean.getLibrary());
+                assertEquals(zLib.getReferenceSequence(),libBean.getReferenceSequence());
+                assertEquals(zLib.getReferenceSequenceVersion(),libBean.getReferenceSequenceVersion());
+                assertEquals(zLib.getRestrictionEnzyme(),libBean.getRestrictionEnzyme());
+                assertEquals(zLib.getRrbsSizeRange(),libBean.getRrbsSizeRange());
+                assertEquals(zLib.getSampleCollaborator(),libBean.getSampleCollaborator());
+                assertEquals(zLib.getStrain(),libBean.getStrain());
+                assertEquals(zLib.getSpecies(),libBean.getSpecies());
+                assertEquals(new Short(zLib.getTargetLaneCoverage()),libBean.getTargetLaneCoverage());
+                assertEquals(zLib.getTissueType(),libBean.getTissueType());
+                assertEquals(zLib.getWeirdness(),libBean.getWeirdness());
                 
                 if ("Human".equals(zLib.getOrganism())) {
                     assertEquals(libBean.getOrganism(),"Homo : Homo sapiens");
@@ -106,6 +128,7 @@ public class RunLaneResourceTest extends ContainerTest {
                 }
                 assertEquals(zLib.getLsid(),libBean.getSampleLSID());
                 checkEquality(zLib.getMolecularIndexes(), libBean.getIndexingScheme());
+                assertEquals(zLib.getGssrBarcodes(), libBean.getGssrBarcodes());
             }
         }
         
@@ -160,7 +183,9 @@ public class RunLaneResourceTest extends ContainerTest {
         assertEquals(libraries.size(),94);
 
         TZamboniLane zamboniLane = getZamboniLane();
-        
+
+        assertNotNull(zamboniLane);
+
         assertEquals(zamboniLane.getLibraries().size(),libraries.size());
         for (TZamboniLibrary zLib : zamboniLane.getLibraries()) {
             doLibraryAssertions(zLib,libraries);    
