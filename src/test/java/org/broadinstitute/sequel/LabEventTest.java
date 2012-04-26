@@ -59,9 +59,9 @@ public class LabEventTest {
     public void testHybridSelection() {
 //        Controller.startCPURecording(true);
 
-        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
+                Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("HS", "8.0", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        WorkflowDescription workflowDescription = new WorkflowDescription("HS", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         ProjectPlan projectPlan = new ProjectPlan(project,"To test hybrid selection", workflowDescription);
 
         WorkflowParser workflowParser = new WorkflowParser(

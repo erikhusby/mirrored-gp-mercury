@@ -10,10 +10,7 @@ import javax.persistence.Transient;
 import java.util.Collection;
 
 /**
- * What makes {@link StartingSample} different
- * from {@link Goop} is taht {@link StartingSample }
- * is read-only data,
- * at the finest granularity necessary
+ * Read-only sample metadata at the finest granularity necessary
  * for de-multiplexing.
  * 
  * Primary implementation is a {@link org.broadinstitute.sequel.entity.bsp.BSPSample},
@@ -50,5 +47,5 @@ public interface StartingSample {
 
     @Transient
     public SampleInstanceImpl createSampleInstance();
-    
+
 }

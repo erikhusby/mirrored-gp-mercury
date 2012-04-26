@@ -32,6 +32,7 @@ import java.util.Map;
 public class WorkflowParser {
     private Map<String, List<WorkflowTransition>> mapNameToTransitionList = new HashMap<String, List<WorkflowTransition>>();
     private WorkflowState startState;
+    private String workflowName;
 
     public WorkflowParser(InputStream xml) {
         parse(xml);
@@ -63,6 +64,13 @@ public class WorkflowParser {
                 }
             });
             Map<String, WorkflowState> mapIdToWorkflowState = new HashMap<String, WorkflowState>();
+
+            XPathExpression processProperty = xpath.compile("//m:process");
+            Node processNode = (Node)processProperty.evaluate(doc, XPathConstants.NODE);
+            if (processNode != null) {
+                NamedNodeMap processNodeAttributes = processNode.getAttributes();
+                workflowName = processNodeAttributes.getNamedItem("name").getNodeValue();
+            }
 
             XPathExpression startEventExpr = xpath.compile("//m:startEvent");
             Node startNode = (Node) startEventExpr.evaluate(doc, XPathConstants.NODE);
@@ -96,8 +104,12 @@ public class WorkflowParser {
                 String transitionName = attributes.getNamedItem("name").getNodeValue();
                 WorkflowTransition workflowTransition = new WorkflowTransition(transitionName,
                         fromState, toState);
-                fromState.getExits().add(workflowTransition);
-                toState.getEntries().add(workflowTransition);
+                if (fromState != null) {
+                    fromState.getExits().add(workflowTransition);
+                }
+                if (toState != null) {
+                    toState.getEntries().add(workflowTransition);
+                }
                 List<WorkflowTransition> workflowTransitions = this.mapNameToTransitionList.get(transitionName);
                 if(workflowTransitions == null) {
                     workflowTransitions = new ArrayList<WorkflowTransition>();
@@ -115,6 +127,10 @@ public class WorkflowParser {
         } catch (XPathExpressionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public String getWorkflowName() {
+        return this.workflowName;
     }
 
     public WorkflowState getStartState() {

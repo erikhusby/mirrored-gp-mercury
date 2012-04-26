@@ -174,6 +174,14 @@ public class ProjectPlan {
         return notes;
     }
 
+    public boolean isComplete(LabVessel startingVessel) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public void setComplete(boolean isComplete) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
     /**
      * Basically how much sequencing are we going
      * to do for this project?  We assume that the
