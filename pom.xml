@@ -463,6 +463,28 @@
         </profile>
 
         <profile>
+            <id>Arquillian-Glassfish-Remote</id>
+            <dependencies>
+                <!-- For Arquillian managed JEE containers, use org.jboss.spec:jboss-javaee-6.0 in lieu of javax:javaee-api.
+                     see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
+                -->
+                <dependency>
+                    <groupId>org.jboss.spec</groupId>
+                    <artifactId>jboss-javaee-6.0</artifactId>
+                    <version>1.0.0.Final</version>
+                    <type>pom</type>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.arquillian.container</groupId>
+                    <artifactId>arquillian-glassfish-remote-3.1</artifactId>
+                    <version>1.0.0.CR3</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
             <id>Arquillian-JBossAS7-Managed</id>
             <dependencies>
                 <dependency>
