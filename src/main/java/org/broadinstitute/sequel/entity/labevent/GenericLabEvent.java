@@ -127,7 +127,7 @@ public class GenericLabEvent extends AbstractLabEvent {
      */
     @Override
     public void validateSourceMolecularState() throws InvalidMolecularStateException {
-        if (getSourceLabVessels().isEmpty()) {
+        if (getSourceLabVessels().isEmpty() && !this.labEventType.isExpectedEmptySources()) {
             throw new InvalidMolecularStateException("No sources.");
         }
         for (LabVessel source: getSourceLabVessels()) {

@@ -2,11 +2,13 @@ package org.broadinstitute.sequel;
 
 import org.broadinstitute.sequel.bettalims.jaxb.CherryPickSourceType;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateCherryPickEvent;
+import org.broadinstitute.sequel.bettalims.jaxb.PlateEventType;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateType;
 import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptacleType;
+import org.broadinstitute.sequel.bettalims.jaxb.StationEventType;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -39,8 +41,7 @@ public class BettaLimsMessageFactory {
             String plateBarcode) {
         try {
             PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
-            plateTransferEvent.setEventType(eventType);
-            plateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+            setStationEventData(eventType, plateTransferEvent);
 
             plateTransferEvent.setSourcePositionMap(buildPositionMap(tubeBarcodes));
             plateTransferEvent.setSourcePlate(buildRack(rackBarcode));
@@ -57,8 +58,7 @@ public class BettaLimsMessageFactory {
             List<String> tubeBarcodes) {
         try {
             PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
-            plateTransferEvent.setEventType(eventType);
-            plateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+            setStationEventData(eventType, plateTransferEvent);
 
             plateTransferEvent.setSourcePlate(buildPlate(plateBarcode));
 
@@ -75,8 +75,7 @@ public class BettaLimsMessageFactory {
             String targetRackBarcode, List<String> targetTubeBarcodes) {
         try {
             PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
-            plateTransferEvent.setEventType(eventType);
-            plateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+            setStationEventData(eventType, plateTransferEvent);
 
             plateTransferEvent.setSourcePositionMap(buildPositionMap(sourceTubeBarcodes));
             plateTransferEvent.setSourcePlate(buildRack(sourceRackBarcode));
@@ -93,8 +92,7 @@ public class BettaLimsMessageFactory {
     public ReceptaclePlateTransferEvent buildTubeToPlate(String eventType, String sourceTubeBarcode, String targetPlateBarcode) {
         try {
             ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
-            receptaclePlateTransferEvent.setEventType(eventType);
-            receptaclePlateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+            setStationEventData(eventType, receptaclePlateTransferEvent);
 
             ReceptacleType sourceReceptacle = new ReceptacleType();
             sourceReceptacle.setBarcode(sourceTubeBarcode);
@@ -102,6 +100,19 @@ public class BettaLimsMessageFactory {
             receptaclePlateTransferEvent.setDestinationPlate(buildPlate(targetPlateBarcode));
 
             return receptaclePlateTransferEvent;
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public PlateEventType buildPlateEvent(String eventType, String plateBarcode) {
+        try {
+            PlateEventType plateEventType = new PlateEventType();
+            setStationEventData(eventType, plateEventType);
+
+            plateEventType.setPlate(buildPlate(plateBarcode));
+
+            return plateEventType;
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException(e);
         }
@@ -142,8 +153,7 @@ public class BettaLimsMessageFactory {
             List<CherryPick> cherryPicks) {
         try {
             PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
-            plateCherryPickEvent.setEventType(eventType);
-            plateCherryPickEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+            setStationEventData(eventType, plateCherryPickEvent);
 
             for (String sourceRackBarcode : sourceRackBarcodes) {
                 plateCherryPickEvent.getSourcePlate().add(buildRack(sourceRackBarcode));
@@ -175,8 +185,7 @@ public class BettaLimsMessageFactory {
             List<CherryPick> cherryPicks) {
         try {
             PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
-            plateCherryPickEvent.setEventType(eventType);
-            plateCherryPickEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+            setStationEventData(eventType, plateCherryPickEvent);
 
             for (String sourceRackBarcode : sourceRackBarcodes) {
                 plateCherryPickEvent.getSourcePlate().add(buildRack(sourceRackBarcode));
@@ -221,8 +230,7 @@ public class BettaLimsMessageFactory {
     public PlateTransferEventType buildPlateToPlate(String eventType, String sourcePlateBarcode, String targetPlateBarcode) {
         try {
             PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
-            plateTransferEvent.setEventType(eventType);
-            plateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+            setStationEventData(eventType, plateTransferEvent);
 
             plateTransferEvent.setSourcePlate(buildRack(sourcePlateBarcode));
 
@@ -232,6 +240,11 @@ public class BettaLimsMessageFactory {
         } catch (DatatypeConfigurationException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void setStationEventData(String eventType, StationEventType plateTransferEvent) throws DatatypeConfigurationException {
+        plateTransferEvent.setEventType(eventType);
+        plateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
     }
 
     private PlateType buildRack(String rackBarcode) {

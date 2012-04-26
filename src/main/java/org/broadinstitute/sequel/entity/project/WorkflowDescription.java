@@ -10,6 +10,7 @@ import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -98,14 +99,12 @@ public class WorkflowDescription {
         for (LabVessel labVessel : labVessels) {
             Set<String> actualEventNames = new HashSet<String>();
             boolean found = false;
-            for (LabEvent labEvent : labVessel.getTransfersTo()) {
-                GenericLabEvent genericLabEvent = (GenericLabEvent) labEvent;
-                String actualEventName = genericLabEvent.getLabEventType().getName();
-                actualEventNames.add(actualEventName);
-                if(validPredecessorEventNames.contains(actualEventName)) {
-                    found = true;
-                    break;
-                }
+            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                    found, labVessel.getTransfersFrom());
+
+            if (!found) {
+                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                        found, labVessel.getTransfersTo());
             }
             if(!found && !start) {
                 errors.add("Vessel " + labVessel.getLabCentricName() + " has actual events " + actualEventNames +
@@ -113,6 +112,23 @@ public class WorkflowDescription {
             }
         }
         return errors;
+    }
+
+    private boolean validateTransfers(String nextEventTypeName, List<String> errors, Set<String> validPredecessorEventNames,
+            LabVessel labVessel, Set<String> actualEventNames, boolean found, Collection<LabEvent> transfersFrom) {
+        for (LabEvent labEvent : transfersFrom) {
+            GenericLabEvent genericLabEvent = (GenericLabEvent) labEvent;
+            String actualEventName = genericLabEvent.getLabEventType().getName();
+            actualEventNames.add(actualEventName);
+            if(actualEventName.equals(nextEventTypeName)) {
+                errors.add("For vessel " + labVessel.getLabCentricName() + ", event " + nextEventTypeName + " has already occurred");
+            }
+            if(validPredecessorEventNames.contains(actualEventName)) {
+                found = true;
+                break;
+            }
+        }
+        return found;
     }
 
     public void setStartState(WorkflowState startState) {

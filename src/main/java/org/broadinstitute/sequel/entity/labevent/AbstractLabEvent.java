@@ -93,10 +93,12 @@ public abstract class AbstractLabEvent implements LabEvent {
     @Override
     public void addTargetLabVessel(LabVessel targetVessel) {
         // todo jmt move to SectionTransfer?
+/*
         if(this.sourceLabVessels.isEmpty()) {
             // todo jmt method for adding source / target pairs
             throw new RuntimeException("Add source lab vessels first");
         }
+*/
 /*
         if(targetVessel.getTransfersTo().isEmpty()) {
             for (LabVessel sourceLabVessel : this.sourceLabVessels) {
@@ -120,6 +122,7 @@ public abstract class AbstractLabEvent implements LabEvent {
 
     @Override
     public void addSourceLabVessel(LabVessel sourceVessel) {
+        sourceVessel.getTransfersFrom().add(this);
         this.sourceLabVessels.add(sourceVessel);
     }
 
