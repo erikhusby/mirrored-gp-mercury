@@ -95,40 +95,40 @@ public class RunLaneResourceTest extends ContainerTest {
             assertNotNull(libBean.getLibrary());
             if (libBean.getLibrary().equals(zLib.getLibrary())) {
                 foundIt = true;
-                assertEquals(zLib.getPrecircularizationDnaSize(),libBean.getPrecircularizationDnaSize());
-                assertEquals(zLib.getProject(),libBean.getProject());
-                assertEquals(zLib.getWorkRequestId(),libBean.getWorkRequest().longValue());
-                assertEquals(zLib.getCellLine(),libBean.getCellLine());
-                assertEquals(zLib.getSampleAlias(),libBean.getCollaboratorSampleName());
-                assertEquals(zLib.getIndividual(),libBean.getIndividual());
-                assertEquals(zLib.getAligner(),libBean.getAligner());
-                assertEquals(zLib.getAnalysisType(),libBean.getAnalysisType());
-                assertEquals(zLib.getBaitSetName(),libBean.getBaitSetName());
-                assertEquals(zLib.getExpectedInsertSize(),libBean.getExpectedInsertSize());
-                assertEquals(zLib.getGssrSampleType(),libBean.getGssrSampleType());
-                assertEquals(zLib.getInitiative(),libBean.getInitiative()); 
-                assertEquals(zLib.getLabMeasuredInsertSize(),libBean.getLabMeasuredInsertSize());
-                assertEquals(zLib.getLibrary(),libBean.getLibrary());
-                assertEquals(zLib.getReferenceSequence(),libBean.getReferenceSequence());
-                assertEquals(zLib.getReferenceSequenceVersion(),libBean.getReferenceSequenceVersion());
-                assertEquals(zLib.getRestrictionEnzyme(),libBean.getRestrictionEnzyme());
-                assertEquals(zLib.getRrbsSizeRange(),libBean.getRrbsSizeRange());
-                assertEquals(zLib.getSampleCollaborator(),libBean.getSampleCollaborator());
-                assertEquals(zLib.getStrain(),libBean.getStrain());
-                assertEquals(zLib.getSpecies(),libBean.getSpecies());
-                assertEquals(new Short(zLib.getTargetLaneCoverage()),libBean.getTargetLaneCoverage());
-                assertEquals(zLib.getTissueType(),libBean.getTissueType());
-                assertEquals(zLib.getWeirdness(),libBean.getWeirdness());
+                assertEquals(libBean.getPrecircularizationDnaSize(),zLib.getPrecircularizationDnaSize() == 0 ? null : zLib.getPrecircularizationDnaSize());
+                assertEquals(libBean.getProject(),zLib.getProject());
+                assertEquals(libBean.getWorkRequest().longValue(),zLib.getWorkRequestId());
+                assertEquals(libBean.getCellLine(),zLib.getCellLine());
+                assertEquals(libBean.getCollaboratorSampleName(),zLib.getSampleAlias());
+                assertEquals(libBean.getIndividual(),zLib.getIndividual());
+                assertEquals(libBean.getAligner(),zLib.getAligner());
+                assertEquals(libBean.getAnalysisType(),zLib.getAnalysisType());
+                assertEquals(libBean.getBaitSetName(),zLib.getBaitSetName());
+                assertEquals(libBean.getExpectedInsertSize(),zLib.getExpectedInsertSize());
+                assertEquals(libBean.getGssrSampleType(),zLib.getGssrSampleType());
+                assertEquals(libBean.getInitiative(),zLib.getInitiative());
+                assertEquals(libBean.getLabMeasuredInsertSize(),zLib.getLabMeasuredInsertSize());
+                assertEquals(libBean.getLibrary(),zLib.getLibrary());
+                assertEquals(libBean.getReferenceSequence(),zLib.getReferenceSequence());
+                assertEquals(libBean.getReferenceSequenceVersion(),zLib.getReferenceSequenceVersion());
+                assertEquals(libBean.getRestrictionEnzyme(),zLib.getRestrictionEnzyme());
+                assertEquals(libBean.getRrbsSizeRange(),zLib.getRrbsSizeRange());
+                assertEquals(libBean.getSampleCollaborator(),zLib.getSampleCollaborator());
+                assertEquals(libBean.getStrain(),zLib.getStrain());
+                assertEquals(libBean.getSpecies(),zLib.getSpecies());
+                assertEquals(libBean.getTargetLaneCoverage(),new Short(zLib.getTargetLaneCoverage()));
+                assertEquals(libBean.getTissueType(),zLib.getTissueType());
+                assertEquals(libBean.getWeirdness(),zLib.getWeirdness());
                 
                 if ("Human".equals(zLib.getOrganism())) {
                     assertEquals(libBean.getOrganism(),"Homo : Homo sapiens");
                 }
                 else {
-                    assertEquals(zLib.getOrganism(),libBean.getOrganism());
+                    assertEquals(libBean.getOrganism(),zLib.getOrganism());
                 }
-                assertEquals(zLib.getLsid(),libBean.getSampleLSID());
+                assertEquals(libBean.getSampleLSID(),zLib.getLsid());
                 checkEquality(zLib.getMolecularIndexes(), libBean.getIndexingScheme());
-                assertEquals(zLib.getGssrBarcodes(), libBean.getGssrBarcodes());
+                assertEquals(libBean.getGssrBarcodes(),zLib.getGssrBarcodes());
             }
         }
         
