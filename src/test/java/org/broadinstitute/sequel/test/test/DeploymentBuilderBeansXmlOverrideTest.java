@@ -20,7 +20,8 @@ public class DeploymentBuilderBeansXmlOverrideTest extends Arquillian {
 
     @Deployment
     public static WebArchive makeArchive() {
-        return DeploymentBuilder.buildSequelWarWithAlternatives("org.broadinstitute.sequel.test.beans.AlternativeSimpleServiceImpl").addPackage("org.broadinstitute.sequel.test.beans");    }
+        return DeploymentBuilder.buildSequelWarWithAlternatives("org.broadinstitute.sequel.test.beans.AlternativeSimpleServiceImpl").addPackage("org.broadinstitute.sequel.test.beans");
+    }
 
     @Test
     public void testInjection() {
