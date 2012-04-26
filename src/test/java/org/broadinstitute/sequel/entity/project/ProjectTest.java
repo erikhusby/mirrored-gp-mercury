@@ -340,7 +340,7 @@ public class ProjectTest extends ContainerTest {
         Collection<Workflow> workflows = workflowEngine.getActiveWorkflows(starter,null);
 
 
-        labWorkQueue.add(starter,queueParameters,projectPlan.getPlanDetails().iterator().next());
+        labWorkQueue.add(starter,queueParameters,projectPlan.getWorkflowDescription());
 
         workflows = workflowEngine.getActiveWorkflows(starter,null);
         assertEquals(1, workflows.size());

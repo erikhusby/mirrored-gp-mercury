@@ -19,7 +19,11 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
      * visible to lab staff.
      *
      *
-     * @param vessel
+     * @param vessel The vessel, complete with a functioning
+     *               {@link org.broadinstitute.sequel.entity.vessel.LabVessel#getSampleInstances()}
+     *               that detail the {@link org.broadinstitute.sequel.entity.project.ProjectPlan}
+     *               relationships via {@link org.broadinstitute.sequel.entity.sample.SampleInstance#getAllProjectPlans()}
+     *               and {@link org.broadinstitute.sequel.entity.sample.SampleInstance#getSingleProjectPlan()}
      * @param workflowParameters the parameters, also considered
      *                   the "bucket" for the queue.
      * @return a response object, which may embody error information
@@ -28,7 +32,9 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
      */
     public LabWorkQueueResponse add(LabVessel vessel,
                                     T workflowParameters,
-                                    SequencingPlanDetail sequencingPlan);
+                                    WorkflowDescription workflowDescription);
+
+    bork;
 
     /**
      * What's the MolecularStateRange required for

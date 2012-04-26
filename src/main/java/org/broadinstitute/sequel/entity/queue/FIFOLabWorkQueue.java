@@ -136,7 +136,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         boolean foundIt = false;
         for (WorkQueueEntry<T> queuedWork: requestedWork) {
             if (vessel.equals(queuedWork.getLabVessel())) {
-                if (workflow.equals(queuedWork.getSequencingPlan().getProjectPlan().getWorkflowDescription())) {
+                if (workflow.equals(queuedWork.getWorkflowDescription())) {
                     if (workflowParameters == null) {
                         if (queuedWork.getLabWorkQueueParameters() == null) {
                             foundIt = true;
@@ -191,20 +191,19 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
     @Override
     public LabWorkQueueResponse add(LabVessel vessel, 
                                     T workflowParameters, 
-                                    SequencingPlanDetail sequencingDetail) {
+                                    WorkflowDescription workflowDescription) {
         if (vessel == null) {
              throw new NullPointerException("vessel cannot be null.");
         }
-        if (sequencingDetail == null) {
-             throw new NullPointerException("projectPlan cannot be null.");
+        if (workflowDescription == null) {
+             throw new NullPointerException("workflowDescription cannot be null.");
         }
-        WorkQueueEntry newWork = new WorkQueueEntry(vessel,workflowParameters,sequencingDetail);
+        WorkQueueEntry newWork = new WorkQueueEntry(vessel,workflowParameters,workflowDescription);
         LabWorkQueueResponse response = null;
         if (requestedWork.contains(newWork)) {
             response = new StandardLabWorkQueueResponse(vessel.getLabel() + " is already in " + getQueueName() + "; duplicate work has been requested."); 
         }
         else {
-            startWorkflow(vessel,sequencingDetail.getProjectPlan(),workflowParameters);
             response = new StandardLabWorkQueueResponse("Added " + vessel.getLabel() + " to " + getQueueName());
         }
         requestedWork.add(newWork);
