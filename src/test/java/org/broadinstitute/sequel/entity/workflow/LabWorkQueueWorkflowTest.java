@@ -31,7 +31,16 @@ import static org.testng.Assert.*;
 public class LabWorkQueueWorkflowTest {
 
     @Test
-    public void test_lab_dequeue_and_workflow_start() {
+    public void test_root_plan() {
+        doIt(false);
+    }
+
+    @Test
+    public void test_plan_override() {
+        doIt(true);
+    }
+
+    public void doIt(boolean useOverride) {
 
         WorkflowResolver wfResolver = new WorkflowResolver();
         int numSamples = 10;
@@ -68,7 +77,12 @@ public class LabWorkQueueWorkflowTest {
         assertTrue(labWorkQueue.isEmpty());
 
         for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
-            labWorkQueue.add(tube,originalParameters,rootPlan.getWorkflowDescription(),planOverride);
+            if (useOverride) {
+                labWorkQueue.add(tube,originalParameters,rootPlan.getWorkflowDescription(),planOverride);
+            }
+            else {
+                labWorkQueue.add(tube,originalParameters,rootPlan.getWorkflowDescription(),null);
+            }
         }
 
         assertFalse(labWorkQueue.isEmpty());
@@ -91,7 +105,12 @@ public class LabWorkQueueWorkflowTest {
         LabVessel outputPlate = shearingTransferEventEntity.getTargetLabVessels().iterator().next();
 
         for (SampleInstance sampleInstance : outputPlate.getSampleInstances()) {
-            assertEquals(sampleInstance.getSingleProjectPlan(),rootPlan);
+            if (useOverride) {
+                assertEquals(sampleInstance.getSingleProjectPlan(),planOverride);
+            }
+            else {
+                assertEquals(sampleInstance.getSingleProjectPlan(),rootPlan);
+            }
         }
 
         assertTrue(labWorkQueue.isEmpty());
