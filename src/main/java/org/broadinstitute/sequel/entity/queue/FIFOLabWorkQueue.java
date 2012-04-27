@@ -248,5 +248,16 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         }
     }
 
-
+    @Override
+    public Collection<WorkQueueEntry> getEntriesForWorkflow(WorkflowDescription workflow, LabVessel vessel) {
+        final Collection<WorkQueueEntry> workQueueEntries = new HashSet<WorkQueueEntry>();
+        for (WorkQueueEntry<T> workQueueEntry : requestedWork) {
+            if (workQueueEntry.getWorkflowDescription().equals(workflow)) {
+                if (workQueueEntry.getLabVessel().equals(vessel)) {
+                    workQueueEntries.add(workQueueEntry);
+                }
+            }
+        }
+        return workQueueEntries;
+    }
 }

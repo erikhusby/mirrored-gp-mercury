@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.queue.WorkQueueEntry;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.StateChange;
@@ -290,15 +291,14 @@ public interface LabVessel  {
      */
     public Collection<JiraTicket> getJiraTickets();
 
-    /**
-     * Adds the given {@link WorkQueueEntry}.  When you add
-     * a {@link WorkQueueEntry}, you're saying "Remember
-     * the fact that this {@link LabVessel} has been queued
-     * up for work in a particular {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}.
-     * @param workQueueEntry
-     */
-    public void addWorkQueueEntry(WorkQueueEntry workQueueEntry);
+    public void addLabWorkQueue(LabWorkQueue labWorkQueue);
 
-    public Set<WorkQueueEntry> getPendingWork(WorkflowDescription workflow);
+    /**
+     * This is a problem...we want some way to ask the
+     * workflow engine how to get all pending work...
+     * @param workflow
+     * @return
+     */
+    public Collection<WorkQueueEntry> getPendingWork(WorkflowDescription workflow);
 
 }

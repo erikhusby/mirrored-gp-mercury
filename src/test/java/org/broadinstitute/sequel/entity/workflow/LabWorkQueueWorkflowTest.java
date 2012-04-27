@@ -16,6 +16,7 @@ import org.broadinstitute.sequel.entity.queue.LcSetParameters;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -92,8 +93,6 @@ public class LabWorkQueueWorkflowTest {
         labEventFactory.setPersonDAO(new PersonDAO());
         LabEventHandler labEventHandler = new LabEventHandler();
 
-        List<String> errors = workflow.validate(new ArrayList<LabVessel>(mapBarcodeToTube.values()), "Start");
-        Assert.assertEquals(errors, new ArrayList<String>(), "Workflow errors");
         String shearPlateBarcode = "ShearPlate";
         PlateTransferEventType shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate(
                 "ShearingTransfer", "SomeRackBarcode", new ArrayList<String>(mapBarcodeToTube.keySet()), shearPlateBarcode);
@@ -115,7 +114,49 @@ public class LabWorkQueueWorkflowTest {
 
         assertTrue(labWorkQueue.isEmpty());
 
+        // PostShearingTransferCleanup
+        final StaticPlate shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
 
+        // now toggle the project plan again, just for this plate.
+        if (useOverride) {
+            // if we've been using the override, now we'll skip it.  the result should
+            // be that we still pickup the override plan because the override
+            // is a total reset from the event on down in the transfer graph
+            labWorkQueue.add(shearingPlate,originalParameters,rootPlan.getWorkflowDescription(),null);
+
+            String shearCleanPlateBarcode = "ShearCleanPlate";
+            PlateTransferEventType postShearingTransferCleanupEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
+                    "PostShearingTransferCleanup", shearPlateBarcode, shearCleanPlateBarcode);
+            LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
+                    postShearingTransferCleanupEventJaxb, shearingPlate, null);
+            labEventHandler.processEvent(postShearingTransferCleanupEntity, workflow);
+
+            assertTrue(labWorkQueue.isEmpty());
+
+            StaticPlate shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
+
+            for (SampleInstance sampleInstance : shearingCleanupPlate.getSampleInstances()) {
+                assertEquals(sampleInstance.getSingleProjectPlan(),planOverride);
+            }
+
+            // now we'll use the root plan again, this time as an override
+            labWorkQueue.add(shearingPlate,originalParameters,rootPlan.getWorkflowDescription(),rootPlan);
+
+            shearCleanPlateBarcode = "ShearCleanPlate2";
+            postShearingTransferCleanupEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
+                    "PostShearingTransferCleanup", shearPlateBarcode, shearCleanPlateBarcode);
+            postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
+                    postShearingTransferCleanupEventJaxb, shearingPlate, null);
+            labEventHandler.processEvent(postShearingTransferCleanupEntity, workflow);
+
+            assertTrue(labWorkQueue.isEmpty());
+            shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
+
+            for (SampleInstance sampleInstance : shearingCleanupPlate.getSampleInstances()) {
+               assertEquals(sampleInstance.getSingleProjectPlan(),rootPlan);
+            }
+
+        }
 
 
     }

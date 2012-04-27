@@ -69,7 +69,12 @@ public class WorkflowParser {
             Node processNode = (Node)processProperty.evaluate(doc, XPathConstants.NODE);
             if (processNode != null) {
                 NamedNodeMap processNodeAttributes = processNode.getAttributes();
-                workflowName = processNodeAttributes.getNamedItem("name").getNodeValue();
+                if (processNodeAttributes != null) {
+                    processNode = processNodeAttributes.getNamedItem("name");
+                    if (processNode != null) {
+                        workflowName = processNode.getNodeValue();
+                    }
+                }
             }
 
             XPathExpression startEventExpr = xpath.compile("//m:startEvent");

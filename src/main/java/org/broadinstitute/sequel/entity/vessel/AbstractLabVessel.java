@@ -10,6 +10,8 @@ import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueueParameters;
 import org.broadinstitute.sequel.entity.queue.WorkQueueEntry;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -48,7 +50,7 @@ public abstract class AbstractLabVessel implements LabVessel {
 
     private Set<Reagent> appliedReagents = new HashSet<Reagent>();
 
-    private Set<WorkQueueEntry> workQueueEntries = new HashSet<WorkQueueEntry>();
+    private Set<LabWorkQueue<?>> labWorkQueues = new HashSet<LabWorkQueue<?>>();
 
     @Embedded
     private UserRemarks userRemarks;
@@ -176,11 +178,23 @@ public abstract class AbstractLabVessel implements LabVessel {
 
     @Override
     public Set<WorkQueueEntry> getPendingWork(WorkflowDescription workflow) {
+        final Set<WorkQueueEntry> workQueueEntries = new HashSet<WorkQueueEntry>();
+        if (workflow == null) {
+            throw new RuntimeException("workflow cannot be null");
+        }
+        for (LabWorkQueue labWorkQueue : labWorkQueues) {
+           workQueueEntries.addAll(labWorkQueue.getEntriesForWorkflow(workflow,
+                                                                      this));
+        }
         return workQueueEntries;
     }
 
+
     @Override
-    public void addWorkQueueEntry(WorkQueueEntry workQueueEntry) {
-        workQueueEntries.add(workQueueEntry);
+    public void addLabWorkQueue(LabWorkQueue labWorkQueue) {
+        if (labWorkQueue == null) {
+            throw new RuntimeException("labWorkQueue cannot be null");
+        }
+        labWorkQueues.add(labWorkQueue);
     }
 }

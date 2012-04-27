@@ -9,6 +9,7 @@ import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface LabWorkQueue<T extends LabWorkQueueParameters> {
 
@@ -58,5 +59,8 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
     public boolean isEmpty();
 
     public void remove(WorkQueueEntry workQueueEntry);
+
+    public Collection<WorkQueueEntry> getEntriesForWorkflow(WorkflowDescription workflow,
+                                                            LabVessel vessel);
 
 }

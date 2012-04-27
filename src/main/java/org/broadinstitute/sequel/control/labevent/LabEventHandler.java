@@ -186,27 +186,44 @@ public class LabEventHandler {
             for (LabVessel labVessel : labEvent.getAllLabVessels()) {
                 if (labVessel instanceof VesselContainerEmbedder) {
                     Collection<LabVessel> containedVessels = ((VesselContainerEmbedder)labVessel).getVesselContainer().getContainedVessels();
-                    for (LabVessel vessel : containedVessels) {
-                        Set<WorkQueueEntry> workQueueEntries = vessel.getPendingWork(workflow);
-                        if (workQueueEntries.size() == 1) {
-                            // not ambiguous: single entry
-                            WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
-                            if (workQueueEntry.getProjectPlanOverride() != null) {
-                                labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
-                            }
-                            workQueueEntry.dequeue();
+                    if (containedVessels.isEmpty()) {
+                        processProjectPlanOverrides(labEvent,labVessel,workflow);
+                    }
+                    else {
+                        for (LabVessel vessel : containedVessels) {
+                            processProjectPlanOverrides(labEvent,vessel,workflow);
                         }
-                        else if (workQueueEntries.size() > 1) {
-                            // todo ambiguous: how do we narrow down the exact queue that this
-                            // vessel was placed in?
-                            throw new RuntimeException("SequeL doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
-                        }
-                        /** else this vessel wasn't place in a {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue} */
                     }
                 }
 
             }
         }
+    }
+
+    /**
+     * {@link #processProjectPlanOverrides(org.broadinstitute.sequel.entity.labevent.LabEvent, org.broadinstitute.sequel.entity.vessel.LabVessel, org.broadinstitute.sequel.entity.project.WorkflowDescription)}
+     * @param labEvent
+     * @param vessel
+     * @param workflow
+     */
+    private void processProjectPlanOverrides(LabEvent labEvent,
+                                             LabVessel vessel,
+                                             WorkflowDescription workflow) {
+        Collection<WorkQueueEntry> workQueueEntries = vessel.getPendingWork(workflow);
+        if (workQueueEntries.size() == 1) {
+            // not ambiguous: single entry
+            WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
+            if (workQueueEntry.getProjectPlanOverride() != null) {
+                labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
+            }
+            workQueueEntry.dequeue();
+        }
+        else if (workQueueEntries.size() > 1) {
+            // todo ambiguous: how do we narrow down the exact queue that this
+            // vessel was placed in?
+            throw new RuntimeException("SequeL doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
+        }
+        /** else this vessel wasn't place in a {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue} */
     }
 
     /**

@@ -135,4 +135,9 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
     public void remove(WorkQueueEntry workQueueEntry) {
         throw new RuntimeException("I haven't been written yet.");
     }
+
+    @Override
+    public Collection<WorkQueueEntry> getEntriesForWorkflow(WorkflowDescription workflow, LabVessel vessel) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 }
