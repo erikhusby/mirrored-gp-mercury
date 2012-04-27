@@ -174,6 +174,14 @@ public class ProjectPlan {
         return notes;
     }
 
+    public boolean isComplete(LabVessel startingVessel) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public void setComplete(boolean isComplete) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
     /**
      * Basically how much sequencing are we going
      * to do for this project?  We assume that the
@@ -187,5 +195,27 @@ public class ProjectPlan {
 
     // organism, collaborator, initiative/funding source/quote, prep
     // type, sequencing type, outbreak,
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ProjectPlan that = (ProjectPlan) o;
+
+        if (planName != null ? !planName.equals(that.planName) : that.planName != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return planName != null ? planName.hashCode() : 0;
+    }
+
+    public String toString() {
+        return planName;
+    }
 
 }

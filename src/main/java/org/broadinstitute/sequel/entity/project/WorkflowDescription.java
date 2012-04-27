@@ -26,8 +26,6 @@ public class WorkflowDescription {
 
     private final String workflowName;
 
-    private final String version;
-
     private Map<LabEventName,PriceItem> priceItemForEvent = new HashMap<LabEventName, PriceItem>();
 
     private CreateIssueRequest.Fields.Issuetype issueType;
@@ -36,25 +34,22 @@ public class WorkflowDescription {
     private WorkflowState startState;
 
     /**
-     * 
+     *
      * @param workflowName
-     * @param version
      * @param billableEvents
      * @param issueType the <i>first</i> type of issue
-     *                  created when this stuff hits
-     *                  the lab.  Subsequent ticket
-     *                  creation is owned by either {@link org.broadinstitute.sequel.entity.workflow.WorkflowEngine}
-     *                  or {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}.
+ *                  created when this stuff hits
+ *                  the lab.  Subsequent ticket
+ *                  creation is owned by either {@link org.broadinstitute.sequel.entity.workflow.WorkflowEngine}
+ *                  or {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}.
      */
     public WorkflowDescription(String workflowName,
-                               String version,
-                               Map<LabEventName,PriceItem> billableEvents,
+                               Map<LabEventName, PriceItem> billableEvents,
                                CreateIssueRequest.Fields.Issuetype issueType) {
         if (workflowName == null) {
              throw new IllegalArgumentException("workflowName must be non-null in WorkflowDescription.WorkflowDescription");
         }
         this.workflowName = workflowName;
-        this.version = version;
         this.priceItemForEvent = billableEvents;
         this.issueType = issueType;
     }
@@ -62,11 +57,7 @@ public class WorkflowDescription {
     public String getWorkflowName() {
         return workflowName;
     }
-    
-    public String getWorkflowVersion() {
-        return version;
-    }
-    
+
     public PriceItem getPriceItem(LabEventName eventName) {
         if (eventName == null) {
             throw new NullPointerException("eventName cannot be null");
@@ -137,5 +128,22 @@ public class WorkflowDescription {
 
     public void setMapNameToTransitionList(Map<String, List<WorkflowTransition>> mapNameToTransitionList) {
         this.mapNameToTransitionList = mapNameToTransitionList;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        WorkflowDescription that = (WorkflowDescription) o;
+
+        if (workflowName != null ? !workflowName.equals(that.workflowName) : that.workflowName != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return workflowName != null ? workflowName.hashCode() : 0;
     }
 }

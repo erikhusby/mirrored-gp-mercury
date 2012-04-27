@@ -96,4 +96,13 @@ public class SampleInstanceImpl implements SampleInstance {
             }
         }
     }
+
+    @Override
+    public void resetProjectPlan(ProjectPlan projectPlan) {
+        if (projectPlan == null) {
+            throw new RuntimeException("Cannot reset projectPlan to null.");
+        }
+        projectPlans.clear();
+        projectPlans.add(projectPlan);
+    }
 }

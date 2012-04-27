@@ -16,7 +16,9 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.zims.LibrariesBean;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 
 import javax.ejb.Stateless;
@@ -28,8 +30,13 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
+
+/**
+ * Web service for fetching run data for Zamboni.
+ */
 @Path("/RunLane")
 @Stateless
 public class RunLaneResource {
@@ -39,6 +46,9 @@ public class RunLaneResource {
     
     @Inject
     BSPSampleDataFetcher bspDataFetcher;
+    
+    @Inject
+    BSPSampleSearchService bspSearchService;
 
     @Inject
     ThriftConfiguration thriftConfiguration;
@@ -71,9 +81,9 @@ public class RunLaneResource {
     }
 
     LibrariesBean getLibraries(LIMQueries.Client thriftClient,
-                                       TTransport thriftTransport,
-                                       String runName,
-                                       String chamber) {
+                               TTransport thriftTransport,
+                               String runName,
+                               String chamber) {
         final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
         try {
             thriftTransport.open();
@@ -90,6 +100,9 @@ public class RunLaneResource {
             else {
                 for (TZamboniLane tZamboniLane : tRun.getLanes()) {
                     for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
+                        String organism = getOrganism(zamboniLibrary);
+                       
+                        
                         LibraryBean libBean = new LibraryBean(zamboniLibrary.getLibrary(),
                                 zamboniLibrary.getProject(),
                                 zamboniLibrary.getInitiative(),
@@ -102,7 +115,7 @@ public class RunLaneResource {
                                 zamboniLibrary.getReferenceSequenceVersion(),
                                 zamboniLibrary.getSampleAlias(),
                                 zamboniLibrary.getSampleCollaborator(),
-                                zamboniLibrary.getOrganism(),
+                                organism,
                                 zamboniLibrary.getSpecies(),
                                 zamboniLibrary.getStrain(),
                                 zamboniLibrary.getLsid(),
@@ -120,7 +133,11 @@ public class RunLaneResource {
                                 zamboniLibrary.getWeirdness(),
                                 zamboniLibrary.getPrecircularizationDnaSize(),
                                 zamboniLibrary.isPartOfDevExperiment(),
-                                zamboniLibrary.getDevExperimentData());
+                                zamboniLibrary.getDevExperimentData(),
+                                zamboniLibrary.getGssrBarcode(),
+                                zamboniLibrary.getGssrBarcodes(),
+                                zamboniLibrary.getGssrSampleType(),
+                                zamboniLibrary.getTargetLaneCoverage());
                         libraries.add(libBean);
                     }
                 }
@@ -138,5 +155,45 @@ public class RunLaneResource {
             }
         }
         return new LibrariesBean(libraries);
+    }
+
+    /**
+     * Why are we doing this redundant call?  To get some practice running
+     * live against BSP to see how well it works.
+     * @param zamboniLibrary
+     * @return
+     */
+    // todo fetch this data from BSP in batch, not one at a time.
+    private String getOrganism(TZamboniLibrary zamboniLibrary) {
+        String organism = null;
+        if (isBspSample(zamboniLibrary)) {
+            Collection<String> lsids = new HashSet<String>();
+            lsids.add(zamboniLibrary.getLsid());
+            String lsid = bspSearchService.lsidsToBareIds(lsids).values().iterator().next();
+            BSPSampleDTO bspSample = bspDataFetcher.fetchSingleSampleFromBSP(lsid);
+            organism = bspSample.getOrganism();
+        }
+        else {
+            organism = zamboniLibrary.getOrganism();
+        }
+        return organism;
+    }
+
+    /**
+     * Based on the LSID, is this {@link TZamboniLibrary} derived
+     * from a BSP sample?
+     * @param zamboniLibrary
+     * @return
+     */
+    private boolean isBspSample(TZamboniLibrary zamboniLibrary) {
+        String lsid = zamboniLibrary.getLsid();
+        boolean isBsp = false;
+        if (lsid != null) {
+            lsid = lsid.toLowerCase();
+            if (lsid.startsWith("broad.mit.edu:bsp.prod.sample:") || lsid.startsWith("broadinstitute.org:bsp.prod.sample:")) {
+                isBsp = true;
+            }
+        }
+        return isBsp;
     }
 }

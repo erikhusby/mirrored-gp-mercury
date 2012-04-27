@@ -29,4 +29,13 @@
         </configuration>
     </container>
 -->
+
+<!-- for Arquillian-JBossAS7-Managed to download and manage its own AS instance
+    <container qualifier="dev" default="true">
+        <configuration>
+            <property name="jbossHome">target/jboss-as-${jboss.version:7.1.0.Final}</property>
+        </configuration>
+    </container>
+-->
+
 </arquillian>

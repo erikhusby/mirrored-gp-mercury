@@ -1,11 +1,17 @@
 package org.broadinstitute.sequel.test;
 
+import org.broadinstitute.sequel.BettaLimsMessageFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
+
+import java.util.Collection;
 
 /**
  * @author breilly
@@ -17,6 +23,7 @@ public class DeploymentBuilder {
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .merge(importMain(), "WEB-INF/classes");
+        war = addWarDependencies(war);
         return war;
     }
 
@@ -25,6 +32,7 @@ public class DeploymentBuilder {
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .merge(importCloverMain(), "WEB-INF/classes");
+        war = addWarDependencies(war);
         return war;
     }
 
@@ -61,16 +69,53 @@ public class DeploymentBuilder {
     }
 
     private static JavaArchive importMain() {
-        return ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
+        JavaArchive archive = ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
                 .importDirectory("target/classes")
                 .importDirectory("src/main/resources")
                 .as(JavaArchive.class);
+        archive = addTestHelpers(archive);
+        return archive;
     }
 
     private static JavaArchive importCloverMain() {
-        return ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
+        JavaArchive archive = ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
                 .importDirectory("target/clover/classes")
                 .importDirectory("src/main/resources")
                 .as(JavaArchive.class);
+        archive = addTestHelpers(archive);
+        return archive;
+    }
+
+    private static JavaArchive addTestHelpers(JavaArchive archive) {
+        // TODO: put all test helpers into a single package or two to import all at once
+        return archive
+                .addClass(ContainerTest.class)
+                .addClass(BettaLimsMessageFactory.class);
+    }
+
+    private static WebArchive addWarDependencies(WebArchive archive) {
+        return archive
+                .as(MavenImporter.class)
+                .loadEffectivePom("pom.xml", "JavaEE")
+                .importAnyDependencies(new MavenResolutionFilter() {
+                    @Override
+                    public boolean accept(MavenDependency dependency) {
+                        if (dependency == null) {
+                            return false;
+                        }
+                        // TODO: remove all test-scoped dependencies; optionally explicitly add certain test dependencies that we commit to supporting
+                        // TODO: remove exclusion of xerces, which is a workaround until all test-scoped dependencies are removed
+                        return
+//                                !dependency.getScope().equals("test") &&
+                                !dependency.getScope().equals("provided")
+                                && !dependency.getCoordinates().contains("xerces");
+                    }
+
+                    @Override
+                    public MavenResolutionFilter configure(Collection<MavenDependency> dependencies) {
+                        return this;
+                    }
+                })
+                .as(WebArchive.class);
     }
 }

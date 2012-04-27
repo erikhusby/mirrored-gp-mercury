@@ -72,13 +72,12 @@ public class EndToEndTest  {
         PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars", PriceItem.GSP_PLATFORM_NAME);
         billableEvents.put(LabEventName.ADAPTOR_LIGATION,priceItem);
         final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
-                "7.0",
                 billableEvents,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         Project project = new BasicProject("Project1",new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        ProjectPlan plan1 = new ProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS","2.3",billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+        ProjectPlan plan1 = new ProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         Project project2 = new BasicProject("Project2", new JiraTicket(new DummyJiraService(),"TP-1","1"));
-        ProjectPlan plan2 = new ProjectPlan(project2,"Plan for "  + project2.getProjectName(),new WorkflowDescription("WGS","2.3",billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+        ProjectPlan plan2 = new ProjectPlan(project2,"Plan for "  + project2.getProjectName(),new WorkflowDescription("WGS", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
         LabVessel stock1 = createBSPStock(masterSample1,"00001234",plan1);
         LabVessel stock2 = createBSPStock(masterSample2,"00005678",plan2);
@@ -104,8 +103,8 @@ public class EndToEndTest  {
         AliquotParameters aliquotParameters = new AliquotParameters(plan1,0.9f,0.6f);
         AliquotParameters aliquotParameters2 = new AliquotParameters(plan2,1.9f,2.6f);
         
-        aliquotWorkQueue.add(stock1,aliquotParameters,null);
-        aliquotWorkQueue.add(stock2,aliquotParameters2,null);
+        aliquotWorkQueue.add(stock1,aliquotParameters,plan1.getWorkflowDescription(),null);
+        aliquotWorkQueue.add(stock2,aliquotParameters2,plan2.getWorkflowDescription(),null);
 
         BSPPlatingResponse platingResponse = aliquotWorkQueue.sendBatch();
 

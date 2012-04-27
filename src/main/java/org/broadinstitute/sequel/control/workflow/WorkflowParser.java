@@ -32,6 +32,7 @@ import java.util.Map;
 public class WorkflowParser {
     private final Map<String, List<WorkflowTransition>> mapNameToTransitionList = new HashMap<String, List<WorkflowTransition>>();
     private WorkflowState startState;
+    private String workflowName;
 
     /** Represents a BPMN sub process.  Each sub process has a start event, an end event, and a sequence of flows and
      * tasks.  There can be flows between sub processes, and between the top level start and end events. */
@@ -108,6 +109,18 @@ public class WorkflowParser {
                 }
             });
             Map<String, WorkflowState> mapIdToWorkflowState = new HashMap<String, WorkflowState>();
+
+            XPathExpression processProperty = xpath.compile("//m:process");
+            Node processNode = (Node)processProperty.evaluate(doc, XPathConstants.NODE);
+            if (processNode != null) {
+                NamedNodeMap processNodeAttributes = processNode.getAttributes();
+                if (processNodeAttributes != null) {
+                    processNode = processNodeAttributes.getNamedItem("name");
+                    if (processNode != null) {
+                        workflowName = processNode.getNodeValue();
+                    }
+                }
+            }
 
             // Get the top level start event
             XPathExpression startEventExpr = xpath.compile("//m:process/m:startEvent");
@@ -255,6 +268,10 @@ public class WorkflowParser {
             this.mapNameToTransitionList.put(transitionName, workflowTransitions);
         }
         workflowTransitions.add(workflowTransition);
+    }
+
+    public String getWorkflowName() {
+        return this.workflowName;
     }
 
     public WorkflowState getStartState() {

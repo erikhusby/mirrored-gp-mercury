@@ -100,20 +100,7 @@ public class SectionTransfer {
                 if (sourceContainedVessel != null) {
                     AbstractLabVessel targetContainedVessel = (AbstractLabVessel) this.targetVesselContainer.getVesselAtPosition(
                             targetWellName.getWellName());
-                    if(targetContainedVessel != null) {
-                        targetContainedVessel.getSampleSheetAuthorities().add(sourceContainedVessel);
-                    }
                 }
-            }
-        } else {
-            // todo jmt rationalize authorities
-            if ( this.sourceVesselContainer.getSampleSheetAuthorities().isEmpty()) {
-                if(sourceVessel.getReagentContents().isEmpty()) {
-//                    this.targetVesselContainer.getSampleSheetAuthorities().add(this.sourceVesselContainer);
-                }
-            } else {
-//                this.targetVesselContainer.getSampleSheetAuthorities().addAll(
-//                        this.sourceVesselContainer.getSampleSheetAuthorities());
             }
         }
 

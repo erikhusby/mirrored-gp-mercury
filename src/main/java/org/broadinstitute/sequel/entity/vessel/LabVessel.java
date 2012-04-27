@@ -3,6 +3,9 @@ package org.broadinstitute.sequel.entity.vessel;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
+import org.broadinstitute.sequel.entity.queue.WorkQueueEntry;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.broadinstitute.sequel.entity.labevent.Failure;
@@ -291,5 +294,15 @@ public interface LabVessel  {
      * @return
      */
     public Collection<JiraTicket> getJiraTickets();
+
+    public void addLabWorkQueue(LabWorkQueue labWorkQueue);
+
+    /**
+     * This is a problem...we want some way to ask the
+     * workflow engine how to get all pending work...
+     * @param workflow
+     * @return
+     */
+    public Collection<WorkQueueEntry> getPendingWork(WorkflowDescription workflow);
 
 }

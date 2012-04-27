@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.queue;
 
 import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -8,6 +9,7 @@ import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface LabWorkQueue<T extends LabWorkQueueParameters> {
 
@@ -19,7 +21,11 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
      * visible to lab staff.
      *
      *
-     * @param vessel
+     * @param vessel The vessel, complete with a functioning
+     *               {@link org.broadinstitute.sequel.entity.vessel.LabVessel#getSampleInstances()}
+     *               that detail the {@link org.broadinstitute.sequel.entity.project.ProjectPlan}
+     *               relationships via {@link org.broadinstitute.sequel.entity.sample.SampleInstance#getAllProjectPlans()}
+     *               and {@link org.broadinstitute.sequel.entity.sample.SampleInstance#getSingleProjectPlan()}
      * @param workflowParameters the parameters, also considered
      *                   the "bucket" for the queue.
      * @return a response object, which may embody error information
@@ -28,7 +34,8 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
      */
     public LabWorkQueueResponse add(LabVessel vessel,
                                     T workflowParameters,
-                                    SequencingPlanDetail sequencingPlan);
+                                    WorkflowDescription workflowDescription,
+                                    ProjectPlan projectPlanOverride);
 
     /**
      * What's the MolecularStateRange required for
@@ -50,7 +57,10 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
                                           Person user);
 
     public boolean isEmpty();
-    
-    public WorkflowEngine getWorkflowEngine();
+
+    public void remove(WorkQueueEntry workQueueEntry);
+
+    public Collection<WorkQueueEntry> getEntriesForWorkflow(WorkflowDescription workflow,
+                                                            LabVessel vessel);
 
 }
