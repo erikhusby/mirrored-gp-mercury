@@ -120,31 +120,31 @@ public class LabEventTest {
                 "ShearingQC", shearCleanPlateBarcode, shearQcPlateBarcode);
         LabEvent shearingQcEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                 shearingQcEventJaxb, shearingCleanupPlate, null);
-        labEventHandler.processEvent(shearingQcEntity);
+        labEventHandler.processEvent(shearingQcEntity,null);
 
         // EndRepair
         validateWorkflow(workflowDescription, "EndRepair", shearingCleanupPlate);
         PlateEventType endRepairJaxb = bettaLimsMessageFactory.buildPlateEvent("EndRepair", shearPlateBarcode);
         LabEvent endRepairEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(endRepairJaxb, shearingCleanupPlate);
-        labEventHandler.processEvent(endRepairEntity);
+        labEventHandler.processEvent(endRepairEntity,null);
 
         // EndRepairCleanup
         validateWorkflow(workflowDescription, "EndRepairCleanup", shearingCleanupPlate);
         PlateEventType endRepairCleanupJaxb = bettaLimsMessageFactory.buildPlateEvent("EndRepairCleanup", shearPlateBarcode);
         LabEvent endRepairCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(endRepairCleanupJaxb, shearingCleanupPlate);
-        labEventHandler.processEvent(endRepairCleanupEntity);
+        labEventHandler.processEvent(endRepairCleanupEntity,null);
 
         // ABase
         validateWorkflow(workflowDescription, "ABase", shearingCleanupPlate);
         PlateEventType aBaseJaxb = bettaLimsMessageFactory.buildPlateEvent("ABase", shearPlateBarcode);
         LabEvent aBaseEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(aBaseJaxb, shearingCleanupPlate);
-        labEventHandler.processEvent(aBaseEntity);
+        labEventHandler.processEvent(aBaseEntity,null);
 
         // ABaseCleanup
         validateWorkflow(workflowDescription, "ABaseCleanup", shearingCleanupPlate);
         PlateEventType aBaseCleanupJaxb = bettaLimsMessageFactory.buildPlateEvent("ABaseCleanup", shearPlateBarcode);
         LabEvent aBaseCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(aBaseCleanupJaxb, shearingCleanupPlate);
-        labEventHandler.processEvent(aBaseCleanupEntity);
+        labEventHandler.processEvent(aBaseCleanupEntity,null);
 
         // IndexedAdapterLigation
         validateWorkflow(workflowDescription, "IndexedAdapterLigation", shearingCleanupPlate);
@@ -178,14 +178,14 @@ public class LabEventTest {
                 "AdapterLigationCleanup", shearPlateBarcode, ligationCleanupBarcode);
         LabEvent ligationCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                 ligationCleanupJaxb, shearingPlate, null);
-        labEventHandler.processEvent(ligationCleanupEntity);
+        labEventHandler.processEvent(ligationCleanupEntity,null);
         StaticPlate ligationCleanupPlate = (StaticPlate) ligationCleanupEntity.getTargetLabVessels().iterator().next();
 
         // PondEnrichment
         validateWorkflow(workflowDescription, "PondEnrichment", ligationCleanupPlate);
         PlateEventType pondEnrichmentJaxb = bettaLimsMessageFactory.buildPlateEvent("PondEnrichment", shearPlateBarcode);
         LabEvent pondEnrichmentEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(pondEnrichmentJaxb, shearingCleanupPlate);
-        labEventHandler.processEvent(pondEnrichmentEntity);
+        labEventHandler.processEvent(pondEnrichmentEntity,null);
 
         // HybSelPondEnrichmentCleanup
         validateWorkflow(workflowDescription, "HybSelPondEnrichmentCleanup", shearingCleanupPlate);
@@ -194,7 +194,7 @@ public class LabEventTest {
                 "HybSelPondEnrichmentCleanup", shearPlateBarcode, pondCleanupBarcode);
         LabEvent pondCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                 pondCleanupJaxb, shearingPlate, null);
-        labEventHandler.processEvent(pondCleanupEntity);
+        labEventHandler.processEvent(pondCleanupEntity,null);
         StaticPlate pondCleanupPlate = (StaticPlate) pondCleanupEntity.getTargetLabVessels().iterator().next();
 
         // PondRegistration
@@ -274,31 +274,31 @@ public class LabEventTest {
         validateWorkflow(workflowDescription, "BeadAddition", hybridizationPlate);
         PlateEventType beadAdditionJaxb = bettaLimsMessageFactory.buildPlateEvent("BeadAddition", hybridizationPlateBarcode);
         LabEvent beadAdditionEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(beadAdditionJaxb, hybridizationPlate);
-        labEventHandler.processEvent(beadAdditionEntity);
+        labEventHandler.processEvent(beadAdditionEntity,null);
 
         // APWash
         validateWorkflow(workflowDescription, "APWash", hybridizationPlate);
         PlateEventType apWashJaxb = bettaLimsMessageFactory.buildPlateEvent("APWash", hybridizationPlateBarcode);
         LabEvent apWashEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(apWashJaxb, hybridizationPlate);
-        labEventHandler.processEvent(apWashEntity);
+        labEventHandler.processEvent(apWashEntity,null);
 
         // GSWash1
         validateWorkflow(workflowDescription, "GSWash1", hybridizationPlate);
         PlateEventType gsWash1Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash1", hybridizationPlateBarcode);
         LabEvent gsWash1Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(gsWash1Jaxb, hybridizationPlate);
-        labEventHandler.processEvent(gsWash1Entity);
+        labEventHandler.processEvent(gsWash1Entity,null);
 
         // GSWash2
         validateWorkflow(workflowDescription, "GSWash2", hybridizationPlate);
         PlateEventType gsWash2Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash2", hybridizationPlateBarcode);
         LabEvent gsWash2Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(gsWash2Jaxb, hybridizationPlate);
-        labEventHandler.processEvent(gsWash2Entity);
+        labEventHandler.processEvent(gsWash2Entity,null);
 
         // CatchEnrichmentSetup
         validateWorkflow(workflowDescription, "CatchEnrichmentSetup", hybridizationPlate);
         PlateEventType catchEnrichmentSetupJaxb = bettaLimsMessageFactory.buildPlateEvent("CatchEnrichmentSetup", hybridizationPlateBarcode);
         LabEvent catchEnrichmentSetupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(catchEnrichmentSetupJaxb, hybridizationPlate);
-        labEventHandler.processEvent(catchEnrichmentSetupEntity);
+        labEventHandler.processEvent(catchEnrichmentSetupEntity,null);
 
         // CatchEnrichmentCleanup
         validateWorkflow(workflowDescription, "CatchEnrichmentCleanup", hybridizationPlate);
@@ -307,7 +307,7 @@ public class LabEventTest {
                 "CatchEnrichmentCleanup", hybridizationPlateBarcode, catchCleanupBarcode);
         LabEvent catchEnrichmentCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                 catchEnrichmentCleanupJaxb, hybridizationPlate, null);
-        labEventHandler.processEvent(catchEnrichmentCleanupEntity);
+        labEventHandler.processEvent(catchEnrichmentCleanupEntity,null);
 
         // NormalizedCatchRegistration
         validateWorkflow(workflowDescription, "NormalizedCatchRegistration", hybridizationPlate);
@@ -374,7 +374,7 @@ public class LabEventTest {
                     put(denatureRackBarcode, null);
                 }}, mapBarcodeToDenatureTube
         );
-        labEventHandler.processEvent(denatureEntity);
+        labEventHandler.processEvent(denatureEntity,null);
         // asserts
         final RackOfTubes denatureRack = (RackOfTubes) denatureEntity.getTargetLabVessels().iterator().next();
         Set<SampleInstance> denaturedSampleInstances = denatureRack.getVesselContainer().getSampleInstancesAtPosition("A01");
