@@ -156,6 +156,18 @@ public class LabEventFactory {
         LabEventType flowcellTransfer = new LabEventType("FlowcellTransfer", true, false,
                 MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
         MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(flowcellTransfer.getName(), flowcellTransfer);
+
+        LabEventType sageLoading = new LabEventType("SageLoading", true, false,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(sageLoading.getName(), sageLoading);
+
+        LabEventType sageUnloading = new LabEventType("SageUnloading", true, false,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(sageUnloading.getName(), sageUnloading);
+
+        LabEventType sageCleanup = new LabEventType("SageCleanup", true, false,
+                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(sageCleanup.getName(), sageCleanup);
     }
     
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDao;

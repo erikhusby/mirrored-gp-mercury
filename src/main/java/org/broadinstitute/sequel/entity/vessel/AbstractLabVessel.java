@@ -56,6 +56,8 @@ public abstract class AbstractLabVessel implements LabVessel {
 
     private Set<Reagent> appliedReagents = new HashSet<Reagent>();
 
+    private Set<VesselContainer> containers = new HashSet<VesselContainer>();
+
     @Embedded
     private UserRemarks userRemarks;
 
@@ -111,6 +113,16 @@ public abstract class AbstractLabVessel implements LabVessel {
     @Override
     public boolean isAncestor(LabVessel progeny) {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void addToContainer(VesselContainer vesselContainer) {
+        this.containers.add(vesselContainer);
+    }
+
+    @Override
+    public Set<VesselContainer> getContainers() {
+        return containers;
     }
 
     @Override

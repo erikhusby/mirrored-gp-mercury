@@ -21,6 +21,10 @@ public interface LabVessel  {
 
     void applyTransfer(SectionTransfer sectionTransfer);
 
+    void addToContainer(VesselContainer vesselContainer);
+
+    Set<VesselContainer> getContainers();
+
     public enum CONTAINER_TYPE {
         STATIC_PLATE,
         TUBE,

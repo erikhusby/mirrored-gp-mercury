@@ -49,25 +49,20 @@ public class VesselContainer<T extends LabVessel> {
     public Set<SampleInstance> getSampleInstancesAtPosition(String position) {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if(this.sampleSheetAuthorities.isEmpty()) {
-            for (LabEvent labEvent : this.embedder.getTransfersTo()) {
-                for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
-                    Set sampleInstancesAtPosition = sectionTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(position);
-                    applyReagents(position, sampleInstancesAtPosition);
-                    sampleInstances.addAll(sampleInstancesAtPosition);
+            examineTransfers(position, sampleInstances);
+            T vesselAtPosition = getVesselAtPosition(position);
+            if(vesselAtPosition != null) {
+                if(!vesselAtPosition.getSampleSheets().isEmpty()) {
+                    sampleInstances.addAll(vesselAtPosition.getSampleInstances());
                 }
-                for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
-                    if(cherryPickTransfer.getTargetPosition().equals(position)) {
-                        Set sampleInstancesAtPosition = cherryPickTransfer.getSourceVesselContainer().
-                                getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition());
-                        applyReagents(position, sampleInstancesAtPosition);
-                        sampleInstances.addAll(sampleInstancesAtPosition);
+                // handle re-arrays of tubes - look in any other racks that the tube has been in
+                for (VesselContainer vesselContainer : vesselAtPosition.getContainers()) {
+                    if(!vesselContainer.equals(this)) {
+                        vesselContainer.examineTransfers(vesselContainer.getPositionOfVessel(vesselAtPosition), sampleInstances);
                     }
                 }
             }
-            T vesselAtPosition = getVesselAtPosition(position);
-            if(vesselAtPosition != null && !vesselAtPosition.getSampleSheets().isEmpty()) {
-                sampleInstances.addAll(vesselAtPosition.getSampleInstances());
-            }
+
         } else {
             for (VesselContainer sampleSheetAuthority : this.sampleSheetAuthorities) {
                 Set<SampleInstance> sampleInstancesAtPosition = sampleSheetAuthority.getSampleInstancesAtPosition(position);
@@ -76,6 +71,34 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
         return sampleInstances;
+    }
+
+    private void examineTransfers(String position, Set<SampleInstance> sampleInstances) {
+        for (LabEvent labEvent : this.embedder.getTransfersTo()) {
+            for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                Set sampleInstancesAtPosition = sectionTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(position);
+                applyReagents(position, sampleInstancesAtPosition);
+                sampleInstances.addAll(sampleInstancesAtPosition);
+            }
+            for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
+                if(cherryPickTransfer.getTargetPosition().equals(position)) {
+                    Set sampleInstancesAtPosition = cherryPickTransfer.getSourceVesselContainer().
+                            getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition());
+                    applyReagents(position, sampleInstancesAtPosition);
+                    sampleInstances.addAll(sampleInstancesAtPosition);
+                }
+            }
+        }
+    }
+
+    private String getPositionOfVessel(T vesselAtPosition) {
+        // todo jmt map in both directions
+        for (Map.Entry<String, T> stringTEntry : mapPositionToVessel.entrySet()) {
+            if(stringTEntry.getValue().equals(vesselAtPosition)) {
+                return stringTEntry.getKey();
+            }
+        }
+        return null;
     }
 
     private void applyReagents(String position, Set<SampleInstance> sampleInstancesAtPosition) {
@@ -134,8 +157,8 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public void addContainedVessel(T child, String position) {
-        // todo jmt set reference to parent
         this.mapPositionToVessel.put(position, child);
+        child.addToContainer(this);
     }
 
     public Set<String> getPositions() {

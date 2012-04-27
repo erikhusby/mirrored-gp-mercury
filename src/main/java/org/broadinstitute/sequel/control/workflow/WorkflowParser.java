@@ -149,6 +149,7 @@ public class WorkflowParser {
             Map<String, SubProcess> mapIdToSubProcess = new HashMap<String, SubProcess>();
             Map<String, SubProcess> mapStartEventIdToSubProcess = new HashMap<String, SubProcess>();
             Map<String, SubProcess> mapEndEventIdToSubProcess = new HashMap<String, SubProcess>();
+
             // Get the sub processes
             XPathExpression subProcessStartEventExpr = xpath.compile("./m:startEvent");
             XPathExpression subProcessEndEventExpr = xpath.compile("./m:endEvent");
@@ -177,7 +178,7 @@ public class WorkflowParser {
             XPathExpression flowExpr = xpath.compile("//m:sequenceFlow");
             NodeList flowNodes = (NodeList) flowExpr.evaluate(doc, XPathConstants.NODESET);
 
-            // In the first pass, handle flows between subprocess
+            // In the first pass, handle flows between sub processes
             for (int i = 0; i < flowNodes.getLength(); i++) {
                 NamedNodeMap attributes = flowNodes.item(i).getAttributes();
                 String sourceRef = attributes.getNamedItem("sourceRef").getNodeValue();
@@ -188,7 +189,7 @@ public class WorkflowParser {
                     // the line sourceref is a subProcess and the targetref is a subProcess so add the source as a predecessor of the target
                     targetSubProcess.getPredecessorSubProcesses().add(sourceSubProcess);
                 } else if(sourceRef.equals(startStateId) && targetSubProcess != null) {
-                    // the line sourceRef is the top level startEvent, and the targetRef is a subprocess
+                    // the line sourceRef is the top level startEvent, and the targetRef is a subProcess
                     targetSubProcess.setPredecessorTopLevelStartEvent(true);
                 }
             }
@@ -223,10 +224,10 @@ public class WorkflowParser {
                     // the line sourceRef is a task and the targetRef is a task so associate the transition with the states
                     buildTransition(attributes, sourceState, targetState);
                 } else if(sourceRef.equals(startStateId) && targetSubProcess != null) {
-                    // the line sourceRef is the top level startEvent, and the targetRef is a subprocess, this is handled above
+                    // the line sourceRef is the top level startEvent, and the targetRef is a subProcess, this is handled above
                 } else if(sourceSubProcess != null && targetRef.equals(endStateId)) {
                     // the line sourceRef is a subProcess, and the targetRef is the end state
-                    // todo
+                    // todo jmt connect to end event
                 } else {
                     throw new RuntimeException("Unknown combination of sourceRef " + sourceRef + " and targetRef " + targetRef);
                 }
