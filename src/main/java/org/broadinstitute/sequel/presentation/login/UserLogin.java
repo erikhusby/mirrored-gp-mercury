@@ -67,47 +67,12 @@ public class UserLogin {
     }
 
 
-    public void authenticate() throws LoginException, ServletException {
+    private void authenticate() throws LoginException, ServletException {
 
         HttpServletRequest request = (HttpServletRequest )FacesContext.getCurrentInstance().getExternalContext().getRequest();
 
         request.login(userName, password);
 
-//        LoginContext ctx = new LoginContext("sequel",null,new AuthenticationCallback(),new LoginConfig());
-//        ctx.login();
-//        return ctx.getSubject();
     }
-//
-//    public class AuthenticationCallback implements CallbackHandler {
-//
-//        public void handle(Callback[] callbacks) throws UnsupportedCallbackException {
-//            for (int i = 0; i < callbacks.length; i++) {
-//                if (callbacks[i] instanceof NameCallback) {
-//                    NameCallback nc = (NameCallback) callbacks[i];
-//                    nc.setName(userName);
-//                } else if (callbacks[i] instanceof PasswordCallback) {
-//                    PasswordCallback pc = (PasswordCallback) callbacks[i];
-//                    pc.setPassword(password.toCharArray());
-//                } else {
-//                    throw (new UnsupportedCallbackException(callbacks[i],
-//                            "Callback handler not supported"));
-//                }
-//            }
-//        }
-//    }
-//
-//    public class LoginConfig extends Configuration {
-//        @Override
-//        public AppConfigurationEntry[] getAppConfigurationEntry(String s) {
-//            AppConfigurationEntry[] entries = new AppConfigurationEntry[1];
-//            Map<String, String> args = new HashMap<String, String>(10);
-//            args.put("crowd.server.url", "https://crowd.broadinstitute.org:8443/crowd");
-//            args.put("application.name", "sequel");
-//            args.put("application.password", "fsR7n3Iq");
-//            entries[0] = new AppConfigurationEntry(CrowdLoginModule.class.getName(),AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT,args );
-//            return entries;
-//        }
-//    }
-
 
 }

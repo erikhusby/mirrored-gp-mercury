@@ -22,30 +22,22 @@
     <h:body>
         Please enter your Broad Username and Password.
 
-        <!--#{requestScope}-->
 
 
-        <form method="POST" action="j_security_check">
-            <!--<h:form>-->
+        <h:form>
 
             <h:messages />
             <h:panelGrid columns="2">
 
                 <h:outputText value="UserName:" />
-
-                <!--<h:inputText label="Username:" value="#{userLogin.userName}" required="true" />-->
-                <input type="text" name="j_username" />
+                <h:inputText label="Username:" value="#{userLogin.userName}" required="true" />
 
                 <h:outputText value="Password:" />
-
-                <!--<h:inputSecret label="Password:" value="#{userLogin.password}" required="true" />-->
-                <input type="password" name="j_password" />
+                <h:inputSecret label="Password:" value="#{userLogin.password}" required="true" />
 
                 <h:panelGroup />
-                <input type="submit" value="Login"/>
-                <!--<h:commandButton value="Login" action="/index" />-->
+                <h:commandButton value="Login" action="#{userLogin.authenticateUser}" />
             </h:panelGrid>
-        <!--</h:form>-->
-        </form>
+        </h:form>
     </h:body>
 </html>
