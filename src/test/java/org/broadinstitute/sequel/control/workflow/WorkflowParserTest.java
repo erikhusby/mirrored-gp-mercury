@@ -14,7 +14,7 @@ public class WorkflowParserTest {
 
     @Test
     public void testParse() {
-        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("HybridSelection.bpmn");
+        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("HybridSelectionV2.bpmn");
         try {
             WorkflowParser workflowParser = new WorkflowParser(inputStream);
             WorkflowState startState = workflowParser.getStartState();

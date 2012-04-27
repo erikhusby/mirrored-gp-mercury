@@ -5,181 +5,181 @@
       <outgoing>_13</outgoing>
       <outgoing>_68</outgoing>
     </startEvent>
-    <receiveTask completionQuantity="1" id="_5" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post PreflightNormalization" startQuantity="1">
+    <task completionQuantity="1" id="_5" isForCompensation="false" name="Post PreflightNormalization" startQuantity="1">
       <incoming>_14</incoming>
       <outgoing>_8</outgoing>
-    </receiveTask>
-    <receiveTask completionQuantity="1" id="_7" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post PreflightPostNormPicoSetup" startQuantity="1">
+    </task>
+    <task completionQuantity="1" id="_7" isForCompensation="false" name="Post PreflightPostNormPicoSetup" startQuantity="1">
       <incoming>_8</incoming>
       <outgoing>_10</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_8" name="PreflightPostNormPicoSetup" sourceRef="_5" targetRef="_7"/>
-    <receiveTask completionQuantity="1" id="_9" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post ShearingTransfer" startQuantity="1">
+    <task completionQuantity="1" id="_9" isForCompensation="false" name="Post ShearingTransfer" startQuantity="1">
       <incoming>_10</incoming>
       <incoming>_68</incoming>
       <outgoing>_17</outgoing>
       <outgoing>_70</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_10" name="ShearingTransfer" sourceRef="_7" targetRef="_9"/>
-    <receiveTask completionQuantity="1" id="_12" implementation="##WebService" instantiate="false" isForCompensation="false" messageRef="_11" name="Post PreflightPicoSetup" startQuantity="1">
+    <task completionQuantity="1" id="_12" isForCompensation="false" name="Post PreflightPicoSetup" startQuantity="1">
       <incoming>_13</incoming>
       <outgoing>_14</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_13" name="PreflightPicoSetup" sourceRef="_2" targetRef="_12"/>
     <sequenceFlow id="_14" name="PreflightNormalization" sourceRef="_12" targetRef="_5"/>
     <endEvent id="_15" name="End Event">
       <incoming>_55</incoming>
     </endEvent>
-    <receiveTask completionQuantity="1" id="_16" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post CovarisLoaded" startQuantity="1">
+    <task completionQuantity="1" id="_16" isForCompensation="false" name="Post CovarisLoaded" startQuantity="1">
       <incoming>_17</incoming>
       <outgoing>_26</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_17" name="CovarisLoaded" sourceRef="_9" targetRef="_16"/>
-    <receiveTask completionQuantity="1" id="_19" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post PostShearingTransferCleanup" startQuantity="1">
+    <task completionQuantity="1" id="_19" isForCompensation="false" name="Post PostShearingTransferCleanup" startQuantity="1">
       <incoming>_26</incoming>
       <incoming>_70</incoming>
       <outgoing>_24</outgoing>
-    </receiveTask>
-    <receiveTask completionQuantity="1" id="_21" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post IndexedAdapterLigation" startQuantity="1">
+    </task>
+    <task completionQuantity="1" id="_21" isForCompensation="false" name="Post IndexedAdapterLigation" startQuantity="1">
       <incoming>_3</incoming>
       <outgoing>_6</outgoing>
-    </receiveTask>
-    <receiveTask completionQuantity="1" id="_23" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post ShearingQC" startQuantity="1">
+    </task>
+    <task completionQuantity="1" id="_23" isForCompensation="false" name="Post ShearingQC" startQuantity="1">
       <incoming>_24</incoming>
       <outgoing>_35</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_24" name="ShearingQC" sourceRef="_19" targetRef="_23"/>
     <sequenceFlow id="_26" name="PostShearingTransferCleanup" sourceRef="_16" targetRef="_19"/>
-    <receiveTask completionQuantity="1" id="_27" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post EndRepair" startQuantity="1">
+    <task completionQuantity="1" id="_27" isForCompensation="false" name="Post EndRepair" startQuantity="1">
       <incoming>_35</incoming>
       <outgoing>_30</outgoing>
-    </receiveTask>
-    <receiveTask completionQuantity="1" id="_29" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post EndRepairCleanup" startQuantity="1">
+    </task>
+    <task completionQuantity="1" id="_29" isForCompensation="false" name="Post EndRepairCleanup" startQuantity="1">
       <incoming>_30</incoming>
       <outgoing>_32</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_30" name="EndRepairCleanup" sourceRef="_27" targetRef="_29"/>
-    <receiveTask completionQuantity="1" id="_31" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post ABase" startQuantity="1">
+    <task completionQuantity="1" id="_31" isForCompensation="false" name="Post ABase" startQuantity="1">
       <incoming>_32</incoming>
       <outgoing>_34</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_32" name="ABase" sourceRef="_29" targetRef="_31"/>
-    <receiveTask completionQuantity="1" id="_33" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post ABaseCleanup" startQuantity="1">
+    <task completionQuantity="1" id="_33" isForCompensation="false" name="Post ABaseCleanup" startQuantity="1">
       <incoming>_34</incoming>
       <outgoing>_3</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_34" name="ABaseCleanup" sourceRef="_31" targetRef="_33"/>
     <sequenceFlow id="_35" name="EndRepair" sourceRef="_23" targetRef="_27"/>
     <sequenceFlow id="_3" name="IndexedAdapterLigation" sourceRef="_33" targetRef="_21"/>
-    <receiveTask completionQuantity="1" id="_4" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post AdapterLigationCleanup" startQuantity="1">
+    <task completionQuantity="1" id="_4" isForCompensation="false" name="Post AdapterLigationCleanup" startQuantity="1">
       <incoming>_6</incoming>
       <outgoing>_18</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_6" name="AdapterLigationCleanup" sourceRef="_21" targetRef="_4"/>
-    <receiveTask completionQuantity="1" id="_11" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post PondEnrichment" startQuantity="1">
+    <task completionQuantity="1" id="_11" isForCompensation="false" name="Post PondEnrichment" startQuantity="1">
       <incoming>_18</incoming>
       <outgoing>_22</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_18" name="PondEnrichment" sourceRef="_4" targetRef="_11"/>
-    <receiveTask completionQuantity="1" id="_20" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post HybSelPondEnrichmentCleanup" startQuantity="1">
+    <task completionQuantity="1" id="_20" isForCompensation="false" name="Post HybSelPondEnrichmentCleanup" startQuantity="1">
       <incoming>_22</incoming>
       <outgoing>_28</outgoing>
       <outgoing>_73</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_22" name="HybSelPondEnrichmentCleanup" sourceRef="_11" targetRef="_20"/>
-    <receiveTask completionQuantity="1" id="_25" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post LibraryQC" startQuantity="1">
+    <task completionQuantity="1" id="_25" isForCompensation="false" name="Post LibraryQC" startQuantity="1">
       <incoming>_28</incoming>
       <outgoing>_37</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_28" name="LibraryQC" sourceRef="_20" targetRef="_25"/>
-    <receiveTask completionQuantity="1" id="_36" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post PondRegistration" startQuantity="1">
+    <task completionQuantity="1" id="_36" isForCompensation="false" name="Post PondRegistration" startQuantity="1">
       <incoming>_37</incoming>
       <incoming>_73</incoming>
       <outgoing>_39</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_37" name="PondRegistration" sourceRef="_25" targetRef="_36"/>
-    <receiveTask completionQuantity="1" id="_38" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post PreSelectionPool" startQuantity="1">
+    <task completionQuantity="1" id="_38" isForCompensation="false" name="Post PreSelectionPool" startQuantity="1">
       <incoming>_39</incoming>
       <outgoing>_41</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_39" name="PreSelectionPool" sourceRef="_36" targetRef="_38"/>
-    <receiveTask completionQuantity="1" id="_40" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post Hybridization" startQuantity="1">
+    <task completionQuantity="1" id="_40" isForCompensation="false" name="Post Hybridization" startQuantity="1">
       <incoming>_41</incoming>
       <outgoing>_43</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_41" name="Hybridization" sourceRef="_38" targetRef="_40"/>
-    <receiveTask completionQuantity="1" id="_42" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post BaitAddition" startQuantity="1">
+    <task completionQuantity="1" id="_42" isForCompensation="false" name="Post BaitAddition" startQuantity="1">
       <incoming>_43</incoming>
       <outgoing>_45</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_43" name="BaitAddition" sourceRef="_40" targetRef="_42"/>
-    <receiveTask completionQuantity="1" id="_44" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post BeadAddition" startQuantity="1">
+    <task completionQuantity="1" id="_44" isForCompensation="false" name="Post BeadAddition" startQuantity="1">
       <incoming>_45</incoming>
       <outgoing>_51</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_45" name="BeadAddition" sourceRef="_42" targetRef="_44"/>
-    <receiveTask completionQuantity="1" id="_46" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post APWash" startQuantity="1">
+    <task completionQuantity="1" id="_46" isForCompensation="false" name="Post APWash" startQuantity="1">
       <incoming>_51</incoming>
       <outgoing>_52</outgoing>
-    </receiveTask>
-    <receiveTask completionQuantity="1" id="_47" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post GSWash1" startQuantity="1">
+    </task>
+    <task completionQuantity="1" id="_47" isForCompensation="false" name="Post GSWash1" startQuantity="1">
       <incoming>_52</incoming>
       <outgoing>_53</outgoing>
-    </receiveTask>
-    <receiveTask completionQuantity="1" id="_48" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post GSWash2" startQuantity="1">
+    </task>
+    <task completionQuantity="1" id="_48" isForCompensation="false" name="Post GSWash2" startQuantity="1">
       <incoming>_53</incoming>
       <outgoing>_54</outgoing>
-    </receiveTask>
-    <receiveTask completionQuantity="1" id="_49" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post CatchEnrichmentSetup" startQuantity="1">
+    </task>
+    <task completionQuantity="1" id="_49" isForCompensation="false" name="Post CatchEnrichmentSetup" startQuantity="1">
       <incoming>_54</incoming>
       <outgoing>_74</outgoing>
       <outgoing>_76</outgoing>
-    </receiveTask>
-    <receiveTask completionQuantity="1" id="_50" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post CatchQC" startQuantity="1">
+    </task>
+    <task completionQuantity="1" id="_50" isForCompensation="false" name="Post CatchQC" startQuantity="1">
       <incoming>_75</incoming>
       <incoming>_76</incoming>
       <outgoing>_57</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_51" name="APWash" sourceRef="_44" targetRef="_46"/>
     <sequenceFlow id="_52" name="GSWash1" sourceRef="_46" targetRef="_47"/>
     <sequenceFlow id="_53" name="GSWash2" sourceRef="_47" targetRef="_48"/>
     <sequenceFlow id="_54" name="CatchEnrichmentSetup" sourceRef="_48" targetRef="_49"/>
-    <receiveTask completionQuantity="1" id="_56" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post NormalizedCatchRegistration" startQuantity="1">
+    <task completionQuantity="1" id="_56" isForCompensation="false" name="Post NormalizedCatchRegistration" startQuantity="1">
       <incoming>_57</incoming>
       <outgoing>_59</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_57" name="NormalizedCatchRegistration" sourceRef="_50" targetRef="_56"/>
-    <receiveTask completionQuantity="1" id="_58" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post PoolingTransfer" startQuantity="1">
+    <task completionQuantity="1" id="_58" isForCompensation="false" name="Post PoolingTransfer" startQuantity="1">
       <incoming>_59</incoming>
       <outgoing>_61</outgoing>
       <outgoing>_77</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_59" name="PoolingTransfer" sourceRef="_56" targetRef="_58"/>
-    <receiveTask completionQuantity="1" id="_60" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post NormalizationTransfer" startQuantity="1">
+    <task completionQuantity="1" id="_60" isForCompensation="false" name="Post NormalizationTransfer" startQuantity="1">
       <incoming>_61</incoming>
       <outgoing>_63</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_61" name="NormalizationTransfer" sourceRef="_58" targetRef="_60"/>
-    <receiveTask completionQuantity="1" id="_62" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post DenatureTransfer" startQuantity="1">
+    <task completionQuantity="1" id="_62" isForCompensation="false" name="Post DenatureTransfer" startQuantity="1">
       <incoming>_63</incoming>
       <incoming>_77</incoming>
       <outgoing>_65</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_63" name="DenatureTransfer" sourceRef="_60" targetRef="_62"/>
-    <receiveTask completionQuantity="1" id="_64" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post StripTubeBTransfer" startQuantity="1">
+    <task completionQuantity="1" id="_64" isForCompensation="false" name="Post StripTubeBTransfer" startQuantity="1">
       <incoming>_65</incoming>
       <outgoing>_67</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_65" name="StripTubeBTransfer" sourceRef="_62" targetRef="_64"/>
-    <receiveTask completionQuantity="1" id="_66" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post FlowcellTransfer" startQuantity="1">
+    <task completionQuantity="1" id="_66" isForCompensation="false" name="Post FlowcellTransfer" startQuantity="1">
       <incoming>_67</incoming>
       <outgoing>_55</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_67" name="FlowcellTransfer" sourceRef="_64" targetRef="_66"/>
-    <receiveTask completionQuantity="1" id="_72" implementation="##WebService" instantiate="false" isForCompensation="false" name="Post CatchEnrichmentCleanup" startQuantity="1">
+    <task completionQuantity="1" id="_72" isForCompensation="false" name="Post CatchEnrichmentCleanup" startQuantity="1">
       <incoming>_74</incoming>
       <outgoing>_75</outgoing>
-    </receiveTask>
+    </task>
     <sequenceFlow id="_74" name="CatchEnrichmentCleanup" sourceRef="_49" targetRef="_72"/>
     <sequenceFlow id="_75" name="CatchQC" sourceRef="_72" targetRef="_50"/>
     <sequenceFlow id="_55" name="FlowcellLoaded" sourceRef="_66" targetRef="_15"/>

@@ -65,7 +65,7 @@ public class LabEventTest {
         ProjectPlan projectPlan = new ProjectPlan(project,"To test hybrid selection", workflowDescription);
 
         WorkflowParser workflowParser = new WorkflowParser(
-                Thread.currentThread().getContextClassLoader().getResourceAsStream("HybridSelection.bpmn"));
+                Thread.currentThread().getContextClassLoader().getResourceAsStream("HybridSelectionV2.bpmn"));
         workflowDescription.setStartState(workflowParser.getStartState());
         workflowDescription.setMapNameToTransitionList(workflowParser.getMapNameToTransitionList());
 

@@ -30,13 +30,57 @@ import java.util.Map;
  */
 @SuppressWarnings({"HardcodedFileSeparator", "rawtypes"})
 public class WorkflowParser {
-    private Map<String, List<WorkflowTransition>> mapNameToTransitionList = new HashMap<String, List<WorkflowTransition>>();
+    private final Map<String, List<WorkflowTransition>> mapNameToTransitionList = new HashMap<String, List<WorkflowTransition>>();
     private WorkflowState startState;
+
+    /** Represents a BPMN sub process.  Each sub process has a start event, an end event, and a sequence of flows and
+     * tasks.  There can be flows between sub processes, and between the top level start and end events. */
+    private static class SubProcess {
+        private final String id;
+        private final String name;
+        private final List<WorkflowState> tasksAtEnd = new ArrayList<WorkflowState>();
+        private final List<SubProcess> predecessorSubProcesses = new ArrayList<SubProcess>();
+        private boolean predecessorTopLevelStartEvent = false;
+
+        private SubProcess(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public String getId() {
+            return this.id;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public List<WorkflowState> getTasksAtEnd() {
+            return this.tasksAtEnd;
+        }
+
+        public List<SubProcess> getPredecessorSubProcesses() {
+            return this.predecessorSubProcesses;
+        }
+
+        public boolean isPredecessorTopLevelStartEvent() {
+            return this.predecessorTopLevelStartEvent;
+        }
+
+        public void setPredecessorTopLevelStartEvent(boolean predecessorTopLevelStartEvent) {
+            this.predecessorTopLevelStartEvent = predecessorTopLevelStartEvent;
+        }
+    }
 
     public WorkflowParser(InputStream xml) {
         parse(xml);
     }
 
+    /**
+     * Parse BPMN subProcesses, tasks and sequenceFlows; build a workflow object representation.  This does not
+     * currently handle nested subProcesses.
+     * @param xml BPMN 2.0 XML
+     */
     private void parse(InputStream xml) {
         try {
             DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
@@ -46,6 +90,7 @@ public class WorkflowParser {
 
             XPathFactory factory = XPathFactory.newInstance();
             XPath xpath = factory.newXPath();
+            // Define a prefix m for the default namespace (the Yaoqiang editor doesn't use a prefix, but xpath requires one).
             xpath.setNamespaceContext(new NamespaceContext() {
                 @Override
                 public String getNamespaceURI(String prefix) {
@@ -64,21 +109,36 @@ public class WorkflowParser {
             });
             Map<String, WorkflowState> mapIdToWorkflowState = new HashMap<String, WorkflowState>();
 
-            XPathExpression startEventExpr = xpath.compile("//m:startEvent");
-            Node startNode = (Node) startEventExpr.evaluate(doc, XPathConstants.NODE);
-            NamedNodeMap startNodeAttributes = startNode.getAttributes();
+            // Get the top level start event
+            XPathExpression startEventExpr = xpath.compile("//m:process/m:startEvent");
+            NodeList startNodes = (NodeList) startEventExpr.evaluate(doc, XPathConstants.NODESET);
+            if(startNodes.getLength() < 1) {
+                throw new RuntimeException("Failed to find startEvent");
+            }
+            if(startNodes.getLength() > 1) {
+                throw new RuntimeException("Found more than one startEvent");
+            }
+            NamedNodeMap startNodeAttributes = startNodes.item(0).getAttributes();
             this.startState = new WorkflowState(startNodeAttributes.getNamedItem("name").getNodeValue());
-            mapIdToWorkflowState.put(startNodeAttributes.getNamedItem("id").getNodeValue(),
-                    this.startState);
+            String startStateId = startNodeAttributes.getNamedItem("id").getNodeValue();
+            mapIdToWorkflowState.put(startStateId, this.startState);
 
-            XPathExpression endEventExpr = xpath.compile("//m:endEvent");
-            Node endNode = (Node) endEventExpr.evaluate(doc, XPathConstants.NODE);
-            NamedNodeMap endNodeAttributes = endNode.getAttributes();
+            // Get the top level end event
+            XPathExpression endEventExpr = xpath.compile("//m:process/m:endEvent");
+            NodeList endNodes = (NodeList) endEventExpr.evaluate(doc, XPathConstants.NODESET);
+            if(endNodes.getLength() < 1) {
+                throw new RuntimeException("Failed to find endEvent");
+            }
+            if(endNodes.getLength() > 1) {
+                throw new RuntimeException("Found more than one endEvent");
+            }
+            NamedNodeMap endNodeAttributes = endNodes.item(0).getAttributes();
             WorkflowState endWorkflowState = new WorkflowState(endNodeAttributes.getNamedItem("name").getNodeValue());
-            mapIdToWorkflowState.put(endNodeAttributes.getNamedItem("id").getNodeValue(),
-                    endWorkflowState);
+            String endStateId = endNodeAttributes.getNamedItem("id").getNodeValue();
+            mapIdToWorkflowState.put(endStateId, endWorkflowState);
 
-            XPathExpression taskExpr = xpath.compile("//m:receiveTask");
+            // Get the tasks
+            XPathExpression taskExpr = xpath.compile("//m:task");
             NodeList taskNodes = (NodeList) taskExpr.evaluate(doc, XPathConstants.NODESET);
             for (int i = 0; i < taskNodes.getLength(); i++) {
                 NamedNodeMap attributes = taskNodes.item(i).getAttributes();
@@ -86,26 +146,91 @@ public class WorkflowParser {
                         new WorkflowState(attributes.getNamedItem("name").getNodeValue()));
             }
 
-            XPathExpression flowExpr = xpath.compile("//m:sequenceFlow");
+            Map<String, SubProcess> mapIdToSubProcess = new HashMap<String, SubProcess>();
+            Map<String, SubProcess> mapStartEventIdToSubProcess = new HashMap<String, SubProcess>();
+            Map<String, SubProcess> mapEndEventIdToSubProcess = new HashMap<String, SubProcess>();
+            // Get the sub processes
+            XPathExpression subProcessStartEventExpr = xpath.compile("./m:startEvent");
+            XPathExpression subProcessEndEventExpr = xpath.compile("./m:endEvent");
+            XPathExpression subProcessExpr = xpath.compile("//m:subProcess");
+            NodeList subProcessNodes = (NodeList) subProcessExpr.evaluate(doc, XPathConstants.NODESET);
+            for (int i = 0; i < subProcessNodes.getLength(); i++) {
+                Node subProcessNode = subProcessNodes.item(i);
+                NamedNodeMap attributes = subProcessNode.getAttributes();
+                SubProcess subProcess = new SubProcess(attributes.getNamedItem("id").getNodeValue(),
+                        attributes.getNamedItem("name").getNodeValue());
+                mapIdToSubProcess.put(subProcess.getId(), subProcess);
 
-            NodeList flowNodes = (NodeList) flowExpr.evaluate(doc, XPathConstants.NODESET);
-            for (int i = 0; i < flowNodes.getLength(); i++) {
-                NamedNodeMap attributes = flowNodes.item(i).getAttributes();
-                WorkflowState fromState = mapIdToWorkflowState.get(attributes.getNamedItem("sourceRef").getNodeValue());
-                WorkflowState toState = mapIdToWorkflowState.get(attributes.getNamedItem("targetRef").getNodeValue());
-                String transitionName = attributes.getNamedItem("name").getNodeValue();
-                WorkflowTransition workflowTransition = new WorkflowTransition(transitionName,
-                        fromState, toState);
-                fromState.getExits().add(workflowTransition);
-                toState.getEntries().add(workflowTransition);
-                List<WorkflowTransition> workflowTransitions = this.mapNameToTransitionList.get(transitionName);
-                if(workflowTransitions == null) {
-                    workflowTransitions = new ArrayList<WorkflowTransition>();
-                    this.mapNameToTransitionList.put(transitionName, workflowTransitions);
+                NodeList subProcessStartNodes = (NodeList) subProcessStartEventExpr.evaluate(subProcessNode, XPathConstants.NODESET);
+                for(int j = 0; j < subProcessStartNodes.getLength(); j++) {
+                    mapStartEventIdToSubProcess.put(
+                            subProcessStartNodes.item(j).getAttributes().getNamedItem("id").getNodeValue(), subProcess);
                 }
-                workflowTransitions.add(workflowTransition);
+                NodeList subProcessEndNodes = (NodeList) subProcessEndEventExpr.evaluate(subProcessNode, XPathConstants.NODESET);
+                for(int j = 0; j < subProcessEndNodes.getLength(); j++) {
+                    mapEndEventIdToSubProcess.put(
+                            subProcessEndNodes.item(j).getAttributes().getNamedItem("id").getNodeValue(), subProcess);
+                }
             }
 
+            // Get the lines between tasks
+            XPathExpression flowExpr = xpath.compile("//m:sequenceFlow");
+            NodeList flowNodes = (NodeList) flowExpr.evaluate(doc, XPathConstants.NODESET);
+
+            // In the first pass, handle flows between subprocess
+            for (int i = 0; i < flowNodes.getLength(); i++) {
+                NamedNodeMap attributes = flowNodes.item(i).getAttributes();
+                String sourceRef = attributes.getNamedItem("sourceRef").getNodeValue();
+                String targetRef = attributes.getNamedItem("targetRef").getNodeValue();
+                SubProcess sourceSubProcess = mapIdToSubProcess.get(sourceRef);
+                SubProcess targetSubProcess = mapIdToSubProcess.get(targetRef);
+                if(sourceSubProcess != null && targetSubProcess != null) {
+                    // the line sourceref is a subProcess and the targetref is a subProcess so add the source as a predecessor of the target
+                    targetSubProcess.getPredecessorSubProcesses().add(sourceSubProcess);
+                } else if(sourceRef.equals(startStateId) && targetSubProcess != null) {
+                    // the line sourceRef is the top level startEvent, and the targetRef is a subprocess
+                    targetSubProcess.setPredecessorTopLevelStartEvent(true);
+                }
+            }
+            // In the second pass, create transitions
+            for (int i = 0; i < flowNodes.getLength(); i++) {
+                NamedNodeMap attributes = flowNodes.item(i).getAttributes();
+                String sourceRef = attributes.getNamedItem("sourceRef").getNodeValue();
+                String targetRef = attributes.getNamedItem("targetRef").getNodeValue();
+                WorkflowState sourceState = mapIdToWorkflowState.get(sourceRef);
+                WorkflowState targetState = mapIdToWorkflowState.get(targetRef);
+                SubProcess sourceSubProcess = mapIdToSubProcess.get(sourceRef);
+                SubProcess targetSubProcess = mapIdToSubProcess.get(targetRef);
+                SubProcess subProcessForSourceStartEvent = mapStartEventIdToSubProcess.get(sourceRef);
+                SubProcess subProcessForTargetEndEvent = mapEndEventIdToSubProcess.get(targetRef);
+                if(sourceSubProcess != null && targetSubProcess != null) {
+                    // the line sourceref is a subProcess and the targetref is a subProcess, this is handled in the first pass
+                } else if(subProcessForSourceStartEvent != null && targetState != null) {
+                    // the line sourceref is a subProcess startEvent and the targetref is a task so associate it with the subProcess' predecessor tasksAtEnd
+                    if(subProcessForSourceStartEvent.isPredecessorTopLevelStartEvent()) {
+                        buildTransition(attributes, this.startState, targetState);
+                    } else {
+                        for (SubProcess subProcess : subProcessForSourceStartEvent.getPredecessorSubProcesses()) {
+                            for (WorkflowState workflowState : subProcess.getTasksAtEnd()) {
+                                buildTransition(attributes, workflowState, targetState);
+                            }
+                        }
+                    }
+                } else if(subProcessForTargetEndEvent != null && sourceState != null) {
+                    // the line targetRef is a subProcess endEvent so add the sourceRef Task to the subProcesses' tasksAtEnd
+                    subProcessForTargetEndEvent.getTasksAtEnd().add(sourceState);
+                } else if(sourceState != null && targetState != null) {
+                    // the line sourceRef is a task and the targetRef is a task so associate the transition with the states
+                    buildTransition(attributes, sourceState, targetState);
+                } else if(sourceRef.equals(startStateId) && targetSubProcess != null) {
+                    // the line sourceRef is the top level startEvent, and the targetRef is a subprocess, this is handled above
+                } else if(sourceSubProcess != null && targetRef.equals(endStateId)) {
+                    // the line sourceRef is a subProcess, and the targetRef is the end state
+                    // todo
+                } else {
+                    throw new RuntimeException("Unknown combination of sourceRef " + sourceRef + " and targetRef " + targetRef);
+                }
+            }
         } catch (ParserConfigurationException e) {
             throw new RuntimeException(e);
         } catch (SAXException e) {
@@ -117,11 +242,25 @@ public class WorkflowParser {
         }
     }
 
+    private void buildTransition(NamedNodeMap attributes, WorkflowState sourceState, WorkflowState targetState) {
+        String transitionName = attributes.getNamedItem("name").getNodeValue();
+        WorkflowTransition workflowTransition = new WorkflowTransition(transitionName,
+                sourceState, targetState);
+        sourceState.getExits().add(workflowTransition);
+        targetState.getEntries().add(workflowTransition);
+        List<WorkflowTransition> workflowTransitions = this.mapNameToTransitionList.get(transitionName);
+        if(workflowTransitions == null) {
+            workflowTransitions = new ArrayList<WorkflowTransition>();
+            this.mapNameToTransitionList.put(transitionName, workflowTransitions);
+        }
+        workflowTransitions.add(workflowTransition);
+    }
+
     public WorkflowState getStartState() {
         return this.startState;
     }
 
     public Map<String, List<WorkflowTransition>> getMapNameToTransitionList() {
-        return mapNameToTransitionList;
+        return this.mapNameToTransitionList;
     }
 }
