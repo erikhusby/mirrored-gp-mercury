@@ -31,22 +31,16 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
     private List<WorkQueueEntry<T>> requestedWork = new ArrayList<WorkQueueEntry<T>>();
 
     private LabWorkQueueName name;
-    
-    private WorkflowEngine workflowEngine;
+
     
     private JiraService jiraService;
     
     public FIFOLabWorkQueue(LabWorkQueueName name,
-                            WorkflowEngine workflowEngine,
                             JiraService jiraService) {
         if (name == null) {
              throw new NullPointerException("name cannot be null.");
         }
-        if (workflowEngine == null) {
-             throw new NullPointerException("workflowEngine cannot be null."); 
-        }
         this.name = name;
-        this.workflowEngine = workflowEngine;
         this.jiraService = jiraService;
     }
 
@@ -151,7 +145,6 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
             }
             if (foundIt) {
                 requestedWork.remove(queuedWork);
-                applyWorkflowStateChange(vessel,workflow);
                 break;
             }
         }
@@ -163,35 +156,14 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
     private void startWorkflow(LabVessel vessel,ProjectPlan plan,T workflowParameters) {
         Collection<LabVessel> vessels = new ArrayList<LabVessel>(1);
         vessels.add(vessel);
-        workflowEngine.addWorkflow(new Workflow(plan,vessels,workflowParameters));
     }
-    
-    private void applyWorkflowStateChange(LabVessel vessel,
-                                          WorkflowDescription workflowDescription) {
-        Collection<Workflow> activeWorkflows = workflowEngine.getActiveWorkflows(vessel,workflowDescription);
-        
-        if (activeWorkflows.isEmpty()) {
-            // todo: basic logging and email writing infrastructure
-        }
-        if (activeWorkflows.size() > 1) {
-            // instead of dumping this stuff to a log file that no one
-            // reads, we could put it in the face of project managers...
-            vessel.addNoteToProjects(vessel.getLabel() + " is mapped to " + activeWorkflows.size() + " active workflows.");
-        }
-        
-        // suppose there are multiple active workflows for this container
-        // and workflow description.  That means the system has duplicate
-        // work queued up.  If that's the case, then it doesn't matter
-        // which one workflow chooses, as long as eventually it chooses
-        // both.
-        Workflow workflow = activeWorkflows.iterator().next();
-        workflow.setState(new WorkflowState("work has stated"));
-    }
+
 
     @Override
     public LabWorkQueueResponse add(LabVessel vessel, 
                                     T workflowParameters, 
-                                    WorkflowDescription workflowDescription) {
+                                    WorkflowDescription workflowDescription,
+                                    ProjectPlan projectPlanOverride) {
         if (vessel == null) {
              throw new NullPointerException("vessel cannot be null.");
         }
@@ -271,9 +243,5 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public WorkflowEngine getWorkflowEngine() {
-        return workflowEngine;
-    }
 
 }

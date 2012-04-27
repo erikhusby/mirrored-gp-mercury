@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
@@ -176,4 +177,8 @@ public interface LabEvent {
     Set<CherryPickTransfer> getCherryPickTransfers();
 
     Set<VesselToSectionTransfer> getVesselToSectionTransfers();
+
+    public void setProjectPlanOverride(ProjectPlan projectPlan);
+
+    public ProjectPlan getProjectPlanOverride();
 }

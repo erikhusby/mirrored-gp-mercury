@@ -3,6 +3,8 @@ package org.broadinstitute.sequel.entity.vessel;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.queue.WorkQueueEntry;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.broadinstitute.sequel.entity.labevent.Failure;
@@ -287,5 +289,16 @@ public interface LabVessel  {
      * @return
      */
     public Collection<JiraTicket> getJiraTickets();
+
+    /**
+     * Adds the given {@link WorkQueueEntry}.  When you add
+     * a {@link WorkQueueEntry}, you're saying "Remember
+     * the fact that this {@link LabVessel} has been queued
+     * up for work in a particular {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}.
+     * @param workQueueEntry
+     */
+    public void addWorkQueueEntry(WorkQueueEntry workQueueEntry);
+
+    public Set<WorkQueueEntry> getPendingWork(WorkflowDescription workflow);
 
 }

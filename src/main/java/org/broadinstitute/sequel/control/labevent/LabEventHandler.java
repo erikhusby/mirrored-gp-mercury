@@ -5,6 +5,8 @@ import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.queue.WorkQueueEntry;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.labevent.PartiallyProcessedLabEventCache;
@@ -14,14 +16,10 @@ import org.broadinstitute.sequel.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventMessage;
 import org.broadinstitute.sequel.infrastructure.quote.Billable;
-import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 public class LabEventHandler {
 
@@ -48,7 +46,7 @@ public class LabEventHandler {
 
         // then on to the good stuff..
         LabEvent labEvent = createEvent(eventMessage);
-        HANDLER_RESPONSE response = processEvent(labEvent);
+        HANDLER_RESPONSE response = processEvent(labEvent, null);
         if (response == HANDLER_RESPONSE.OK) {
             this.labEventDao.persist(labEvent);
         }
@@ -68,7 +66,7 @@ public class LabEventHandler {
         throw new RuntimeException("Method not yet implemented.");
     }
 
-    public HANDLER_RESPONSE processEvent(LabEvent labEvent) {
+    public HANDLER_RESPONSE processEvent(LabEvent labEvent, WorkflowDescription workflow) {
         // random thought, which should go onto confluence doc:
         /*
 
@@ -120,6 +118,26 @@ public class LabEventHandler {
             }
         }
         */
+
+        if (workflow != null) {
+            for (LabVessel vessel : labEvent.getAllLabVessels()) {
+                Set<WorkQueueEntry> workQueueEntries = vessel.getPendingWork(workflow);
+
+                if (workQueueEntries.size() == 1) {
+                    // not ambiguous: single entry
+                    WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
+                    if (workQueueEntry.getProjectPlanOverride() != null) {
+                        labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
+                        workQueueEntry.dequeue();
+                    }
+                }
+                else {
+                    // todo ambiguous: how do we narrow down the exact queue that this
+                    // vessel was placed in?
+                    throw new RuntimeException("SequeL doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
+                }
+            }
+        }
 
         try {
             labEvent.validateSourceMolecularState();
@@ -228,7 +246,7 @@ public class LabEventHandler {
      */
     private void retryInvalidMolecularState(LabEvent labEvent) {
         for (LabEvent partiallyProcessedEvent: invalidMolecularState.findRelatedEvents(labEvent)) {
-            processEvent(partiallyProcessedEvent);
+            processEvent(partiallyProcessedEvent, null);
         }
     }
     
@@ -261,7 +279,7 @@ public class LabEventHandler {
         // pull back a pile of partially processed events and
         // reprocess them.
         for (LabEvent partiallyProcessedEvent: unanchored.findRelatedEvents(labEvent)) {
-            processEvent(partiallyProcessedEvent);
+            processEvent(partiallyProcessedEvent, null);
 
             /*
             interesting problems arise here.  if you have a compound out of order

@@ -174,7 +174,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
         biller.setQuoteService(quoteService);  // there has to be a better way to do this.
                                                                                 // how can we configure injection of particular
                                                                                 // classes from within a single unit test?
-        labEventHandler.processEvent(labEvent);
+        labEventHandler.processEvent(labEvent, null);
         EasyMock.verify(service);
         Assert.assertEquals(labEvent.getQuoteServerBatchId(),workBatchId);
     }
