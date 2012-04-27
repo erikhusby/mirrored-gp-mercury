@@ -23,10 +23,13 @@ public class WorkQueueEntry<T extends LabWorkQueueParameters> {
 
     private LabWorkQueue queue;
 
+    private ProjectPlan projectPlanOverride;
+
     public WorkQueueEntry(LabWorkQueue queue,
                           LabVessel vessel,
                           T workflowParameters,
-                          WorkflowDescription workflowDescription) {
+                          WorkflowDescription workflowDescription,
+                          ProjectPlan projectPlanOverride) {
         if (queue == null) {
             throw new RuntimeException("Queue cannot be null.");
         }
@@ -41,6 +44,7 @@ public class WorkQueueEntry<T extends LabWorkQueueParameters> {
         vessel.addWorkQueueEntry(this);
         this.parameters = workflowParameters;
         this.workflowDescription = workflowDescription;
+        this.projectPlanOverride = projectPlanOverride;
     }
 
     public void dequeue() {
@@ -64,6 +68,6 @@ public class WorkQueueEntry<T extends LabWorkQueueParameters> {
     }
 
     public ProjectPlan getProjectPlanOverride() {
-        throw new RuntimeException("I haven't been written yet.");
+        return projectPlanOverride;
     }
 }

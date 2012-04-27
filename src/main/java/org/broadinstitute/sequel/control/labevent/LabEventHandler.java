@@ -15,6 +15,8 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventMessage;
+import org.broadinstitute.sequel.entity.vessel.VesselContainer;
+import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.sequel.infrastructure.quote.Billable;
 
 import javax.enterprise.event.Event;
@@ -120,22 +122,28 @@ public class LabEventHandler {
         */
 
         if (workflow != null) {
-            for (LabVessel vessel : labEvent.getAllLabVessels()) {
-                Set<WorkQueueEntry> workQueueEntries = vessel.getPendingWork(workflow);
-
-                if (workQueueEntries.size() == 1) {
-                    // not ambiguous: single entry
-                    WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
-                    if (workQueueEntry.getProjectPlanOverride() != null) {
-                        labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
-                        workQueueEntry.dequeue();
+            for (LabVessel labVessel : labEvent.getAllLabVessels()) {
+               if (labVessel instanceof VesselContainerEmbedder) {
+                    Collection<LabVessel> containedVessels = ((VesselContainerEmbedder)labVessel).getVesselContainer().getContainedVessels();
+                    for (LabVessel vessel : containedVessels) {
+                        Set<WorkQueueEntry> workQueueEntries = vessel.getPendingWork(workflow);
+                        if (workQueueEntries.size() == 1) {
+                            // not ambiguous: single entry
+                            WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
+                            if (workQueueEntry.getProjectPlanOverride() != null) {
+                                labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
+                            }
+                            workQueueEntry.dequeue();
+                        }
+                        else if (workQueueEntries.size() > 1) {
+                            // todo ambiguous: how do we narrow down the exact queue that this
+                            // vessel was placed in?
+                            throw new RuntimeException("SequeL doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
+                        }
+                        /** else this vessel wasn't place in a {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue} */
                     }
                 }
-                else {
-                    // todo ambiguous: how do we narrow down the exact queue that this
-                    // vessel was placed in?
-                    throw new RuntimeException("SequeL doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
-                }
+
             }
         }
 

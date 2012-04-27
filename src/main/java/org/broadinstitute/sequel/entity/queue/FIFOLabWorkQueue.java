@@ -31,7 +31,6 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
     private List<WorkQueueEntry<T>> requestedWork = new ArrayList<WorkQueueEntry<T>>();
 
     private LabWorkQueueName name;
-
     
     private JiraService jiraService;
     
@@ -170,7 +169,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         if (workflowDescription == null) {
              throw new NullPointerException("workflowDescription cannot be null.");
         }
-        WorkQueueEntry newWork = new WorkQueueEntry(vessel,workflowParameters,workflowDescription);
+        WorkQueueEntry newWork = new WorkQueueEntry(this,vessel,workflowParameters,workflowDescription,projectPlanOverride);
         LabWorkQueueResponse response = null;
         if (requestedWork.contains(newWork)) {
             response = new StandardLabWorkQueueResponse(vessel.getLabel() + " is already in " + getQueueName() + "; duplicate work has been requested."); 
@@ -241,6 +240,12 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
     @Override
     public Collection<MolecularStateRange> getMolecularStateRequirements() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public void remove(WorkQueueEntry workQueueEntry) {
+        if (!requestedWork.remove(workQueueEntry)) {
+            throw new RuntimeException("WorkQueueEntry " + workQueueEntry + " was not part of the queued work for " + getQueueName());
+        }
     }
 
 

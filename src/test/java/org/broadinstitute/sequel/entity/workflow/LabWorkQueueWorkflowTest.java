@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
+import org.broadinstitute.sequel.control.workflow.WorkflowParser;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
@@ -12,6 +13,7 @@ import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
 import org.broadinstitute.sequel.entity.queue.LcSetParameters;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
@@ -23,10 +25,14 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
+
+import static org.testng.Assert.*;
+
 public class LabWorkQueueWorkflowTest {
 
     @Test
     public void test_lab_dequeue_and_workflow_start() {
+
         WorkflowResolver wfResolver = new WorkflowResolver();
         int numSamples = 10;
 
@@ -37,10 +43,15 @@ public class LabWorkQueueWorkflowTest {
         WorkflowDescription workflow = new WorkflowDescription(WorkflowResolver.TEST_WORKFLOW_1,
                                                                           billableEvents,
                                                                           CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-        ProjectPlan rootPlan = new ProjectPlan(rootProject,"To test hybrid selection", workflow);
+        ProjectPlan rootPlan = new ProjectPlan(rootProject,"The root plan", workflow);
+
+        WorkflowParser workflowParser = new WorkflowParser(
+                Thread.currentThread().getContextClassLoader().getResourceAsStream(WorkflowResolver.TEST_WORKFLOW_1));
+        workflow.setMapNameToTransitionList(workflowParser.getMapNameToTransitionList());
+        workflow.setStartState(workflowParser.getStartState());
 
 
-        ProjectPlan planOverride = new ProjectPlan(overrideProject,"To test hybrid selection", workflow);
+        ProjectPlan planOverride = new ProjectPlan(overrideProject,"Override tech dev plan", workflow);
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
@@ -54,9 +65,13 @@ public class LabWorkQueueWorkflowTest {
         FIFOLabWorkQueue<LcSetParameters> labWorkQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,new DummyJiraService());
         LcSetParameters originalParameters = new LcSetParameters();
 
+        assertTrue(labWorkQueue.isEmpty());
+
         for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
-            labWorkQueue.add(tube,null,rootPlan.getWorkflowDescription(),null);
+            labWorkQueue.add(tube,originalParameters,rootPlan.getWorkflowDescription(),planOverride);
         }
+
+        assertFalse(labWorkQueue.isEmpty());
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
@@ -67,11 +82,19 @@ public class LabWorkQueueWorkflowTest {
         Assert.assertEquals(errors, new ArrayList<String>(), "Workflow errors");
         String shearPlateBarcode = "ShearPlate";
         PlateTransferEventType shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate(
-                "Start", "SomeRackBarcode", new ArrayList<String>(mapBarcodeToTube.keySet()), shearPlateBarcode);
+                "ShearingTransfer", "SomeRackBarcode", new ArrayList<String>(mapBarcodeToTube.keySet()), shearPlateBarcode);
         // for each vessel, get most recent event, check whether it's a predecessor to the proposed event
         LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                 shearingTransferEventJaxb, mapBarcodeToTube, null);
-        labEventHandler.processEvent(shearingTransferEventEntity, null);
+        labEventHandler.processEvent(shearingTransferEventEntity, workflow);
+
+        LabVessel outputPlate = shearingTransferEventEntity.getTargetLabVessels().iterator().next();
+
+        for (SampleInstance sampleInstance : outputPlate.getSampleInstances()) {
+            assertEquals(sampleInstance.getSingleProjectPlan(),rootPlan);
+        }
+
+        assertTrue(labWorkQueue.isEmpty());
 
 
 

@@ -140,14 +140,9 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
     @Override
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if(getSampleSheets().isEmpty()) {
-            for (LabVessel labVessel : getSampleSheetAuthorities()) {
-                sampleInstances.addAll(labVessel.getSampleInstances());
-            }
-        } else {
-            for (SampleSheet sampleSheet : getSampleSheets()) {
-                sampleInstances.addAll(sampleSheet.getSampleInstances(this));
-            }
+
+        for (SampleSheet sampleSheet : getSampleSheets()) {
+            sampleInstances.addAll(sampleSheet.getSampleInstances(this));
         }
         return sampleInstances;
     }

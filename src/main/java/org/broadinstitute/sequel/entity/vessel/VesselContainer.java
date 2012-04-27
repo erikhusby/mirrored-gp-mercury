@@ -28,8 +28,6 @@ public class VesselContainer<T extends LabVessel> {
     * striptube holds tubes, tubes can't be removed, don't have barcodes. */
     private Map<String, T> mapPositionToVessel = new HashMap<String, T>();
 
-    private Set<VesselContainer> sampleSheetAuthorities = new HashSet<VesselContainer>();
-
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
     @Parent
     private LabVessel embedder;
@@ -45,35 +43,41 @@ public class VesselContainer<T extends LabVessel> {
     public T getVesselAtPosition(String position) {
         return this.mapPositionToVessel.get(position);
     }
-    
+
+    private void applyProjectPlanOverrideIfPresent(LabEvent event,
+                                                   Collection<SampleInstance> sampleInstances) {
+        if (event.getProjectPlanOverride() != null) {
+            for (SampleInstance sampleInstance : sampleInstances) {
+                sampleInstance.resetProjectPlan(event.getProjectPlanOverride());
+            }
+        }
+    }
+
+
     public Set<SampleInstance> getSampleInstancesAtPosition(String position) {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if(this.sampleSheetAuthorities.isEmpty()) {
-            for (LabEvent labEvent : this.embedder.getTransfersTo()) {
-                for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
-                    Set sampleInstancesAtPosition = sectionTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(position);
+        for (LabEvent labEvent : this.embedder.getTransfersTo()) {
+            for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                Set<SampleInstance> sampleInstancesAtPosition = sectionTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(position);
+                applyReagents(position, sampleInstancesAtPosition);
+                applyProjectPlanOverrideIfPresent(labEvent,sampleInstancesAtPosition);
+                sampleInstances.addAll(sampleInstancesAtPosition);
+
+            }
+            for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
+                if(cherryPickTransfer.getTargetPosition().equals(position)) {
+                    Set<SampleInstance> sampleInstancesAtPosition = cherryPickTransfer.getSourceVesselContainer().
+                            getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition());
                     applyReagents(position, sampleInstancesAtPosition);
+                    applyProjectPlanOverrideIfPresent(labEvent,sampleInstancesAtPosition);
                     sampleInstances.addAll(sampleInstancesAtPosition);
                 }
-                for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
-                    if(cherryPickTransfer.getTargetPosition().equals(position)) {
-                        Set sampleInstancesAtPosition = cherryPickTransfer.getSourceVesselContainer().
-                                getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition());
-                        applyReagents(position, sampleInstancesAtPosition);
-                        sampleInstances.addAll(sampleInstancesAtPosition);
-                    }
-                }
             }
-            T vesselAtPosition = getVesselAtPosition(position);
-            if(vesselAtPosition != null && !vesselAtPosition.getSampleSheets().isEmpty()) {
-                sampleInstances.addAll(vesselAtPosition.getSampleInstances());
-            }
-        } else {
-            for (VesselContainer sampleSheetAuthority : this.sampleSheetAuthorities) {
-                Set<SampleInstance> sampleInstancesAtPosition = sampleSheetAuthority.getSampleInstancesAtPosition(position);
-                applyReagents(position, sampleInstancesAtPosition);
-                sampleInstances.addAll(sampleInstancesAtPosition);
-            }
+
+        }
+        T vesselAtPosition = getVesselAtPosition(position);
+        if(vesselAtPosition != null && !vesselAtPosition.getSampleSheets().isEmpty()) {
+            sampleInstances.addAll(vesselAtPosition.getSampleInstances());
         }
         return sampleInstances;
     }
@@ -98,24 +102,20 @@ public class VesselContainer<T extends LabVessel> {
 
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if(this.sampleSheetAuthorities.isEmpty()) {
-            if (this.mapPositionToVessel.isEmpty()) {
-                // This plate has no wells in the database, because its transfers are all section based (i.e. no cherry picks)
-                for (LabEvent labEvent : this.embedder.getTransfersTo()) {
-                    for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
-                        if(sourceLabVessel instanceof VesselContainerEmbedder) {
-                            sampleInstances.addAll(((VesselContainerEmbedder) sourceLabVessel).getVesselContainer().getSampleInstances());
-                        }
+
+        if (this.mapPositionToVessel.isEmpty()) {
+            // This plate has no wells in the database, because its transfers are all section based (i.e. no cherry picks)
+            for (LabEvent labEvent : this.embedder.getTransfersTo()) {
+                for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
+                    if(sourceLabVessel instanceof VesselContainerEmbedder) {
+                        sampleInstances.addAll(((VesselContainerEmbedder) sourceLabVessel).getVesselContainer().getSampleInstances());
+                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                     }
-                }
-            } else {
-                for (String position : this.mapPositionToVessel.keySet()) {
-                    sampleInstances.addAll(getSampleInstancesAtPosition(position));
                 }
             }
         } else {
-            for (VesselContainer sampleSheetAuthority : this.sampleSheetAuthorities) {
-                sampleInstances.addAll(sampleSheetAuthority.getSampleInstances());
+            for (String position : this.mapPositionToVessel.keySet()) {
+                sampleInstances.addAll(getSampleInstancesAtPosition(position));
             }
         }
         return sampleInstances;
@@ -150,13 +150,6 @@ public class VesselContainer<T extends LabVessel> {
         this.embedder = embedder;
     }
 
-    public Set<VesselContainer> getSampleSheetAuthorities() {
-        return this.sampleSheetAuthorities;
-    }
-
-    public void setSampleSheetAuthorities(Set<VesselContainer> sampleSheetAuthorities) {
-        this.sampleSheetAuthorities = sampleSheetAuthorities;
-    }
 
     // section transfers
     // position transfers

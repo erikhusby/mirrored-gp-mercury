@@ -183,4 +183,14 @@ public interface SampleInstance  {
 
     public Collection<ReadBucket> getReadBuckets();
 
+    /**
+     * Based the entry/exit of a {@link org.broadinstitute.sequel.entity.vessel.LabVessel} into
+     * or out of a {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}, SequeL has the
+     * ability to "override" the {@link ProjectPlan} for a {@link org.broadinstitute.sequel.entity.vessel.LabVessel}
+     * at a particular spot in the worklow.  This method is how
+     * your override the {@link ProjectPlan}.
+     * @param projectPlan
+     */
+    public void resetProjectPlan(ProjectPlan projectPlan);
+
 }

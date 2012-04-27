@@ -9,6 +9,8 @@ import org.broadinstitute.sequel.entity.notice.UserRemarks;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.queue.WorkQueueEntry;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
@@ -26,16 +28,6 @@ public abstract class AbstractLabVessel implements LabVessel {
     
     private final Collection<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
 
-    /** SampleInstances in this vessel.  If null, follow {@link #sampleSheetAuthorities}*/
-//    private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-    /** Ancestor vessel that has the nearest change to sampleInstances, e.g. starting vessel or pooling */
-    private Set<LabVessel> sampleSheetAuthorities = new HashSet<LabVessel>();
-    
-    /** The molecular envelope delta applied to this vessel. If null, follow {@link #molecularEnvelopeDeltaAuthority}*/
-    private MolecularEnvelope molecularEnvelopeDelta;
-    /** Ancestor vessel that applied the nearest change to molecular envelope */
-    private LabVessel molecularEnvelopeDeltaAuthority;
-    
     private MolecularState molecularState;
     // todo jmt molecularStateAuthority?
     // need a list of molecular states, and a map from event type to state(s?)
@@ -55,6 +47,8 @@ public abstract class AbstractLabVessel implements LabVessel {
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
     private Set<Reagent> appliedReagents = new HashSet<Reagent>();
+
+    private Set<WorkQueueEntry> workQueueEntries = new HashSet<WorkQueueEntry>();
 
     @Embedded
     private UserRemarks userRemarks;
@@ -129,14 +123,6 @@ public abstract class AbstractLabVessel implements LabVessel {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public Set<LabVessel> getSampleSheetAuthorities() {
-        return sampleSheetAuthorities;
-    }
-
-    public void setSampleSheetAuthorities(Set<LabVessel> sampleSheetAuthorities) {
-        this.sampleSheetAuthorities = sampleSheetAuthorities;
-    }
-
     @Override
     public Collection<LabEvent> getTransfersFrom() {
         return transfersFrom;
@@ -186,5 +172,15 @@ public abstract class AbstractLabVessel implements LabVessel {
     @Override
     public Collection<Reagent> getAppliedReagents() {
         return this.appliedReagents;
+    }
+
+    @Override
+    public Set<WorkQueueEntry> getPendingWork(WorkflowDescription workflow) {
+        return workQueueEntries;
+    }
+
+    @Override
+    public void addWorkQueueEntry(WorkQueueEntry workQueueEntry) {
+        workQueueEntries.add(workQueueEntry);
     }
 }

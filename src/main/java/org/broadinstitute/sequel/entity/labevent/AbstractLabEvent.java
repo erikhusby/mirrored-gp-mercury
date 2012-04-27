@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.labevent;
 
 
 import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.AbstractLabVessel;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -39,7 +40,8 @@ public abstract class AbstractLabEvent implements LabEvent {
     // todo jmt tube to tube transfers, or will they always be in a rack?
 
     private String quoteServerBatchId;
-    
+
+    private ProjectPlan projectPlanOverride;
     
     @Override
     public Collection<LabVessel> getTargetLabVessels() {
@@ -178,5 +180,18 @@ public abstract class AbstractLabEvent implements LabEvent {
     @Override
     public void setQuoteServerBatchId(String batchId) {
         this.quoteServerBatchId = batchId;
+    }
+
+    @Override
+    public ProjectPlan getProjectPlanOverride() {
+        return projectPlanOverride;
+    }
+
+    @Override
+    public void setProjectPlanOverride(ProjectPlan projectPlan) {
+        if (projectPlan == null) {
+            throw new RuntimeException("projectPlan override cannot be null.");
+        }
+        this.projectPlanOverride = projectPlan;
     }
 }

@@ -15,8 +15,6 @@ import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.entity.workflow.Workflow;
-import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.test.ContainerTest;
@@ -150,10 +148,9 @@ public class ProjectTest extends ContainerTest {
         assertTrue(lcWorkQueue.isEmpty());
 
         LcSetParameters lcSetParameters = new LcSetParameters();
-        Workflow workflowInstance = null;
         assertTrue(lcWorkQueue.isEmpty());
         for (LabVessel starter : allStarters) {
-            workflowInstance = projectManagerEnquesLabWork(starter,plan,lcSetParameters,lcWorkQueue);
+            projectManagerEnquesLabWork(starter,plan,lcSetParameters,lcWorkQueue);
         }
 
         assertFalse(lcWorkQueue.isEmpty());
@@ -168,8 +165,6 @@ public class ProjectTest extends ContainerTest {
         assertTrue(jiraTicket.getTicketName().startsWith(plan.getWorkflowDescription().getJiraProjectPrefix()));
         
         assertTrue(lcWorkQueue.isEmpty());
-
-        assertEquals("work has stated", workflowInstance.getState().getState());
 
         postSomethingFunToJira(jiraTicket,allStarters,project);
         
@@ -310,8 +305,7 @@ public class ProjectTest extends ContainerTest {
     }
     
     private FIFOLabWorkQueue<LcSetParameters> createLabWorkQueue(JiraService jiraService) {
-        WorkflowEngine workflowEngine = new WorkflowEngine();
-        FIFOLabWorkQueue<LcSetParameters> labWorkQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,workflowEngine,jiraService);
+       FIFOLabWorkQueue<LcSetParameters> labWorkQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,jiraService);
         return labWorkQueue;
     }
 
@@ -331,27 +325,15 @@ public class ProjectTest extends ContainerTest {
      * @param labWorkQueue
      * @return
      */
-    private Workflow projectManagerEnquesLabWork(LabVessel starter,
+    private void projectManagerEnquesLabWork(LabVessel starter,
                                              ProjectPlan projectPlan,
                                              LabWorkQueueParameters queueParameters,
                                              LabWorkQueue labWorkQueue) {
-       
-        WorkflowEngine workflowEngine = labWorkQueue.getWorkflowEngine();
-        Collection<Workflow> workflows = workflowEngine.getActiveWorkflows(starter,null);
 
+        labWorkQueue.add(starter,queueParameters,projectPlan.getWorkflowDescription(),null);
 
-        labWorkQueue.add(starter,queueParameters,projectPlan.getWorkflowDescription());
-
-        workflows = workflowEngine.getActiveWorkflows(starter,null);
-        assertEquals(1, workflows.size());
-        Workflow workflowInstance = workflows.iterator().next();
-        assertNull(workflowInstance.getState());
-        assertEquals(1,workflowInstance.getAllVessels().size());
-        assertTrue(workflowInstance.getAllVessels().contains(starter));
-        assertEquals(projectPlan,workflowInstance.getProjectPlan());
         assertFalse(labWorkQueue.isEmpty());
-        
-        return workflowInstance;
+
     }
 
 
