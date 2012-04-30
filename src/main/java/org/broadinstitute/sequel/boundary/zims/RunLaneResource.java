@@ -28,10 +28,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -92,7 +89,8 @@ public class RunLaneResource {
             throw new RuntimeException("Could not open transport for " + thriftConfiguration.getHost() + ":" + thriftConfiguration.getPort(),e);
         }
         try {
-            TZamboniRun tRun = thriftClient.fetchSingleLane(runName,new Short(chamber).shortValue());
+            final TZamboniRun tRun = thriftClient.fetchSingleLane(runName,new Short(chamber).shortValue());
+            final Map<String,BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
 
             if (tRun == null) {
                 throw new RuntimeException("Could not load run " + runName);
@@ -100,7 +98,15 @@ public class RunLaneResource {
             else {
                 for (TZamboniLane tZamboniLane : tRun.getLanes()) {
                     for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
-                        String organism = getOrganism(zamboniLibrary);
+                        String organism = null;
+                        BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
+
+                        if (bspDTO == null) {
+                            organism = zamboniLibrary.getOrganism();
+                        }
+                        else {
+                            organism = bspDTO.getOrganism();
+                        }
                        
                         
                         LibraryBean libBean = new LibraryBean(zamboniLibrary.getLibrary(),
@@ -158,25 +164,31 @@ public class RunLaneResource {
     }
 
     /**
-     * Why are we doing this redundant call?  To get some practice running
-     * live against BSP to see how well it works.
-     * @param zamboniLibrary
+     * Fetches all BSP data for the run in one shot,
+     * returning a Map from the sample LSID to the
+     * {@link BSPSampleDTO}.
+     * @param run
      * @return
      */
-    // todo fetch this data from BSP in batch, not one at a time.
-    private String getOrganism(TZamboniLibrary zamboniLibrary) {
-        String organism = null;
-        if (isBspSample(zamboniLibrary)) {
-            Collection<String> lsids = new HashSet<String>();
-            lsids.add(zamboniLibrary.getLsid());
-            String lsid = bspSearchService.lsidsToBareIds(lsids).values().iterator().next();
-            BSPSampleDTO bspSample = bspDataFetcher.fetchSingleSampleFromBSP(lsid);
-            organism = bspSample.getOrganism();
+    private Map<String,BSPSampleDTO> fetchAllBSPDataAtOnce(TZamboniRun run) {
+        final Set<String> sampleLsids = new HashSet<String>();
+        final Set<String> sampleNames = new HashSet<String>();
+        for (TZamboniLane zamboniLane : run.getLanes()) {
+            for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
+                if (isBspSample(zamboniLibrary)) {
+                    sampleLsids.add(zamboniLibrary.getLsid());
+                }
+            }
         }
-        else {
-            organism = zamboniLibrary.getOrganism();
+        for (Map.Entry<String,String> lsIdToBareId: bspSearchService.lsidsToBareIds(sampleLsids).entrySet()) {
+            if (lsIdToBareId.getValue() == null) {
+                throw new RuntimeException("Could not map lsid " + lsIdToBareId.getKey() + " to a bsp id.");
+            }
+            else {
+                sampleNames.add(lsIdToBareId.getValue());
+            }
         }
-        return organism;
+        return bspDataFetcher.fetchSamplesFromBSP(sampleNames);
     }
 
     /**
