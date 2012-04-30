@@ -3,8 +3,12 @@ package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import javax.inject.Inject;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Transient;
 import java.io.IOException;
 
+@Entity
 public class JiraTicket {
 
     public static final String TEST_PROJECT_PREFIX = "TP";
@@ -12,9 +16,11 @@ public class JiraTicket {
     public static final String SEQUEL_PROJECT_ISSUE_TYPE = "SequeL Project";
     
     private String ticketName;
-    
+
+    @Id
     private String ticketId;
 
+    @Transient
     JiraService jiraService;
 
     public JiraTicket() {}

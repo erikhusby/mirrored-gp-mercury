@@ -17,6 +17,7 @@ import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.reagent.GenericReagent;
 import org.broadinstitute.sequel.entity.run.IlluminaFlowcell;
+import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.StripTube;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
@@ -29,7 +30,6 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.reagent.IndexEnvelope;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.vessel.PlateWell;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
@@ -68,7 +68,7 @@ public class LabEventTest {
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
-            SampleSheetImpl sampleSheet = new SampleSheetImpl();
+            SampleSheet sampleSheet = new SampleSheet();
             sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, projectPlan, null));
             String barcode = "R" + rackPosition;
             mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
@@ -137,7 +137,7 @@ public class LabEventTest {
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
-            SampleSheetImpl sampleSheet = new SampleSheetImpl();
+            SampleSheet sampleSheet = new SampleSheet();
             sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, projectPlan, null));
             String barcode = "R" + rackPosition;
             mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));

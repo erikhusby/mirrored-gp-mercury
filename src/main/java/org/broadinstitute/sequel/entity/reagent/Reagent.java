@@ -3,6 +3,9 @@ package org.broadinstitute.sequel.entity.reagent;
 import org.broadinstitute.sequel.entity.vessel.Containable;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
 /**
  * Some chemistry bits applied to {@link Goop} to help
  * transform it into a sequenceable state.
@@ -15,17 +18,21 @@ import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
  * Although they contain DNA, they are considered
  * {@link Reagent}s.
  */
-public interface Reagent extends Containable {
+@Entity
+public abstract class Reagent implements Containable {
+
+    @Id
+    private Long reagentId;
 
     /**
      * Returns the MolecularEnvelope that this
      * reagent applies to the target sample.
      * @return
      */
-    public MolecularEnvelope getMolecularEnvelopeDelta();
+    public abstract MolecularEnvelope getMolecularEnvelopeDelta();
 
-    public String getReagentName();
+    public abstract String getReagentName();
 
-    public String getLot();
+    public abstract String getLot();
 
 }

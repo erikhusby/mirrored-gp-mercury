@@ -1,58 +1,28 @@
 package org.broadinstitute.sequel.entity.sample;
 
+import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.labevent.LabEventTraverser;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A collection of sample metadata.
  */
-public interface SampleSheet {
+@Entity
+public class SampleSheet {
 
-    public Collection<StartingSample> getStartingSamples();
+    @Id
+    private Long sampleSheetId;
 
-    public void addStartingSample(StartingSample startingSample);
-
-    public Collection<LabVessel> getVessels();
-    
-    public Collection<SampleInstance> getSampleInstances(LabVessel labVessel);
-    
-    /**
-     * 
-     * @param labTangible the piece of plastic which
-     *                  contains this {@link SampleSheet}
-     * @param project If null, no change to the {@link org.broadinstitute.sequel.entity.project.Project}
-     *                relationships in {@link StartingSample#getRootProject()}.
-     *                
-     *                If not null, the effect is that in the
-     *                context of {@link LabVessel}, this {@link SampleSheet}
-     *                should be associated to {@link org.broadinstitute.sequel.entity.project.Project}.  Specifying
-     *                a {@link org.broadinstitute.sequel.entity.project.Project} here essentially tells the
-     *                system to "override" the {@link StartingSample#getRootProject()}  with this project, from here on down
-     *                in the event graph.
-     * @param readBucket Similar behavior to setting the {@link org.broadinstitute.sequel.entity.project.Project}.
-     *                   
-     *                   If  null, the {@link StartingSample#getRootReadBucket()} is used as the {@link org.broadinstitute.sequel.entity.analysis.ReadBucket} for this {@link SampleSheet} in the context
-     *                   of {@link LabVessel}.
-     *                   
-     *                   If not null, the effect should be that from here
-     *                   on down in the transfer graph, any mention of this
-     *                   {@link SampleSheet} should have its reads visible
-     *                   in {@link org.broadinstitute.sequel.entity.analysis.ReadBucket}.
-     * @param molecularStateChange In this {@link LabVessel}, is there a 
-     *                             {@link org.broadinstitute.sequel.entity.vessel.MolecularState molecular state change?}
-     *                             If null, there is no change.  If {@param molecularStateChange} is
-     *                             set, then this {@link SampleSheet} in the context of {@param labTangible}
-     *                             has the given {@param molecularStateChange} added to it.
-     */
-    public void addStateChange(LabVessel vessel,
-                                StateChange stateChange);
-
-    public void addToVessel(LabVessel vessel);
-
-
-    Collection<SampleInstance> getSampleInstances();
-    
     /**
      * Some lab reactions permanently alter the
      * state of the samples inside this vessel.  For
@@ -92,4 +62,92 @@ public interface SampleSheet {
      *
      * @return the new, copied {@link SampleSheet}
      */
+    //todo jmt fix this
+    @Transient
+    private Map<LabVessel,Set<StateChange>> containerToStateChanges = new HashMap<LabVessel,Set<StateChange>>();
+
+    @OneToMany(targetEntity = BSPSample.class)
+    private Collection<StartingSample> startingSamples = new HashSet<StartingSample>();
+
+    public SampleSheet() {}
+
+    public Collection<StartingSample> getStartingSamples() {
+        return startingSamples;
+    }
+
+    public void addStartingSample(StartingSample startingSample) {
+        startingSamples.add(startingSample);
+    }
+
+    public Collection<LabVessel> getVessels() {
+        return containerToStateChanges.keySet();
+    }
+
+    /**
+     *
+     * @param labTangible the piece of plastic which
+     *                  contains this {@link SampleSheet}
+     * @param project If null, no change to the {@link org.broadinstitute.sequel.entity.project.Project}
+     *                relationships in {@link StartingSample#getRootProject()}.
+     *
+     *                If not null, the effect is that in the
+     *                context of {@link LabVessel}, this {@link SampleSheet}
+     *                should be associated to {@link org.broadinstitute.sequel.entity.project.Project}.  Specifying
+     *                a {@link org.broadinstitute.sequel.entity.project.Project} here essentially tells the
+     *                system to "override" the {@link StartingSample#getRootProject()}  with this project, from here on down
+     *                in the event graph.
+     * @param readBucket Similar behavior to setting the {@link org.broadinstitute.sequel.entity.project.Project}.
+     *
+     *                   If  null, the {@link StartingSample#getRootReadBucket()} is used as the {@link org.broadinstitute.sequel.entity.analysis.ReadBucket} for this {@link SampleSheet} in the context
+     *                   of {@link LabVessel}.
+     *
+     *                   If not null, the effect should be that from here
+     *                   on down in the transfer graph, any mention of this
+     *                   {@link SampleSheet} should have its reads visible
+     *                   in {@link org.broadinstitute.sequel.entity.analysis.ReadBucket}.
+     * @param molecularStateChange In this {@link LabVessel}, is there a
+     *                             {@link org.broadinstitute.sequel.entity.vessel.MolecularState molecular state change?}
+     *                             If null, there is no change.  If {@param molecularStateChange} is
+     *                             set, then this {@link SampleSheet} in the context of {@param labTangible}
+     *                             has the given {@param molecularStateChange} added to it.
+     */
+    public void addStateChange(LabVessel vessel, StateChange stateChange) {
+        addToVessel(vessel);
+        containerToStateChanges.get(vessel).add(stateChange);
+    }
+
+    public void addToVessel(LabVessel vessel) {
+        if (!containerToStateChanges.containsKey(vessel)) {
+            containerToStateChanges.put(vessel,new HashSet<StateChange>());
+        }
+    }
+
+    public Collection<SampleInstance> getSampleInstances(LabVessel container) {
+        Collection<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        if (!containerToStateChanges.containsKey(container)) {
+            throw new RuntimeException("This sample sheet isn't contained by " + container.getLabCentricName());
+        }
+
+        for (StartingSample startingSample : startingSamples) {
+            SampleInstanceImpl sampleInstance = startingSample.createSampleInstance();
+            for (StateChange stateChange : LabEventTraverser.getStateChangesPriorToAndIncluding(this, container)) {
+                // ordering of the state changes is critical...
+                // doing it root-to-branch means that "nearest ancestor"
+                //
+                sampleInstance.applyChange(stateChange);
+            }
+            sampleInstances.add(sampleInstance);
+        }
+        return sampleInstances;
+    }
+
+    public Collection<SampleInstance> getSampleInstances() {
+        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        for (StartingSample startingSample : startingSamples) {
+            SampleInstanceImpl sampleInstance = startingSample.createSampleInstance();
+            sampleInstances.add(sampleInstance);
+        }
+        return sampleInstances;
+    }
+
 }

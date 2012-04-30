@@ -6,8 +6,6 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
-import org.broadinstitute.sequel.entity.vessel.MolecularStateImpl;
-import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 
 import java.util.Collection;
@@ -25,7 +23,7 @@ public class SampleInstanceImpl implements SampleInstance {
     
     private Collection<ReadBucket> readBuckets = new HashSet<ReadBucket>();
     
-    private MolecularState molecularState = new MolecularStateImpl();
+    private MolecularState molecularState = new MolecularState();
     
     public SampleInstanceImpl(StartingSample sample,
                               GSP_CONTROL_ROLE controlRole,

@@ -4,6 +4,8 @@ import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -24,7 +26,10 @@ import java.util.HashSet;
  * was created when the lab work was started.
  *
  */
+@Entity
 public class ProjectPlan {
+    @Id
+    private Long projectPlanId;
 
     private Collection<LabVessel> starters = new HashSet<LabVessel>();
     

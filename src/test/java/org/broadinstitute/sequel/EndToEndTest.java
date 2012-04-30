@@ -22,7 +22,6 @@ import org.broadinstitute.sequel.entity.run.RunChamber;
 import org.broadinstitute.sequel.entity.run.SequencingRun;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
@@ -46,7 +45,7 @@ public class EndToEndTest  {
     LabEventHandler handler;
 
     private LabVessel createBSPStock(String sampleName,String tubeBarcode,ProjectPlan projectPlan) {
-        SampleSheet sampleSheet = new SampleSheetImpl();
+        SampleSheet sampleSheet = new SampleSheet();
         // this seems redundant: we're adding a sample sheet with only the stock
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple

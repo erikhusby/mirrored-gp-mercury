@@ -4,9 +4,10 @@ package org.broadinstitute.sequel.entity.labevent;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.vessel.AbstractLabVessel;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -25,7 +26,10 @@ import java.util.Set;
  * useful representation in terms
  * of src/dest mapping.
  */
+@Entity
 public abstract class AbstractLabEvent implements LabEvent {
+    @Id
+    private Long labEventId;
     private String eventLocation;
     private Person eventOperator;
     private Date eventDate;
@@ -104,13 +108,13 @@ public abstract class AbstractLabEvent implements LabEvent {
 /*
         if(targetVessel.getTransfersTo().isEmpty()) {
             for (LabVessel sourceLabVessel : this.sourceLabVessels) {
-                if (((AbstractLabVessel) sourceLabVessel).getSampleSheetAuthorities().isEmpty()) {
+                if (sourceLabVessel.getSampleSheetAuthorities().isEmpty()) {
                     if(sourceLabVessel.getReagentContents().isEmpty()) {
-                        ((AbstractLabVessel)targetVessel).getSampleSheetAuthorities().add(sourceLabVessel);
+                        targetVessel.getSampleSheetAuthorities().add(sourceLabVessel);
                     }
                 } else {
-                    ((AbstractLabVessel)targetVessel).getSampleSheetAuthorities().addAll(
-                            ((AbstractLabVessel) sourceLabVessel).getSampleSheetAuthorities());
+                    targetVessel.getSampleSheetAuthorities().addAll(
+                            sourceLabVessel.getSampleSheetAuthorities());
                 }
             }
         } else {

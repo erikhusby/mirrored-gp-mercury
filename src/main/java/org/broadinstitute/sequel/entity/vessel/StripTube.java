@@ -16,7 +16,7 @@ import java.util.Set;
  * Represents a strip tube, several tubes molded into a single piece of plasticware, e.g. 8 tubes in the same formation
  * as a rack column.  The Strip tube has a barcode, but each constituent tube does not.
  */
-public class StripTube extends AbstractLabVessel implements VesselContainerEmbedder<StripTubeWell> {
+public class StripTube extends LabVessel implements VesselContainerEmbedder<StripTubeWell> {
 
     public enum Positions {
         ONE("1"),
@@ -53,28 +53,8 @@ public class StripTube extends AbstractLabVessel implements VesselContainerEmbed
     }
 
     @Override
-    public void applyTransfer(SectionTransfer sectionTransfer) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void addStateChange(StateChange stateChange) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public Set<SampleInstance> getSampleInstances() {
         return this.getVesselContainer().getSampleInstances();
-    }
-
-    @Override
-    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Collection<StateChange> getStateChanges() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

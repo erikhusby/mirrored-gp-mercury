@@ -14,34 +14,14 @@ import java.util.Set;
 /**
  * One of many (usually 8) tubes in a StripTube
  */
-public class StripTubeWell extends AbstractLabVessel {
+public class StripTubeWell extends LabVessel {
 
     protected StripTubeWell(String label) {
         super(label);
     }
 
     @Override
-    public void applyTransfer(SectionTransfer sectionTransfer) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void addStateChange(StateChange stateChange) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public Set<SampleInstance> getSampleInstances() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Collection<StateChange> getStateChanges() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

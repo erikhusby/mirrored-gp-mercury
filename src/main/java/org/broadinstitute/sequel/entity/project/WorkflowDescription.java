@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.entity.labevent.AbstractLabEvent;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -106,7 +107,7 @@ public class WorkflowDescription {
     }
 
     private boolean validateTransfers(String nextEventTypeName, List<String> errors, Set<String> validPredecessorEventNames,
-            LabVessel labVessel, Set<String> actualEventNames, boolean found, Collection<LabEvent> transfersFrom) {
+            LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<AbstractLabEvent> transfersFrom) {
         for (LabEvent labEvent : transfersFrom) {
             GenericLabEvent genericLabEvent = (GenericLabEvent) labEvent;
             String actualEventName = genericLabEvent.getLabEventType().getName();

@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -11,7 +12,6 @@ import org.broadinstitute.sequel.entity.queue.*;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
@@ -273,7 +273,7 @@ public class ProjectTest extends ContainerTest {
     }
     
     private LabVessel makeRootSample(String sampleName,ProjectPlan projectPlan,BSPSampleDataFetcher bspFetcher) {
-        SampleSheetImpl sampleSheet = new SampleSheetImpl();
+        SampleSheet sampleSheet = new SampleSheet();
         StartingSample startingSample = new BSPSample(sampleName,projectPlan,bspFetcher.fetchSingleSampleFromBSP(sampleName));
         sampleSheet.addStartingSample(startingSample);
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP

@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * A Generic reagent that doesn't change the molecular envelope
  */
-public class GenericReagent implements Reagent {
+public class GenericReagent extends Reagent {
 
     // todo jmt should this be in a reagent type class?
     private MolecularEnvelope molecularEnvelope;

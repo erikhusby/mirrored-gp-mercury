@@ -11,9 +11,9 @@ import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleInstanceImpl;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
-import org.broadinstitute.sequel.entity.vessel.MolecularStateImpl;
 
-import javax.persistence.PostLoad;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Transient;
 import java.util.Collection;
 
@@ -22,7 +22,11 @@ import java.util.Collection;
  * name of the sample, and then have
  * a service lookup the real data from bsp.
  */
+@Entity
 public class BSPSample implements StartingSample {
+
+    @Id
+    private String sampleId;
 
     private static Log gLog = LogFactory.getLog(BSPSample.class);
 
@@ -95,7 +99,7 @@ public class BSPSample implements StartingSample {
 
     @Override
     public SampleInstanceImpl createSampleInstance() {
-        return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE, projectPlan, new MolecularStateImpl(), null);
+        return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE, projectPlan, new MolecularState(), null);
     }
 
     @Transient

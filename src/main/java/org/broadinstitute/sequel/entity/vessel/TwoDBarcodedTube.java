@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class TwoDBarcodedTube extends AbstractLabVessel {
+public class TwoDBarcodedTube extends LabVessel {
 
     private static Log gLog = LogFactory.getLog(TwoDBarcodedTube.class);
     
@@ -109,22 +109,6 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
         return this.twoDBarcode;
     }
 
-    @Override
-    public Collection<StateChange> getStateChanges() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void addStateChange(StateChange stateChange) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-
-    @Override
-    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
-        return sheet.getSampleInstances(this);
-    }
-
     // rack.getSampleInstancesInPosition
     //   if tube-level authority
     //   if rack-level authority
@@ -186,11 +170,6 @@ public class TwoDBarcodedTube extends AbstractLabVessel {
     @Override
     public Float getConcentration() {
         throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void applyTransfer(SectionTransfer sectionTransfer) {
-        throw new RuntimeException("Method not yet implemented.");
     }
 
     public List<RackOfTubes> getRacksOfTubes() {

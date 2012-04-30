@@ -6,7 +6,7 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 
-public class PCRPrimerPairReagent implements Reagent {
+public class PCRPrimerPairReagent extends Reagent {
 
     private static Log gLog = LogFactory.getLog(PCRPrimerPairReagent.class);
 

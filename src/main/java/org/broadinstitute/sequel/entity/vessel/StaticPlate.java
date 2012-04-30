@@ -10,6 +10,8 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 
 import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -18,7 +20,8 @@ import java.util.Set;
 /**
  * A traditional plate.
  */
-public class StaticPlate extends AbstractLabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell> {
+@Entity
+public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell> {
 
     @Embedded
     private VesselContainer<PlateWell> vesselContainer = new VesselContainer<PlateWell>(this);
@@ -43,28 +46,8 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
     }
 
     @Override
-    public void applyTransfer(SectionTransfer sectionTransfer) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void addStateChange(StateChange stateChange) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Set<SampleInstance> getSampleInstances() {
         return this.vesselContainer.getSampleInstances();
-    }
-
-    @Override
-    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<StateChange> getStateChanges() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

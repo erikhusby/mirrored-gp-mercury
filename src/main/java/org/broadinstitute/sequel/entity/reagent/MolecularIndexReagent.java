@@ -7,7 +7,7 @@ import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 
-public class MolecularIndexReagent implements Reagent {
+public class MolecularIndexReagent extends Reagent {
 
     private MolecularEnvelope envelopeDelta;
 

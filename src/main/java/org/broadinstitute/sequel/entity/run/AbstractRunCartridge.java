@@ -2,11 +2,10 @@ package org.broadinstitute.sequel.entity.run;
 
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.vessel.AbstractLabVessel;
 
 import java.util.Collection;
 
-public abstract class AbstractRunCartridge extends AbstractLabVessel implements RunCartridge {
+public abstract class AbstractRunCartridge extends RunCartridge {
 
 
     protected AbstractRunCartridge(String label) {

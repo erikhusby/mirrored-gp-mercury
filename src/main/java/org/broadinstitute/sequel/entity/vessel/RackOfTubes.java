@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * A rack of tubes
  */
-public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
+public class RackOfTubes extends LabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
 
     @Embedded
     private VesselContainer<TwoDBarcodedTube> vesselContainer = new VesselContainer<TwoDBarcodedTube>(this);
@@ -42,23 +42,8 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
     }
 
     @Override
-    public void addStateChange(StateChange stateChange) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Set<SampleInstance> getSampleInstances() {
         return this.getVesselContainer().getSampleInstances();
-    }
-
-    @Override
-    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<StateChange> getStateChanges() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override
@@ -98,11 +83,6 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
             sampleSheets.addAll(twoDBarcodedTube.getSampleSheets());
         }
         return sampleSheets;
-    }
-
-    @Override
-    public void applyTransfer(SectionTransfer sectionTransfer) {
-        throw new RuntimeException("Method not yet implemented.");
     }
 
     public VesselContainer<TwoDBarcodedTube> getVesselContainer() {

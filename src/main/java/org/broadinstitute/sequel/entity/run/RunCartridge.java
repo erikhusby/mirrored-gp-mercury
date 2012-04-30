@@ -10,12 +10,16 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
  * 454 PTP, Illumina flowcell, Ion chip,
  * pacbio plate
  */
-public interface RunCartridge extends LabVessel {
+public abstract class RunCartridge extends LabVessel {
 
-    public Iterable<RunChamber> getChambers();
+    public RunCartridge(String label) {
+        super(label);
+    }
 
-    public String getCartridgeName();
+    abstract public Iterable<RunChamber> getChambers();
 
-    public String getCartridgeBarcode();
+    abstract public String getCartridgeName();
+
+    abstract public String getCartridgeBarcode();
 
 }

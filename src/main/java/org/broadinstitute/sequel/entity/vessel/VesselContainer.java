@@ -8,6 +8,8 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.hibernate.annotations.Parent;
 
 import javax.persistence.Embeddable;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +22,7 @@ import java.util.Set;
 @SuppressWarnings("rawtypes")
 @Embeddable
 public class VesselContainer<T extends LabVessel> {
+    @OneToMany
     /* rack holds tubes, tubes have barcodes and can be removed.
     * plate holds wells, wells can't be removed.
     * flowcell holds lanes.
@@ -119,6 +122,7 @@ public class VesselContainer<T extends LabVessel> {
         }
     }
 
+    @Transient
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         if (this.mapPositionToVessel.isEmpty()) {
@@ -147,6 +151,7 @@ public class VesselContainer<T extends LabVessel> {
      * the rack.
      * @return contained vessels
      */
+    @Transient
     public Collection<T> getContainedVessels() {
         return this.mapPositionToVessel.values();
     }
@@ -156,10 +161,12 @@ public class VesselContainer<T extends LabVessel> {
         child.addToContainer(this);
     }
 
+    @Transient
     public Set<String> getPositions() {
         return this.mapPositionToVessel.keySet();
     }
 
+    @Transient
     public LabVessel getEmbedder() {
         return this.embedder;
     }

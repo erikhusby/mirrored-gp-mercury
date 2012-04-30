@@ -7,12 +7,18 @@ import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.util.Collection;
 
 /**
  * A change to the state (of a SampleSheet).
  */
+@Entity
 public class StateChange {
+
+    @Id
+    private Long stateChangeId;
 
     private static Log gLog = LogFactory.getLog(StateChange.class);
 

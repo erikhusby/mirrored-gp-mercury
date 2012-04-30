@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.vessel.AbstractLabVessel;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.PlateWell;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
@@ -98,7 +97,7 @@ public class SectionTransfer {
                 }
                 LabVessel sourceContainedVessel = this.sourceVesselContainer.getVesselAtPosition(sourceWellName.getWellName());
                 if (sourceContainedVessel != null) {
-                    AbstractLabVessel targetContainedVessel = (AbstractLabVessel) this.targetVesselContainer.getVesselAtPosition(
+                    LabVessel targetContainedVessel = this.targetVesselContainer.getVesselAtPosition(
                             targetWellName.getWellName());
                 }
             }

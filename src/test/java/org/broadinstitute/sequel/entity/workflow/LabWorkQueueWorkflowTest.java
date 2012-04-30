@@ -16,7 +16,7 @@ import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
 import org.broadinstitute.sequel.entity.queue.LcSetParameters;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
+import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
@@ -24,7 +24,6 @@ import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.easymock.EasyMock;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.*;
@@ -68,7 +67,7 @@ public class LabWorkQueueWorkflowTest {
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
-            SampleSheetImpl sampleSheet = new SampleSheetImpl();
+            SampleSheet sampleSheet = new SampleSheet();
             sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, rootPlan, null));
             String barcode = "R" + rackPosition;
             mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
