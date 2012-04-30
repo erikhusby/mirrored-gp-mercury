@@ -2,10 +2,12 @@ package org.broadinstitute.sequel.control.labevent;
 
 
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
+import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.queue.WorkQueueEntry;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -34,12 +36,23 @@ public class LabEventHandler {
     PartiallyProcessedLabEventCache unanchored;
 
     PartiallyProcessedLabEventCache invalidMolecularState;
-    
+
+    @Inject
+    WorkQueueDAO workQueueDAO;
+
     @Inject
     Event<Billable> billableEvents;
 
     @Inject
     private LabEventDao labEventDao;
+
+
+    public LabEventHandler(WorkQueueDAO workQueueDAO) {
+        if (workQueueDAO == null) {
+            throw new NullPointerException("workQueueDAO cannot be null.");
+        }
+        this.workQueueDAO = workQueueDAO;
+    }
 
     public HANDLER_RESPONSE handleEvent(LabEventMessage eventMessage) {
         // 0. write out the message to stable server-side storage,
@@ -209,21 +222,24 @@ public class LabEventHandler {
     private void processProjectPlanOverrides(LabEvent labEvent,
                                              LabVessel vessel,
                                              WorkflowDescription workflow) {
-        Collection<WorkQueueEntry> workQueueEntries = vessel.getPendingWork(workflow);
-        if (workQueueEntries.size() == 1) {
-            // not ambiguous: single entry
-            WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
-            if (workQueueEntry.getProjectPlanOverride() != null) {
-                labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
+        for (LabWorkQueue labWorkQueue : workQueueDAO.getPendingQueues(vessel, workflow)) {
+            Collection<WorkQueueEntry> workQueueEntries = labWorkQueue.getEntriesForWorkflow(workflow,vessel);
+            if (workQueueEntries.size() == 1) {
+                // not ambiguous: single entry
+                WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
+                if (workQueueEntry.getProjectPlanOverride() != null) {
+                    labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
+                }
+                workQueueEntry.dequeue();
             }
-            workQueueEntry.dequeue();
+            else if (workQueueEntries.size() > 1) {
+                // todo ambiguous: how do we narrow down the exact queue that this
+                // vessel was placed in?
+                throw new RuntimeException("SequeL doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
+            }
+            /** else this vessel wasn't place in a {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue} */
         }
-        else if (workQueueEntries.size() > 1) {
-            // todo ambiguous: how do we narrow down the exact queue that this
-            // vessel was placed in?
-            throw new RuntimeException("SequeL doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
-        }
-        /** else this vessel wasn't place in a {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue} */
+
     }
 
     /**

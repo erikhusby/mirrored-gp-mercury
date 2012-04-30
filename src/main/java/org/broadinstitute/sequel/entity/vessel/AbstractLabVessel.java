@@ -50,8 +50,6 @@ public abstract class AbstractLabVessel implements LabVessel {
 
     private Set<Reagent> appliedReagents = new HashSet<Reagent>();
 
-    private Set<LabWorkQueue<?>> labWorkQueues = new HashSet<LabWorkQueue<?>>();
-
     private Set<VesselContainer> containers = new HashSet<VesselContainer>();
 
     @Embedded
@@ -188,25 +186,4 @@ public abstract class AbstractLabVessel implements LabVessel {
         return this.appliedReagents;
     }
 
-    @Override
-    public Set<WorkQueueEntry> getPendingWork(WorkflowDescription workflow) {
-        final Set<WorkQueueEntry> workQueueEntries = new HashSet<WorkQueueEntry>();
-        if (workflow == null) {
-            throw new RuntimeException("workflow cannot be null");
-        }
-        for (LabWorkQueue labWorkQueue : labWorkQueues) {
-           workQueueEntries.addAll(labWorkQueue.getEntriesForWorkflow(workflow,
-                                                                      this));
-        }
-        return workQueueEntries;
-    }
-
-
-    @Override
-    public void addLabWorkQueue(LabWorkQueue labWorkQueue) {
-        if (labWorkQueue == null) {
-            throw new RuntimeException("labWorkQueue cannot be null");
-        }
-        labWorkQueues.add(labWorkQueue);
-    }
 }

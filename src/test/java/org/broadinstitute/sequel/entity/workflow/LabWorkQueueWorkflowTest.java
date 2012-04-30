@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.workflow;
 import org.broadinstitute.sequel.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
+import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.workflow.WorkflowParser;
@@ -11,6 +12,7 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
 import org.broadinstitute.sequel.entity.queue.LcSetParameters;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -21,6 +23,7 @@ import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
+import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -72,7 +75,7 @@ public class LabWorkQueueWorkflowTest {
         }
 
         // add the samples to the queue, no project plan override
-        FIFOLabWorkQueue<LcSetParameters> labWorkQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,new DummyJiraService());
+        final FIFOLabWorkQueue<LcSetParameters> labWorkQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,new DummyJiraService());
         LcSetParameters originalParameters = new LcSetParameters();
 
         assertTrue(labWorkQueue.isEmpty());
@@ -89,9 +92,9 @@ public class LabWorkQueueWorkflowTest {
         assertFalse(labWorkQueue.isEmpty());
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
-        LabEventFactory labEventFactory = new LabEventFactory();
+        final LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setPersonDAO(new PersonDAO());
-        LabEventHandler labEventHandler = new LabEventHandler();
+        final LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO(labWorkQueue));
 
         String shearPlateBarcode = "ShearPlate";
         PlateTransferEventType shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate(
@@ -157,7 +160,20 @@ public class LabWorkQueueWorkflowTest {
             }
 
         }
+    }
 
+    private WorkQueueDAO createMockWorkQueueDAO(LabWorkQueue workQueue) {
+        Set<LabWorkQueue> workQueues = new HashSet<LabWorkQueue>();
+        workQueues.add(workQueue);
 
+        WorkQueueDAO workQueueDAO = EasyMock.createMock(WorkQueueDAO.class);
+
+        EasyMock.expect(workQueueDAO.getPendingQueues(
+                (LabVessel)EasyMock.anyObject(),
+                (WorkflowDescription)EasyMock.anyObject()
+                )).andReturn(workQueues).atLeastOnce();
+
+        EasyMock.replay(workQueueDAO);
+        return workQueueDAO;
     }
 }

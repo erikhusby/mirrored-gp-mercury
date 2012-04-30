@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.bettalims.jaxb.PlateEventType;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
+import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.control.workflow.WorkflowParser;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
@@ -13,6 +14,7 @@ import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.reagent.GenericReagent;
 import org.broadinstitute.sequel.entity.run.IlluminaFlowcell;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -34,17 +36,11 @@ import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.WellName;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
+import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -81,7 +77,7 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setPersonDAO(new PersonDAO());
-        LabEventHandler labEventHandler = new LabEventHandler();
+        LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
 
         Shearing shearing = new Shearing(workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
                 labEventHandler).invoke();
@@ -150,7 +146,7 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setPersonDAO(new PersonDAO());
-        LabEventHandler labEventHandler = new LabEventHandler();
+        LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
 
         Shearing shearing = new Shearing(workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
                 labEventHandler).invoke();
@@ -724,5 +720,16 @@ public class LabEventTest {
             Assert.assertEquals(illuminaFlowcell.getVesselContainer().getSampleInstancesAtPosition("1").size(), NUM_POSITIONS_IN_RACK,
                     "Wrong number of samples in flowcell lane");
         }
+    }
+
+    private WorkQueueDAO createMockWorkQueueDAO() {
+        WorkQueueDAO workQueueDAO = EasyMock.createMock(WorkQueueDAO.class);
+        EasyMock.expect(workQueueDAO.getPendingQueues(
+                (LabVessel)EasyMock.anyObject(),
+                (WorkflowDescription)EasyMock.anyObject()
+        )).andReturn(Collections.<LabWorkQueue>emptySet()).anyTimes();
+
+        EasyMock.replay(workQueueDAO);
+        return workQueueDAO;
     }
 }

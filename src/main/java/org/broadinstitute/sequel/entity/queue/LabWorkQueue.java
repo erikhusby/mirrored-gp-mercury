@@ -60,7 +60,7 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
 
     public void remove(WorkQueueEntry workQueueEntry);
 
-    public Collection<WorkQueueEntry> getEntriesForWorkflow(WorkflowDescription workflow,
+    public Collection<WorkQueueEntry<T>> getEntriesForWorkflow(WorkflowDescription workflow,
                                                             LabVessel vessel);
 
 }

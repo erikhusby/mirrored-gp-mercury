@@ -295,14 +295,4 @@ public interface LabVessel  {
      */
     public Collection<JiraTicket> getJiraTickets();
 
-    public void addLabWorkQueue(LabWorkQueue labWorkQueue);
-
-    /**
-     * This is a problem...we want some way to ask the
-     * workflow engine how to get all pending work...
-     * @param workflow
-     * @return
-     */
-    public Collection<WorkQueueEntry> getPendingWork(WorkflowDescription workflow);
-
 }

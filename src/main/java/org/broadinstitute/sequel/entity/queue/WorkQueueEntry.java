@@ -41,7 +41,6 @@ public class WorkQueueEntry<T extends LabWorkQueueParameters> {
         }
         this.vessel = vessel;
         this.queue = queue;
-        vessel.addLabWorkQueue(queue);
         this.parameters = workflowParameters;
         this.workflowDescription = workflowDescription;
         this.projectPlanOverride = projectPlanOverride;
