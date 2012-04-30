@@ -55,6 +55,10 @@ public class RunLaneResourceTest extends ContainerTest {
     
     private final String WEBSERVICE_URL = "rest/RunLane/query";
 
+    private final String HUMAN = "Human";
+
+    private final String BSP_HUMAN = "Homo : Homo sapiens";
+
     /**
      * Does a test of {@link #RUN_NAME} {@link #CHAMBER}
      * directly in container.
@@ -120,8 +124,10 @@ public class RunLaneResourceTest extends ContainerTest {
                 assertEquals(libBean.getTissueType(),zLib.getTissueType());
                 assertEquals(libBean.getWeirdness(),zLib.getWeirdness());
                 
-                if ("Human".equals(zLib.getOrganism())) {
-                    assertEquals(libBean.getOrganism(),"Homo : Homo sapiens");
+                if (HUMAN.equals(zLib.getOrganism())) {
+                    if (!(HUMAN.equals(libBean.getOrganism()) || BSP_HUMAN.equals(libBean.getOrganism()))) {
+                        fail("Not the right human:" + libBean.getOrganism());
+                    }
                 }
                 else {
                     assertEquals(libBean.getOrganism(),zLib.getOrganism());
