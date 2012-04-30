@@ -39,7 +39,6 @@ public class DeploymentBuilder {
     public static WebArchive buildSequelWar(String beansXml) {
         WebArchive war = ShrinkWrap.create(WebArchive.class, "SequeL.war")
                 .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
-                .addAsWebInfResource(EmptyAsset.INSTANCE, "lentils.xml")
                 .merge(buildSequelWar());
         return war;
     }

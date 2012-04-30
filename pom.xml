@@ -833,6 +833,13 @@
             <artifactId>limsThrift</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.cenqua.clover</groupId>
+            <artifactId>clover</artifactId>
+            <version>${clover.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

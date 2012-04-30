@@ -37,5 +37,15 @@
         </configuration>
     </container>
 -->
+<!--
+    <container qualifier="remote-glassfish" default="true">
+        <configuration>
+            <property name="adminHost">seq01.broadinstitute.org</property>
+            <property name="adminHttps">true</property>
+            <property name="adminUser">admin</property>
+            <property name="adminPassword">sm@ck99</property>
+        </configuration>
+    </container>
+-->
 
 </arquillian>
