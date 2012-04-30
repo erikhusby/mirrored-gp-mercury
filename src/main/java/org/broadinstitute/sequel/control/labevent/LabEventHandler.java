@@ -46,6 +46,7 @@ public class LabEventHandler {
     @Inject
     private LabEventDao labEventDao;
 
+    public LabEventHandler() {}
 
     public LabEventHandler(WorkQueueDAO workQueueDAO) {
         if (workQueueDAO == null) {
