@@ -9,6 +9,7 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.queue.WorkQueueEntry;
+import org.broadinstitute.sequel.entity.sample.JiraCommentUtil;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.labevent.PartiallyProcessedLabEventCache;
@@ -136,6 +137,8 @@ public class LabEventHandler {
         */
 
         processProjectPlanOverrides(labEvent,workflow);
+        JiraCommentUtil.postUpdate(labEvent.getEventName().toString() + " Event Applied",
+                labEvent.getEventName().toString() + " has been applied to the following samples:",labEvent.getAllLabVessels());
 
         try {
             labEvent.validateSourceMolecularState();
