@@ -178,7 +178,18 @@ public interface LabEvent {
 
     Set<VesselToSectionTransfer> getVesselToSectionTransfers();
 
+    /**
+     * An "override" of the {@link ProjectPlan} effectively says "From
+     * this point forward in the transfer graph, consider all work
+     * related to the given projectPlan.  In this way, we're "overriding"
+     * the {@link ProjectPlan} referenced by {@link org.broadinstitute.sequel.entity.sample.StartingSample#getRootProjectPlan()}
+     * @param projectPlan
+     */
     public void setProjectPlanOverride(ProjectPlan projectPlan);
 
+    /**
+     * See {@link #setProjectPlanOverride(org.broadinstitute.sequel.entity.project.ProjectPlan)}.
+     * @return
+     */
     public ProjectPlan getProjectPlanOverride();
 }

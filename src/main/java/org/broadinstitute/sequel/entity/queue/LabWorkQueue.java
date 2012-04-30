@@ -60,6 +60,13 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
 
     public void remove(WorkQueueEntry workQueueEntry);
 
+    /**
+     * Returns any entires this queue has for the given
+     * workflow and vessel.
+     * @param workflow
+     * @param vessel
+     * @return
+     */
     public Collection<WorkQueueEntry<T>> getEntriesForWorkflow(WorkflowDescription workflow,
                                                             LabVessel vessel);
 
