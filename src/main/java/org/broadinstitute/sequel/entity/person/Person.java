@@ -1,7 +1,10 @@
 package org.broadinstitute.sequel.entity.person;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 
 /**
  * Let's make a very simple person model
@@ -29,6 +32,8 @@ import javax.persistence.Id;
 public class Person {
 
     @Id
+    @SequenceGenerator(name = "SEQ_PERSON", sequenceName = "SEQ_PERSON")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PERSON")
     private Long personId;
 
     private String username;

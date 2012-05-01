@@ -11,7 +11,10 @@ import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +33,8 @@ import java.util.Set;
 public class WorkflowDescription {
 
     @Id
+    @SequenceGenerator(name = "SEQ_WORKFLOW_DESCRIPTION", sequenceName = "SEQ_WORKFLOW_DESCRIPTION")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_WORKFLOW_DESCRIPTION")
     private Long workflowDescriptionId;
 
     private String workflowName;

@@ -1,8 +1,11 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
 import java.io.Serializable;
 
 /**
@@ -37,6 +40,8 @@ import java.io.Serializable;
 public class MolecularState implements Serializable {
 
     @Id
+    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE", sequenceName = "SEQ_MOLECULAR_STATE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE")
     private Long molecularStateId;
 
     public enum DNA_OR_RNA {

@@ -1,7 +1,10 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 
 /**
  * Basically a way to summarize certain critical
@@ -48,6 +51,8 @@ import javax.persistence.Id;
 public class MolecularStateTemplate {
 
     @Id
+    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE_TEMPLATE", sequenceName = "SEQ_MOLECULAR_STATE_TEMPLATE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE_TEMPLATE")
     private Long molecularStateTemplateId;
 
     /**

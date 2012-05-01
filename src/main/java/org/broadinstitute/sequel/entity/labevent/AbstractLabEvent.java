@@ -7,9 +7,12 @@ import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -31,6 +34,8 @@ import java.util.Set;
 @Entity
 public abstract class AbstractLabEvent implements LabEvent {
     @Id
+    @SequenceGenerator(name = "SEQ_LAB_EVENT", sequenceName = "SEQ_LAB_EVENT")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_EVENT")
     private Long labEventId;
     private String eventLocation;
     @ManyToOne

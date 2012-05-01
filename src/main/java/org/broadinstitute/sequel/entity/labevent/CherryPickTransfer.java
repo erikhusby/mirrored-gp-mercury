@@ -1,9 +1,15 @@
 package org.broadinstitute.sequel.entity.labevent;
 
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
+import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
 
 /**
  * Represents a transfer between positions in two vessel containers
@@ -11,34 +17,38 @@ import javax.persistence.Id;
 @Entity
 public class CherryPickTransfer {
     @Id
+    @SequenceGenerator(name = "SEQ_CHERRY_PICK_TRANSFER", sequenceName = "SEQ_CHERRY_PICK_TRANSFER")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_CHERRY_PICK_TRANSFER")
     private Long cherryPickTransferId;
 
-    private VesselContainer sourceVesselContainer;
+    @ManyToOne
+    private LabVessel sourceVessel;
     private String sourcePosition;
-    private VesselContainer targetVesselContainer;
+    @ManyToOne
+    private LabVessel targetVessel;
     private String targetPosition;
 
-    public CherryPickTransfer(VesselContainer sourceVesselContainer, String sourcePosition,
-            VesselContainer targetVesselContainer, String targetPosition) {
-        this.sourceVesselContainer = sourceVesselContainer;
+    public CherryPickTransfer(VesselContainer<?> sourceVesselContainer, String sourcePosition,
+            VesselContainer<?> targetVesselContainer, String targetPosition) {
+        this.sourceVessel = sourceVesselContainer.getEmbedder();
         this.sourcePosition = sourcePosition;
-        this.targetVesselContainer = targetVesselContainer;
+        this.targetVessel = targetVesselContainer.getEmbedder();
         this.targetPosition = targetPosition;
     }
 
     protected CherryPickTransfer() {
     }
 
-    public VesselContainer getSourceVesselContainer() {
-        return sourceVesselContainer;
+    public VesselContainer<?> getSourceVesselContainer() {
+        return ((VesselContainerEmbedder<?>)sourceVessel).getVesselContainer();
     }
 
     public String getSourcePosition() {
         return sourcePosition;
     }
 
-    public VesselContainer getTargetVesselContainer() {
-        return targetVesselContainer;
+    public VesselContainer<?> getTargetVesselContainer() {
+        return ((VesselContainerEmbedder<?>) targetVessel).getVesselContainer();
     }
 
     public String getTargetPosition() {

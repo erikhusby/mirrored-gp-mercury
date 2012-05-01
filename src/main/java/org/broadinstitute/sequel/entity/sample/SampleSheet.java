@@ -5,8 +5,11 @@ import org.broadinstitute.sequel.entity.labevent.LabEventTraverser;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,6 +24,8 @@ import java.util.Set;
 public class SampleSheet {
 
     @Id
+    @SequenceGenerator(name = "SEQ_SAMPLE_SHEET", sequenceName = "SEQ_SAMPLE_SHEET")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SAMPLE_SHEET")
     private Long sampleSheetId;
 
     /**

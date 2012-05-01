@@ -65,15 +65,9 @@ public class VesselContainer<T extends LabVessel> {
                 sampleInstances.addAll(vesselAtPosition.getSampleInstances());
             }
             // handle re-arrays of tubes - look in any other racks that the tube has been in
-            for (LabVessel labVessel : vesselAtPosition.getContainers()) {
-                if(labVessel instanceof VesselContainerEmbedder) {
-                    VesselContainer vesselContainer = ((VesselContainerEmbedder) labVessel).getVesselContainer();
-                    if(!vesselContainer.equals(this)) {
-                        vesselContainer.examineTransfers(vesselContainer.getPositionOfVessel(vesselAtPosition), sampleInstances);
-                    }
-                } else {
-                    // todo jmt should the getter do this check?
-                    throw new RuntimeException("Not a vessel container");
+            for (VesselContainer vesselContainer : vesselAtPosition.getContainers()) {
+                if(!vesselContainer.equals(this)) {
+                    vesselContainer.examineTransfers(vesselContainer.getPositionOfVessel(vesselAtPosition), sampleInstances);
                 }
             }
         }

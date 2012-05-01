@@ -5,20 +5,26 @@ import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import java.util.Collection;
 import java.util.Date;
 
 /**
  * Most general form of lab event
  */
+@Entity
 public class GenericLabEvent extends AbstractLabEvent {
-    private final LabEventType labEventType;
+    private LabEventType labEventType;
 
     public GenericLabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Person operator) {
         this.labEventType = labEventType;
         this.setEventDate(eventDate);
         this.setEventLocation(eventLocation);
         this.setEventOperator(operator);
+    }
+
+    protected GenericLabEvent() {
     }
 
     @Override

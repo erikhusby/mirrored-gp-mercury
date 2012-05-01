@@ -46,130 +46,6 @@ public class LabEventFactory {
     public static final String PHYS_TYPE_STRIP_TUBE_RACK_OF_12 = "StripTubeRackOf12";
     public static final String PHYS_TYPE_STRIP_TUBE = "StripTube";
 
-    private static final Map<String, LabEventType> MAP_MESSAGE_NAME_TO_EVENT_TYPE = new HashMap<String, LabEventType>();
-
-    static {
-        LabEventType shearingTransfer = new LabEventType("ShearingTransfer", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(shearingTransfer.getName(), shearingTransfer);
-
-        LabEventType postShearingTransferCleanup = new LabEventType("PostShearingTransferCleanup", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(postShearingTransferCleanup.getName(), postShearingTransferCleanup);
-
-        LabEventType shearingQc = new LabEventType("ShearingQC", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(shearingQc.getName(), shearingQc);
-
-        LabEventType endRepair = new LabEventType("EndRepair", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(endRepair.getName(), endRepair);
-
-        LabEventType endRepairCleanup = new LabEventType("EndRepairCleanup", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(endRepairCleanup.getName(), endRepairCleanup);
-
-        LabEventType aBase = new LabEventType("ABase", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(aBase.getName(), aBase);
-
-        LabEventType aBaseCleanup = new LabEventType("ABaseCleanup", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(aBaseCleanup.getName(), aBaseCleanup);
-
-        LabEventType indexedAdapterLigation = new LabEventType("IndexedAdapterLigation", true, false,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(indexedAdapterLigation.getName(), indexedAdapterLigation);
-
-        LabEventType adapterLigationCleanup = new LabEventType("AdapterLigationCleanup", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(adapterLigationCleanup.getName(), adapterLigationCleanup);
-
-        LabEventType pondEnrichment = new LabEventType("PondEnrichment", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(pondEnrichment.getName(), pondEnrichment);
-
-        LabEventType pondEnrichmentCleanup = new LabEventType("HybSelPondEnrichmentCleanup", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(pondEnrichmentCleanup.getName(), pondEnrichmentCleanup);
-
-        LabEventType pondRegistration = new LabEventType("PondRegistration", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(pondRegistration.getName(), pondRegistration);
-
-        LabEventType preSelectionPool = new LabEventType("PreSelectionPool", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(preSelectionPool.getName(), preSelectionPool);
-
-        LabEventType hybridization = new LabEventType("Hybridization", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(hybridization.getName(), hybridization);
-
-        LabEventType baitSetup = new LabEventType("BaitSetup", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(baitSetup.getName(), baitSetup);
-
-        LabEventType baitAddition = new LabEventType("BaitAddition", true, false,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(baitAddition.getName(), baitAddition);
-
-        LabEventType beadAddition = new LabEventType("BeadAddition", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(beadAddition.getName(), beadAddition);
-
-        LabEventType apWash = new LabEventType("APWash", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(apWash.getName(), apWash);
-
-        LabEventType gsWash1 = new LabEventType("GSWash1", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(gsWash1.getName(), gsWash1);
-
-        LabEventType gsWash2 = new LabEventType("GSWash2", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(gsWash2.getName(), gsWash2);
-
-        LabEventType catchEnrichmentSetup = new LabEventType("CatchEnrichmentSetup", true, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(catchEnrichmentSetup.getName(), catchEnrichmentSetup);
-
-        LabEventType catchEnrichmentCleanup = new LabEventType("CatchEnrichmentCleanup", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(catchEnrichmentCleanup.getName(), catchEnrichmentCleanup);
-
-        LabEventType normalizedCatchRegistration = new LabEventType("NormalizedCatchRegistration", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(normalizedCatchRegistration.getName(), normalizedCatchRegistration);
-
-        LabEventType poolingTransfer = new LabEventType("PoolingTransfer", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(poolingTransfer.getName(), poolingTransfer);
-
-        LabEventType denatureTransfer = new LabEventType("DenatureTransfer", false, true,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(denatureTransfer.getName(), denatureTransfer);
-
-        LabEventType stripTubeBTransfer = new LabEventType("StripTubeBTransfer", true, false,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(stripTubeBTransfer.getName(), stripTubeBTransfer);
-
-        LabEventType flowcellTransfer = new LabEventType("FlowcellTransfer", true, false,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(flowcellTransfer.getName(), flowcellTransfer);
-
-        LabEventType sageLoading = new LabEventType("SageLoading", true, false,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(sageLoading.getName(), sageLoading);
-
-        LabEventType sageUnloading = new LabEventType("SageUnloading", true, false,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(sageUnloading.getName(), sageUnloading);
-
-        LabEventType sageCleanup = new LabEventType("SageCleanup", true, false,
-                MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
-        MAP_MESSAGE_NAME_TO_EVENT_TYPE.put(sageCleanup.getName(), sageCleanup);
-    }
-    
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDao;
     private StaticPlateDAO staticPlateDAO;
     private PersonDAO personDAO;
@@ -496,7 +372,7 @@ public class LabEventFactory {
         stationEventType.getEnd();
         stationEventType.getProgram();
         
-        LabEventType labEventType = MAP_MESSAGE_NAME_TO_EVENT_TYPE.get(stationEventType.getEventType());
+        LabEventType labEventType = LabEventType.getByName(stationEventType.getEventType());
         if(labEventType == null) {
             throw new RuntimeException("Unexpected event type " + stationEventType.getEventType());
         }

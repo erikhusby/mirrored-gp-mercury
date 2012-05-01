@@ -18,9 +18,12 @@ import org.broadinstitute.sequel.infrastructure.quote.QuotesCache;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,6 +34,8 @@ import java.util.List;
 public abstract class Project {
 
     @Id
+    @SequenceGenerator(name = "SEQ_PROJECT", sequenceName = "SEQ_PROJECT")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PROJECT")
     private Long projectId;
 
    public static final String JIRA_PROJECT_PREFIX = "TP";

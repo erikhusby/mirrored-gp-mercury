@@ -17,11 +17,15 @@ import org.broadinstitute.sequel.entity.sample.StateChange;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,6 +35,8 @@ import java.util.Set;
 @Entity
 public abstract class LabVessel  {
 
+    @SequenceGenerator(name = "SEQ_LAB_VESSEL", sequenceName = "SEQ_LAB_VESSEL")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
     @Id
     private Long labVesselId;
     protected String label;
@@ -162,8 +168,13 @@ public abstract class LabVessel  {
         this.containers.add(vesselContainer.getEmbedder());
     }
 
-    public Set<LabVessel> getContainers() {
-        return containers;
+    public Set<VesselContainer<?>> getContainers() {
+        Set<VesselContainer<?>> vesselContainers = new HashSet<VesselContainer<?>>();
+        for (LabVessel container : containers) {
+            vesselContainers.add(((VesselContainerEmbedder<?>) container).getVesselContainer());
+        }
+
+        return Collections.unmodifiableSet(vesselContainers);
     }
 
     // todo notion of a "sample group", not a cohorot,

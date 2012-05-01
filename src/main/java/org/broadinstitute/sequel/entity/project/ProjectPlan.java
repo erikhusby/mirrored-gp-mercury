@@ -5,9 +5,12 @@ import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,6 +35,8 @@ import java.util.HashSet;
 @Entity
 public class ProjectPlan {
     @Id
+    @SequenceGenerator(name = "SEQ_PROJECT_PLAN", sequenceName = "SEQ_PROJECT_PLAN")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PROJECT_PLAN")
     private Long projectPlanId;
 
     @OneToMany

@@ -4,7 +4,10 @@ import org.broadinstitute.sequel.entity.vessel.Containable;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 
 /**
  * Some chemistry bits applied to {@link Goop} to help
@@ -22,6 +25,8 @@ import javax.persistence.Id;
 public abstract class Reagent implements Containable {
 
     @Id
+    @SequenceGenerator(name = "SEQ_REAGENT", sequenceName = "SEQ_REAGENT")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT")
     private Long reagentId;
 
     /**

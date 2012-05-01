@@ -34,7 +34,7 @@ public class Quote {
         this.alphanumericId = alphanumericId;
     }
 
-    private Quote() {
+    protected Quote() {
     }
 
     public org.broadinstitute.sequel.infrastructure.quote.Quote getQuote() {

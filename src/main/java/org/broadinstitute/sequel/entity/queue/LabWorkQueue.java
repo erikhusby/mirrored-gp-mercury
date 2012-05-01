@@ -9,7 +9,10 @@ import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import java.util.Collection;
 import java.util.Set;
 
@@ -17,6 +20,8 @@ import java.util.Set;
 public abstract class LabWorkQueue<T extends LabWorkQueueParameters> {
 
     @Id
+    @SequenceGenerator(name = "SEQ_LAB_WORK_QUEUE", sequenceName = "SEQ_LAB_WORK_QUEUE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_WORK_QUEUE")
     private Long labWorkQueueId;
 
     public abstract LabWorkQueueName getQueueName();

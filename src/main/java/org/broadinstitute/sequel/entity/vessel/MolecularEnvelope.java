@@ -1,7 +1,10 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 
 /**
  * Target DNA is surrounded with various
@@ -43,6 +46,8 @@ import javax.persistence.Id;
 public abstract class MolecularEnvelope {
 
     @Id
+    @SequenceGenerator(name = "SEQ_MOLECULAR_ENVELOPE", sequenceName = "SEQ_MOLECULAR_ENVELOPE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_ENVELOPE")
     private Long molecularEnvelopeId;
 
     public enum FUNCTIONAL_ROLE {

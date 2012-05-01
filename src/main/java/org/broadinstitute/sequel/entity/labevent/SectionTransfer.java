@@ -10,7 +10,10 @@ import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.WellName;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,6 +24,8 @@ import java.util.List;
 @SuppressWarnings("rawtypes")
 public class SectionTransfer {
     @Id
+    @SequenceGenerator(name = "SEQ_SECTION_TRANSFER", sequenceName = "SEQ_SECTION_TRANSFER")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SECTION_TRANSFER")
     private Long sectionTransferId;
 
     private VesselContainer sourceVesselContainer;

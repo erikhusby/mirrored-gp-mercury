@@ -1,12 +1,104 @@
 package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
-import org.broadinstitute.sequel.entity.vessel.MolecularState;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Properties common to all events of a particular message type
  */
-public class LabEventType {
+public enum LabEventType {
+    SHEARING_TRANSFER("ShearingTransfer", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    POST_SHEARING_TRANSFER_CLEANUP("PostShearingTransferCleanup", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    SHEARING_QC ("ShearingQC", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    END_REPAIR ("EndRepair", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    END_REPAIR_CLEANUP ("EndRepairCleanup", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    A_BASE ("ABase", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    A_BASE_CLEANUP ("ABaseCleanup", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    INDEXED_ADAPTER_LIGATION ("IndexedAdapterLigation", true, false,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    ADAPTER_LIGATION_CLEANUP ("AdapterLigationCleanup", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    POND_ENRICHMENT ("PondEnrichment", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    POND_ENRICHMENT_CLEANUP ("HybSelPondEnrichmentCleanup", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    POND_REGISTRATION ("PondRegistration", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    PRE_SELECTION_POOL ("PreSelectionPool", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    HYBRIDIZATION ("Hybridization", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    BAIT_SETUP ("BaitSetup", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    BAIT_ADDITION ("BaitAddition", true, false,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    BEAD_ADDITION ("BeadAddition", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    AP_WASH ("APWash", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    GS_WASH_1 ("GSWash1", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    GS_WASH_2 ("GSWash2", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    CATCH_ENRICHMENT_SETUP ("CatchEnrichmentSetup", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    CATCH_ENRICHMENT_CLEANUP ("CatchEnrichmentCleanup", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    NORMALIZED_CATCH_REGISTRATION ("NormalizedCatchRegistration", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    POOLING_TRANSFER ("PoolingTransfer", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    DENATURE_TRANSFER ("DenatureTransfer", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    STRIP_TUBE_B_TRANSFER ("StripTubeBTransfer", true, false,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    FLOWCELL_TRANSFER ("FlowcellTransfer", true, false,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    SAGE_LOADING ("SageLoading", true, false,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    SAGE_UNLOADING ("SageUnloading", true, false,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    SAGE_CLEANUP ("SageCleanup", true, false,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+
     private final String name;
 
     private final boolean expectedEmptySources;
@@ -16,6 +108,8 @@ public class LabEventType {
     private final MolecularState.DNA_OR_RNA nucleicAcidType;
 
     private final MolecularState.STRANDEDNESS targetStrand;
+
+    private static final Map<String, LabEventType> mapNameToType = new HashMap<String, LabEventType>();
 
     /**
      * One attempt at trying to make a very generic
@@ -29,7 +123,7 @@ public class LabEventType {
      * @param nucleicAcid if null, inherit the same {@link org.broadinstitute.sequel.entity.vessel.MolecularState.DNA_OR_RNA nucleic acid}
 *                     from the {@link org.broadinstitute.sequel.entity.labevent.LabEvent#getSourceLabVessels() sources}
      */
-    public LabEventType(String name,
+    LabEventType(String name,
             boolean expectSourcesEmpty,
             boolean expectTargetsEmpty,
             MolecularState.STRANDEDNESS targetStrand,
@@ -59,5 +153,14 @@ public class LabEventType {
 
     public MolecularState.STRANDEDNESS getTargetStrand() {
         return targetStrand;
+    }
+
+    public static LabEventType getByName(String name) {
+        if(mapNameToType.isEmpty()) {
+            for (LabEventType labEventType : LabEventType.values()) {
+                mapNameToType.put(labEventType.getName(), labEventType);
+            }
+        }
+        return mapNameToType.get(name);
     }
 }

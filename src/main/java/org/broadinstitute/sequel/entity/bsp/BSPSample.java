@@ -38,7 +38,7 @@ public class BSPSample implements StartingSample {
 
     private BSPSampleDTO bspDTO;
 
-    public BSPSample() {}
+    protected BSPSample() {}
     /**
      * Is there a distinction in BSP between
      * the name of the sample and the container
