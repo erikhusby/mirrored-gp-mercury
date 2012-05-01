@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.vessel;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import java.io.Serializable;
 
 /**
@@ -48,9 +49,11 @@ public class MolecularState implements Serializable {
         SINGLE_STRANDED
     }
 
+    @ManyToOne
     private MolecularEnvelope molecularEnvelope;
     private DNA_OR_RNA nucleicAcidState;
     private STRANDEDNESS strand;
+    @ManyToOne
     private MolecularStateTemplate molecularStateTemplate = new MolecularStateTemplate();
 
     /**

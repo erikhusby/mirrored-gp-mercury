@@ -25,7 +25,7 @@ import java.util.*;
  * for every batch of {@link LabVessel}s 
  * when {@link #startWork(java.util.Collection, LabWorkQueueParameters, org.broadinstitute.sequel.entity.project.WorkflowDescription, org.broadinstitute.sequel.entity.person.Person)} is called.
  */
-public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullAccessLabWorkQueue<T> {
+public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> extends FullAccessLabWorkQueue<T> {
 
     // order matters: fifo
     private List<WorkQueueEntry<T>> requestedWork = new ArrayList<WorkQueueEntry<T>>();

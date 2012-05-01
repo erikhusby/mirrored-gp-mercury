@@ -9,18 +9,25 @@ import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import java.util.Collection;
 import java.util.Set;
-
+@Entity
 public class PlateWell extends LabVessel {
 
+    @ManyToOne
     private StaticPlate plate;
+    @ManyToOne
     private WellName wellName;
     
     public PlateWell(StaticPlate p,WellName wellName) {
         super(p.getLabel() + wellName);
         this.plate = p;
         this.wellName = wellName;
+    }
+
+    public PlateWell() {
     }
 
     @Override

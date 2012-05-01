@@ -1,5 +1,8 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
 /**
  * Target DNA is surrounded with various
  * appendages (or adaptors--but in the
@@ -35,7 +38,12 @@ package org.broadinstitute.sequel.entity.vessel;
  * Take a look at {@link org.broadinstitute.sequel.entity.labevent.AdaptorLigationEvent#validateSourceMolecularState() an example
  * use}
  */
-public interface MolecularEnvelope {
+
+@Entity
+public abstract class MolecularEnvelope {
+
+    @Id
+    private Long molecularEnvelopeId;
 
     public enum FUNCTIONAL_ROLE {
         INDEX,ADAPTOR,SEQUENCING_PRIMER,PCR_PRIMER
@@ -45,21 +53,21 @@ public interface MolecularEnvelope {
      * Primer?  adaptor?  index? pcr primer?
      * @return
      */
-    public FUNCTIONAL_ROLE getFunctionalRole();
+    public abstract FUNCTIONAL_ROLE getFunctionalRole();
 
     /**
      * What DNA thing is on the 3' end of the molecular?
      * Might be null.
      * @return
      */
-    public MolecularAppendage get3PrimeAttachment();
+    public abstract MolecularAppendage get3PrimeAttachment();
 
     /**
      * What DNA thing is on the 3' end of the molecular?
      * Might be null.
      * @return
      */
-    public MolecularAppendage get5PrimeAttachment();
+    public abstract MolecularAppendage get5PrimeAttachment();
 
     // todo abstract class to implement getContainedEnvelope and surroundWith()
 
@@ -77,7 +85,7 @@ public interface MolecularEnvelope {
      * target DNA.
      * @return
      */
-    public MolecularEnvelope getContainedEnvelope();
+    public abstract MolecularEnvelope getContainedEnvelope();
 
     /**
      * Add a surrounding envelope around this envelope.
@@ -86,7 +94,7 @@ public interface MolecularEnvelope {
      * to attach your adaptors.
      * @param containingEnvelope
      */
-    public void surroundWith(MolecularEnvelope containingEnvelope);
+    public abstract void surroundWith(MolecularEnvelope containingEnvelope);
 
     /**
      * Does the envelope contain this appendage, regardless
@@ -94,9 +102,9 @@ public interface MolecularEnvelope {
      * @param appendage
      * @return
      */
-    public boolean contains(MolecularAppendage appendage);
+    public abstract boolean contains(MolecularAppendage appendage);
 
-    public boolean contains3Prime(MolecularAppendage appendage);
+    public abstract boolean contains3Prime(MolecularAppendage appendage);
 
-    public boolean contains5Prime(MolecularAppendage appendage);
+    public abstract boolean contains5Prime(MolecularAppendage appendage);
 }

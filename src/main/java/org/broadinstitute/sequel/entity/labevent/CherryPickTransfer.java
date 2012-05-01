@@ -2,10 +2,17 @@ package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
 /**
  * Represents a transfer between positions in two vessel containers
  */
+@Entity
 public class CherryPickTransfer {
+    @Id
+    private Long cherryPickTransferId;
+
     private VesselContainer sourceVesselContainer;
     private String sourcePosition;
     private VesselContainer targetVesselContainer;
@@ -17,6 +24,9 @@ public class CherryPickTransfer {
         this.sourcePosition = sourcePosition;
         this.targetVesselContainer = targetVesselContainer;
         this.targetPosition = targetPosition;
+    }
+
+    protected CherryPickTransfer() {
     }
 
     public VesselContainer getSourceVesselContainer() {

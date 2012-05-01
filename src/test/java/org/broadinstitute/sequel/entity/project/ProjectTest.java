@@ -45,7 +45,7 @@ public class ProjectTest extends ContainerTest {
                 "Do lots of sequencing");
         assertNotNull(response);
         JiraTicket ticket = new JiraTicket(jiraService,response.getTicketName(),response.getId());
-        AbstractProject project = new BasicProject(ticket.getTicketName(),ticket);
+        Project project = new BasicProject(ticket.getTicketName(),ticket);
         project.addJiraComment("Comment added via Project");
         assertTrue(response.getTicketName().startsWith(Project.JIRA_PROJECT_PREFIX));
 
@@ -54,7 +54,7 @@ public class ProjectTest extends ContainerTest {
     
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_simple_project() {
-        AbstractProject project = projectManagerCreatesProject(jiraService);
+        Project project = projectManagerCreatesProject(jiraService);
         projectManagerAddsFundingSourceToProject(project,"NHGRI");
         ProjectPlan plan = projectManagerAddsProjectPlan(project);
         ReagentDesign bait = projectManagerAddsBait(plan);
@@ -223,7 +223,7 @@ public class ProjectTest extends ContainerTest {
      * problem.
      * @return
      */
-    private AbstractProject projectManagerCreatesProject(JiraService jiraService) {
+    private Project projectManagerCreatesProject(JiraService jiraService) {
         String projectName = "Legacy Squid Project C203";
         CreateIssueResponse jiraResponse = null;
 
@@ -236,7 +236,7 @@ public class ProjectTest extends ContainerTest {
         catch(IOException e ) {
             throw new RuntimeException("Cannot create jira ticket",e);
         }
-        AbstractProject legacyProject = new BasicProject(projectName,new JiraTicket(jiraService,jiraResponse.getTicketName(),jiraResponse.getId()));
+        Project legacyProject = new BasicProject(projectName,new JiraTicket(jiraService,jiraResponse.getTicketName(),jiraResponse.getId()));
         return legacyProject;
     }
 
@@ -376,7 +376,7 @@ public class ProjectTest extends ContainerTest {
         return queueResponse.getJiraTicket();
     }
 
-    private void projectManagerAddsFundingSourceToProject(AbstractProject project,
+    private void projectManagerAddsFundingSourceToProject(Project project,
                                                           String grantName) {
         project.addGrant(grantName);
         QuotesCache quotesCache = buildQuotesCache();

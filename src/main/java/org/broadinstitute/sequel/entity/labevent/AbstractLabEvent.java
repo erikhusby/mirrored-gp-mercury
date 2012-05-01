@@ -8,6 +8,8 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -31,20 +33,28 @@ public abstract class AbstractLabEvent implements LabEvent {
     @Id
     private Long labEventId;
     private String eventLocation;
+    @ManyToOne
     private Person eventOperator;
     private Date eventDate;
+    @OneToMany
     private Set<LabVessel> sourceLabVessels = new HashSet<LabVessel>();
+    @OneToMany
     private Set<LabVessel> targetLabVessels = new HashSet<LabVessel>();
+    @OneToMany
     private Set<Reagent> reagents = new HashSet<Reagent>();
     /** for transfers using a tip box, e.g. Bravo */
+    @OneToMany
     private Set<SectionTransfer> sectionTransfers = new HashSet<SectionTransfer>();
     /** for random access transfers, e.g. MultiProbe */
+    @OneToMany
     private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<CherryPickTransfer>();
+    @OneToMany
     private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<VesselToSectionTransfer>();
     // todo jmt tube to tube transfers, or will they always be in a rack?
 
     private String quoteServerBatchId;
 
+    @ManyToOne
     private ProjectPlan projectPlanOverride;
     
     @Override

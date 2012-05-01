@@ -5,7 +5,7 @@ import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.vessel.MolecularAppendage;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 
-public class IndexEnvelope  implements MolecularEnvelope {
+public class IndexEnvelope  extends MolecularEnvelope {
 
     private String threePrimeSeq;
     private String fivePrimeSeq;

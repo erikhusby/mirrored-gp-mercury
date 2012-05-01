@@ -9,14 +9,20 @@ import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.WellName;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.util.Collection;
 import java.util.List;
 
 /**
  * Represents a transfer between two sections.
  */
+@Entity
 @SuppressWarnings("rawtypes")
 public class SectionTransfer {
+    @Id
+    private Long sectionTransferId;
+
     private VesselContainer sourceVesselContainer;
     private SBSSection sourceSection;
     private VesselContainer targetVesselContainer;
@@ -28,6 +34,9 @@ public class SectionTransfer {
         this.sourceSection = sourceSection;
         this.targetVesselContainer = targetVesselContainer;
         this.targetSection = targetSection;
+    }
+
+    protected SectionTransfer() {
     }
 
     public VesselContainer getSourceVesselContainer() {

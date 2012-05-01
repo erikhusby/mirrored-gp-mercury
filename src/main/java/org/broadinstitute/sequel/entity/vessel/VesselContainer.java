@@ -22,13 +22,13 @@ import java.util.Set;
 @SuppressWarnings("rawtypes")
 @Embeddable
 public class VesselContainer<T extends LabVessel> {
-    @OneToMany
     /* rack holds tubes, tubes have barcodes and can be removed.
     * plate holds wells, wells can't be removed.
     * flowcell holds lanes.
     * PTP holds regions.
     * smartpac holds smrtcells, smrtcells are removed, but not replaced.
     * striptube holds tubes, tubes can't be removed, don't have barcodes. */
+    @OneToMany(targetEntity = LabVessel.class)
     private Map<String, T> mapPositionToVessel = new HashMap<String, T>();
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
@@ -65,9 +65,15 @@ public class VesselContainer<T extends LabVessel> {
                 sampleInstances.addAll(vesselAtPosition.getSampleInstances());
             }
             // handle re-arrays of tubes - look in any other racks that the tube has been in
-            for (VesselContainer vesselContainer : vesselAtPosition.getContainers()) {
-                if(!vesselContainer.equals(this)) {
-                    vesselContainer.examineTransfers(vesselContainer.getPositionOfVessel(vesselAtPosition), sampleInstances);
+            for (LabVessel labVessel : vesselAtPosition.getContainers()) {
+                if(labVessel instanceof VesselContainerEmbedder) {
+                    VesselContainer vesselContainer = ((VesselContainerEmbedder) labVessel).getVesselContainer();
+                    if(!vesselContainer.equals(this)) {
+                        vesselContainer.examineTransfers(vesselContainer.getPositionOfVessel(vesselAtPosition), sampleInstances);
+                    }
+                } else {
+                    // todo jmt should the getter do this check?
+                    throw new RuntimeException("Not a vessel container");
                 }
             }
         }

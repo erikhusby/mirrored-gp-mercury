@@ -12,6 +12,7 @@ import org.broadinstitute.sequel.entity.sample.StateChange;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,13 +22,16 @@ import java.util.Set;
  * A traditional plate.
  */
 @Entity
-public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell> {
+public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell>, Serializable {
 
     @Embedded
     private VesselContainer<PlateWell> vesselContainer = new VesselContainer<PlateWell>(this);
 
     public StaticPlate(String label) {
         super(label);
+    }
+
+    public StaticPlate() {
     }
 
     @Override

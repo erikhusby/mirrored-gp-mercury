@@ -6,6 +6,9 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -31,12 +34,17 @@ public class ProjectPlan {
     @Id
     private Long projectPlanId;
 
+    @OneToMany
     private Collection<LabVessel> starters = new HashSet<LabVessel>();
-    
+
+    // todo jmt fix this
+    @Transient
     private Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
 
+    @ManyToOne
     private WorkflowDescription workflowDescription;
 
+    @ManyToOne
     private Project project;
     
     private String planName;
@@ -45,14 +53,22 @@ public class ProjectPlan {
 
     // todo where does analysis type go here?
 
+    // todo jmt fix this
+    @Transient
     private Collection<PoolGroup> poolGroups = new HashSet<PoolGroup>();
 
+    // todo jmt fix this
+    @Transient
     private Collection<ReagentDesign> reagentDesigns = new HashSet<ReagentDesign>();
 
+    // todo jmt fix this
+    @Transient
     private final Collection<BSPPlatingRequest> platingRequests = new HashSet<BSPPlatingRequest>();
-    
+
+    @OneToMany
     private final Collection<JiraTicket> jiraTickets = new HashSet<JiraTicket>();
 
+    @ManyToOne
     private Quote quote;
     
     public ProjectPlan(Project project,
@@ -71,6 +87,9 @@ public class ProjectPlan {
         this.planName = name;
         this.workflowDescription = workflowDescription;
         project.addProjectPlan(this);
+    }
+
+    protected ProjectPlan() {
     }
 
     public Project getProject() {
@@ -137,7 +156,7 @@ public class ProjectPlan {
 
     public void addPlatingRequest(BSPPlatingRequest platingRequest) {
         if (platingRequest == null) {
-            throw new IllegalArgumentException("platingRequest must be non-null in AbstractProject.addPlatingRequest");
+            throw new IllegalArgumentException("platingRequest must be non-null in ProjectPlan.addPlatingRequest");
         }
         platingRequests.add(platingRequest);
     }

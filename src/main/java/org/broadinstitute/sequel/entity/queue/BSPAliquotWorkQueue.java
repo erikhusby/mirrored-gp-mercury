@@ -31,7 +31,7 @@ import java.util.HashSet;
  * used to build a list which is then sent to
  * BSP when we call some method.
  */
-public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,ExternalLabWorkQueue<BSPPlatingResponse> {
+public class BSPAliquotWorkQueue extends LabWorkQueue<AliquotParameters> implements ExternalLabWorkQueue<BSPPlatingResponse> {
 
     // Can we first make db-free unit tests and then play some
     // CDI configuration to turn them into various flavors

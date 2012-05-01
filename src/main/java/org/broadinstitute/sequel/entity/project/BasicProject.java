@@ -4,7 +4,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.entity.person.Person;
 
-public class BasicProject extends AbstractProject {
+public class BasicProject extends Project {
     
     private static Log gLog = LogFactory.getLog(BasicProject.class);
 
@@ -22,7 +22,6 @@ public class BasicProject extends AbstractProject {
 
     }
 
-    @Override
     public Person getPlatformOwner() {
         return platformOwner;
     }

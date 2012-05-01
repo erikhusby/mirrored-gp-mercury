@@ -14,6 +14,7 @@ import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 import java.util.Collection;
 
@@ -32,6 +33,7 @@ public class BSPSample implements StartingSample {
 
     private  String sampleName;
 
+    @ManyToOne
     private ProjectPlan projectPlan;
 
     private BSPSampleDTO bspDTO;

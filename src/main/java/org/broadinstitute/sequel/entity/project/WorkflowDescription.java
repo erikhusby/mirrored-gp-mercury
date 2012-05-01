@@ -10,6 +10,9 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,15 +26,25 @@ import java.util.Set;
  * workflow.  Things like "Hybrid Selection v8.0"
  * and "WGS 7.2"
  */
+@Entity
 public class WorkflowDescription {
 
-    private final String workflowName;
+    @Id
+    private Long workflowDescriptionId;
 
+    private String workflowName;
+
+    // todo jmt fix this
+    @Transient
     private Map<LabEventName,PriceItem> priceItemForEvent = new HashMap<LabEventName, PriceItem>();
 
     private CreateIssueRequest.Fields.Issuetype issueType;
 
+    // todo jmt fix this
+    @Transient
     private Map<String, List<WorkflowTransition>> mapNameToTransitionList = new HashMap<String, List<WorkflowTransition>>();
+    // todo jmt fix this
+    @Transient
     private WorkflowState startState;
 
     /**
@@ -54,7 +67,10 @@ public class WorkflowDescription {
         this.priceItemForEvent = billableEvents;
         this.issueType = issueType;
     }
-    
+
+    protected WorkflowDescription() {
+    }
+
     public String getWorkflowName() {
         return workflowName;
     }

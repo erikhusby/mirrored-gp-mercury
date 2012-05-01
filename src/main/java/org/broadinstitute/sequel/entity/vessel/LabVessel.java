@@ -2,27 +2,25 @@ package org.broadinstitute.sequel.entity.vessel;
 
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.labevent.AbstractLabEvent;
-import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
+import org.broadinstitute.sequel.entity.labevent.Failure;
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.Stalker;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.notice.UserRemarks;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.WorkflowDescription;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
-import org.broadinstitute.sequel.entity.queue.WorkQueueEntry;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.sample.StateChange;
-import org.broadinstitute.sequel.entity.labevent.Failure;
-import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.sample.StateChange;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,32 +38,32 @@ public abstract class LabVessel  {
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
     @OneToMany
     private final Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
+    @ManyToOne
     private MolecularState molecularState;
+    @ManyToOne
     private Project project;
+    @ManyToOne
     private LabVessel projectAuthority;
+    // todo jmt fix this
+    @Transient
     private ReadBucket readBucket;
+    @ManyToOne
     private LabVessel readBucketAuthority;
     @OneToMany
     private Set<AbstractLabEvent> transfersFrom = new HashSet<AbstractLabEvent>();
     @OneToMany
     private Set<AbstractLabEvent> transfersTo = new HashSet<AbstractLabEvent>();
+    // todo jmt fix this
+    @Transient
     private final Collection<Stalker> stalkers = new HashSet<Stalker>();
     @OneToMany
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
     @OneToMany
     private Set<Reagent> appliedReagents = new HashSet<Reagent>();
     @OneToMany
-    private Set<VesselContainer> containers = new HashSet<VesselContainer>();
+    private Set<LabVessel> containers = new HashSet<LabVessel>();
     @Embedded
     private UserRemarks userRemarks;
-
-/*
-    void applyTransfer(SectionTransfer sectionTransfer);
-
-    void addToContainer(VesselContainer vesselContainer);
-
-    Set<VesselContainer> getContainers();
-*/
 
     protected LabVessel(String label) {
         this.label = label;
@@ -161,10 +159,10 @@ public abstract class LabVessel  {
     }
 
     public void addToContainer(VesselContainer vesselContainer) {
-        this.containers.add(vesselContainer);
+        this.containers.add(vesselContainer.getEmbedder());
     }
 
-    public Set<VesselContainer> getContainers() {
+    public Set<LabVessel> getContainers() {
         return containers;
     }
 
@@ -290,14 +288,6 @@ public abstract class LabVessel  {
         RACK_OF_TUBES
     }
 
-//    public String getLabCentricName();
-
-//    public Collection<SampleSheet> getSampleSheets();
-
-//    public void addSampleSheet(SampleSheet sampleSheet);
-
-//    public void addStateChange(StateChange stateChange);
-
     /**
      * Probably a transient that computes the {@link SampleInstance} data
      * on-the-fly by walking the history and applying the
@@ -305,12 +295,6 @@ public abstract class LabVessel  {
      * @return
      */
     public abstract Set<SampleInstance> getSampleInstances();
-
-//    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet);
-
-//    public Collection<StateChange> getStateChanges();
-
-//    public String getLabel();
 
     /**
      * I'm avoiding parent/child semantics
@@ -325,18 +309,6 @@ public abstract class LabVessel  {
      * @return
      */
     public abstract LabVessel getContainingVessel();
-
-//    public void addMetric(LabMetric m);
-
-//    public Collection<LabMetric> getMetrics();
-
-//    public void addFailure(Failure failureMode);
-
-//    public Collection<Failure> getFailures();
-
-//    public Collection<Reagent> getReagentContents();
-
-//    public void addReagent(Reagent r);
 
     /**
      * Metrics are captured on vessels, but when we
@@ -378,14 +350,6 @@ public abstract class LabVessel  {
         NEAREST
     }
 
-//    public LabMetric getMetric(LabMetric.MetricName metricName,
-//                               MetricSearchMode searchMode,
-//                               SampleInstance sampleInstance);
-
-//    public Set<AbstractLabEvent> getTransfersFrom();
-
-//    public Set<AbstractLabEvent> getTransfersTo();
-
     /**
      * Get all events that have happened directly to
      * this vesell.  Really, really fast.  Like
@@ -393,10 +357,6 @@ public abstract class LabVessel  {
      * @return
      */
     public abstract Collection<LabEvent> getEvents();
-
-//    public boolean isAncestor(LabVessel progeny);
-
-//    public boolean isProgeny(LabVessel ancestor);
 
     /**
      * Returns all projects.  Convenience method vs.
@@ -443,15 +403,4 @@ public abstract class LabVessel  {
     public abstract Float getVolume();
 
     public abstract Float getConcentration();
-
-//    public abstract void applyReagent(Reagent r);
-
-//    public abstract Collection<Reagent> getAppliedReagents();
-    
-//    public void addNoteToProjects(String message);
-
-//    public void addJiraTicket(JiraTicket jiraTicket);
-
-//    public Collection<JiraTicket> getJiraTickets();
-
 }

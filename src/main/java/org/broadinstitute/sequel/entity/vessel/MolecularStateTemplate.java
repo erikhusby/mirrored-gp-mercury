@@ -1,5 +1,8 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
 /**
  * Basically a way to summarize certain critical
  * aspects of {@link MolecularState} to detect
@@ -41,7 +44,11 @@ package org.broadinstitute.sequel.entity.vessel;
  * not filling in the metadata, which means that at some
  * point, things will break.
  */
+@Entity
 public class MolecularStateTemplate {
+
+    @Id
+    private Long molecularStateTemplateId;
 
     /**
      * Human readable representation, such as
