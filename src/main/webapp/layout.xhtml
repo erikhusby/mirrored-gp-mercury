@@ -18,7 +18,9 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:sqltg="http://sequel.broadinstitute.org/tags"
+      xmlns:vt="http://java.sun.com/jsf/composite/login">
 
 <!--
   Base JSF page template to be used in the "template" attribure of
@@ -46,10 +48,15 @@
                     <img src="/images/broad_logo.png" alt="Broad Institute" align="right"/>
                 </td>
                 <td>
-                    <!--<h:link outcome="/logout">Logout" </h:link>-->
-                    <h:form>
-                        <h:commandLink action="#{securityBackingBean.logout}" value="Logout"/>
-                    </h:form>
+                    <sqltg:isLoggedOut>
+                        <vt:loginPanel/>
+                    </sqltg:isLoggedOut>
+                    <sqltg:isLoggedIn>
+                        <!--<h:link outcome="/logout">Logout" </h:link>-->
+                        <h:form>
+                            <h:commandLink action="#{securityBackingBean.logout}" value="Logout"/>
+                        </h:form>
+                    </sqltg:isLoggedIn>
                 </td>
             </tr>
         </table>
