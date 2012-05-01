@@ -4,6 +4,15 @@
     xsi:schemaLocation="http://jboss.org/schema/arquillian
     http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
 
+    <container qualifier="remote-glassfish" default="true">
+        <configuration>
+            <property name="adminHost">localhost</property>
+            <!--<property name="adminHttps">true</property>-->
+            <!--<property name="adminUser">admin</property>-->
+            <!--<property name="adminPassword">admin</property>-->
+        </configuration>
+    </container>
+
     <!--  Uncomment to have test archives exported to the file system for inspection  -->
     <!--
     <engine>

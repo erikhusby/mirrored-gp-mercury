@@ -576,10 +576,9 @@
                     <plugin>
                         <groupId>org.glassfish.embedded</groupId>
                         <artifactId>maven-embedded-glassfish-plugin</artifactId>
-                        <version>3.1.2</version>
                         <configuration>
                             <app>${project.build.directory}/${project.build.finalName}.war</app>
-                            <port>8080</port>
+                            <port>${glassfish.httpPort}</port>
                             <contextRoot>/</contextRoot>
                             <autoDelete>true</autoDelete>
                         </configuration>
@@ -600,6 +599,50 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+
+        <profile>
+            <id>DEV</id>
+            <properties>
+                <glassfish.home>${user.home}/glassfish3</glassfish.home>
+                <glassfish.adminPort>4848</glassfish.adminPort>
+                <glassfish.httpPort>8080</glassfish.httpPort>
+            </properties>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources</directory>
+                    </testResource>
+                    <testResource>
+                        <directory>src/test/resources-dev</directory>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+        <profile>
+            <id>BUILD</id>
+            <properties>
+                <glassfish.home>/prodinfolocal/glassfish3</glassfish.home>
+                <glassfish.adminPort>4848</glassfish.adminPort>
+                <glassfish.httpPort>8030</glassfish.httpPort>
+            </properties>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources</directory>
+                    </testResource>
+                    <testResource>
+                        <directory>src/test/resources-build</directory>
+                        <filtering>true</filtering>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+        <profile>
+            <id>QA</id>
+        </profile>
+        <profile>
+            <id>PROD</id>
         </profile>
     </profiles>
 
@@ -880,33 +923,44 @@
                     <artifactId>maven-pmd-plugin</artifactId>
                     <version>2.7.1</version>
                 </plugin>
-
-<!--
                 <plugin>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <id>unpack</id>
-                            <phase>process-test-classes</phase>
-                            <goals>
-                                <goal>unpack</goal>
-                            </goals>
-                            <configuration>
-                                <artifactItems>
-                                    <artifactItem>
-                                        <groupId>org.jboss.as</groupId>
-                                        <artifactId>jboss-as-dist</artifactId>
-                                        <version>7.0.2.Final</version>
-                                        <type>zip</type>
-                                        <overWrite>false</overWrite>
-                                        <outputDirectory>target</outputDirectory>
-                                    </artifactItem>
-                                </artifactItems>
-                            </configuration>
-                        </execution>
-                    </executions>
+                    <groupId>org.glassfish.embedded</groupId>
+                    <artifactId>maven-embedded-glassfish-plugin</artifactId>
+                    <version>3.1.2</version>
                 </plugin>
--->
+
+                <plugin>
+                    <groupId>org.glassfish.maven.plugin</groupId>
+                    <artifactId>maven-glassfish-plugin</artifactId>
+                    <version>2.1</version>
+                </plugin>
+
+                <!--
+                                <plugin>
+                                    <artifactId>maven-dependency-plugin</artifactId>
+                                    <executions>
+                                        <execution>
+                                            <id>unpack</id>
+                                            <phase>process-test-classes</phase>
+                                            <goals>
+                                                <goal>unpack</goal>
+                                            </goals>
+                                            <configuration>
+                                                <artifactItems>
+                                                    <artifactItem>
+                                                        <groupId>org.jboss.as</groupId>
+                                                        <artifactId>jboss-as-dist</artifactId>
+                                                        <version>7.0.2.Final</version>
+                                                        <type>zip</type>
+                                                        <overWrite>false</overWrite>
+                                                        <outputDirectory>target</outputDirectory>
+                                                    </artifactItem>
+                                                </artifactItems>
+                                            </configuration>
+                                        </execution>
+                                    </executions>
+                                </plugin>
+                -->
 
             </plugins>
         </pluginManagement>
@@ -957,6 +1011,30 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <forkMode>never</forkMode>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.glassfish.maven.plugin</groupId>
+                <artifactId>maven-glassfish-plugin</artifactId>
+                <configuration>
+                    <glassfishDirectory>${glassfish.home}</glassfishDirectory>
+                    <echo>true</echo>
+                    <debug>true</debug>
+                    <passFile>${glassfish.passwordFile}</passFile>
+                    <user>${glassfish.adminUser}</user>
+                    <domain>
+                        <httpPort>${glassfish.httpPort}</httpPort>
+                        <adminPort>${glassfish.adminPort}</adminPort>
+                        <name>${glassfish.domain}</name>
+                    </domain>
+
+                    <components>
+                        <component>
+                            <name>${project.build.finalName}</name>
+                            <artifact>${project.build.directory}/${project.build.finalName}.war</artifact>
+                        </component>
+                    </components>
                 </configuration>
             </plugin>
         </plugins>

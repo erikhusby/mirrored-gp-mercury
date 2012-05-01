@@ -19,7 +19,7 @@ remoteDebugOptions='-Dmaven.surefire.debug="-Xdebug -Xrunjdwp:transport=dt_socke
  */
 siteUrl = "http://localhost:8080/site"
 sitePath = "/Users/mhusby/Applications/tomcat/webapps/site"
-license = "/prodinfolocal/BambooHome/clover.license"
+license = "/prodinfolocal/BambooHome/clover.license2012"
 
 /**
  * Targets
@@ -42,4 +42,9 @@ target( Site : 'Build Site after running all unit tests') {
 
 target( SiteDeploy : 'Deploy the Site') {
     execute.shell("mvn site:deploy")
+}
+
+target( ArguillianTests : 'Run the unit tests with Arguillian') {
+  def options = "-PDEV,Arquillian-Glassfish-Remote"
+  execute.shell("mvn ${options} clean test")
 }
