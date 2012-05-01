@@ -12,32 +12,18 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:vt="http://java.sun.com/jsf/composite/login">
 
 
-    <h:head>
-        <title>SequeL Login Page</title>
-    </h:head>
 
     <h:body>
-        Please enter your Broad Username and Password.
+        <ui:composition template="/layout.xhtml">
+            <ui:define name="title">Login Page</ui:define>
+            <ui:define name="body">
+                <vt:loginPanel/>
+            </ui:define>
+        </ui:composition>
 
-
-
-        <h:form>
-
-            <h:messages />
-            <h:panelGrid columns="2">
-
-                <h:outputText value="UserName:" />
-                <h:inputText label="Username:" value="#{userLogin.userName}" required="true" />
-
-                <h:outputText value="Password:" />
-                <h:inputSecret label="Password:" value="#{userLogin.password}" required="true" />
-
-                <h:panelGroup />
-                <h:commandButton value="Login" action="#{userLogin.authenticateUser}" />
-            </h:panelGrid>
-        </h:form>
     </h:body>
 </html>
