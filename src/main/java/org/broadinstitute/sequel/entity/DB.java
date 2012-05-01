@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.entity;
 
+import org.broadinstitute.sequel.entity.authentication.AuthorizedGroup;
+import org.broadinstitute.sequel.entity.authentication.PageAuthorization;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 
@@ -21,10 +23,13 @@ public class DB implements Serializable {
 
     private Map<String, Project> projects = new HashMap<String, Project>();
     private Map<String, WorkflowDescription> workflowDescriptions = new HashMap<String, WorkflowDescription>();
+    private Map<String, PageAuthorization> pageAuthorizationMap = new HashMap<String, PageAuthorization>();
+    private Map<String, AuthorizedGroup> authorizedGroupMap = new HashMap<String, AuthorizedGroup>();
 
     public DB() {
         addWorkflowDescription(new WorkflowDescription("Hybrid Selection", "v7.2", null, null));
         addWorkflowDescription(new WorkflowDescription("Whole Genome Shotgun", "v7.2", null, null));
+        addPageAuthorization(new PageAuthorization("/projects/", "Sequel-Developers", "Sequel-ProjectManagers"));
     }
 
     // Project
@@ -76,5 +81,30 @@ public class DB implements Serializable {
 
     public WorkflowDescription findByWorkflowDescriptionName(String workflowDescriptionName) {
         return workflowDescriptions.get(workflowDescriptionName);
+    }
+
+    public void addAuthorizedGroup(AuthorizedGroup groupIn) {
+        this.authorizedGroupMap.put(groupIn.getGroupName(), groupIn);
+    }
+
+    public void removeAuthorizedGroup(AuthorizedGroup groupIn) {
+        this.authorizedGroupMap.remove(groupIn);
+    }
+
+    public Map<String, AuthorizedGroup> getAuthorizedGroupMap() {
+        return authorizedGroupMap;
+    }
+
+    public void addPageAuthorization(PageAuthorization newAuthorizationIn) {
+
+        this.pageAuthorizationMap.put(newAuthorizationIn.getPagePath(), newAuthorizationIn);
+    }
+
+    public void removePageAuthorization(PageAuthorization newAuthorizationIn) {
+        this.pageAuthorizationMap.remove(newAuthorizationIn);
+    }
+
+    public Map<String, PageAuthorization> getPageAuthorizationMap() {
+        return pageAuthorizationMap;
     }
 }
