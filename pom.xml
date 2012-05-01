@@ -141,8 +141,8 @@
 
     <properties>
         <!-- Clover -->
-        <clover.plugin.version>3.1.2</clover.plugin.version>
         <clover.version>3.1.2</clover.version>
+        <clover.plugin.version>3.1.2</clover.plugin.version>
         <clover.targetPercentage>15%</clover.targetPercentage>
 
         <!-- For site reports -->
@@ -877,11 +877,13 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
+        <!-- exists only to be included in ShrinkWrap deployments. would be better to include explicitly in DeploymentBuilder -->
         <dependency>
             <groupId>com.cenqua.clover</groupId>
             <artifactId>clover</artifactId>
             <version>${clover.version}</version>
-            <scope>test</scope>
+            <!-- cannot be test scoped because it is needed for compiling instrumented main sources -->
+            <!--<scope>test</scope>-->
         </dependency>
     </dependencies>
 

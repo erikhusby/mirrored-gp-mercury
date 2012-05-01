@@ -2,7 +2,6 @@ package org.broadinstitute.sequel.test;
 
 import org.broadinstitute.sequel.BettaLimsMessageFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -23,15 +22,6 @@ public class DeploymentBuilder {
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .merge(importMain(), "WEB-INF/classes");
-        war = addWarDependencies(war);
-        return war;
-    }
-
-    public static WebArchive buildSequelCloverWar() {
-        WebArchive war = ShrinkWrap.create(ExplodedImporter.class, "SequeL.war")
-                .importDirectory("src/main/webapp")
-                .as(WebArchive.class)
-                .merge(importCloverMain(), "WEB-INF/classes");
         war = addWarDependencies(war);
         return war;
     }
@@ -68,20 +58,9 @@ public class DeploymentBuilder {
     }
 
     private static JavaArchive importMain() {
-        JavaArchive archive = ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
-                .importDirectory("target/classes")
-                .importDirectory("src/main/resources")
-                .as(JavaArchive.class);
-        archive = addTestHelpers(archive);
-        return archive;
-    }
-
-    private static JavaArchive importCloverMain() {
-        JavaArchive archive = ShrinkWrap.create(ExplodedImporter.class, "SequeL.jar")
-                .importDirectory("target/clover/classes")
-                .importDirectory("src/main/resources")
-                .as(JavaArchive.class);
-        archive = addTestHelpers(archive);
+        JavaArchive archive = ShrinkWrap.create(JavaArchive.class, "SequeL.jar")
+                .addAsDirectory("src/main/resources")
+                .addPackages(true, "org.broadinstitute.sequel");
         return archive;
     }
 
