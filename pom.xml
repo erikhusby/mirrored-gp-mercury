@@ -1014,12 +1014,12 @@
                     <glassfishDirectory>${glassfish.home}</glassfishDirectory>
                     <echo>true</echo>
                     <debug>true</debug>
+                    <passFile>${glassfish.passwordFile}</passFile>
+                    <user>${glassfish.adminUser}</user>
                     <domain>
-                        <name>${glassfish.domain}</name>
-                        <user>${glassfish.adminUser}</user>
-                        <adminPassword>${glassfish.adminPassword}</adminPassword>
-                        <adminPort>${glassfish.adminPort}</adminPort>
                         <httpPort>${glassfish.httpPort}</httpPort>
+                        <adminPort>${glassfish.adminPort}</adminPort>
+                        <name>${glassfish.domain}</name>
                     </domain>
 
                     <components>
