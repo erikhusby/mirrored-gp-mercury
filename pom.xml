@@ -621,11 +621,6 @@
         </profile>
         <profile>
             <id>BUILD</id>
-            <properties>
-                <glassfish.home>/prodinfolocal/glassfish3</glassfish.home>
-                <glassfish.adminPort>4848</glassfish.adminPort>
-                <glassfish.httpPort>8030</glassfish.httpPort>
-            </properties>
             <build>
                 <testResources>
                     <testResource>
@@ -636,14 +631,16 @@
                         <filtering>true</filtering>
                     </testResource>
                 </testResources>
-            </build>
+	    </build>
         </profile>
+
         <profile>
             <id>QA</id>
         </profile>
         <profile>
             <id>PROD</id>
         </profile>
+
     </profiles>
 
     <dependencyManagement>
@@ -1016,29 +1013,6 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.glassfish.maven.plugin</groupId>
-                <artifactId>maven-glassfish-plugin</artifactId>
-                <configuration>
-                    <glassfishDirectory>${glassfish.home}</glassfishDirectory>
-                    <echo>true</echo>
-                    <debug>true</debug>
-                    <passFile>${glassfish.passwordFile}</passFile>
-                    <user>${glassfish.adminUser}</user>
-                    <domain>
-                        <httpPort>${glassfish.httpPort}</httpPort>
-                        <adminPort>${glassfish.adminPort}</adminPort>
-                        <name>${glassfish.domain}</name>
-                    </domain>
-
-                    <components>
-                        <component>
-                            <name>${project.build.finalName}</name>
-                            <artifact>${project.build.directory}/${project.build.finalName}.war</artifact>
-                        </component>
-                    </components>
-                </configuration>
-            </plugin>
         </plugins>
 
     </build>
@@ -1102,6 +1076,30 @@
                     <targetJdk>1.6</targetJdk>
                 </configuration>
             </plugin>
+
+	    <plugin>
+	      <groupId>org.glassfish.maven.plugin</groupId>
+	      <artifactId>maven-glassfish-plugin</artifactId>
+	      <configuration>
+		<glassfishDirectory>${glassfish.home}</glassfishDirectory>
+		<echo>true</echo>
+		<debug>true</debug>
+		<passFile>${glassfish.passwordFile}</passFile>
+		<user>${glassfish.adminUser}</user>
+		<domain>
+		  <httpPort>${glassfish.httpPort}</httpPort>
+		  <adminPort>${glassfish.adminPort}</adminPort>
+		  <name>${glassfish.domain}</name>
+		</domain>
+		<components>
+		  <component>
+		    <name>${project.artifactId}</name>
+		    <artifact>${project.build.directory}/${project.build.finalName}.war</artifact>
+		  </component>
+		</components>
+	      </configuration>
+	    </plugin>
+
         </plugins>
     </reporting>
 
