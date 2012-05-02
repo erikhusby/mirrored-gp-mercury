@@ -31,15 +31,23 @@
     </servlet-mapping>
 
 
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>AllPages</web-resource-name>
-            <url-pattern>/projects/*</url-pattern>
-        </web-resource-collection>
-        <auth-constraint>
-            <role-name>user</role-name>
-        </auth-constraint>
-    </security-constraint>
+    <security-role>
+        <role-name>Sequel-Admins</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-LabUsers</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-LabManagers</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-ProjectManagers</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-Developers</role-name>
+    </security-role>
+
+
 
     <welcome-file-list>
         <welcome-file>/index.xhtml</welcome-file>
@@ -53,16 +61,19 @@
         </form-login-config>
     </login-config>
 
-    <servlet>
-        <servlet-name>LogoutServlet</servlet-name>
-        <servlet-class>
-            org.broadinstitute.sequel.presentation.logout.LogoutServlet
-        </servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>LogoutServlet</servlet-name>
-        <url-pattern>/logout</url-pattern>
-    </servlet-mapping>
+    <filter>
+        <filter-name>AuthorizationFilter</filter-name>
+        <filter-class>org.broadinstitute.sequel.presentation.security.AuthorizationFilter</filter-class>
 
+        <init-param>
+            <param-name>error_page</param-name>
+            <param-value>/login/authorization_error.xhtml</param-value>
+        </init-param>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>AuthorizationFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
 </web-app>

@@ -1,8 +1,11 @@
 package org.broadinstitute.sequel.presentation.logout;
 
+import org.broadinstitute.sequel.boundary.authentication.AuthenticationService;
+
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 import javax.faces.context.FacesContext;
+import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.logging.Level;
@@ -17,6 +20,10 @@ import java.util.logging.Logger;
 @ManagedBean
 @RequestScoped
 public class SecurityBackingBean {
+
+    @Inject
+    private AuthenticationService authSvc;
+
 
 
     Logger securityLogger = Logger.getLogger(this.getClass().getName());
@@ -41,5 +48,7 @@ public class SecurityBackingBean {
         return result;
 
     }
+
+
 
 }

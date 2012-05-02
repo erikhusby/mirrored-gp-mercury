@@ -4,7 +4,28 @@
         "http://www.sun.com/software/appserver/dtds/sun-web-app_3_0-0.dtd">
 <sun-web-app>
     <security-role-mapping>
-        <role-name>user</role-name>
+        <role-name>Sequel-Admins</role-name>
         <group-name>Sequel-Admins</group-name>
     </security-role-mapping>
+
+    <security-role-mapping>
+        <role-name>Sequel-LabUsers</role-name>
+        <group-name>Sequel-LabUsers</group-name>
+    </security-role-mapping>
+
+    <security-role-mapping>
+        <role-name>Sequel-LabManagers</role-name>
+        <group-name>Sequel-LabManagers</group-name>
+    </security-role-mapping>
+
+    <security-role-mapping>
+        <role-name>Sequel-ProjectManagers</role-name>
+        <group-name>Sequel-ProjectManagers</group-name>
+    </security-role-mapping>
+
+    <security-role-mapping>
+        <role-name>Sequel-Developers</role-name>
+        <group-name>Sequel-Developers</group-name>
+    </security-role-mapping>
+
 </sun-web-app>
