@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
+import java.util.Map;
 
 /**
  * @author Scott Matthews
@@ -21,8 +22,8 @@ import javax.persistence.PersistenceContextType;
 @RequestScoped
 public class PageAuthorizationDao {
 
-    @PersistenceContext(type = PersistenceContextType.EXTENDED)
-    private EntityManager entityManager;
+//    @PersistenceContext(type = PersistenceContextType.EXTENDED)
+//    private EntityManager entityManager;
 
 
     @Inject
@@ -34,7 +35,17 @@ public class PageAuthorizationDao {
     }
 
     public PageAuthorization findPageAuthorizationByPage(String pageNameIn) {
-        return db.getPageAuthorizationMap().get(pageNameIn);
+
+        PageAuthorization authorization = db.getPageAuthorizationMap().get(pageNameIn);
+        if(null == authorization) {
+            for(Map.Entry<String, PageAuthorization> currAuthorization:db.getPageAuthorizationMap().entrySet()) {
+                if(pageNameIn.startsWith(currAuthorization.getKey())) {
+                    authorization = currAuthorization.getValue();
+                }
+            }
+        }
+
+        return authorization;
     }
 
     public void addNewPageAuthorization(PageAuthorization pageAuthorizationIn) {

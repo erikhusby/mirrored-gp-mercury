@@ -46,17 +46,24 @@
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 
-    <!-- for JBoss AS 7 -->
-<!--
-    <servlet>
-        <servlet-name>javax.ws.rs.core.Application</servlet-name>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>javax.ws.rs.core.Application</servlet-name>
-        <url-pattern>/rest/*</url-pattern>
-    </servlet-mapping>
--->
+    <security-role>
+        <role-name>Sequel-Admins</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-LabUsers</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-LabManagers</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-ProjectManagers</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-Developers</role-name>
+    </security-role>
+
+
+
     <welcome-file-list>
         <welcome-file>/index.xhtml</welcome-file>
     </welcome-file-list>
@@ -69,16 +76,19 @@
         </form-login-config>
     </login-config>
 
-    <servlet>
-        <servlet-name>LogoutServlet</servlet-name>
-        <servlet-class>
-            org.broadinstitute.sequel.presentation.logout.LogoutServlet
-        </servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>LogoutServlet</servlet-name>
-        <url-pattern>/logout</url-pattern>
-    </servlet-mapping>
+    <filter>
+        <filter-name>AuthorizationFilter</filter-name>
+        <filter-class>org.broadinstitute.sequel.presentation.security.AuthorizationFilter</filter-class>
 
+        <init-param>
+            <param-name>error_page</param-name>
+            <param-value>/login/authorization_error.xhtml</param-value>
+        </init-param>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>AuthorizationFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
 </web-app>

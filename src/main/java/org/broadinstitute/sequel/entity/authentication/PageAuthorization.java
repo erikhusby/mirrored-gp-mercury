@@ -26,10 +26,10 @@ public class PageAuthorization {
     }
 
 
-    public static List<String> getGroupList(PageAuthorization authorizationIn) {
+    public List<String> getGroupList() {
         List<String> authorizedGroups = new LinkedList<String>();
 
-        for(AuthorizedGroup currGroup: authorizationIn.getGroupAccess()) {
+        for(AuthorizedGroup currGroup: this.getGroupAccess()) {
             authorizedGroups.add(currGroup.getGroupName());
         }
         return authorizedGroups;
