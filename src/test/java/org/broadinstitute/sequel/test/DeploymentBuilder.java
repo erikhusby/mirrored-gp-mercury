@@ -17,8 +17,10 @@ import java.util.Collection;
  */
 public class DeploymentBuilder {
 
+    private static final String SEQUEL_WAR = "SequeL-Arquillian.war";
+
     public static WebArchive buildSequelWar() {
-        WebArchive war = ShrinkWrap.create(ExplodedImporter.class, "SequeL.war")
+        WebArchive war = ShrinkWrap.create(ExplodedImporter.class, SEQUEL_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .merge(importMain(), "WEB-INF/classes");
@@ -27,7 +29,7 @@ public class DeploymentBuilder {
     }
 
     public static WebArchive buildSequelWar(String beansXml) {
-        WebArchive war = ShrinkWrap.create(WebArchive.class, "SequeL.war")
+        WebArchive war = ShrinkWrap.create(WebArchive.class, SEQUEL_WAR)
                 .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
                 .merge(buildSequelWar());
         return war;
