@@ -24,8 +24,8 @@ public class QuoteServiceTest {
 
     @BeforeClass
     private void setupLargeQuoteAndPriceItem() {
-        quote = new Quote("RNAI4EA",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))));
-        priceItem = new PriceItem("Virus Prep","1","Plate Based","15","bannanas","RNAi Screening");
+        quote = new Quote("DNA4JC",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))));
+        priceItem = new PriceItem("Illumina Sequencing","1","Illumina Custom Hybrid Selection Library (93 sample batch size)","15","bannanas","DNA Sequencing");
     }
     
     
@@ -40,8 +40,12 @@ public class QuoteServiceTest {
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_register_work() throws Exception {
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
+        Quote fetchedQuote = service.getQuoteFromQuoteServer(quote.getAlphanumericId());
+        System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId = service.registerNewWork(quote,priceItem,0.0001,"http://www.SequeLTesting","paramName","paramValue");
-        
+        System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
+
+
         Assert.assertNotNull(workBatchId);
 
         try {
@@ -51,15 +55,6 @@ public class QuoteServiceTest {
         catch(NumberFormatException e) {
             Assert.fail(workBatchId + " returned from quote server is not a number");
         }
-
-        try {
-            workBatchId = service.registerNewWork(quote,priceItem,150000,"SequeLTesting","paramName","paramValue");
-            Assert.fail("It looks like we can charge ridiculously large amounts of work to a quote, possible more than the limit for the quote.");
-        }
-        catch(RuntimeException e) {
-            // as expected
-        }
-
     }
 
     @Test(groups = DATABASE_FREE)

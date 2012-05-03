@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.infrastructure.quote;
 
+import javax.xml.bind.annotation.XmlAccessorOrder;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -13,7 +15,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "QuoteFunding")
 public class QuoteFunding {
 
-    
+    @XmlAttribute(name = "fundsRemaining" )
+    private String fundsRemaining;
+
+    @XmlElement(name = "FundingLevel")
     private FundingLevel fundingLevel;
 
     public QuoteFunding() {}
@@ -21,14 +26,13 @@ public class QuoteFunding {
     public QuoteFunding(FundingLevel fundLevel) {
         this.fundingLevel = fundLevel;
     }
-    
-    @XmlElement(name = "FundingLevel")
+
     public FundingLevel getFundingLevel() {
         return fundingLevel;
     }
 
-    public void setFundingLevel(FundingLevel fundingLevel) {
-        this.fundingLevel = fundingLevel;
+    public String getFundsRemaining() {
+        return fundsRemaining;
     }
 
 }
