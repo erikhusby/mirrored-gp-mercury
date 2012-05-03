@@ -64,11 +64,11 @@ public class UserLogin {
         } catch (LoginException le) {
              FacesContext.getCurrentInstance()
                         .addMessage(null, new FacesMessage("The username and password combination entered was not able to be authenticated."));
-            targetPage = "/login/login";
+            targetPage = "/security/login";
         } catch (ServletException le) {
              FacesContext.getCurrentInstance()
                         .addMessage(null, new FacesMessage("The username and password combination entered was not able to be authenticated."));
-            targetPage = "/login/login";
+            targetPage = "/security/login";
         }
 
         return targetPage;
