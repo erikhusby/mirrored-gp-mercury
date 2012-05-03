@@ -173,6 +173,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>maven-clover2-plugin</artifactId>
                         <configuration>
+                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
@@ -213,6 +214,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>maven-clover2-plugin</artifactId>
                         <configuration>
+                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
                             <fullRunEvery>60</fullRunEvery>
                             <snapshot>${user.home}/.clover/${project.groupId}-${project.artifactId}/clover.snapshot</snapshot>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
@@ -241,6 +243,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>maven-clover2-plugin</artifactId>
                         <configuration>
+                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
@@ -265,6 +268,7 @@
                         <groupId>com.atlassian.maven.plugins</groupId>
                         <artifactId>maven-clover2-plugin</artifactId>
                         <configuration>
+                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
@@ -304,6 +308,7 @@
                         <artifactId>maven-clover2-plugin</artifactId>
                         <version>${clover.plugin.version}</version>
                         <configuration>
+                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <generateHistorical>true</generateHistorical>
                             <generateHtml>true</generateHtml>
@@ -624,11 +629,6 @@
         </profile>
         <profile>
             <id>BUILD</id>
-            <properties>
-                <glassfish.home>/prodinfolocal/glassfish3</glassfish.home>
-                <glassfish.adminPort>4848</glassfish.adminPort>
-                <glassfish.httpPort>8030</glassfish.httpPort>
-            </properties>
             <build>
                 <testResources>
                     <testResource>
@@ -639,14 +639,16 @@
                         <filtering>true</filtering>
                     </testResource>
                 </testResources>
-            </build>
+	    </build>
         </profile>
+
         <profile>
             <id>QA</id>
         </profile>
         <profile>
             <id>PROD</id>
         </profile>
+
     </profiles>
 
     <dependencyManagement>
@@ -1021,29 +1023,6 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.glassfish.maven.plugin</groupId>
-                <artifactId>maven-glassfish-plugin</artifactId>
-                <configuration>
-                    <glassfishDirectory>${glassfish.home}</glassfishDirectory>
-                    <echo>true</echo>
-                    <debug>true</debug>
-                    <passFile>${glassfish.passwordFile}</passFile>
-                    <user>${glassfish.adminUser}</user>
-                    <domain>
-                        <httpPort>${glassfish.httpPort}</httpPort>
-                        <adminPort>${glassfish.adminPort}</adminPort>
-                        <name>${glassfish.domain}</name>
-                    </domain>
-
-                    <components>
-                        <component>
-                            <name>${project.build.finalName}</name>
-                            <artifact>${project.build.directory}/${project.build.finalName}.war</artifact>
-                        </component>
-                    </components>
-                </configuration>
-            </plugin>
         </plugins>
 
     </build>
@@ -1107,6 +1086,30 @@
                     <targetJdk>1.6</targetJdk>
                 </configuration>
             </plugin>
+
+	    <plugin>
+	      <groupId>org.glassfish.maven.plugin</groupId>
+	      <artifactId>maven-glassfish-plugin</artifactId>
+	      <configuration>
+		<glassfishDirectory>${glassfish.home}</glassfishDirectory>
+		<echo>true</echo>
+		<debug>true</debug>
+		<passFile>${glassfish.passwordFile}</passFile>
+		<user>${glassfish.adminUser}</user>
+		<domain>
+		  <httpPort>${glassfish.httpPort}</httpPort>
+		  <adminPort>${glassfish.adminPort}</adminPort>
+		  <name>${glassfish.domain}</name>
+		</domain>
+		<components>
+		  <component>
+		    <name>${project.artifactId}</name>
+		    <artifact>${project.build.directory}/${project.build.finalName}.war</artifact>
+		  </component>
+		</components>
+	      </configuration>
+	    </plugin>
+
         </plugins>
     </reporting>
 
