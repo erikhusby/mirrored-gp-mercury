@@ -23,7 +23,7 @@ public class PageAdministrationBean extends AbstractJsfBean {
     @Inject
     private AuthenticationService authSvc;
     private String pagePath;
-    private String newGroupAuth = "";
+    private List<String> newGroupAuth = new LinkedList<String>();
 
     public Collection<PageAuthorization> getAllPageAuthorizations() {
 
@@ -53,11 +53,21 @@ public class PageAdministrationBean extends AbstractJsfBean {
         return fullGroupList;
     }
 
+    public List<String> getFullGroupList() {
+        List<String> tempList = new LinkedList<String>();
+
+        tempList.addAll(authSvc.retrieveAllGroups());
+
+        return tempList;
+    }
+
+
+
     public String addNewGroup() {
 
-        authSvc.addGroupToPage(pagePath, newGroupAuth);
+        authSvc.addGroupsToPage(pagePath, newGroupAuth);
 
-        newGroupAuth = "";
+        newGroupAuth = new LinkedList<String>();
 
         return redirect("/administration/page_admin_detail");
     }
@@ -70,11 +80,11 @@ public class PageAdministrationBean extends AbstractJsfBean {
         pagePath = pagePathIn;
     }
 
-    public String getNewGroupAuth() {
+    public List<String> getNewGroupAuth() {
         return newGroupAuth;
     }
 
-    public void setNewGroupAuth(String newGroupAuthIn) {
+    public void setNewGroupAuth(List<String> newGroupAuthIn) {
         newGroupAuth = newGroupAuthIn;
     }
 }

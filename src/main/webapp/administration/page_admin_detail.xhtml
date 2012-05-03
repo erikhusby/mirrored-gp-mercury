@@ -36,8 +36,11 @@
                 </p:column>
             </p:dataTable>
             <h:form>
-                <h:outputLabel for="newGroup">Add a new Group</h:outputLabel>
-                <p:inputText id="newGroup" value="#{pageAdministrationBean.newGroupAuth}" />
+                <h:outputLabel for="selectedGroup">Select one or more group(s) to assign to the Page Path:</h:outputLabel>
+                <h:selectManyListbox id="selectedGroup" required="true" value="#{pageAdministrationBean.newGroupAuth}">
+                    <f:selectItems value="#{pageAdministrationBean.fullGroupList}" var="grp"
+                                   itemValue="#{grp}" itemLabel="#{grp}" />
+                </h:selectManyListbox>
 
                 <p:commandButton value="Save" action="#{pageAdministrationBean.addNewGroup}" />
             </h:form>

@@ -75,10 +75,12 @@ public class AuthenticationService {
         return authorizationDao.findPageAuthorizationByPage(pagePath);
     }
 
-    public void addGroupToPage(String pagePath, String groupIn) {
+    public void addGroupsToPage(String pagePath, List<String> groupsIn) {
         PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
 
-        authorization.addGroupAccess(groupDao.findGroupByName(groupIn));
+        for(String currGroup:groupsIn) {
+            authorization.addGroupAccess(groupDao.findGroupByName(currGroup));
+        }
     }
 
 
