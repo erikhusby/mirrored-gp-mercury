@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -54,11 +55,11 @@ public class MolecularState implements Serializable {
         SINGLE_STRANDED
     }
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private MolecularEnvelope molecularEnvelope;
     private DNA_OR_RNA nucleicAcidState;
     private STRANDEDNESS strand;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private MolecularStateTemplate molecularStateTemplate = new MolecularStateTemplate();
 
     /**

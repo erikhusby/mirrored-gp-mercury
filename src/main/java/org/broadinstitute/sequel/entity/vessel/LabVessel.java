@@ -15,11 +15,14 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -39,35 +42,50 @@ public abstract class LabVessel  {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
     @Id
     private Long labVesselId;
+
     protected String label;
-    @OneToMany
+
+    @OneToMany(cascade = CascadeType.PERSIST)
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
-    @OneToMany
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private final Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     private MolecularState molecularState;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     private Project project;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel projectAuthority;
+
     // todo jmt fix this
     @Transient
     private ReadBucket readBucket;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel readBucketAuthority;
-    @OneToMany
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<AbstractLabEvent> transfersFrom = new HashSet<AbstractLabEvent>();
-    @OneToMany
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<AbstractLabEvent> transfersTo = new HashSet<AbstractLabEvent>();
+
     // todo jmt fix this
     @Transient
     private final Collection<Stalker> stalkers = new HashSet<Stalker>();
-    @OneToMany
+
+    @ManyToMany
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
-    @OneToMany
+
+    @ManyToMany
     private Set<Reagent> appliedReagents = new HashSet<Reagent>();
-    @OneToMany
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<LabVessel> containers = new HashSet<LabVessel>();
+
     @Embedded
     private UserRemarks userRemarks;
 

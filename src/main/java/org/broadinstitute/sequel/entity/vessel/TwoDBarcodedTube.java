@@ -3,31 +3,38 @@ package org.broadinstitute.sequel.entity.vessel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
+import org.broadinstitute.sequel.entity.labevent.Failure;
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.sample.StateChange;
-import org.broadinstitute.sequel.entity.labevent.Failure;
-import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
+import javax.persistence.Entity;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+@Entity
+@NamedQueries(
+        @NamedQuery(
+                name = "TwoDBarcodedTube.fetchByBarcodes",
+                query = "select t from TwoDBarcodedTube t where label in (:barcodes)"
+        )
+)
+/**
+ * Represents a tube with a two dimensional barcode on its bottom.  These tubes are usually stored in racks.
+ */
 public class TwoDBarcodedTube extends LabVessel {
 
     private static Log gLog = LogFactory.getLog(TwoDBarcodedTube.class);
     
-    private String twoDBarcode;
-
-    private List<RackOfTubes> racksOfTubes = new ArrayList<RackOfTubes>();
-    
+    @OneToMany
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
     
     public TwoDBarcodedTube(String twoDBarcode) {
@@ -35,7 +42,6 @@ public class TwoDBarcodedTube extends LabVessel {
         if (twoDBarcode == null) {
             throw new IllegalArgumentException("twoDBarcode must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
         }
-        this.twoDBarcode = twoDBarcode;
     }
 
     public TwoDBarcodedTube(String twoDBarcode,SampleSheet sheet) {
@@ -48,15 +54,11 @@ public class TwoDBarcodedTube extends LabVessel {
 //             throw new IllegalArgumentException("sheet must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
         } else {
             getSampleSheets().add(sheet);
-            sheet.addToVessel(this);
+//            sheet.addToVessel(this);
         }
-        this.twoDBarcode = twoDBarcode;
     }
 
-
-    @Override
-    public String getLabel() {
-        return this.twoDBarcode;
+    protected TwoDBarcodedTube() {
     }
 
     @Override
@@ -104,23 +106,6 @@ public class TwoDBarcodedTube extends LabVessel {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public String getLabCentricName() {
-        return this.twoDBarcode;
-    }
-
-    // rack.getSampleInstancesInPosition
-    //   if tube-level authority
-    //   if rack-level authority
-    //   for each other rack
-    //     rack.getSampleInstancesInPosition
-
-    // a sequence of ALL96 plate to ALL96 plate transfers can be compressed, because the wells can't move
-    // in a transfer to or from a rack, the tubes could change position
-    // working backwards:
-    // pooling transfer is a cherry pick, so authority has to be established tube to tube
-    // normalized catch registration is plate to rack, the source wells can't move
-    // hybridization is rack to plate, the tubes can move
     @Override
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
@@ -170,13 +155,5 @@ public class TwoDBarcodedTube extends LabVessel {
     @Override
     public Float getConcentration() {
         throw new RuntimeException("I haven't been written yet.");
-    }
-
-    public List<RackOfTubes> getRacksOfTubes() {
-        return this.racksOfTubes;
-    }
-
-    public void setRacksOfTubes(List<RackOfTubes> racksOfTubes) {
-        this.racksOfTubes = racksOfTubes;
     }
 }

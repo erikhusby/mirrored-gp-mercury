@@ -10,15 +10,16 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import java.util.Collection;
 import java.util.Set;
 @Entity
 public class PlateWell extends LabVessel {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private StaticPlate plate;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private WellName wellName;
     
     public PlateWell(StaticPlate p,WellName wellName) {

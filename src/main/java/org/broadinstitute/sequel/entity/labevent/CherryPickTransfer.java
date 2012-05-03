@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -21,12 +22,14 @@ public class CherryPickTransfer {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_CHERRY_PICK_TRANSFER")
     private Long cherryPickTransferId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel sourceVessel;
     private String sourcePosition;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel targetVessel;
     private String targetPosition;
+    @ManyToOne
+    private AbstractLabEvent labEvent;
 
     public CherryPickTransfer(VesselContainer<?> sourceVesselContainer, String sourcePosition,
             VesselContainer<?> targetVesselContainer, String targetPosition) {

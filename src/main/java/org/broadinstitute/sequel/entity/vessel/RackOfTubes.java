@@ -10,6 +10,7 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 
 import javax.persistence.Embedded;
+import javax.persistence.Entity;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -17,6 +18,7 @@ import java.util.Set;
 /**
  * A rack of tubes
  */
+@Entity
 public class RackOfTubes extends LabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
 
     @Embedded
@@ -24,6 +26,9 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
 
     public RackOfTubes(String label) {
         super(label);
+    }
+
+    protected RackOfTubes() {
     }
 
     @Override
@@ -91,5 +96,22 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
 
     public void setVesselContainer(VesselContainer<TwoDBarcodedTube> vesselContainer) {
         this.vesselContainer = vesselContainer;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof RackOfTubes)) return false;
+
+        RackOfTubes that = (RackOfTubes) o;
+
+        if (!this.label.equals(that.getLabel())) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.label.hashCode();
     }
 }

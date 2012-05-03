@@ -12,6 +12,8 @@ import org.broadinstitute.sequel.entity.sample.StateChange;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
@@ -21,6 +23,12 @@ import java.util.Set;
 /**
  * A traditional plate.
  */
+@NamedQueries(
+        @NamedQuery(
+                name = "StaticPlate.findByBarcode",
+                query = "select p from StaticPlate p where label = :barcode"
+        )
+)
 @Entity
 public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell>, Serializable {
 

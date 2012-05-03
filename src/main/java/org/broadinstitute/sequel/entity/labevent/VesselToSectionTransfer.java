@@ -2,8 +2,10 @@ package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
+import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -20,15 +22,16 @@ public class VesselToSectionTransfer {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_VESSEL_TO_SECTION_TRANSFER")
     private Long vesselToSectionTransferId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel sourceVessel;
     private String targetSection;
-    private VesselContainer targetVesselContainer;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private LabVessel targetVessel;
 
     public VesselToSectionTransfer(LabVessel sourceVessel, String targetSection, VesselContainer targetVesselContainer) {
         this.sourceVessel = sourceVessel;
         this.targetSection = targetSection;
-        this.targetVesselContainer = targetVesselContainer;
+        this.targetVessel = targetVesselContainer.getEmbedder();
     }
 
     protected VesselToSectionTransfer() {
@@ -43,6 +46,6 @@ public class VesselToSectionTransfer {
     }
 
     public VesselContainer getTargetVesselContainer() {
-        return targetVesselContainer;
+        return ((VesselContainerEmbedder)targetVessel).getVesselContainer();
     }
 }

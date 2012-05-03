@@ -240,11 +240,11 @@ public class LabEventTest {
     }
 
     private class Shearing {
-        private WorkflowDescription workflowDescription;
-        private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
-        private BettaLimsMessageFactory bettaLimsMessageFactory;
-        private LabEventFactory labEventFactory;
-        private LabEventHandler labEventHandler;
+        private final WorkflowDescription workflowDescription;
+        private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+        private final BettaLimsMessageFactory bettaLimsMessageFactory;
+        private final LabEventFactory labEventFactory;
+        private final LabEventHandler labEventHandler;
         private String shearPlateBarcode;
         private StaticPlate shearingPlate;
         private String shearCleanPlateBarcode;
@@ -275,12 +275,16 @@ public class LabEventTest {
         }
 
         public Shearing invoke() {
+            ShearingJaxb shearingJaxb = new ShearingJaxb(bettaLimsMessageFactory, new ArrayList<String>(mapBarcodeToTube.keySet()),
+                    "").invoke();
+            PlateTransferEventType shearingTransferEventJaxb = shearingJaxb.getShearingTransferEventJaxb();
+            PlateTransferEventType postShearingTransferCleanupEventJaxb = shearingJaxb.getPostShearingTransferCleanupEventJaxb();
+            PlateTransferEventType shearingQcEventJaxb = shearingJaxb.getShearingQcEventJaxb();
+            this.shearPlateBarcode = shearingJaxb.getShearPlateBarcode();
+            this.shearCleanPlateBarcode = shearingJaxb.getShearCleanPlateBarcode();
+
             // ShearingTransfer
             validateWorkflow(workflowDescription, "ShearingTransfer", mapBarcodeToTube.values());
-            shearPlateBarcode = "ShearPlate";
-            PlateTransferEventType shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate(
-                    "ShearingTransfer", "KioskRack", new ArrayList<String>(mapBarcodeToTube.keySet()), shearPlateBarcode);
-            // for each vessel, get most recent event, check whether it's a predecessor to the proposed event
             LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                     shearingTransferEventJaxb, mapBarcodeToTube, null);
             labEventHandler.processEvent(shearingTransferEventEntity, null);
@@ -291,9 +295,6 @@ public class LabEventTest {
 
             // PostShearingTransferCleanup
             validateWorkflow(workflowDescription, "PostShearingTransferCleanup", shearingPlate);
-            shearCleanPlateBarcode = "ShearCleanPlate";
-            PlateTransferEventType postShearingTransferCleanupEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                    "PostShearingTransferCleanup", shearPlateBarcode, shearCleanPlateBarcode);
             LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                     postShearingTransferCleanupEventJaxb, shearingPlate, null);
             labEventHandler.processEvent(postShearingTransferCleanupEntity, null);
@@ -307,12 +308,62 @@ public class LabEventTest {
 
             // ShearingQC
             validateWorkflow(workflowDescription, "ShearingQC", shearingCleanupPlate);
-            String shearQcPlateBarcode = "ShearQcPlate";
-            PlateTransferEventType shearingQcEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                    "ShearingQC", shearCleanPlateBarcode, shearQcPlateBarcode);
             LabEvent shearingQcEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                     shearingQcEventJaxb, shearingCleanupPlate, null);
             labEventHandler.processEvent(shearingQcEntity, null);
+            return this;
+        }
+
+    }
+
+    public static class ShearingJaxb {
+        private BettaLimsMessageFactory bettaLimsMessageFactory;
+        private List<String> tubeBarcodeList;
+        private String testPrefix;
+        private String shearPlateBarcode;
+        private String shearCleanPlateBarcode;
+
+        private PlateTransferEventType shearingTransferEventJaxb;
+        private PlateTransferEventType postShearingTransferCleanupEventJaxb;
+        private PlateTransferEventType shearingQcEventJaxb;
+
+        public ShearingJaxb(BettaLimsMessageFactory bettaLimsMessageFactory, List<String> tubeBarcodeList,
+                String testPrefix) {
+            this.bettaLimsMessageFactory = bettaLimsMessageFactory;
+            this.tubeBarcodeList = tubeBarcodeList;
+            this.testPrefix = testPrefix;
+        }
+
+        public PlateTransferEventType getShearingTransferEventJaxb() {
+            return shearingTransferEventJaxb;
+        }
+
+        public PlateTransferEventType getPostShearingTransferCleanupEventJaxb() {
+            return postShearingTransferCleanupEventJaxb;
+        }
+
+        public PlateTransferEventType getShearingQcEventJaxb() {
+            return shearingQcEventJaxb;
+        }
+
+        public String getShearPlateBarcode() {
+            return shearPlateBarcode;
+        }
+
+        public String getShearCleanPlateBarcode() {
+            return shearCleanPlateBarcode;
+        }
+
+        public ShearingJaxb invoke() {
+            shearPlateBarcode = "ShearPlate" + testPrefix;
+            shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate(
+                    "ShearingTransfer", "KioskRack" + testPrefix, tubeBarcodeList, shearPlateBarcode);
+            shearCleanPlateBarcode = "ShearCleanPlate" + testPrefix;
+            postShearingTransferCleanupEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
+                    "PostShearingTransferCleanup", shearPlateBarcode, shearCleanPlateBarcode);
+            String shearQcPlateBarcode = "ShearQcPlate" + testPrefix;
+            shearingQcEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
+                    "ShearingQC", shearCleanPlateBarcode, shearQcPlateBarcode);
             return this;
         }
     }
@@ -639,11 +690,11 @@ public class LabEventTest {
                     poolingCherryPicks);
             Map<String, TwoDBarcodedTube> mapBarcodeToPoolTube = new HashMap<String, TwoDBarcodedTube>();
             LabEvent poolingEntity = labEventFactory.buildCherryPickRackToRackDbFree(cherryPickJaxb,
-                    new HashMap<String, VesselContainer>() {{
+                    new HashMap<String, VesselContainer<?>>() {{
                         put(normCatchRackBarcode, normCatchRack.getVesselContainer());
                     }},
                     mapBarcodeToNormCatchTubes,
-                    new HashMap<String, VesselContainer>() {{
+                    new HashMap<String, VesselContainer<?>>() {{
                         put(poolRackBarcode, null);
                     }}, mapBarcodeToPoolTube
             );
@@ -666,11 +717,11 @@ public class LabEventTest {
                     denatureCherryPicks);
             Map<String, TwoDBarcodedTube> mapBarcodeToDenatureTube = new HashMap<String, TwoDBarcodedTube>();
             LabEvent denatureEntity = labEventFactory.buildCherryPickRackToRackDbFree(denatureJaxb,
-                    new HashMap<String, VesselContainer>() {{
+                    new HashMap<String, VesselContainer<?>>() {{
                         put(poolRackBarcode, poolingRack.getVesselContainer());
                     }},
                     mapBarcodeToPoolTube,
-                    new HashMap<String, VesselContainer>() {{
+                    new HashMap<String, VesselContainer<?>>() {{
                         put(denatureRackBarcode, null);
                     }}, mapBarcodeToDenatureTube
             );
@@ -695,11 +746,11 @@ public class LabEventTest {
                     stripTubeHolderBarcode, Arrays.asList(stripTubeBarcode), stripTubeCherryPicks);
             Map<String, StripTube> mapBarcodeToStripTube = new HashMap<String, StripTube>();
             LabEvent stripTubeTransferEntity = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeTransferJaxb,
-                    new HashMap<String, VesselContainer>() {{
+                    new HashMap<String, VesselContainer<?>>() {{
                         put(denatureRackBarcode, denatureRack.getVesselContainer());
                     }},
                     mapBarcodeToDenatureTube,
-                    new HashMap<String, VesselContainer>() {{
+                    new HashMap<String, VesselContainer<?>>() {{
                         put(stripTubeHolderBarcode, null);
                     }},
                     mapBarcodeToStripTube

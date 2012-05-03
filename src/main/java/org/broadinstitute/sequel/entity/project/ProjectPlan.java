@@ -4,7 +4,9 @@ import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -46,10 +48,10 @@ public class ProjectPlan {
     @Transient
     private Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private WorkflowDescription workflowDescription;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private Project project;
     
     private String planName;
@@ -73,7 +75,7 @@ public class ProjectPlan {
     @OneToMany
     private final Collection<JiraTicket> jiraTickets = new HashSet<JiraTicket>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Quote quote;
     
     public ProjectPlan(Project project,

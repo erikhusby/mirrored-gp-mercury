@@ -55,11 +55,14 @@ public class JiraTicket {
      * @param text
      */
     public void addComment(String text) {
-        try {
-            jiraService.addComment(ticketName,text);
-        }
-        catch(IOException  e) {
-            throw new RuntimeException("Could not log message '" + text + "' to jira ticket " + ticketName + ".  Is the jira server okay?",e);
+        // todo jmt remove null check after initializing service for entities
+        if (jiraService != null) {
+            try {
+                jiraService.addComment(ticketName,text);
+            }
+            catch(IOException  e) {
+                throw new RuntimeException("Could not log message '" + text + "' to jira ticket " + ticketName + ".  Is the jira server okay?",e);
+            }
         }
     }
 

@@ -6,10 +6,13 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -37,29 +40,38 @@ public abstract class AbstractLabEvent implements LabEvent {
     @SequenceGenerator(name = "SEQ_LAB_EVENT", sequenceName = "SEQ_LAB_EVENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_EVENT")
     private Long labEventId;
+
     private String eventLocation;
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private Person eventOperator;
+
     private Date eventDate;
-    @OneToMany
+
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "transfersFrom")
     private Set<LabVessel> sourceLabVessels = new HashSet<LabVessel>();
-    @OneToMany
+
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "transfersTo")
     private Set<LabVessel> targetLabVessels = new HashSet<LabVessel>();
-    @OneToMany
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> reagents = new HashSet<Reagent>();
+
     /** for transfers using a tip box, e.g. Bravo */
-    @OneToMany
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<SectionTransfer> sectionTransfers = new HashSet<SectionTransfer>();
+
     /** for random access transfers, e.g. MultiProbe */
-    @OneToMany
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<CherryPickTransfer>();
-    @OneToMany
+
+    @OneToMany(cascade = CascadeType.PERSIST)
     private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<VesselToSectionTransfer>();
     // todo jmt tube to tube transfers, or will they always be in a rack?
 
     private String quoteServerBatchId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private ProjectPlan projectPlanOverride;
     
     @Override

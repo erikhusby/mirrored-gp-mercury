@@ -7,7 +7,11 @@ import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.hibernate.annotations.Parent;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
+import javax.persistence.ManyToMany;
+import javax.persistence.MapKey;
+import javax.persistence.MapKeyColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 import java.util.Collection;
@@ -22,14 +26,16 @@ import java.util.Set;
 @SuppressWarnings("rawtypes")
 @Embeddable
 public class VesselContainer<T extends LabVessel> {
+
     /* rack holds tubes, tubes have barcodes and can be removed.
     * plate holds wells, wells can't be removed.
     * flowcell holds lanes.
     * PTP holds regions.
     * smartpac holds smrtcells, smrtcells are removed, but not replaced.
     * striptube holds tubes, tubes can't be removed, don't have barcodes. */
-    @OneToMany(targetEntity = LabVessel.class)
-    private Map<String, T> mapPositionToVessel = new HashMap<String, T>();
+    @ManyToMany(targetEntity = LabVessel.class, cascade = CascadeType.PERSIST)
+    @MapKeyColumn(name = "mapkey")
+    private final Map<String, T> mapPositionToVessel = new HashMap<String, T>();
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
     @Parent

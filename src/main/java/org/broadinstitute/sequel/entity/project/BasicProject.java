@@ -5,6 +5,7 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.entity.person.Person;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 
 @Entity
@@ -12,7 +13,7 @@ public class BasicProject extends Project {
     
     private static Log gLog = LogFactory.getLog(BasicProject.class);
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Person platformOwner;
     
     public BasicProject(String projectName,JiraTicket jiraTicket) {

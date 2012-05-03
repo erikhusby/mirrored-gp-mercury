@@ -12,7 +12,9 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleInstanceImpl;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
@@ -26,16 +28,15 @@ import java.util.Collection;
 @Entity
 public class BSPSample implements StartingSample {
 
-    @Id
-    private String sampleId;
-
     private static Log gLog = LogFactory.getLog(BSPSample.class);
 
+    @Id
     private  String sampleName;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private ProjectPlan projectPlan;
 
+    @Transient
     private BSPSampleDTO bspDTO;
 
     protected BSPSample() {}
