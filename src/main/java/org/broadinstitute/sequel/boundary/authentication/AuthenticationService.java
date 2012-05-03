@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.boundary.authentication;
 
+import org.broadinstitute.sequel.control.dao.authentication.AuthorizedGroupDao;
 import org.broadinstitute.sequel.control.dao.authentication.PageAuthorizationDao;
 import org.broadinstitute.sequel.entity.authentication.AuthorizedGroup;
 import org.broadinstitute.sequel.entity.authentication.PageAuthorization;
@@ -23,7 +24,7 @@ import java.util.List;
 public class AuthenticationService {
 
     @Inject private PageAuthorizationDao authorizationDao;
-
+    @Inject private AuthorizedGroupDao groupDao;
     /**
      *
      * retrieveAuthorizedGroups provides callers with a way to, based on a page access path, access the authorized
@@ -37,13 +38,17 @@ public class AuthenticationService {
     public Collection<String> retrieveAuthorizedGroups(String pagePath) {
         PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
 
-        List<String> groupList = null;
-        if(null != authorization) {
-
-            groupList = authorization.getGroupList();
-        }
-
+        List<String> groupList = authorization.getGroupList();
         return groupList;
+    }
+
+    public void addNewPageAuthorization(String pagePathIn, String authGroupIn) {
+        PageAuthorization page = new PageAuthorization(pagePathIn);
+        AuthorizedGroup grp = new AuthorizedGroup(authGroupIn);
+
+        page.addGroupAccess(grp);
+
+        authorizationDao.addNewPageAuthorization(page);
     }
 
     /**
@@ -60,6 +65,33 @@ public class AuthenticationService {
         return (null != authorization);
     }
 
+    public Collection<PageAuthorization> getAllAuthorizedPages() {
+        return authorizationDao.getAllPageAuthorizations();
+    }
+
+
+    public PageAuthorization findByPage(String pagePath) {
+        return authorizationDao.findPageAuthorizationByPage(pagePath);
+    }
+
+    public void addGroupToPage(String pagePath, String groupIn) {
+        PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
+
+        authorization.addGroupAccess(groupDao.findGroupByName(groupIn));
+    }
+
+
+    public Collection<String> retrieveAllGroups() {
+        Collection<AuthorizedGroup> groupList = groupDao.findAllGroups();
+
+        List<String> grpStringList = new LinkedList<String>();
+
+        for(AuthorizedGroup group:groupList) {
+            grpStringList.add(group.getGroupName());
+        }
+
+        return grpStringList;
+    }
 
 
 }

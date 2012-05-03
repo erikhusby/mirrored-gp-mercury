@@ -29,7 +29,8 @@ public class DB implements Serializable {
     public DB() {
         addWorkflowDescription(new WorkflowDescription("Hybrid Selection", "v7.2", null, null));
         addWorkflowDescription(new WorkflowDescription("Whole Genome Shotgun", "v7.2", null, null));
-        addPageAuthorization(new PageAuthorization("/projects/", "Sequel-Developers", "Sequel-ProjectManagers"));
+        initAuthorizedGroups();
+        initPageAuthorizations();
     }
 
     // Project
@@ -82,6 +83,31 @@ public class DB implements Serializable {
     public WorkflowDescription findByWorkflowDescriptionName(String workflowDescriptionName) {
         return workflowDescriptions.get(workflowDescriptionName);
     }
+
+    public void initPageAuthorizations() {
+
+        PageAuthorization page = new PageAuthorization("/projects/");
+
+        page.addGroupAccess(authorizedGroupMap.get("Sequel-Developers"));
+        page.addGroupAccess(authorizedGroupMap.get("Sequel-ProjectManagers"));
+        addPageAuthorization(page);
+
+    }
+
+    private void initAuthorizedGroups() {
+        AuthorizedGroup groupAll = new AuthorizedGroup("All");
+        addAuthorizedGroup(groupAll);
+        AuthorizedGroup groupDev = new AuthorizedGroup("Sequel-Developers");
+        addAuthorizedGroup(groupDev);
+        AuthorizedGroup groupPM = new AuthorizedGroup("Sequel-ProjectManagers");
+        addAuthorizedGroup(groupPM);
+        AuthorizedGroup groupLabUser = new AuthorizedGroup("Sequel-LabUsers");
+        addAuthorizedGroup(groupLabUser);
+        AuthorizedGroup groupLabManager = new AuthorizedGroup("Sequel-LabManagers");
+        addAuthorizedGroup(groupLabManager);
+
+    }
+
 
     public void addAuthorizedGroup(AuthorizedGroup groupIn) {
         this.authorizedGroupMap.put(groupIn.getGroupName(), groupIn);
