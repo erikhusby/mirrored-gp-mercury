@@ -27,8 +27,16 @@ public class QuoteServiceTest {
         quote = new Quote("DNA4JC",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))));
         priceItem = new PriceItem("Illumina Sequencing","1","Illumina Custom Hybrid Selection Library (93 sample batch size)","15","bannanas","DNA Sequencing");
     }
-    
-    
+
+
+    /**
+     * If this test fails because the quote has been used up, 
+     * visit the website {@link QAQuoteConnectionParams#QA_HOST},
+     * login with the credentials, run the {@link QuoteConnectionParameters#GET_ALL_SEQUENCING_QUOTES_URL},
+     * find a quote that doesn't expire for a while, and change {@link #quote} in
+     * @{link #setupLargeQuoteAndPriceItem}.
+     * @throws Exception
+     */
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_get_all_price_items() throws Exception {
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
