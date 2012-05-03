@@ -1,12 +1,8 @@
 package org.broadinstitute.sequel.presentation.tags.security;
 
-import org.broadinstitute.sequel.presentation.logout.SecurityBackingBean;
-
 import javax.faces.component.UIComponent;
 import javax.faces.view.facelets.FaceletContext;
-import javax.faces.view.facelets.TagAttribute;
 import javax.faces.view.facelets.TagConfig;
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -25,14 +21,15 @@ public abstract class AuthorizationTag extends SecureTagHandler{
 
     @Override
     public void apply(FaceletContext faceletContextIn, UIComponent uiComponentIn) throws IOException {
-        if(isAuthorized()) {
+        if(isAuthorized(faceletContextIn)) {
             this.nextHandler.apply(faceletContextIn, uiComponentIn);
-        } else {
+        }
+        else {
             alternateOptions();
         }
     }
 
     protected abstract void alternateOptions() ;
-    protected abstract boolean isAuthorized();
+    protected abstract boolean isAuthorized(FaceletContext faceletContextIn);
 
 }

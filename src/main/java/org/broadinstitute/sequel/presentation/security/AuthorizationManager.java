@@ -45,7 +45,7 @@ public class AuthorizationManager {
 
             Collection<String> authorizationGrps = authSvc.retrieveAuthorizedGroups(pageUri);
             for(String currGrp:authorizationGrps) {
-                if(request.isUserInRole(currGrp)) {
+                if(request.isUserInRole(currGrp) || currGrp.equals("all")) {
                     authorized = true;
                     break;
                 }
