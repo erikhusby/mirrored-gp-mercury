@@ -8,6 +8,8 @@ package org.broadinstitute.sequel.presentation.login;
 
 //import com.atlassian.crowd.application.jaas.CrowdLoginModule;
 
+import org.broadinstitute.sequel.presentation.AbstractJsfBean;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
@@ -26,7 +28,7 @@ import java.util.Map;
 
 @ManagedBean
 @RequestScoped
-public class UserLogin {
+public class UserLogin extends AbstractJsfBean {
 
     private String userName;
     private String password;

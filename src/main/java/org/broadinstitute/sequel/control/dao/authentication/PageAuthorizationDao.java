@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -55,5 +56,11 @@ public class PageAuthorizationDao {
     public void removePageAuthorization(String pageNameIn) {
         db.removePageAuthorization(findPageAuthorizationByPage(pageNameIn));
     }
+
+    public Collection<PageAuthorization> getAllPageAuthorizations() {
+        return db.getPageAuthorizationMap().values();
+    }
+
+
 
 }

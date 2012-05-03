@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.presentation.logout;
 
 import org.broadinstitute.sequel.boundary.authentication.AuthenticationService;
+import org.broadinstitute.sequel.presentation.AbstractJsfBean;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
@@ -19,7 +20,7 @@ import java.util.logging.Logger;
 
 @ManagedBean
 @RequestScoped
-public class SecurityBackingBean {
+public class SecurityBackingBean extends AbstractJsfBean {
 
     @Inject
     private AuthenticationService authSvc;

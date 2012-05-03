@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Created by IntelliJ IDEA.
+  User: scottmat
+  Date: 5/3/12
+  Time: 2:07 PM
+-->
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Simple JSF Facelets page</title>
+</h:head>
+
+<h:body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="authPagePath" value="#{pageAdministrationBean.pagePath}" required="true" />
+            </f:metadata>
+        </ui:define>
+        <ui:define name="title">Page Administration Detail</ui:define>
+        <ui:define name="body">
+
+            #{pageAdministrationBean.pagePath}
+            <p:dataTable value="#{pageAdministrationBean.groupList}" var="grp">
+                <p:column headerText="Authorized Group Name">
+                    #{grp}
+                </p:column>
+            </p:dataTable>
+            <h:form>
+                <h:outputLabel for="newGroup">Add a new Group</h:outputLabel>
+                <p:inputText id="newGroup" value="#{pageAdministrationBean.newGroupAuth}" />
+
+                <p:commandButton value="Save" action="#{pageAdministrationBean.addNewGroup}" />
+            </h:form>
+        </ui:define>
+    </ui:composition>
+
+</h:body>
+
+</html>
