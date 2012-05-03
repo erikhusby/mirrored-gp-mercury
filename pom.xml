@@ -161,7 +161,7 @@
         <jersey.version>1.10</jersey.version>
         <!--<jersey.version>1.12</jersey.version>-->
 
-        <jbossas_7.version>7.1.0.Final</jbossas_7.version>
+        <jbossas_7.version>7.1.1.Final</jbossas_7.version>
     </properties>
 
     <profiles>
@@ -502,9 +502,12 @@
                 <dependency>
                     <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-arquillian-container-managed</artifactId>
-                    <!--<version>7.1.1.Final</version>-->
-                    <!--<version>7.0.2.Final</version>-->
                     <version>${jbossas_7.version}</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.arquillian.protocol</groupId>
+                    <artifactId>arquillian-protocol-servlet</artifactId>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -560,7 +563,7 @@
                 <dependency>
                     <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-arquillian-container-remote</artifactId>
-                    <version>7.1.1.Final</version>
+                    <version>${jbossas_7.version}</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -862,6 +865,7 @@
             <version>${jersey.version}</version>
         </dependency>
 
+        <!-- disable when deploying to JBoss AS 7 -->
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
@@ -873,6 +877,7 @@
             <artifactId>jersey-json</artifactId>
             <version>${jersey.version}</version>
         </dependency>
+
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>

@@ -23,7 +23,7 @@ public class DeploymentBuilder {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, SEQUEL_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
-                .merge(importMain(), "WEB-INF/classes");
+                .addPackages(true, "org.broadinstitute.sequel");
         war = addWarDependencies(war);
         return war;
     }
@@ -57,13 +57,6 @@ public class DeploymentBuilder {
         sb.append("  </alternatives>\n")
                 .append("</beans>");
         return buildSequelWar(sb.toString());
-    }
-
-    private static JavaArchive importMain() {
-        JavaArchive archive = ShrinkWrap.create(JavaArchive.class, "SequeL.jar")
-                .addAsDirectory("src/main/resources")
-                .addPackages(true, "org.broadinstitute.sequel");
-        return archive;
     }
 
     private static JavaArchive addTestHelpers(JavaArchive archive) {
