@@ -22,15 +22,17 @@ public class CreatePageAuthorization extends AbstractJsfBean {
     @Inject private AuthenticationService authSvc;
 
     public String pagePath;
-    public String assignedGroup;
+    public List<String> assignedGroup = new LinkedList<String>();
 
 
     public String createNewPage() {
 
         String direction = "/administration/page_administration.xhtml";
 
-        if(null != pagePath)
-        authSvc.addNewPageAuthorization(pagePath, assignedGroup);
+        if(null != pagePath) {
+
+            authSvc.addNewPageAuthorization(pagePath, assignedGroup);
+        }
 
         return redirect(direction);
 
@@ -52,11 +54,11 @@ public class CreatePageAuthorization extends AbstractJsfBean {
         pagePath = pagePathIn;
     }
 
-    public String getAssignedGroup() {
+    public List<String> getAssignedGroup() {
         return assignedGroup;
     }
 
-    public void setAssignedGroup(String assignedGroupIn) {
+    public void setAssignedGroup(List<String> assignedGroupIn) {
         assignedGroup = assignedGroupIn;
     }
 }

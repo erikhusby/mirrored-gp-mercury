@@ -29,10 +29,10 @@
                     <p:inputText id="pagePath" value="#{createPageAuthorization.pagePath}" />
 
                     <h:outputLabel for="selectedGroup">Select a group to assign to the Page Path:</h:outputLabel>
-                    <h:selectOneMenu id="selectedGroup" required="true" value="#{createPageAuthorization.assignedGroup}">
+                    <h:selectManyListbox id="selectedGroup" required="true" value="#{createPageAuthorization.assignedGroup}">
                         <f:selectItems value="#{createPageAuthorization.groupList}" var="grp"
                                        itemValue="#{grp}" itemLabel="#{grp}" />
-                    </h:selectOneMenu>
+                    </h:selectManyListbox>
                 </h:panelGrid>
 
                 <h:commandButton value="Create" action="#{createPageAuthorization.createNewPage}" />

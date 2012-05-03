@@ -42,11 +42,12 @@ public class AuthenticationService {
         return groupList;
     }
 
-    public void addNewPageAuthorization(String pagePathIn, String authGroupIn) {
+    public void addNewPageAuthorization(String pagePathIn, List<String> authGroupIn) {
         PageAuthorization page = new PageAuthorization(pagePathIn);
-        AuthorizedGroup grp = new AuthorizedGroup(authGroupIn);
-
-        page.addGroupAccess(grp);
+        for(String currGroup:authGroupIn) {
+            AuthorizedGroup grp = groupDao.findGroupByName(currGroup);
+            page.addGroupAccess(grp);
+        }
 
         authorizationDao.addNewPageAuthorization(page);
     }
