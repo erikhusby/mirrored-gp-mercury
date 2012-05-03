@@ -49,10 +49,18 @@ public class UserLogin {
     }
 
     public String authenticateUser() {
+
         String targetPage = "/index";
 
         try {
+
             authenticate();
+            FacesContext context = FacesContext.getCurrentInstance();
+            HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
+            String previouslyTargettedPage = (String)request.getAttribute("targetted_page");
+            if(null != previouslyTargettedPage ) {
+                targetPage =previouslyTargettedPage;
+            }
         } catch (LoginException le) {
              FacesContext.getCurrentInstance()
                         .addMessage(null, new FacesMessage("The username and password combination entered was not able to be authenticated."));

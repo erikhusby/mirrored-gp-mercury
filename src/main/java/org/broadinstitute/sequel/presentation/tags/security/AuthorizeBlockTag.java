@@ -1,9 +1,14 @@
 package org.broadinstitute.sequel.presentation.tags.security;
 
-import org.broadinstitute.sequel.boundary.authentication.AuthenticationService;
-
+import javax.el.ValueExpression;
+import javax.faces.context.FacesContext;
+import javax.faces.view.facelets.FaceletContext;
+import javax.faces.view.facelets.TagAttribute;
 import javax.faces.view.facelets.TagConfig;
-import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author Scott Matthews
@@ -12,17 +17,53 @@ import javax.inject.Inject;
  */
 public class AuthorizeBlockTag extends AuthorizationTag {
 
+    private final TagAttribute name;
+
+
     public AuthorizeBlockTag(TagConfig tagConfigIn) {
         super(tagConfigIn);
+        this.name = this.getRequiredAttribute("name");
+
     }
+
+    private List<String> getAttrValues(FaceletContext ctx, TagAttribute attr) {
+        List<String> values = new LinkedList<String>();
+        String value;
+        if (attr.isLiteral()) {
+            value = attr.getValue(ctx);
+        } else {
+            ValueExpression expression = attr.getValueExpression(ctx, String.class);
+            value = (String) expression.getValue(ctx);
+        }
+
+        if(null != value) {
+            values.addAll(Arrays.asList(value.split(",")));
+        }
+        return values;
+    }
+
 
     @Override
     protected void alternateOptions() {
-        //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
-    protected boolean isAuthorized() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+    protected boolean isAuthorized(FaceletContext faceletContextIn) {
+
+        boolean authorized = false;
+
+        FacesContext currContext = FacesContext.getCurrentInstance();
+        HttpServletRequest request = (HttpServletRequest)currContext.getExternalContext().getRequest();
+
+
+        for(String currGroup:getAttrValues(faceletContextIn, name)){
+            if(request.isUserInRole(currGroup) || currGroup.equals("all")){
+                authorized = true;
+                break;
+            }
+        }
+
+        return authorized;
     }
 }
