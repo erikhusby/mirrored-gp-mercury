@@ -25,7 +25,7 @@ public class AuthorizationFilter implements Filter {
     private String errorPage;
     @Inject AuthorizationManager manager;
 
-    private static final String LOGIN_PAGE = "/login/login.xhtml";
+    private static final String LOGIN_PAGE = "/security/login.xhtml";
 
     /**
      * init is the default initialization method for this filter.  It grabs the filter config (defined in the

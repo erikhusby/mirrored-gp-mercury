@@ -56,8 +56,8 @@
         <auth-method>FORM</auth-method>
         <realm-name>crowd_custom_realm</realm-name>
         <form-login-config>
-            <form-login-page>/login/login.xhtml</form-login-page>
-            <form-error-page>/login/login_error.xhtml</form-error-page>
+            <form-login-page>/security/login.xhtml</form-login-page>
+            <form-error-page>/security/login_error.xhtml</form-error-page>
         </form-login-config>
     </login-config>
 
@@ -67,7 +67,7 @@
 
         <init-param>
             <param-name>error_page</param-name>
-            <param-value>/login/authorization_error.xhtml</param-value>
+            <param-value>/security/authorization_error.xhtml</param-value>
         </init-param>
     </filter>
 
