@@ -20,7 +20,7 @@
         <handler-class>org.broadinstitute.sequel.presentation.tags.security.AuthorizeBlockTag</handler-class>
         <attribute>
             <description>Comma separated list of groups that this block will allow access.  Using "All" will mean all groups have access</description>
-            <name>groups</name>
+            <name>roles</name>
             <required>true</required>
         </attribute>
     </tag>

@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.control.dao.authentication;
 
 import org.broadinstitute.sequel.entity.DB;
-import org.broadinstitute.sequel.entity.authentication.AuthorizedGroup;
+import org.broadinstitute.sequel.entity.authentication.AuthorizedRole;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -15,19 +15,19 @@ import java.util.Collection;
  */
 @Stateful
 @RequestScoped
-public class AuthorizedGroupDao {
+public class AuthorizedRoleDao {
 
 
     @Inject
     private DB db;
 
 
-    public AuthorizedGroup findGroupByName(String groupNameIn) {
-        return db.getAuthorizedGroupMap().get(groupNameIn);
+    public AuthorizedRole findRoleByName(String roleNameIn) {
+        return db.getAuthorizedRoleMap().get(roleNameIn);
     }
 
-    public Collection<AuthorizedGroup> findAllGroups() {
-        return db.getAuthorizedGroupMap().values();
+    public Collection<AuthorizedRole> findAllRoles() {
+        return db.getAuthorizedRoleMap().values();
     }
 
 

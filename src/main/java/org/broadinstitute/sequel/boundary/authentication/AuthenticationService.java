@@ -1,8 +1,8 @@
 package org.broadinstitute.sequel.boundary.authentication;
 
-import org.broadinstitute.sequel.control.dao.authentication.AuthorizedGroupDao;
+import org.broadinstitute.sequel.control.dao.authentication.AuthorizedRoleDao;
 import org.broadinstitute.sequel.control.dao.authentication.PageAuthorizationDao;
-import org.broadinstitute.sequel.entity.authentication.AuthorizedGroup;
+import org.broadinstitute.sequel.entity.authentication.AuthorizedRole;
 import org.broadinstitute.sequel.entity.authentication.PageAuthorization;
 
 import javax.ejb.Stateless;
@@ -24,29 +24,31 @@ import java.util.List;
 public class AuthenticationService {
 
     @Inject private PageAuthorizationDao authorizationDao;
-    @Inject private AuthorizedGroupDao groupDao;
+    @Inject private AuthorizedRoleDao roleDao;
+
+
     /**
      *
-     * retrieveAuthorizedGroups provides callers with a way to, based on a page access path, access the authorized
-     * groups for that path.  The current implementation is flexible enough to support both directory paths and full
+     * retrieveAuthorizedRoles provides callers with a way to, based on a page access path, access the authorized
+     * roles for that path.  The current implementation is flexible enough to support both directory paths and full
      * page paths
      *
      *
      * @param pagePath
      * @return
      */
-    public Collection<String> retrieveAuthorizedGroups(String pagePath) {
+    public Collection<String> retrieveAuthorizedRoles(String pagePath) {
         PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
 
-        List<String> groupList = authorization.getGroupList();
-        return groupList;
+        List<String> roleList = authorization.getRoleList();
+        return roleList;
     }
 
-    public void addNewPageAuthorization(String pagePathIn, List<String> authGroupIn) {
+    public void addNewPageAuthorization(String pagePathIn, List<String> authRoleIn) {
         PageAuthorization page = new PageAuthorization(pagePathIn);
-        for(String currGroup:authGroupIn) {
-            AuthorizedGroup grp = groupDao.findGroupByName(currGroup);
-            page.addGroupAccess(grp);
+        for(String currRole:authRoleIn) {
+            AuthorizedRole role = roleDao.findRoleByName(currRole);
+            page.addRoleAccess(role);
         }
 
         authorizationDao.addNewPageAuthorization(page);
@@ -75,25 +77,25 @@ public class AuthenticationService {
         return authorizationDao.findPageAuthorizationByPage(pagePath);
     }
 
-    public void addGroupsToPage(String pagePath, List<String> groupsIn) {
+    public void addRolesToPage(String pagePath, List<String> rolesIn) {
         PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
 
-        for(String currGroup:groupsIn) {
-            authorization.addGroupAccess(groupDao.findGroupByName(currGroup));
+        for(String currRole:rolesIn) {
+            authorization.addRoleAccess(roleDao.findRoleByName(currRole));
         }
     }
 
 
-    public Collection<String> retrieveAllGroups() {
-        Collection<AuthorizedGroup> groupList = groupDao.findAllGroups();
+    public Collection<String> retrieveAllRoles() {
+        Collection<AuthorizedRole> roleList = roleDao.findAllRoles();
 
-        List<String> grpStringList = new LinkedList<String>();
+        List<String> roleStringList = new LinkedList<String>();
 
-        for(AuthorizedGroup group:groupList) {
-            grpStringList.add(group.getGroupName());
+        for(AuthorizedRole role:roleList) {
+            roleStringList.add(role.getRoleName());
         }
 
-        return grpStringList;
+        return roleStringList;
     }
 
 

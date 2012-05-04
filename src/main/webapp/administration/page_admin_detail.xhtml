@@ -30,19 +30,19 @@
         <ui:define name="body">
 
             #{pageAdministrationBean.pagePath}
-            <p:dataTable value="#{pageAdministrationBean.groupList}" var="grp">
-                <p:column headerText="Authorized Group Name">
+            <p:dataTable value="#{pageAdministrationBean.roleList}" var="grp">
+                <p:column headerText="Authorized Role Name">
                     #{grp}
                 </p:column>
             </p:dataTable>
             <h:form>
-                <h:outputLabel for="selectedGroup">Select one or more group(s) to assign to the Page Path:</h:outputLabel>
-                <h:selectManyListbox id="selectedGroup" required="true" value="#{pageAdministrationBean.newGroupAuth}">
-                    <f:selectItems value="#{pageAdministrationBean.fullGroupList}" var="grp"
-                                   itemValue="#{grp}" itemLabel="#{grp}" />
+                <h:outputLabel for="selectedRole">Select one or more role(s) to assign to the Page Path:</h:outputLabel>
+                <h:selectManyListbox id="selectedRole" required="true" value="#{pageAdministrationBean.newRoleAuth}">
+                    <f:selectItems value="#{pageAdministrationBean.fullRoleList}" var="role"
+                                   itemValue="#{role}" itemLabel="#{role}" />
                 </h:selectManyListbox>
 
-                <p:commandButton value="Save" action="#{pageAdministrationBean.addNewGroup}" />
+                <p:commandButton value="Save" action="#{pageAdministrationBean.addNewRole}" />
             </h:form>
         </ui:define>
     </ui:composition>

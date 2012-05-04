@@ -1,13 +1,10 @@
 package org.broadinstitute.sequel.presentation.security;
 
 import org.broadinstitute.sequel.boundary.authentication.AuthenticationService;
-import org.broadinstitute.sequel.entity.authentication.PageAuthorization;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
-import javax.faces.context.FacesContext;
 import javax.inject.Inject;
-import javax.naming.AuthenticationNotSupportedException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 
@@ -43,7 +40,7 @@ public class AuthorizationManager {
         HttpServletRequest request =requestIn;
         if(authSvc.isPageProtected(pageUri)) {
 
-            Collection<String> authorizationGrps = authSvc.retrieveAuthorizedGroups(pageUri);
+            Collection<String> authorizationGrps = authSvc.retrieveAuthorizedRoles(pageUri);
             for(String currGrp:authorizationGrps) {
                 if(request.isUserInRole(currGrp) || currGrp.equals("All")) {
                     authorized = true;
