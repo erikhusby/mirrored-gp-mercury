@@ -39,7 +39,7 @@ public class RunLaneResourceBadThriftTest  {
         IlluminaRunResource runLaneResource = new IlluminaRunResource(new QAThriftConfiguration());
         LIMQueries.Client limQueries = getMockClient();
 
-        EasyMock.expect(limQueries.fetchSingleLane((String)EasyMock.anyObject(),EasyMock.anyShort())).andReturn(null);
+        EasyMock.expect(limQueries.fetchRun((String)EasyMock.anyObject())).andReturn(null);
 
         EasyMock.replay(limQueries);
         runLaneResource.getRun(limQueries, getMockTransport(), "foo");
@@ -50,7 +50,7 @@ public class RunLaneResourceBadThriftTest  {
         IlluminaRunResource runLaneResource = new IlluminaRunResource(new QAThriftConfiguration());
         LIMQueries.Client limQueries = getMockClient();
 
-        EasyMock.expect(limQueries.fetchSingleLane((String)EasyMock.anyObject(),EasyMock.anyShort())).andThrow(
+        EasyMock.expect(limQueries.fetchRun((String)EasyMock.anyObject())).andThrow(
                 new TZIMSException("something blew up remotely")
                 );
 
@@ -63,7 +63,7 @@ public class RunLaneResourceBadThriftTest  {
         IlluminaRunResource runLaneResource = new IlluminaRunResource(new QAThriftConfiguration());
         LIMQueries.Client limQueries = getMockClient();
 
-        EasyMock.expect(limQueries.fetchSingleLane((String)EasyMock.anyObject(),EasyMock.anyShort())).andThrow(
+        EasyMock.expect(limQueries.fetchRun((String)EasyMock.anyObject())).andThrow(
                 new TException("something blew up remotely")
         );
 

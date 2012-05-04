@@ -30,7 +30,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 
-public class RunLaneResourceTest extends ContainerTest {
+public class IlluminaRunResourceTest extends ContainerTest {
 
     @Inject
     IlluminaRunResource runLaneResource;
