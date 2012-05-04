@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.entity;
 
-import org.broadinstitute.sequel.entity.authentication.AuthorizedGroup;
+import org.broadinstitute.sequel.entity.authentication.AuthorizedRole;
 import org.broadinstitute.sequel.entity.authentication.PageAuthorization;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
@@ -24,12 +24,12 @@ public class DB implements Serializable {
     private Map<String, Project> projects = new HashMap<String, Project>();
     private Map<String, WorkflowDescription> workflowDescriptions = new HashMap<String, WorkflowDescription>();
     private Map<String, PageAuthorization> pageAuthorizationMap = new HashMap<String, PageAuthorization>();
-    private Map<String, AuthorizedGroup> authorizedGroupMap = new HashMap<String, AuthorizedGroup>();
+    private Map<String, AuthorizedRole> authorizedRoleMap = new HashMap<String, AuthorizedRole>();
 
     public DB() {
         addWorkflowDescription(new WorkflowDescription("Hybrid Selection", "v7.2", null, null));
         addWorkflowDescription(new WorkflowDescription("Whole Genome Shotgun", "v7.2", null, null));
-        initAuthorizedGroups();
+        initAuthorizedRoles();
         initPageAuthorizations();
     }
 
@@ -88,37 +88,37 @@ public class DB implements Serializable {
 
         PageAuthorization page = new PageAuthorization("/projects/");
 
-        page.addGroupAccess(authorizedGroupMap.get("Sequel-Developers"));
-        page.addGroupAccess(authorizedGroupMap.get("Sequel-ProjectManagers"));
+        page.addRoleAccess(authorizedRoleMap.get("Sequel-Developers"));
+        page.addRoleAccess(authorizedRoleMap.get("Sequel-ProjectManagers"));
         addPageAuthorization(page);
 
     }
 
-    private void initAuthorizedGroups() {
-        AuthorizedGroup groupAll = new AuthorizedGroup("All");
-        addAuthorizedGroup(groupAll);
-        AuthorizedGroup groupDev = new AuthorizedGroup("Sequel-Developers");
-        addAuthorizedGroup(groupDev);
-        AuthorizedGroup groupPM = new AuthorizedGroup("Sequel-ProjectManagers");
-        addAuthorizedGroup(groupPM);
-        AuthorizedGroup groupLabUser = new AuthorizedGroup("Sequel-LabUsers");
-        addAuthorizedGroup(groupLabUser);
-        AuthorizedGroup groupLabManager = new AuthorizedGroup("Sequel-LabManagers");
-        addAuthorizedGroup(groupLabManager);
+    private void initAuthorizedRoles() {
+        AuthorizedRole roleAll = new AuthorizedRole("All");
+        addAuthorizedRole(roleAll);
+        AuthorizedRole roleDev = new AuthorizedRole("Sequel-Developers");
+        addAuthorizedRole(roleDev);
+        AuthorizedRole rolePM = new AuthorizedRole("Sequel-ProjectManagers");
+        addAuthorizedRole(rolePM);
+        AuthorizedRole roleLabUser = new AuthorizedRole("Sequel-LabUsers");
+        addAuthorizedRole(roleLabUser);
+        AuthorizedRole roleLabManager = new AuthorizedRole("Sequel-LabManagers");
+        addAuthorizedRole(roleLabManager);
 
     }
 
 
-    public void addAuthorizedGroup(AuthorizedGroup groupIn) {
-        this.authorizedGroupMap.put(groupIn.getGroupName(), groupIn);
+    public void addAuthorizedRole(AuthorizedRole RoleIn) {
+        this.authorizedRoleMap.put(RoleIn.getRoleName(), RoleIn);
     }
 
-    public void removeAuthorizedGroup(AuthorizedGroup groupIn) {
-        this.authorizedGroupMap.remove(groupIn);
+    public void removeAuthorizedRole(AuthorizedRole roleIn) {
+        this.authorizedRoleMap.remove(roleIn);
     }
 
-    public Map<String, AuthorizedGroup> getAuthorizedGroupMap() {
-        return authorizedGroupMap;
+    public Map<String, AuthorizedRole> getAuthorizedRoleMap() {
+        return authorizedRoleMap;
     }
 
     public void addPageAuthorization(PageAuthorization newAuthorizationIn) {

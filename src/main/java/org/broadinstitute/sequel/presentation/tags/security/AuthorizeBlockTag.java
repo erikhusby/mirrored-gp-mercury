@@ -17,12 +17,12 @@ import java.util.List;
  */
 public class AuthorizeBlockTag extends AuthorizationTag {
 
-    private final TagAttribute groups;
+    private final TagAttribute roles;
 
 
     public AuthorizeBlockTag(TagConfig tagConfigIn) {
         super(tagConfigIn);
-        this.groups = this.getRequiredAttribute("groups");
+        this.roles = this.getRequiredAttribute("roles");
 
     }
 
@@ -57,7 +57,7 @@ public class AuthorizeBlockTag extends AuthorizationTag {
         HttpServletRequest request = (HttpServletRequest)currContext.getExternalContext().getRequest();
 
 
-        for(String currGroup:getAttrValues(faceletContextIn, groups)){
+        for(String currGroup:getAttrValues(faceletContextIn, roles)){
             if(request.isUserInRole(currGroup) || currGroup.equals("All")){
                 authorized = true;
                 break;

@@ -23,7 +23,7 @@ public class PageAdministrationBean extends AbstractJsfBean {
     @Inject
     private AuthenticationService authSvc;
     private String pagePath;
-    private List<String> newGroupAuth = new LinkedList<String>();
+    private List<String> newroleAuth = new LinkedList<String>();
 
     public Collection<PageAuthorization> getAllPageAuthorizations() {
 
@@ -32,42 +32,33 @@ public class PageAdministrationBean extends AbstractJsfBean {
         return allPgs;
     }
 
-    public Collection<String>  getGroupList () {
+    public Collection<String> getRoleList() {
 
-
-        Collection<String> fullGroupList = null;
-//        String fullGroupList = "";
+        Collection<String> fullRoleList = null;
         if(null != pagePath) {
-            Collection<String> groupList = authSvc.retrieveAuthorizedGroups(pagePath);
+            Collection<String> roleList = authSvc.retrieveAuthorizedRoles(pagePath);
 
-//            StringBuilder listBuilder = new StringBuilder();
-//            for(String currGroup:groupList) {
-//                if(!listBuilder.toString().isEmpty()) {
-//                    listBuilder.append(", ")
-//                }
-//                listBuilder.append(groupList);
-//            }
-            fullGroupList = groupList;
+            fullRoleList = roleList;
         }
 
-        return fullGroupList;
+        return fullRoleList;
     }
 
-    public List<String> getFullGroupList() {
+    public List<String> getFullRoleList() {
         List<String> tempList = new LinkedList<String>();
 
-        tempList.addAll(authSvc.retrieveAllGroups());
+        tempList.addAll(authSvc.retrieveAllRoles());
 
         return tempList;
     }
 
 
 
-    public String addNewGroup() {
+    public String addNewRole() {
 
-        authSvc.addGroupsToPage(pagePath, newGroupAuth);
+        authSvc.addRolesToPage(pagePath, newroleAuth);
 
-        newGroupAuth = new LinkedList<String>();
+        newroleAuth = new LinkedList<String>();
 
         return redirect("/administration/page_admin_detail");
     }
@@ -80,11 +71,11 @@ public class PageAdministrationBean extends AbstractJsfBean {
         pagePath = pagePathIn;
     }
 
-    public List<String> getNewGroupAuth() {
-        return newGroupAuth;
+    public List<String> getNewRoleAuth() {
+        return newroleAuth;
     }
 
-    public void setNewGroupAuth(List<String> newGroupAuthIn) {
-        newGroupAuth = newGroupAuthIn;
+    public void setNewRoleAuth(List<String> newRoleAuthIn) {
+        newroleAuth = newRoleAuthIn;
     }
 }

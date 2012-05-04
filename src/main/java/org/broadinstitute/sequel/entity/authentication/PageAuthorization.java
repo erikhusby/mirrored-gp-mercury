@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ *
+ * PageAuthorization is an entity class
  * @author Scott Matthews
  *         Date: 5/1/12
  *         Time: 4:02 PM
@@ -12,27 +14,19 @@ public class PageAuthorization {
 
     private Long authorizationId;
     private String pagePath;
-    private List<AuthorizedGroup> groupAccess = new LinkedList<AuthorizedGroup>();
+    private List<AuthorizedRole> roleAccess = new LinkedList<AuthorizedRole>();
 
     public PageAuthorization(String pagePathIn) {
         pagePath = pagePathIn;
     }
 
-    public PageAuthorization(String pagePathIn, String ... groupsIn) {
-        this(pagePathIn);
-        for(String currGrp:groupsIn) {
-            groupAccess.add(new AuthorizedGroup(currGrp));
+    public List<String> getRoleList() {
+        List<String> authorizedRoles = new LinkedList<String>();
+
+        for(AuthorizedRole currRole: this.getRoleAccess()) {
+            authorizedRoles.add(currRole.getRoleName());
         }
-    }
-
-
-    public List<String> getGroupList() {
-        List<String> authorizedGroups = new LinkedList<String>();
-
-        for(AuthorizedGroup currGroup: this.getGroupAccess()) {
-            authorizedGroups.add(currGroup.getGroupName());
-        }
-        return authorizedGroups;
+        return authorizedRoles;
     }
 
     public Long getAuthorizationId() {
@@ -51,15 +45,15 @@ public class PageAuthorization {
         pagePath = pagePathIn;
     }
 
-    public List<AuthorizedGroup> getGroupAccess() {
-        return groupAccess;
+    public List<AuthorizedRole> getRoleAccess() {
+        return roleAccess;
     }
 
-    public void setGroupAccess(List<AuthorizedGroup> groupAccessIn) {
-        groupAccess = groupAccessIn;
+    public void setRoleAccess(List<AuthorizedRole> roleAccessIn) {
+        roleAccess = roleAccessIn;
     }
 
-    public void addGroupAccess(AuthorizedGroup newGroupIn) {
-        this.groupAccess.add(newGroupIn);
+    public void addRoleAccess(AuthorizedRole newRoleIn) {
+        this.roleAccess.add(newRoleIn);
     }
 }

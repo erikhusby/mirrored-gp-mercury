@@ -28,9 +28,9 @@
                     <h:outputLabel for="pagePath">Enter Page Path:</h:outputLabel>
                     <p:inputText id="pagePath" value="#{createPageAuthorization.pagePath}" />
 
-                    <h:outputLabel for="selectedGroup">Select a group to assign to the Page Path:</h:outputLabel>
-                    <h:selectManyListbox id="selectedGroup" required="true" value="#{createPageAuthorization.assignedGroup}">
-                        <f:selectItems value="#{createPageAuthorization.groupList}" var="grp"
+                    <h:outputLabel for="selectedRole">Select a role to assign to the Page Path:</h:outputLabel>
+                    <h:selectManyListbox id="selectedRole" required="true" value="#{createPageAuthorization.assignedRole}">
+                        <f:selectItems value="#{createPageAuthorization.roleList}" var="grp"
                                        itemValue="#{grp}" itemLabel="#{grp}" />
                     </h:selectManyListbox>
                 </h:panelGrid>
