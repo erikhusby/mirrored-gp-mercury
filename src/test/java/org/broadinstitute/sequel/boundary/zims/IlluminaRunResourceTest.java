@@ -2,7 +2,6 @@ package org.broadinstitute.sequel.boundary.zims;
 
 import com.sun.jersey.api.client.Client;
 import edu.mit.broad.prodinfo.thrift.lims.*;
-import org.apache.derby.iapi.tools.run;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
