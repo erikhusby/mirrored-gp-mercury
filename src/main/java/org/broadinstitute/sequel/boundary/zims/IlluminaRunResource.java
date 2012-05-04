@@ -141,7 +141,7 @@ public class IlluminaRunResource {
                                 zamboniLibrary.getTargetLaneCoverage());
                         libraries.add(libBean);
                     }
-                    runBean.addChamber(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(),libraries));
+                    runBean.addChamber(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(),libraries,tZamboniLane.getPrimer()));
                 }
             }
         }

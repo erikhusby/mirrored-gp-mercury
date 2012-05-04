@@ -15,7 +15,7 @@ public class ZimsIlluminaRun {
     @XmlAttribute(name = "barcode")
     private String runBarcode;
     
-    @XmlElement(name = "chambers")
+    @XmlElement(name = "lane")
     private final Collection<ZimsIlluminaChamber> chambers = new HashSet<ZimsIlluminaChamber>();
 
     public ZimsIlluminaRun() {}
