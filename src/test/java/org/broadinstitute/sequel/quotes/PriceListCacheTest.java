@@ -6,9 +6,12 @@ import org.testng.annotations.Test;
 
 import java.util.Collection;
 
+import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+
 public class PriceListCacheTest {
     
-    @Test(groups = {"DatabaseFree"})
+    @Test(groups = DATABASE_FREE)
     public void test_gsp_platform() {
         PriceList priceList = new PriceList();
         PriceItem item1 = new PriceItem("Illumina Sequencing","123","101bp MiSeq","5","Sample",PriceItem.GSP_PLATFORM_NAME);
@@ -27,7 +30,7 @@ public class PriceListCacheTest {
         Assert.assertTrue(priceItems.contains(item2));
     }
     
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void test_gsp_prices() throws Exception {
         PriceListCache cache = new PriceListCache(new QuoteServiceImpl(new QAQuoteConnectionParams()).getAllPriceItems());
         Assert.assertFalse(cache.getGSPPriceList().isEmpty());
