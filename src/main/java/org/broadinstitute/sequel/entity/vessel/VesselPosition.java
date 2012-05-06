@@ -1,9 +1,6 @@
 package org.broadinstitute.sequel.entity.vessel;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-
-// this should probably be an enum
+// todo jmt need to deal with short names in XML, e.g. A1 vs A01
 public enum VesselPosition {
     A01,
     A02,

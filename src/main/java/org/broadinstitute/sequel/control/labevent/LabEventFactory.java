@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 /**
  * Creates Lab Event entities from BettaLIMS JAXB beans
  */
-@SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass"})
+@SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "serial", "CloneableClassWithoutClone", "ClassExtendsConcreteCollection"})
 public class LabEventFactory {
 
     public static final String SECTION_ALL_96 = "ALL96";
@@ -116,22 +116,27 @@ public class LabEventFactory {
 
     private Map<String, RackOfTubes> buildMapBarcodeToRack(List<PositionMapType> positionMap) {
         Map<String, RackOfTubes> mapBarcodeToSourceRack = new HashMap<String, RackOfTubes>();
-        List<Map.Entry<String, String>> positionBarcodeList  = new ArrayList<Map.Entry<String, String>>();
         for (PositionMapType positionMapType : positionMap) {
-            for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
-                positionBarcodeList.add(new AbstractMap.SimpleEntry<String, String>(
-                        receptacleType.getPosition(), receptacleType.getBarcode()));
-            }
-            String digest = RackOfTubes.makeDigest(positionBarcodeList);
-            List<RackOfTubes> racksOfTubes = rackOfTubesDao.findByDigest(digest);
-            RackOfTubes rackOfTubes = null;
-            // todo jmt handle digest collision
-            if(!racksOfTubes.isEmpty()) {
-                rackOfTubes = racksOfTubes.get(0);
-            }
+            RackOfTubes rackOfTubes = fetchRack(positionMapType);
             mapBarcodeToSourceRack.put(positionMapType.getBarcode(), rackOfTubes);
         }
         return mapBarcodeToSourceRack;
+    }
+
+    private RackOfTubes fetchRack(PositionMapType positionMapType) {
+        List<Map.Entry<String, String>> positionBarcodeList  = new ArrayList<Map.Entry<String, String>>();
+        for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+            positionBarcodeList.add(new AbstractMap.SimpleEntry<String, String>(
+                    receptacleType.getPosition(), receptacleType.getBarcode()));
+        }
+        String digest = RackOfTubes.makeDigest(positionBarcodeList);
+        List<RackOfTubes> racksOfTubes = rackOfTubesDao.findByDigest(digest);
+        RackOfTubes rackOfTubes = null;
+        // todo jmt handle digest collision
+        if(!racksOfTubes.isEmpty()) {
+            rackOfTubes = racksOfTubes.get(0);
+        }
+        return rackOfTubes;
     }
 
     public LabEvent buildCherryPickRackToRackDbFree(PlateCherryPickEvent plateCherryPickEvent,
@@ -225,6 +230,7 @@ public class LabEventFactory {
     public LabEvent buildFromBettaLims(PlateTransferEventType plateTransferEvent) {
         Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes = null;
         StaticPlate sourcePlate = null;
+        RackOfTubes sourceRackOfTubes = null;
         if(plateTransferEvent.getSourcePositionMap() == null) {
             if(plateTransferEvent.getSourcePlate().getPhysType().equals(PHYS_TYPE_STRIP_TUBE) &&
                     plateTransferEvent.getPlate().getPhysType().equals(PHYS_TYPE_FLOWCELL)) {
@@ -234,15 +240,20 @@ public class LabEventFactory {
             }
             sourcePlate = this.staticPlateDAO.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
         } else {
-            // todo jmt hash the tube positions, fetch any existing tube formation
+            sourceRackOfTubes = fetchRack(plateTransferEvent.getSourcePositionMap());
             mapBarcodeToSourceTubes = findTubesByBarcodes(plateTransferEvent.getSourcePositionMap());
+            if(sourceRackOfTubes == null) {
+                sourceRackOfTubes = buildRack(mapBarcodeToSourceTubes, plateTransferEvent.getSourcePlate(), plateTransferEvent.getSourcePositionMap());
+            }
         }
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes = null;
         StaticPlate targetPlate = null;
+        RackOfTubes targetRackOfTubes = null;
         if(plateTransferEvent.getPositionMap() == null) {
             targetPlate = this.staticPlateDAO.findByBarcode(plateTransferEvent.getPlate().getBarcode());
         } else {
+            targetRackOfTubes = fetchRack(plateTransferEvent.getPositionMap());
             mapBarcodeToTargetTubes = findTubesByBarcodes(plateTransferEvent.getPositionMap());
         }
 
@@ -259,16 +270,27 @@ public class LabEventFactory {
             // rack to ...
             if(plateTransferEvent.getPositionMap() == null) {
                 // plate
-                return buildFromBettaLimsRackToPlateDbFree(plateTransferEvent, mapBarcodeToSourceTubes, targetPlate);
+                if(targetRackOfTubes == null) {
+                    return buildFromBettaLimsRackToPlateDbFree(plateTransferEvent, mapBarcodeToSourceTubes, targetPlate);
+                } else {
+                    return buildFromBettaLimsRackToPlateDbFree(plateTransferEvent, targetRackOfTubes, targetPlate);
+                }
             } else {
                 // rack
-                return buildFromBettaLimsRackToRackDbFree(plateTransferEvent,
-                        buildRack(mapBarcodeToSourceTubes, plateTransferEvent.getSourcePlate(), plateTransferEvent.getSourcePositionMap()),
-                        mapBarcodeToTargetTubes);
+                if(targetRackOfTubes == null) {
+                    return buildFromBettaLimsRackToRackDbFree(plateTransferEvent,
+                            sourceRackOfTubes,
+                            mapBarcodeToTargetTubes);
+                } else {
+                    return buildFromBettaLimsRackToRackDbFree(plateTransferEvent,
+                            sourceRackOfTubes,
+                            targetRackOfTubes);
+                }
             }
         }
     }
 
+    // todo jmt combine following two methods?
     /**
      * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
      * lab event entity
@@ -341,6 +363,7 @@ public class LabEventFactory {
         return rackOfTubes;
     }
 
+    // todo jmt combine following two methods?
     public LabEvent buildFromBettaLimsRackToRackDbFree(
             PlateTransferEventType plateTransferEvent,
             RackOfTubes sourceRack,

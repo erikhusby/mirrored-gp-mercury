@@ -2,44 +2,29 @@ package org.broadinstitute.sequel.entity.run;
 
 import org.broadinstitute.sequel.entity.person.Person;
 
-public class IlluminaSequencingRun implements SequencingRun {
+import javax.persistence.Entity;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import java.util.HashSet;
 
-    public IlluminaSequencingRun(IlluminaFlowcell flowcell,
+@NamedQueries({
+        @NamedQuery(
+                name = "IlluminaSequencingRun.findByRunName",
+                query = "select r from IlluminaSequencingRun r where runName = :runName"
+        )
+})
+@Entity
+public class IlluminaSequencingRun extends SequencingRun {
+
+    public IlluminaSequencingRun(final IlluminaFlowcell flowcell,
                                  String runName,
                                  String runBarcode,
                                  String machineName,
                                  Person operator,
                                  boolean isTestRun) {
-
+        super(runName, runBarcode, machineName, operator, isTestRun, new HashSet<RunCartridge>(){{add(flowcell);}});
     }
 
-    @Override
-    public String getRunName() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public String getRunBarcode() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public String getMachineName() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Person getOperator() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public boolean isTestRun() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Iterable<RunCartridge> getSampleCartridge() {
-        throw new RuntimeException("I haven't been written yet.");
+    protected IlluminaSequencingRun() {
     }
 }

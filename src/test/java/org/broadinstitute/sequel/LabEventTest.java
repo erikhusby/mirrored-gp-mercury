@@ -21,7 +21,6 @@ import org.broadinstitute.sequel.entity.run.IlluminaFlowcell;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.StripTube;
-import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -1099,6 +1098,7 @@ public class LabEventTest {
         private PlateCherryPickEvent stripTubeTransferJaxb;
         private PlateTransferEventType flowcellTransferJaxb;
         private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+        private String flowcellBarcode;
 
         public QtpJaxb(BettaLimsMessageFactory bettaLimsMessageFactory, String testPrefix, List<String> normCatchBarcodes,
                 String normCatchRackBarcode) {
@@ -1134,6 +1134,10 @@ public class LabEventTest {
 
         public PlateTransferEventType getFlowcellTransferJaxb() {
             return flowcellTransferJaxb;
+        }
+
+        public String getFlowcellBarcode() {
+            return flowcellBarcode;
         }
 
         public List<BettaLIMSMessage> getMessageList() {
@@ -1184,8 +1188,9 @@ public class LabEventTest {
             bettaLIMSMessage2.getPlateCherryPickEvent().add(stripTubeTransferJaxb);
             messageList.add(bettaLIMSMessage2);
 
+            flowcellBarcode = "Flowcell" + testPrefix;
             flowcellTransferJaxb = bettaLimsMessageFactory.buildStripTubeToFlowcell("FlowcellTransfer",
-                    stripTubeBarcode, "Flowcell" + testPrefix);
+                    stripTubeBarcode, flowcellBarcode);
             BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
             bettaLIMSMessage3.getPlateTransferEvent().add(flowcellTransferJaxb);
             messageList.add(bettaLIMSMessage3);
