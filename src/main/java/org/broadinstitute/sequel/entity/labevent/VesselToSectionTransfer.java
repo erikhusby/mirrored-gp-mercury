@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.labevent;
 
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
@@ -46,6 +47,6 @@ public class VesselToSectionTransfer {
     }
 
     public VesselContainer getTargetVesselContainer() {
-        return ((VesselContainerEmbedder)targetVessel).getVesselContainer();
+        return OrmUtil.proxySafeCast(targetVessel, VesselContainerEmbedder.class).getVesselContainer();
     }
 }

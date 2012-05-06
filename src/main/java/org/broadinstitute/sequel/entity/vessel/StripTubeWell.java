@@ -8,16 +8,21 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 
+import javax.persistence.Entity;
 import java.util.Collection;
 import java.util.Set;
 
 /**
  * One of many (usually 8) tubes in a StripTube
  */
+@Entity
 public class StripTubeWell extends LabVessel {
 
     protected StripTubeWell(String label) {
         super(label);
+    }
+
+    protected StripTubeWell() {
     }
 
     @Override

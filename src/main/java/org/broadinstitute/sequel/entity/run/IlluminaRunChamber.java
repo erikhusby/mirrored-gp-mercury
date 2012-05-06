@@ -1,16 +1,12 @@
 package org.broadinstitute.sequel.entity.run;
 
 
-import org.broadinstitute.sequel.entity.labevent.AbstractLabEvent;
-import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.vessel.LabMetric;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 
 import java.util.Collection;
@@ -47,12 +43,12 @@ public class IlluminaRunChamber extends RunChamber {
     }
 
     @Override
-    public Set<AbstractLabEvent> getTransfersFrom() {
+    public Set<LabEvent> getTransfersFrom() {
         throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override
-    public Set<AbstractLabEvent> getTransfersTo() {
+    public Set<LabEvent> getTransfersTo() {
         throw new RuntimeException("I haven't been written yet.");
     }
 

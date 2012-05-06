@@ -9,6 +9,9 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 
 import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import java.util.Collection;
 import java.util.Set;
 
@@ -16,7 +19,17 @@ import java.util.Set;
  * Represents a strip tube, several tubes molded into a single piece of plasticware, e.g. 8 tubes in the same formation
  * as a rack column.  The Strip tube has a barcode, but each constituent tube does not.
  */
+@NamedQueries({
+        @NamedQuery(
+                name = "StripTube.findByBarcode",
+                query = "select s from StripTube s where label = :barcode"
+        )
+})
+@Entity
 public class StripTube extends LabVessel implements VesselContainerEmbedder<StripTubeWell> {
+
+    protected StripTube() {
+    }
 
     public enum Positions {
         ONE("1"),

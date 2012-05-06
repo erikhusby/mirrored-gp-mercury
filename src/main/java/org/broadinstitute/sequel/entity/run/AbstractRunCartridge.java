@@ -12,6 +12,9 @@ public abstract class AbstractRunCartridge extends RunCartridge {
         super(label);
     }
 
+    protected AbstractRunCartridge() {
+    }
+
     @Override
     public LabVessel getContainingVessel() {
         throw new RuntimeException("I haven't been written yet.");

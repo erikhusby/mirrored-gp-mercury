@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.control.labevent;
 
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
@@ -201,8 +202,9 @@ public class LabEventHandler {
                                              WorkflowDescription workflow) {
         if (workflow != null) {
             for (LabVessel labVessel : labEvent.getAllLabVessels()) {
-                if (labVessel instanceof VesselContainerEmbedder) {
-                    Collection<LabVessel> containedVessels = ((VesselContainerEmbedder)labVessel).getVesselContainer().getContainedVessels();
+                if (OrmUtil.proxySafeIsInstance(labVessel, VesselContainerEmbedder.class)) {
+                    Collection<LabVessel> containedVessels = OrmUtil.proxySafeCast(labVessel, VesselContainerEmbedder.class).
+                            getVesselContainer().getContainedVessels();
                     if (containedVessels.isEmpty()) {
                         processProjectPlanOverrides(labEvent,labVessel,workflow);
                     }

@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
@@ -131,19 +132,17 @@ public class VesselContainer<T extends LabVessel> {
     @Transient
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        if (this.mapPositionToVessel.isEmpty()) {
-            // This plate has no wells in the database, because its transfers are all section based (i.e. no cherry picks)
+        for (String position : this.mapPositionToVessel.keySet()) {
+            sampleInstances.addAll(getSampleInstancesAtPosition(position));
+        }
+        if (sampleInstances.isEmpty()) {
             for (LabEvent labEvent : this.embedder.getTransfersTo()) {
                 for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
-                    if(sourceLabVessel instanceof VesselContainerEmbedder) {
-                        sampleInstances.addAll(((VesselContainerEmbedder) sourceLabVessel).getVesselContainer().getSampleInstances());
+                    if(OrmUtil.proxySafeIsInstance(sourceLabVessel, VesselContainerEmbedder.class)) {
+                        sampleInstances.addAll(OrmUtil.proxySafeCast(sourceLabVessel, VesselContainerEmbedder.class).getVesselContainer().getSampleInstances());
                         applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                     }
                 }
-            }
-        } else {
-            for (String position : this.mapPositionToVessel.keySet()) {
-                sampleInstances.addAll(getSampleInstancesAtPosition(position));
             }
         }
         return sampleInstances;
@@ -170,6 +169,10 @@ public class VesselContainer<T extends LabVessel> {
     @Transient
     public Set<String> getPositions() {
         return this.mapPositionToVessel.keySet();
+    }
+
+    Map<String, T> getMapPositionToVessel() {
+        return mapPositionToVessel;
     }
 
     @Transient

@@ -21,12 +21,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 @Entity
-@NamedQueries(
+@NamedQueries({
         @NamedQuery(
                 name = "TwoDBarcodedTube.fetchByBarcodes",
                 query = "select t from TwoDBarcodedTube t where label in (:barcodes)"
+        ),
+        @NamedQuery(
+                name = "TwoDBarcodedTube.fetchByBarcode",
+                query = "select t from TwoDBarcodedTube t where label = :barcode"
         )
-)
+})
 /**
  * Represents a tube with a two dimensional barcode on its bottom.  These tubes are usually stored in racks.
  */

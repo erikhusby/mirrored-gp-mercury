@@ -11,7 +11,7 @@ import java.util.Collection;
  * measurement, a volume measurement, etc.
  * we use this class.
  */
-public class MetricEvent extends AbstractLabEvent {
+public class MetricEvent extends LabEvent {
 
     public MetricEvent(LabMetric metric,LabVessel container) {
         container.addMetric(metric);

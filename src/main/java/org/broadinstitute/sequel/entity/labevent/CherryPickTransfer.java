@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.labevent;
 
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
@@ -29,10 +30,11 @@ public class CherryPickTransfer {
     private LabVessel targetVessel;
     private String targetPosition;
     @ManyToOne
-    private AbstractLabEvent labEvent;
+    private LabEvent labEvent;
 
     public CherryPickTransfer(VesselContainer<?> sourceVesselContainer, String sourcePosition,
-            VesselContainer<?> targetVesselContainer, String targetPosition) {
+            VesselContainer<?> targetVesselContainer, String targetPosition, LabEvent labEvent) {
+        this.labEvent = labEvent;
         this.sourceVessel = sourceVesselContainer.getEmbedder();
         this.sourcePosition = sourcePosition;
         this.targetVessel = targetVesselContainer.getEmbedder();
@@ -43,7 +45,7 @@ public class CherryPickTransfer {
     }
 
     public VesselContainer<?> getSourceVesselContainer() {
-        return ((VesselContainerEmbedder<?>)sourceVessel).getVesselContainer();
+        return OrmUtil.proxySafeCast(sourceVessel, VesselContainerEmbedder.class).getVesselContainer();
     }
 
     public String getSourcePosition() {
@@ -51,10 +53,14 @@ public class CherryPickTransfer {
     }
 
     public VesselContainer<?> getTargetVesselContainer() {
-        return ((VesselContainerEmbedder<?>) targetVessel).getVesselContainer();
+        return OrmUtil.proxySafeCast(targetVessel, VesselContainerEmbedder.class).getVesselContainer();
     }
 
     public String getTargetPosition() {
         return targetPosition;
+    }
+
+    public LabEvent getLabEvent() {
+        return labEvent;
     }
 }

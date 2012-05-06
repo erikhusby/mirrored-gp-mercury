@@ -5,6 +5,9 @@ import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.vessel.MolecularAppendage;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 
+import javax.persistence.Entity;
+
+@Entity
 public class IndexEnvelope  extends MolecularEnvelope {
 
     private String threePrimeSeq;
@@ -19,7 +22,10 @@ public class IndexEnvelope  extends MolecularEnvelope {
         this.fivePrimeSeq = fivePrimeSeq;
         this.name = name;
     }
-    
+
+    protected IndexEnvelope() {
+    }
+
     @Override
     public FUNCTIONAL_ROLE getFunctionalRole() {
         return FUNCTIONAL_ROLE.INDEX;

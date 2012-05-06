@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
-import org.broadinstitute.sequel.entity.labevent.AbstractLabEvent;
 import org.broadinstitute.sequel.entity.labevent.Failure;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.Stalker;
@@ -68,19 +68,19 @@ public abstract class LabVessel  {
     private LabVessel readBucketAuthority;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    private Set<AbstractLabEvent> transfersFrom = new HashSet<AbstractLabEvent>();
+    private Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    private Set<AbstractLabEvent> transfersTo = new HashSet<AbstractLabEvent>();
+    private Set<LabEvent> transfersTo = new HashSet<LabEvent>();
 
     // todo jmt fix this
     @Transient
     private final Collection<Stalker> stalkers = new HashSet<Stalker>();
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> appliedReagents = new HashSet<Reagent>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
@@ -189,7 +189,7 @@ public abstract class LabVessel  {
     public Set<VesselContainer<?>> getContainers() {
         Set<VesselContainer<?>> vesselContainers = new HashSet<VesselContainer<?>>();
         for (LabVessel container : containers) {
-            vesselContainers.add(((VesselContainerEmbedder<?>) container).getVesselContainer());
+            vesselContainers.add(OrmUtil.proxySafeCast(container, VesselContainerEmbedder.class).getVesselContainer());
         }
 
         return Collections.unmodifiableSet(vesselContainers);
@@ -250,7 +250,7 @@ public abstract class LabVessel  {
      * This needs to be really, really fast.
      * @return
      */
-    public Set<AbstractLabEvent> getTransfersFrom() {
+    public Set<LabEvent> getTransfersFrom() {
         return transfersFrom;
     }
 
@@ -258,7 +258,7 @@ public abstract class LabVessel  {
      * This needs to be really, really fast.
      * @return
      */
-    public Set<AbstractLabEvent> getTransfersTo() {
+    public Set<LabEvent> getTransfersTo() {
         return transfersTo;
     }
 
@@ -331,7 +331,7 @@ public abstract class LabVessel  {
      * with transfer graphs and the notion
      * of ancestor/descendant.
      *
-     * If this {@link LabVessel} is a {@link org.broadinstitute.sequel.entity.vessel.WellName},
+     * If this {@link LabVessel} is a {@link VesselPosition},
      * then the containing vessel could be a {@link org.broadinstitute.sequel.entity.vessel.StaticPlate}.
      * If this {@link LabVessel} is a {@link org.broadinstitute.sequel.entity.run.RunChamber flowcell lane},
      * then perhaps the containing {@link LabVessel} is a {@link org.broadinstitute.sequel.entity.run.RunCartridge flowcell}.

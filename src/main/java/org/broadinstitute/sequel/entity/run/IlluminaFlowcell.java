@@ -12,18 +12,36 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
+@NamedQueries({
+        @NamedQuery(
+                name = "IlluminaFlowcell.findByBarcode",
+                query = "select f from IlluminaFlowcell f where label = :barcode"
+        )
+})
+@Entity
 public class IlluminaFlowcell extends AbstractRunCartridge implements VesselContainerEmbedder<RunChamber> {
 
-    private Collection<RunChamber> runChambers = new ArrayList<RunChamber>();
-
+    // todo jmt fix this
+    @Transient
     private IlluminaRunConfiguration runConfiguration;
 
     private FLOWCELL_TYPE flowcellType;
+
+    // todo jmt how is this different from label?
+    private String flowcellBarcode;
 
     @Embedded
     VesselContainer<RunChamber> vesselContainer = new VesselContainer<RunChamber>(this);
@@ -31,6 +49,9 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     protected IlluminaFlowcell(String label) {
         super(label);
         this.flowcellBarcode = label;
+    }
+
+    public IlluminaFlowcell() {
     }
 
     @Override
@@ -42,9 +63,6 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         EIGHT_LANE,MISEQ
     }
 
-    private final String flowcellBarcode;
-
-
     public IlluminaFlowcell(FLOWCELL_TYPE flowcellType,String flowcellBarcode,IlluminaRunConfiguration runConfig) {
         super(flowcellBarcode);
         this.flowcellBarcode = flowcellBarcode;
@@ -52,6 +70,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         this.flowcellType = flowcellType;
     }
         
+/*
+    todo jmt need something similar in VesselContainer
     public void addChamber(LabVessel library,int laneNumber) {
         if (flowcellType == FLOWCELL_TYPE.EIGHT_LANE) {
             if (laneNumber < 1 || laneNumber > 8) {
@@ -66,7 +86,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         IlluminaRunChamber runChamber = new IlluminaRunChamber(this,laneNumber,library);
         runChambers.add(runChamber);
     }
-    
+*/
+
     /**
      * In the illumina world, one sets the run configuration
      * when the flowcell is made.  But other technologies
@@ -80,7 +101,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
     @Override
     public Iterable<RunChamber> getChambers() {
-        return runChambers;
+        return this.vesselContainer.getContainedVessels();
     }
 
     @Override

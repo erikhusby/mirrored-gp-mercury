@@ -1,13 +1,9 @@
 package org.broadinstitute.sequel.entity.vessel;
 
-import org.broadinstitute.sequel.entity.labevent.AbstractLabEvent;
-import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
-import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -19,13 +15,12 @@ public class PlateWell extends LabVessel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private StaticPlate plate;
-    @ManyToOne(fetch = FetchType.LAZY)
-    private WellName wellName;
+    private VesselPosition vesselPosition;
     
-    public PlateWell(StaticPlate p,WellName wellName) {
-        super(p.getLabel() + wellName);
+    public PlateWell(StaticPlate p,VesselPosition vesselPosition) {
+        super(p.getLabel() + vesselPosition);
         this.plate = p;
-        this.wellName = wellName;
+        this.vesselPosition = vesselPosition;
     }
 
     public PlateWell() {
@@ -37,12 +32,12 @@ public class PlateWell extends LabVessel {
     }
 
     @Override
-    public Set<AbstractLabEvent> getTransfersFrom() {
+    public Set<LabEvent> getTransfersFrom() {
         throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override
-    public Set<AbstractLabEvent> getTransfersTo() {
+    public Set<LabEvent> getTransfersTo() {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -53,7 +48,7 @@ public class PlateWell extends LabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        return this.plate.getVesselContainer().getSampleInstancesAtPosition(this.wellName.getWellName());
+        return this.plate.getVesselContainer().getSampleInstancesAtPosition(this.vesselPosition.toString());
     }
 
     @Override

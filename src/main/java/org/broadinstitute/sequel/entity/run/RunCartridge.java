@@ -16,6 +16,9 @@ public abstract class RunCartridge extends LabVessel {
         super(label);
     }
 
+    protected RunCartridge() {
+    }
+
     abstract public Iterable<RunChamber> getChambers();
 
     abstract public String getCartridgeName();

@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.project;
 
 
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.notice.UserRemarks;
 import org.broadinstitute.sequel.entity.person.Person;
@@ -345,7 +346,7 @@ public abstract class Project {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Project)) return false;
+        if (!OrmUtil.proxySafeIsInstance(o, Project.class)) return false;
 
         Project that = (Project) o;
 

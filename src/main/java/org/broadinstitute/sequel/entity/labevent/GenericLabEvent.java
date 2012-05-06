@@ -7,6 +7,7 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Date;
 
@@ -14,7 +15,8 @@ import java.util.Date;
  * Most general form of lab event
  */
 @Entity
-public class GenericLabEvent extends AbstractLabEvent {
+public class GenericLabEvent extends LabEvent {
+
     private LabEventType labEventType;
 
     public GenericLabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Person operator) {
@@ -36,13 +38,14 @@ public class GenericLabEvent extends AbstractLabEvent {
      * Are we going to change the molecular
      * state?
      *
-     * Perhaps this should be up at {@link AbstractLabEvent}
+     * Perhaps this should be up at {@link LabEvent}
      *
      * Events that denature or that transform from
      * RNA into DNA also change molecular state.  So perhaps
      * these
      * @return
      */
+    @Transient
     private boolean isMolecularStateBeingChanged() {
         boolean hasMolStateChange = false;
         for (Reagent reagent: getReagents()) {
