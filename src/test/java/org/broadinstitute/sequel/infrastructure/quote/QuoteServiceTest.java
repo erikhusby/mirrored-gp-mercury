@@ -67,7 +67,7 @@ public class QuoteServiceTest {
 
     @Test(groups = DATABASE_FREE)
     public void test_bad_response_code() {
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
+        QuoteServiceImpl service = new QuoteServiceImpl(null);
         ClientResponse mockResponse = EasyMock.createMock(ClientResponse.class);
         
         EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(ClientResponse.Status.BAD_REQUEST).atLeastOnce();
@@ -82,7 +82,7 @@ public class QuoteServiceTest {
 
     @Test(groups = DATABASE_FREE)
     public void test_null_response() {
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
+        QuoteServiceImpl service = new QuoteServiceImpl(null);
         ClientResponse mockResponse = EasyMock.createMock(ClientResponse.class);
         EasyMock.reset(mockResponse);
         EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(null).atLeastOnce();
@@ -109,7 +109,7 @@ public class QuoteServiceTest {
 
     @Test(groups = DATABASE_FREE)
     public void test_bad_work_unit_return() {
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
+        QuoteServiceImpl service = new QuoteServiceImpl(null);
         ClientResponse mockResponse = EasyMock.createMock(ClientResponse.class);
 
         EasyMock.reset(mockResponse);

@@ -9,13 +9,9 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.sequel.control.dao.run.RunChamberDAO;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.run.RunChamber;
-import org.broadinstitute.sequel.entity.run.SequencingRun;
-import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.StartingSample;
-import org.broadinstitute.sequel.entity.zims.LibrariesBean;
+import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
+import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
@@ -34,9 +30,9 @@ import java.util.*;
 /**
  * Web service for fetching run data for Zamboni.
  */
-@Path("/RunLane")
+@Path("/IlluminaRun")
 @Stateless
-public class RunLaneResource {
+public class IlluminaRunResource {
 
     @Inject
     private RunChamberDAO runChamberDAO;
@@ -50,53 +46,52 @@ public class RunLaneResource {
     @Inject
     ThriftConfiguration thriftConfiguration;
 
-    public RunLaneResource() {}
+    public IlluminaRunResource() {}
 
-    public RunLaneResource(ThriftConfiguration thriftConfiguration) {
+    public IlluminaRunResource(ThriftConfiguration thriftConfiguration) {
         this.thriftConfiguration = thriftConfiguration;
     }
 
+    
     @GET
     @Path("/query")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public LibrariesBean getLibraries(
-            @QueryParam("runName") String runName,
-            @QueryParam("chamber") String chamber)
+    public ZimsIlluminaRun getRun(
+            @QueryParam("runName") String runName)
     {
         if (runName == null) {
             throw new NullPointerException("runName cannot be null");
         }
-        if (chamber == null) {
-            throw new NullPointerException("chamber cannot be null");
-        }
+        
 
         TTransport transport = new TSocket(thriftConfiguration.getHost(), thriftConfiguration.getPort());
         TProtocol protocol = new TBinaryProtocol(transport);
         LIMQueries.Client client = new LIMQueries.Client(protocol);
 
-        return getLibraries(client,transport,runName,chamber);
+        return getRun(client, transport, runName);
     }
 
-    LibrariesBean getLibraries(LIMQueries.Client thriftClient,
-                               TTransport thriftTransport,
-                               String runName,
-                               String chamber) {
-        final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
+    ZimsIlluminaRun getRun(LIMQueries.Client thriftClient,
+                           TTransport thriftTransport,
+                           String runName) {
         try {
             thriftTransport.open();
         }
         catch(TTransportException e) {
             throw new RuntimeException("Could not open transport for " + thriftConfiguration.getHost() + ":" + thriftConfiguration.getPort(),e);
         }
+        ZimsIlluminaRun runBean = null;
         try {
-            final TZamboniRun tRun = thriftClient.fetchSingleLane(runName,new Short(chamber).shortValue());
+            final TZamboniRun tRun = thriftClient.fetchRun(runName);
             final Map<String,BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
-
+            runBean = new ZimsIlluminaRun(runName,tRun.getRunBarcode());
+            
             if (tRun == null) {
                 throw new RuntimeException("Could not load run " + runName);
             }
             else {
                 for (TZamboniLane tZamboniLane : tRun.getLanes()) {
+                    final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
                     for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
                         String organism = null;
                         BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
@@ -146,21 +141,22 @@ public class RunLaneResource {
                                 zamboniLibrary.getTargetLaneCoverage());
                         libraries.add(libBean);
                     }
+                    runBean.addChamber(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(),libraries));
                 }
             }
         }
         catch(TZIMSException e) {
-            throw new RuntimeException("Failed to fetch run " + runName + " lane " + chamber,e);
+            throw new RuntimeException("Failed to fetch run " + runName,e);
         }
         catch(TException e) {
-            throw new RuntimeException("Failed to fetch run " + runName + " lane " + chamber,e);
+            throw new RuntimeException("Failed to fetch run " + runName,e);
         }
         finally {
             if (thriftTransport != null) {
                 thriftTransport.close();
             }
         }
-        return new LibrariesBean(libraries);
+        return runBean;
     }
 
     /**

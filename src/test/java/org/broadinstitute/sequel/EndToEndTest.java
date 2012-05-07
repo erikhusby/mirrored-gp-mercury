@@ -206,7 +206,7 @@ public class EndToEndTest  {
         }
         
         Person testUser = new Person("QADude");
-        SequencingRun run = new IlluminaSequencingRun(flowcell,"Run1","000Run1","SLX-AB",testUser,false);
+        ZimsIlluminaRun run = new IlluminaSequencingRun(flowcell,"Run1","000Run1","SLX-AB",testUser,false);
         checkForSampleProjectData(run, project, sample1,2,indexEnvelope); // we have three tubes (aliquot, 1st dest, and 2nd dest)
                                                             // but we should only have two sample sheets.  the first
                                                             // vessels (initial aliquot and 1st dest) should share
