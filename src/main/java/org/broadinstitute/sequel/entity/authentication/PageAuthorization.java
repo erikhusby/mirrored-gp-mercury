@@ -17,7 +17,7 @@ public class PageAuthorization {
     private List<AuthorizedRole> roleAccess = new LinkedList<AuthorizedRole>();
 
     public PageAuthorization(String pagePathIn) {
-        pagePath = pagePathIn;
+        setPagePath(pagePathIn);
     }
 
     public List<String> getRoleList() {
