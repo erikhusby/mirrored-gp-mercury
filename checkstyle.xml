@@ -6,7 +6,7 @@
         <module name="ImportControl">
             <property name="severity" value="error"/>
             <!-- In the CheckStyle IDEA plugin configuration, use Edit Properties to set the location of checkstyle-import-control.xml -->
-            <property name="file" value="${checkstyle.importcontrol.file}"/>
+            <property name="file" value="${project.basedir}/checkstyle-import-control.xml"/>
         </module>
     </module>
 </module>

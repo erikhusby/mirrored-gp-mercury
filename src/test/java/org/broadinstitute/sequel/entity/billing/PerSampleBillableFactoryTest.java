@@ -27,7 +27,6 @@ import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;

@@ -44,4 +44,24 @@
         <disallow class="javax.persistence.EntityManagerFactory"/>
     </subpackage>
 
+    <subpackage name="test">
+        <allow pkg="edu.mit.broad.prodinfo.thrift.lims"/>
+        <allow pkg="javax.xml"/>
+        <allow pkg="org.apache.thrift"/>
+        <allow pkg="org.easymock"/>
+        <allow pkg="org.testng"/>
+    </subpackage>
+
+    <subpackage name="integration">
+        <allow pkg="com.sun.jersey"/>
+        <allow pkg="javax.enterprise.inject"/>
+        <allow pkg="javax.inject"/>
+        <allow pkg="javax.persistence.EntityManager"/>
+        <allow pkg="javax.persistence.EntityManagerFactory"/>
+        <allow pkg="javax.ws.rs"/>
+        <allow pkg="org.hibernate"/>
+        <allow pkg="org.jboss.arquillian"/>
+        <allow pkg="org.jboss.shrinkwrap"/>
+    </subpackage>
+
 </import-control>

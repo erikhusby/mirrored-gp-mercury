@@ -6,16 +6,16 @@ import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.easymock.EasyMock;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
 public class RunLaneResourceBadThriftTest  {
+
+    private RunLaneResource runLaneResource;
 
     private TTransport getMockTransport() {
         return EasyMock.createMock(TTransport.class);
@@ -25,21 +25,27 @@ public class RunLaneResourceBadThriftTest  {
         return EasyMock.createMock(LIMQueries.Client.class);
     }
 
+    @BeforeMethod
+    protected void setUp() throws Exception {
+        runLaneResource = new RunLaneResource(new ThriftConfiguration() {
+            public String getHost() { return null; }
+            public int getPort() { return 0; }
+        });
+    }
+
     @Test(expectedExceptions = RuntimeException.class,groups = {DATABASE_FREE})
     public void test_bad_transport() throws Exception {
-        RunLaneResource runLaneResource = new RunLaneResource(new QAThriftConfiguration());
         TTransport badTransport = getMockTransport();
         
         badTransport.open();
         EasyMock.expectLastCall().andThrow(new TTransportException("Can't open!"));
 
         EasyMock.replay(badTransport);
-        runLaneResource.getLibraries(getMockClient(),badTransport,"foo","3");
+        runLaneResource.getLibraries(getMockClient(), badTransport, "foo", "3");
     }
 
     @Test(expectedExceptions = RuntimeException.class,groups = {DATABASE_FREE})
     public void test_client_returns_null() throws Exception {
-        RunLaneResource runLaneResource = new RunLaneResource(new QAThriftConfiguration());
         LIMQueries.Client limQueries = getMockClient();
 
         EasyMock.expect(limQueries.fetchSingleLane((String)EasyMock.anyObject(),EasyMock.anyShort())).andReturn(null);
@@ -50,7 +56,6 @@ public class RunLaneResourceBadThriftTest  {
 
     @Test(expectedExceptions = RuntimeException.class,groups = {DATABASE_FREE})
     public void test_client_throws_exception() throws Exception {
-        RunLaneResource runLaneResource = new RunLaneResource(new QAThriftConfiguration());
         LIMQueries.Client limQueries = getMockClient();
 
         EasyMock.expect(limQueries.fetchSingleLane((String)EasyMock.anyObject(),EasyMock.anyShort())).andThrow(
@@ -63,7 +68,6 @@ public class RunLaneResourceBadThriftTest  {
 
     @Test(expectedExceptions = RuntimeException.class,groups = {DATABASE_FREE})
     public void test_client_throws_another_exception() throws Exception {
-        RunLaneResource runLaneResource = new RunLaneResource(new QAThriftConfiguration());
         LIMQueries.Client limQueries = getMockClient();
 
         EasyMock.expect(limQueries.fetchSingleLane((String)EasyMock.anyObject(),EasyMock.anyShort())).andThrow(

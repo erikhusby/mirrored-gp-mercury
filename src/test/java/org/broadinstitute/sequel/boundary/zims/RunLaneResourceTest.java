@@ -1,39 +1,28 @@
 package org.broadinstitute.sequel.boundary.zims;
 
 import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
 import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
-import org.broadinstitute.sequel.WeldBooter;
-import org.broadinstitute.sequel.control.AbstractJerseyClientService;
 import org.broadinstitute.sequel.entity.zims.IndexPositionBean;
 import org.broadinstitute.sequel.entity.zims.LibrariesBean;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import static org.testng.Assert.*;
 
 import org.broadinstitute.sequel.entity.zims.MolecularIndexingSchemeBean;
-import org.broadinstitute.sequel.infrastructure.thrift.ProductionThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.broadinstitute.sequel.test.ContainerTest;
-import org.broadinstitute.sequel.test.DeploymentBuilder;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import org.yaml.snakeyaml.nodes.CollectionNode;
 
 
-import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import javax.naming.InitialContext;
 import javax.ws.rs.core.MediaType;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
