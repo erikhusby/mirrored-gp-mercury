@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.test;
+package org.broadinstitute.sequel.integration;
 
 import org.broadinstitute.sequel.BettaLimsMessageFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;

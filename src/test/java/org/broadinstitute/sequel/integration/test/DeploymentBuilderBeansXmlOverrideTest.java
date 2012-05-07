@@ -1,7 +1,8 @@
-package org.broadinstitute.sequel.test.test;
+package org.broadinstitute.sequel.integration.test;
 
-import org.broadinstitute.sequel.test.DeploymentBuilder;
-import org.broadinstitute.sequel.test.beans.SimpleService;
+import org.broadinstitute.sequel.integration.DeploymentBuilder;
+import org.broadinstitute.sequel.integration.test.beans.AlternativeSimpleServiceImpl;
+import org.broadinstitute.sequel.integration.test.beans.SimpleService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -20,7 +21,7 @@ public class DeploymentBuilderBeansXmlOverrideTest extends Arquillian {
 
     @Deployment
     public static WebArchive makeArchive() {
-        return DeploymentBuilder.buildSequelWarWithAlternatives("org.broadinstitute.sequel.test.beans.AlternativeSimpleServiceImpl").addPackage("org.broadinstitute.sequel.test.beans");
+        return DeploymentBuilder.buildSequelWarWithAlternatives(AlternativeSimpleServiceImpl.class);
     }
 
     @Test

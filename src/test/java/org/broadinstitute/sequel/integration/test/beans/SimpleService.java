@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.test.beans;
+package org.broadinstitute.sequel.integration.test.beans;
 
 /**
  * @author breilly

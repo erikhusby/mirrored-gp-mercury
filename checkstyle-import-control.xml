@@ -62,6 +62,7 @@
         <allow pkg="org.hibernate"/>
         <allow pkg="org.jboss.arquillian"/>
         <allow pkg="org.jboss.shrinkwrap"/>
+        <allow pkg="org.testng"/>
     </subpackage>
 
 </import-control>

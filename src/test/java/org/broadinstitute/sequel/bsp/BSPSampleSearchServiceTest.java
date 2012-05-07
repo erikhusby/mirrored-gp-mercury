@@ -4,9 +4,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -23,11 +22,6 @@ public class BSPSampleSearchServiceTest extends ContainerTest {
 
     @Inject
     BSPSampleSearchService service;
-
-//    @BeforeClass
-//    private void init() {
-//        service = weldUtil.getFromContainer(BSPSampleSearchService.class);
-//    }
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void testBasic() {

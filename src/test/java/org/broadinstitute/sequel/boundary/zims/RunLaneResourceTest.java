@@ -14,7 +14,7 @@ import static org.testng.Assert.*;
 import org.broadinstitute.sequel.entity.zims.MolecularIndexingSchemeBean;
 import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -175,7 +175,7 @@ public class RunLaneResourceTest extends ContainerTest {
     private void doAssertions(Collection<LibraryBean> libraries) throws Exception {
         assertNotNull(libraries);
         assertFalse(libraries.isEmpty());
-        assertEquals(libraries.size(),94);
+        assertEquals(libraries.size(), 94);
 
         TZamboniLane zamboniLane = getZamboniLane();
 
