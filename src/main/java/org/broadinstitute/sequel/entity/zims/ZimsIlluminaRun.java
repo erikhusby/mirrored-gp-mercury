@@ -135,6 +135,15 @@ public class ZimsIlluminaRun {
         return date;
     }
 
+    private void setRunDateString(String runDate) throws ParseException {
+        if (runDate != null) {
+            this.runDate = dateFormat.parse(runDate);
+        }
+        else {
+            this.runDate = null;
+        }
+    }
+
     public String getSequencerModel() {
         return sequencerModel;
     }

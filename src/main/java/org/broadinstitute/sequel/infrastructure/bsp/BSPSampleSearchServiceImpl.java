@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.infrastructure.bsp;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -112,6 +113,9 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
             is.close();
 
+        }
+        catch (ClientHandlerException clientException) {
+            throw new RuntimeException("Error connecting to BSP",clientException);
         }
         catch (UnsupportedEncodingException uex) {
             throw new RuntimeException(uex);
