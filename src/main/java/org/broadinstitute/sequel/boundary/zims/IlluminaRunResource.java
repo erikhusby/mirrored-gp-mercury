@@ -13,6 +13,7 @@ import org.broadinstitute.sequel.control.dao.run.RunChamberDAO;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
@@ -211,7 +212,7 @@ public class IlluminaRunResource {
                 }
             }
         }
-        for (Map.Entry<String,String> lsIdToBareId: bspSearchService.lsidsToBareIds(sampleLsids).entrySet()) {
+        for (Map.Entry<String,String> lsIdToBareId: BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
             if (lsIdToBareId.getValue() == null) {
                 throw new RuntimeException("Could not map lsid " + lsIdToBareId.getKey() + " to a bsp id.");
             }

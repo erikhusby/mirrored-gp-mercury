@@ -6,20 +6,28 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.entity.zims.*;
 
 import static org.testng.Assert.*;
 
+import org.broadinstitute.sequel.infrastructure.bsp.BSPLSIDUtil;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.test.DeploymentBuilder;
+import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 
+import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 
@@ -27,10 +35,12 @@ import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-public class IlluminaRunResourceTest extends ContainerTest {
+public class IlluminaRunResourceTest extends Arquillian  {
 
     @Inject
     IlluminaRunResource runLaneResource;
@@ -48,7 +58,12 @@ public class IlluminaRunResourceTest extends ContainerTest {
     public static final String HUMAN = "Human";
 
     public static final String BSP_HUMAN = "Homo : Homo sapiens";
-    
+
+    @Deployment
+    public static WebArchive buildSequelWar() {
+        return DeploymentBuilder.buildSequelWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class);
+    }
+
     /**
      * Does a test of {@link #RUN_NAME} {@link #CHAMBER}
      * directly in container.
@@ -182,7 +197,7 @@ public class IlluminaRunResourceTest extends ContainerTest {
                 assertEquals(libBean.getTargetLaneCoverage(),new Short(zLib.getTargetLaneCoverage()));
                 assertEquals(libBean.getTissueType(),zLib.getTissueType());
                 assertEquals(libBean.getWeirdness(),zLib.getWeirdness());
-                
+
                 if (HUMAN.equals(zLib.getOrganism())) {
                     if (!(HUMAN.equals(libBean.getOrganism()) || BSP_HUMAN.equals(libBean.getOrganism()))) {
                         fail("Not the right human:" + libBean.getOrganism());
@@ -245,5 +260,7 @@ public class IlluminaRunResourceTest extends ContainerTest {
             transport.close();
         }
         zamboniRun = run;
-    }    
+    }
+
+
 }

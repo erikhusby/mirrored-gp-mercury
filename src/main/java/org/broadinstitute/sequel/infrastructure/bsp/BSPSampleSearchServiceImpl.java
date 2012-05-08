@@ -10,6 +10,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.AbstractJerseyClientService;
 
+import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.io.*;
@@ -17,6 +18,7 @@ import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.*;
 
+@Alternative
 public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
 
 
@@ -26,6 +28,10 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
     @Inject
     private BSPConnectionParameters connParams;
+
+    public BSPSampleSearchServiceImpl(BSPConnectionParameters connParams) {
+        this.connParams = connParams;
+    }
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
@@ -130,25 +136,4 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
         return ret;
 
     }
-
-    @Override
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
-        BSPSampleSearchColumn [] dummy = new BSPSampleSearchColumn[resultColumns.size()];
-        return runSampleSearch(sampleIDs, resultColumns.toArray(dummy));
-    }
-
-
-    @Override
-    public Map<String, String> lsidsToBareIds(Collection<String> lsids) {
-        Map<String, String> ret = new HashMap<String, String>();
-        
-        for (String lsid : lsids) {
-            String [] chunks = lsid.split(":");
-            ret.put(lsid, chunks[chunks.length-1]);
-        }
-        
-        return ret;
-
-    }
-
 }

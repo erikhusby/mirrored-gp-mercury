@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -20,6 +21,10 @@ import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.test.DeploymentBuilder;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 
@@ -31,13 +36,18 @@ import java.util.*;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
 
-public class ProjectTest extends ContainerTest {
+public class ProjectTest extends Arquillian {
 
     @Inject
     private JiraService jiraService;
 
     @Inject
     private BSPSampleDataFetcher bspFetcher;
+
+    @Deployment
+    public static WebArchive buildSequeLWar() {
+        return DeploymentBuilder.buildSequelWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class);
+    }
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {

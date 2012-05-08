@@ -1,8 +1,6 @@
 package org.broadinstitute.sequel.entity.bsp;
 
-import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.sequel.infrastructure.bsp.*;
 import org.broadinstitute.sequel.test.ContainerTest;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -14,15 +12,12 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
-public class BSPSampleTest extends ContainerTest {
+public class BSPSampleTest {
 
-    @Inject
-    BSPSampleDataFetcher fetcher;
-
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test(groups = {DATABASE_FREE})
     public void test_patient_id_integration() {
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(new MockBSPService());
         String sampleName = "SM-12CO4";
         BSPSample bspSample = new BSPSample(sampleName,
                 null,
@@ -31,7 +26,6 @@ public class BSPSampleTest extends ContainerTest {
 
         Assert.assertNotNull(patientId);
         Assert.assertEquals("PT-2LK3",patientId);
-
-
     }
+
 }
