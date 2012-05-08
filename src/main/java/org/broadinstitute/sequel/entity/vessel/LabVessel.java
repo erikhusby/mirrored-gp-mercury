@@ -14,6 +14,8 @@ import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StateChange;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Formula;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
@@ -36,6 +38,7 @@ import java.util.Set;
  *
  */
 @Entity
+@BatchSize(size = 50)
 public abstract class LabVessel  {
 
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", sequenceName = "SEQ_LAB_VESSEL")
@@ -50,6 +53,11 @@ public abstract class LabVessel  {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     private final Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
+
+    /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
+     * avoid an unnecessary database round trip  */
+    @Formula("(select count(*) from lab_vessel_sample_sheets where lab_vessel_sample_sheets.lab_vessel = lab_vessel_id)")
+    private Integer sampleSheetCount = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private MolecularState molecularState;
@@ -80,11 +88,22 @@ public abstract class LabVessel  {
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
+    // todo jmt remove this denormalization?
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> appliedReagents = new HashSet<Reagent>();
 
+    /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
+     * avoid an unnecessary database round trip  */
+    @Formula("(select count(*) from lab_vessel_applied_reagents where lab_vessel_applied_reagents.lab_vessel = lab_vessel_id)")
+    private Integer appliedReagentsCount = 0;
+
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<LabVessel> containers = new HashSet<LabVessel>();
+
+    /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
+     * avoid an unnecessary database round trip  */
+    @Formula("(select count(*) from lab_vessel_containers where lab_vessel_containers.lab_vessel = lab_vessel_id)")
+    private Integer containersCount = 0;
 
     @Embedded
     private UserRemarks userRemarks;
@@ -184,15 +203,25 @@ public abstract class LabVessel  {
 
     public void addToContainer(VesselContainer vesselContainer) {
         this.containers.add(vesselContainer.getEmbedder());
+        if(this.containersCount == null) {
+            this.containersCount = 0;
+        }
+        this.containersCount++;
     }
 
     public Set<VesselContainer<?>> getContainers() {
         Set<VesselContainer<?>> vesselContainers = new HashSet<VesselContainer<?>>();
-        for (LabVessel container : containers) {
-            vesselContainers.add(OrmUtil.proxySafeCast(container, VesselContainerEmbedder.class).getVesselContainer());
+        if(containersCount != null && containersCount > 0) {
+            for (LabVessel container : containers) {
+                vesselContainers.add(OrmUtil.proxySafeCast(container, VesselContainerEmbedder.class).getVesselContainer());
+            }
         }
 
         return Collections.unmodifiableSet(vesselContainers);
+    }
+
+    public Integer getContainersCount() {
+        return containersCount;
     }
 
     // todo notion of a "sample group", not a cohorot,
@@ -243,7 +272,12 @@ public abstract class LabVessel  {
      * @param sampleSheet
      */
     public void addSampleSheet(SampleSheet sampleSheet) {
-        throw new RuntimeException("I haven't been written yet.");
+        this.sampleSheets.add(sampleSheet);
+        sampleSheetCount++;
+    }
+
+    public Integer getSampleSheetCount() {
+        return sampleSheetCount;
     }
 
     /**
@@ -305,10 +339,18 @@ public abstract class LabVessel  {
 
     public void applyReagent(Reagent reagent) {
         this.appliedReagents.add(reagent);
+        if(this.appliedReagentsCount == null) {
+            this.appliedReagentsCount = 0;
+        }
+        this.appliedReagentsCount++;
     }
 
     public Collection<Reagent> getAppliedReagents() {
         return this.appliedReagents;
+    }
+
+    public Integer getAppliedReagentsCount() {
+        return appliedReagentsCount;
     }
 
     public enum CONTAINER_TYPE {

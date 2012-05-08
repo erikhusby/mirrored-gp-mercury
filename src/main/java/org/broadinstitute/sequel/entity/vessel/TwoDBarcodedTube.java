@@ -57,7 +57,7 @@ public class TwoDBarcodedTube extends LabVessel {
             // todo jmt decide how to follow the spirit of this
 //             throw new IllegalArgumentException("sheet must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
         } else {
-            getSampleSheets().add(sheet);
+            addSampleSheet(sheet);
 //            sheet.addToVessel(this);
         }
     }
@@ -114,8 +114,10 @@ public class TwoDBarcodedTube extends LabVessel {
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
 
-        for (SampleSheet sampleSheet : getSampleSheets()) {
-            sampleInstances.addAll(sampleSheet.getSampleInstances(this));
+        if (getSampleSheetCount() != null && getSampleSheetCount() > 0) {
+            for (SampleSheet sampleSheet : getSampleSheets()) {
+                sampleInstances.addAll(sampleSheet.getSampleInstances(this));
+            }
         }
         return sampleInstances;
     }

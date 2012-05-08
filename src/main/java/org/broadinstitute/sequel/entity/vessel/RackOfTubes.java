@@ -149,7 +149,9 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
     public Collection<SampleSheet> getSampleSheets() {
         Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
         for (TwoDBarcodedTube twoDBarcodedTube : this.vesselContainer.getContainedVessels()) {
-            sampleSheets.addAll(twoDBarcodedTube.getSampleSheets());
+            if(twoDBarcodedTube.getSampleSheetCount() != null && twoDBarcodedTube.getSampleSheetCount() > 0) {
+                sampleSheets.addAll(twoDBarcodedTube.getSampleSheets());
+            }
         }
         return sampleSheets;
     }
@@ -162,6 +164,7 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
         this.vesselContainer = vesselContainer;
     }
 
+/*
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -178,4 +181,5 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
     public int hashCode() {
         return this.label.hashCode();
     }
+*/
 }

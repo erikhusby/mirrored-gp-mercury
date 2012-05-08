@@ -11,9 +11,7 @@ import org.hibernate.annotations.Parent;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.ManyToMany;
-import javax.persistence.MapKey;
 import javax.persistence.MapKeyColumn;
-import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashMap;
@@ -68,13 +66,15 @@ public class VesselContainer<T extends LabVessel> {
         examineTransfers(position, sampleInstances);
         T vesselAtPosition = getVesselAtPosition(position);
         if(vesselAtPosition != null) {
-            if(!vesselAtPosition.getSampleSheets().isEmpty()) {
+            if(vesselAtPosition.getSampleSheetCount() != null && vesselAtPosition.getSampleSheetCount() > 0) {
                 sampleInstances.addAll(vesselAtPosition.getSampleInstances());
             }
             // handle re-arrays of tubes - look in any other racks that the tube has been in
-            for (VesselContainer vesselContainer : vesselAtPosition.getContainers()) {
-                if(!vesselContainer.equals(this)) {
-                    vesselContainer.examineTransfers(vesselContainer.getPositionOfVessel(vesselAtPosition), sampleInstances);
+            if (vesselAtPosition.getContainersCount() != null && vesselAtPosition.getContainersCount() > 1) {
+                for (VesselContainer vesselContainer : vesselAtPosition.getContainers()) {
+                    if (!vesselContainer.equals(this)) {
+                        vesselContainer.examineTransfers(vesselContainer.getPositionOfVessel(vesselAtPosition), sampleInstances);
+                    }
                 }
             }
         }
@@ -90,6 +90,7 @@ public class VesselContainer<T extends LabVessel> {
                 sampleInstances.addAll(sampleInstancesAtPosition);
             }
             for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
+                // todo jmt optimize this
                 if(cherryPickTransfer.getTargetPosition().equals(position)) {
                     Set<SampleInstance> sampleInstancesAtPosition = cherryPickTransfer.getSourceVesselContainer().
                             getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition());
@@ -115,13 +116,15 @@ public class VesselContainer<T extends LabVessel> {
         for (SampleInstance sampleInstance : sampleInstancesAtPosition) {
             LabVessel vesselAtPosition = this.getVesselAtPosition(position);
             if (vesselAtPosition != null) {
-                for (Reagent reagent : vesselAtPosition.getAppliedReagents()) {
-                    if(reagent.getMolecularEnvelopeDelta() != null) {
-                        MolecularEnvelope molecularEnvelope = sampleInstance.getMolecularState().getMolecularEnvelope();
-                        if(molecularEnvelope == null) {
-                            sampleInstance.getMolecularState().setMolecularEnvelope(reagent.getMolecularEnvelopeDelta());
-                        } else {
-                            molecularEnvelope.surroundWith(reagent.getMolecularEnvelopeDelta());
+                if (vesselAtPosition.getAppliedReagentsCount() != null && vesselAtPosition.getAppliedReagentsCount() > 0) {
+                    for (Reagent reagent : vesselAtPosition.getAppliedReagents()) {
+                        if(reagent.getMolecularEnvelopeDelta() != null) {
+                            MolecularEnvelope molecularEnvelope = sampleInstance.getMolecularState().getMolecularEnvelope();
+                            if(molecularEnvelope == null) {
+                                sampleInstance.getMolecularState().setMolecularEnvelope(reagent.getMolecularEnvelopeDelta());
+                            } else {
+                                molecularEnvelope.surroundWith(reagent.getMolecularEnvelopeDelta());
+                            }
                         }
                     }
                 }

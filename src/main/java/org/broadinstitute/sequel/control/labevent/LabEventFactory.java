@@ -270,10 +270,10 @@ public class LabEventFactory {
             // rack to ...
             if(plateTransferEvent.getPositionMap() == null) {
                 // plate
-                if(targetRackOfTubes == null) {
+                if(sourceRackOfTubes == null) {
                     return buildFromBettaLimsRackToPlateDbFree(plateTransferEvent, mapBarcodeToSourceTubes, targetPlate);
                 } else {
-                    return buildFromBettaLimsRackToPlateDbFree(plateTransferEvent, targetRackOfTubes, targetPlate);
+                    return buildFromBettaLimsRackToPlateDbFree(plateTransferEvent, sourceRackOfTubes, targetPlate);
                 }
             } else {
                 // rack
