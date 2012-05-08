@@ -1,5 +1,14 @@
-package org.broadinstitute.sequel.entity.project;
+package org.broadinstitute.sequel.integration.entity.project;
 
+import org.broadinstitute.sequel.entity.project.AbstractProject;
+import org.broadinstitute.sequel.entity.project.BasicProject;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.ReagentDesign;
+import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.project.XFoldCoverage;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -20,6 +29,7 @@ import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.integration.ContainerTest;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 
@@ -136,7 +146,7 @@ public class ProjectTest extends ContainerTest {
         assertEquals(65,((IonSequencingTechnology)sequencingDetail.getSequencingTechnology()).getCycleCount());
         assertEquals(IonSequencingTechnology.CHIP_TYPE.CHIP1,((IonSequencingTechnology)sequencingDetail.getSequencingTechnology()).getChipType());
 
-        assertEquals(30,((XFoldCoverage)sequencingDetail.getCoverageGoal()).getCoverageDepth());
+        Assert.assertEquals(30, ((XFoldCoverage) sequencingDetail.getCoverageGoal()).getCoverageDepth());
 
 
         Collection<Quote> quotes = project.getAvailableQuotes();

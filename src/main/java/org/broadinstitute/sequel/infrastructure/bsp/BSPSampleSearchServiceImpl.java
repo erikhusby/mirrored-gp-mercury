@@ -23,8 +23,12 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             .getLog(BSPSampleSearchServiceImpl.class);
 
 
-    @Inject
     private BSPConnectionParameters connParams;
+
+    @Inject
+    public BSPSampleSearchServiceImpl(BSPConnectionParameters connParams) {
+        this.connParams = connParams;
+    }
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {

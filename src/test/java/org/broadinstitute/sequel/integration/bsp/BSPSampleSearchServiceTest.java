@@ -1,27 +1,32 @@
-package org.broadinstitute.sequel.bsp;
+package org.broadinstitute.sequel.integration.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.sequel.integration.ContainerTest;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchServiceImpl;
+import org.broadinstitute.sequel.infrastructure.bsp.QABSPConnectionParameters;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
-public class BSPSampleSearchServiceTest extends ContainerTest {
+public class BSPSampleSearchServiceTest {
 
     @SuppressWarnings("unused")
     private static final Log _logger = LogFactory.getLog(BSPSampleSearchServiceTest.class);
 
-    @Inject
-    BSPSampleSearchService service;
+    private BSPSampleSearchService service;
+
+    @BeforeMethod
+    public void setUp() {
+        service = new BSPSampleSearchServiceImpl(new QABSPConnectionParameters());
+    }
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void testBasic() {

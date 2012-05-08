@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel;
+package org.broadinstitute.sequel.test;
 
 
 import org.broadinstitute.sequel.infrastructure.bsp.AliquotReceiver;

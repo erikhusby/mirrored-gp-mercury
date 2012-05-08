@@ -77,7 +77,7 @@ public class RunLaneResource {
         return getLibraries(client,transport,runName,chamber);
     }
 
-    LibrariesBean getLibraries(LIMQueries.Client thriftClient,
+    public LibrariesBean getLibraries(LIMQueries.Client thriftClient,
                                TTransport thriftTransport,
                                String runName,
                                String chamber) {

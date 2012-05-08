@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.boundary.zims;
+package org.broadinstitute.sequel.test.boundary.zims;
 
 
 import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
@@ -6,6 +6,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.broadinstitute.sequel.boundary.zims.RunLaneResource;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.easymock.EasyMock;
 import org.testng.annotations.BeforeMethod;

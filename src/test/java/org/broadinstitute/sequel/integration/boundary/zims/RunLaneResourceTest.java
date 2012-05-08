@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.boundary.zims;
+package org.broadinstitute.sequel.integration.boundary.zims;
 
 import com.sun.jersey.api.client.Client;
 import edu.mit.broad.prodinfo.thrift.lims.*;
@@ -6,6 +6,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.broadinstitute.sequel.boundary.zims.RunLaneResource;
 import org.broadinstitute.sequel.entity.zims.IndexPositionBean;
 import org.broadinstitute.sequel.entity.zims.LibrariesBean;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;

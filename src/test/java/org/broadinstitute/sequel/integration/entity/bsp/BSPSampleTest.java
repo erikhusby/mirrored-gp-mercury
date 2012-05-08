@@ -1,5 +1,6 @@
-package org.broadinstitute.sequel.entity.bsp;
+package org.broadinstitute.sequel.integration.entity.bsp;
 
+import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
