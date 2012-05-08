@@ -15,9 +15,12 @@ import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
+/**
+ * This is an example of a "real live" integration test.
+ */
 public class BSPSampleSearchServiceTest  {
 
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
     public void testBasic() {
         BSPSampleSearchService service = new BSPSampleSearchServiceImpl(new QABSPConnectionParameters());
         final String TEST_SAMPLE_ID = "SM-12CO4";
