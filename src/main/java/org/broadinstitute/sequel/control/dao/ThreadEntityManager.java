@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.control.dao;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
+import javax.persistence.FlushModeType;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
 
@@ -18,6 +19,8 @@ public class ThreadEntityManager {
     private EntityManager entityManager;
 
     public EntityManager getEntityManager() {
+        // todo jmt find a way to set this in the configuration
+        entityManager.setFlushMode(FlushModeType.COMMIT);
         return entityManager;
     }
 }

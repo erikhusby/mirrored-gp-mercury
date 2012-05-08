@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE resources PUBLIC
+        "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions//EN"
+        "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+<resources>
+    <jdbc-connection-pool name="java:app/jdbc/test_pool"
+                          res-type="javax.sql.DataSource"
+                          datasource-classname="org.postgresql.ds.PGSimpleDataSource">
+        <property name="serverName" value="localhost"/>
+        <property name="databaseName" value="postgres"/>
+        <property name="portNumber" value="5432"/>
+        <property name="user" value="sequel"/>
+        <property name="password" value="sequel_local"/>
+    </jdbc-connection-pool>
+    <jdbc-resource pool-name="java:app/jdbc/test_pool"
+                   jndi-name="java:app/jdbc/test"/>
+</resources>

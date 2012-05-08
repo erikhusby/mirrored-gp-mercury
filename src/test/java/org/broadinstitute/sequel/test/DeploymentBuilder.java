@@ -11,6 +11,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
+import java.io.File;
 import java.util.Collection;
 
 /**
@@ -22,6 +23,8 @@ public class DeploymentBuilder {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, "SequeL.war")
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
+                // resourcesXml in arquillian.xml container configuration doesn't seem to work
+                .addAsWebInfResource(new File("src/test/resources/glassfish-resources.xml"))
                 .merge(importMain(), "WEB-INF/classes");
         war = addWarDependencies(war);
         return war;
