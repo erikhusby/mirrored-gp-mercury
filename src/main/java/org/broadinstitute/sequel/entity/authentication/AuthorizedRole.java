@@ -66,4 +66,24 @@ public class AuthorizedRole {
 
         roleName = roleNameIn;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof AuthorizedRole))
+            return false;
+
+        AuthorizedRole that = (AuthorizedRole) o;
+
+        if (!roleName.equals(that.roleName))
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return roleName.hashCode();
+    }
 }

@@ -47,7 +47,7 @@ public class PageAdministrationBean extends AbstractJsfBean {
     public List<String> getFullRoleList() {
         List<String> tempList = new LinkedList<String>();
 
-        tempList.addAll(authSvc.retrieveAllRoles());
+        tempList.addAll(authSvc.retrieveAllRolesNames());
 
         return tempList;
     }
