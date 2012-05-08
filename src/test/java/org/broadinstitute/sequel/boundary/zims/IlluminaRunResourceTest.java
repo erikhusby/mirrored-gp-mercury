@@ -34,36 +34,19 @@ public class IlluminaRunResourceTest extends ContainerTest {
     @Inject
     IlluminaRunResource runLaneResource;
 
+    private TZamboniRun zamboniRun;
+    
     final ThriftConfiguration thriftConfig = new QAThriftConfiguration();
     
-    private final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
+    public static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
 
     private final String CHAMBER = "2";
     
     private final String WEBSERVICE_URL = "rest/IlluminaRun/query";
 
-    private final String HUMAN = "Human";
+    public static final String HUMAN = "Human";
 
-    private final String BSP_HUMAN = "Homo : Homo sapiens";
-
-    private ZimsIlluminaChamber getLane(String laneName,ZimsIlluminaRun run) {
-        Collection<LibraryBean> libraries = null;
-        for (ZimsIlluminaChamber lane : run.getChambers()) {
-            if (laneName.equals(lane.getChamberName())) {
-                return lane;
-            }
-        }
-        return null;
-    }
-    
-    private TZamboniLane getLane(String laneName,TZamboniRun zamboniRun) {
-        for (TZamboniLane zamboniLane : zamboniRun.getLanes()) {
-            if (laneName.equals(Short.toString(zamboniLane.getLaneNumber()))) {
-                return zamboniLane;                
-            }
-        }        
-        return null;
-    }
+    public static final String BSP_HUMAN = "Homo : Homo sapiens";
     
     /**
      * Does a test of {@link #RUN_NAME} {@link #CHAMBER}
@@ -71,14 +54,8 @@ public class IlluminaRunResourceTest extends ContainerTest {
      */
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_zims_in_container() throws Exception {
-        TZamboniRun zamboniRun = getZamboniRun();
         ZimsIlluminaRun runBean = runLaneResource.getRun(RUN_NAME);
-        ZimsIlluminaChamber laneBean = getLane(CHAMBER,runBean);
-        doLaneAssertions(getLane(CHAMBER,zamboniRun),laneBean);
-        
-        final Collection<LibraryBean> libraries = laneBean.getLibraries(); 
-        assertNotNull(libraries);
-        doAssertions(libraries);
+        doAssertions(zamboniRun,runBean);
     }
     
     /**
@@ -99,17 +76,28 @@ public class IlluminaRunResourceTest extends ContainerTest {
 
         assertNotNull(run);
         assertEquals(run.getRunName(),RUN_NAME);
-        ZimsIlluminaChamber laneBean = getLane(CHAMBER,run);
-        doLaneAssertions(getLane(CHAMBER,getZamboniRun()),laneBean);
-        doAssertions(laneBean.getLibraries());
+        doAssertions(zamboniRun,run);
     }      
     
-    private void doLaneAssertions(TZamboniLane zLane,ZimsIlluminaChamber laneBean) {
-        assertEquals(laneBean.getChamberName(),Short.toString(zLane.getLaneNumber()));
-        assertEquals(laneBean.getPrimer(),zLane.getPrimer());
+    public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {
+        assertEquals(runBean.getChambers().size(),thriftRun.getLanes().size());
+        for (TZamboniLane thriftLane : thriftRun.getLanes()) {
+            ZimsIlluminaChamber lane = getLane(Short.toString(thriftLane.getLaneNumber()),runBean);
+            doAssertions(thriftLane, lane);
+        }
     }
     
-    private void doLibraryAssertions(TZamboniLibrary zLib,Collection<LibraryBean> libBeans) {
+    private static void doAssertions(TZamboniLane zLane,ZimsIlluminaChamber laneBean) {
+        assertEquals(laneBean.getChamberName(),Short.toString(zLane.getLaneNumber()));
+        assertEquals(laneBean.getPrimer(),zLane.getPrimer());
+        assertEquals(laneBean.getLibraries().size(), zLane.getLibraries().size());
+
+        for (TZamboniLibrary thriftLib : zLane.getLibraries()) {
+            doAssertions(thriftLib,laneBean.getLibraries());
+        }
+    }
+    
+    private static void doAssertions(TZamboniLibrary zLib,Collection<LibraryBean> libBeans) {
         boolean foundIt = false;
 
         for (LibraryBean libBean : libBeans) {
@@ -158,7 +146,7 @@ public class IlluminaRunResourceTest extends ContainerTest {
         assertTrue(foundIt);
     }
 
-    private void checkEquality(MolecularIndexingScheme thriftScheme,MolecularIndexingSchemeBean beanScheme) {
+    private static void checkEquality(MolecularIndexingScheme thriftScheme,MolecularIndexingSchemeBean beanScheme) {
         if (thriftScheme == null && beanScheme == null) {
             return;    
         }
@@ -178,8 +166,17 @@ public class IlluminaRunResourceTest extends ContainerTest {
         }
     }
 
+    private static ZimsIlluminaChamber getLane(String laneName,ZimsIlluminaRun run) {
+        for (ZimsIlluminaChamber lane : run.getChambers()) {
+            if (laneName.equals(lane.getChamberName())) {
+                return lane;
+            }
+        }
+        return null;
+    }
+
     @BeforeClass
-    private TZamboniRun getZamboniRun() throws Exception {
+    private void getZamboniRun() throws Exception {
         TTransport transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
         TProtocol protocol = new TBinaryProtocol(transport);
         LIMQueries.Client client = new LIMQueries.Client(protocol);
@@ -193,26 +190,6 @@ public class IlluminaRunResourceTest extends ContainerTest {
         finally {
             transport.close();
         }
-        return run;
-    }
-    
-    /**
-     * Does the assertions for run {@link #RUN_NAME} chamber {@link #CHAMBER}
-     * @param libraries
-     */
-    private void doAssertions(Collection<LibraryBean> libraries) throws Exception {
-        assertNotNull(libraries);
-        assertFalse(libraries.isEmpty());
-        assertEquals(libraries.size(),94);
-
-        TZamboniLane zamboniLane = getLane(CHAMBER,getZamboniRun());
-
-        assertNotNull(zamboniLane);
-
-        assertEquals(zamboniLane.getLibraries().size(),libraries.size());
-        for (TZamboniLibrary zLib : zamboniLane.getLibraries()) {
-            doLibraryAssertions(zLib,libraries);    
-        }
-    }
-
+        zamboniRun = run;
+    }    
 }

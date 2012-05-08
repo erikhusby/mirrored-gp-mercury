@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
-public class RunLaneResourceBadThriftTest  {
+public class IlluminaRunResourceBadThriftTest {
 
     private TTransport getMockTransport() {
         return EasyMock.createMock(TTransport.class);
