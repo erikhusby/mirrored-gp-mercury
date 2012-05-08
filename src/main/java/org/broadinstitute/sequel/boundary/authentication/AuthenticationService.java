@@ -136,7 +136,7 @@ public class AuthenticationService {
      *
      * @return Collection of all roles that are known to the application
      */
-    public Collection<String> retrieveAllRoles() {
+    public Collection<String> retrieveAllRolesNames() {
         Collection<AuthorizedRole> roleList = roleDao.findAllRoles();
 
         List<String> roleStringList = new LinkedList<String>();
@@ -146,6 +146,10 @@ public class AuthenticationService {
         }
 
         return roleStringList;
+    }
+
+    public Collection<AuthorizedRole> retrieveAllRoles() {
+        return roleDao.findAllRoles();
     }
 
     /**

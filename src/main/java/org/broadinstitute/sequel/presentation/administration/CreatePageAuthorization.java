@@ -41,7 +41,7 @@ public class CreatePageAuthorization extends AbstractJsfBean {
     public List<String> getRoleList() {
         List<String> tempList = new LinkedList<String>();
 
-        tempList.addAll(authSvc.retrieveAllRoles());
+        tempList.addAll(authSvc.retrieveAllRolesNames());
 
         return tempList;
     }
