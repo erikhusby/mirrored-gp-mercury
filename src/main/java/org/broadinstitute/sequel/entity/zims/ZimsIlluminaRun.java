@@ -1,13 +1,13 @@
 package org.broadinstitute.sequel.entity.zims;
 
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
+import java.util.*;
 
 @XmlRootElement(name = "IlluminaRun")
 public class ZimsIlluminaRun {
@@ -52,6 +52,9 @@ public class ZimsIlluminaRun {
     @XmlAttribute(name = "pairedRun")
     private Boolean isPaired;
 
+    @XmlElement(name = "Read")
+    private final List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
+
     public ZimsIlluminaRun() {}
 
     public ZimsIlluminaRun(String runName,
@@ -77,12 +80,22 @@ public class ZimsIlluminaRun {
         catch(ParseException e) {
             throw new RuntimeException("Cannot parse run date " + runDate + " for " + runName);
         }
-        this.firstCycle = zeroAsNull(firstCycle);
-        this.firstCycleReadLength = zeroAsNull(firstCycleReadLength);
-        this.lastCycle = zeroAsNull(lastCycle);
-        this.molecularBarcodeCycle = zeroAsNull(molecularBarcodeCycle);
-        this.molecularBarcodeLength = zeroAsNull(molecularBarcodeLength);
+        this.firstCycle = ThriftConversionUtil.zeroAsNull(firstCycle);
+        this.firstCycleReadLength = ThriftConversionUtil.zeroAsNull(firstCycleReadLength);
+        this.lastCycle = ThriftConversionUtil.zeroAsNull(lastCycle);
+        this.molecularBarcodeCycle = ThriftConversionUtil.zeroAsNull(molecularBarcodeCycle);
+        this.molecularBarcodeLength = ThriftConversionUtil.zeroAsNull(molecularBarcodeLength);
         this.isPaired = isPaired;
+    }
+
+    public void addRead(TZamboniRead thriftRead) {
+        reads.add(new ZamboniRead(ThriftConversionUtil.zeroAsNull(thriftRead.getFirstCycle()),
+                ThriftConversionUtil.zeroAsNull(thriftRead.getLength()),
+                thriftRead.getReadType().toString()));
+    }
+
+    public List<ZamboniRead> getReads() {
+        return reads;
     }
 
     public boolean getIsPaired() {
@@ -95,15 +108,6 @@ public class ZimsIlluminaRun {
 
     public Integer getMolecularBarcodeCycle() {
         return molecularBarcodeCycle;
-    }
-
-    private Integer zeroAsNull(int number) {
-        if (number == 0) {
-            return null;
-        }
-        else {
-            return new Integer(number);
-        }
     }
 
     public Integer getLastCycle() {

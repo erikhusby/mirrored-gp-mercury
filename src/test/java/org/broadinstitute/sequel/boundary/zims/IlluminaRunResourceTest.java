@@ -92,10 +92,52 @@ public class IlluminaRunResourceTest extends ContainerTest {
         assertEquals(runBean.getIsPaired(),thriftRun.isPairedRun());
         assertEquals(runBean.getLastCycle(),new Integer(thriftRun.getLastCycle()));
 
+        doReadAssertions(thriftRun,runBean);
+
         assertEquals(runBean.getRunDateString(),thriftRun.getRunDate());
         for (TZamboniLane thriftLane : thriftRun.getLanes()) {
             ZimsIlluminaChamber lane = getLane(Short.toString(thriftLane.getLaneNumber()),runBean);
             doAssertions(thriftLane, lane);
+        }
+    }
+
+    private static void doReadAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {
+        if (thriftRun.getReads() != null && runBean.getReads() != null ) {
+            assertEquals(runBean.getReads().size(),thriftRun.getReads().size());
+            for (TZamboniRead thriftRead : thriftRun.getReads()) {
+                boolean haveIt = false;
+                for (ZamboniRead beanRead : runBean.getReads()) {
+                    Integer firstCycle = ThriftConversionUtil.zeroAsNull(thriftRead.getFirstCycle());
+                    Integer readLength = ThriftConversionUtil.zeroAsNull(thriftRead.getLength());
+
+                    if (firstCycle.equals(beanRead.getFirstCycle()) && readLength.equals(beanRead.getLength())) {
+                        if (thriftRead.getReadType() != null) {
+                            String readTypeName = thriftRead.getReadType().name();
+                            if (readTypeName.equals(ZamboniRead.INDEX)) {
+                                assertEquals(beanRead.getReadType(),ZamboniReadType.INDEX);
+                                haveIt = true;
+                            }
+                            else if (readTypeName.equals(ZamboniRead.TEMPLATE)) {
+                                assertEquals(beanRead.getReadType(),ZamboniReadType.TEMPLATE);
+                                haveIt = true;
+                            }
+                            else {
+                                fail("Read type " + thriftRead.getReadType() + " is unknown");
+                            }
+                        }
+                        else {
+                            assertNull(beanRead.getReadType());
+                        }
+                    }
+                }
+                assertTrue(haveIt);
+            }
+        }
+        else if (thriftRun.getReads() == null && runBean.getReads() == null) {
+            // ok
+        }
+        else {
+            fail("Reads are not the same");
         }
     }
     

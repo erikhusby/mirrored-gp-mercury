@@ -101,6 +101,10 @@ public class IlluminaRunResource {
                 tRun.getMolBarcodeCycle(),
                 tRun.getMolBarcodeLength(),
                 tRun.isPairedRun());
+
+        for (TZamboniRead tZamboniRead : tRun.getReads()) {
+            runBean.addRead(tZamboniRead);
+        }
         for (TZamboniLane tZamboniLane : tRun.getLanes()) {
             final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
