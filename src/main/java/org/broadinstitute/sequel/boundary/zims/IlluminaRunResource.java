@@ -26,6 +26,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.io.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -86,7 +88,16 @@ public class IlluminaRunResource {
         if (tRun == null) {
             throw new NullPointerException("tRun cannot be null");
         }
-        final ZimsIlluminaRun runBean = new ZimsIlluminaRun(tRun.getRunName(),tRun.getRunBarcode());
+
+        final ZimsIlluminaRun runBean = new ZimsIlluminaRun(tRun.getRunName(),
+                                                            tRun.getRunBarcode(),
+                                                            tRun.getFlowcellBarcode(),
+                                                            tRun.getSequencer(),
+                                                            tRun.getSequencerModel(),
+                                                            tRun.getRunDate(),
+                                                            tRun.getFirstCycle(),
+                                                            tRun.getFirstCycleReadLength(),
+                                                            tRun.getLastCycle());
         for (TZamboniLane tZamboniLane : tRun.getLanes()) {
             final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {

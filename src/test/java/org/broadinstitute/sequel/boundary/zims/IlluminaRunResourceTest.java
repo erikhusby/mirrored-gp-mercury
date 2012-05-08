@@ -26,6 +26,7 @@ import javax.ws.rs.core.MediaType;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Map;
 
@@ -81,6 +82,13 @@ public class IlluminaRunResourceTest extends ContainerTest {
     
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {
         assertEquals(runBean.getChambers().size(),thriftRun.getLanes().size());
+        assertEquals(runBean.getFlowcellBarcode(),thriftRun.getFlowcellBarcode());
+        assertEquals(runBean.getSequencer(),thriftRun.getSequencer());
+        assertEquals(runBean.getSequencerModel(),thriftRun.getSequencerModel());
+        assertEquals(runBean.getFirstCycle(),new Integer(thriftRun.getFirstCycle()));
+        assertEquals(runBean.getFirstCycleReadLength(),new Integer(thriftRun.getFirstCycleReadLength()));
+
+        assertEquals(runBean.getRunDateString(),thriftRun.getRunDate());
         for (TZamboniLane thriftLane : thriftRun.getLanes()) {
             ZimsIlluminaChamber lane = getLane(Short.toString(thriftLane.getLaneNumber()),runBean);
             doAssertions(thriftLane, lane);
