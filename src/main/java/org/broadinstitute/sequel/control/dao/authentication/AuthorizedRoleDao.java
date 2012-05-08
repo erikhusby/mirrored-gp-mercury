@@ -30,5 +30,7 @@ public class AuthorizedRoleDao {
         return db.getAuthorizedRoleMap().values();
     }
 
-
+    public void persist(AuthorizedRole newRoleIn) {
+        db.addAuthorizedRole(newRoleIn);
+    }
 }

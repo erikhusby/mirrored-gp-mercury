@@ -32,7 +32,7 @@ public class PageAuthorizationDao {
 
 
     public void persist(PageAuthorization pageAuthorizationIn)  {
-        // todo SGM implement
+        db.addPageAuthorization(pageAuthorizationIn);
     }
 
     public PageAuthorization findPageAuthorizationByPage(String pageNameIn) {
@@ -47,10 +47,6 @@ public class PageAuthorizationDao {
         }
 
         return authorization;
-    }
-
-    public void addNewPageAuthorization(PageAuthorization pageAuthorizationIn) {
-        db.addPageAuthorization(pageAuthorizationIn);
     }
 
     public void removePageAuthorization(String pageNameIn) {
