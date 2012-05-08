@@ -24,8 +24,8 @@ public class QuoteServiceTest {
 
     @BeforeClass
     private void setupLargeQuoteAndPriceItem() {
-        quote = new Quote("DNA4JC",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))));
-        priceItem = new PriceItem("Illumina Sequencing","1","Illumina Custom Hybrid Selection Library (93 sample batch size)","15","bannanas","DNA Sequencing");
+        quote = new Quote("DNA4JD",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))));
+        priceItem = new PriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","bannan","DNA Sequencing");
     }
 
 
@@ -45,7 +45,7 @@ public class QuoteServiceTest {
 
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
     public void test_register_work() throws Exception {
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
         Quote fetchedQuote = service.getQuoteFromQuoteServer(quote.getAlphanumericId());
