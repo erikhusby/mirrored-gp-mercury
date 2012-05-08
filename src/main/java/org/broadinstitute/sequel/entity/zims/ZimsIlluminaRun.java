@@ -43,6 +43,15 @@ public class ZimsIlluminaRun {
     @XmlElement(name = "lane")
     private final Collection<ZimsIlluminaChamber> chambers = new HashSet<ZimsIlluminaChamber>();
 
+    @XmlAttribute(name = "molBarcodeCycle")
+    private Integer molecularBarcodeCycle;
+
+    @XmlAttribute(name = "molBarcodeLength")
+    private Integer molecularBarcodeLength;
+
+    @XmlAttribute(name = "pairedRun")
+    private Boolean isPaired;
+
     public ZimsIlluminaRun() {}
 
     public ZimsIlluminaRun(String runName,
@@ -53,7 +62,10 @@ public class ZimsIlluminaRun {
                            String runDate,
                            short firstCycle,
                            short firstCycleReadLength,
-                           short lastCycle) {
+                           short lastCycle,
+                           short molecularBarcodeCycle,
+                           short molecularBarcodeLength,
+                           boolean isPaired) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;
@@ -68,6 +80,21 @@ public class ZimsIlluminaRun {
         this.firstCycle = zeroAsNull(firstCycle);
         this.firstCycleReadLength = zeroAsNull(firstCycleReadLength);
         this.lastCycle = zeroAsNull(lastCycle);
+        this.molecularBarcodeCycle = zeroAsNull(molecularBarcodeCycle);
+        this.molecularBarcodeLength = zeroAsNull(molecularBarcodeLength);
+        this.isPaired = isPaired;
+    }
+
+    public boolean getIsPaired() {
+        return isPaired;
+    }
+
+    public Integer getMolecularBarcodeLength() {
+        return molecularBarcodeLength;
+    }
+
+    public Integer getMolecularBarcodeCycle() {
+        return molecularBarcodeCycle;
     }
 
     private Integer zeroAsNull(int number) {
@@ -79,7 +106,7 @@ public class ZimsIlluminaRun {
         }
     }
 
-    private Integer getLastCycle() {
+    public Integer getLastCycle() {
         return lastCycle;
     }
 
@@ -97,7 +124,11 @@ public class ZimsIlluminaRun {
      */
     @XmlAttribute(name = "runDate")
     public String getRunDateString() {
-        return dateFormat.format(runDate);
+        String date = null;
+        if (runDate != null) {
+            date = dateFormat.format(runDate);
+        }
+        return date;
     }
 
     public String getSequencerModel() {

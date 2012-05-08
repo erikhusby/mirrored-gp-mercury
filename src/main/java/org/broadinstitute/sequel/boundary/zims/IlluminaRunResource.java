@@ -97,7 +97,10 @@ public class IlluminaRunResource {
                                                             tRun.getRunDate(),
                                                             tRun.getFirstCycle(),
                                                             tRun.getFirstCycleReadLength(),
-                                                            tRun.getLastCycle());
+                                                            tRun.getLastCycle(),
+                tRun.getMolBarcodeCycle(),
+                tRun.getMolBarcodeLength(),
+                tRun.isPairedRun());
         for (TZamboniLane tZamboniLane : tRun.getLanes()) {
             final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {

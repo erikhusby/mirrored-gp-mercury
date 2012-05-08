@@ -87,6 +87,10 @@ public class IlluminaRunResourceTest extends ContainerTest {
         assertEquals(runBean.getSequencerModel(),thriftRun.getSequencerModel());
         assertEquals(runBean.getFirstCycle(),new Integer(thriftRun.getFirstCycle()));
         assertEquals(runBean.getFirstCycleReadLength(),new Integer(thriftRun.getFirstCycleReadLength()));
+        assertEquals(runBean.getMolecularBarcodeCycle(),new Integer(thriftRun.getMolBarcodeCycle()));
+        assertEquals(runBean.getMolecularBarcodeLength(),new Integer(thriftRun.getMolBarcodeLength()));
+        assertEquals(runBean.getIsPaired(),thriftRun.isPairedRun());
+        assertEquals(runBean.getLastCycle(),new Integer(thriftRun.getLastCycle()));
 
         assertEquals(runBean.getRunDateString(),thriftRun.getRunDate());
         for (TZamboniLane thriftLane : thriftRun.getLanes()) {
