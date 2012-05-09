@@ -19,6 +19,9 @@ import org.testng.annotations.Test;
 import java.io.*;
 import java.util.HashMap;
 
+import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+
 /**
  * Instead of spending so much time waiting for the thrift server
  * (that's left to {@link IlluminaRunResourceTest}), this test
@@ -29,7 +32,7 @@ public class DbFreeIlluminaRunResourceTest {
 
     private final File RUN_FILE = new File("src/test/data/thrift/",IlluminaRunResourceTest.RUN_NAME + ".thrift");
     
-    @Test
+    @Test(groups = DATABASE_FREE)
     public void test_known_good_run() throws Exception {  
         TZamboniRun thriftRun = deserializeRun(RUN_FILE);
         ZimsIlluminaRun runBean = new IlluminaRunResource().getRun(thriftRun,new HashMap<String, BSPSampleDTO>());
