@@ -3,7 +3,6 @@ package org.broadinstitute.sequel.infrastructure.quote;
 
 
 import com.sun.jersey.api.client.ClientResponse;
-import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -22,6 +21,7 @@ public class QuoteServiceTest {
 
     private  PriceItem priceItem;
 
+
     @BeforeClass
     private void setupLargeQuoteAndPriceItem() {
         quote = new Quote("DNA4JD",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))));
@@ -37,22 +37,21 @@ public class QuoteServiceTest {
      * @{link #setupLargeQuoteAndPriceItem}.
      * @throws Exception
      */
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test(groups = {DATABASE_FREE})
     public void test_get_all_price_items() throws Exception {
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
+        QuoteService service = new MockQuoteService();
         PriceList priceList = service.getAllPriceItems();
         Assert.assertFalse(priceList.getPriceList().isEmpty());
 
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
+    @Test(groups = {EXTERNAL_INTEGRATION},enabled = false)
     public void test_register_work() throws Exception {
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
         Quote fetchedQuote = service.getQuoteFromQuoteServer(quote.getAlphanumericId());
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId = service.registerNewWork(quote,priceItem,0.0001,"http://www.SequeLTesting","paramName","paramValue");
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
-
 
         Assert.assertNotNull(workBatchId);
 
@@ -152,17 +151,16 @@ public class QuoteServiceTest {
 
     }
 
-
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test(groups = {DATABASE_FREE})
     public void test_get_a_quote() throws Exception {
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
-        Quote quote = service.getQuoteFromQuoteServer("DNA3CD");
+        QuoteService service = new MockQuoteService();
+        Quote quote = service.getQuoteFromQuoteServer("DNA4AA");
         Assert.assertNotNull(quote);
-        Assert.assertEquals("Regev ChIP Sequencing 8-1-2011", quote.getName());
+        Assert.assertEquals("Regev Zebrafish RNASeq 2-6-12", quote.getName());
         Assert.assertEquals("6820110", quote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
         Assert.assertEquals("ZEBRAFISH_NIH_REGEV",quote.getQuoteFunding().getFundingLevel().getFunding().getGrantDescription());
         Assert.assertEquals(Funding.FUNDS_RESERVATION,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
-        Assert.assertEquals("DNA3CD",quote.getAlphanumericId());
+        Assert.assertEquals("DNA4AA",quote.getAlphanumericId());
 
         quote = service.getQuoteFromQuoteServer("DNA3A9");
         Assert.assertEquals("HARVARD UNIVERSITY",quote.getQuoteFunding().getFundingLevel().getFunding().getInstitute());
@@ -171,12 +169,12 @@ public class QuoteServiceTest {
 
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test(groups = {DATABASE_FREE})
     public void test_get_all_quotes_for_sequencing() throws Exception {
 
         boolean caught = false;
 
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
+        QuoteService service = new MockQuoteService();
         Quotes quotes = service.getAllSequencingPlatformQuotes();
         Assert.assertNotNull(quotes);
         Assert.assertFalse(quotes.getQuotes().isEmpty());

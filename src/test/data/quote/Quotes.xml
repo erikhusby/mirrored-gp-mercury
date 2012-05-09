@@ -1,0 +1,850 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Quotes>
+    <Quote alphanumericId="DNA23H" approvalStatus="Funded" id="2717" name="NIAID (CO 5035331)">
+        <QuoteFunding fundsRemaining="7415610.5">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5035331" fundingType="Funds Reservation" grantDescription="GENSEQCTR_(NIH)NIAID" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA20E" approvalStatus="Funded" id="2606" name="HMP U54">
+        <QuoteFunding fundsRemaining="608288.38">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030063" fundingType="Funds Reservation" grantDescription="U54-HMP_NIH_BIRREN" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="BSP1WK" approvalStatus="Funded" id="2468" name="HCV_BSP Work_8-2-10">
+        <QuoteFunding fundsRemaining="5012.25">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030141" fundingType="Funds Reservation" grantDescription="U19HCV_(NIH)MGH_HENN" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA27K" approvalStatus="Funded" id="2864" name="NCI-TCGA (CO 5010120)">
+        <QuoteFunding fundsRemaining="9997856">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5010120" fundingType="Funds Reservation" grantDescription="TCGACONT_(NIH)NCI_GA" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA2E9" approvalStatus="Funded" id="3105" name="TagSeq TechDev- Mikkelsen">
+        <QuoteFunding fundsRemaining="34629">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6810101" fundingType="Funds Reservation" grantDescription="NEXTGENERATION_BARR_" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA1R9" approvalStatus="Funded" id="2277" name="Meyerson/Banerji SCLC Whole Exome Sequencing">
+        <QuoteFunding fundsRemaining="42620.4">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="DANA FARBER CANCER INSTIT" purchaseOrderNumber="0000462902"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA230" approvalStatus="Funded" id="2700" name="U01REMC_NIH_Bernstein (CO# 7210020)">
+        <QuoteFunding fundsRemaining="163703.42">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="7210024" fundingType="Funds Reservation" grantDescription="U01REMC_NIH_BERNSTEI" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA232" approvalStatus="Funded" id="2702" name="Epigenomics_InsulinR01_(NIH)BIDMC_Rosen_Y1 (CO# 7210050)- new acct # 7210051">
+        <QuoteFunding fundsRemaining="16060.17">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="7210052" fundingType="Funds Reservation" grantDescription="INSULINR01_(NIH)BIDM" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3DY" approvalStatus="Funded" id="4390" name="Seq Platform BSP and GAP work (Internal Platform)">
+        <QuoteFunding fundsRemaining="38179.3">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="8015144" fundingType="Funds Reservation" grantDescription="DEFAULT GRANT" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA49K" approvalStatus="Funded" id="5528" name="Russ - Aphanomyces astaci WGS">
+        <QuoteFunding fundsRemaining="34233.5">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030020" fundingType="Funds Reservation" grantDescription="SAPROLEGNIA_(USDA)VT" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA49M" approvalStatus="Funded" id="5530" name="Russ - BSP Kit for Creolimax and Corallochytrium">
+        <QuoteFunding fundsRemaining="340">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030020" fundingType="Funds Reservation" grantDescription="SAPROLEGNIA_(USDA)VT" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA46E" approvalStatus="Funded" id="5414" name="Kwiatowski LAM Phase 3: Whole Exome/RNASeq">
+        <QuoteFunding fundsRemaining="54909.05">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="BRIGHAM AND WOMEN'S HOSPI" purchaseOrderNumber="pending"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="MMM4AM" approvalStatus="Funded" id="5566" name="Welt_CHGR_exomes">
+        <QuoteFunding fundsRemaining="11494.2">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MASSACHUSETTS GENERAL HOSPITAL" purchaseOrderNumber="0004994073"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3PI" approvalStatus="Funded" id="4806" name="GSP - NHGRI Sequencing Parent Grant (2011)">
+        <QuoteFunding fundsRemaining="10811124">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5015441" fundingType="Funds Reservation" grantDescription="NHGRI_NIH_LANDER" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="MMM47J" approvalStatus="Funded" id="5455" name="Crowley_CHGR">
+        <QuoteFunding fundsRemaining="108424.8">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MASSACHUSETTS GENERAL HOSPITAL" purchaseOrderNumber="0004978222"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA36C" approvalStatus="Funded" id="4116" name="Lassa Virus Development June 2011">
+        <QuoteFunding fundsRemaining="12937.67">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6230100" fundingType="Funds Reservation" grantDescription="BCELL_(NIH)TULANE_SA" grantStatus="Pending"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3OC" approvalStatus="Funded" id="4764" name="iPS stem cell project whole genome sequencing">
+        <QuoteFunding fundsRemaining="25915.75">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6045123" fundingType="Funds Reservation" grantDescription="STANLEY CENTER" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA44W" approvalStatus="Funded" id="5360" name="Roman Thomas Cancer Pairs">
+        <QuoteFunding fundsRemaining="27068">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MAX PLANCK KOELN" purchaseOrderNumber="25"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3FQ" approvalStatus="Funded" id="4454" name="Garraway-Solid Tumor Exome Sequencing">
+        <QuoteFunding fundsRemaining="39355.29">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5420050" fundingType="Funds Reservation" grantDescription="GENEMUTATIONPROFILIN" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3JR" approvalStatus="Funded" id="4599" name="Hacohen_293T TDP-43 CLIP">
+        <QuoteFunding fundsRemaining="1178.63">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6410090" fundingType="Funds Reservation" grantDescription="INFLUENZAHOST_(NIH)N" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA48W" approvalStatus="Funded" id="5504" name="Meyerson Carcinoid WEx 2012">
+        <QuoteFunding fundsRemaining="53808.6">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="DANA FARBER CANCER INSTIT" purchaseOrderNumber="0000595776"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5FA" approvalStatus="Funded" id="7030" name="Hischhorn Extreme Short Stature (additional 15)">
+        <QuoteFunding fundsRemaining="21755.1">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="CHILDREN'S HOSPITAL BOSTON" purchaseOrderNumber="RSTFD0000454886"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="MMM5I8" approvalStatus="Funded" id="7136" name="Crowley_ReproDis_Omni+ExChip">
+        <QuoteFunding fundsRemaining="104207.8">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MASSACHUSETTS GENERAL HOSPITAL" purchaseOrderNumber="0005092720"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5J6" approvalStatus="Funded" id="7170" name="Metagenomic Mouse Stool">
+        <QuoteFunding fundsRemaining="16027.58">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="HARVARD UNIVERSITY" purchaseOrderNumber="70000346500"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5KL" approvalStatus="Funded" id="7221" name="1000 Genomes Cross Platform Validation (Illumina-Ion Torrent)">
+        <QuoteFunding fundsRemaining="251521">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210190" fundingType="Funds Reservation" grantDescription="1000GENOMESSEQSUPPLE" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5JV" approvalStatus="Funded" id="7195" name="REGEV CEGS_Epigenomics_IV">
+        <QuoteFunding fundsRemaining="6641.63">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6820130" fundingType="Funds Reservation" grantDescription="CEGS MAIN_NIH_REGEV" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5KA" approvalStatus="Funded" id="7210" name="Russ - Saprolegnia declina RNA Seq">
+        <QuoteFunding fundsRemaining="8603">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030020" fundingType="Funds Reservation" grantDescription="SAPROLEGNIA_(USDA)VT" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4J7" approvalStatus="Funded" id="5875" name="Livny - Prokaryotic RNA Seq - NIH">
+        <QuoteFunding fundsRemaining="2522">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6230050" fundingType="Funds Reservation" grantDescription="REGULATORY_RNAS_NIH_" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA48H" approvalStatus="Funded" id="5489" name="SIGMA Cancer GSP Dec'11-Feb'13">
+        <QuoteFunding fundsRemaining="4000000">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5015310" fundingType="Funds Reservation" grantDescription="SIGMA_CARSO-SLIM_LAN" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4AA" approvalStatus="Funded" id="5554" name="Regev Zebrafish RNASeq 2-6-12">
+        <QuoteFunding fundsRemaining="8476.5">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6820110" fundingType="Funds Reservation" grantDescription="ZEBRAFISH_NIH_REGEV" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4CS" approvalStatus="Funded" id="5644" name="Hirschhorn Extreme Short Stature WEx HybSel &amp; Seq">
+        <QuoteFunding fundsRemaining="5322">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="CHILDREN'S HOSPITAL BOSTON" purchaseOrderNumber="RSTFD0000448283"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3JZ" approvalStatus="Funded" id="4607" name="Jung/Meyerson Single Cell Illumina Sequencing Only - Batch 2">
+        <QuoteFunding fundsRemaining="8368">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5420143" fundingType="Funds Reservation" grantDescription="GCC-U24_NIH_MEYERSON" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4AL" approvalStatus="Funded" id="5565" name="P. triticina RNA-seq_020612">
+        <QuoteFunding fundsRemaining="3179">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5020110" fundingType="Funds Reservation" grantDescription="WHEATRUST_USDA_CUOMO" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA43P" approvalStatus="Funded" id="5317" name="1000 Genome Mark Daly">
+        <QuoteFunding fundsRemaining="400613.5">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210191" fundingType="Funds Reservation" grantDescription="1000GENOMESSEQSUPPLE" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA44I" approvalStatus="Funded" id="5346" name="Jung_Single_Cell_01_12">
+        <QuoteFunding fundsRemaining="2360">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5420143" fundingType="Funds Reservation" grantDescription="GCC-U24_NIH_MEYERSON" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA2TZ" approvalStatus="Funded" id="3671" name="Enabling Wheat Rust Post-Genomic Research DNA BSP">
+        <QuoteFunding fundsRemaining="333.5">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5020175" fundingType="Funds Reservation" grantDescription="WHEATRUST(GATES)EBI_" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3I2" approvalStatus="Funded" id="4538" name="Meyerson Mouse Model Lung Cancer">
+        <QuoteFunding fundsRemaining="18125.5">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="DANA FARBER CANCER INSTIT" purchaseOrderNumber="0000571791"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4CL" approvalStatus="Funded" id="5637" name="Plasmodium falciparum mutation invitro">
+        <QuoteFunding fundsRemaining="40515">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6220020" fundingType="Funds Reservation" grantDescription="HAPMAP_GATESFOUND_WI" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3BZ" approvalStatus="Funded" id="4319" name="Chin Mouse Models RNAseq LC and Sequencing">
+        <QuoteFunding fundsRemaining="9545">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="DANA FARBER CANCER INSTIT" purchaseOrderNumber="0000553559"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3AQ" approvalStatus="Funded" id="4274" name="Infant Gut Metagenomics NIAID Open-Ended">
+        <QuoteFunding fundsRemaining="625537">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030160" fundingType="Funds Reservation" grantDescription="NIAIDINFANTGUTOPT2(N" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4E7" approvalStatus="Funded" id="5695" name="Meyerson Carcinoid (Zinner) WEx">
+        <QuoteFunding fundsRemaining="20731.9">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="DANA FARBER CANCER INSTIT" purchaseOrderNumber="0000598602"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3X4" approvalStatus="Funded" id="5080" name="Regev/Thompson Fungal Genome">
+        <QuoteFunding fundsRemaining="7380.75">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MASSACHUSETTTS INSTITUTE" purchaseOrderNumber="4501466363"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3C4" approvalStatus="Funded" id="4324" name="Non-HMP 16S_Banta">
+        <QuoteFunding fundsRemaining="12997">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="4010007" fundingType="Funds Reservation" grantDescription="SEQUENCING DISCRETIO" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3PT" approvalStatus="Funded" id="4817" name="Regev - Single cell total RNA-Seq - Merkin">
+        <QuoteFunding fundsRemaining="16332">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6820130" fundingType="Funds Reservation" grantDescription="CEGS MAIN_NIH_REGEV" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3AS" approvalStatus="Funded" id="4276" name="EnteroEcoli Open-Ended">
+        <QuoteFunding fundsRemaining="407173.56">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030190" fundingType="Funds Reservation" grantDescription="NIAIDENTEROECOLIOPT3" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3X0" approvalStatus="Funded" id="5076" name="GTEx cDNA LC and Sequencing">
+        <QuoteFunding fundsRemaining="114467">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210500" fundingType="Funds Reservation" grantDescription="GTEX CONTRACT_(NIH)N" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5GP" approvalStatus="Funded" id="7081" name="Boston Toronto IBM Microbiome">
+        <QuoteFunding fundsRemaining="100000">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5230081" fundingType="Funds Reservation" grantDescription="MICROBIOM-IBD_CCFA_X" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3YM" approvalStatus="Funded" id="5134" name="HEP-C RNASeq">
+        <QuoteFunding fundsRemaining="7171.3">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MASSACHUSETTS GENERAL HOSPITAL" purchaseOrderNumber="004883613"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5KW" approvalStatus="Funded" id="7232" name="Altshuler Starr Cancers Tranche 2">
+        <QuoteFunding fundsRemaining="118774">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210690" fundingType="Funds Reservation" grantDescription="NOVELCANCERMUTATIONS" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA42I" approvalStatus="Funded" id="5274" name="Gardner - Microbial LC and Sequencing on MiSeq and Ion Torrent">
+        <QuoteFunding fundsRemaining="17594.8">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="AstraZeneca" purchaseOrderNumber="2000319025"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA42E" approvalStatus="Funded" id="5270" name="CCLE Whole Exome HybSel &amp; Seq">
+        <QuoteFunding fundsRemaining="131602.5">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5010120" fundingType="Funds Reservation" grantDescription="TCGACONT_(NIH)NCI_GA" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA36O" approvalStatus="Funded" id="4128" name="Cancer Epigenetics-Hazra">
+        <QuoteFunding fundsRemaining="5105.16">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="HARVARD UNIVERSITY" purchaseOrderNumber="70000133436"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4EZ" approvalStatus="Funded" id="5723" name="Hirschhorn Short-Stature WEx">
+        <QuoteFunding fundsRemaining="7607.2">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="CHILDREN'S HOSPITAL BOSTON" purchaseOrderNumber="RSTFD0000450704"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4IC" approvalStatus="Funded" id="5844" name="Uveal melanoma exomes">
+        <QuoteFunding fundsRemaining="28065.6">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MASSACHUSETTS GENERAL HOSPITAL" purchaseOrderNumber="50657"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA38D" approvalStatus="Funded" id="4189" name="Multiple Myeloma Whole Exome">
+        <QuoteFunding fundsRemaining="437658.38">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5415110" fundingType="Funds Reservation" grantDescription="MULTIPLEMYLOMA_MMRF_" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3PK" approvalStatus="Funded" id="4808" name="GAP - NHGRI Sequencing Parent">
+        <QuoteFunding fundsRemaining="141982.48">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5015451" fundingType="Funds Reservation" grantDescription="NHGRI_NIH_LANDER" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4EB" approvalStatus="Funded" id="5699" name="Benoist/Doran RNASeq 2-23-2012">
+        <QuoteFunding fundsRemaining="6354.35">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="HARVARD UNIVERSITY" purchaseOrderNumber="P159876"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3PJ" approvalStatus="Funded" id="4807" name="BSP - NHGRI Sequencing Parent Grant (2011)">
+        <QuoteFunding fundsRemaining="28104.63">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5015432" fundingType="Funds Reservation" grantDescription="NHGRI_NIH_LANDER" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4GY" approvalStatus="Funded" id="5794" name="Gates Puccinia Project">
+        <QuoteFunding fundsRemaining="35824">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5020200" fundingType="Funds Reservation" grantDescription="BROAD CORNELL RA_COR" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA37Z" approvalStatus="Funded" id="4175" name="Plasmodium falciparum_Wirth">
+        <QuoteFunding fundsRemaining="15211">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6220020" fundingType="Funds Reservation" grantDescription="HAPMAP_GATESFOUND_WI" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3PG" approvalStatus="Funded" id="4804" name="23andWe BSP Work">
+        <QuoteFunding fundsRemaining="87.5">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5010160" fundingType="Funds Reservation" grantDescription="PERSONALGENOMEPILOT_" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3TK" approvalStatus="Funded" id="4952" name="Lipids (HDL) Whole Exome Hybrid Selection &amp; Sequencing">
+        <QuoteFunding fundsRemaining="15014">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210652" fundingType="Funds Reservation" grantDescription="MENDELIANEXOME_LDL(N" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3VN" approvalStatus="Funded" id="5027" name="SIGMA MCKD1 Sanger Sequencing">
+        <QuoteFunding fundsRemaining="75.72">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5015330" fundingType="Funds Reservation" grantDescription="SIGMA_CARSO-SLIM_LAN" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3ZQ" approvalStatus="Funded" id="5174" name="Epigenomics_Neurodegeneration_Tsai">
+        <QuoteFunding fundsRemaining="14082.5">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MASSACHUSETTTS INSTITUTE" purchaseOrderNumber="4501462453"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4GE" approvalStatus="Funded" id="5774" name="Kiran Musunuru 6x WGS 3-5-12">
+        <QuoteFunding fundsRemaining="11892">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="4100027" fundingType="Funds Reservation" grantDescription="SUMMERSFELLOWSHIP201" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA2Z3" approvalStatus="Funded" id="3855" name="Puccinia graminis_71Pgt strains">
+        <QuoteFunding fundsRemaining="21102.63">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="USDA Agricultural Research Division" purchaseOrderNumber="AG63VYP100001"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA39C" approvalStatus="Funded" id="4224" name="Environmental Epigenetics-Challenge">
+        <QuoteFunding fundsRemaining="19678.79">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="HARVARD UNIVERSITY" purchaseOrderNumber="70000141675"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4AK" approvalStatus="Funded" id="5564" name="P. graminis RNA-seq_020612">
+        <QuoteFunding fundsRemaining="3194">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5020173" fundingType="Funds Reservation" grantDescription="WHEATRUST(GATES)EBI_" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3NC" approvalStatus="Funded" id="4728" name="Chin Mouse Colon RNA-Seq LC and Sequencing">
+        <QuoteFunding fundsRemaining="12342.45">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MD Anderson Cancer Center" purchaseOrderNumber="124835-2100"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA270" approvalStatus="Funded" id="2844" name="Ferret WGS">
+        <QuoteFunding fundsRemaining="105172.64">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030090" fundingType="Funds Reservation" grantDescription="NIAIDFERRETOPT1_(NIH" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4CT" approvalStatus="Funded" id="5645" name="Russ - Phytophthora BSP kit">
+        <QuoteFunding fundsRemaining="102">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030130" fundingType="Funds Reservation" grantDescription="HOSTRANGEPHYTOPHTHOR" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA36D" approvalStatus="Funded" id="4117" name="Ebola Virus June 2011">
+        <QuoteFunding fundsRemaining="18825.9">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="HARVARD UNIVERSITY" purchaseOrderNumber="70000129899"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3JM" approvalStatus="Funded" id="4594" name="Neafsey - Plasmodium Hybrid Selection Development - Gates">
+        <QuoteFunding fundsRemaining="19060">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6220020" fundingType="Funds Reservation" grantDescription="HAPMAP_GATESFOUND_WI" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA2TP" approvalStatus="Funded" id="3661" name="Sabeti - Lassa Virus BSP Kit - NIH">
+        <QuoteFunding fundsRemaining="8076">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6230100" fundingType="Funds Reservation" grantDescription="BCELL_(NIH)TULANE_SA" grantStatus="Pending"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5IK" approvalStatus="Funded" id="7148" name="Russ - Aphanomyces invadans BSP Kits">
+        <QuoteFunding fundsRemaining="248">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030020" fundingType="Funds Reservation" grantDescription="SAPROLEGNIA_(USDA)VT" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3E6" approvalStatus="Funded" id="4398" name="16S Multiple Sclerosis - Howard Weiner">
+        <QuoteFunding fundsRemaining="21037.51">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="BRIGHAM AND WOMEN'S HOSPI" purchaseOrderNumber="0004794056"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA27H" approvalStatus="Funded" id="2861" name="NHLBI GO (CO 5215920)">
+        <QuoteFunding fundsRemaining="100000">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5215920" fundingType="Funds Reservation" grantDescription="GO_(NIH)NHLBI_GABRIE" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA41J" approvalStatus="Funded" id="5239" name="Targeted Bisulfite Sequencing on 454">
+        <QuoteFunding fundsRemaining="1476.25">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210330" fundingType="Funds Reservation" grantDescription="RALOCI GWAS_(NIH)BWH" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA261" approvalStatus="Funded" id="2809" name="T2D GO WGS (CO 5210280)">
+        <QuoteFunding fundsRemaining="248510.12">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210281" fundingType="Funds Reservation" grantDescription="LOWPASSSEQUENCING_(N" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5HS" approvalStatus="Funded" id="7120" name="Epigenomics Reprogramming and Pluripotency">
+        <QuoteFunding fundsRemaining="24212">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="7210090" fundingType="Funds Reservation" grantDescription="P01SCRB_(NIH)HARVARD" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5IL" approvalStatus="Funded" id="7149" name="Regev Zebrafish RNASeq 2-2-2012">
+        <QuoteFunding fundsRemaining="16391">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6820110" fundingType="Funds Reservation" grantDescription="ZEBRAFISH_NIH_REGEV" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4DK" approvalStatus="Funded" id="5672" name="TagSeq ENCODE ARRA_2012">
+        <QuoteFunding fundsRemaining="24212">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6810230" fundingType="Funds Reservation" grantDescription="INTEGRATEDARRA_(NIH)" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5OQ" approvalStatus="Funded" id="7370" name="ARRA Wave 8">
+        <QuoteFunding fundsRemaining="1511770">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6020061" fundingType="Funds Reservation" grantDescription="WHOLEEXOMEBP/SCZ-ARR" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA43N" approvalStatus="Funded" id="5315" name="NIDDK T2D ME WEx HybSel &amp; Seq">
+        <QuoteFunding fundsRemaining="917807.75">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210344" fundingType="Funds Reservation" grantDescription="T2D MEC_NIH_ALTSHULE" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3SS" approvalStatus="Funded" id="4924" name="Project 23 &amp; Me High Speed Exome">
+        <QuoteFunding fundsRemaining="12422">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5010160" fundingType="Funds Reservation" grantDescription="PERSONALGENOMEPILOT_" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4I3" approvalStatus="Funded" id="5835" name="Russ - P. parasitica WGS - USDA">
+        <QuoteFunding fundsRemaining="37511">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030130" fundingType="Funds Reservation" grantDescription="HOSTRANGEPHYTOPHTHOR" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA2U2" approvalStatus="Funded" id="3674" name="Enabling Wheat Rust Post-Genomic Research [DNA PORTION]">
+        <QuoteFunding fundsRemaining="16331.25">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5020175" fundingType="Funds Reservation" grantDescription="WHEATRUST(GATES)EBI_" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4JC" approvalStatus="Funded" id="5880" name="GWASeq GEI Supplement (CO 5015433)">
+        <QuoteFunding fundsRemaining="213552">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5015433" fundingType="Funds Reservation" grantDescription="NHGRI_NIH_LANDER" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3W8" approvalStatus="Funded" id="5048" name="Russ - Phytophthora RNA and DNA BSP Kits">
+        <QuoteFunding fundsRemaining="409">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030130" fundingType="Funds Reservation" grantDescription="HOSTRANGEPHYTOPHTHOR" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4JD" approvalStatus="Funded" id="5881" name="Regev Zebrafish ChIP Sequencing 3-21-12">
+        <QuoteFunding fundsRemaining="7566">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6820110" fundingType="Funds Reservation" grantDescription="ZEBRAFISH_NIH_REGEV" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA450" approvalStatus="Funded" id="5364" name="Lander - Methylated ccfDNA Recovery Optimization">
+        <QuoteFunding fundsRemaining="3397.76">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5015330" fundingType="Funds Reservation" grantDescription="SIGMA_CARSO-SLIM_LAN" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA2YJ" approvalStatus="Funded" id="3835" name="16S Gastroesophageal reflux in children - Rosen">
+        <QuoteFunding fundsRemaining="1238.78">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="CHILDREN'S HOSPITAL BOSTON" purchaseOrderNumber="RSTFD-0000404066"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4GI" approvalStatus="Funded" id="5778" name="Fusobacterium-Streptococcus Interactions_BSP">
+        <QuoteFunding fundsRemaining="287">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5030180" fundingType="Funds Reservation" grantDescription="R01MICROBIOME_(NIH)H" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3M7" approvalStatus="Funded" id="4687" name="Regev/Thompson RNA-Seq 10-6-11">
+        <QuoteFunding fundsRemaining="3164.37">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MASSACHUSETTTS INSTITUTE" purchaseOrderNumber="4501438708"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3VK" approvalStatus="Funded" id="5024" name="1000 Genome Validation">
+        <QuoteFunding fundsRemaining="295333">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210191" fundingType="Funds Reservation" grantDescription="1000GENOMESSEQSUPPLE" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5FL" approvalStatus="Funded" id="7041" name="Suva GBM Stem Cell Line RNASeq 3-26-12">
+        <QuoteFunding fundsRemaining="4663.95">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MASSACHUSETTS GENERAL HOSPITAL" purchaseOrderNumber="0005092711"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA48M" approvalStatus="Funded" id="5494" name="Cardiff trio Sequencing Project Informatics">
+        <QuoteFunding fundsRemaining="1356">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6010040" fundingType="Funds Reservation" grantDescription="DAUTEN_GIFT_SCOLNICK" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA48O" approvalStatus="Funded" id="5496" name="DLPF Cortex H3K9ac Pools of 8">
+        <QuoteFunding fundsRemaining="124083">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210430" fundingType="Funds Reservation" grantDescription="BRAIN DNA METH_(NIH)" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3TF" approvalStatus="Funded" id="4947" name="CCLE RainDance Quant, Pool &amp; Seq batch 1">
+        <QuoteFunding fundsRemaining="67585">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5420240" fundingType="Funds Reservation" grantDescription="GARRAWAY_NOVARTIS_CC" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5P1" approvalStatus="Funded" id="7381" name="Taylor - MiSeq Fungal Diversity">
+        <QuoteFunding fundsRemaining="54449">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5020080" fundingType="Funds Reservation" grantDescription="ALASKANFUNGAL_(NSF)U" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4HI" approvalStatus="Funded" id="5814" name="Meyerson Rhabdomyosarcoma WEx 3-12-12">
+        <QuoteFunding fundsRemaining="33170">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5410250" fundingType="Funds Reservation" grantDescription="ZUCKERMAN_DFCI_MEYER" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3V4" approvalStatus="Funded" id="5008" name="Rivera Ewings Sarcoma_ChIPSeq">
+        <QuoteFunding fundsRemaining="4361.26">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MASSACHUSETTS GENERAL HOSPITAL" purchaseOrderNumber="0004878762"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4CY" approvalStatus="Funded" id="5650" name="Sabeti - Lassa Virus Illumina HiSeq Sequencing - SPARC">
+        <QuoteFunding fundsRemaining="18564">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="4070014" fundingType="Funds Reservation" grantDescription="SABETI_SPARC_PATHPLA" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA39R" approvalStatus="Funded" id="4239" name="Epigenetic Mouse Expt_Jianren Mao (MGH)">
+        <QuoteFunding fundsRemaining="1866.87">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="HARVARD UNIVERSITY" purchaseOrderNumber="0004620749"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA233" approvalStatus="Funded" id="2703" name="Epigenomics_Encode Human ChIPs_NIH_Bernstein/ Main-CellDynamics_NIH_Bernstein (CO#7215110)">
+        <QuoteFunding fundsRemaining="72897.15">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="7215130" fundingType="Funds Reservation" grantDescription="ENCODEHUMANCHIPS_NIH" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4FW" approvalStatus="Funded" id="5756" name="Jung Pooled Library Seq">
+        <QuoteFunding fundsRemaining="28320">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5410210" fundingType="Funds Reservation" grantDescription="AIDS-RELATEDLYMPHOMA" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5MI" approvalStatus="Funded" id="7290" name="Stanley Center Additional Experiment">
+        <QuoteFunding fundsRemaining="13536">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6010040" fundingType="Funds Reservation" grantDescription="DAUTEN_GIFT_SCOLNICK" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5FK" approvalStatus="Funded" id="7040" name="Lipids- Averna">
+        <QuoteFunding fundsRemaining="60298">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210652" fundingType="Funds Reservation" grantDescription="MENDELIANEXOME_LDL(N" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4FA" approvalStatus="Funded" id="5734" name="Gabriel Fanconi Anemia 2/29/2012">
+        <QuoteFunding fundsRemaining="19981.5">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210570" fundingType="Funds Reservation" grantDescription="FA&amp;BC_STARR_GABRIEL" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4E6" approvalStatus="Funded" id="5694" name="1000 Genome PacBio/MiSeq Validation">
+        <QuoteFunding fundsRemaining="8572">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5210190" fundingType="Funds Reservation" grantDescription="1000GENOMESSEQSUPPLE" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA44L" approvalStatus="Funded" id="5349" name="Sabeti - Lassa Virus Illumina HiSeq Sequencing">
+        <QuoteFunding fundsRemaining="12394.33">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="4070014" fundingType="Funds Reservation" grantDescription="SABETI_SPARC_PATHPLA" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3MZ" approvalStatus="Funded" id="4715" name="quick-quote-1318516131847">
+        <QuoteFunding fundsRemaining="112.32">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="BRIGHAM AND WOMEN'S HOSPI" purchaseOrderNumber="0004789668"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4D2" approvalStatus="Funded" id="5654" name="Sabeti - Lassa Virus Illumina HiSeq Sequencing - SPARC">
+        <QuoteFunding fundsRemaining="9291">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="4070014" fundingType="Funds Reservation" grantDescription="SABETI_SPARC_PATHPLA" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5ES" approvalStatus="Funded" id="7012" name="Lieberman-Aiden - HiC Illumina Sequencing">
+        <QuoteFunding fundsRemaining="51977">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="6820180" fundingType="Funds Reservation" grantDescription="CEGS MAIN_NIH_REGEV" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3TW" approvalStatus="Funded" id="4964" name="Altshuler/Cancers P.O.">
+        <QuoteFunding fundsRemaining="37012.43">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="MEMORIAL-SLOAN KETTERING" purchaseOrderNumber="BD514577"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4D5" approvalStatus="Funded" id="5657" name="Gnirke - Jumping Library Development - Kindey_Carso">
+        <QuoteFunding fundsRemaining="19158">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5015330" fundingType="Funds Reservation" grantDescription="SIGMA_CARSO-SLIM_LAN" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3U8" approvalStatus="Funded" id="4976" name="Multiplexed-RRBS _SPARC">
+        <QuoteFunding fundsRemaining="745.02">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="4120002" fundingType="Funds Reservation" grantDescription="SPARC_2011_DNAMETH_M" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3A9" approvalStatus="Funded" id="4257" name="Ebola BSP Pico">
+        <QuoteFunding fundsRemaining="162">
+            <FundingLevel percent="100">
+                <Funding fundingType="Purchase Order" institute="HARVARD UNIVERSITY" purchaseOrderNumber="70000141496"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA5M8" approvalStatus="Funded" id="7280" name="Sabeti - Lassa virus BSP Work - SPARC">
+        <QuoteFunding fundsRemaining="162">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="4070014" fundingType="Funds Reservation" grantDescription="SABETI_SPARC_PATHPLA" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA3VW" approvalStatus="Funded" id="5036" name="Finishing Development">
+        <QuoteFunding fundsRemaining="18.64">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5035325" fundingType="Funds Reservation" grantDescription="GENSEQCTR_(NIH)NIAID" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+    <Quote alphanumericId="DNA4HD" approvalStatus="Funded" id="5809" name="Jung Single Cell">
+        <QuoteFunding fundsRemaining="7080">
+            <FundingLevel percent="100">
+                <Funding broadName="" commonName="" costObject="5420143" fundingType="Funds Reservation" grantDescription="GCC-U24_NIH_MEYERSON" grantStatus="Active"/>
+            </FundingLevel>
+        </QuoteFunding>
+    </Quote>
+</Quotes>

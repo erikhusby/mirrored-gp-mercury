@@ -62,18 +62,12 @@ public class QuotesCacheTest {
         Assert.assertEquals(quotes.getQuotes(),cache.getQuotes());
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = DATABASE_FREE)
     public void test_known_good_funding_sources() throws Exception {
-
-        long start = System.currentTimeMillis();
-        QuotesCache cache = new QuotesCache(new QuoteServiceImpl(new QAQuoteConnectionParams()).getAllSequencingPlatformQuotes());
-        System.out.println("Quotes call took " + (System.currentTimeMillis() - start) + "ms");
-        
+        QuotesCache cache = new QuotesCache(new MockQuoteService().getAllSequencingPlatformQuotes());
         Funding nhgriGrant = new Funding(Funding.FUNDS_RESERVATION,"NHGRI_NIH_LANDER");
-        start = System.currentTimeMillis();
         Collection<Quote> foundQuotes = cache.getQuotesForGrantDescription(nhgriGrant.getGrantDescription());
-        System.out.println("Search for quotes took " + (System.currentTimeMillis() - start) + "ms");
-        
+
         Assert.assertFalse(foundQuotes == null);
         Assert.assertTrue(0 < foundQuotes.size());
 

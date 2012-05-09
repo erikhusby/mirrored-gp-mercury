@@ -6,13 +6,14 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.sequel.control.AbstractJerseyClientService;
 
+import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-@Default
+@Alternative
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
 
     @Inject
@@ -155,6 +156,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         return quote;
     }
 
+    @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
         String url = connectionParameters.getUrl(QuoteConnectionParameters.GET_ALL_PRICE_ITEMS);
         WebResource resource = getJerseyClient().resource(url);
@@ -182,6 +184,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
      * @throws QuoteServerException
      * @throws QuoteNotFoundException
      */
+    @Override
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
         String url = connectionParameters.getUrl(QuoteConnectionParameters.GET_ALL_SEQUENCING_QUOTES_URL);
         
