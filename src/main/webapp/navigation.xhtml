@@ -5,13 +5,20 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:ui="http://java.sun.com/jsf/facelets">
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:sqltg="http://sequel.broadinstitute.org/tags">
 <body>
     <ui:composition>
+
         <h:link outcome="/index">Home</h:link>
         <ul>
             <li><h:link outcome="/projects/list">Projects</h:link></li>
         </ul>
+        <sqltg:AuthorizeBlock roles="Sequel-Developers">
+        <ul>
+            <li><h:link outcome="/administration/page_administration.xhtml">Page Administration</h:link> </li>
+        </ul>
+        </sqltg:AuthorizeBlock>
     </ui:composition>
 </body>
 </html>
