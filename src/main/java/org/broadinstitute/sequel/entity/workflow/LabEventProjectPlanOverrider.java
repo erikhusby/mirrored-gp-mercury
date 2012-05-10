@@ -5,7 +5,6 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
-import javax.inject.Inject;
 import java.util.Collection;
 
 /**
