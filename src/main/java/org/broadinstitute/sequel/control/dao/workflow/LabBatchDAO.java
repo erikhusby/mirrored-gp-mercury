@@ -23,5 +23,5 @@ public interface LabBatchDAO {
      * @param vessels
      * @return
      */
-    public Collection<LabBatch> guessActiveBatchesForVessels(Collection<LabVessel> vessels);
+    public Collection<LabBatch> guessActiveBatchesForVessels(Collection<? extends LabVessel> vessels);
 }
