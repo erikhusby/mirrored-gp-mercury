@@ -2,9 +2,8 @@ package org.broadinstitute.sequel.boundary.authentication;
 
 import org.broadinstitute.sequel.entity.authentication.AuthorizedRole;
 import org.broadinstitute.sequel.entity.authentication.PageAuthorization;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

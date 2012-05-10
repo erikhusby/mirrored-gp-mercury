@@ -32,7 +32,7 @@ public class PriceListCacheTest {
     
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_gsp_prices() throws Exception {
-        PriceListCache cache = new PriceListCache(new QuoteServiceImpl(new QAQuoteConnectionParams()).getAllPriceItems());
+        PriceListCache cache = new PriceListCache(new MockQuoteService().getAllPriceItems());
         Assert.assertFalse(cache.getGSPPriceList().isEmpty());
 
         for (PriceItem priceItem : cache.getGSPPriceList()) {
