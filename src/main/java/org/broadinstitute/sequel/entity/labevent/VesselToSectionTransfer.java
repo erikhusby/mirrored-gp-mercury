@@ -25,13 +25,19 @@ public class VesselToSectionTransfer {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel sourceVessel;
+
     private String targetSection;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel targetVessel;
 
-    public VesselToSectionTransfer(LabVessel sourceVessel, String targetSection, VesselContainer targetVesselContainer) {
+    @ManyToOne
+    private LabEvent labEvent;
+
+    public VesselToSectionTransfer(LabVessel sourceVessel, String targetSection, VesselContainer<?> targetVesselContainer, LabEvent labEvent) {
         this.sourceVessel = sourceVessel;
         this.targetSection = targetSection;
+        this.labEvent = labEvent;
         this.targetVessel = targetVesselContainer.getEmbedder();
     }
 
@@ -46,7 +52,11 @@ public class VesselToSectionTransfer {
         return targetSection;
     }
 
-    public VesselContainer getTargetVesselContainer() {
+    public VesselContainer<?> getTargetVesselContainer() {
         return OrmUtil.proxySafeCast(targetVessel, VesselContainerEmbedder.class).getVesselContainer();
+    }
+
+    public LabEvent getLabEvent() {
+        return labEvent;
     }
 }

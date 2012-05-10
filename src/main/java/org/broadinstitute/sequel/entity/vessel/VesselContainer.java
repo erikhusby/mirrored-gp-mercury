@@ -10,6 +10,7 @@ import org.hibernate.annotations.Parent;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.Transient;
@@ -33,6 +34,8 @@ public class VesselContainer<T extends LabVessel> {
     * smartpac holds smrtcells, smrtcells are removed, but not replaced.
     * striptube holds tubes, tubes can't be removed, don't have barcodes. */
     @ManyToMany(targetEntity = LabVessel.class, cascade = CascadeType.PERSIST)
+    // have to specify name, generated name is too long for Oracle
+    @JoinTable(name = "lv_map_position_to_vessel")
     @MapKeyColumn(name = "mapkey")
     private final Map<String, T> mapPositionToVessel = new HashMap<String, T>();
 

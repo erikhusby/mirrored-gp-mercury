@@ -490,7 +490,7 @@ public class LabEventFactory {
         labEvent.addSourceLabVessel(sourceTube);
         labEvent.addTargetLabVessel(targetPlate);
         labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube, targetSection,
-                targetPlate.getVesselContainer()));
+                targetPlate.getVesselContainer(), labEvent));
         return labEvent;
     }
 

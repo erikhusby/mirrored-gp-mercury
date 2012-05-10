@@ -18,11 +18,11 @@ public class StatusNote {
 
     private LabEventName eventName;
     
-    private Date date;
+    private Date noteDate;
     
     public StatusNote(LabEventName eventName) {
         this.eventName = eventName;
-        this.date = new Date();
+        this.noteDate = new Date();
     }
 
     protected StatusNote() {
@@ -32,8 +32,8 @@ public class StatusNote {
         return eventName;
     }
     
-    public Date getDate() {
-        return date;
+    public Date getNoteDate() {
+        return noteDate;
     }
     
 }

@@ -13,7 +13,7 @@ import javax.persistence.SequenceGenerator;
  * its travel through various biological
  * operations.
  *
- * It's analgous to network envelopes/datagrams and
+ * It's analagous to network envelopes/datagrams and
  * payloads.  Take
  * a piece of target DNA and put adaptors
  * on the 3' and 5' ends.  Then a piece
@@ -29,9 +29,9 @@ import javax.persistence.SequenceGenerator;
  *
  * Need to link to a nice diagram in confluence
  * of how all this stuff comes together.  We
- * end up sequence a concatention of various
+ * end up sequence a concatenation of various
  * envelopes, and we need to know where
- * the various daptor sequences are and
+ * the various adaptor sequences are and
  * where the target DNA of interest is.
  *
  * Equals() is very important here.  Equals() will

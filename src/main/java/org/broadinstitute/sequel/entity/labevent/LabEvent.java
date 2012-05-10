@@ -88,7 +88,7 @@ public abstract class LabEvent {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<CherryPickTransfer>();
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<VesselToSectionTransfer>();
     // todo jmt tube to tube transfers, or will they always be in a rack?
 
