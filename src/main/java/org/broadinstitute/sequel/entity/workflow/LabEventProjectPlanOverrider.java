@@ -17,7 +17,6 @@ import java.util.Collection;
  */
 public class LabEventProjectPlanOverrider {
 
-    @Inject
     private LabBatchDAO labBatchDAO;
 
     public LabEventProjectPlanOverrider() {}
