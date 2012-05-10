@@ -2,7 +2,9 @@ package org.broadinstitute.sequel.boundary.authentication;
 
 import org.broadinstitute.sequel.entity.authentication.AuthorizedRole;
 import org.broadinstitute.sequel.entity.authentication.PageAuthorization;
+import org.broadinstitute.sequel.test.ContainerTest;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -16,7 +18,7 @@ import java.util.List;
  *         Date: 5/7/12
  *         Time: 4:37 PM
  */
-public class AuthenticationServiceTest {
+public class AuthenticationServiceTest extends ContainerTest {
 
     final String testPath ="/testPath/";
 
@@ -38,7 +40,7 @@ public class AuthenticationServiceTest {
     @Inject AuthenticationService authSvc;
 
 
-//    @BeforeMethod
+    @BeforeMethod
     public void setUp() throws Exception {
 
         testPage = new PageAuthorization(testPath);
@@ -49,24 +51,23 @@ public class AuthenticationServiceTest {
         roleLabUser = new AuthorizedRole(luRoleName);
         roleLabManager = new AuthorizedRole(lmRoleName);
 
-        authSvc.addNewRole(allRoleName);
-        authSvc.addNewRole(devRoleName);
-        authSvc.addNewRole(pmRoleName);
-        authSvc.addNewRole(lmRoleName);
-        authSvc.addNewRole(luRoleName);
+        if(null != authSvc) {
+            authSvc.addNewRole(allRoleName);
+            authSvc.addNewRole(devRoleName);
+            authSvc.addNewRole(pmRoleName);
+            authSvc.addNewRole(lmRoleName);
+            authSvc.addNewRole(luRoleName);
 
 
-        predefinedRoleList.add(allRoleName);
-        predefinedRoleList.add(lmRoleName);
+            predefinedRoleList.add(allRoleName);
+            predefinedRoleList.add(lmRoleName);
 
-        authSvc.addNewPageAuthorization(testPath,predefinedRoleList);
-
+            authSvc.addNewPageAuthorization(testPath,predefinedRoleList);
+        }
     }
 
-
-//    @Test
+    @Test
     public void test_retrieve_authorized_roles() throws Exception {
-
 
         Collection<String> roleList =authSvc.retrieveAuthorizedRoles(testPage.getPagePath());
 
@@ -78,9 +79,8 @@ public class AuthenticationServiceTest {
 
     }
 
-//    @Test
+    @Test
     public void test_add_new_authorization() throws Exception {
-
 
         List<String> roleList = new LinkedList<String>();
         roleList.add(pmRoleName);
@@ -98,14 +98,14 @@ public class AuthenticationServiceTest {
 
     }
 
-//    @Test
+    @Test
     public void test_is_page_protected() throws Exception {
         Assert.assertTrue(authSvc.isPageProtected(testPath));
 
         Assert.assertFalse(authSvc.isPageProtected("/testpath2/"));
     }
 
-//    @Test
+    @Test
     public void test_get_all_authorized_pages() throws Exception {
 
         Assert.assertFalse(authSvc.getAllAuthorizedPages().isEmpty());
@@ -122,8 +122,9 @@ public class AuthenticationServiceTest {
 
     }
 
-//    @Test
+    @Test
     public void test_find_by_page_name() throws Exception {
+
 
         PageAuthorization foundPage = authSvc.findByPage(testPath);
 
@@ -131,8 +132,9 @@ public class AuthenticationServiceTest {
         Assert.assertEquals(foundPage.getRoleList(), predefinedRoleList);
     }
 
-//    @Test
+    @Test
     public void test_add_roles_to_page() throws Exception {
+
 
         PageAuthorization foundPage = authSvc.findByPage(testPath);
 
@@ -156,8 +158,9 @@ public class AuthenticationServiceTest {
 
     }
 
-//    @Test
+    @Test
     public void test_retrieve_all_roles_names() throws Exception {
+
 
         Collection<String> registeredRoleNames = authSvc.retrieveAllRolesNames();
 
@@ -170,8 +173,9 @@ public class AuthenticationServiceTest {
         Assert.assertTrue(registeredRoleNames.contains(luRoleName));
     }
 
-//    @Test
+    @Test
     public void test_retrieve_all_roles() throws Exception {
+
         Collection<AuthorizedRole> registeredRoleNames = authSvc.retrieveAllRoles();
 
         Assert.assertEquals(registeredRoleNames.size(), 5);

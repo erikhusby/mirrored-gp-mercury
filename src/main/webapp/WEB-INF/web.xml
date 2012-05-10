@@ -46,6 +46,17 @@
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 
+    <!-- for JBoss AS 7 -->
+<!--
+    <servlet>
+        <servlet-name>javax.ws.rs.core.Application</servlet-name>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>javax.ws.rs.core.Application</servlet-name>
+        <url-pattern>/rest/*</url-pattern>
+    </servlet-mapping>
+-->
     <security-role>
         <role-name>Sequel-Admins</role-name>
     </security-role>

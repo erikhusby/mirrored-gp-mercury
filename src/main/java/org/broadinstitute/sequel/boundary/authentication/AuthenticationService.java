@@ -169,4 +169,13 @@ public class AuthenticationService {
         roleDao.persist(newRole);
 
     }
+
+    /**
+     * removeRole allows a user to eliminate a previously defined role from the system.
+     *
+     * @param defunctRoleIn Role to be removed
+     */
+    public void removeRole(AuthorizedRole defunctRoleIn) {
+        roleDao.removeRole(defunctRoleIn);
+    }
 }

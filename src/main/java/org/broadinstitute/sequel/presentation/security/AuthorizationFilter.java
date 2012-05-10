@@ -140,7 +140,9 @@ public class AuthorizationFilter implements Filter {
     }
 
     private boolean excludeFromFilter(String path) {
-        if(path.startsWith("/javax.faces.resource")){
+        if(path.startsWith("/javax.faces.resource") ||
+                path.startsWith("/rest") ||
+                path.startsWith("/ArquillianServletRunner")){
             return true;
         } else {
             return false;
