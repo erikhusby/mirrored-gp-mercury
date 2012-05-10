@@ -9,6 +9,15 @@ import java.util.Map;
  * Properties common to all events of a particular message type
  */
 public enum LabEventType {
+    PREFLIGHT_PICO_SETUP ("PreflightPicoSetup", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    PREFLIGHT_NORMALIZATION("PreflightNormalization", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    PREFLIGHT_POST_NORM_PICO_SETUP ("PreflightPostNormPicoSetup", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
     SHEARING_TRANSFER("ShearingTransfer", false, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 

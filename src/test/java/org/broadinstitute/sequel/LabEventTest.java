@@ -55,7 +55,7 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 /**
  * Test messaging
  */
-@SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass"})
+@SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "OverlyCoupledMethod", "OverlyLongMethod"})
 public class LabEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
@@ -87,10 +87,11 @@ public class LabEventTest {
         labEventFactory.setPersonDAO(new PersonDAO());
         LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
 
+        PreFlight preFlight = new PreFlight(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                mapBarcodeToTube);
         Shearing shearing = new Shearing(workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
-                labEventHandler).invoke();
+                labEventHandler, preFlight.getRackBarcode()).invoke();
         StaticPlate shearingCleanupPlate = shearing.getShearingCleanupPlate();
-        String shearPlateBarcode = shearing.getShearPlateBarcode();
         String shearCleanPlateBarcode = shearing.getShearCleanPlateBarcode();
         StaticPlate shearingPlate = shearing.getShearingPlate();
 
@@ -156,10 +157,11 @@ public class LabEventTest {
         labEventFactory.setPersonDAO(new PersonDAO());
         LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
 
+        PreFlight preFlight = new PreFlight(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                mapBarcodeToTube).invoke();
         Shearing shearing = new Shearing(workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
-                labEventHandler).invoke();
+                labEventHandler, preFlight.getRackBarcode()).invoke();
         StaticPlate shearingCleanupPlate = shearing.getShearingCleanupPlate();
-        String shearPlateBarcode = shearing.getShearPlateBarcode();
         String shearCleanPlateBarcode = shearing.getShearCleanPlateBarcode();
         StaticPlate shearingPlate = shearing.getShearingPlate();
 
@@ -228,6 +230,15 @@ public class LabEventTest {
         // indexes
     }
 
+    @Test
+    public void testFluidigm() {
+        // FluidigmSampleInput rack P96COLS1-6BYROW to chip P384COLS4-6BYROW
+
+        // FluidigmIndexedAdapterInput plate P96COLS1-6BYROW to chip P384COLS4-6BYROW
+
+        // FluidigmHarvestingToRack chip P384COLS4-6BYROW to rack P96COLS1-6BYROW
+    }
+
     private static void validateWorkflow(WorkflowDescription workflowDescription, String nextEventTypeName, Collection<? extends LabVessel> tubes) {
         List<LabVessel> labVessels = new ArrayList<LabVessel>(tubes);
         validateWorkflow(workflowDescription, nextEventTypeName, labVessels);
@@ -246,28 +257,188 @@ public class LabEventTest {
         }
     }
 
+    public static class PreFlight {
+        private final WorkflowDescription workflowDescription;
+        private final BettaLimsMessageFactory bettaLimsMessageFactory;
+        private final LabEventFactory labEventFactory;
+        private final LabEventHandler labEventHandler;
+
+        private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+        private RackOfTubes rackOfTubes;
+        private String rackBarcode;
+
+        public PreFlight(WorkflowDescription workflowDescription, BettaLimsMessageFactory bettaLimsMessageFactory,
+                LabEventFactory labEventFactory, LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+            this.workflowDescription = workflowDescription;
+            this.bettaLimsMessageFactory = bettaLimsMessageFactory;
+            this.labEventFactory = labEventFactory;
+            this.labEventHandler = labEventHandler;
+            this.mapBarcodeToTube = mapBarcodeToTube;
+        }
+
+        public String getRackBarcode() {
+            return rackBarcode;
+        }
+
+        public PreFlight invoke() {
+            PreFlightJaxb preFlightJaxb = new PreFlightJaxb(bettaLimsMessageFactory, "",
+                    new ArrayList<String>(mapBarcodeToTube.keySet()));
+            preFlightJaxb.invoke();
+            rackBarcode = preFlightJaxb.getRackBarcode();
+
+            // PreflightPicoSetup 1
+            LabEvent preflightPicoSetup1Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
+                    preFlightJaxb.getPreflightPicoSetup1(), mapBarcodeToTube, null);
+            labEventHandler.processEvent(preflightPicoSetup1Entity, workflowDescription);
+            // asserts
+            StaticPlate preflightPicoSetup1Plate = (StaticPlate) preflightPicoSetup1Entity.getTargetLabVessels().iterator().next();
+            Assert.assertEquals(preflightPicoSetup1Plate.getSampleInstances().size(),
+                    NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
+
+            // PreflightPicoSetup 2
+            LabEvent preflightPicoSetup2Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
+                    preFlightJaxb.getPreflightPicoSetup2(), mapBarcodeToTube, null);
+            labEventHandler.processEvent(preflightPicoSetup2Entity, workflowDescription);
+            // asserts
+            StaticPlate preflightPicoSetup2Plate = (StaticPlate) preflightPicoSetup2Entity.getTargetLabVessels().iterator().next();
+            Assert.assertEquals(preflightPicoSetup2Plate.getSampleInstances().size(),
+                    NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
+
+            // PreflightNormalization
+            LabEvent preflightNormalization = labEventFactory.buildFromBettaLimsRackEventDbFree(
+                    preFlightJaxb.getPreflightNormalization(), null, mapBarcodeToTube);
+            labEventHandler.processEvent(preflightNormalization, workflowDescription);
+            // asserts
+            rackOfTubes = (RackOfTubes) preflightNormalization.getTargetLabVessels().iterator().next();
+            Assert.assertEquals(rackOfTubes.getSampleInstances().size(),
+                    NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
+
+            // PreflightPostNormPicoSetup 1
+            LabEvent preflightPostNormPicoSetup1Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
+                    preFlightJaxb.getPreflightPostNormPicoSetup1(), mapBarcodeToTube, null);
+            labEventHandler.processEvent(preflightPostNormPicoSetup1Entity, workflowDescription);
+            // asserts
+            StaticPlate preflightPostNormPicoSetup1Plate = (StaticPlate) preflightPostNormPicoSetup1Entity.getTargetLabVessels().iterator().next();
+            Assert.assertEquals(preflightPostNormPicoSetup1Plate.getSampleInstances().size(),
+                    NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
+
+            // PreflightPicoSetup 2
+            LabEvent preflightPostNormPicoSetup2Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
+                    preFlightJaxb.getPreflightPostNormPicoSetup2(), mapBarcodeToTube, null);
+            labEventHandler.processEvent(preflightPostNormPicoSetup2Entity, workflowDescription);
+            // asserts
+            StaticPlate preflightPostNormPicoSetup2Plate = (StaticPlate) preflightPostNormPicoSetup2Entity.getTargetLabVessels().iterator().next();
+            Assert.assertEquals(preflightPostNormPicoSetup2Plate.getSampleInstances().size(),
+                    NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
+
+            return this;
+        }
+    }
+
+    public static class PreFlightJaxb {
+        private final BettaLimsMessageFactory bettaLimsMessageFactory;
+        private final String testPrefix;
+        private final List<String> tubeBarcodes;
+
+        private String rackBarcode;
+        private PlateTransferEventType preflightPicoSetup1;
+        private PlateTransferEventType preflightPicoSetup2;
+        private PlateEventType preflightNormalization;
+        private PlateTransferEventType preflightPostNormPicoSetup1;
+        private PlateTransferEventType preflightPostNormPicoSetup2;
+
+        private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+
+        public PreFlightJaxb(BettaLimsMessageFactory bettaLimsMessageFactory, String testPrefix, List<String> tubeBarcodes) {
+            this.bettaLimsMessageFactory = bettaLimsMessageFactory;
+            this.testPrefix = testPrefix;
+            this.tubeBarcodes = tubeBarcodes;
+        }
+
+        public PlateTransferEventType getPreflightPicoSetup1() {
+            return preflightPicoSetup1;
+        }
+
+        public PlateTransferEventType getPreflightPicoSetup2() {
+            return preflightPicoSetup2;
+        }
+
+        public PlateEventType getPreflightNormalization() {
+            return preflightNormalization;
+        }
+
+        public PlateTransferEventType getPreflightPostNormPicoSetup1() {
+            return preflightPostNormPicoSetup1;
+        }
+
+        public PlateTransferEventType getPreflightPostNormPicoSetup2() {
+            return preflightPostNormPicoSetup2;
+        }
+
+        public List<BettaLIMSMessage> getMessageList() {
+            return messageList;
+        }
+
+        public String getRackBarcode() {
+            return rackBarcode;
+        }
+
+        public PreFlightJaxb invoke() {
+            rackBarcode = "PreflightRack" + testPrefix;
+            preflightPicoSetup1 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
+                    tubeBarcodes, "PreflightPicoPlate1" + testPrefix);
+            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.getPlateTransferEvent().add(preflightPicoSetup1);
+            messageList.add(bettaLIMSMessage);
+
+            preflightPicoSetup2 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
+                    tubeBarcodes, "PreflightPicoPlate2" + testPrefix);
+            BettaLIMSMessage bettaLIMSMessage1 = new BettaLIMSMessage();
+            bettaLIMSMessage1.getPlateTransferEvent().add(preflightPicoSetup2);
+            messageList.add(bettaLIMSMessage1);
+
+            preflightNormalization = this.bettaLimsMessageFactory.buildRackEvent("PreflightNormalization", rackBarcode, tubeBarcodes);
+            BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
+            bettaLIMSMessage2.getPlateEvent().add(preflightNormalization);
+            messageList.add(bettaLIMSMessage2);
+
+            preflightPostNormPicoSetup1 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPostNormPicoSetup",
+                    rackBarcode, tubeBarcodes, "PreflightPostNormPicoPlate1" + testPrefix);
+            BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
+            bettaLIMSMessage3.getPlateEvent().add(preflightPostNormPicoSetup1);
+            messageList.add(bettaLIMSMessage3);
+
+            preflightPostNormPicoSetup2 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPostNormPicoSetup",
+                    rackBarcode, tubeBarcodes, "PreflightPostNormPicoPlate2" + testPrefix);
+            BettaLIMSMessage bettaLIMSMessage4 = new BettaLIMSMessage();
+            bettaLIMSMessage4.getPlateEvent().add(preflightPostNormPicoSetup2);
+            messageList.add(bettaLIMSMessage4);
+
+            return this;
+        }
+    }
+
     private static class Shearing {
         private final WorkflowDescription workflowDescription;
         private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final LabEventFactory labEventFactory;
         private final LabEventHandler labEventHandler;
+        private final String rackBarcode;
         private String shearPlateBarcode;
         private StaticPlate shearingPlate;
         private String shearCleanPlateBarcode;
         private StaticPlate shearingCleanupPlate;
 
         private Shearing(WorkflowDescription workflowDescription, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-                BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory, LabEventHandler labEventHandler) {
+                BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
+                LabEventHandler labEventHandler, String rackBarcode) {
             this.workflowDescription = workflowDescription;
             this.mapBarcodeToTube = mapBarcodeToTube;
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
             this.labEventFactory = labEventFactory;
             this.labEventHandler = labEventHandler;
-        }
-
-        public String getShearPlateBarcode() {
-            return shearPlateBarcode;
+            this.rackBarcode = rackBarcode;
         }
 
         public StaticPlate getShearingPlate() {
@@ -284,7 +455,7 @@ public class LabEventTest {
 
         public Shearing invoke() {
             ShearingJaxb shearingJaxb = new ShearingJaxb(bettaLimsMessageFactory, new ArrayList<String>(mapBarcodeToTube.keySet()),
-                    "").invoke();
+                    "", rackBarcode).invoke();
             this.shearPlateBarcode = shearingJaxb.getShearPlateBarcode();
             this.shearCleanPlateBarcode = shearingJaxb.getShearCleanPlateBarcode();
 
@@ -325,6 +496,7 @@ public class LabEventTest {
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final List<String> tubeBarcodeList;
         private final String testPrefix;
+        private final String rackBarcode;
         private String shearPlateBarcode;
         private String shearCleanPlateBarcode;
 
@@ -334,10 +506,11 @@ public class LabEventTest {
         private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
 
         public ShearingJaxb(BettaLimsMessageFactory bettaLimsMessageFactory, List<String> tubeBarcodeList,
-                String testPrefix) {
+                String testPrefix, String rackBarcode) {
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
             this.tubeBarcodeList = tubeBarcodeList;
             this.testPrefix = testPrefix;
+            this.rackBarcode = rackBarcode;
         }
 
         public PlateTransferEventType getShearingTransferEventJaxb() {
@@ -367,7 +540,7 @@ public class LabEventTest {
         public ShearingJaxb invoke() {
             shearPlateBarcode = "ShearPlate" + testPrefix;
             shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate(
-                    "ShearingTransfer", "KioskRack" + testPrefix, tubeBarcodeList, shearPlateBarcode);
+                    "ShearingTransfer", rackBarcode, tubeBarcodeList, shearPlateBarcode);
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
             bettaLIMSMessage.getPlateTransferEvent().add(shearingTransferEventJaxb);
             messageList.add(bettaLIMSMessage);
@@ -505,7 +678,7 @@ public class LabEventTest {
     }
 
     public static class BuildIndexPlate {
-        private String indexPlateBarcode;
+        private final String indexPlateBarcode;
         private StaticPlate indexPlate;
         private MolecularIndexReagent index301;
 
@@ -675,7 +848,7 @@ public class LabEventTest {
         }
     }
 
-    private class HybridSelection {
+    private static class HybridSelection {
         private final WorkflowDescription workflowDescription;
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final LabEventFactory labEventFactory;

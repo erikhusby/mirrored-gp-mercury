@@ -15,6 +15,8 @@ import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
@@ -38,6 +40,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     @Transient
     private IlluminaRunConfiguration runConfiguration;
 
+    @Enumerated(EnumType.STRING)
     private FLOWCELL_TYPE flowcellType;
 
     // todo jmt how is this different from label?

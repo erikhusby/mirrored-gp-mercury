@@ -80,8 +80,17 @@ public class BettalimsMessageResourceTest extends ContainerTest {
         twoDBarcodedTubeDAO.clear();
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+
+        LabEventTest.PreFlightJaxb preFlightJaxb = new LabEventTest.PreFlightJaxb(bettaLimsMessageFactory, testPrefix,
+                new ArrayList<String>(mapBarcodeToTube.keySet())).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : preFlightJaxb.getMessageList()) {
+            bettalimsMessageResource.processMessage(bettaLIMSMessage);
+            twoDBarcodedTubeDAO.flush();
+            twoDBarcodedTubeDAO.clear();
+        }
+
         LabEventTest.ShearingJaxb shearingJaxb = new LabEventTest.ShearingJaxb(bettaLimsMessageFactory,
-                new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix).invoke();
+                new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, preFlightJaxb.getRackBarcode()).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : shearingJaxb.getMessageList()) {
             bettalimsMessageResource.processMessage(bettaLIMSMessage);
             twoDBarcodedTubeDAO.flush();

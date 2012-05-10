@@ -14,6 +14,8 @@ import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -37,11 +39,13 @@ public class SectionTransfer {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel sourceVessel;
 
+    @Enumerated(EnumType.STRING)
     private SBSSection sourceSection;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel targetVessel;
 
+    @Enumerated(EnumType.STRING)
     private SBSSection targetSection;
 
     @ManyToOne(fetch = FetchType.LAZY)

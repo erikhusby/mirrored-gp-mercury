@@ -6,6 +6,8 @@ import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import java.util.Collection;
@@ -15,6 +17,8 @@ public class PlateWell extends LabVessel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private StaticPlate plate;
+
+    @Enumerated(EnumType.STRING)
     private VesselPosition vesselPosition;
     
     public PlateWell(StaticPlate p,VesselPosition vesselPosition) {

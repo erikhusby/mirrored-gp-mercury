@@ -118,6 +118,20 @@ public class BettaLimsMessageFactory {
         }
     }
 
+    public PlateEventType buildRackEvent(String eventType, String rackBarcode, List<String> tubeBarcodes) {
+        try {
+            PlateEventType rackEvent = new PlateEventType();
+            setStationEventData(eventType, rackEvent);
+
+            rackEvent.setPlate(buildRack(rackBarcode));
+            rackEvent.setPositionMap(buildPositionMap(rackBarcode, tubeBarcodes));
+
+            return rackEvent;
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static class CherryPick {
         private final String sourceRackBarcode;
         private final String sourceWell;

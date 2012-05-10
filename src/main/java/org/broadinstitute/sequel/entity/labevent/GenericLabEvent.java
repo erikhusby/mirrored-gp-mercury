@@ -6,7 +6,8 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Date;
@@ -17,6 +18,7 @@ import java.util.Date;
 @Entity
 public class GenericLabEvent extends LabEvent {
 
+    @Enumerated(EnumType.STRING)
     private LabEventType labEventType;
 
     public GenericLabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Person operator) {
