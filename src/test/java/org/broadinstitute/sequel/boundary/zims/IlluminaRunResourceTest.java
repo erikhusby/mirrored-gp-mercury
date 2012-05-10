@@ -11,13 +11,9 @@ import org.broadinstitute.sequel.entity.zims.*;
 
 import static org.testng.Assert.*;
 
-import org.broadinstitute.sequel.infrastructure.bsp.BSPLSIDUtil;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
-import org.broadinstitute.sequel.test.ContainerTest;
-import org.broadinstitute.sequel.test.DeploymentBuilder;
+import org.broadinstitute.sequel.integration.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -27,17 +23,13 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 
-import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 public class IlluminaRunResourceTest extends Arquillian  {

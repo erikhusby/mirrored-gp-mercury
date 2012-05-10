@@ -1,6 +1,7 @@
-package org.broadinstitute.sequel.entity.project;
+package org.broadinstitute.sequel.integration.entity.project;
 
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -20,8 +21,7 @@ import org.broadinstitute.sequel.entity.workflow.Workflow;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.infrastructure.quote.*;
-import org.broadinstitute.sequel.test.ContainerTest;
-import org.broadinstitute.sequel.test.DeploymentBuilder;
+import org.broadinstitute.sequel.integration.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -146,7 +146,7 @@ public class ProjectTest extends Arquillian {
         assertEquals(65,((IonSequencingTechnology)sequencingDetail.getSequencingTechnology()).getCycleCount());
         assertEquals(IonSequencingTechnology.CHIP_TYPE.CHIP1,((IonSequencingTechnology)sequencingDetail.getSequencingTechnology()).getChipType());
 
-        assertEquals(30,((XFoldCoverage)sequencingDetail.getCoverageGoal()).getCoverageDepth());
+        assertEquals(30, ((XFoldCoverage) sequencingDetail.getCoverageGoal()).getCoverageDepth());
 
 
         Collection<Quote> quotes = project.getAvailableQuotes();

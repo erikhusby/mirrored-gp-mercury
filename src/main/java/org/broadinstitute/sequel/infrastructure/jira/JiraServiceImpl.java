@@ -19,14 +19,17 @@ import java.io.IOException;
 
 @Default
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
-    
-    @Inject
-    private JiraConnectionParameters connectionParameters;
 
     private Log logger = LogFactory.getLog(JiraServiceImpl.class);
-    
+
+    private JiraConnectionParameters connectionParameters;
+
     private String baseUrl;
 
+    @Inject
+    public JiraServiceImpl(JiraConnectionParameters connectionParameters) {
+        this.connectionParameters = connectionParameters;
+    }
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {

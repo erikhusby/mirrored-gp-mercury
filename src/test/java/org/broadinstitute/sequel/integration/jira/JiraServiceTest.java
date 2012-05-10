@@ -1,25 +1,30 @@
-package org.broadinstitute.sequel.jira;
+package org.broadinstitute.sequel.integration.jira;
 
 
+import org.broadinstitute.sequel.infrastructure.jira.EriksDesktopJiraConnectionParameters;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.test.ContainerTest;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.io.IOException;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 @Test(groups = EXTERNAL_INTEGRATION)
-public class JiraServiceTest extends ContainerTest {
+public class JiraServiceTest {
 
-    @Inject
     private JiraService service;
+
+    @BeforeMethod
+    public void setUp() {
+        service = new JiraServiceImpl(new EriksDesktopJiraConnectionParameters());
+    }
 
     public void testCreation() {
 

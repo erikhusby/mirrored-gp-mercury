@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel;
+package org.broadinstitute.sequel.test;
 
 //import com.jprofiler.api.agent.Controller;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateCherryPickEvent;

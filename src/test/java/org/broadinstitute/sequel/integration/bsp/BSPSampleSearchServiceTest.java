@@ -1,24 +1,18 @@
-package org.broadinstitute.sequel.bsp;
+package org.broadinstitute.sequel.integration.bsp;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.infrastructure.bsp.*;
-import org.broadinstitute.sequel.test.ContainerTest;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * This is an example of a "real live" integration test.
  */
-public class BSPSampleSearchServiceTest  {
+public class BSPSampleSearchServiceTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
     public void testBasic() {
@@ -30,6 +24,5 @@ public class BSPSampleSearchServiceTest  {
                 BSPSampleSearchColumn.ROOT_SAMPLE);
         Assert.assertEquals(TEST_SAMPLE_ID, data.get(0)[0]);
     }
-
 
 }

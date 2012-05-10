@@ -1,19 +1,15 @@
 package org.broadinstitute.sequel.infrastructure.quote;
 
-
-
 import com.sun.jersey.api.client.ClientResponse;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 public class QuoteServiceTest {
 
@@ -27,7 +23,6 @@ public class QuoteServiceTest {
         quote = new Quote("DNA4JD",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))));
         priceItem = new PriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","bannan","DNA Sequencing");
     }
-
 
     /**
      * If this test fails because the quote has been used up, 
@@ -45,30 +40,11 @@ public class QuoteServiceTest {
 
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION},enabled = false)
-    public void test_register_work() throws Exception {
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
-        Quote fetchedQuote = service.getQuoteFromQuoteServer(quote.getAlphanumericId());
-        System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
-        String workBatchId = service.registerNewWork(quote,priceItem,0.0001,"http://www.SequeLTesting","paramName","paramValue");
-        System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
-
-        Assert.assertNotNull(workBatchId);
-
-        try {
-            long workItemId = Long.parseLong(workBatchId);
-            Assert.assertTrue(workItemId > 0);
-        }
-        catch(NumberFormatException e) {
-            Assert.fail(workBatchId + " returned from quote server is not a number");
-        }
-    }
-
     @Test(groups = DATABASE_FREE)
     public void test_bad_response_code() {
         QuoteServiceImpl service = new QuoteServiceImpl(null);
         ClientResponse mockResponse = EasyMock.createMock(ClientResponse.class);
-        
+
         EasyMock.expect(mockResponse.getClientResponseStatus()).andReturn(ClientResponse.Status.BAD_REQUEST).atLeastOnce();
         EasyMock.replay(mockResponse);
         try {
@@ -146,9 +122,6 @@ public class QuoteServiceTest {
         }
         catch(Exception e) {}
         EasyMock.verify(mockResponse);
-
-
-
     }
 
     @Test(groups = {DATABASE_FREE})

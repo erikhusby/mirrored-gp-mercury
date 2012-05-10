@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.test;
+package org.broadinstitute.sequel.integration;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.test.api.ArquillianResource;

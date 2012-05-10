@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.quotes;
+package org.broadinstitute.sequel.integration.quotes;
 
 import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.testng.Assert;

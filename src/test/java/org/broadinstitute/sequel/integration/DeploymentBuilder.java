@@ -1,6 +1,6 @@
-package org.broadinstitute.sequel.test;
+package org.broadinstitute.sequel.integration;
 
-import org.broadinstitute.sequel.BettaLimsMessageFactory;
+import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;

@@ -1,15 +1,9 @@
-package org.broadinstitute.sequel.entity.bsp;
+package org.broadinstitute.sequel.integration.entity.bsp;
 
+import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.infrastructure.bsp.*;
-import org.broadinstitute.sequel.test.ContainerTest;
-import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 

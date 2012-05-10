@@ -8,6 +8,7 @@ import org.easymock.EasyMock;
 /**
  * Utility methods shared by tests
  */
+@Deprecated
 public class TestUtilities {
 
     public static WeldUtil bootANewWeld() {

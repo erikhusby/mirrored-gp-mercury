@@ -1,7 +1,7 @@
-package org.broadinstitute.sequel.test.test;
+package org.broadinstitute.sequel.integration.test;
 
-import org.broadinstitute.sequel.test.DeploymentBuilder;
-import org.broadinstitute.sequel.test.beans.SimpleService;
+import org.broadinstitute.sequel.integration.DeploymentBuilder;
+import org.broadinstitute.sequel.integration.test.beans.SimpleService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.Archive;

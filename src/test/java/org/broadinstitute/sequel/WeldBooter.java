@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 
+@Deprecated
 public class WeldBooter extends Arquillian {
 
     @Deployment

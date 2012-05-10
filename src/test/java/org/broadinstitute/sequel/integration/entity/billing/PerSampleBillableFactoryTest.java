@@ -1,33 +1,29 @@
-package org.broadinstitute.sequel.entity.billing;
+package org.broadinstitute.sequel.integration.entity.billing;
 
 
-import org.broadinstitute.sequel.BettaLimsMessageFactory;
+import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
+import org.broadinstitute.sequel.entity.billing.Quote;
+import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.*;
-import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
@@ -69,9 +65,10 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
      * tubes are semi-equally distributed between
      * two different {@link ProjectPlan}s. This helps us test that
      * we bill the single {@link LabEvent} back to two different
-     * {@link Quote}s.
+     * {@link org.broadinstitute.sequel.entity.billing.Quote}s.
      *
-     * plan1 and plan2 should have different {@link Quote}s.
+     * plan1 and plan2 should have different
+     * {@link org.broadinstitute.sequel.entity.billing.Quote}s.
      * @param plan1
      * @param plan2
      * @param totalSamples the total number of samples
@@ -127,12 +124,15 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
     /**
      * Verifies that a rack -> plate event, which contains
      * {@link StartingSample} from different (@link ProjectPlan}s
-     * and different {@link Quote}s will be billed properly.
+     * and different {@link org.broadinstitute.sequel.entity.billing.Quote}s
+     * will be billed properly.
      * 
      * In particular, this test is supposed to verify that
      * if you have 12 {@link StartingSample}s for one
-     * {@link Quote} and 12 other {@link StartingSample}s from
-     * a different {@link Quote} comingled on a plate and
+     * {@link org.broadinstitute.sequel.entity.billing.Quote}
+     * and 12 other {@link StartingSample}s from a different
+     * {@link org.broadinstitute.sequel.entity.billing.Quote}
+     * comingled on a plate and
      * you want to bill for the {@link LabEvent} that uses
      * the plate, what you'll post back to quote server is
      * a single line item for one quote for the first set
