@@ -12,14 +12,24 @@ public class ZimsIlluminaChamber {
     @XmlAttribute(name = "name")
     private String chamberName;
 
-    @XmlElement(name = "libraries")
+    @XmlElement(name = "library")
     private Collection<LibraryBean> libraries;
+    
+    @XmlAttribute(name = "primer")
+    private String primer;
     
     public ZimsIlluminaChamber() {}
             
-    public ZimsIlluminaChamber(short chamberName,final Collection<LibraryBean> libraries) {
+    public ZimsIlluminaChamber(short chamberName,
+                               final Collection<LibraryBean> libraries,
+                               final String primer) {
         this.chamberName = Short.toString(chamberName);
         this.libraries = libraries;
+        this.primer = primer;
+    }
+    
+    public String getPrimer() {
+        return primer;
     }
     
     public String getChamberName() {

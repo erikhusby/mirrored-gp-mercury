@@ -57,7 +57,49 @@
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 -->
+    <security-role>
+        <role-name>Sequel-Admins</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-LabUsers</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-LabManagers</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-ProjectManagers</role-name>
+    </security-role>
+    <security-role>
+        <role-name>Sequel-Developers</role-name>
+    </security-role>
+
+
+
     <welcome-file-list>
-        <welcome-file>index.xhtml</welcome-file>
+        <welcome-file>/index.xhtml</welcome-file>
     </welcome-file-list>
+    <login-config>
+        <auth-method>FORM</auth-method>
+        <realm-name>crowd_custom_realm</realm-name>
+        <form-login-config>
+            <form-login-page>/security/login.xhtml</form-login-page>
+            <form-error-page>/security/login_error.xhtml</form-error-page>
+        </form-login-config>
+    </login-config>
+
+    <filter>
+        <filter-name>AuthorizationFilter</filter-name>
+        <filter-class>org.broadinstitute.sequel.presentation.security.AuthorizationFilter</filter-class>
+
+        <init-param>
+            <param-name>error_page</param-name>
+            <param-value>/security/authorization_error.xhtml</param-value>
+        </init-param>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>AuthorizationFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
 </web-app>

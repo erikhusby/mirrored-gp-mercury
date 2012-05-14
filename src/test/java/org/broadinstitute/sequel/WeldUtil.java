@@ -3,6 +3,7 @@ package org.broadinstitute.sequel;
 //import org.jboss.weld.environment.se.Weld;
 //import org.jboss.weld.environment.se.WeldContainer;
 
+@Deprecated
 public class WeldUtil {
     
 //    private WeldContainer weld;

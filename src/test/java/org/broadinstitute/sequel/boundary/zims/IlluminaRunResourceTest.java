@@ -6,16 +6,19 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.entity.zims.*;
 
 import static org.testng.Assert.*;
 
 import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.integration.DeploymentBuilder;
+import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -29,43 +32,38 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 
-public class IlluminaRunResourceTest extends ContainerTest {
+public class IlluminaRunResourceTest extends Arquillian  {
 
     @Inject
     IlluminaRunResource runLaneResource;
 
+    private TZamboniRun zamboniRun;
+    
     final ThriftConfiguration thriftConfig = new QAThriftConfiguration();
     
-    private final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
+    public static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
 
     private final String CHAMBER = "2";
     
     private final String WEBSERVICE_URL = "rest/IlluminaRun/query";
 
-    private final String HUMAN = "Human";
+    public static final String HUMAN = "Human";
 
-    private final String BSP_HUMAN = "Homo : Homo sapiens";
+    public static final String BSP_HUMAN = "Homo : Homo sapiens";
 
-    private Collection<LibraryBean> getLibrariesForLane(String laneName,ZimsIlluminaRun run) {
-        Collection<LibraryBean> libraries = null;
-        for (ZimsIlluminaChamber lane : run.getChambers()) {
-            if (laneName.equals(lane.getChamberName())) {
-                libraries = lane.getLibraries();
-                break;
-            }
-        }
-        return libraries;
+    @Deployment
+    public static WebArchive buildSequelWar() {
+        return DeploymentBuilder.buildSequelWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class);
     }
-    
+
     /**
      * Does a test of {@link #RUN_NAME} {@link #CHAMBER}
      * directly in container.
      */
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_zims_in_container() throws Exception {
-        final Collection<LibraryBean> libraries = getLibrariesForLane(CHAMBER,runLaneResource.getRun(RUN_NAME));
-        assertNotNull(libraries);
-        doAssertions(libraries);
+        ZimsIlluminaRun runBean = runLaneResource.getRun(RUN_NAME);
+        doAssertions(zamboniRun,runBean);
     }
     
     /**
@@ -86,10 +84,81 @@ public class IlluminaRunResourceTest extends ContainerTest {
 
         assertNotNull(run);
         assertEquals(run.getRunName(),RUN_NAME);
-        doAssertions(getLibrariesForLane(CHAMBER,run));
+        doAssertions(zamboniRun,run);
     }      
     
-    private void doLibraryAssertions(TZamboniLibrary zLib,Collection<LibraryBean> libBeans) {
+    public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {
+        assertEquals(runBean.getChambers().size(),thriftRun.getLanes().size());
+        assertEquals(runBean.getFlowcellBarcode(),thriftRun.getFlowcellBarcode());
+        assertEquals(runBean.getSequencer(),thriftRun.getSequencer());
+        assertEquals(runBean.getSequencerModel(),thriftRun.getSequencerModel());
+        assertEquals(runBean.getFirstCycle(),new Integer(thriftRun.getFirstCycle()));
+        assertEquals(runBean.getFirstCycleReadLength(),new Integer(thriftRun.getFirstCycleReadLength()));
+        assertEquals(runBean.getMolecularBarcodeCycle(),new Integer(thriftRun.getMolBarcodeCycle()));
+        assertEquals(runBean.getMolecularBarcodeLength(),new Integer(thriftRun.getMolBarcodeLength()));
+        assertEquals(runBean.getIsPaired(),thriftRun.isPairedRun());
+        assertEquals(runBean.getLastCycle(),new Integer(thriftRun.getLastCycle()));
+
+        doReadAssertions(thriftRun,runBean);
+
+        assertEquals(runBean.getRunDateString(),thriftRun.getRunDate());
+        for (TZamboniLane thriftLane : thriftRun.getLanes()) {
+            ZimsIlluminaChamber lane = getLane(Short.toString(thriftLane.getLaneNumber()),runBean);
+            doAssertions(thriftLane, lane);
+        }
+    }
+
+    private static void doReadAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {
+        if (thriftRun.getReads() != null && runBean.getReads() != null ) {
+            assertEquals(runBean.getReads().size(),thriftRun.getReads().size());
+            for (TZamboniRead thriftRead : thriftRun.getReads()) {
+                boolean haveIt = false;
+                for (ZamboniRead beanRead : runBean.getReads()) {
+                    Integer firstCycle = ThriftConversionUtil.zeroAsNull(thriftRead.getFirstCycle());
+                    Integer readLength = ThriftConversionUtil.zeroAsNull(thriftRead.getLength());
+
+                    if (firstCycle.equals(beanRead.getFirstCycle()) && readLength.equals(beanRead.getLength())) {
+                        if (thriftRead.getReadType() != null) {
+                            String readTypeName = thriftRead.getReadType().name();
+                            if (readTypeName.equals(ZamboniRead.INDEX)) {
+                                assertEquals(beanRead.getReadType(),ZamboniReadType.INDEX);
+                                haveIt = true;
+                            }
+                            else if (readTypeName.equals(ZamboniRead.TEMPLATE)) {
+                                assertEquals(beanRead.getReadType(),ZamboniReadType.TEMPLATE);
+                                haveIt = true;
+                            }
+                            else {
+                                fail("Read type " + thriftRead.getReadType() + " is unknown");
+                            }
+                        }
+                        else {
+                            assertNull(beanRead.getReadType());
+                        }
+                    }
+                }
+                assertTrue(haveIt);
+            }
+        }
+        else if (thriftRun.getReads() == null && runBean.getReads() == null) {
+            // ok
+        }
+        else {
+            fail("Reads are not the same");
+        }
+    }
+    
+    private static void doAssertions(TZamboniLane zLane,ZimsIlluminaChamber laneBean) {
+        assertEquals(laneBean.getChamberName(),Short.toString(zLane.getLaneNumber()));
+        assertEquals(laneBean.getPrimer(),zLane.getPrimer());
+        assertEquals(laneBean.getLibraries().size(), zLane.getLibraries().size());
+
+        for (TZamboniLibrary thriftLib : zLane.getLibraries()) {
+            doAssertions(thriftLib,laneBean.getLibraries());
+        }
+    }
+    
+    private static void doAssertions(TZamboniLibrary zLib,Collection<LibraryBean> libBeans) {
         boolean foundIt = false;
 
         for (LibraryBean libBean : libBeans) {
@@ -120,7 +189,7 @@ public class IlluminaRunResourceTest extends ContainerTest {
                 assertEquals(libBean.getTargetLaneCoverage(),new Short(zLib.getTargetLaneCoverage()));
                 assertEquals(libBean.getTissueType(),zLib.getTissueType());
                 assertEquals(libBean.getWeirdness(),zLib.getWeirdness());
-                
+
                 if (HUMAN.equals(zLib.getOrganism())) {
                     if (!(HUMAN.equals(libBean.getOrganism()) || BSP_HUMAN.equals(libBean.getOrganism()))) {
                         fail("Not the right human:" + libBean.getOrganism());
@@ -138,7 +207,7 @@ public class IlluminaRunResourceTest extends ContainerTest {
         assertTrue(foundIt);
     }
 
-    private void checkEquality(MolecularIndexingScheme thriftScheme,MolecularIndexingSchemeBean beanScheme) {
+    private static void checkEquality(MolecularIndexingScheme thriftScheme,MolecularIndexingSchemeBean beanScheme) {
         if (thriftScheme == null && beanScheme == null) {
             return;    
         }
@@ -158,41 +227,32 @@ public class IlluminaRunResourceTest extends ContainerTest {
         }
     }
 
+    private static ZimsIlluminaChamber getLane(String laneName,ZimsIlluminaRun run) {
+        for (ZimsIlluminaChamber lane : run.getChambers()) {
+            if (laneName.equals(lane.getChamberName())) {
+                return lane;
+            }
+        }
+        return null;
+    }
+
     @BeforeClass
-    private TZamboniLane getZamboniLane() throws Exception {
+    private void getZamboniRun() throws Exception {
         TTransport transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
         TProtocol protocol = new TBinaryProtocol(transport);
         LIMQueries.Client client = new LIMQueries.Client(protocol);
         transport.open();
 
-        TZamboniLane lane = null;
+        TZamboniRun run = null;
 
         try {
-            lane = client.fetchSingleLane(RUN_NAME,Short.parseShort(CHAMBER)).getLanes().iterator().next();
+            run = client.fetchRun(RUN_NAME);
         }
         finally {
             transport.close();
         }
-        return lane;
+        zamboniRun = run;
     }
-    
-    /**
-     * Does the assertions for run {@link #RUN_NAME} chamber {@link #CHAMBER}
-     * @param libraries
-     */
-    private void doAssertions(Collection<LibraryBean> libraries) throws Exception {
-        assertNotNull(libraries);
-        assertFalse(libraries.isEmpty());
-        assertEquals(libraries.size(),94);
 
-        TZamboniLane zamboniLane = getZamboniLane();
-
-        assertNotNull(zamboniLane);
-
-        assertEquals(zamboniLane.getLibraries().size(),libraries.size());
-        for (TZamboniLibrary zLib : zamboniLane.getLibraries()) {
-            doLibraryAssertions(zLib,libraries);    
-        }
-    }
 
 }

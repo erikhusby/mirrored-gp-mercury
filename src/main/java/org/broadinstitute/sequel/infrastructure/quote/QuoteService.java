@@ -8,6 +8,12 @@ package org.broadinstitute.sequel.infrastructure.quote;
 
 public interface QuoteService {
 
+    // todo extract and marshall current quote server xml
+
+    // todo rename impl and bsp impl to "LiveBSP" and "LiveQuote", same for jira
+
+    // todo make registerNewWork mock
+
     /**
      * Asks the quote server for basic information about a quote.
      *
@@ -16,6 +22,10 @@ public interface QuoteService {
      */
 
     public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException;
+
+    public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException;
+
+    public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException;
 
     public String registerNewWork(Quote quote,
                                   PriceItem priceItem,
