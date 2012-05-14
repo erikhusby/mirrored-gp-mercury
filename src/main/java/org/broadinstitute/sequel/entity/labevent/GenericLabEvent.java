@@ -82,9 +82,11 @@ public class GenericLabEvent extends LabEvent {
 */
             // after the target goop is transferred,
             // apply the reagent
+/*
             for (Reagent reagent : getReagents()) {
                 target.applyReagent(reagent);
             }
+*/
         }
 
         /**

@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.control.zims;
 
-import com.jprofiler.api.agent.Controller;
+//import com.jprofiler.api.agent.Controller;
 import junit.framework.Assert;
 import org.broadinstitute.sequel.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.sequel.entity.zims.LibrariesBean;
@@ -23,9 +23,9 @@ public class LibraryBeanFactoryTest extends ContainerTest {
     @Test
     public void testBuildLibraries() {
         String runName = "TestRun0510120516";
-        Controller.startCPURecording(true);
+//        Controller.startCPURecording(true);
         LibrariesBean librariesBean = libraryBeanFactory.buildLibraries(runName);
-        Controller.stopCPURecording();
+//        Controller.stopCPURecording();
         Assert.assertNotNull("no libraries", librariesBean);
     }
 }

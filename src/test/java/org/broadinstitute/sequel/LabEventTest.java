@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel;
 
 //import com.jprofiler.api.agent.Controller;
+
 import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateCherryPickEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateEventType;
@@ -10,7 +11,11 @@ import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptacleType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
+import org.broadinstitute.sequel.control.labevent.LabEventFactory;
+import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.workflow.WorkflowParser;
+import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
@@ -19,25 +24,22 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.reagent.GenericReagent;
+import org.broadinstitute.sequel.entity.reagent.MolecularIndex;
+import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.sequel.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.sequel.entity.run.IlluminaFlowcell;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.vessel.PlateWell;
+import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.SBSSection;
+import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.StripTube;
+import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.sequel.control.labevent.LabEventFactory;
-import org.broadinstitute.sequel.control.labevent.LabEventHandler;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
-import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.reagent.IndexEnvelope;
-import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
-import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.vessel.PlateWell;
-import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
-import org.broadinstitute.sequel.entity.vessel.StaticPlate;
-import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -271,11 +273,11 @@ public class LabEventTest {
         private String rackBarcode;
         private String chipBarcode;
         private PlateTransferEventType fluidigmSampleInputJaxb;
-        PlateTransferEventType fluidigmIndexedAdapterInputJaxb;
-        PlateTransferEventType fluidigmHarvestingToRackJaxb;
+        private PlateTransferEventType fluidigmIndexedAdapterInputJaxb;
+        private PlateTransferEventType fluidigmHarvestingToRackJaxb;
         private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
         private String harvestRackBarcode;
-        Map<String, TwoDBarcodedTube> mapBarcodeToHarvestTube = new HashMap<String, TwoDBarcodedTube>();
+        private final Map<String, TwoDBarcodedTube> mapBarcodeToHarvestTube = new HashMap<String, TwoDBarcodedTube>();
 
         private FluidigmMessages(String testPrefix, BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
                 LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube, StaticPlate indexPlate) {
@@ -353,7 +355,7 @@ public class LabEventTest {
             labEventHandler.processEvent(fluidigmSampleInputEntity, null);
             // asserts
             StaticPlate chip = (StaticPlate) fluidigmSampleInputEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(chip.getSampleInstances().size(), 48, "Wrong number of sample instances");
+            Assert.assertEquals(chip.getSampleInstances().size(), mapBarcodeToTube.size(), "Wrong number of sample instances");
 
             LabEvent fluidigmIndexedAdapterInputEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                     fluidigmIndexedAdapterInputJaxb, indexPlate, chip);
@@ -364,7 +366,7 @@ public class LabEventTest {
             labEventHandler.processEvent(fluidigmHarvestingToRackEntity, null);
             // asserts
             RackOfTubes harvestRack = (RackOfTubes) fluidigmHarvestingToRackEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(harvestRack.getSampleInstances().size(), 48, "Wrong number of sample instances");
+            Assert.assertEquals(harvestRack.getSampleInstances().size(), mapBarcodeToTube.size(), "Wrong number of sample instances");
         }
     }
 
@@ -730,7 +732,7 @@ public class LabEventTest {
 
         public LibraryConstruction invoke() {
             LibraryConstructionJaxb libraryConstructionJaxb = new LibraryConstructionJaxb(bettaLimsMessageFactory, "",
-                    shearCleanPlateBarcode).invoke();
+                    shearCleanPlateBarcode, "IndexPlate").invoke();
             pondRegRackBarcode = libraryConstructionJaxb.getPondRegRackBarcode();
             pondRegTubeBarcodes = libraryConstructionJaxb.getPondRegTubeBarcodes();
 
@@ -758,17 +760,16 @@ public class LabEventTest {
             validateWorkflow(workflowDescription, "IndexedAdapterLigation", shearingCleanupPlate);
             BuildIndexPlate buildIndexPlate = new BuildIndexPlate(libraryConstructionJaxb.getIndexPlateBarcode()).invoke();
             StaticPlate indexPlate = buildIndexPlate.getIndexPlate();
-            MolecularIndexReagent index301 = buildIndexPlate.getIndex301();
             LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                     libraryConstructionJaxb.getIndexedAdapterLigationJaxb(), indexPlate, shearingCleanupPlate);
             labEventHandler.processEvent(indexedAdapterLigationEntity, null);
             // asserts
             Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition("A01");
-            PlateWell plateWellA1PostIndex = shearingCleanupPlate.getVesselContainer().getVesselAtPosition("A01");
-            Assert.assertEquals(plateWellA1PostIndex.getAppliedReagents().iterator().next(), index301, "Wrong reagent");
+//            PlateWell plateWellA1PostIndex = shearingCleanupPlate.getVesselContainer().getVesselAtPosition("A01");
+//            Assert.assertEquals(plateWellA1PostIndex.getAppliedReagents().iterator().next(), index301, "Wrong reagent");
             SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
-            Assert.assertEquals(sampleInstance.getMolecularState().getMolecularEnvelope().get3PrimeAttachment().getAppendageName(),
-                    "tagged_301", "Wrong index");
+            MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) sampleInstance.getReagents().iterator().next();
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Fenok", "Wrong index");
 
             // AdapterLigationCleanup
             validateWorkflow(workflowDescription, "AdapterLigationCleanup", shearingCleanupPlate);
@@ -824,14 +825,17 @@ public class LabEventTest {
         }
 
         public BuildIndexPlate invoke() {
-            indexPlate = new StaticPlate(indexPlateBarcode);
+            indexPlate = new StaticPlate(indexPlateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
             PlateWell plateWellA01 = new PlateWell(indexPlate, VesselPosition.A01);
-            index301 = new MolecularIndexReagent(new IndexEnvelope("ATCGATCG", null, "tagged_301"));
+            index301 = new MolecularIndexReagent(new MolecularIndexingScheme(
+                    new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
+                        put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex("ATCGATCG"));}}));
             plateWellA01.addReagent(index301);
             indexPlate.getVesselContainer().addContainedVessel(plateWellA01, "A01");
             PlateWell plateWellA02 = new PlateWell(indexPlate, VesselPosition.A02);
-            IndexEnvelope index502 = new IndexEnvelope("TCGATCGA", null, "tagged_502");
-            plateWellA02.addReagent(new MolecularIndexReagent(index502));
+            plateWellA02.addReagent(new MolecularIndexReagent(new MolecularIndexingScheme(
+                    new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
+                        put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex("TCGATCGA"));}})));
             indexPlate.getVesselContainer().addContainedVessel(plateWellA02, "A02");
             return this;
         }
@@ -857,10 +861,12 @@ public class LabEventTest {
         private PlateTransferEventType pondRegistrationJaxb;
         private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
 
-        public LibraryConstructionJaxb(BettaLimsMessageFactory bettaLimsMessageFactory, String testPrefix, String shearCleanPlateBarcode) {
+        public LibraryConstructionJaxb(BettaLimsMessageFactory bettaLimsMessageFactory, String testPrefix,
+                String shearCleanPlateBarcode, String indexPlateBarcode) {
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
             this.testPrefix = testPrefix;
             this.shearCleanPlateBarcode = shearCleanPlateBarcode;
+            this.indexPlateBarcode = indexPlateBarcode;
         }
 
         public PlateEventType getEndRepairJaxb() {
@@ -936,7 +942,7 @@ public class LabEventTest {
             bettaLIMSMessage3.getPlateEvent().add(aBaseCleanupJaxb);
             messageList.add(bettaLIMSMessage3);
 
-            indexPlateBarcode = "IndexPlate" + testPrefix;
+//            indexPlateBarcode = "IndexPlate" + testPrefix;
             indexedAdapterLigationJaxb = bettaLimsMessageFactory.buildPlateToPlate(
                     "IndexedAdapterLigation", indexPlateBarcode, shearCleanPlateBarcode);
             BettaLIMSMessage bettaLIMSMessage4 = new BettaLIMSMessage();

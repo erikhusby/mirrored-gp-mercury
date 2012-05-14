@@ -1,11 +1,19 @@
 package org.broadinstitute.sequel.entity.sample;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.reagent.Reagent;
+import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * An aliquot of a sample in a particular
@@ -87,11 +95,37 @@ import java.util.Collection;
  * a {@link org.broadinstitute.sequel.entity.vessel.LabVessel}, in which case they'll
  * have to have different {@link org.broadinstitute.sequel.entity.vessel.MolecularState}.
  * */
-public interface SampleInstance  {
+public class SampleInstance  {
 
     public enum GSP_CONTROL_ROLE {
         NEGATIVE,POSITIVE,NONE
     }
+
+    private static Log gLog = LogFactory.getLog(SampleInstance.class);
+
+    private StartingSample sample;
+
+    private GSP_CONTROL_ROLE controlRole;
+
+    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
+
+    private Collection<ReadBucket> readBuckets = new HashSet<ReadBucket>();
+
+    private MolecularState molecularState = new MolecularState();
+
+    private List<Reagent> reagents = new ArrayList<Reagent>();
+
+    public SampleInstance(StartingSample sample,
+            GSP_CONTROL_ROLE controlRole,
+            ProjectPlan projectPlan,
+            MolecularState molecularState,
+            WorkflowDescription workflowDescription) {
+        this.sample = sample;
+        this.controlRole = controlRole;
+        projectPlans.add(projectPlan);
+        this.molecularState = molecularState;
+    }
+
 
     /**
      * Positive control or negative control?
@@ -100,7 +134,9 @@ public interface SampleInstance  {
      * in a container.
      * @return
      */
-    public GSP_CONTROL_ROLE getControlRole();
+    public GSP_CONTROL_ROLE getControlRole() {
+        return controlRole;
+    }
 
     /**
      * Ultimately from whence this instance
@@ -111,7 +147,9 @@ public interface SampleInstance  {
      * model, except that it would actually work)
      * @return
      */
-    public StartingSample getStartingSample();
+    public StartingSample getStartingSample() {
+        return sample;
+    }
 
     /**
      *
@@ -142,20 +180,34 @@ public interface SampleInstance  {
      * {@link #getAllProjectPlans()}.
      * @return
      */
-    public ProjectPlan getSingleProjectPlan();
+    public ProjectPlan getSingleProjectPlan() {
+        if (projectPlans.isEmpty()) {
+            return null;
+        }
+        else if (projectPlans.size() <= 1) {
+            return projectPlans.iterator().next();
+        }
+        else {
+            throw new RuntimeException("There are " + projectPlans.size() + " possible project plans for " + this);
+        }
+    }
 
     /**
      * @see #getSingleProjectPlan()
      * @return
      */
-    public Collection<ProjectPlan> getAllProjectPlans();
+    public Collection<ProjectPlan> getAllProjectPlans() {
+        return projectPlans;
+    }
 
     /**
      * What is the molecular state  of this
      * sample in this container?
      * @return
      */
-    public MolecularState getMolecularState();
+    public MolecularState getMolecularState() {
+        return molecularState;
+    }
 
     /**
      * This seems at odds with {@link org.broadinstitute.sequel.entity.project.Project#getWorkflowDescription(SampleInstance)}.
@@ -181,7 +233,9 @@ public interface SampleInstance  {
      */
     //public WorkflowDescription getWorkflowDescription();
 
-    public Collection<ReadBucket> getReadBuckets();
+    public Collection<ReadBucket> getReadBuckets() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
     /**
      * Based the entry/exit of a {@link org.broadinstitute.sequel.entity.vessel.LabVessel} into
@@ -191,6 +245,41 @@ public interface SampleInstance  {
      * your override the {@link ProjectPlan}.
      * @param projectPlan
      */
-    public void resetProjectPlan(ProjectPlan projectPlan);
+    public void resetProjectPlan(ProjectPlan projectPlan) {
+        if (projectPlan == null) {
+            throw new RuntimeException("Cannot reset projectPlan to null.");
+        }
+        projectPlans.clear();
+        projectPlans.add(projectPlan);
+    }
+
+    public void addReagent(Reagent reagent) {
+        reagents.add(reagent);
+    }
+
+    public List<Reagent> getReagents() {
+        return reagents;
+    }
+
+    public void applyChange(StateChange change) {
+        if (change != null) {
+            if (change.getControlRole() != null) {
+                controlRole = change.getControlRole();
+            }
+            if (change.getProjectPlanOverride() != null) {
+                projectPlans.add(change.getProjectPlanOverride());
+            }
+            if (change.getReadBucketOverrides() != null) {
+                readBuckets.clear();
+                readBuckets.addAll(change.getReadBucketOverrides());
+            }
+            if (change.getMolecularState() != null) {
+                if (change.getMolecularState().getMolecularEnvelope() != null) {
+                    MolecularEnvelope envelopeDelta = change.getMolecularState().getMolecularEnvelope();
+                    getMolecularState().getMolecularEnvelope().surroundWith(envelopeDelta);
+                }
+            }
+        }
+    }
 
 }

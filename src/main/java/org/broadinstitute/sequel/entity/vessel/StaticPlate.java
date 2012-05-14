@@ -60,11 +60,13 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
     @Enumerated(EnumType.STRING)
     private PlateType plateType;
 
-    public StaticPlate(String label) {
+    public StaticPlate(String label, PlateType plateType) {
         super(label);
+        this.plateType = plateType;
     }
 
-    public StaticPlate() {
+    /** For Hibernate */
+    protected StaticPlate() {
     }
 
     @Override

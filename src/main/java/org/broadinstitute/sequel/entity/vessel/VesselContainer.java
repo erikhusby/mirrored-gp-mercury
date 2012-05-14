@@ -23,7 +23,6 @@ import java.util.Set;
 /**
  * A vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a flowcell of lanes
  */
-@SuppressWarnings("rawtypes")
 @Embeddable
 public class VesselContainer<T extends LabVessel> {
 
@@ -85,24 +84,32 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     private void examineTransfers(String position, Set<SampleInstance> sampleInstances) {
+        Set<SampleInstance> sampleInstancesAtPosition = new HashSet<SampleInstance>();
+        Set<Reagent> reagentsAtPosition = new HashSet<Reagent>();
         for (LabEvent labEvent : this.embedder.getTransfersTo()) {
             for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
-                Set<SampleInstance> sampleInstancesAtPosition = sectionTransfer.getSourceVesselContainer().getSampleInstancesAtPosition(position);
-                applyReagents(position, sampleInstancesAtPosition);
-                applyProjectPlanOverrideIfPresent(labEvent,sampleInstancesAtPosition);
-                sampleInstances.addAll(sampleInstancesAtPosition);
+                VesselContainer sourceVesselContainer = sectionTransfer.getSourceVesselContainer();
+                sampleInstancesAtPosition.addAll(sourceVesselContainer.getSampleInstancesAtPosition(position));
+                reagentsAtPosition.addAll(getReagentsAtPosition(sourceVesselContainer, position));
+                applyProjectPlanOverrideIfPresent(labEvent, sampleInstancesAtPosition);
             }
             for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
                 // todo jmt optimize this
                 if(cherryPickTransfer.getTargetPosition().equals(position)) {
-                    Set<SampleInstance> sampleInstancesAtPosition = cherryPickTransfer.getSourceVesselContainer().
-                            getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition());
-                    applyReagents(position, sampleInstancesAtPosition);
-                    applyProjectPlanOverrideIfPresent(labEvent,sampleInstancesAtPosition);
-                    sampleInstances.addAll(sampleInstancesAtPosition);
+                    VesselContainer<?> sourceVesselContainer = cherryPickTransfer.getSourceVesselContainer();
+                    sampleInstancesAtPosition.addAll(sourceVesselContainer.
+                            getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition()));
+                    reagentsAtPosition.addAll(getReagentsAtPosition(sourceVesselContainer, position));
+                    applyProjectPlanOverrideIfPresent(labEvent, sampleInstancesAtPosition);
                 }
             }
         }
+        for (SampleInstance sampleInstance : sampleInstancesAtPosition) {
+            for (Reagent reagent : reagentsAtPosition) {
+                sampleInstance.addReagent(reagent);
+            }
+        }
+        sampleInstances.addAll(sampleInstancesAtPosition);
     }
 
     private String getPositionOfVessel(T vesselAtPosition) {
@@ -115,24 +122,17 @@ public class VesselContainer<T extends LabVessel> {
         return null;
     }
 
-    private void applyReagents(String position, Set<SampleInstance> sampleInstancesAtPosition) {
-        for (SampleInstance sampleInstance : sampleInstancesAtPosition) {
-            LabVessel vesselAtPosition = this.getVesselAtPosition(position);
-            if (vesselAtPosition != null) {
-                if (vesselAtPosition.getAppliedReagentsCount() != null && vesselAtPosition.getAppliedReagentsCount() > 0) {
-                    for (Reagent reagent : vesselAtPosition.getAppliedReagents()) {
-                        if(reagent.getMolecularEnvelopeDelta() != null) {
-                            MolecularEnvelope molecularEnvelope = sampleInstance.getMolecularState().getMolecularEnvelope();
-                            if(molecularEnvelope == null) {
-                                sampleInstance.getMolecularState().setMolecularEnvelope(reagent.getMolecularEnvelopeDelta());
-                            } else {
-                                molecularEnvelope.surroundWith(reagent.getMolecularEnvelopeDelta());
-                            }
-                        }
-                    }
+    private Set<Reagent> getReagentsAtPosition(VesselContainer vesselContainer, String position) {
+        Set<Reagent> reagents = new HashSet<Reagent>();
+        LabVessel vesselAtPosition = vesselContainer.getVesselAtPosition(position);
+        if (vesselAtPosition != null) {
+            if (vesselAtPosition.getReagentContentsCount() != null && vesselAtPosition.getReagentContentsCount() > 0) {
+                for (Reagent reagent : vesselAtPosition.getReagentContents()) {
+                    reagents.add(reagent);
                 }
             }
         }
+        return reagents;
     }
 
     @Transient
@@ -189,9 +189,4 @@ public class VesselContainer<T extends LabVessel> {
     public void setEmbedder(LabVessel embedder) {
         this.embedder = embedder;
     }
-
-
-    // section transfers
-    // position transfers
-    // authorities
 }

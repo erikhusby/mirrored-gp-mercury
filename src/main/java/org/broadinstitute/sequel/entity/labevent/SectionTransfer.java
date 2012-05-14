@@ -96,6 +96,8 @@ public class SectionTransfer {
     }
 
     public void applyTransfer() {
+        // todo jmt remove this method?
+/*
         List<VesselPosition> wells = this.sourceSection.getWells();
         for (int wellIndex = 0; wellIndex < wells.size(); wellIndex++) {
             VesselPosition sourceVesselPosition = wells.get(wellIndex);
@@ -116,7 +118,8 @@ public class SectionTransfer {
                 }
             }
         }
-        // if source container is mutable, or sections are different: establish authorities at contained vessel level, based on section
+*/
+/*
         LabVessel sourceVessel = this.getSourceVesselContainer().getEmbedder();
         // todo jmt, rather than checking for incoming transfers, check for other position maps?
         if(Hibernate.getClass(this.getSourceVesselContainer().getEmbedder()).equals(RackOfTubes.class) && !sourceVessel.getTransfersTo().isEmpty() ||
@@ -135,12 +138,7 @@ public class SectionTransfer {
                 }
             }
         }
-
-        // if destination is empty and source and destination sections are identical
-        // else
-        //   establish sample authorities at child vessel level
-        // do re-arrays mess this up?  Look at Sage.  Primary should be positionMap, not rackOfTubes
-        // if the source is a rack, a re-array is possible
+*/
     }
 
     public LabEvent getLabEvent() {

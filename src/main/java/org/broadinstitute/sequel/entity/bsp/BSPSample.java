@@ -9,7 +9,6 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleInstanceImpl;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 
 import javax.persistence.CascadeType;
@@ -101,8 +100,8 @@ public class BSPSample implements StartingSample {
     }
 
     @Override
-    public SampleInstanceImpl createSampleInstance() {
-        return new SampleInstanceImpl(this, SampleInstance.GSP_CONTROL_ROLE.NONE, projectPlan, new MolecularState(), null);
+    public SampleInstance createSampleInstance() {
+        return new SampleInstance(this, SampleInstance.GSP_CONTROL_ROLE.NONE, projectPlan, new MolecularState(), null);
     }
 
     @Transient

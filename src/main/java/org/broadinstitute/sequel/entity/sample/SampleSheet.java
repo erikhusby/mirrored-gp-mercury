@@ -42,7 +42,7 @@ public class SampleSheet {
     public Collection<SampleInstance> getSampleInstances(LabVessel container) {
         Collection<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         for (StartingSample startingSample : startingSamples) {
-            SampleInstanceImpl sampleInstance = startingSample.createSampleInstance();
+            SampleInstance sampleInstance = startingSample.createSampleInstance();
             for (StateChange stateChange : LabEventTraverser.getStateChangesPriorToAndIncluding(this, container)) {
                 // ordering of the state changes is critical...
                 // doing it root-to-branch means that "nearest ancestor"
@@ -57,7 +57,7 @@ public class SampleSheet {
     public Collection<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         for (StartingSample startingSample : startingSamples) {
-            SampleInstanceImpl sampleInstance = startingSample.createSampleInstance();
+            SampleInstance sampleInstance = startingSample.createSampleInstance();
             sampleInstances.add(sampleInstance);
         }
         return sampleInstances;

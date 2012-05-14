@@ -9,6 +9,7 @@ import org.broadinstitute.sequel.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.sequel.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.sequel.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.sequel.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
@@ -18,6 +19,7 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -26,6 +28,7 @@ import org.broadinstitute.sequel.test.ContainerTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -53,6 +56,9 @@ public class BettalimsMessageResourceTest extends ContainerTest {
 
     @Inject
     private IlluminaSequencingRunDao illuminaSequencingRunDao;
+
+    @Inject
+    private IndexedPlateFactory indexedPlateFactory;
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
@@ -97,12 +103,17 @@ public class BettalimsMessageResourceTest extends ContainerTest {
             twoDBarcodedTubeDAO.clear();
         }
 
+        Map<String,StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseFile(
+                new File(Thread.currentThread().getContextClassLoader().getResource("testdata/DuplexCOAforBroad.xlsx").getFile()),
+                IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
+        StaticPlate indexPlate = mapBarcodeToPlate.values().iterator().next();
+        if(staticPlateDAO.findByBarcode(indexPlate.getLabel()) == null) {
+            staticPlateDAO.persist(indexPlate);
+            staticPlateDAO.flush();
+            staticPlateDAO.clear();
+        }
         LabEventTest.LibraryConstructionJaxb libraryConstructionJaxb = new LabEventTest.LibraryConstructionJaxb(
-                bettaLimsMessageFactory, testPrefix, shearingJaxb.getShearCleanPlateBarcode()).invoke();
-        LabEventTest.BuildIndexPlate buildIndexPlate = new LabEventTest.BuildIndexPlate(libraryConstructionJaxb.getIndexPlateBarcode()).invoke();
-        staticPlateDAO.persist(buildIndexPlate.getIndexPlate());
-        staticPlateDAO.flush();
-        staticPlateDAO.clear();
+                bettaLimsMessageFactory, testPrefix, shearingJaxb.getShearCleanPlateBarcode(), indexPlate.getLabel()).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxb.getMessageList()) {
             bettalimsMessageResource.processMessage(bettaLIMSMessage);

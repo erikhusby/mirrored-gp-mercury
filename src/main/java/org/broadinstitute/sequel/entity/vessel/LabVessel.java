@@ -31,6 +31,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -47,6 +48,8 @@ public abstract class LabVessel  {
     private Long labVesselId;
 
     protected String label;
+
+    private Date createdOn;
 
     @OneToMany(cascade = CascadeType.PERSIST)
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
@@ -88,14 +91,10 @@ public abstract class LabVessel  {
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
-    // todo jmt remove this denormalization?
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    private Set<Reagent> appliedReagents = new HashSet<Reagent>();
-
     /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
      * avoid an unnecessary database round trip  */
-    @Formula("(select count(*) from lab_vessel_applied_reagents where lab_vessel_applied_reagents.lab_vessel = lab_vessel_id)")
-    private Integer appliedReagentsCount = 0;
+    @Formula("(select count(*) from lab_vessel_reagent_contents where lab_vessel_reagent_contents.lab_vessel = lab_vessel_id)")
+    private Integer reagentContentsCount = 0;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<LabVessel> containers = new HashSet<LabVessel>();
@@ -174,6 +173,14 @@ public abstract class LabVessel  {
 
     public void addReagent(Reagent reagent) {
         reagentContents.add(reagent);
+        if(reagentContentsCount == null) {
+            reagentContentsCount = 0;
+        }
+        reagentContentsCount++;
+    }
+
+    public Integer getReagentContentsCount() {
+        return reagentContentsCount;
     }
 
     /**
@@ -337,20 +344,12 @@ public abstract class LabVessel  {
         return userRemarks;
     }
 
-    public void applyReagent(Reagent reagent) {
-        this.appliedReagents.add(reagent);
-        if(this.appliedReagentsCount == null) {
-            this.appliedReagentsCount = 0;
-        }
-        this.appliedReagentsCount++;
+    public Date getCreatedOn() {
+        return createdOn;
     }
 
-    public Collection<Reagent> getAppliedReagents() {
-        return this.appliedReagents;
-    }
-
-    public Integer getAppliedReagentsCount() {
-        return appliedReagentsCount;
+    public void setCreatedOn(Date createdOn) {
+        this.createdOn = createdOn;
     }
 
     public enum CONTAINER_TYPE {

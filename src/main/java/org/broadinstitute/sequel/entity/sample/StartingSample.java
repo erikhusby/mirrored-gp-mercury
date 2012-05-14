@@ -46,6 +46,6 @@ public interface StartingSample {
     public SampleInstance.GSP_CONTROL_ROLE getRootControlRole();
 
     @Transient
-    public SampleInstanceImpl createSampleInstance();
+    public SampleInstance createSampleInstance();
 
 }
