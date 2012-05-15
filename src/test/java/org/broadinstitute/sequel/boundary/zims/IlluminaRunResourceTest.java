@@ -78,7 +78,6 @@ public class IlluminaRunResourceTest extends Arquillian  {
     public void test_zims_over_http(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
-        System.out.println(url);
         ZimsIlluminaRun run = Client.create().resource(url)
                 .queryParam("runName", RUN_NAME)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
@@ -190,6 +189,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
                 assertEquals(libBean.getTargetLaneCoverage(),new Short(zLib.getTargetLaneCoverage()));
                 assertEquals(libBean.getTissueType(),zLib.getTissueType());
                 assertEquals(libBean.getWeirdness(),zLib.getWeirdness());
+                assertEquals(libBean.getGssrBarcode(),zLib.getGssrBarcode());
 
                 if (HUMAN.equals(zLib.getOrganism())) {
                     if (!(HUMAN.equals(libBean.getOrganism()) || BSP_HUMAN.equals(libBean.getOrganism()))) {
