@@ -14,16 +14,16 @@ import java.util.Collection;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class LibraryBean {
 
-    @XmlAttribute(name = "library")
+    @XmlElement(name = "library")
     private String library;
 
-    @XmlAttribute(name = "project")
+    @XmlElement(name = "project")
     private String project;
 
-    @XmlAttribute(name = "initiative")
+    @XmlElement(name = "initiative")
     private String initiative;
 
-    @XmlAttribute(name = "workRequestId")
+    @XmlElement(name = "workRequestId")
     private Long workRequest;
 
     @XmlElement(name = "MolecularIndexingScheme")
@@ -31,88 +31,89 @@ public class LibraryBean {
     
     private Boolean hasIndexingRead;
     
-    @XmlAttribute(name = "expectedInsertSize")
+    @XmlElement(name = "expectedInsertSize")
     private String expectedInsertSize;
     
-    @XmlAttribute(name = "analysisType")
+    @XmlElement(name = "analysisType")
     private String analysisType;
 
-    @XmlAttribute(name = "referenceSequence")
+    @XmlElement(name = "referenceSequence")
     private String referenceSequence;
 
-    @XmlAttribute(name = "referenceSequenceVersion")
+    @XmlElement(name = "referenceSequenceVersion")
     private String referenceSequenceVersion;
 
-    @XmlAttribute(name = "sampleAlias")
+    @XmlElement(name = "sampleAlias")
     /** the name the collaborator has given to the sample */
     private String collaboratorSampleId;
 
-    @XmlAttribute(name = "sampleCollaborator")
+    @XmlElement(name = "sampleCollaborator")
     /** the name of the collaborator */
     private String collaborator;
 
-    @XmlAttribute(name = "organism")
+    @XmlElement(name = "organism")
     private String organism;
 
-    @XmlAttribute(name = "species")
+    @XmlElement(name = "species")
     private String species;
 
-    @XmlAttribute(name = "strain")
+    @XmlElement(name = "strain")
     private String strain;
 
-    @XmlAttribute(name = "lsid")
+    @XmlElement(name = "lsid")
     private String sampleLSID;
 
-    @XmlAttribute(name = "tissueType")
+    @XmlElement(name = "tissueType")
     private String tissueType;
     
     private String expectedPlasmid;
     
-    @XmlAttribute(name = "aligner")
+    @XmlElement(name = "aligner")
     private String aligner;
 
-    @XmlAttribute(name = "rrbsSizeRange")
+    @XmlElement(name = "rrbsSizeRange")
     private String rrbsSizeRange;
 
-    @XmlAttribute(name = "restrictionEnzyme")
+    @XmlElement(name = "restrictionEnzyme")
     private String restrictionEnzyme;
 
-    @XmlAttribute(name = "cellLine")
+    @XmlElement(name = "cellLine")
     private String cellLine;
 
-    @XmlAttribute(name = "BaitSetName")
+    @XmlElement(name = "BaitSetName")
     private String bait;
 
-    @XmlAttribute(name = "individual")
+    @XmlElement(name = "individual")
     /** obfuscated name of the individual (person) from whence this sample was taken */
     private String individual;
 
-    @XmlAttribute(name = "labMeasuredInsertSize")
+    @XmlElement(name = "labMeasuredInsertSize")
     private Double labMeasuredInsertSize;
     
     private Boolean isPositiveControl;
     
     private Boolean isNegativeControl;
 
-    @XmlAttribute(name = "tissueType")
+    @XmlElement(name = "tissueType")
     private String weirdness;
     
     private Double preCircularizationDnaSize;
     
     private Boolean isPartOfDevExperiment;
 
+    @XmlElement(name = "devExperimentData")
     private DevExperimentDataBean devExperimentData;
 
-    @XmlAttribute(name = "gssrBarcode")
+    @XmlElement(name = "gssrBarcode")
     private String gssrBarcode;
 
-    @XmlAttribute(name = "gssrBarcodes")
+    @XmlElement(name = "gssrBarcodes")
     private Collection<String> gssrBarcodes;
 
-    @XmlAttribute(name = "gssrSampleType")
+    @XmlElement(name = "gssrSampleType")
     private String gssrSampleType;
 
-    @XmlAttribute(name = "targetLaneCoverage")
+    @XmlElement(name = "targetLaneCoverage")
     private Short targetLaneCoverage;
     
     public LibraryBean() {}
@@ -280,5 +281,9 @@ public class LibraryBean {
     
     public String getWeirdness() {
         return weirdness;
+    }
+
+    public DevExperimentDataBean getDevExperimentData() {
+        return devExperimentData;
     }
 }

@@ -78,9 +78,10 @@ public class IlluminaRunResourceTest extends Arquillian  {
     public void test_zims_over_http(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
+        System.out.println(url);
         ZimsIlluminaRun run = Client.create().resource(url)
                 .queryParam("runName", RUN_NAME)
-                .accept(MediaType.APPLICATION_XML).get(ZimsIlluminaRun.class);
+                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
 
         assertNotNull(run);
         assertEquals(run.getRunName(),RUN_NAME);
@@ -201,10 +202,27 @@ public class IlluminaRunResourceTest extends Arquillian  {
                 assertEquals(libBean.getSampleLSID(),zLib.getLsid());
                 checkEquality(zLib.getMolecularIndexes(), libBean.getIndexingScheme());
                 assertEquals(libBean.getGssrBarcodes(),zLib.getGssrBarcodes());
+                checkEquality(libBean.getDevExperimentData(),zLib.getDevExperimentData());
             }
         }
         
         assertTrue(foundIt);
+    }
+
+    private static void checkEquality(DevExperimentDataBean devExperimentBean,TZDevExperimentData thriftExperimentData) {
+        if (devExperimentBean != null && thriftExperimentData != null) {
+            assertEquals(devExperimentBean.getConditions().size(),thriftExperimentData.getConditionChain().size());
+            Collection<String> thriftConditions = thriftExperimentData.getConditionChain();
+            for (String condition : devExperimentBean.getConditions()) {
+                assertTrue(thriftConditions.contains(condition));
+            }
+        }
+        else if (devExperimentBean == null && thriftExperimentData == null) {
+            return;
+        }
+        else {
+            fail("dev experiment bean and thrift bean do not agree.");
+        }
     }
 
     private static void checkEquality(MolecularIndexingScheme thriftScheme,MolecularIndexingSchemeBean beanScheme) {

@@ -5,12 +5,13 @@ import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "IndexPosition")
-@XmlAccessorType(XmlAccessType.FIELD)
 public class IndexPositionBean {
 
+    @XmlElement(name = "hint")
     private String hint;
 
     public IndexPositionBean() {}

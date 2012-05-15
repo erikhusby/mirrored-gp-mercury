@@ -2,40 +2,45 @@ package org.broadinstitute.sequel.entity.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+/**
+ * Note that we use {@link XmlElement} here for fields
+ * so that the resulting json isn't choc-full of "@"'s.
+ * See http://stackoverflow.com/questions/9576460/json-objects-returning-with-field-name-is-this-a-bug-or-a-feature
+ * for more details.
+ */
 @XmlRootElement(name = "IlluminaRun")
 public class ZimsIlluminaRun {
     
-    @XmlAttribute(name = "name")
+    @XmlElement(name = "name")
     private String runName;
     
-    @XmlAttribute(name = "barcode")
+    @XmlElement(name = "barcode")
     private String runBarcode;
 
-    @XmlAttribute(name = "flowcellBarcode")
+    @XmlElement(name = "flowcellBarcode")
     private String flowcellBarcode;
 
-    @XmlAttribute(name = "sequencer")
+    @XmlElement(name = "sequencer")
     private String sequencer;
 
-    @XmlAttribute(name = "sequencerModel")
+    @XmlElement(name = "sequencerModel")
     private String sequencerModel;
 
     private Date runDate;
 
-    @XmlAttribute(name = "firstCycle")
+    @XmlElement(name = "firstCycle")
     private Integer firstCycle;
 
-    @XmlAttribute(name = "firstCycleReadLength")
+    @XmlElement(name = "firstCycleReadLength")
     private Integer firstCycleReadLength;
 
-    @XmlAttribute(name = "lastCycle")
+    @XmlElement(name = "lastCycle")
     private Integer lastCycle;
 
     final SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy HH:mm");
@@ -43,13 +48,13 @@ public class ZimsIlluminaRun {
     @XmlElement(name = "lane")
     private final Collection<ZimsIlluminaChamber> chambers = new HashSet<ZimsIlluminaChamber>();
 
-    @XmlAttribute(name = "molBarcodeCycle")
+    @XmlElement(name = "molBarcodeCycle")
     private Integer molecularBarcodeCycle;
 
-    @XmlAttribute(name = "molBarcodeLength")
+    @XmlElement(name = "molBarcodeLength")
     private Integer molecularBarcodeLength;
 
-    @XmlAttribute(name = "pairedRun")
+    @XmlElement(name = "pairedRun")
     private Boolean isPaired;
 
     @XmlElement(name = "Read")
@@ -126,7 +131,7 @@ public class ZimsIlluminaRun {
      * Format is 01/03/2010 24:19
      * @return
      */
-    @XmlAttribute(name = "runDate")
+    @XmlElement(name = "runDate")
     public String getRunDateString() {
         String date = null;
         if (runDate != null) {

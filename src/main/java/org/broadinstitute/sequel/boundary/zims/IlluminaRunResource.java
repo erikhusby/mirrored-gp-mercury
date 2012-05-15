@@ -34,6 +34,7 @@ import java.util.*;
 
 /**
  * Web service for fetching run data for Zamboni.
+ *
  */
 @Path("/IlluminaRun")
 @Stateless
@@ -61,7 +62,7 @@ public class IlluminaRunResource {
     
     @GET
     @Path("/query")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON})
     public ZimsIlluminaRun getRun(
             @QueryParam("runName") String runName)
     {

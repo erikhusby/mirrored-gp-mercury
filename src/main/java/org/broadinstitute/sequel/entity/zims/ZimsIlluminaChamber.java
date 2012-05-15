@@ -9,13 +9,13 @@ import java.util.HashSet;
 @XmlRootElement(name = "Lane")
 public class ZimsIlluminaChamber {
     
-    @XmlAttribute(name = "name")
+    @XmlElement(name = "name")
     private String chamberName;
 
     @XmlElement(name = "library")
     private Collection<LibraryBean> libraries;
     
-    @XmlAttribute(name = "primer")
+    @XmlElement(name = "primer")
     private String primer;
     
     public ZimsIlluminaChamber() {}

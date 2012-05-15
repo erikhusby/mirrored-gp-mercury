@@ -1,18 +1,19 @@
 package org.broadinstitute.sequel.entity.zims;
 
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "ZamboniRead")
 public class ZamboniRead {
 
-    @XmlAttribute(name = "firstCycle")
+    @XmlElement(name = "firstCycle")
     private Integer firstCycle;
 
-    @XmlAttribute(name = "length")
+    @XmlElement(name = "length")
     private Integer length;
 
-    @XmlAttribute(name = "readType")
+    @XmlElement(name = "readType")
     private ZamboniReadType readType;
 
     public static final String TEMPLATE = "TEMPLATE";
