@@ -246,6 +246,11 @@ public class LabEventFactory {
                 return buildFromBettaLimsPlateToPlateDbFree(plateTransferEvent, stripTube, illuminaFlowcell);
             }
             sourcePlate = this.staticPlateDAO.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
+            // todo jmt log this?
+            if(sourcePlate == null) {
+                sourcePlate = new StaticPlate(plateTransferEvent.getSourcePlate().getBarcode(),
+                        StaticPlate.PlateType.getByDisplayName(plateTransferEvent.getSourcePlate().getPhysType()));
+            }
         } else {
             sourceRackOfTubes = fetchRack(plateTransferEvent.getSourcePositionMap());
             mapBarcodeToSourceTubes = findTubesByBarcodes(plateTransferEvent.getSourcePositionMap());

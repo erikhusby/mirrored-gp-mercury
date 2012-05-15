@@ -15,7 +15,7 @@ import javax.persistence.PersistenceContextType;
 @Stateful
 @RequestScoped
 public class ThreadEntityManager {
-    @PersistenceContext(type = PersistenceContextType.EXTENDED)
+    @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "test_pu")
     private EntityManager entityManager;
 
     public EntityManager getEntityManager() {

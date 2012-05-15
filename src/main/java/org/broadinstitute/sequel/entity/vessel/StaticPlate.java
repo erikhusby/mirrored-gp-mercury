@@ -19,7 +19,9 @@ import javax.persistence.NamedQuery;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -50,6 +52,17 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
 
         public String getDisplayName() {
             return displayName;
+        }
+
+        private static Map<String, PlateType> mapDisplayNameToType = new HashMap<String, PlateType>();
+        static {
+            for (PlateType plateType : PlateType.values()) {
+                mapDisplayNameToType.put(plateType.getDisplayName(), plateType);
+            }
+        }
+
+        public static PlateType getByDisplayName(String displayName) {
+            return mapDisplayNameToType.get(displayName);
         }
     }
 

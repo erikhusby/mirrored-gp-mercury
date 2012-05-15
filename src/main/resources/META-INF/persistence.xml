@@ -6,9 +6,19 @@
         <provider>org.hibernate.ejb.HibernatePersistence</provider>
         <jta-data-source>java:app/jdbc/test</jta-data-source>
         <properties>
-<!--
             <property name="hibernate.dialect" value="org.hibernate.dialect.PostgresPlusDialect"/>
+<!--
+            <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
 -->
+            <property name="hibernate.ejb.naming_strategy" value="org.hibernate.cfg.ImprovedNamingStrategy" />
+            <!-- todo jmt this doesn't seem to work -->
+            <property name="org.hibernate.flushMode" value="COMMIT" />
+        </properties>
+    </persistence-unit>
+    <persistence-unit name="squid_pu" transaction-type="JTA">
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <jta-data-source>java:app/jdbc/squid</jta-data-source>
+        <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
             <property name="hibernate.ejb.naming_strategy" value="org.hibernate.cfg.ImprovedNamingStrategy" />
             <!-- todo jmt this doesn't seem to work -->

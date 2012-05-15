@@ -70,6 +70,12 @@ public class IndexedPlateFactory {
                 throw new RuntimeException(e);
             }
             platesByBarcode = uploadIndexedPlates(associations);
+            // todo jmt where to put this?
+            for (StaticPlate staticPlate : platesByBarcode.values()) {
+                staticPlateDAO.persist(staticPlate);
+                staticPlateDAO.flush();
+                staticPlateDAO.clear();
+            }
 //                setSuccessText("Uploaded " + associations.size() + " rows from " + file.getName());
         }
 

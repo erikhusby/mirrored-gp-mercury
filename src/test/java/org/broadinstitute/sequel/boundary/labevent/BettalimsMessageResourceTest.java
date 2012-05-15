@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.boundary.labevent;
 
 //import com.jprofiler.api.agent.Controller;
+import com.sun.jersey.api.client.Client;
 import org.broadinstitute.sequel.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.LabEventTest;
 import org.broadinstitute.sequel.TestGroups;
@@ -25,16 +26,26 @@ import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.test.ContainerTest;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import java.io.File;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Test the web service
@@ -149,4 +160,31 @@ public class BettalimsMessageResourceTest extends ContainerTest {
         illuminaSequencingRunDao.flush();
         System.out.println("Test run name " + runName);
     }
+
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testHttp(@ArquillianResource URL baseUrl) {
+        File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
+        List<String> dayDirectoryNames =  Arrays.asList(inboxDirectory.list());
+        Collections.sort(dayDirectoryNames);
+        for (String dayDirectoryName : dayDirectoryNames) {
+            File dayDirectory = new File(inboxDirectory, dayDirectoryName);
+            List<String> messageFileNames =  Arrays.asList(dayDirectory.list());
+            Collections.sort(messageFileNames);
+            for (String messageFileName : messageFileNames) {
+                String response = null;
+                try {
+                    response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
+                            .type(MediaType.APPLICATION_XML_TYPE)
+                            .accept(MediaType.APPLICATION_XML)
+                            .entity(new File(dayDirectory, messageFileName))
+                            .post(String.class);
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
+                System.out.println(response);
+            }
+        }
+    }
+
 }

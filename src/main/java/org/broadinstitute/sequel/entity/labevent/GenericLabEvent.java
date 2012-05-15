@@ -143,13 +143,15 @@ public class GenericLabEvent extends LabEvent {
         if (getSourceLabVessels().isEmpty() && !this.labEventType.isExpectedEmptySources()) {
             throw new InvalidMolecularStateException("No sources.");
         }
-        for (LabVessel source: getSourceLabVessels()) {
+/*
+        for (LabVessel source: getSourceLabVessels()) { // todo jmt remove
             if (!this.labEventType.isExpectedEmptySources()) {
                 if (source.getSampleInstances().isEmpty()) {
                     throw new InvalidMolecularStateException("Source " + source.getLabCentricName() + " is empty");
                 }
             }
         }
+*/
     }
 
     /**
@@ -164,6 +166,7 @@ public class GenericLabEvent extends LabEvent {
         if (getTargetLabVessels().isEmpty()) {
             throw new InvalidMolecularStateException("No destinations!");
         }
+/*
         for (LabVessel target: getTargetLabVessels()) {
             if (!this.labEventType.isExpectedEmptyTargets()) {
                 if (target.getSampleInstances().isEmpty()) {
@@ -171,6 +174,7 @@ public class GenericLabEvent extends LabEvent {
                 }
             }
         }
+*/
     }
 
     @Override
