@@ -1,14 +1,10 @@
 package org.broadinstitute.pmbridge.quotes;
 
 
-import org.broadinstitute.pmbridge.infrastructure.ObjectMarshaller;
 import org.broadinstitute.pmbridge.infrastructure.quote.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -65,55 +61,36 @@ public class QuotesCacheTest {
         Assert.assertEquals(quotes.getQuotes(),cache.getQuotes());
     }
 
+
+    // Very Slow external test.
     @Test(groups = {"ExternalIntegration"})
     public void test_known_good_funding_sources() throws Exception {
 
         long start = System.currentTimeMillis();
-//        QuotesCache cache = new QuotesCache(new QuoteServiceImpl(new QAQuoteConnectionParams(QuoteConnectionParameters.GET_ALL_QUOTES_URL)).getAllQuotes());
-//        System.out.println("Quotes call took " + (System.currentTimeMillis() - start) + "ms");
+        QuotesCache cache = new QuotesCache(new QuoteServiceImpl(new QAQuoteConnectionParams()).getAllQuotes());
+        System.out.println("Quotes call took " + (System.currentTimeMillis() - start) + "ms");
 
-        String line = "";
-        StringBuffer sb = new StringBuffer();
-        InputStream inStream = null;
-        BufferedReader rdr = null;
-        QuotesCache cache = null;
+        Funding nhgriGrant = new Funding(Funding.FUNDS_RESERVATION,"NHGRI_NIH_LANDER");
+        start = System.currentTimeMillis();
+        Collection<Quote> foundQuotes = cache.getQuotesForGrantDescription(nhgriGrant.getGrantDescription());
+        System.out.println("Search for quotes took " + (System.currentTimeMillis() - start) + "ms");
 
-        try {
-            inStream = this.getClass().getResourceAsStream("quoteTestData.xml");
-            rdr = new BufferedReader(new InputStreamReader(inStream));
+        Assert.assertFalse(foundQuotes == null);
+        Assert.assertTrue(0 < foundQuotes.size());
 
-            while( (line = rdr.readLine()) != null) {
-                sb.append(line);
+        for (Quote foundQuote : foundQuotes) {
+            System.out.println(foundQuote.getAlphanumericId() + " " + foundQuote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
+        }
+
+        // print out the quotes per grant.
+        Map<Funding, HashSet<Quote>> myMap = cache.getQuotesByFundingSource();
+        for ( Funding funding : myMap.keySet() ) {
+            System.out.print(  funding.getSponsorName() + "\t" + funding.getCostObject() + "\t"
+                    + funding.getGrantNumber() + "\t" + funding.getGrantDescription() + "\t" +  funding.getGrantStartDate() +"\t" + funding.getGrantEndDate() + "\t");
+            for ( Quote quote : myMap.get(funding)) {
+                System.out.print(quote.getAlphanumericId() + ", ");
             }
-            Quotes quoteData = ObjectMarshaller.unmarshall(Quotes.class, sb.toString());
-            cache = new QuotesCache(quoteData);
-
-            Funding nhgriGrant = new Funding(Funding.FUNDS_RESERVATION,"NHGRI_NIH_LANDER");
-            start = System.currentTimeMillis();
-            Collection<Quote> foundQuotes = cache.getQuotesForGrantDescription(nhgriGrant.getGrantDescription());
-            System.out.println("Search for quotes took " + (System.currentTimeMillis() - start) + "ms");
-
-            Assert.assertFalse(foundQuotes == null);
-            Assert.assertTrue(0 < foundQuotes.size());
-
-            for (Quote foundQuote : foundQuotes) {
-                System.out.println(foundQuote.getAlphanumericId() + " " + foundQuote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
-            }
-
-            // print out the quotes per grant.
-            Map<Funding, HashSet<Quote>> myMap = cache.getQuotesByFundingSource();
-            for ( Funding funding : myMap.keySet() ) {
-                System.out.print(  funding.getSponsorName() + "\t" + funding.getCostObject() + "\t"
-                        + funding.getGrantNumber() + "\t" + funding.getGrantDescription() + "\t" +  funding.getGrantStartDate() +"\t" + funding.getGrantEndDate() + "\t");
-                for ( Quote quote : myMap.get(funding)) {
-                    System.out.print(quote.getAlphanumericId() + ", ");
-                }
-                System.out.println();
-            }
-        } catch (Exception ue) {
-            // Do nothing - Just return the message from the exp in it's original format.
-        } finally {
-            if ( rdr != null ) rdr.close();
+            System.out.println();
         }
     }
 

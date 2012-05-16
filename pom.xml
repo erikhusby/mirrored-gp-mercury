@@ -48,28 +48,67 @@
     </developers>
 
     <repositories>
-        <repository>
-            <id>java.net2</id>
-            <name>Repository hosting the jee6 artifacts</name>
-            <url>http://download.java.net/maven/2</url>
-        </repository>
+        <!--<repository>-->
+        <!--<id>java.net2</id>-->
+        <!--<name>Repository hosting the jee6 artifacts</name>-->
+        <!--<url>http://download.java.net/maven/2</url>-->
+        <!--</repository>-->
+        <!--<repository>-->
+        <!--<id>JBoss</id>-->
+        <!--<name>JBoss Repository</name>-->
+        <!--<url>https://repository.jboss.org/nexus/content/groups/public/</url>-->
+        <!--</repository>-->
+        <!--<repository>-->
+        <!--<id>Glassfish</id>-->
+        <!--<name>Glassfish Repository</name>-->
+        <!--<url>http://download.java.net/maven/glassfish</url>-->
+        <!--</repository>-->
+
+        <!-- JBoss Repository for Arquillian, Hibernate, etc. -->
         <repository>
             <id>JBoss</id>
             <name>JBoss Repository</name>
-            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-        </repository>
-        <repository>
-            <id>Glassfish</id>
-            <name>Glassfish Repository</name>
-            <url>http://download.java.net/maven/glassfish</url>
-        </repository>
-        <repository>
-            <id>prime-repo</id>
-            <name>PrimeFaces Maven Repository</name>
-            <url>http://repository.primefaces.org</url>
+            <url>http://repository.jboss.org/nexus/content/groups/public-jboss/</url>
             <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </snapshots>
         </repository>
+
+        <!--<repository>-->
+            <!--<id>prime-repo</id>-->
+            <!--<name>PrimeFaces Maven Repository</name>-->
+            <!--<url>http://repository.primefaces.org</url>-->
+            <!--<layout>default</layout>-->
+        <!--</repository>-->
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>jboss-public-repository-group</id>
+            <name>JBoss Public Maven Repository Group</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </snapshots>
+        </pluginRepository>
+
+        <pluginRepository>
+            <id>apache.snapshots</id>
+            <url>http://repository.apache.org/snapshots/</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <properties>
         <!-- Clover -->
@@ -88,9 +127,15 @@
         <site.url>http://prodinfosvn.broadinstitute.org:8000/m2-projects</site.url>
         <site.path>/prodinfo/releng/m2-projects</site.path>
 
-        <!-- TODO  - Do this property need to move to the profiles only ? -->
+        <!-- TODO  - Does this property need to move to the profiles only ? -->
         <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
 
+        <seam.version>3.1.0.Final</seam.version>
+        <!--<jersey.version>1.8</jersey.version>-->
+        <jersey.version>1.10</jersey.version>
+        <!--<jersey.version>1.12</jersey.version>-->
+
+        <jbossas_7.version>7.1.0.Final</jbossas_7.version>
     </properties>
 
     <profiles>
@@ -128,14 +173,14 @@
                     </plugin>
                 </plugins>
             </build>
-             <reporting>
-                 <plugins>
-                     <plugin>
-                         <groupId>com.atlassian.maven.plugins</groupId>
-                         <artifactId>maven-clover2-plugin</artifactId>
-                     </plugin>
-                 </plugins>
-             </reporting>
+            <reporting>
+                <plugins>
+                    <plugin>
+                        <groupId>com.atlassian.maven.plugins</groupId>
+                        <artifactId>maven-clover2-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </reporting>
         </profile>
         <profile>
             <id>Clover.optimize</id>
@@ -254,65 +299,322 @@
                 </plugins>
             </reporting>
         </profile>
-            <profile>
-                <id>Tests.ExternalIntegration</id>
-                <properties>
-                    <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
-                </properties>
-                <build>
-                    <plugins>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-surefire-plugin</artifactId>
-                            <configuration>
-                                <groups>ExternalIntegration</groups>
-                            </configuration>
-                        </plugin>
+        <profile>
+            <id>Tests.ExternalIntegration</id>
+            <!--<properties>-->
+                <!--<squid.root>http://vsquidrc.broadinstitute.org:8000/</squid.root>-->
+            <!--</properties>-->
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>ExternalIntegration</groups>
+                        </configuration>
+                    </plugin>
 
-                    </plugins>
-                </build>
-            </profile>
+                </plugins>
+            </build>
+        </profile>
 
-            <profile>
-                <id>Tests.DatabaseFree</id>
-                <properties>
-                    <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
-                </properties>
-                <build>
-                    <plugins>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-surefire-plugin</artifactId>
-                            <configuration>
-                                <groups>DatabaseFree</groups>
-                                <parallel>methods</parallel>
-                                <threadCount>10</threadCount>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </build>
+        <profile>
+            <id>Tests.DatabaseFree</id>
+            <properties>
+                <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>DatabaseFree</groups>
+                            <parallel>methods</parallel>
+                            <threadCount>10</threadCount>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
 
-            </profile>
-            <profile>
-                <id>Tests.Parallel</id>
-                <properties>
-                    <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
-                </properties>
-                <build>
-                    <plugins>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-surefire-plugin</artifactId>
-                            <configuration>
-                                <runOrder>failedFirst</runOrder>
-                                <parallel>methods</parallel>
-                                <threadCount>10</threadCount>
-                            </configuration>
-                        </plugin>
-                    </plugins>
-                </build>
-            </profile>
+        </profile>
+        <profile>
+            <id>Tests.Parallel</id>
+            <properties>
+                <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <runOrder>failedFirst</runOrder>
+                            <parallel>methods</parallel>
+                            <threadCount>10</threadCount>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
+        <profile>
+            <id>JavaEE</id>
+
+            <dependencies>
+                <dependency>
+                    <groupId>javax</groupId>
+                    <artifactId>javaee-api</artifactId>
+                    <version>6.0</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>Arquillian-Weld</id>
+            <dependencies>
+                <!-- For Arquillian Weld embedded, use org.jboss.spec:jboss-javaee-6.0 in lieu of javax:javaee-api.
+                     see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
+                -->
+                <dependency>
+                    <groupId>org.jboss.spec</groupId>
+                    <artifactId>jboss-javaee-6.0</artifactId>
+                    <version>1.0.0.Final</version>
+                    <type>pom</type>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.arquillian.container</groupId>
+                    <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
+                    <version>1.0.0.CR3</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.weld</groupId>
+                    <artifactId>weld-core</artifactId>
+                    <version>1.1.7.Final</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                    <version>1.6.4</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>Arquillian-Glassfish</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jboss.arquillian.container</groupId>
+                    <artifactId>arquillian-glassfish-embedded-3.1</artifactId>
+                    <version>1.0.0.CR3</version>
+                    <scope>test</scope>
+                </dependency>
+                <!-- Possible workaround for problem discussed at https://community.jboss.org/message/729907
+                                <dependency>
+                                    <groupId>javax.enterprise</groupId>
+                                    <artifactId>cdi-api</artifactId>
+                                    <version>1.0</version>
+                                    <scope>provided</scope>
+                                </dependency>
+                -->
+                <dependency>
+                    <groupId>org.glassfish.main.extras</groupId>
+                    <artifactId>glassfish-embedded-all</artifactId>
+                    <version>3.1.2</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>Arquillian-Glassfish-Managed</id>
+            <dependencies>
+                <!-- For Arquillian managed JEE containers, use org.jboss.spec:jboss-javaee-6.0 in lieu of javax:javaee-api.
+                     see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
+                -->
+                <dependency>
+                    <groupId>org.jboss.spec</groupId>
+                    <artifactId>jboss-javaee-6.0</artifactId>
+                    <version>1.0.0.Final</version>
+                    <type>pom</type>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.arquillian.container</groupId>
+                    <artifactId>arquillian-glassfish-managed-3.1</artifactId>
+                    <version>1.0.0.CR3</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>Arquillian-Glassfish-Remote</id>
+            <dependencies>
+                <!-- For Arquillian managed JEE containers, use org.jboss.spec:jboss-javaee-6.0 in lieu of javax:javaee-api.
+                     see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
+                -->
+                <dependency>
+                    <groupId>org.jboss.spec</groupId>
+                    <artifactId>jboss-javaee-6.0</artifactId>
+                    <version>1.0.0.Final</version>
+                    <type>pom</type>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.arquillian.container</groupId>
+                    <artifactId>arquillian-glassfish-remote-3.1</artifactId>
+                    <version>1.0.0.CR3</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>Arquillian-JBossAS7-Managed</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jboss.spec</groupId>
+                    <artifactId>jboss-javaee-6.0</artifactId>
+                    <version>1.0.0.Final</version>
+                    <type>pom</type>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-arquillian-container-managed</artifactId>
+                    <!--<version>7.1.1.Final</version>-->
+                    <!--<version>7.0.2.Final</version>-->
+                    <version>${jbossas_7.version}</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <argLine>-Xmx2048m</argLine>
+                            <systemProperties>
+                                <jboss.version>${jbossas_7.version}</jboss.version>
+                            </systemProperties>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>unpack</id>
+                                <phase>process-test-classes</phase>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>org.jboss.as</groupId>
+                                            <artifactId>jboss-as-dist</artifactId>
+                                            <version>${jbossas_7.version}</version>
+                                            <type>zip</type>
+                                            <overWrite>false</overWrite>
+                                            <outputDirectory>${project.build.directory}</outputDirectory>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>Arquillian-JBossAS7-Remote</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jboss.spec</groupId>
+                    <artifactId>jboss-javaee-6.0</artifactId>
+                    <version>1.0.0.Final</version>
+                    <type>pom</type>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-arquillian-container-remote</artifactId>
+                    <version>7.1.1.Final</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+
+        <profile>
+            <id>DEV</id>
+            <properties>
+                <glassfish.home>${user.home}/glassfish3</glassfish.home>
+                <glassfish.adminPort>4848</glassfish.adminPort>
+                <glassfish.httpPort>8080</glassfish.httpPort>
+            </properties>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources</directory>
+                    </testResource>
+                    <testResource>
+                        <directory>src/test/resources-dev</directory>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+        <profile>
+            <id>BUILD</id>
+            <properties>
+                <glassfish.home>/prodinfolocal/glassfish3</glassfish.home>
+                <glassfish.adminPort>4848</glassfish.adminPort>
+                <glassfish.httpPort>8030</glassfish.httpPort>
+            </properties>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources</directory>
+                    </testResource>
+                    <testResource>
+                        <directory>src/test/resources-build</directory>
+                        <filtering>true</filtering>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+        <profile>
+            <id>QA</id>
+        </profile>
+        <profile>
+            <id>PROD</id>
+        </profile>
+
     </profiles>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jboss.arquillian</groupId>
+                <artifactId>arquillian-bom</artifactId>
+                <version>1.0.0.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.jboss.weld.se</groupId>
@@ -335,12 +637,53 @@
             <scope>test</scope>
         </dependency>
         -->
-	<dependency>
-	  <groupId>org.testng</groupId>
-	  <artifactId>testng</artifactId>
-	  <version>6.1.1</version>
-	  <scope>test</scope>
-	</dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.1.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.testng</groupId>
+            <artifactId>arquillian-testng-container</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--<dependency>-->
+          <!--<groupId>junit</groupId>-->
+          <!--<artifactId>junit</artifactId>-->
+          <!--<version>4.8.1</version>-->
+          <!--<scope>test</scope>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+        	<!--<groupId>org.jboss.arquillian.junit</groupId>-->
+        	<!--<artifactId>arquillian-junit-container</artifactId>-->
+        	<!--<version>1.0.0.Final</version>-->
+        <!--</dependency>-->
+
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.resolver</groupId>
+            <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+            <version>1.1.0-alpha-3</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.shrinkwrap.resolver</groupId>
+            <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+            <version>1.1.0-alpha-3</version>
+            <scope>test</scope>
+        </dependency>
+
+
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.1</version>
+        </dependency>
+
         <dependency>
             <groupId>net.sourceforge.htmlunit</groupId>
             <artifactId>htmlunit</artifactId>
@@ -355,27 +698,36 @@
             <scope>provided</scope>
         </dependency>
         -->
-        <dependency>
-            <groupId>org.primefaces</groupId>
-            <artifactId>primefaces</artifactId>
-            <version>3.0.RC1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.5.9.RC1</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.primefaces</groupId>-->
+            <!--<artifactId>primefaces</artifactId>-->
+            <!--<version>3.0.RC1</version>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+            <!--<groupId>org.primefaces.themes</groupId>-->
+            <!--<artifactId>pepper-grinder</artifactId>-->
+            <!--<version>1.0.4</version>-->
+        <!--</dependency>-->
+
+        <!--<dependency>-->
+            <!--<groupId>org.slf4j</groupId>-->
+            <!--<artifactId>slf4j-api</artifactId>-->
+            <!--<version>1.5.9.RC1</version>-->
+        <!--</dependency>-->
+
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
             <version>1.2.16</version>
         </dependency>
-        <dependency>
-            <groupId>org.hibernate.javax.persistence</groupId>
-            <artifactId>hibernate-jpa-2.0-api</artifactId>
-            <version>1.0.0.Final</version>
-            <scope>provided</scope>
-        </dependency>
+        <!-- not needed yet ? -->
+        <!--<dependency>-->
+            <!--<groupId>org.hibernate.javax.persistence</groupId>-->
+            <!--<artifactId>hibernate-jpa-2.0-api</artifactId>-->
+            <!--<version>1.0.0.Final</version>-->
+            <!--<scope>provided</scope>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
@@ -386,28 +738,28 @@
             <artifactId>commons-logging</artifactId>
             <version>1.1.1</version>
         </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-core</artifactId>
-            <version>3.6.1.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-commons-annotations</artifactId>
-            <version>3.2.0.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-entitymanager</artifactId>
-            <version>3.6.1.Final</version>
-            <exclusions>
-                <!-- using cglib-nodep instead -->
-                <exclusion>
-                    <groupId>cglib</groupId>
-                    <artifactId>cglib</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.hibernate</groupId>-->
+            <!--<artifactId>hibernate-core</artifactId>-->
+            <!--<version>3.6.1.Final</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.hibernate</groupId>-->
+            <!--<artifactId>hibernate-commons-annotations</artifactId>-->
+            <!--<version>3.2.0.Final</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.hibernate</groupId>-->
+            <!--<artifactId>hibernate-entitymanager</artifactId>-->
+            <!--<version>3.6.1.Final</version>-->
+            <!--<exclusions>-->
+                <!--&lt;!&ndash; using cglib-nodep instead &ndash;&gt;-->
+                <!--<exclusion>-->
+                    <!--<groupId>cglib</groupId>-->
+                    <!--<artifactId>cglib</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
@@ -422,46 +774,62 @@
 
 
         <!-- start jax-ws dependency -->
-        <dependency>
-            <groupId>com.sun.xml.ws</groupId>
-            <artifactId>jaxws-rt</artifactId>
-            <version>2.1.7</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-            <version>2.2.4</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.sun.xml.ws</groupId>-->
+            <!--<artifactId>jaxws-rt</artifactId>-->
+            <!--<version>2.1.7</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>com.sun.xml.bind</groupId>-->
+            <!--<artifactId>jaxb-impl</artifactId>-->
+            <!--<version>2.2.4</version>-->
+        <!--</dependency>-->
 
-        <dependency>
-            <groupId>com.sun.xml.rpc</groupId>
-            <artifactId>jaxrpc</artifactId>
-            <version>1.4</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.sun.xml.rpc</groupId>-->
+            <!--<artifactId>jaxrpc</artifactId>-->
+            <!--<version>1.4</version>-->
+        <!--</dependency>-->
 
-        <dependency>
-            <groupId>org.jvnet.staxex</groupId>
-            <artifactId>stax-ex</artifactId>
-            <version>1.2</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.jvnet.staxex</groupId>-->
+            <!--<artifactId>stax-ex</artifactId>-->
+            <!--<version>1.2</version>-->
+        <!--</dependency>-->
 
-        <dependency>
-            <groupId>com.sun.xml.stream.buffer</groupId>
-            <artifactId>streambuffer</artifactId>
-            <version>0.9</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.sun.xml.stream.buffer</groupId>-->
+            <!--<artifactId>streambuffer</artifactId>-->
+            <!--<version>0.9</version>-->
+        <!--</dependency>-->
         <!-- end jax-ws -->
 
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>1.8</version>
+            <version>${jersey.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-json</artifactId>
-            <version>1.8</version>
+            <version>${jersey.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.cenqua.clover</groupId>
+            <artifactId>clover</artifactId>
+            <version>${clover.version}</version>
+            <!-- cannot be test scoped because it is needed for compiling instrumented main sources -->
+            <!--<scope>test</scope>-->
+        </dependency>
+
         <dependency>
             <groupId>org.unitils</groupId>
             <artifactId>unitils-core</artifactId>
@@ -494,7 +862,13 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.12</version>
+                    <version>2.13-SNAPSHOT</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>jaxws-maven-plugin</artifactId>
+                    <version>1.12</version>
                 </plugin>
 
                 <plugin>
@@ -507,6 +881,17 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-pmd-plugin</artifactId>
                     <version>2.7.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.glassfish.embedded</groupId>
+                    <artifactId>maven-embedded-glassfish-plugin</artifactId>
+                    <version>3.1.2</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.glassfish.maven.plugin</groupId>
+                    <artifactId>maven-glassfish-plugin</artifactId>
+                    <version>2.1</version>
                 </plugin>
 
             </plugins>
@@ -531,6 +916,13 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <forkMode>never</forkMode>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -565,6 +957,29 @@
                 </executions>
             </plugin>
 
+            <plugin>
+                <groupId>org.glassfish.maven.plugin</groupId>
+                <artifactId>maven-glassfish-plugin</artifactId>
+                <configuration>
+                    <glassfishDirectory>${glassfish.home}</glassfishDirectory>
+                    <echo>true</echo>
+                    <debug>true</debug>
+                    <passFile>${glassfish.passwordFile}</passFile>
+                    <user>${glassfish.adminUser}</user>
+                    <domain>
+                        <httpPort>${glassfish.httpPort}</httpPort>
+                        <adminPort>${glassfish.adminPort}</adminPort>
+                        <name>${glassfish.domain}</name>
+                    </domain>
+
+                    <components>
+                        <component>
+                            <name>${project.build.finalName}</name>
+                            <artifact>${project.build.directory}/${project.build.finalName}.war</artifact>
+                        </component>
+                    </components>
+                </configuration>
+            </plugin>
         </plugins>
 
     </build>
@@ -589,7 +1004,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
                 <version>2.3</version>
-
             </plugin>
 
             <plugin>
@@ -613,12 +1027,12 @@
                     <failOnViolation>false</failOnViolation>
                 </configuration>
                 <reportSets>
-                        <reportSet>
-                            <reports>
-                                <report>checkstyle</report>
-                            </reports>
-                        </reportSet>
-                    </reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>checkstyle</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -627,13 +1041,6 @@
                 <configuration>
                     <targetJdk>1.6</targetJdk>
                 </configuration>
-            </plugin>
-
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>jaxws-maven-plugin</artifactId>
-                <version>1.12</version>
             </plugin>
 
 

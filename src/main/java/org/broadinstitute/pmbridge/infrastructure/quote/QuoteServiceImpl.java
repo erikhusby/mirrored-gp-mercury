@@ -24,7 +24,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         connectionParameters = quoteConnectionParameters;
     }
 
-
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
         acceptAllServerCertificates(clientConfig);

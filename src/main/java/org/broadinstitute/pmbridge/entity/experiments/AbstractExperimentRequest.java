@@ -4,12 +4,9 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broadinstitute.pmbridge.entity.bsp.BSPSample;
-import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
-import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.person.Person;
 
 import java.util.Collection;
-import java.util.Date;
 
 /**
  * Abstract base class for experiment request
@@ -20,42 +17,29 @@ import java.util.Date;
  */
 public abstract class AbstractExperimentRequest implements ExperimentRequest {
 
-    public final ExperimentId id;
-    public final Name title;
-    public final ChangeEvent creation;
-    public final PlatformId platformId;
+
+    private final ExperimentRequestSummary experimentRequestSummary;
     private Collection<Person> platformProjectManagers;
     private Collection<Person> programProjectManagers; // Also defined at the RP level this data would/could override/supplement the values from the RP level
     private Collection<BSPSample> samples;
-    private ChangeEvent modification;
 
-    //TODO hmc should ID be generated ?
-    protected AbstractExperimentRequest(Person creator, ExperimentId id, Name title, PlatformId platformId,
+    protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary) {
+        this.experimentRequestSummary = experimentRequestSummary;
+    }
+
+    protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary,
                                         Collection<Person> platformProjectManagers,
                                         Collection<Person> programProjectManagers,
                                         Collection<BSPSample> samples) {
-        this.id = id;
-        this.platformId = platformId;
-        this.title = title;
+        this.experimentRequestSummary = experimentRequestSummary;
         this.platformProjectManagers = platformProjectManagers;
         this.programProjectManagers = programProjectManagers;
         this.samples = samples;
-        this.creation = new ChangeEvent( creator );
-        this.modification = new ChangeEvent(new Date(this.creation.date.getTime()), creator);
-
     }
 
     //Getters
-    public ExperimentId getId() {
-        return id;
-    }
-
-    public ChangeEvent getCreation() {
-        return creation;
-    }
-
-    public PlatformId getPlatformId() {
-        return platformId;
+    public ExperimentRequestSummary getExperimentRequestSummary() {
+        return experimentRequestSummary;
     }
 
     public Collection<Person> getPlatformProjectManagers() {
@@ -70,10 +54,17 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
         return samples;
     }
 
-    public ChangeEvent getModification() {
-        return modification;
+    public LocalId getLocalId() {
+        return this.experimentRequestSummary.getLocalId();
     }
 
+    public RemoteId getRemoteId() {
+        return this.experimentRequestSummary.getRemoteId();
+    }
+
+    public void setRemoteId(RemoteId remoteId) {
+        this.experimentRequestSummary.setRemoteId( remoteId );
+    }
 
     @Override
     public boolean equals(Object obj) {

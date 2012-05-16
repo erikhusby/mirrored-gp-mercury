@@ -1,5 +1,6 @@
 package org.broadinstitute.pmbridge.entity.common;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
@@ -11,10 +12,13 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
  */
 public class Id {
 
-    public final String id;
+    public final String value;
 
-    public Id(String id) {
-        this.id = id;
+    public Id(String value) {
+        if ((value == null ) || StringUtils.isBlank(value)) {
+            throw new IllegalArgumentException("Id is invalid. Must be non-null and non-empty.");
+        }
+        this.value = value;
     }
 
     @Override
@@ -27,6 +31,6 @@ public class Id {
     }
     @Override
     public String toString() {
-        return id;
+        return value;
     }
 }

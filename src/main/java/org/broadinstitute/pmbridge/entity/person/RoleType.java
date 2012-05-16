@@ -12,6 +12,6 @@ public enum RoleType {
     EXTERNAL,
     PLATFORM_PM,
     PROGRAM_PM,
-    UNKNOWN;
+    UNSPECIFIED
 
 }

@@ -8,7 +8,11 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.pmbridge.control.AbstractJerseyClientService;
+import org.broadinstitute.pmbridge.entity.bsp.BSPCollection;
+import org.broadinstitute.pmbridge.entity.bsp.BSPCollectionID;
+import org.broadinstitute.pmbridge.entity.person.Person;
 
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.io.*;
@@ -16,15 +20,18 @@ import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.*;
 
+@Default
 public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
 
 
-    private static Log _logger = LogFactory
-            .getLog(BSPSampleSearchServiceImpl.class);
-
+    private static Log _logger = LogFactory.getLog(BSPSampleSearchServiceImpl.class);
 
     @Inject
     private BSPConnectionParameters connParams;
+
+
+    public BSPSampleSearchServiceImpl() {
+    }
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
@@ -131,6 +138,60 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
         BSPSampleSearchColumn [] dummy = new BSPSampleSearchColumn[resultColumns.size()];
         return runSampleSearch(sampleIDs, resultColumns.toArray(dummy));
+    }
+
+
+    //TODO hmc Fake up a retrieved collection.
+    private Collection<BSPCollection> getFakeCollections() {
+
+        HashSet<BSPCollection> fakeCohorts = new HashSet<BSPCollection>();
+        fakeCohorts.add( new BSPCollection(new BSPCollectionID("12345"), "AlxCollection1"));
+        return fakeCohorts;
+
+    }
+
+    @Override
+    public List<BSPCollection> getCohortsByUser(Person bspUser) {
+
+        if ((bspUser == null ) || (StringUtils.isBlank(bspUser.getUsername()))) {
+            throw new IllegalArgumentException("Bsp Username is not valid. Canot retrieve list of cohorts from BSP.");
+        }
+
+        List<BSPCollection> cohortSet = new ArrayList<BSPCollection>();
+
+        // TODO hmc Mocked out here as API is not yet available.
+        Collection<BSPCollection> bspCollections = getFakeCollections();
+        // TODO end
+
+        cohortSet.addAll(bspCollections);
+
+        return cohortSet;
+
+    }
+
+    @Override
+    public List<String> runSampleSearchByCohort(BSPCollection cohort) {
+
+        if ((cohort == null) ) {
+            throw new IllegalArgumentException("Cohort param was null. Cannot retrieve list of samples from BSP.");
+        }
+
+        List<String> results = new ArrayList<String>();
+
+        // find samples in cohort
+
+        // TODO hmc Replace this with new BSP API call to get samples per cohort.
+        // Faked out here as API is not yet available. Add 4 samples to results.
+        List<String> tempIds = new ArrayList<String>();
+        tempIds.add("SM-11K1"); tempIds.add("SM-11K2");tempIds.add("SM-11K4");tempIds.add("SM-11K4");
+
+        List<String[]> tempResults = runSampleSearch(tempIds, BSPSampleSearchColumn.SAMPLE_ID );
+        for ( String[] sampleResult : tempResults ) {
+            results.add(sampleResult[0]);
+        }
+        //TODO end
+
+        return results;
     }
 
 }

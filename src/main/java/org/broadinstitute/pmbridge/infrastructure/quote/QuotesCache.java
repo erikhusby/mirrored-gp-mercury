@@ -7,6 +7,7 @@ import java.util.*;
  * from the quote server, which enables
  * finding quotes for particular funding
  * sources.
+ * @author From SequeL
  */
 public class QuotesCache {
     
@@ -25,6 +26,8 @@ public class QuotesCache {
         }
         this.quotes = quotes;
     }
+
+
 
     /**
      * Returns the underlying

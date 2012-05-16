@@ -1,16 +1,27 @@
 package org.broadinstitute.pmbridge.infrastructure.bsp;
 
+import org.broadinstitute.pmbridge.entity.bsp.BSPCollection;
+import org.broadinstitute.pmbridge.entity.person.Person;
+
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 
 public interface BSPSampleSearchService {
 
 
     /**
+     * Get list of cohorts ( BSP collections ) for a user.
+     * Initially we expect this to be a Program PM username but could also be a sponsoring scientist.
+     * @param bspUser
+     * @return
+     */
+    List<BSPCollection> getCohortsByUser(Person bspUser);
+
+
+    /**
      * Pull down data for the specified set of samples from the BSP
-     * runSampleSearch service.
+     * runSampleSearchByCohort service.
      * 
      *
      *
@@ -44,5 +55,16 @@ public interface BSPSampleSearchService {
      */
     List<String []> runSampleSearch(Collection<String> sampleIDs,
                                     List<BSPSampleSearchColumn> resultColumns);
+
+    /**
+     * Get list of samples for a cohort (BSP collections).
+     * Initially we expect this to be a Program PM username but could also be a sponsoring scientist.
+     *
+     * @param cohort
+     * @return
+     */
+    List<String> runSampleSearchByCohort(BSPCollection cohort) ;
+
+
 
 }

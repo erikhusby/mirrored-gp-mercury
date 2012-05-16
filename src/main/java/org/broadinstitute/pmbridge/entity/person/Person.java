@@ -34,21 +34,27 @@ public class Person {
     
     private String lastName;
 
-    private RoleType roleType = RoleType.UNKNOWN;
-    
-    public Person(String name,
-                  String firstName,
-                  String lastName,
-                  RoleType roleType) {
+    private String personId;
 
-        this(name);
-        this.firstName = firstName;
-        this.lastName = lastName;
+    private RoleType roleType = RoleType.UNSPECIFIED;
+    
+
+    public Person(String username,
+                      RoleType roleType) {
+        this.username = username;
         this.roleType = roleType;
     }
-    
-    protected Person(String username) {
-        this.username = username;
+
+    public Person(String username,
+                  String firstName,
+                  String lastName,
+                  String personId,
+                  RoleType roleType) {
+
+        this(username, roleType);
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.personId = personId;
     }
     
     public String getFirstName() {
@@ -57,6 +63,18 @@ public class Person {
 
     public String getLastName() {
         return lastName;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPersonId() {
+        return personId;
+    }
+
+    public RoleType getRoleType() {
+        return roleType;
     }
 
     /**

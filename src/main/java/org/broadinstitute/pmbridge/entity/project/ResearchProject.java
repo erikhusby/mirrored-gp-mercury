@@ -5,11 +5,17 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broadinstitute.pmbridge.entity.bsp.BSPCollection;
 import org.broadinstitute.pmbridge.entity.bsp.BSPSample;
+import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequest;
 import org.broadinstitute.pmbridge.entity.person.Person;
+import org.broadinstitute.pmbridge.infrastructure.quote.Funding;
 
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 
 /**
@@ -23,18 +29,74 @@ import java.util.HashSet;
  * Date: 4/12/12
  * Time: 12:21 PM
  */
-public class ResearchProject extends AbstractResearchProject {
+@XmlRootElement(name="Project")
+public class ResearchProject {
 
+    private Name title;
+    public static Long UNSPECIFIED_ID = 0L;
+    private Long id = UNSPECIFIED_ID;
+    private ChangeEvent creation;
+    private String synopsis;
+    private ChangeEvent modification;
     private final Collection<Person> sponsoringScientists = new HashSet<Person>();
-    private final Collection<FundingSource> fundingSources = new HashSet<FundingSource>();
+    private final Collection<Funding> fundings = new HashSet<Funding>();
+    private final Collection<Person> analysts = new HashSet<Person>();
     private final Collection<BSPCollection> sampleCohorts = new HashSet<BSPCollection>();
     private final Collection<String> irbNumbers = new HashSet<String>();
     private final Collection<ExperimentRequest> experimentRequests = new HashSet<ExperimentRequest>();
     private Collection<BSPSample> samples = new HashSet<BSPSample>();
     private String irbNotes;
 
-    public ResearchProject(Person creator, Name title, ResearchProjectId id, String synopsis ) {
-        super(creator, title, id, synopsis);
+
+    public ResearchProject(Person creator, Name title, String synopsis) {
+        this.title = title;
+        this.id = id;
+        this.synopsis = synopsis;
+        this.creation = new ChangeEvent(creator);
+        this.modification = new ChangeEvent(new Date(this.creation.date.getTime()), creator);
+    }
+
+
+    // Getters
+    @XmlAttribute(name="researchProjectName")
+    public Name getTitle() {
+        return title;
+    }
+
+    @XmlAttribute(name="RPID")
+    public Long getId() {
+        return id;
+    }
+
+    public ChangeEvent getCreation() {
+        return creation;
+    }
+
+    public String getSynopsis() {
+        return synopsis;
+    }
+    public ChangeEvent getModification() {
+        return modification;
+    }
+
+    //Setters
+    public void setTitle(Name title) {
+        this.title = title;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setCreation(ChangeEvent creation) {
+        this.creation = creation;
+    }
+
+    public void setSynopsis(String synopsis) {
+        this.synopsis = synopsis;
+    }
+    public void setModification(ChangeEvent modification) {
+        this.modification = modification;
     }
 
     public String getIrbNotes() {
@@ -42,78 +104,90 @@ public class ResearchProject extends AbstractResearchProject {
     }
 
     public Collection<Person> getSponsoringScientists() {
-        return sponsoringScientists;
+        return Collections.unmodifiableCollection(sponsoringScientists);
     }
     public Collection<Person> addSponsoringScientist(Person scientist) {
         sponsoringScientists.add(scientist);
-        return sponsoringScientists;
+        return Collections.unmodifiableCollection(sponsoringScientists);
     }
     public Collection<Person> removeSponsoringScientist(Person scientist) {
         sponsoringScientists.remove(scientist);
-        return sponsoringScientists;
+        return Collections.unmodifiableCollection(sponsoringScientists);
     }
 
-    public Collection<FundingSource> getFundingSources() {
-        return fundingSources;
+    public Collection<Person> getAnalysts() {
+        return Collections.unmodifiableCollection(analysts);
     }
-    public Collection<FundingSource> addFundingSource(FundingSource source) {
-        fundingSources.add(source);
-        return fundingSources;
+    public Collection<Person> addAanalysts(Person analyst) {
+        analysts.add(analyst);
+        return Collections.unmodifiableCollection(analysts);
     }
-    public Collection<FundingSource> removeFundingSource(FundingSource source) {
-        fundingSources.remove(source);
-        return fundingSources;
+    public Collection<Person> removeAnalyst(Person analyst) {
+        analysts.remove(analyst);
+        return Collections.unmodifiableCollection(analysts);
+    }
+
+    public Collection<Funding> getFundings() {
+        return Collections.unmodifiableCollection(fundings);
+    }
+    public Collection<Funding> addFunding(Funding source) {
+        fundings.add(source);
+        return Collections.unmodifiableCollection(fundings);
+    }
+    public Collection<Funding> removeFunding(Funding source) {
+        fundings.remove(source);
+        return Collections.unmodifiableCollection(fundings);
     }
 
     public Collection<BSPCollection> getSampleCohorts() {
-        return sampleCohorts;
+        return Collections.unmodifiableCollection(sampleCohorts);
     }
     public Collection<BSPCollection> addBSPCollection(BSPCollection bspCollection ){
         sampleCohorts.add(bspCollection);
-        return sampleCohorts;
+        return Collections.unmodifiableCollection(sampleCohorts);
     }
     public Collection<BSPCollection> removeBSPCollection(BSPCollection bspCollection ){
         sampleCohorts.remove(bspCollection);
-        return sampleCohorts;
+        return Collections.unmodifiableCollection(sampleCohorts);
     }
 
     public Collection<String> getIrbNumbers() {
-        return irbNumbers;
+        return Collections.unmodifiableCollection(irbNumbers);
     }
     public Collection<String> addIrbNumber(String irbNumber) {
         irbNumbers.add(irbNumber);
-        return irbNumbers;
+        return Collections.unmodifiableCollection(irbNumbers);
     }
     public Collection<String> removeIrbNumber(String irbNumber) {
         irbNumbers.remove(irbNumber);
-        return irbNumbers;
+        return Collections.unmodifiableCollection(irbNumbers);
     }
 
 
     public Collection<ExperimentRequest> getExperimentRequests() {
-        return experimentRequests;
+        return Collections.unmodifiableCollection(experimentRequests);
     }
     public Collection<ExperimentRequest> addExperimentRequest(ExperimentRequest experimentRequest) {
         experimentRequests.add(experimentRequest);
-        return experimentRequests;
+        return Collections.unmodifiableCollection(experimentRequests);
     }
     public Collection<ExperimentRequest> removeExperimentRequest(ExperimentRequest experimentRequest) {
-        experimentRequests.add(experimentRequest);
-        return experimentRequests;
+        experimentRequests.remove(experimentRequest);
+        return Collections.unmodifiableCollection(experimentRequests);
     }
 
 
     public Collection<BSPSample> addSample(BSPSample sample) {
         samples.add(sample);
-        return samples;
+        return Collections.unmodifiableCollection(samples);
     }
     public Collection<BSPSample> removeSample(BSPSample sample) {
-        samples.add(sample);
-        return samples;
+        samples.remove(sample);
+        return Collections.unmodifiableCollection(samples);
     }
 
     public Collection<BSPSample> getSamples() {
-        return samples;
+        return Collections.unmodifiableCollection(samples);
     }
     public void setSamples(Collection<BSPSample> samples) {
         this.samples = samples;

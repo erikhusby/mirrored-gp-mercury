@@ -8,8 +8,8 @@ import org.broadinstitute.pmbridge.entity.common.Id;
  * Date: 4/11/12
  * Time: 5:01 PM
  */
-public class PlatformId extends Id {
-    public PlatformId(String id) {
+public class RemoteId extends Id {
+    public RemoteId(String id) {
         super(id);
     }
 }

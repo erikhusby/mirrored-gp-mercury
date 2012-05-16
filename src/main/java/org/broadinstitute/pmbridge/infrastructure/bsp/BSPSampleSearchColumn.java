@@ -26,15 +26,11 @@ public enum BSPSampleSearchColumn {
     ;
     
     private final String columnName;
-    
-    
-    
+
     public String columnName() { return columnName; }
     
     BSPSampleSearchColumn(String name) {
         this.columnName = name;
     }
-    
-
 
 }

@@ -32,10 +32,9 @@ public class QuoteServiceTest {
     @Test(groups = {"ExternalIntegration"})
     public void test_get_all_quotes_for_sequencing() throws Exception {
 
-        boolean caught = false;
-
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
         Quotes quotes = service.getAllQuotes();
+
         Assert.assertNotNull(quotes);
         Assert.assertFalse(quotes.getQuotes().isEmpty());
         Set<String> grants = new HashSet<String>();

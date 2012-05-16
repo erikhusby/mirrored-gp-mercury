@@ -7,7 +7,7 @@ public class QABSPConnectionParameters implements BSPConnectionParameters {
 
     private String superuserLogin = "pmbridge";
     private String superuserPassword = "bspbsp";
-    private String hostname = "gapqa01.broadinstitute.org";
+    private String hostname = "gapqa3.broadinstitute.org";
     private int port = 8080;
 
 
