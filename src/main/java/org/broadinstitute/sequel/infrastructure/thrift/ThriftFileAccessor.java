@@ -11,12 +11,13 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
 import java.io.*;
+import java.net.URL;
 
 public class ThriftFileAccessor {
 
-    private static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX";
+    private static final String RUN_FILE_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX.thrift";
 
-    private static final File RUN_FILE = new File("src/test/data/thrift/",RUN_NAME + ".thrift");
+    public static final File RUN_FILE = new File("src/test/resources/thrift/",RUN_FILE_NAME);
 
     /**
      * Use this method to update the thrift run
@@ -57,10 +58,13 @@ public class ThriftFileAccessor {
     }
 
     public static TZamboniRun deserializeRun() throws IOException,TException {
-        if (!RUN_FILE.exists()) {
-            throw new RuntimeException("File " + RUN_FILE.getAbsolutePath() + " does not exist.");
+       InputStream inputStream = null;
+        if (RUN_FILE.exists()) {
+            inputStream = new BufferedInputStream(new FileInputStream(RUN_FILE));
         }
-        BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(RUN_FILE));
+        else {
+            inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(RUN_FILE.getName());
+        }
         TBinaryProtocol thriftReader = new TBinaryProtocol(new TIOStreamTransport(inputStream));
         TZamboniRun zamboniRun = new TZamboniRun();
         zamboniRun.read(thriftReader);

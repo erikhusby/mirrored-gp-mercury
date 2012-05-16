@@ -15,11 +15,14 @@ import static org.testng.Assert.*;
 
 import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
+import org.broadinstitute.sequel.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.sequel.integration.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.ArchivePath;
+import org.jboss.shrinkwrap.api.asset.FileAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -30,6 +33,7 @@ import javax.ws.rs.core.MediaType;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
+import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
@@ -55,7 +59,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
 
     @Deployment
     public static WebArchive buildSequelWar() {
-        return DeploymentBuilder.buildSequelWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class);
+        return DeploymentBuilder.buildSequelWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class).addAsResource(ThriftFileAccessor.RUN_FILE);
     }
 
     /**
