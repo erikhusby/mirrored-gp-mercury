@@ -87,6 +87,11 @@ public class IlluminaRunResourceTest extends Arquillian  {
                 .queryParam("runName", RUN_NAME)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
 
+        String rawJson = Client.create(clientConfig).resource(url)
+                .queryParam("runName", RUN_NAME)
+                .accept(MediaType.APPLICATION_JSON).get(String.class);
+        assertFalse(rawJson.contains("@")); // might see this if you use XmlAttribute instead of XmlElement
+
         assertNotNull(run);
         assertEquals(run.getRunName(),RUN_NAME);
         doAssertions(zamboniRun,run);
