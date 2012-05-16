@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
+import org.broadinstitute.sequel.control.labevent.MessageStore;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -26,6 +27,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.sax.SAXSource;
 import java.io.StringReader;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -59,7 +61,12 @@ public class BettalimsMessageResource {
     @POST
     @Consumes({MediaType.APPLICATION_XML})
     public Response processMessage(String message) {
+        Date now = new Date();
+        // todo jmt make this configurable
+        MessageStore messageStore = new MessageStore("c:/temp/sequel/messages");
         try {
+            messageStore.store(message, now);
+
             // todo jmt move so done only once
             JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
             Unmarshaller unmarshaller = jc.createUnmarshaller();
@@ -79,6 +86,7 @@ public class BettalimsMessageResource {
 
             processMessage((BettaLIMSMessage) unmarshaller.unmarshal(source));
         } catch (Exception e) {
+            messageStore.recordError(message, now, e);
             LOG.error("Failed to process run", e);
 /*
 todo jmt fix this
