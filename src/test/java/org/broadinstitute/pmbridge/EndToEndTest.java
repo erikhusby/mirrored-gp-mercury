@@ -68,7 +68,7 @@ public class EndToEndTest extends Arquillian {
     }
 
     @Test
-    public void testCreateResearchProject() throws Exception {
+    public void testCreateResearchProjectWithSeqExperiment() throws Exception {
         Date start = new Date();
 
         // A user (logs in) and gets created.
@@ -182,12 +182,27 @@ public class EndToEndTest extends Arquillian {
         seqExperimentRequest = sequencingService.submitRequestToPlatform(seqExperimentRequest);
 
 
+
+        // Later get the SEQ experiment request from SQUID
+        SeqExperimentRequest submittedSeqExperimentRequest = sequencingService.getPlatformRequest(seqExperimentRequest.getExperimentRequestSummary());
+
+
+        // Assert that the timestamp string in the the newly fetched experiment request.
+        Assert.assertTrue( submittedSeqExperimentRequest.getSynopsis().contains( updateDateStr ) );
+
+
+    }
+
+
+    @Test
+    public void createGapExperimentRequest() throws Exception {
+
+        //TODO -
 //        Date stop = new Date();
 //        FundingSource fundingSource1 = new FundingSource(new GrantId("100"), new Name("SmallGrant"), start, stop,
 //                new Name("NIH") );
 //        FundingSource fundingSource2 = new FundingSource(new GrantId("200"), new Name("OtherGrant"), start, stop,
 //                new Name("NHGRI") );
-
 
 //        // Create a GAP Experiment Request
 //        Person platformManager1 = new Person("Rob", "Onofrio", "onofrio@broad", "2", RoleType.PLATFORM_PM );
@@ -237,6 +252,7 @@ public class EndToEndTest extends Arquillian {
 
                System.out.println(researchProject.toString());
         */
+
     }
 
     @Test
