@@ -94,7 +94,7 @@ public class LibraryBean {
     
     private Boolean isNegativeControl;
 
-    @XmlElement(name = "tissueType")
+    @XmlElement(name = "weirdness")
     private String weirdness;
     
     private Double preCircularizationDnaSize;

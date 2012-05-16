@@ -8,10 +8,10 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "IndexPosition")
+//@XmlRootElement(name = "IndexPosition")
 public class IndexPositionBean {
 
-    @XmlElement(name = "hint")
+    //@XmlElement(name = "hint")
     private String hint;
 
     public IndexPositionBean() {}

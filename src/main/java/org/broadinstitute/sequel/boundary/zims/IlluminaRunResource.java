@@ -18,6 +18,7 @@ import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
+import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -50,16 +51,15 @@ public class IlluminaRunResource {
     BSPSampleSearchService bspSearchService;
 
     @Inject
-    ThriftConfiguration thriftConfiguration;
+    ThriftService thriftService;
 
     public IlluminaRunResource() {}
 
 
-    public IlluminaRunResource(ThriftConfiguration thriftConfiguration) {
-        this.thriftConfiguration = thriftConfiguration;
+    public IlluminaRunResource(ThriftService thriftService) {
+        this.thriftService = thriftService;
     }
 
-    
     @GET
     @Path("/query")
     @Produces({MediaType.APPLICATION_JSON})
@@ -69,13 +69,8 @@ public class IlluminaRunResource {
         if (runName == null) {
             throw new NullPointerException("runName cannot be null");
         }
-        
 
-        TTransport transport = new TSocket(thriftConfiguration.getHost(), thriftConfiguration.getPort());
-        TProtocol protocol = new TBinaryProtocol(transport);
-        LIMQueries.Client client = new LIMQueries.Client(protocol);
-
-        return getRun(client, transport, runName);
+        return getRun(thriftService,runName);
     }
 
     /**
@@ -162,18 +157,11 @@ public class IlluminaRunResource {
         return runBean;
     }
     
-    ZimsIlluminaRun getRun(LIMQueries.Client thriftClient,
-                           TTransport thriftTransport,
+    ZimsIlluminaRun getRun(ThriftService thriftService,
                            String runName) {
         ZimsIlluminaRun runBean = null;
         try {
-            thriftTransport.open();
-        }
-        catch(TTransportException e) {
-            throw new RuntimeException("Could not open transport for " + thriftConfiguration.getHost() + ":" + thriftConfiguration.getPort(),e);
-        }
-        try {
-            final TZamboniRun tRun = thriftClient.fetchRun(runName);
+            final TZamboniRun tRun = thriftService.fetchRun(runName);
             if (tRun == null) {
                 throw new RuntimeException("Could not load run " + runName);
             }
@@ -188,11 +176,7 @@ public class IlluminaRunResource {
         catch(TException e) {
             throw new RuntimeException("Failed to fetch run " + runName,e);
         }
-        finally {
-            if (thriftTransport != null) {
-                thriftTransport.close();
-            }
-        }
+
         return runBean;
     }
 

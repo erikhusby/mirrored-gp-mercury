@@ -1,6 +1,8 @@
 package org.broadinstitute.sequel.boundary.zims;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.json.JSONConfiguration;
 import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -11,6 +13,7 @@ import org.broadinstitute.sequel.entity.zims.*;
 
 import static org.testng.Assert.*;
 
+import org.broadinstitute.sequel.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.broadinstitute.sequel.integration.DeploymentBuilder;
@@ -78,7 +81,10 @@ public class IlluminaRunResourceTest extends Arquillian  {
     public void test_zims_over_http(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
-        ZimsIlluminaRun run = Client.create().resource(url)
+        DefaultClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+
+        ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .queryParam("runName", RUN_NAME)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
 
@@ -271,6 +277,5 @@ public class IlluminaRunResourceTest extends Arquillian  {
         }
         zamboniRun = run;
     }
-
 
 }
