@@ -65,6 +65,9 @@ public class ThriftFileAccessor {
         else {
             inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(RUN_FILE.getName());
         }
+        if (inputStream == null) {
+            throw new RuntimeException("Cannot access cached zamboni file from " + RUN_FILE.getName() +  ".  Were you expecting to connect to a live thrift service?");
+        }
         TBinaryProtocol thriftReader = new TBinaryProtocol(new TIOStreamTransport(inputStream));
         TZamboniRun zamboniRun = new TZamboniRun();
         zamboniRun.read(thriftReader);
