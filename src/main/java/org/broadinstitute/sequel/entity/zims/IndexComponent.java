@@ -2,21 +2,28 @@ package org.broadinstitute.sequel.entity.zims;
 
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-//@XmlRootElement(name = "IndexPosition")
-public class IndexPositionBean {
+@XmlRootElement(name = "IndexPosition")
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        creatorVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE,
+        isGetterVisibility = JsonAutoDetect.Visibility.NONE)
+public class IndexComponent {
 
-    //@XmlElement(name = "hint")
+    @XmlElement(name = "hint")
     private String hint;
 
-    public IndexPositionBean() {}
+    @XmlElement(name = "sequence")
+    private String sequence;
 
-    public IndexPositionBean(IndexPosition thriftPosition) {
+    public IndexComponent() {}
+
+    public IndexComponent(IndexPosition thriftPosition,String sequence) {
         
         if (thriftPosition == IndexPosition.A) {
             this.hint = "A";                    
@@ -42,6 +49,7 @@ public class IndexPositionBean {
         else {
             throw new RuntimeException("SequeL cannot map index position " + thriftPosition);
         }
+        this.sequence = sequence;
     }
 
     @Override
@@ -49,15 +57,26 @@ public class IndexPositionBean {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        IndexPositionBean that = (IndexPositionBean) o;
+        IndexComponent that = (IndexComponent) o;
 
-        if (!hint.equals(that.hint)) return false;
+        if (hint != null ? !hint.equals(that.hint) : that.hint != null) return false;
+        if (sequence != null ? !sequence.equals(that.sequence) : that.sequence != null) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return hint.hashCode();
+        int result = hint != null ? hint.hashCode() : 0;
+        result = 31 * result + (sequence != null ? sequence.hashCode() : 0);
+        return result;
+    }
+
+    public String getSequence() {
+        return sequence;
+    }
+
+    public String getHint() {
+        return hint;
     }
 }

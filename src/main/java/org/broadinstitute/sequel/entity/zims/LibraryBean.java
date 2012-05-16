@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
 
 import javax.xml.bind.annotation.*;
 import java.util.Collection;
@@ -11,7 +12,11 @@ import java.util.Collection;
  * LIMQuery.thrift from squidThriftService.
  */
 @XmlRootElement(name = "Library")
-@XmlAccessorType(XmlAccessType.PROPERTY)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,
+                getterVisibility = JsonAutoDetect.Visibility.NONE,
+                creatorVisibility = JsonAutoDetect.Visibility.NONE,
+                setterVisibility = JsonAutoDetect.Visibility.NONE,
+                isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public class LibraryBean {
 
     @XmlElement(name = "library")
@@ -65,7 +70,8 @@ public class LibraryBean {
 
     @XmlElement(name = "tissueType")
     private String tissueType;
-    
+
+    @XmlElement(name = "expectedPlasmid")
     private String expectedPlasmid;
     
     @XmlElement(name = "aligner")
@@ -89,16 +95,20 @@ public class LibraryBean {
 
     @XmlElement(name = "labMeasuredInsertSize")
     private Double labMeasuredInsertSize;
-    
+
+    @XmlElement(name = "isPositiveControl")
     private Boolean isPositiveControl;
-    
+
+    @XmlElement(name = "isNegativeControl")
     private Boolean isNegativeControl;
 
     @XmlElement(name = "weirdness")
     private String weirdness;
-    
+
+    @XmlElement(name = "preCircularizationDnaSize")
     private Double preCircularizationDnaSize;
-    
+
+    @XmlElement(name = "isPartOfDevExperiment")
     private Boolean isPartOfDevExperiment;
 
     @XmlElement(name = "devExperimentData")
@@ -285,5 +295,17 @@ public class LibraryBean {
 
     public DevExperimentDataBean getDevExperimentData() {
         return devExperimentData;
+    }
+
+    public Boolean isNegativeControl() {
+        return isNegativeControl;
+    }
+
+    public Boolean isPositiveControl() {
+        return isPositiveControl();
+    }
+
+    public Boolean isPartOfDevExperiment() {
+        return isPositiveControl();
     }
 }

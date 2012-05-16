@@ -13,7 +13,6 @@ import org.broadinstitute.sequel.entity.zims.*;
 
 import static org.testng.Assert.*;
 
-import org.broadinstitute.sequel.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.broadinstitute.sequel.integration.DeploymentBuilder;
@@ -82,9 +81,9 @@ public class IlluminaRunResourceTest extends Arquillian  {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
         DefaultClientConfig clientConfig = new DefaultClientConfig();
-        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        //clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 
-        ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
+         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .queryParam("runName", RUN_NAME)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
 
@@ -241,8 +240,8 @@ public class IlluminaRunResourceTest extends Arquillian  {
                 assertEquals(beanScheme.getSequences().size(),thriftScheme.getSequences().size());
 
                 for (Map.Entry<IndexPosition, String> thriftEntry : thriftScheme.getSequences().entrySet()) {
-                    String beanSequence = beanScheme.getSequences().get(new IndexPositionBean(thriftEntry.getKey()));
-                    assertEquals(beanSequence,thriftEntry.getValue());
+                    IndexComponent singleIndex = new IndexComponent(thriftEntry.getKey(),thriftEntry.getValue());
+                    assertTrue(beanScheme.getSequences().contains(singleIndex));
                 }
             }
             else {

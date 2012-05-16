@@ -1,6 +1,8 @@
 package org.broadinstitute.sequel.entity.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -15,6 +17,11 @@ import java.util.*;
  * for more details.
  */
 @XmlRootElement(name = "IlluminaRun")
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        creatorVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE,
+        isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ZimsIlluminaRun {
     
     @XmlElement(name = "name")
@@ -46,7 +53,7 @@ public class ZimsIlluminaRun {
     final SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy HH:mm");
 
     @XmlElement(name = "lane")
-    private final Collection<ZimsIlluminaChamber> chambers = new HashSet<ZimsIlluminaChamber>();
+    private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();
 
     @XmlElement(name = "molBarcodeCycle")
     private Integer molecularBarcodeCycle;
@@ -58,7 +65,7 @@ public class ZimsIlluminaRun {
     private Boolean isPaired;
 
     @XmlElement(name = "Read")
-    private final List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
+    private List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
 
     public ZimsIlluminaRun() {}
 
@@ -140,7 +147,7 @@ public class ZimsIlluminaRun {
         return date;
     }
 
-    private void setRunDateString(String runDate) throws ParseException {
+    public void setRunDateString(String runDate) throws ParseException {
         if (runDate != null) {
             this.runDate = dateFormat.parse(runDate);
         }
