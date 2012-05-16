@@ -81,7 +81,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
 
         DefaultClientConfig clientConfig = new DefaultClientConfig();
-        //clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 
          ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .queryParam("runName", RUN_NAME)

@@ -31,7 +31,9 @@ public class DevExperimentDataBean {
         conditionData = new ArrayList<String>();
         for (String condition : experimentData.getConditionChain()) {
             if (condition != null) {
-                conditionData.add(condition);
+                if (condition.length() > 0) {
+                    conditionData.add(condition);
+                }
             }
         }
     }
