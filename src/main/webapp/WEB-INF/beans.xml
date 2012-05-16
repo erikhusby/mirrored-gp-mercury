@@ -5,4 +5,10 @@
       http://java.sun.com/xml/ns/javaee
       http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
 
+<!--
+    <alternatives>
+        <stereotype>org.broadinstitute.sequel.infrastructure.Offline</stereotype>
+    </alternatives>
+-->
+
 </beans>

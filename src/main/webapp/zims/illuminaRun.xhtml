@@ -6,18 +6,162 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="runName" value="#{illuminaRunQuery.runName}" required="true"/>
+                <!-- cannot be required="true" due to http://java.net/jira/browse/JAVASERVERFACES-1532 -->
+                <f:viewParam name="runName" value="#{illuminaRunQuery.runName}"/>
                 <f:event type="preRenderView" listener="#{illuminaRunQuery.query}"/>
             </f:metadata>
         </ui:define>
         <ui:define name="title">Illumina Run</ui:define>
         <ui:define name="body">
-            <p>Run Name: #{illuminaRunQuery.run.runName}</p>
+
+            <h:form id="form">
+                <table width="100%"><tr>
+                    <td>
+                        <h:panelGrid columns="2">
+                            <h:outputText value="Run Name:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.runName}"/>
+
+                            <h:outputText value="Run Barcode:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.runBarcode}"/>
+
+                            <h:outputText value="Run Date:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.runDateString}"/>
+
+                            <h:outputText value="Sequencer:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.sequencer}"/>
+
+                            <h:outputText value="Sequencer Model:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.sequencerModel}"/>
+
+                            <h:outputText value="Flowcell Barcode:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.flowcellBarcode}"/>
+
+                            <h:outputText value="Paired:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.isPaired ? 'Yes' : 'No'}"/>
+
+                            <h:outputText value="First Cycle:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.firstCycle}"/>
+
+                            <h:outputText value="First Cycle Read Length:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.firstCycleReadLength}"/>
+
+                            <h:outputText value="Last Cycle:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.lastCycle}"/>
+
+                            <h:outputText value="Molecular Barcode Cycle:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.molecularBarcodeCycle}"/>
+
+                            <h:outputText value="Molecular Barcode Length:"/>
+                            <h:outputText value="#{illuminaRunQuery.run.molecularBarcodeLength}"/>
+                        </h:panelGrid>
+                    </td>
+
+                    <td>
+                        <p:dataTable value="#{illuminaRunQuery.reads}" var="read">
+                            <f:facet name="header">Reads</f:facet>
+
+                            <p:column headerText="Read Type">
+                                #{read.readType}
+                            </p:column>
+                            <p:column headerText="First Cycle">
+                                #{read.firstCycle}
+                            </p:column>
+                            <p:column headerText="Length">
+                                #{read.length}
+                            </p:column>
+                        </p:dataTable>
+
+                        <p/>
+
+                        <p:dataTable value="#{illuminaRunQuery.lanes}" var="lane" selectionMode="single" selection="#{illuminaRunQuery.selectedLane}" rowKey="#{lane.chamberName}">
+
+                            <p:ajax event="rowSelect" update=":form:libraryTable"/>
+
+                            <f:facet name="header">Lanes</f:facet>
+
+                            <p:column headerText="Lane">
+                                #{lane.chamberName}
+                            </p:column>
+                            <p:column headerText="Primer">
+                                #{lane.primer}
+                            </p:column>
+                            <p:column headerText="Libraries">
+                                #{lane.libraries.size()}
+                            </p:column>
+                        </p:dataTable>
+                    </td>
+                </tr></table>
+
+                <p/>
+
+                <p:selectManyCheckbox value="#{illuminaRunQuery.columnNames}">
+                    <p:ajax event="change" update=":form:libraryTable"/>
+                    <f:selectItems value="#{illuminaRunQuery.allColumns.keySet()}" var="columnName" itemLabel="#{columnName}"/>
+                </p:selectManyCheckbox>
+
+                <p:dataTable id="libraryTable" value="#{illuminaRunQuery.selectedLane == null ? null : illuminaRunQuery.selectedLane.libraries}" var="library" emptyMessage="Select a lane">
+                    <f:facet name="header">
+                        <h:outputText value="Lane #{illuminaRunQuery.selectedLane.chamberName} Details"/>
+                    </f:facet>
+
+                    <p:columns value="#{illuminaRunQuery.columns}" var="column" columnIndexVar="i">
+                        <f:facet name="header">
+                            #{column.header}
+                        </f:facet>
+                        <h:outputText value="#{library[column.property]}" rendered="#{column.property != null}"/>
+                        <h:outputText value="#{illuminaRunQuery.eval(column.expression)}" rendered="#{column.expression != null}"/>
+                    </p:columns>
+<!--
+                    <p:column headerText="Library Name">
+                        #{library.library}
+                    </p:column>
+
+                    <p:column headerText="Initiative">
+                        #{library.initiative}
+                    </p:column>
+
+                    <p:column headerText="Project">
+                        #{library.project}
+                    </p:column>
+
+                    <p:column headerText="Work Request">
+                        #{library.workRequest}
+                    </p:column>
+
+                    <p:column headerText="GSSR Barcode">
+                        #{library.gssrBarcode}
+                    </p:column>
+
+                    <p:column headerText="Collaborator Sample Name">
+                        #{library.collaboratorSampleName}
+                    </p:column>
+
+                    <p:column headerText="Indexing Scheme">
+                        #{library.indexingScheme.name}
+                    </p:column>
+
+                    <p:column headerText="Analysis Type">
+                        #{library.analysisType}
+                    </p:column>
+
+                    <p:column headerText="Reference Sequence (Version)">
+                        #{library.referenceSequence} (#{library.referenceSequenceVersion})
+                    </p:column>
+-->
+                </p:dataTable>
+            </h:form>
+
+            <p/>
+
+            <h:form>
+                <p:commandButton action="#{illuminaRunQuery.clearCache}" value="Clear Cache"/>
+            </h:form>
         </ui:define>
     </ui:composition>
 </body>

@@ -13,8 +13,8 @@
         <ui:define name="body">
             <form action="illuminaRun.xhtml" method="GET">
                 <h:panelGrid columns="2">
-                    <h:outputText>Run Name:</h:outputText>
-                    <p:inputText id="runName" value="#{illuminaRunQuery.runName}"/>
+                    <h:outputText value="Run Name"/>
+                    <p:inputText id="runName" value="#{illuminaRunQuery.runName}" size="60"/>
                 </h:panelGrid>
                 <input type="submit" value="Query"/>
             </form>
