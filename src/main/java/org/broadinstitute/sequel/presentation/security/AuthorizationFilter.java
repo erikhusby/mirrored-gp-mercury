@@ -1,5 +1,8 @@
 package org.broadinstitute.sequel.presentation.security;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import javax.inject.Inject;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +23,7 @@ import java.security.Principal;
  */
 public class AuthorizationFilter implements Filter {
 
+    private Log logger = LogFactory.getLog(AuthorizationFilter.class);
     private FilterConfig filterConfig;
 
     private String errorPage;
@@ -150,7 +154,7 @@ public class AuthorizationFilter implements Filter {
     }
 
     private void debug(String debugStmtIn) {
-        System.out.println(debugStmtIn);
+        logger.info(debugStmtIn);
     }
 
 

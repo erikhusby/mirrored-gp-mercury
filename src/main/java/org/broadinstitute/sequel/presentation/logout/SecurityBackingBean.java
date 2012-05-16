@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.presentation.logout;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.boundary.authentication.AuthenticationService;
 import org.broadinstitute.sequel.presentation.AbstractJsfBean;
 
@@ -26,9 +28,7 @@ public class SecurityBackingBean extends AbstractJsfBean {
     private AuthenticationService authSvc;
 
 
-
-    Logger securityLogger = Logger.getLogger(this.getClass().getName());
-
+    private Log securityLogger = LogFactory.getLog(this.getClass());
 
     public String logout() {
 
@@ -39,10 +39,10 @@ public class SecurityBackingBean extends AbstractJsfBean {
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
 
         try {
-            securityLogger.log(Level.WARNING, "Attempting Logout");
+            securityLogger.info("Attempting Logout");
             request.logout();
         } catch (ServletException ex) {
-            securityLogger.log(Level.SEVERE, "Logout Failed");
+            securityLogger.error("Logout Failed");
             result = request.getRequestURI();
         }
 

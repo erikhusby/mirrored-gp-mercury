@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.authentication.AuthorizedRole;
 import org.broadinstitute.sequel.entity.authentication.PageAuthorization;
 import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -62,6 +63,18 @@ public class AuthenticationServiceTest extends ContainerTest {
             predefinedRoleList.add(lmRoleName);
 
             authSvc.addNewPageAuthorization(testPath,predefinedRoleList);
+        }
+    }
+
+    @AfterMethod
+    public void tearDown() throws Exception {
+
+        if(null != authSvc) {
+            authSvc.removeRole(roleAll);
+            authSvc.removeRole(roleDev);
+            authSvc.removeRole(rolePM);
+            authSvc.removeRole(roleLabManager);
+            authSvc.removeRole(roleLabUser);
         }
     }
 

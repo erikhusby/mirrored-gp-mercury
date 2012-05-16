@@ -1,5 +1,8 @@
 package org.broadinstitute.sequel.presentation.logout;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -18,8 +21,7 @@ import java.util.logging.Logger;
 @WebServlet(urlPatterns = {"/logout"})
 public class LogoutServlet extends HttpServlet {
 
-    Logger logoutLogger = Logger.getLogger(this.getClass().getName());
-
+    private Log logoutLogger = LogFactory.getLog(LogoutServlet.class);
     @Override
     protected void doGet(HttpServletRequest requestIn, HttpServletResponse responseIn)
             throws ServletException, IOException {
@@ -35,9 +37,9 @@ public class LogoutServlet extends HttpServlet {
     private void performLogout(HttpServletRequest requestIn, HttpServletResponse responseIn)
             throws ServletException, IOException {
 
-        logoutLogger.log(Level.SEVERE, "contextPath is: " + requestIn.getContextPath());
+        logoutLogger.info("contextPath is: " + requestIn.getContextPath());
 
-        logoutLogger.log(Level.SEVERE,"Attempting to logout user");
+        logoutLogger.info("Attempting to logout user");
         requestIn.logout();
 
         responseIn.sendRedirect(requestIn.getContextPath() + "index");
