@@ -1,6 +1,13 @@
 package org.broadinstitute.sequel.entity.vessel;
 
-// todo jmt need to deal with short names in XML, e.g. A1 vs A01
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * The position of a vessel in a container, e.g. the position of a well in a plate, or the position of a tube in a rack.
+ */
 public enum VesselPosition {
     A01,
     A02,
@@ -194,4 +201,41 @@ public enum VesselPosition {
     P10,
     P11,
     P12,
+
+    TUBE1,
+    TUBE2,
+    TUBE3,
+    TUBE4,
+    TUBE5,
+    TUBE6,
+    TUBE7,
+    TUBE8,
+
+    LANE1,
+    LANE2,
+    LANE3,
+    LANE4,
+    LANE5,
+    LANE6,
+    LANE7,
+    LANE8;
+
+    private static final Map<String, VesselPosition> MAP_NAME_TO_POSITION =
+            new HashMap<String, VesselPosition>(VesselPosition.values().length);
+    private static final Pattern MIDDLE_ZERO_PATTERN = Pattern.compile("([A-Z])0([0-9])");
+
+    static {
+        for (VesselPosition vesselPosition : VesselPosition.values()) {
+            MAP_NAME_TO_POSITION.put(vesselPosition.name(), vesselPosition);
+            // If the name has a zero in the middle, e.g. A01, create a map entry without the zero, e.g. A1
+            Matcher matcher = MIDDLE_ZERO_PATTERN.matcher(vesselPosition.name());
+            if(matcher.matches()) {
+                MAP_NAME_TO_POSITION.put(matcher.group(1) + matcher.group(2), vesselPosition);
+            }
+        }
+    }
+
+    public static VesselPosition getByName(String positionName) {
+        return MAP_NAME_TO_POSITION.get(positionName);
+    }
 }

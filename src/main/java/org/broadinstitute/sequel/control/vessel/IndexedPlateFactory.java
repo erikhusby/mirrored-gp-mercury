@@ -91,7 +91,8 @@ public class IndexedPlateFactory {
             final StaticPlate plate = this.createOrGetPlate(
                     plateWellIndex,
                     platesByBarcode);
-            final PlateWell plateWell = new PlateWell(plate, VesselPosition.valueOf(plateWellIndex.getWellName()));
+            VesselPosition vesselPosition = VesselPosition.getByName(plateWellIndex.getWellName());
+            final PlateWell plateWell = new PlateWell(plate, vesselPosition);
             if (previousWells.contains(plateWell)) {
                 throw new RuntimeException(
                         "Plate " + plate.getLabel() + " and well " + plateWellIndex.getWellName() +
@@ -103,7 +104,7 @@ public class IndexedPlateFactory {
                     this.indexingSchemeFactory.findOrCreateIndexingScheme(Arrays.asList(plateWellIndex.getPositionPairs()));
             plateWell.addReagent(new MolecularIndexReagent(indexingScheme));
 
-            plate.getVesselContainer().addContainedVessel(plateWell, plateWellIndex.getWellName());
+            plate.getVesselContainer().addContainedVessel(plateWell, vesselPosition);
 //            this.em.persist(new PlateSeqSampleIdentifier(plate, wellDescription, seqSampleIdentifier, indexingScheme));
         }
 

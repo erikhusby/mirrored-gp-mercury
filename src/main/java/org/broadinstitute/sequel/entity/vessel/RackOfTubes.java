@@ -51,23 +51,23 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
     }
 
     public void makeDigest() {
-        List<Map.Entry<String, String>> positionBarcodeList = new ArrayList<Map.Entry<String, String>>();
-        for (Map.Entry<String, TwoDBarcodedTube> barcodedTubeEntry : vesselContainer.getMapPositionToVessel().entrySet()) {
-            positionBarcodeList.add(new AbstractMap.SimpleEntry<String, String>(
+        List<Map.Entry<VesselPosition, String>> positionBarcodeList = new ArrayList<Map.Entry<VesselPosition, String>>();
+        for (Map.Entry<VesselPosition, TwoDBarcodedTube> barcodedTubeEntry : vesselContainer.getMapPositionToVessel().entrySet()) {
+            positionBarcodeList.add(new AbstractMap.SimpleEntry<VesselPosition, String>(
                     barcodedTubeEntry.getKey(), barcodedTubeEntry.getValue().getLabel()));
         }
         this.digest = makeDigest(positionBarcodeList);
     }
 
-    public static String makeDigest(List<Map.Entry<String, String>> positionBarcodeList) {
-        Collections.sort(positionBarcodeList, new Comparator<Map.Entry<String, String>>() {
+    public static String makeDigest(List<Map.Entry<VesselPosition, String>> positionBarcodeList) {
+        Collections.sort(positionBarcodeList, new Comparator<Map.Entry<VesselPosition, String>>() {
             @Override
-            public int compare(Map.Entry<String, String> o1, Map.Entry<String, String> o2) {
+            public int compare(Map.Entry<VesselPosition, String> o1, Map.Entry<VesselPosition, String> o2) {
                 return o1.getKey().compareTo(o2.getKey());
             }
         });
         StringBuilder stringBuilder = new StringBuilder();
-        for (Map.Entry<String, String> positionBarcodeEntry : positionBarcodeList) {
+        for (Map.Entry<VesselPosition, String> positionBarcodeEntry : positionBarcodeList) {
             stringBuilder.append(positionBarcodeEntry.getKey());
             stringBuilder.append(positionBarcodeEntry.getValue());
         }

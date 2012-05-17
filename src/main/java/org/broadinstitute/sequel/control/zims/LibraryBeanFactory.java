@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.sequel.entity.run.RunCartridge;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.StripTube;
+import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.entity.zims.LibrariesBean;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
 
@@ -26,7 +27,12 @@ public class LibraryBeanFactory {
         IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunDao.findByRunName(runName);
         RunCartridge runCartridge = illuminaSequencingRun.getSampleCartridge().iterator().next();
         StripTube stripTube = (StripTube) runCartridge.getTransfersTo().iterator().next().getSourceLabVessels().iterator().next();
-        Set<SampleInstance> sampleInstances = stripTube.getVesselContainer().getSampleInstancesAtPosition(StripTube.Positions.ONE.getDisplay());
+        Set<SampleInstance> sampleInstances = stripTube.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.TUBE1);
+/*
+        if(sampleInstances.size() != 96) {
+            throw new RuntimeException("Wrong number of sample instances: " + sampleInstances.size());
+        }
+*/
         Project project = sampleInstances.iterator().next().getSingleProjectPlan().getProject();
 
 //        libraries.add(new LibraryBean(

@@ -215,7 +215,7 @@ public class LabEventTest {
         List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<TwoDBarcodedTube>(mapBarcodeToSageUnloadTubes.values());
         for(int i = 0; i < NUM_POSITIONS_IN_RACK; i++) {
             sageUnloadRackRearrayed.getVesselContainer().addContainedVessel(sageUnloadTubes.get(i),
-                    bettaLimsMessageFactory.buildWellName(i + 1));
+                    VesselPosition.getByName(bettaLimsMessageFactory.buildWellName(i + 1)));
         }
         LabEvent sageCleanupEntity = labEventFactory.buildFromBettaLimsRackToRackDbFree(sageCleanupJaxb,
                 sageUnloadRackRearrayed, new HashMap<String, TwoDBarcodedTube>());
@@ -292,6 +292,8 @@ public class LabEventTest {
         private void buildJaxb() {
             // FluidigmSampleInput rack P96COLS1-6BYROW to chip P384COLS4-6BYROW
             ArrayList<String> tubeBarcodes = new ArrayList<String>(mapBarcodeToTube.keySet());
+            chipBarcode = "Fluidigm" + testPrefix;
+            rackBarcode = "InputRack" + testPrefix;
             fluidigmSampleInputJaxb = this.bettaLimsMessageFactory.buildRackToPlate(
                     "FluidigmSampleInput", rackBarcode, tubeBarcodes, chipBarcode);
             fluidigmSampleInputJaxb.getSourcePlate().setSection(SBSSection.P96COLS1_6BYROW.getSectionName());
@@ -318,7 +320,7 @@ public class LabEventTest {
             // FluidigmHarvestingToRack chip P384COLS4-6BYROW to rack P96COLS1-6BYROW
             harvestRackBarcode = "Harvest" + testPrefix;
             List<String> harvestTubeBarcodes = new ArrayList<String>();
-            for(int rackPosition = 1; rackPosition <= 48; rackPosition++) {
+            for(int rackPosition = 1; rackPosition <= mapBarcodeToTube.size(); rackPosition++) {
                 harvestTubeBarcodes.add("Harvest" + testPrefix + rackPosition);
             }
             fluidigmHarvestingToRackJaxb = this.bettaLimsMessageFactory.buildPlateToRack(
@@ -609,7 +611,7 @@ public class LabEventTest {
             shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(shearingCleanupPlate.getSampleInstances().size(),
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
-            Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition("A08");
+            Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A08);
             Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
             Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
 
@@ -764,7 +766,7 @@ public class LabEventTest {
                     libraryConstructionJaxb.getIndexedAdapterLigationJaxb(), indexPlate, shearingCleanupPlate);
             labEventHandler.processEvent(indexedAdapterLigationEntity, null);
             // asserts
-            Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition("A01");
+            Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
 //            PlateWell plateWellA1PostIndex = shearingCleanupPlate.getVesselContainer().getVesselAtPosition("A01");
 //            Assert.assertEquals(plateWellA1PostIndex.getAppliedReagents().iterator().next(), index301, "Wrong reagent");
             SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
@@ -800,7 +802,7 @@ public class LabEventTest {
             pondRegRack = (RackOfTubes) pondRegistrationEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(pondRegRack.getSampleInstances().size(),
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
-            Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getVesselContainer().getSampleInstancesAtPosition("A08");
+            Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A08);
             Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
             Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
             return this;
@@ -820,10 +822,6 @@ public class LabEventTest {
             return indexPlate;
         }
 
-        public MolecularIndexReagent getIndex301() {
-            return index301;
-        }
-
         public BuildIndexPlate invoke() {
             indexPlate = new StaticPlate(indexPlateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
             PlateWell plateWellA01 = new PlateWell(indexPlate, VesselPosition.A01);
@@ -831,12 +829,12 @@ public class LabEventTest {
                     new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
                         put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex("ATCGATCG"));}}));
             plateWellA01.addReagent(index301);
-            indexPlate.getVesselContainer().addContainedVessel(plateWellA01, "A01");
+            indexPlate.getVesselContainer().addContainedVessel(plateWellA01, VesselPosition.A01);
             PlateWell plateWellA02 = new PlateWell(indexPlate, VesselPosition.A02);
             plateWellA02.addReagent(new MolecularIndexReagent(new MolecularIndexingScheme(
                     new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
                         put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex("TCGATCGA"));}})));
-            indexPlate.getVesselContainer().addContainedVessel(plateWellA02, "A02");
+            indexPlate.getVesselContainer().addContainedVessel(plateWellA02, VesselPosition.A02);
             return this;
         }
     }
@@ -846,7 +844,7 @@ public class LabEventTest {
         private final String testPrefix;
         private final String shearCleanPlateBarcode;
 
-        private String indexPlateBarcode;
+        private final String indexPlateBarcode;
         private String pondRegRackBarcode;
         private List<String> pondRegTubeBarcodes;
 
@@ -1043,7 +1041,7 @@ public class LabEventTest {
             //asserts
             Assert.assertEquals(preSelPoolRack.getSampleInstances().size(),
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
-            Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getVesselContainer().getSampleInstancesAtPosition("A08");
+            Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A08);
             Assert.assertEquals(sampleInstancesInPreSelPoolWell.size(), 2, "Wrong number of sample instances in position");
 
             // Hybridization
@@ -1342,7 +1340,7 @@ public class LabEventTest {
             labEventHandler.processEvent(poolingEntity, null);
             // asserts
             final RackOfTubes poolingRack = (RackOfTubes) poolingEntity.getTargetLabVessels().iterator().next();
-            Set<SampleInstance> pooledSampleInstances = poolingRack.getVesselContainer().getSampleInstancesAtPosition("A01");
+            Set<SampleInstance> pooledSampleInstances = poolingRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(pooledSampleInstances.size(), NUM_POSITIONS_IN_RACK, "Wrong number of pooled samples");
 
             // DenatureTransfer
@@ -1360,7 +1358,7 @@ public class LabEventTest {
             labEventHandler.processEvent(denatureEntity, null);
             // asserts
             final RackOfTubes denatureRack = (RackOfTubes) denatureEntity.getTargetLabVessels().iterator().next();
-            Set<SampleInstance> denaturedSampleInstances = denatureRack.getVesselContainer().getSampleInstancesAtPosition("A01");
+            Set<SampleInstance> denaturedSampleInstances = denatureRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(denaturedSampleInstances.size(), NUM_POSITIONS_IN_RACK, "Wrong number of denatured samples");
 
             // StripTubeBTransfer
@@ -1379,7 +1377,7 @@ public class LabEventTest {
             labEventHandler.processEvent(stripTubeTransferEntity, null);
             // asserts
             StripTube stripTube = (StripTube) stripTubeTransferEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(stripTube.getVesselContainer().getSampleInstancesAtPosition("1").size(), NUM_POSITIONS_IN_RACK,
+            Assert.assertEquals(stripTube.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.TUBE1).size(), NUM_POSITIONS_IN_RACK,
                     "Wrong number of samples in strip tube well");
 
             // FlowcellTransfer
@@ -1388,7 +1386,7 @@ public class LabEventTest {
             labEventHandler.processEvent(flowcellTransferEntity, null);
             //asserts
             IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(illuminaFlowcell.getVesselContainer().getSampleInstancesAtPosition("1").size(), NUM_POSITIONS_IN_RACK,
+            Assert.assertEquals(illuminaFlowcell.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.LANE1).size(), NUM_POSITIONS_IN_RACK,
                     "Wrong number of samples in flowcell lane");
         }
     }

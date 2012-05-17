@@ -1,17 +1,10 @@
 package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.OrmUtil;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.vessel.PlateWell;
-import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.SBSSection;
-import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
-import org.broadinstitute.sequel.entity.vessel.VesselPosition;
-import org.hibernate.Hibernate;
-import org.hibernate.proxy.HibernateProxy;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -22,8 +15,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * Represents a transfer between two sections.

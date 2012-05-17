@@ -36,7 +36,7 @@ public class VesselContainer<T extends LabVessel> {
     // have to specify name, generated name is too long for Oracle
     @JoinTable(name = "lv_map_position_to_vessel")
     @MapKeyColumn(name = "mapkey")
-    private final Map<String, T> mapPositionToVessel = new HashMap<String, T>();
+    private final Map<VesselPosition, T> mapPositionToVessel = new HashMap<VesselPosition, T>();
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
     @Parent
@@ -49,8 +49,7 @@ public class VesselContainer<T extends LabVessel> {
         this.embedder = embedder;
     }
 
-    // todo jmt enum for positions
-    public T getVesselAtPosition(String position) {
+    public T getVesselAtPosition(VesselPosition position) {
         return this.mapPositionToVessel.get(position);
     }
 
@@ -63,7 +62,7 @@ public class VesselContainer<T extends LabVessel> {
         }
     }
 
-    public Set<SampleInstance> getSampleInstancesAtPosition(String position) {
+    public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         examineTransfers(position, sampleInstances);
         T vesselAtPosition = getVesselAtPosition(position);
@@ -83,14 +82,17 @@ public class VesselContainer<T extends LabVessel> {
         return sampleInstances;
     }
 
-    private void examineTransfers(String position, Set<SampleInstance> sampleInstances) {
+    private void examineTransfers(VesselPosition position, Set<SampleInstance> sampleInstances) {
         Set<SampleInstance> sampleInstancesAtPosition = new HashSet<SampleInstance>();
         Set<Reagent> reagentsAtPosition = new HashSet<Reagent>();
         for (LabEvent labEvent : this.embedder.getTransfersTo()) {
             for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
                 VesselContainer sourceVesselContainer = sectionTransfer.getSourceVesselContainer();
-                sampleInstancesAtPosition.addAll(sourceVesselContainer.getSampleInstancesAtPosition(position));
-                reagentsAtPosition.addAll(getReagentsAtPosition(sourceVesselContainer, position));
+                // todo jmt replace indexOf with map lookup
+                VesselPosition sourcePosition = sectionTransfer.getSourceSection().getWells().get(
+                        sectionTransfer.getTargetSection().getWells().indexOf(position));
+                sampleInstancesAtPosition.addAll(sourceVesselContainer.getSampleInstancesAtPosition(sourcePosition));
+                reagentsAtPosition.addAll(getReagentsAtPosition(sourceVesselContainer, sourcePosition));
                 applyProjectPlanOverrideIfPresent(labEvent, sampleInstancesAtPosition);
             }
             for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
@@ -112,9 +114,9 @@ public class VesselContainer<T extends LabVessel> {
         sampleInstances.addAll(sampleInstancesAtPosition);
     }
 
-    private String getPositionOfVessel(T vesselAtPosition) {
+    private VesselPosition getPositionOfVessel(T vesselAtPosition) {
         // todo jmt map in both directions
-        for (Map.Entry<String, T> stringTEntry : mapPositionToVessel.entrySet()) {
+        for (Map.Entry<VesselPosition, T> stringTEntry : mapPositionToVessel.entrySet()) {
             if(stringTEntry.getValue().equals(vesselAtPosition)) {
                 return stringTEntry.getKey();
             }
@@ -122,7 +124,7 @@ public class VesselContainer<T extends LabVessel> {
         return null;
     }
 
-    private Set<Reagent> getReagentsAtPosition(VesselContainer vesselContainer, String position) {
+    private Set<Reagent> getReagentsAtPosition(VesselContainer vesselContainer, VesselPosition position) {
         Set<Reagent> reagents = new HashSet<Reagent>();
         LabVessel vesselAtPosition = vesselContainer.getVesselAtPosition(position);
         if (vesselAtPosition != null) {
@@ -138,7 +140,7 @@ public class VesselContainer<T extends LabVessel> {
     @Transient
     public Set<SampleInstance> getSampleInstances() {
         Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        for (String position : this.mapPositionToVessel.keySet()) {
+        for (VesselPosition position : this.mapPositionToVessel.keySet()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position));
         }
         if (sampleInstances.isEmpty()) {
@@ -167,17 +169,17 @@ public class VesselContainer<T extends LabVessel> {
         return this.mapPositionToVessel.values();
     }
 
-    public void addContainedVessel(T child, String position) {
+    public void addContainedVessel(T child, VesselPosition position) {
         this.mapPositionToVessel.put(position, child);
         child.addToContainer(this);
     }
 
     @Transient
-    public Set<String> getPositions() {
+    public Set<VesselPosition> getPositions() {
         return this.mapPositionToVessel.keySet();
     }
 
-    Map<String, T> getMapPositionToVessel() {
+    Map<VesselPosition, T> getMapPositionToVessel() {
         return mapPositionToVessel;
     }
 

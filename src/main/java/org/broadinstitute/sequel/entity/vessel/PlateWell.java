@@ -52,7 +52,7 @@ public class PlateWell extends LabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        return this.plate.getVesselContainer().getSampleInstancesAtPosition(this.vesselPosition.toString());
+        return this.plate.getVesselContainer().getSampleInstancesAtPosition(this.vesselPosition);
     }
 
     @Override

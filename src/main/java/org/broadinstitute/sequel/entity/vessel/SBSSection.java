@@ -391,8 +391,28 @@ public enum SBSSection {
             VesselPosition.H08,
             VesselPosition.H10,
             VesselPosition.H12
+    )),
+    STRIP_TUBE8("STRIP_TUBE8", Arrays.asList(
+            VesselPosition.TUBE1,
+            VesselPosition.TUBE2,
+            VesselPosition.TUBE3,
+            VesselPosition.TUBE4,
+            VesselPosition.TUBE5,
+            VesselPosition.TUBE6,
+            VesselPosition.TUBE7,
+            VesselPosition.TUBE8
+    )),
+    FLOWCELL8("FLOWCELL8", Arrays.asList(
+            VesselPosition.LANE1,
+            VesselPosition.LANE2,
+            VesselPosition.LANE3,
+            VesselPosition.LANE4,
+            VesselPosition.LANE5,
+            VesselPosition.LANE6,
+            VesselPosition.LANE7,
+            VesselPosition.LANE8
     ));
-    
+
     private final String sectionName;
     private List<VesselPosition> wells = new ArrayList<VesselPosition>();
     private static Map<String, SBSSection> mapNameToSection = new HashMap<String, SBSSection>();

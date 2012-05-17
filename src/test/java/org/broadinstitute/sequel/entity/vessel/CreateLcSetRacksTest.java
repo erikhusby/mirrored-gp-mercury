@@ -108,7 +108,7 @@ public class CreateLcSetRacksTest extends ContainerTest {
             }
             SampleSheet sampleSheet = new SampleSheet();
             sampleSheet.addStartingSample(new BSPSample(sampleBarcode, projectPlan));
-            rackOfTubes.getVesselContainer().addContainedVessel(new TwoDBarcodedTube(tubeBarcode, sampleSheet), wellName);
+            rackOfTubes.getVesselContainer().addContainedVessel(new TwoDBarcodedTube(tubeBarcode, sampleSheet), VesselPosition.getByName(wellName));
         }
     }
 }
