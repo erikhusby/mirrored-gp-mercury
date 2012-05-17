@@ -205,7 +205,7 @@ public class LibraryBean {
         return library;
     }
 
-    public Double getPrecircularizationDnaSize() {
+    public Double getPreCircularizationSize() {
         return preCircularizationDnaSize;
     }
 
@@ -289,7 +289,7 @@ public class LibraryBean {
         return devExperimentData;
     }
 
-    @XmlElement(name = "isPartOfDevExperiment")
+    @XmlElement(name = "devExperimentData")
     public void setDevExperimentData(TZDevExperimentData experimentData) {
         this.devExperimentData = new DevExperimentDataBean(experimentData);
     }

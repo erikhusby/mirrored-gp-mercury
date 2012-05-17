@@ -191,7 +191,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
             assertNotNull(libBean.getLibrary());
             if (libBean.getLibrary().equals(zLib.getLibrary())) {
                 foundIt = true;
-                assertEquals(libBean.getPrecircularizationDnaSize(),zLib.getPrecircularizationDnaSize() == 0 ? null : zLib.getPrecircularizationDnaSize());
+                assertEquals(libBean.getPreCircularizationSize(),zLib.getPrecircularizationDnaSize() == 0 ? null : zLib.getPrecircularizationDnaSize());
                 assertEquals(libBean.getProject(),zLib.getProject());
                 assertEquals(libBean.getWorkRequest().longValue(),zLib.getWorkRequestId());
                 assertEquals(libBean.getCellLine(),zLib.getCellLine());
