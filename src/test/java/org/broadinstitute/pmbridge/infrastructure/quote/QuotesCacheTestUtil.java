@@ -1,4 +1,4 @@
-package org.broadinstitute.pmbridge.quotes;
+package org.broadinstitute.pmbridge.infrastructure.quote;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.pmbridge.infrastructure.ObjectMarshaller;

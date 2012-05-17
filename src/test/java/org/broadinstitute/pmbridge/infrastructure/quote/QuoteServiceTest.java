@@ -1,4 +1,4 @@
-package org.broadinstitute.pmbridge.quotes;
+package org.broadinstitute.pmbridge.infrastructure.quote;
 
 
 import org.broadinstitute.pmbridge.infrastructure.quote.*;
@@ -7,11 +7,11 @@ import org.testng.annotations.Test;
 
 import java.util.HashSet;
 import java.util.Set;
+import static org.broadinstitute.pmbridge.TestGroups.EXTERNAL_INTEGRATION;
 
 public class QuoteServiceTest {
 
-
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_get_a_quote() throws Exception {
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
         Quote quote = service.getQuoteFromQuoteServer("DNA3CD");
@@ -29,7 +29,7 @@ public class QuoteServiceTest {
 
     }
 
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_get_all_quotes_for_sequencing() throws Exception {
 
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());

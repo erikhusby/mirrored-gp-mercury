@@ -1,4 +1,4 @@
-package org.broadinstitute.pmbridge.quotes;
+package org.broadinstitute.pmbridge.infrastructure.quote;
 
 
 import org.broadinstitute.pmbridge.infrastructure.quote.*;
@@ -9,6 +9,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
+import static org.broadinstitute.pmbridge.TestGroups.EXTERNAL_INTEGRATION;
+
+/**
+ * Modified from SequeL
+ */
+
 public class QuotesCacheTest {
 
     Quote quote1 = new Quote("DNA32",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"Magical Infinite Grant"))), ApprovalStatus.FUNDED);
@@ -16,7 +22,7 @@ public class QuotesCacheTest {
     Quote quote3 = new Quote("DNA34",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"Cheap Grant"))), ApprovalStatus.FUNDED);
     Quote quote4 = new Quote("DNA35",new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))), ApprovalStatus.FUNDED);
 
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_quotes_for_funding_source() throws Exception {
         Quotes quotes = new Quotes();
         Funding targetSource = new Funding(Funding.FUNDS_RESERVATION,"Magical Infinite Grant");
@@ -38,7 +44,7 @@ public class QuotesCacheTest {
         Assert.assertFalse(foundQuotes.contains(quote3));
     }
 
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_unique_funding_soures() throws Exception {
         Quotes quotes = new Quotes();
         quotes.addQuote(quote1);
@@ -63,7 +69,7 @@ public class QuotesCacheTest {
 
 
     // Very Slow external test.
-    @Test(groups = {"ExternalIntegration"})
+    @Test(groups = {EXTERNAL_INTEGRATION}, enabled=false)
     public void test_known_good_funding_sources() throws Exception {
 
         long start = System.currentTimeMillis();
