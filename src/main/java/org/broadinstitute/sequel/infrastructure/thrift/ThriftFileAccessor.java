@@ -1,8 +1,6 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -12,10 +10,15 @@ import org.apache.thrift.transport.TTransport;
 
 import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ThriftFileAccessor {
 
-    private static final String RUN_FILE_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX.thrift";
+    private static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX";
+
+    private static final String RUN_FILE_NAME = RUN_NAME + ".thrift";
 
     public static final File RUN_FILE = new File("src/test/resources/thrift/",RUN_FILE_NAME);
 
@@ -24,27 +27,39 @@ public class ThriftFileAccessor {
      * object.
      * @throws Exception
      */
-    private void writeRunFile() throws Exception {
+    private static void writeRunFile() throws Exception {
         ThriftConfiguration qaThrift = new QAThriftConfiguration();
-        TZamboniRun runFetchedFromService = fetchRun(qaThrift,"foo");
+        TZamboniRun runFetchedFromService = fetchRun(qaThrift);
         serializeRun(runFetchedFromService,RUN_FILE);
     }
 
-    private TZamboniRun fetchRun(ThriftConfiguration thriftConfiguration,
-                                 String runName) throws TZIMSException, TException {
+    private static TZamboniRun fetchRun(ThriftConfiguration thriftConfiguration) throws TZIMSException, TException {
 
         TTransport transport = new TSocket(thriftConfiguration.getHost(), thriftConfiguration.getPort());
         TProtocol protocol = new TBinaryProtocol(transport);
         LIMQueries.Client client = new LIMQueries.Client(protocol);
         transport.open();
 
-        TZamboniRun zamboniRun = client.fetchRun(runName);
+        TZamboniRun zamboniRun = client.fetchRun(RUN_NAME);
+        for (TZamboniLane lane : zamboniRun.getLanes()) {
+            for (TZamboniLibrary lib : lane.getLibraries()) {
+                if (lane.getLaneNumber() % 2 == 0) {
+                    // we're overwriting some values here to make a more
+                    // representative data set
+                    lib.setAggregate(true);
+                    lib.setLabMeasuredInsertSize(14.3);
+                    lib.setPrecircularizationDnaSize(19.2);
+                    lib.setDevExperimentDataIsSet(true);
+                    lib.setDevExperimentData(new TZDevExperimentData("Dumy Experiment",Arrays.asList(new String[]{"condition 1","condition2"})));
+                }
+            }
+        }
         transport.close();
         return zamboniRun;
     }
 
 
-    private void serializeRun(TZamboniRun zamboniRun,File fileToWrite) throws IOException,TException {
+    private static void serializeRun(TZamboniRun zamboniRun,File fileToWrite) throws IOException,TException {
         if (!fileToWrite.exists()) {
             if (!fileToWrite.createNewFile()) {
                 throw new RuntimeException("Could not create file " + fileToWrite.getAbsolutePath());
@@ -58,6 +73,14 @@ public class ThriftFileAccessor {
     }
 
     public static TZamboniRun deserializeRun() throws IOException,TException {
+        /*
+        try {
+           writeRunFile();
+       }
+       catch(Exception e) {
+           throw new RuntimeException("Failed to rewrite run file to local disk",e);
+       }
+       */
        InputStream inputStream = null;
         if (RUN_FILE.exists()) {
             inputStream = new BufferedInputStream(new FileInputStream(RUN_FILE));

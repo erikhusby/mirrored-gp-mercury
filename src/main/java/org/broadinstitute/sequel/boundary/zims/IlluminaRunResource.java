@@ -149,7 +149,8 @@ public class IlluminaRunResource {
                         zamboniLibrary.getGssrBarcode(),
                         zamboniLibrary.getGssrBarcodes(),
                         zamboniLibrary.getGssrSampleType(),
-                        zamboniLibrary.getTargetLaneCoverage());
+                        zamboniLibrary.getTargetLaneCoverage(),
+                        zamboniLibrary.aggregate);
                 libraries.add(libBean);
             }
             runBean.addChamber(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(),libraries,tZamboniLane.getPrimer()));

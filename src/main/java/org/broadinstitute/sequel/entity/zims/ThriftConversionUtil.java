@@ -10,4 +10,13 @@ public class ThriftConversionUtil {
             return new Integer(number);
         }
     }
+
+    public static Double zeroAsNull(double number) {
+        if (number == 0) {
+            return null;
+        }
+        else {
+            return new Double(number);
+        }
+    }
 }

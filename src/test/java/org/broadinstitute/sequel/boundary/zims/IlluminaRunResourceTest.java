@@ -21,8 +21,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.ArchivePath;
-import org.jboss.shrinkwrap.api.asset.FileAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -33,7 +31,6 @@ import javax.ws.rs.core.MediaType;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
-import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
@@ -116,10 +113,25 @@ public class IlluminaRunResourceTest extends Arquillian  {
         doReadAssertions(thriftRun,runBean);
 
         assertEquals(runBean.getRunDateString(),thriftRun.getRunDate());
+        boolean hasRealPreCircSize = false;
+        boolean hasRealLabInsertSize = false;
         for (TZamboniLane thriftLane : thriftRun.getLanes()) {
             ZimsIlluminaChamber lane = getLane(Short.toString(thriftLane.getLaneNumber()),runBean);
             doAssertions(thriftLane, lane);
+
+            for (TZamboniLane zamboniLane : thriftRun.getLanes()) {
+                for (TZamboniLibrary thriftLib : zamboniLane.getLibraries()) {
+                    if (thriftLib.getPrecircularizationDnaSize() > 0) {
+                        hasRealPreCircSize = true;
+                    }
+                    if (thriftLib.getLabMeasuredInsertSize() > 0) {
+                        hasRealLabInsertSize = true;
+                    }
+                }
+            }
         }
+        assertTrue(hasRealLabInsertSize);
+        assertTrue(hasRealPreCircSize);
     }
 
     private static void doReadAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {
@@ -191,7 +203,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
                 assertEquals(libBean.getExpectedInsertSize(),zLib.getExpectedInsertSize());
                 assertEquals(libBean.getGssrSampleType(),zLib.getGssrSampleType());
                 assertEquals(libBean.getInitiative(),zLib.getInitiative());
-                assertEquals(libBean.getLabMeasuredInsertSize(),zLib.getLabMeasuredInsertSize());
+                assertEquals(libBean.getLabMeasuredInsertSize(),zLib.getLabMeasuredInsertSize() == 0 ? null : zLib.getLabMeasuredInsertSize());
                 assertEquals(libBean.getLibrary(),zLib.getLibrary());
                 assertEquals(libBean.getReferenceSequence(),zLib.getReferenceSequence());
                 assertEquals(libBean.getReferenceSequenceVersion(),zLib.getReferenceSequenceVersion());
@@ -203,7 +215,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
                 assertEquals(libBean.getTargetLaneCoverage(),new Short(zLib.getTargetLaneCoverage()));
                 assertEquals(libBean.getTissueType(),zLib.getTissueType());
                 assertEquals(libBean.getWeirdness(),zLib.getWeirdness());
-                assertEquals(libBean.getGssrBarcode(),zLib.getGssrBarcode());
+                assertEquals(libBean.doAggregation().booleanValue(),zLib.aggregate);
 
                 if (HUMAN.equals(zLib.getOrganism())) {
                     if (!(HUMAN.equals(libBean.getOrganism()) || BSP_HUMAN.equals(libBean.getOrganism()))) {
