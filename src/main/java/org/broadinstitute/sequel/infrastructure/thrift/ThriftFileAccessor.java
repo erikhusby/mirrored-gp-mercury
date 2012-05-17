@@ -11,7 +11,6 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
 import java.io.*;
-import java.net.URL;
 
 public class ThriftFileAccessor {
 
@@ -64,6 +63,8 @@ public class ThriftFileAccessor {
         }
         else {
             inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(RUN_FILE.getName());
+            // TODO: obtain the servlet context and use that instead
+//            inputStream = servletContext.getResourceAsStream(RUN_FILE.getName());
         }
         if (inputStream == null) {
             throw new RuntimeException("Cannot access cached zamboni file from " + RUN_FILE.getName() +  ".  Were you expecting to connect to a live thrift service?");
