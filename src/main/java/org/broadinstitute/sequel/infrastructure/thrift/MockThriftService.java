@@ -10,6 +10,9 @@ import java.io.IOException;
 
 @Default
 public class MockThriftService implements ThriftService {
+
+    public MockThriftService() {}
+
     @Override
     public TZamboniRun fetchRun(String runName) throws TZIMSException, TException {
         TZamboniRun run = null;
