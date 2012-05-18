@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.control.vessel;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.dao.vessel.StaticPlateDAO;
@@ -14,6 +15,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -26,7 +28,8 @@ import java.util.Set;
  * This class creates plates containing molecular index reagents
  */
 public class IndexedPlateFactory {
-    private static final Log gLog = LogFactory.getLog(IndexedPlateFactory.class);
+    private static final Log LOG = LogFactory.getLog(IndexedPlateFactory.class);
+    public static final int BARCODE_LENGTH = 12;
 
     @Inject
     private MolecularIndexingSchemeFactory indexingSchemeFactory;
@@ -55,29 +58,46 @@ public class IndexedPlateFactory {
         public String getPrettyName() {
             return this.prettyName;
         }
+
+        public IndexedPlateParser getIndexedPlateParser() {
+            return indexedPlateParser;
+        }
+    }
+
+    public Map<String, StaticPlate> parseAndPersist(File file, TechnologiesAndParsers technologiesAndParsers) {
+        Map<String, StaticPlate> platesByBarcode = parseFile(file, technologiesAndParsers);
+        for (StaticPlate staticPlate : platesByBarcode.values()) {
+            if (staticPlateDAO.findByBarcode(staticPlate.getLabel()) != null) {
+                throw new RuntimeException("Plate already exists: " + staticPlate.getLabel());
+            }
+            staticPlateDAO.persist(staticPlate);
+            staticPlateDAO.flush();
+            staticPlateDAO.clear();
+        }
+        return platesByBarcode;
     }
 
     public Map<String, StaticPlate> parseFile(File file, TechnologiesAndParsers technologiesAndParsers) {
-        Map<String, StaticPlate> platesByBarcode = null;
         if (file == null) {
             throw new RuntimeException("Please enter a file name.");
-        } else {
-            final IndexedPlateParser parser = technologiesAndParsers.indexedPlateParser;
-            final List<PlateWellIndexAssociation> associations;
-            try {
-                associations = parser.parseInputStream(new FileInputStream(file));
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-            platesByBarcode = uploadIndexedPlates(associations);
-            // todo jmt where to put this?
-            for (StaticPlate staticPlate : platesByBarcode.values()) {
-                staticPlateDAO.persist(staticPlate);
-                staticPlateDAO.flush();
-                staticPlateDAO.clear();
-            }
-//                setSuccessText("Uploaded " + associations.size() + " rows from " + file.getName());
         }
+        final IndexedPlateParser parser = technologiesAndParsers.getIndexedPlateParser();
+        final List<PlateWellIndexAssociation> associations;
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            try {
+                associations = parser.parseInputStream(fileInputStream);
+            } finally {
+                try {
+                    fileInputStream.close();
+                } catch (IOException ignored) {
+                }
+            }
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        Map<String, StaticPlate> platesByBarcode = uploadIndexedPlates(associations);
+//                setSuccessText("Uploaded " + associations.size() + " rows from " + file.getName());
 
         return platesByBarcode;
     }
@@ -105,42 +125,20 @@ public class IndexedPlateFactory {
             plateWell.addReagent(new MolecularIndexReagent(indexingScheme));
 
             plate.getVesselContainer().addContainedVessel(plateWell, vesselPosition);
-//            this.em.persist(new PlateSeqSampleIdentifier(plate, wellDescription, seqSampleIdentifier, indexingScheme));
         }
 
-        gLog.info("Number of plates: " + platesByBarcode.keySet().size());
-//        this.em.flush();
+        LOG.info("Number of plates: " + platesByBarcode.keySet().size());
         return platesByBarcode;
     }
 
 
-    /*
-      * Adds leading zeros to make a 12-digit barcode.
-      */
-    private String getFormattedBarcode(final String rawBarcode) {
-        String formattedBarcode = rawBarcode;
-        for (int j = rawBarcode.length(); j < 12; j++) {
-            formattedBarcode = "0" + formattedBarcode;
-        }
-        return formattedBarcode;
-    }
-
     private StaticPlate createOrGetPlate(final PlateWellIndexAssociation plateWellIndex, final Map<String, StaticPlate> platesByBarcode) {
-        final String formattedBarcode = this.getFormattedBarcode(plateWellIndex.getPlateBarcode());
+        final String formattedBarcode = StringUtils.leftPad(plateWellIndex.getPlateBarcode(), BARCODE_LENGTH, '0');
         StaticPlate plate = platesByBarcode.get(formattedBarcode);
         if (plate == null) {
-/*
-todo jmt restore this check elsewhere
-            if (staticPlateDAO.findByBarcode(formattedBarcode) != null) {
-                throw new RuntimeException("Plate already exists: " + formattedBarcode);
-            }
-*/
-
             plate = new StaticPlate(formattedBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
             plate.setCreatedOn(new Date());
             platesByBarcode.put(formattedBarcode, plate);
-
-//            staticPlateDAO.persist(plate);
         }
         return plate;
     }
