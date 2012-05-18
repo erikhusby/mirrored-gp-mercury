@@ -12,7 +12,7 @@
     <ui:composition template="/layout.xhtml">
         <ui:define name="metadata">
             <f:metadata>
-                <!-- cannot be required="true" due to http://java.net/jira/browse/JAVASERVERFACES-1532 -->
+                <!-- cannot be required="true" due to http://java.net/jira/browse/JAVASERVERFACES-1532 and p:dataTable with p:ajax -->
                 <f:viewParam name="runName" value="#{illuminaRunQuery.runName}"/>
                 <f:event type="preRenderView" listener="#{illuminaRunQuery.query}"/>
             </f:metadata>
@@ -100,15 +100,38 @@
 
                 <p/>
 
-                <p:selectManyCheckbox value="#{illuminaRunQuery.columnNames}">
-                    <p:ajax event="change" update=":form:libraryTable"/>
-                    <f:selectItems value="#{illuminaRunQuery.allColumns.keySet()}" var="columnName" itemLabel="#{columnName}"/>
-                </p:selectManyCheckbox>
+                <p:dialog header="Library Detail Columns" widgetVar="libraryColumnsDialog" modal="true" height="500">
+<!--
+                    <h:selectManyListbox value="#{illuminaRunQuery.columnNames}" layout="pageDirection">
+                        <p:ajax event="change" update=":form:libraryTable"/>
+                        <f:selectItems value="#{illuminaRunQuery.allColumnNames}" var="columnName" itemLabel="#{columnName}" />
+                    </h:selectManyListbox>
+                    <h:selectManyMenu value="#{illuminaRunQuery.columnNames}" layout="pageDirection">
+                        <p:ajax event="change" update=":form:libraryTable"/>
+                        <f:selectItems value="#{illuminaRunQuery.allColumnNames}" var="columnName" itemLabel="#{columnName}" />
+                    </h:selectManyMenu>
+-->
+                    <p:selectManyCheckbox value="#{illuminaRunQuery.columnNames}" layout="pageDirection">
+                        <p:ajax event="change" update=":form:libraryTable"/>
+                        <f:selectItems value="#{illuminaRunQuery.allColumnNames}" var="columnName" itemLabel="#{columnName}" />
+                    </p:selectManyCheckbox>
+                </p:dialog>
+                <p:commandButton value="Change Library Detail Columns" type="button" onclick="libraryColumnsDialog.show()"/>
+
+                <p/>
 
                 <p:dataTable id="libraryTable" value="#{illuminaRunQuery.selectedLane == null ? null : illuminaRunQuery.selectedLane.libraries}" var="library" emptyMessage="Select a lane">
                     <f:facet name="header">
                         <h:outputText value="Lane #{illuminaRunQuery.selectedLane.chamberName} Details"/>
                     </f:facet>
+
+                    <p:column>
+                        <p:rowToggler/>
+                    </p:column>
+
+                    <p:column headerText="Library Name" filterBy="#{library.library}" filterMatchMode="contains">
+                        #{library.library}
+                    </p:column>
 
                     <p:columns value="#{illuminaRunQuery.columns}" var="column" columnIndexVar="i">
                         <f:facet name="header">
@@ -117,6 +140,18 @@
                         <h:outputText value="#{library[column.property]}" rendered="#{column.property != null}"/>
                         <h:outputText value="#{illuminaRunQuery.eval(column.expression)}" rendered="#{column.expression != null}"/>
                     </p:columns>
+
+                    <p:rowExpansion>
+                        <p:dataTable value="#{illuminaRunQuery.allColumns}" var="column">
+                            <p:column>
+                                #{column.header}
+                            </p:column>
+                            <p:column>
+                                <h:outputText value="#{library[column.property]}" rendered="#{column.property != null}"/>
+                                <h:outputText value="#{illuminaRunQuery.eval(column.expression)}" rendered="#{column.expression != null}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </p:rowExpansion>
 <!--
                     <p:column headerText="Library Name">
                         #{library.library}

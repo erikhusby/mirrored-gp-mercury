@@ -10,10 +10,13 @@ import org.broadinstitute.sequel.presentation.AbstractJsfBean;
 import javax.el.ELContext;
 import javax.el.ExpressionFactory;
 import javax.el.ValueExpression;
+import javax.enterprise.context.Conversation;
+import javax.enterprise.context.ConversationScoped;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,10 +29,10 @@ import java.util.Map;
 /**
  * @author breilly
  */
-//@Named
-//@ConversationScoped
-@ManagedBean
-@ViewScoped
+@Named
+@ConversationScoped
+//@ManagedBean
+//@ViewScoped
 public class IlluminaRunQuery extends AbstractJsfBean {
 
     @Inject
@@ -38,16 +41,14 @@ public class IlluminaRunQuery extends AbstractJsfBean {
     @Inject @IlluminaRunQueryCache
     private LRUMap<String, ZimsIlluminaRun> runCache;
 
-//    @Inject
-//    private Conversation conversation;
+    @Inject
+    private Conversation conversation;
 
     private List<String> columnNames = new ArrayList<String>();
     private List<ColumnModel> columns = new ArrayList<ColumnModel>();
-    private static List<ColumnModel> allColumnss = new ArrayList<ColumnModel>();
-    private static Map<String, ColumnModel> allColumns = new LinkedHashMap<String, ColumnModel>();
-
-    private static final String libraryVar = "library";
-    private static final String columnVar = "column";
+    private static List<ColumnModel> allColumns = new ArrayList<ColumnModel>();
+    private static List<String> allColumnNames = new ArrayList<String>();
+    private static Map<String, ColumnModel> columnsByName = new LinkedHashMap<String, ColumnModel>();
 
     private String runName;
     private ZimsIlluminaRun run;
@@ -56,31 +57,59 @@ public class IlluminaRunQuery extends AbstractJsfBean {
     private ZimsIlluminaChamber selectedLane;
 
     static {
-        allColumns.put("Library Name", new ColumnModel("Library Name", "library", null));
-        allColumns.put("Initiative", new ColumnModel("Initiative", "initiative", null));
-        allColumns.put("Project", new ColumnModel("Project", "project", null));
-        allColumns.put("Work Request", new ColumnModel("Work Request", "workRequest", null));
-        allColumns.put("GSSR Barcode", new ColumnModel("GSSR Barcode", "gssrBarcode", null));
-        allColumns.put("Indexing Scheme", new ColumnModel("Indexing Scheme", null, libraryVar + ".indexingScheme.name"));
-//        allColumns.add(new ColumnModel("", "", null));
+//        addColumn("Library Name", "library", null);
+        addColumn("Project", "project", null);
+        addColumn("Initiative", "initiative", null);
+        addColumn("Work Request", "workRequest", null);
+        addColumn("Indexing Scheme", null, "library.indexingScheme.name");
+        addColumn("Expected Insert Size", "expectedInsertSize", null);
+        addColumn("Analysis Type", "analysisType", null);
+        addColumn("Reference Sequence", "referenceSequence", null);
+        addColumn("Reference Sequence Version", "referenceSequenceVersion", null);
+        addColumn("Sample Alias", "collaboratorSampleName", null);
+        addColumn("Collaborator", "sampleCollaborator", null);
+        addColumn("Organism", "organism", null);
+        addColumn("Species", "species", null);
+        addColumn("Strain", "strain", null);
+        addColumn("LSID", "sampleLSID", null);
+        addColumn("Tissue Type", "tissueType", null);
+//        addColumn("Expected Plasmid", "expectedPlasmid", null);
+        addColumn("Aligner", "aligner", null);
+        addColumn("RRBS Size Range", "rrbsSizeRange", null);
+        addColumn("Restriction Enzyme", "restrictionEnzyme", null);
+        addColumn("Cell Line", "cellLine", null);
+        addColumn("Bait Set", "baitSetName", null);
+        addColumn("Individual", "individual", null);
+        addColumn("Measured Insert Size", "labMeasuredInsertSize", null);
+//        addColumn("Positive Control?", "isPositiveControl", null);
+//        addColumn("Negative Control?", "isNegativeControl", null);
+        addColumn("Weirdness", "weirdness", null);
+        addColumn("Pre-Circularization DNA Size", "precircularizationDnaSize", null);
+//        addColumn("Dev Experiment?", "isPartOfDevExperiment", null);
+        // TODO: dev experiment data?
+        addColumn("GSSR Barcode", "gssrBarcode", null);
+        // TODO: GSSR barcodes?
+        addColumn("GSSR Sample Type", "gssrSampleType", null);
+        addColumn("Target Lane Coverage", "targetLaneCoverage", null);
+//        addColumn("", "", null);
+    }
+
+    public static void addColumn(String header, String property, String expression) {
+        ColumnModel column = new ColumnModel(header, property, expression);
+        allColumns.add(column);
+        allColumnNames.add(header);
+        columnsByName.put(header, column);
     }
 
     public IlluminaRunQuery() {
-//        columns.add(new ColumnModel("Library Name", "library", null));
-//        columns.add(new ColumnModel("Initiative", "initiative", null));
-//        columns.add(new ColumnModel("Project", "project", null));
-//        columns.add(new ColumnModel("Work Request", "workRequest", null));
-//        columns.add(new ColumnModel("GSSR Barcode", "gssrBarcode", null));
-//        columns.add(new ColumnModel("Indexing Scheme", null, libraryVar + ".indexingScheme.name"));
-//        columns.add(new ColumnModel("", ""));
-//        columns.addAll(allColumns);
-        setColumnNames(Arrays.asList("Library Name", "Initiative", "Project"));
+        // use an ArrayList because Mojarra doesn't like to deal with the result of Arrays.asList()
+        setColumnNames(new ArrayList<String>(Arrays.asList("Project", "Work Request", "Sample Alias")));
     }
 
     public void query() {
-//        if (conversation.isTransient()) {
-//            conversation.begin();
-//        }
+        if (conversation.isTransient()) {
+            conversation.begin();
+        }
 
         if (run == null) {
             run = runCache.get(runName);
@@ -139,8 +168,12 @@ public class IlluminaRunQuery extends AbstractJsfBean {
         return reads;
     }
 
-    public Map<String, ColumnModel> getAllColumns() {
+    public List<ColumnModel> getAllColumns() {
         return allColumns;
+    }
+
+    public List<String> getAllColumnNames() {
+        return allColumnNames;
     }
 
     public List<String> getColumnNames() {
@@ -151,7 +184,7 @@ public class IlluminaRunQuery extends AbstractJsfBean {
         this.columnNames = columnNames;
         columns.clear();
         for (String columnName : columnNames) {
-            columns.add(allColumns.get(columnName));
+            columns.add(columnsByName.get(columnName));
         }
     }
 
@@ -163,19 +196,11 @@ public class IlluminaRunQuery extends AbstractJsfBean {
         this.columns = columns;
     }
 
-    public static String getLibraryVar() {
-        return libraryVar;
-    }
-
     public String eval(String el) {
         ELContext elContext = FacesContext.getCurrentInstance().getELContext();
         ExpressionFactory expressionFactory = FacesContext.getCurrentInstance().getApplication().getExpressionFactory();
         ValueExpression valueExpression = expressionFactory.createValueExpression(elContext, "#{" + el + "}", String.class);
         return (String) valueExpression.getValue(elContext);
-    }
-
-    public static String getColumnVar() {
-        return columnVar;
     }
 
     public static class ColumnModel implements Serializable {
