@@ -146,8 +146,21 @@ public class LabEventFactory {
             Map<String, RackOfTubes> mapBarcodeToTargetRack,
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTube) {
         LabEvent labEvent = constructReferenceData(plateCherryPickEvent);
-        for (Map.Entry<String, RackOfTubes> stringVesselContainerEntry : mapBarcodeToSourceRack.entrySet()) {
-            labEvent.addSourceLabVessel(stringVesselContainerEntry.getValue());
+        for (PlateType sourceRackJaxb : plateCherryPickEvent.getSourcePlate()) {
+            RackOfTubes sourceRackEntity = mapBarcodeToSourceRack.get(sourceRackJaxb.getBarcode());
+            if(sourceRackEntity == null) {
+                for (PositionMapType sourcePositionMap : plateCherryPickEvent.getSourcePositionMap()) {
+                    if(sourcePositionMap.getBarcode().equals(sourceRackJaxb.getBarcode())) {
+                        sourceRackEntity = buildRack(mapBarcodeToSourceTube, sourceRackJaxb, sourcePositionMap);
+                        break;
+                    }
+                }
+            }
+            if(sourceRackEntity == null) {
+                throw new RuntimeException("Failed to find source position map for " + sourceRackJaxb.getBarcode());
+            }
+            mapBarcodeToSourceRack.put(sourceRackJaxb.getBarcode(), sourceRackEntity);
+            labEvent.addSourceLabVessel(sourceRackEntity);
         }
 
         for (Map.Entry<String, RackOfTubes> stringVesselContainerEntry : mapBarcodeToTargetRack.entrySet()) {
@@ -160,10 +173,14 @@ public class LabEventFactory {
         }
 
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
+            String destinationRackBarcode = cherryPickSourceType.getDestinationBarcode();
+            if(destinationRackBarcode == null) {
+                destinationRackBarcode = plateCherryPickEvent.getPlate().getBarcode();
+            }
             labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
                     mapBarcodeToSourceRack.get(cherryPickSourceType.getBarcode()).getVesselContainer(),
                     VesselPosition.getByName(cherryPickSourceType.getWell()),
-                    mapBarcodeToTargetRack.get(cherryPickSourceType.getDestinationBarcode()).getVesselContainer(),
+                    mapBarcodeToTargetRack.get(destinationRackBarcode).getVesselContainer(),
                     VesselPosition.getByName(cherryPickSourceType.getDestinationWell()),
                     labEvent));
         }
@@ -367,7 +384,8 @@ public class LabEventFactory {
      * @return entity
      */
     private RackOfTubes buildRack(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, PlateType plate, PositionMapType positionMap) {
-        RackOfTubes rackOfTubes = new RackOfTubes(plate.getBarcode());
+        // todo jmt fix label
+        RackOfTubes rackOfTubes = new RackOfTubes(plate.getBarcode() + "_" + Long.toString(System.currentTimeMillis()));
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if(twoDBarcodedTube == null) {
