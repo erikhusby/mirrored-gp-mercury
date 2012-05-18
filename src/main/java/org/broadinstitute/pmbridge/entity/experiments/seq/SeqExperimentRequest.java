@@ -18,10 +18,7 @@ import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 import org.broadinstitute.pmbridge.infrastructure.SubmissionException;
 import org.broadinstitute.pmbridge.infrastructure.ValidationException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,12 +26,12 @@ import java.util.StringTokenizer;
  * Date: 4/2/12
  * Time: 5:02 PM
  */
-public class SeqExperimentRequest extends AbstractExperimentRequest {
+public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
     private Log logger = LogFactory.getLog(SeqExperimentRequest.class);
-    // pass can be null if not constructing experiment request from data feed from Seq platform
-    private AbstractPass pass;
-    private PMBPassType passType;
+
+    protected PMBPassType passType;
+    protected SeqCoverageModel seqCoverageModel;
 
     // Need the following to store lookup data since the pass only stores the integer id.
     private OrganismName organism;
@@ -44,133 +41,71 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
     public SeqExperimentRequest(ExperimentRequestSummary experimentRequestSummary, PMBPassType passType ) {
         super(experimentRequestSummary);
         this.passType = passType;
+        //TODO set defaults for other pass members ??
     }
 
-    public SeqExperimentRequest(ExperimentRequestSummary experimentRequestSummary, AbstractPass pass) {
-        super(experimentRequestSummary);
-        passType = determinePassTypeFromPass(pass);
-        this.pass = pass;
-    }
-
-    private PMBPassType determinePassTypeFromPass(final AbstractPass pass) {
-        PMBPassType result = null;
-        if ( pass != null ) {
-            if (pass instanceof WholeGenomePass) {
-                result = PMBPassType.WG;
-            } else if ( pass instanceof DirectedPass) {
-                result = PMBPassType.DIRECTED;
-            } else if (pass instanceof RNASeqPass ){
-                result = PMBPassType.RNASeq;
-            } else {
-                throw new IllegalArgumentException("Unsupported type of PASS. Contents of pass : " + pass.toString() );
-            }
+    protected CoverageAndAnalysisInformation getOrCreateCoverageAndAnalysisInformation() {
+        CoverageAndAnalysisInformation coverageAndAnalysisInformation;
+        if( (null == getConcretePass().getCoverageAndAnalysisInformation()) ) {
+            // Create default coverage model
+            coverageAndAnalysisInformation =  createDefaultCoverageModel();
+            getConcretePass().setCoverageAndAnalysisInformation(coverageAndAnalysisInformation);
         } else {
-            throw new IllegalArgumentException("Cannot determine type of Pass. Object was null");
+            coverageAndAnalysisInformation = getConcretePass().getCoverageAndAnalysisInformation();
         }
-        return result;
+        return coverageAndAnalysisInformation;
     }
 
-    private AbstractPass getOrCreateAbstractPass() {
-        if ((pass == null) && (passType != null)) {
-        // Create pass from pmbPassType.
-        switch (passType) {
-            //TODO set mandatory defaults for each ??
-            case WG:
-                pass = new WholeGenomePass();
-                break;
-            case DIRECTED:
-                pass = new DirectedPass();
-                break;
-            case RNASeq:
-                pass = new RNASeqPass();
-                break;
-            default:
-                // in case the enum is extended but not this code.
-                throw new IllegalArgumentException("Unsupported Sequencing Pass Type. Supported values are : " + PMBPassType.values().toString() );
-        }        }
-        return pass;
+    public SeqCoverageModel getSeqCoverageModel() {
+        return seqCoverageModel;
     }
 
-    private ProjectInformation getOrCreateProjectInformation() {
-        ProjectInformation projectInformation;
-        if( (null == getOrCreateAbstractPass().getProjectInformation()) ) {
-            projectInformation = new ProjectInformation();
-            getOrCreateAbstractPass().setProjectInformation(projectInformation);
+    /**
+     * Implementing subclasses should always return a non-null concrete AbstractPass
+     * @return
+     */
+
+    protected abstract AbstractPass getConcretePass();
+
+
+    public abstract Set<CoverageModelType> getCoverageModelTypes();
+
+
+    public void setSeqCoverageModel(final SeqCoverageModel seqCoverageModel) {
+        if ( getCoverageModelTypes().contains( seqCoverageModel.getConcreteModelType()) ) {
+            this.seqCoverageModel = seqCoverageModel;
         } else {
-            projectInformation = getOrCreateAbstractPass().getProjectInformation();
+            StringBuilder msg = new StringBuilder( this.getClass().getSimpleName()  +  " Experiment only supports :" );
+            for ( CoverageModelType coverageModelType : getCoverageModelTypes() ) {
+                msg.append( " ").append( coverageModelType.getFullName() );
+            }
+            throw new RuntimeException(msg.toString());
+        }
+    }
+
+    protected abstract CoverageAndAnalysisInformation createDefaultCoverageModel();
+
+
+    protected ProjectInformation getOrCreateProjectInformation() {
+        ProjectInformation projectInformation;
+        if( (null == getConcretePass().getProjectInformation()) ) {
+            projectInformation = new ProjectInformation();
+            getConcretePass().setProjectInformation(projectInformation);
+        } else {
+            projectInformation = getConcretePass().getProjectInformation();
         }
         return projectInformation;
     }
 
-    private FundingInformation getOrCreateFundingInformation() {
+    protected FundingInformation getOrCreateFundingInformation() {
         FundingInformation fundingInformation;
-        if( (null == getOrCreateAbstractPass().getFundingInformation()) ) {
+        if( (null == getConcretePass().getFundingInformation()) ) {
             fundingInformation = new FundingInformation();
-            getOrCreateAbstractPass().setFundingInformation(fundingInformation);
+            getConcretePass().setFundingInformation(fundingInformation);
         } else {
-            fundingInformation = getOrCreateAbstractPass().getFundingInformation();
+            fundingInformation = getConcretePass().getFundingInformation();
         }
         return fundingInformation;
-    }
-
-    private CoverageAndAnalysisInformation getOrCreateCoverageAndAnalysisInformation() {
-            CoverageAndAnalysisInformation coverageAndAnalysisInformation;
-            if( (null == getOrCreateAbstractPass().getCoverageAndAnalysisInformation()) ) {
-                coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
-                getOrCreateAbstractPass().setCoverageAndAnalysisInformation(coverageAndAnalysisInformation);
-            } else {
-                coverageAndAnalysisInformation = getOrCreateAbstractPass().getCoverageAndAnalysisInformation();
-            }
-            return coverageAndAnalysisInformation;
-        }
-
-//
-//    public Name getResearchProjectName() {
-//        Name result = new Name(Name.UNSPECIFIED);  // initialized to Unspecified
-//        String passResearchProjectStr = getOrCreateAbstractPass().getResearchProject();
-//        if (StringUtils.isNotBlank( passResearchProjectStr ) ) {
-//            result = new Name( passResearchProjectStr );
-//        }
-//        return result;
-//    }
-//
-//    public void setResearchProjectName(final Name researchProjectName) {
-//        //Set the research project Id on the pass DTO
-//        getOrCreateAbstractPass().setResearchProject(researchProjectName.name);
-//    }
-
-
-    public String getRNAProtocol() {
-        String rnaSeqProtocol = null;
-        if (! (getOrCreateAbstractPass() instanceof RNASeqPass) ) {
-                    throw new IllegalArgumentException("Cannot set the RNA protocol on a non-RNASeq experiment.");
-        }
-        RNASeqPass rnaSeqPass = (RNASeqPass) getOrCreateAbstractPass();
-        RNASeqProtocolType rnaSeqProtocolType = rnaSeqPass.getProtocol();
-        if ( null != rnaSeqProtocolType) {
-            rnaSeqProtocol = rnaSeqProtocolType.value();
-        }
-        return rnaSeqProtocol;
-    }
-
-    public void setRNAProtocol(final String rnaProtocol) {
-        if (! (getOrCreateAbstractPass() instanceof RNASeqPass) ) {
-            throw new IllegalArgumentException("Cannot set the RNA protocol on a non-RNASeq experiment.");
-        }
-        RNASeqPass rnaSeqPass = (RNASeqPass) getOrCreateAbstractPass();
-        RNASeqProtocolType rnaSeqProtocolType = convertToRNASeqProtocolEnumElseNull(rnaProtocol);
-        if ( rnaSeqProtocolType == null ) {
-            throw new IllegalArgumentException("Unrecognized RNA protocol type.");
-        }
-        rnaSeqPass.setProtocol(rnaSeqProtocolType );
-    }
-
-    public static RNASeqProtocolType convertToRNASeqProtocolEnumElseNull(String str) {
-        for (RNASeqProtocolType eValue : RNASeqProtocolType.values()) {
-            if (eValue.name().equalsIgnoreCase(str))
-                return eValue;
-        }
-        return null;
     }
 
     public SeqTechnology getSeqTechnology() {
@@ -191,7 +126,7 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
         }
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         projectInformation.setSequencingTechnology(SequencingTechnology.fromValue(seqTechnology.value()));
-        getOrCreateAbstractPass().setProjectInformation(projectInformation);
+        getConcretePass().setProjectInformation(projectInformation);
     }
 
     public Name getTitle() {
@@ -201,10 +136,10 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
     public void setTitle(final Name title ) {
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         projectInformation.setTitle( getExperimentRequestSummary().getTitle().name );
-        getOrCreateAbstractPass().setProjectInformation(projectInformation);
+        getConcretePass().setProjectInformation(projectInformation);
     }
 
-    private Collection<Person> getOrCreatePersonsFromPass(SquidPersonList squidPersonList, RoleType roleType) {
+    protected List<Person> getOrCreatePersonsFromPass(SquidPersonList squidPersonList, RoleType roleType) {
         List<Person> people = null;
         for (SquidPerson squidPerson : squidPersonList.getSquidPerson() ) {
             Person person = new Person(
@@ -219,7 +154,7 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
 
-    public Collection<Person> getSponsoringScientists() {
+    public List<Person> getSponsoringScientists() {
         return getOrCreatePersonsFromPass( getOrCreateSponsoringScientists(), RoleType.BROAD_SCIENTIST );
     }
 
@@ -227,7 +162,7 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
       The sponsoring scientists are associated with the Research Project
       but need to be set on the experiment request when submitting
      */
-    public void setSponsoringScientists(final Collection<Person> sponsoringScientists) {
+    public void setSponsoringScientists(final List<Person> sponsoringScientists) {
 
         ProjectInformation projectInformation = getOrCreateProjectInformation();
 
@@ -243,7 +178,7 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
         projectInformation.setSponsoringScientists( squidPersonList );
     }
 
-    private SquidPersonList getOrCreateSponsoringScientists() {
+    protected SquidPersonList getOrCreateSponsoringScientists() {
         SquidPersonList result = null;
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         if ( null == projectInformation.getSponsoringScientists() ) {
@@ -255,7 +190,7 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
         return result;
     }
 
-    private SquidPersonList getOrCreatePlatformProjectManagers() {
+    protected SquidPersonList getOrCreatePlatformProjectManagers() {
         SquidPersonList result = null;
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         if ( null == projectInformation.getPlatformProjectManagers() ) {
@@ -407,8 +342,6 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
 
-
-
     public OrganismName getOrganism() {
         if ( organism != null ) {
             return organism;
@@ -455,24 +388,9 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
         getOrCreateCoverageAndAnalysisInformation().setAnalysisPipeline(analysisPipelineType);
     }
 
-    public AlignerType getAlignerType() {
-        //TODO Need to display BWA for WGS and Directed pasTypes and need to display TopHat for RNASeq pass type.
+    public abstract AlignerType getAlignerType();
 
-
-        return getOrCreateCoverageAndAnalysisInformation().getAligner();
-    }
-
-    public void setAlignerType(final AlignerType alignerType) {
-
-        if (PMBPassType.RNASeq.equals(passType)) {
-            throw new IllegalStateException("Not implemented yet. TopHat aligner should be supported for RNASeq. Todo for Squid.");
-        }
-        if (AlignerType.MAQ.equals(alignerType)) {
-            throw new IllegalStateException(AlignerType.MAQ.toString() + " aligner type no longer supported. Please use BWA.");
-        }
-
-        getOrCreateCoverageAndAnalysisInformation().setAligner( alignerType );
-    }
+    public abstract void setAlignerType(final AlignerType alignerType);
 
 
     @Override
@@ -483,7 +401,7 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
             researchProject.addExperimentRequest(this);
 
             // Update the RP id that is associated with the research project.
-            getOrCreateAbstractPass().setResearchProject("" + researchProject.getId().longValue());
+            getConcretePass().setResearchProject("" + researchProject.getId().longValue());
         }
     }
 
@@ -501,8 +419,8 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
 
     public Name getExperimentStatus() {
          Name state = ExperimentRequestSummary.DRAFT_STATUS;
-         if (  pass != null && pass.getStatus() != null) {
-             state = new Name( pass.getStatus().value() );
+         if (  getConcretePass().getStatus() != null) {
+             state = new Name( getConcretePass().getStatus().value() );
          }
          return state;
      }
@@ -532,13 +450,13 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
         String identifier = (getRemoteId() != null) ? getRemoteId().value : getLocalId().value;
 
         // Check for zero samples
-        if (getOrCreateAbstractPass().getSampleDetailsInformation().getSample().isEmpty()) {
+        if (getConcretePass().getSampleDetailsInformation().getSample().isEmpty()) {
             throw new ValidationException("No Samples found in experiment request " +  identifier);
         }
 
         //TODO hmc Add validation logic for submitting a pass
 
-        PassCritique passCritique  = squidServicePort.validatePass( getOrCreateAbstractPass() );
+        PassCritique passCritique  = squidServicePort.validatePass( getConcretePass() );
         errorMessages = passCritique.getErrors();
 
         return errorMessages;
@@ -552,7 +470,7 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
 
         //TODO Under construction !!!!
 
-        String passNumber = squidServicePort.storePass(pass);
+        String passNumber = squidServicePort.storePass( getConcretePass() );
 
         if ( StringUtils.isBlank(passNumber ) ) {
             throw new SubmissionException("No Pass number receive back from SQUID after submission of " + identifier);
@@ -563,6 +481,50 @@ public class SeqExperimentRequest extends AbstractExperimentRequest {
         return passNumber;
 
     }
+
+
+
+
+//    protected abstract AbstractPass getOrCreateAbstractPass() {
+//        if ((pass == null) && (passType != null)) {
+//        // Create pass from pmbPassType.
+//        switch (passType) {
+//            //TODO set mandatory defaults for each ??
+//            case WG:
+//                pass = new WholeGenomePass();
+//                break;
+//            case DIRECTED:
+//                pass = new DirectedPass();
+//                break;
+//            case RNASeq:
+//                pass = new RNASeqPass();
+//                break;
+//            default:
+//                // in case the enum is extended but not this code.
+//                throw new IllegalArgumentException("Unsupported Sequencing Pass Type. Supported values are : " + PMBPassType.values().toString() );
+//        }        }
+//        return pass;
+//    }
+
+
+//    public PMBPassType determinePassTypeFromPass(final AbstractPass pass) {
+//        PMBPassType result = null;
+//        if ( pass != null ) {
+//            if (pass instanceof WholeGenomePass) {
+//                result = PMBPassType.WG;
+//            } else if ( pass instanceof DirectedPass) {
+//                result = PMBPassType.DIRECTED;
+//            } else if (pass instanceof RNASeqPass ){
+//                result = PMBPassType.RNASeq;
+//            } else {
+//                throw new IllegalArgumentException("Unsupported type of PASS. Contents of pass : " + pass.toString() );
+//            }
+//        } else {
+//            throw new IllegalArgumentException("Cannot determine type of Pass. Object was null");
+//        }
+//        return result;
+//    }
+
 
 }
 
