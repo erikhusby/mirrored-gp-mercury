@@ -125,7 +125,7 @@ public class LibraryBean {
     
     public LibraryBean() {}
 
-    public LibraryBean(String library, String project, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize, String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId, String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType, String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine, String bait, String individual, Double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl, String weirdness, Double preCircularizationDnaSize, Boolean partOfDevExperiment, TZDevExperimentData devExperimentData,String gssrBarcode,Collection<String> gssrBarcodes,String gssrSampleType,Short targetLaneCoverage,Boolean doAggregation) {
+    public LibraryBean(String library, String project, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize, String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId, String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType, String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine, String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl, String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment, TZDevExperimentData devExperimentData,String gssrBarcode,Collection<String> gssrBarcodes,String gssrSampleType,Short targetLaneCoverage,Boolean doAggregation) {
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -164,13 +164,21 @@ public class LibraryBean {
     }
 
     @XmlElement(name = "preCircularizationDnaSize")
-    private void setPreCircularizationSize(Double preCircularizationSize) {
-        this.preCircularizationDnaSize = ThriftConversionUtil.zeroAsNull(preCircularizationSize);
+    public void setPreCircularizationSize(Double preCircularizationSize) {
+        if (preCircularizationSize != null) {
+            this.preCircularizationDnaSize = ThriftConversionUtil.zeroAsNull(preCircularizationSize.doubleValue());
+        }
+    }
+
+    public Double getPreCircularizationSize() {
+        return preCircularizationDnaSize;
     }
 
     @XmlElement(name = "labMeasuredInsertSize")
-    private void setLabMeasuredInsertSize(Double labSize) {
-        this.labMeasuredInsertSize = ThriftConversionUtil.zeroAsNull(labSize);
+    public void setLabMeasuredInsertSize(Double labSize) {
+        if (labSize != null) {
+            this.labMeasuredInsertSize = ThriftConversionUtil.zeroAsNull(labSize.doubleValue());
+        }
     }
     
     public Long getWorkRequest() {
@@ -203,10 +211,6 @@ public class LibraryBean {
 
     public String getLibrary() {
         return library;
-    }
-
-    public Double getPreCircularizationSize() {
-        return preCircularizationDnaSize;
     }
 
     public MolecularIndexingSchemeBean getIndexingScheme() {

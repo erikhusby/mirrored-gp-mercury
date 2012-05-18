@@ -8,7 +8,7 @@ import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.Default;
 import java.io.IOException;
 
-@Default
+@Alternative
 public class MockThriftService implements ThriftService {
 
     public MockThriftService() {}

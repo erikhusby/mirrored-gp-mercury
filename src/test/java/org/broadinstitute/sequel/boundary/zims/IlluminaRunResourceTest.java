@@ -13,6 +13,7 @@ import org.broadinstitute.sequel.entity.zims.*;
 
 import static org.testng.Assert.*;
 
+import org.broadinstitute.sequel.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftFileAccessor;
@@ -56,7 +57,9 @@ public class IlluminaRunResourceTest extends Arquillian  {
 
     @Deployment
     public static WebArchive buildSequelWar() {
-        return DeploymentBuilder.buildSequelWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class).addAsResource(ThriftFileAccessor.RUN_FILE);
+        return DeploymentBuilder.buildSequelWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class,
+                                                                MockThriftService.class)
+                .addAsResource(ThriftFileAccessor.RUN_FILE);
     }
 
     /**
@@ -191,7 +194,8 @@ public class IlluminaRunResourceTest extends Arquillian  {
             assertNotNull(libBean.getLibrary());
             if (libBean.getLibrary().equals(zLib.getLibrary())) {
                 foundIt = true;
-                assertEquals(libBean.getPreCircularizationSize(),zLib.getPrecircularizationDnaSize() == 0 ? null : zLib.getPrecircularizationDnaSize());
+                assertEquals(libBean.getPreCircularizationSize(),zLib.getPrecircularizationDnaSize() == 0 ? null : zLib.getPrecircularizationDnaSize(),
+                        "Precircularization size is wrong for " + libBean.getLibrary());
                 assertEquals(libBean.getProject(),zLib.getProject());
                 assertEquals(libBean.getWorkRequest().longValue(),zLib.getWorkRequestId());
                 assertEquals(libBean.getCellLine(),zLib.getCellLine());
@@ -282,20 +286,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
 
     @BeforeClass
     private void getZamboniRun() throws Exception {
-        TTransport transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
-        TProtocol protocol = new TBinaryProtocol(transport);
-        LIMQueries.Client client = new LIMQueries.Client(protocol);
-        transport.open();
-
-        TZamboniRun run = null;
-
-        try {
-            run = client.fetchRun(RUN_NAME);
-        }
-        finally {
-            transport.close();
-        }
-        zamboniRun = run;
+        zamboniRun = new MockThriftService().fetchRun(RUN_NAME);
     }
 
 }

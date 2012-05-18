@@ -14,7 +14,7 @@ import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 
-@Alternative
+@Default
 public class LiveThriftService implements  ThriftService {
 
     private ThriftConfiguration thriftConfig;
