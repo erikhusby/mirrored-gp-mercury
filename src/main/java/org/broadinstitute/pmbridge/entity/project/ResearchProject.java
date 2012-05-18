@@ -13,10 +13,7 @@ import org.broadinstitute.pmbridge.infrastructure.quote.Funding;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  * Concrete class for a Research project.
@@ -38,13 +35,13 @@ public class ResearchProject {
     private ChangeEvent creation;
     private String synopsis;
     private ChangeEvent modification;
-    private final Collection<Person> sponsoringScientists = new HashSet<Person>();
-    private final Collection<Funding> fundings = new HashSet<Funding>();
-    private final Collection<Person> analysts = new HashSet<Person>();
-    private final Collection<BSPCollection> sampleCohorts = new HashSet<BSPCollection>();
-    private final Collection<String> irbNumbers = new HashSet<String>();
-    private final Collection<ExperimentRequest> experimentRequests = new HashSet<ExperimentRequest>();
-    private Collection<BSPSample> samples = new HashSet<BSPSample>();
+    private final Set<Person> sponsoringScientists = new HashSet<Person>();
+    private final Set<Funding> fundings = new HashSet<Funding>();
+    private final Set<Person> analysts = new HashSet<Person>();
+    private final Set<BSPCollection> sampleCohorts = new HashSet<BSPCollection>();
+    private final Set<String> irbNumbers = new HashSet<String>();
+    private final Set<ExperimentRequest> experimentRequests = new HashSet<ExperimentRequest>();
+    private Set<BSPSample> samples = new HashSet<BSPSample>();
     private String irbNotes;
 
 
@@ -103,93 +100,93 @@ public class ResearchProject {
         return irbNotes;
     }
 
-    public Collection<Person> getSponsoringScientists() {
-        return Collections.unmodifiableCollection(sponsoringScientists);
+    public Set<Person> getSponsoringScientists() {
+        return Collections.unmodifiableSet(sponsoringScientists);
     }
-    public Collection<Person> addSponsoringScientist(Person scientist) {
+    public Set<Person> addSponsoringScientist(Person scientist) {
         sponsoringScientists.add(scientist);
-        return Collections.unmodifiableCollection(sponsoringScientists);
+        return Collections.unmodifiableSet(sponsoringScientists);
     }
-    public Collection<Person> removeSponsoringScientist(Person scientist) {
+    public Set<Person> removeSponsoringScientist(Person scientist) {
         sponsoringScientists.remove(scientist);
-        return Collections.unmodifiableCollection(sponsoringScientists);
+        return Collections.unmodifiableSet(sponsoringScientists);
     }
 
-    public Collection<Person> getAnalysts() {
-        return Collections.unmodifiableCollection(analysts);
+    public Set<Person> getAnalysts() {
+        return Collections.unmodifiableSet(analysts);
     }
-    public Collection<Person> addAanalysts(Person analyst) {
+    public Set<Person> addAanalysts(Person analyst) {
         analysts.add(analyst);
-        return Collections.unmodifiableCollection(analysts);
+        return Collections.unmodifiableSet(analysts);
     }
-    public Collection<Person> removeAnalyst(Person analyst) {
+    public Set<Person> removeAnalyst(Person analyst) {
         analysts.remove(analyst);
-        return Collections.unmodifiableCollection(analysts);
+        return Collections.unmodifiableSet(analysts);
     }
 
-    public Collection<Funding> getFundings() {
-        return Collections.unmodifiableCollection(fundings);
+    public Set<Funding> getFundings() {
+        return Collections.unmodifiableSet(fundings);
     }
-    public Collection<Funding> addFunding(Funding source) {
+    public Set<Funding> addFunding(Funding source) {
         fundings.add(source);
-        return Collections.unmodifiableCollection(fundings);
+        return Collections.unmodifiableSet(fundings);
     }
-    public Collection<Funding> removeFunding(Funding source) {
+    public Set<Funding> removeFunding(Funding source) {
         fundings.remove(source);
-        return Collections.unmodifiableCollection(fundings);
+        return Collections.unmodifiableSet(fundings);
     }
 
-    public Collection<BSPCollection> getSampleCohorts() {
-        return Collections.unmodifiableCollection(sampleCohorts);
+    public Set<BSPCollection> getSampleCohorts() {
+        return Collections.unmodifiableSet(sampleCohorts);
     }
-    public Collection<BSPCollection> addBSPCollection(BSPCollection bspCollection ){
+    public Set<BSPCollection> addBSPCollection(BSPCollection bspCollection ){
         sampleCohorts.add(bspCollection);
-        return Collections.unmodifiableCollection(sampleCohorts);
+        return Collections.unmodifiableSet(sampleCohorts);
     }
-    public Collection<BSPCollection> removeBSPCollection(BSPCollection bspCollection ){
+    public Set<BSPCollection> removeBSPCollection(BSPCollection bspCollection ){
         sampleCohorts.remove(bspCollection);
-        return Collections.unmodifiableCollection(sampleCohorts);
+        return Collections.unmodifiableSet(sampleCohorts);
     }
 
-    public Collection<String> getIrbNumbers() {
-        return Collections.unmodifiableCollection(irbNumbers);
+    public Set<String> getIrbNumbers() {
+        return Collections.unmodifiableSet(irbNumbers);
     }
-    public Collection<String> addIrbNumber(String irbNumber) {
+    public Set<String> addIrbNumber(String irbNumber) {
         irbNumbers.add(irbNumber);
-        return Collections.unmodifiableCollection(irbNumbers);
+        return Collections.unmodifiableSet(irbNumbers);
     }
-    public Collection<String> removeIrbNumber(String irbNumber) {
+    public Set<String> removeIrbNumber(String irbNumber) {
         irbNumbers.remove(irbNumber);
-        return Collections.unmodifiableCollection(irbNumbers);
+        return Collections.unmodifiableSet(irbNumbers);
     }
 
 
-    public Collection<ExperimentRequest> getExperimentRequests() {
-        return Collections.unmodifiableCollection(experimentRequests);
+    public Set<ExperimentRequest> getExperimentRequests() {
+        return Collections.unmodifiableSet(experimentRequests);
     }
-    public Collection<ExperimentRequest> addExperimentRequest(ExperimentRequest experimentRequest) {
+    public Set<ExperimentRequest> addExperimentRequest(ExperimentRequest experimentRequest) {
         experimentRequests.add(experimentRequest);
-        return Collections.unmodifiableCollection(experimentRequests);
+        return Collections.unmodifiableSet(experimentRequests);
     }
-    public Collection<ExperimentRequest> removeExperimentRequest(ExperimentRequest experimentRequest) {
+    public Set<ExperimentRequest> removeExperimentRequest(ExperimentRequest experimentRequest) {
         experimentRequests.remove(experimentRequest);
-        return Collections.unmodifiableCollection(experimentRequests);
+        return Collections.unmodifiableSet(experimentRequests);
     }
 
 
-    public Collection<BSPSample> addSample(BSPSample sample) {
+    public Set<BSPSample> addSample(BSPSample sample) {
         samples.add(sample);
-        return Collections.unmodifiableCollection(samples);
+        return Collections.unmodifiableSet(samples);
     }
-    public Collection<BSPSample> removeSample(BSPSample sample) {
+    public Set<BSPSample> removeSample(BSPSample sample) {
         samples.remove(sample);
-        return Collections.unmodifiableCollection(samples);
+        return Collections.unmodifiableSet(samples);
     }
 
-    public Collection<BSPSample> getSamples() {
-        return Collections.unmodifiableCollection(samples);
+    public Set<BSPSample> getSamples() {
+        return Collections.unmodifiableSet(samples);
     }
-    public void setSamples(Collection<BSPSample> samples) {
+    public void setSamples(Set<BSPSample> samples) {
         this.samples = samples;
     }
     public void setIrbNotes(String irbNotes) {

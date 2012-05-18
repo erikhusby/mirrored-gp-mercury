@@ -1,7 +1,6 @@
 package org.broadinstitute.pmbridge.infrastructure.quote;
 
 
-import org.broadinstitute.pmbridge.infrastructure.quote.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -14,7 +13,7 @@ public class QuoteServiceTest {
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_get_a_quote() throws Exception {
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
-        Quote quote = service.getQuoteFromQuoteServer("DNA3CD");
+        Quote quote = service.getQuoteByAlphaId("DNA3CD");
         Assert.assertNotNull(quote);
         Assert.assertEquals("Regev ChIP Sequencing 8-1-2011", quote.getName());
         Assert.assertEquals("6820110", quote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
@@ -22,7 +21,7 @@ public class QuoteServiceTest {
         Assert.assertEquals(Funding.FUNDS_RESERVATION,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
         Assert.assertEquals("DNA3CD",quote.getAlphanumericId());
 
-        quote = service.getQuoteFromQuoteServer("DNA3A9");
+        quote = service.getQuoteByAlphaId("DNA3A9");
         Assert.assertEquals("HARVARD UNIVERSITY",quote.getQuoteFunding().getFundingLevel().getFunding().getInstitute());
         Assert.assertEquals(Funding.PURCHASE_ORDER,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
         Assert.assertEquals("DNA3A9",quote.getAlphanumericId());

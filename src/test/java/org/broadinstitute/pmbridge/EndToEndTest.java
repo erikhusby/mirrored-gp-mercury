@@ -13,9 +13,10 @@ import org.broadinstitute.pmbridge.entity.person.RoleType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.pmbridge.infrastructure.quote.*;
+import org.broadinstitute.pmbridge.infrastructure.quote.Funding;
+import org.broadinstitute.pmbridge.infrastructure.quote.Quote;
+import org.broadinstitute.pmbridge.infrastructure.quote.QuoteService;
 import org.broadinstitute.pmbridge.infrastructure.squid.SequencingService;
-import org.broadinstitute.pmbridge.quotes.QuotesCacheTestUtil;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -25,7 +26,10 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.net.MalformedURLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -93,18 +97,12 @@ public class EndToEndTest extends Arquillian {
         Assert.assertEquals( myResearchProject.getSampleCohorts().size(), 1 );
 
         //FUNDING - Get some funding sources and associated quotes (from a local file for test purposes).
-        QuotesCacheTestUtil quotesCacheTestUtil = new QuotesCacheTestUtil();
-        QuotesCache quotesCache = quotesCacheTestUtil.getLocalQuotes("quoteTestData.xml");
-        Map<Funding, HashSet<Quote>> quotesByFundingSource = quotesCache.getQuotesByFundingSource();
+        Funding rpFunding = quoteService.getAllFundingSources().iterator().next();
+        myResearchProject.addFunding( rpFunding );
 
-        // Choose the first funding source and associate it with the RP
-        Funding funding = quotesByFundingSource.keySet().iterator().next();
-        Collection<Funding> fundings = myResearchProject.addFunding(funding);
-        Funding rpFunding = fundings.iterator().next();
-
-        System.out.println("Chose funding source : " + rpFunding.getGrantDescription() + " " +
-                rpFunding.getGrantNumber());
-
+        Funding funding = myResearchProject.getFundings().iterator().next();
+        System.out.println("Associated funding source : " + funding.getGrantDescription() + " " +
+                funding.getGrantNumber());
 
         //IRBs - Add a couple of IRBs to the RP
         myResearchProject.addIrbNumber("irb0123");
@@ -151,13 +149,13 @@ public class EndToEndTest extends Arquillian {
 
 
         // Get first quote from the fundingSource that was selected above. This will be the Seq quote.
-        Quote seqQuote = quotesByFundingSource.get(funding).iterator().next();
+        Quote seqQuote = quoteService.getQuotesInFundingSource(funding).iterator().next();
 
         // Set the quote Alpha numeric Id with the seq experiment request.
         seqExperimentRequest.setSeqQuoteId( seqQuote.getAlphanumericId() );
 
         // Get second quote from the fundingSource that was selected above. This will be the Bsp quote.
-        Quote bspQuote = quotesByFundingSource.get(funding).iterator().next();
+        Quote bspQuote = quoteService.getQuotesInFundingSource(funding).iterator().next();
 
         // Set the quote Alpha numeric Id with the seq experiment request for BSP
         seqExperimentRequest.setBspQuoteId( bspQuote.getAlphanumericId() );

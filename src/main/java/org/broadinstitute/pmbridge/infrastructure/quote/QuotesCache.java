@@ -44,7 +44,7 @@ public class QuotesCache {
      * the cache.
      * @return
      */
-    public Collection<Funding> getAllFundingSources() {
+    public Set<Funding> getAllFundingSources() {
         Set<Funding> fundingSources = new HashSet<Funding>();
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {
