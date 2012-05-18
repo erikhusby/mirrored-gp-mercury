@@ -45,6 +45,10 @@ public enum LabEventType {
     ADAPTER_LIGATION_CLEANUP ("AdapterLigationCleanup", false, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
+    // no longer used, needed to import past messages
+    WGS_ADAPTER_LIGATION_CLEANUP ("WGSAdapterLigationCleanup", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
     POND_ENRICHMENT ("PondEnrichment", true, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
@@ -76,6 +80,22 @@ public enum LabEventType {
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     GS_WASH_2 ("GSWash2", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    // no longer used, needed to import past messages
+    GS_WASH_3 ("GSWash3", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    // no longer used, needed to import past messages
+    GS_WASH_4 ("GSWash4", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    // no longer used, needed to import past messages
+    GS_WASH_5 ("GSWash5", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    // no longer used, needed to import past messages
+    GS_WASH_6 ("GSWash6", true, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     CATCH_ENRICHMENT_SETUP ("CatchEnrichmentSetup", true, true,
