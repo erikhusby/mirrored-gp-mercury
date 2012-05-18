@@ -18,6 +18,13 @@
             </f:metadata>
         </ui:define>
         <ui:define name="title">Illumina Run</ui:define>
+        <ui:define name="head">
+            <style type="text/css">
+                .ui-selectcheckboxmenu-panel {
+                    width: 250px;
+                }
+            </style>
+        </ui:define>
         <ui:define name="body">
 
             <h:form id="form">
@@ -63,22 +70,6 @@
                     </td>
 
                     <td>
-                        <p:dataTable value="#{illuminaRunQuery.reads}" var="read">
-                            <f:facet name="header">Reads</f:facet>
-
-                            <p:column headerText="Read Type">
-                                #{read.readType}
-                            </p:column>
-                            <p:column headerText="First Cycle">
-                                #{read.firstCycle}
-                            </p:column>
-                            <p:column headerText="Length">
-                                #{read.length}
-                            </p:column>
-                        </p:dataTable>
-
-                        <p/>
-
                         <p:dataTable value="#{illuminaRunQuery.lanes}" var="lane" selectionMode="single" selection="#{illuminaRunQuery.selectedLane}" rowKey="#{lane.chamberName}">
 
                             <p:ajax event="rowSelect" update=":form:libraryTable"/>
@@ -100,29 +91,15 @@
 
                 <p/>
 
-                <p:dialog header="Library Detail Columns" widgetVar="libraryColumnsDialog" modal="true" height="500">
-<!--
-                    <h:selectManyListbox value="#{illuminaRunQuery.columnNames}" layout="pageDirection">
-                        <p:ajax event="change" update=":form:libraryTable"/>
-                        <f:selectItems value="#{illuminaRunQuery.allColumnNames}" var="columnName" itemLabel="#{columnName}" />
-                    </h:selectManyListbox>
-                    <h:selectManyMenu value="#{illuminaRunQuery.columnNames}" layout="pageDirection">
-                        <p:ajax event="change" update=":form:libraryTable"/>
-                        <f:selectItems value="#{illuminaRunQuery.allColumnNames}" var="columnName" itemLabel="#{columnName}" />
-                    </h:selectManyMenu>
--->
-                    <p:selectManyCheckbox value="#{illuminaRunQuery.columnNames}" layout="pageDirection">
-                        <p:ajax event="change" update=":form:libraryTable"/>
-                        <f:selectItems value="#{illuminaRunQuery.allColumnNames}" var="columnName" itemLabel="#{columnName}" />
-                    </p:selectManyCheckbox>
-                </p:dialog>
-                <p:commandButton value="Change Library Detail Columns" type="button" onclick="libraryColumnsDialog.show()"/>
-
-                <p/>
-
                 <p:dataTable id="libraryTable" value="#{illuminaRunQuery.selectedLane == null ? null : illuminaRunQuery.selectedLane.libraries}" var="library" emptyMessage="Select a lane">
                     <f:facet name="header">
                         <h:outputText value="Lane #{illuminaRunQuery.selectedLane.chamberName} Details"/>
+                        <div style="float: right">
+                            <p:selectCheckboxMenu id="laneDetailColumns" value="#{illuminaRunQuery.columnNames}" label="Lane Detail Columns" height="300">
+                                <p:ajax event="change" update=":form:libraryTable"/>
+                                <f:selectItems value="#{illuminaRunQuery.allColumnNames}" var="columnName" itemLabel="#{columnName}"/>
+                            </p:selectCheckboxMenu>
+                        </div>
                     </f:facet>
 
                     <p:column>
@@ -191,6 +168,22 @@
 -->
                 </p:dataTable>
             </h:form>
+
+            <p/>
+
+            <p:dataTable value="#{illuminaRunQuery.reads}" var="read">
+                <f:facet name="header">Reads</f:facet>
+
+                <p:column headerText="Read Type">
+                    #{read.readType}
+                </p:column>
+                <p:column headerText="First Cycle">
+                    #{read.firstCycle}
+                </p:column>
+                <p:column headerText="Length">
+                    #{read.length}
+                </p:column>
+            </p:dataTable>
 
             <p/>
 
