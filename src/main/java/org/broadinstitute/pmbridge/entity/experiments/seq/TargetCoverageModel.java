@@ -1,0 +1,52 @@
+package org.broadinstitute.pmbridge.entity.experiments.seq;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: mccrory
+ * Date: 5/18/12
+ * Time: 11:59 AM
+ */
+public class TargetCoverageModel extends SeqCoverageModel {
+
+    private final org.broad.squid.services.TopicService.TargetCoverageModel targetCoverageModel;
+    public final static BigInteger DEFAULT_DEPTH = BigInteger.ZERO;
+    public final static BigInteger DEFAULT_PERCENT = BigInteger.ZERO;
+
+    public TargetCoverageModel() {
+        this(DEFAULT_DEPTH, DEFAULT_PERCENT);
+    }
+
+    public TargetCoverageModel(final BigInteger targetDepth, final BigInteger targetPercent) {
+        this(new org.broad.squid.services.TopicService.TargetCoverageModel());
+        this.targetCoverageModel.setDepth(targetDepth);
+        this.targetCoverageModel.setCoveragePercentage(targetPercent);
+    }
+
+    public TargetCoverageModel(final org.broad.squid.services.TopicService.TargetCoverageModel targetCoverageModel) {
+        this.targetCoverageModel = targetCoverageModel;
+    }
+
+    public BigInteger getPercent() {
+        return this.targetCoverageModel.getCoveragePercentage();
+    }
+
+    public void setPercent(final BigInteger percent) {
+        this.targetCoverageModel.setCoveragePercentage( percent );
+    }
+
+    public BigInteger getDepth() {
+        return this.targetCoverageModel.getDepth();
+    }
+
+    public void setDepth(final BigInteger depth) {
+        this.targetCoverageModel.setDepth(depth);
+    }
+
+    @Override
+    protected CoverageModelType getConcreteModelType() {
+        return CoverageModelType.TARGETCOVERAGE;
+    }
+}
