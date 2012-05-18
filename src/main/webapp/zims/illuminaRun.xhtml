@@ -106,18 +106,6 @@
                         <p:rowToggler/>
                     </p:column>
 
-                    <p:column headerText="Library Name" filterBy="#{library.library}" filterMatchMode="contains">
-                        #{library.library}
-                    </p:column>
-
-                    <p:columns value="#{illuminaRunQuery.columns}" var="column" columnIndexVar="i">
-                        <f:facet name="header">
-                            #{column.header}
-                        </f:facet>
-                        <h:outputText value="#{library[column.property]}" rendered="#{column.property != null}"/>
-                        <h:outputText value="#{illuminaRunQuery.eval(column.expression)}" rendered="#{column.expression != null}"/>
-                    </p:columns>
-
                     <p:rowExpansion>
                         <p:dataTable value="#{illuminaRunQuery.allColumns}" var="column">
                             <p:column>
@@ -129,6 +117,18 @@
                             </p:column>
                         </p:dataTable>
                     </p:rowExpansion>
+
+                    <p:column headerText="Library Name" filterBy="#{library.library}" filterMatchMode="contains">
+                        #{library.library}
+                    </p:column>
+
+                    <p:columns value="#{illuminaRunQuery.columns}" var="column" columnIndexVar="i">
+                        <f:facet name="header">
+                            #{column.header}
+                        </f:facet>
+                        <h:outputText value="#{library[column.property]}" rendered="#{column.property != null}"/>
+                        <h:outputText value="#{illuminaRunQuery.eval(column.expression)}" rendered="#{column.expression != null}"/>
+                    </p:columns>
 <!--
                     <p:column headerText="Library Name">
                         #{library.library}
