@@ -81,7 +81,8 @@ public class DeploymentBuilder {
                 }
                 // TODO: remove all test-scoped dependencies; optionally explicitly add certain test dependencies that we commit to supporting
                 // TODO: remove exclusion of xerces, which is a workaround until all test-scoped dependencies are removed
-                return !dependency.getScope().equals("test") &&
+                return
+//                        !dependency.getScope().equals("test") &&
                         !dependency.getScope().equals("provided") &&
                         !dependency.getCoordinates().contains("xerces");
             }
