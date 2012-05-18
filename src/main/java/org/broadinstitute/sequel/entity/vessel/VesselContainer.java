@@ -10,9 +10,11 @@ import org.hibernate.annotations.Parent;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
+import javax.persistence.EnumType;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyEnumerated;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,6 +37,7 @@ public class VesselContainer<T extends LabVessel> {
     @ManyToMany(targetEntity = LabVessel.class, cascade = CascadeType.PERSIST)
     // have to specify name, generated name is too long for Oracle
     @JoinTable(name = "lv_map_position_to_vessel")
+    @MapKeyEnumerated(EnumType.STRING)
     @MapKeyColumn(name = "mapkey")
     private final Map<VesselPosition, T> mapPositionToVessel = new HashMap<VesselPosition, T>();
 
