@@ -1,39 +1,30 @@
 package org.broadinstitute.sequel.entity.vessel;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.sequel.control.dao.vessel.RackOfTubesDao;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
-import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.WorkflowDescription;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
-import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
+import com.sun.jersey.api.client.Client;
+import org.broadinstitute.sequel.boundary.vessel.RackBean;
+import org.broadinstitute.sequel.boundary.vessel.TubeBean;
 import org.broadinstitute.sequel.test.ContainerTest;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.ws.rs.core.MediaType;
+import java.util.ArrayList;
 import java.util.List;
+
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * To prepare for sending past production BettaLIMS messages into SequeL, this class creates LC Sets and associated
- * racks of tubes.
+ * racks of tubes that are stored in Squid.
  */
 public class CreateLcSetRacksTest extends ContainerTest {
-    private static final Log log = LogFactory.getLog(CreateLcSetRacksTest.class);
 
     @PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
-    @Inject
-    private RackOfTubesDao rackOfTubesDao;
-
-    @Test(enabled = false)
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
     public void testCreateLcSets() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "    l.\"KEY\", " +
@@ -80,8 +71,8 @@ public class CreateLcSetRacksTest extends ContainerTest {
                 "    wd.\"NAME\" ");
         List resultList = nativeQuery.getResultList();
         String previousLcSet = "";
-        RackOfTubes rackOfTubes = null;
-        ProjectPlan projectPlan = null;
+        RackBean rackOfTubes = null;
+        List<TubeBean> tubeBeans = null;
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;
             String lcSet = (String) columns[0];
@@ -92,23 +83,26 @@ public class CreateLcSetRacksTest extends ContainerTest {
             if(!lcSet.equals(previousLcSet)) {
                 previousLcSet = lcSet;
                 if(rackOfTubes != null) {
-                    System.out.println("About to persist rack " + rackOfTubes.getLabel() + ", LCSet " + lcSet);
+                    System.out.println("About to persist rack " + rackOfTubes.barcode + ", LCSet " + lcSet);
+                    String response = null;
                     try {
-                        rackOfTubesDao.persist(rackOfTubes);
-                        rackOfTubesDao.flush();
+                        // Use a web service, rather than just calling persist on a DAO, because a constraint
+                        // violation invalidates the EntityManager.  The web service gets a fresh EntityManager for
+                        // each request.
+                        response = Client.create().resource("http://localhost:8181/SequeL/rest/rackoftubes")
+                                .type(MediaType.APPLICATION_XML_TYPE)
+                                .accept(MediaType.APPLICATION_XML)
+                                .entity(rackOfTubes)
+                                .post(String.class);
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }
-                    rackOfTubesDao.clear();
+                    System.out.println(response);
                 }
-                rackOfTubes = new RackOfTubes(rackBarcode);
-                // todo jmt fix workflow
-                projectPlan = new ProjectPlan(new BasicProject(lcSet, new JiraTicket(new DummyJiraService(), lcSet, lcSet)), lcSet,
-                        new WorkflowDescription("", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+                tubeBeans = new ArrayList<TubeBean>();
+                rackOfTubes = new RackBean(rackBarcode, lcSet, tubeBeans);
             }
-            SampleSheet sampleSheet = new SampleSheet();
-            sampleSheet.addStartingSample(new BSPSample(sampleBarcode, projectPlan));
-            rackOfTubes.getVesselContainer().addContainedVessel(new TwoDBarcodedTube(tubeBarcode, sampleSheet), VesselPosition.getByName(wellName));
+            tubeBeans.add(new TubeBean(tubeBarcode, wellName, sampleBarcode));
         }
     }
 }
