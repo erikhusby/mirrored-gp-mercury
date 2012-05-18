@@ -16,6 +16,8 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -57,6 +59,7 @@ import java.util.Set;
 // todo rename to "Event"--everything is an event, including
     // deltas in an aggregation in zamboni
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate"}))
 public abstract class LabEvent {
 
     @Id

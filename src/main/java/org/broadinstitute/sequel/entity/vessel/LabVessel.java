@@ -16,6 +16,8 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
+import org.hibernate.annotations.Index;
+import org.hibernate.annotations.NaturalId;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
@@ -28,7 +30,9 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -39,6 +43,7 @@ import java.util.Set;
  *
  */
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
 @BatchSize(size = 50)
 public abstract class LabVessel  {
 
@@ -47,7 +52,7 @@ public abstract class LabVessel  {
     @Id
     private Long labVesselId;
 
-    protected String label;
+    private String label;
 
     private Date createdOn;
 
