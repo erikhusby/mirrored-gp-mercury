@@ -163,18 +163,17 @@ public class LibraryBean {
         this.doAggregation = doAggregation;
     }
 
-    @XmlElement(name = "preCircularizationDnaSize")
     public void setPreCircularizationSize(Double preCircularizationSize) {
         if (preCircularizationSize != null) {
             this.preCircularizationDnaSize = ThriftConversionUtil.zeroAsNull(preCircularizationSize.doubleValue());
         }
     }
 
+    @XmlElement(name = "preCircularizationDnaSize")
     public Double getPreCircularizationSize() {
         return preCircularizationDnaSize;
     }
 
-    @XmlElement(name = "labMeasuredInsertSize")
     public void setLabMeasuredInsertSize(Double labSize) {
         if (labSize != null) {
             this.labMeasuredInsertSize = ThriftConversionUtil.zeroAsNull(labSize.doubleValue());
@@ -256,7 +255,8 @@ public class LibraryBean {
     public String getExpectedInsertSize() {
         return expectedInsertSize;
     }
-    
+
+    @XmlElement(name = "labMeasuredInsertSize")
     public Double getLabMeasuredInsertSize() {
         return labMeasuredInsertSize;
     }
@@ -293,7 +293,6 @@ public class LibraryBean {
         return devExperimentData;
     }
 
-    @XmlElement(name = "devExperimentData")
     public void setDevExperimentData(TZDevExperimentData experimentData) {
         this.devExperimentData = new DevExperimentDataBean(experimentData);
     }
