@@ -52,6 +52,9 @@ public class LibraryBean {
     /** the name the collaborator has given to the sample */
     private String collaboratorSampleId;
 
+    @XmlElement(name = "aggregate")
+    private Boolean doAggregation;
+
     @XmlElement(name = "sampleCollaborator")
     /** the name of the collaborator */
     private String collaborator;
@@ -93,7 +96,6 @@ public class LibraryBean {
     /** obfuscated name of the individual (person) from whence this sample was taken */
     private String individual;
 
-    @XmlElement(name = "labMeasuredInsertSize")
     private Double labMeasuredInsertSize;
 
     @XmlElement(name = "isPositiveControl")
@@ -105,17 +107,12 @@ public class LibraryBean {
     @XmlElement(name = "weirdness")
     private String weirdness;
 
-    @XmlElement(name = "preCircularizationDnaSize")
     private Double preCircularizationDnaSize;
 
-    @XmlElement(name = "isPartOfDevExperiment")
     private Boolean isPartOfDevExperiment;
 
     @XmlElement(name = "devExperimentData")
     private DevExperimentDataBean devExperimentData;
-
-    @XmlElement(name = "gssrBarcode")
-    private String gssrBarcode;
 
     @XmlElement(name = "gssrBarcodes")
     private Collection<String> gssrBarcodes;
@@ -128,7 +125,7 @@ public class LibraryBean {
     
     public LibraryBean() {}
 
-    public LibraryBean(String library, String project, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize, String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId, String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType, String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine, String bait, String individual, Double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl, String weirdness, Double preCircularizationDnaSize, Boolean partOfDevExperiment, TZDevExperimentData devExperimentData,String gssrBarcode,Collection<String> gssrBarcodes,String gssrSampleType,Short targetLaneCoverage) {
+    public LibraryBean(String library, String project, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize, String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId, String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType, String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine, String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl, String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment, TZDevExperimentData devExperimentData,String gssrBarcode,Collection<String> gssrBarcodes,String gssrSampleType,Short targetLaneCoverage,Boolean doAggregation) {
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -153,27 +150,34 @@ public class LibraryBean {
         this.cellLine = cellLine;
         this.bait = bait;
         this.individual = individual;
-        this.labMeasuredInsertSize = labMeasuredInsertSize;
+        setLabMeasuredInsertSize(labMeasuredInsertSize);
         isPositiveControl = positiveControl;
         isNegativeControl = negativeControl;
         this.weirdness = weirdness;
         setPreCircularizationSize(preCircularizationDnaSize);        
         isPartOfDevExperiment = partOfDevExperiment;
-        this.devExperimentData = new DevExperimentDataBean(devExperimentData);
-        this.gssrBarcode = gssrBarcode;
+        setDevExperimentData(devExperimentData);
         this.gssrBarcodes = gssrBarcodes;
         this.gssrSampleType = gssrSampleType;
         this.targetLaneCoverage = targetLaneCoverage;
+        this.doAggregation = doAggregation;
     }
 
-    private void setPreCircularizationSize(Double preCircularizationSize) {
+    @XmlElement(name = "preCircularizationDnaSize")
+    public void setPreCircularizationSize(Double preCircularizationSize) {
         if (preCircularizationSize != null) {
-            if (preCircularizationSize.doubleValue() == 0) {
-                this.preCircularizationDnaSize = null;
-            }
-            else {
-                this.preCircularizationDnaSize = preCircularizationSize;
-            }
+            this.preCircularizationDnaSize = ThriftConversionUtil.zeroAsNull(preCircularizationSize.doubleValue());
+        }
+    }
+
+    public Double getPreCircularizationSize() {
+        return preCircularizationDnaSize;
+    }
+
+    @XmlElement(name = "labMeasuredInsertSize")
+    public void setLabMeasuredInsertSize(Double labSize) {
+        if (labSize != null) {
+            this.labMeasuredInsertSize = ThriftConversionUtil.zeroAsNull(labSize.doubleValue());
         }
     }
     
@@ -209,10 +213,6 @@ public class LibraryBean {
         return library;
     }
 
-    public Double getPrecircularizationDnaSize() {
-        return preCircularizationDnaSize;
-    }
-
     public MolecularIndexingSchemeBean getIndexingScheme() {
         return indexingScheme;
     }
@@ -221,10 +221,6 @@ public class LibraryBean {
         return aligner;
     }
 
-    public String getGssrBarcode() {
-        return gssrBarcode;
-    }
-    
     public Collection<String> getGssrBarcodes() {
         return gssrBarcodes;
     }
@@ -297,6 +293,11 @@ public class LibraryBean {
         return devExperimentData;
     }
 
+    @XmlElement(name = "devExperimentData")
+    public void setDevExperimentData(TZDevExperimentData experimentData) {
+        this.devExperimentData = new DevExperimentDataBean(experimentData);
+    }
+
     public Boolean isNegativeControl() {
         return isNegativeControl;
     }
@@ -307,5 +308,9 @@ public class LibraryBean {
 
     public Boolean isPartOfDevExperiment() {
         return isPositiveControl();
+    }
+
+    public Boolean doAggregation() {
+        return doAggregation;
     }
 }

@@ -8,18 +8,21 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
 import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.Default;
+import javax.inject.Inject;
 
-@Alternative
+@Default
 public class LiveThriftService implements  ThriftService {
 
-    private final ThriftConfiguration thriftConfig;
+    private ThriftConfiguration thriftConfig;
 
     // stateful: created by open()
     private TTransport transport;
 
+    @Inject
     public LiveThriftService(ThriftConfiguration thriftConfiguration) {
         this.thriftConfig = thriftConfiguration;
     }
@@ -27,6 +30,12 @@ public class LiveThriftService implements  ThriftService {
     private void open() {
         close();
         transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
+        try {
+            transport.open();
+        }
+        catch(TTransportException e) {
+            throw new RuntimeException("Could not open thrift connection",e);
+        }
     }
 
     private void close() {

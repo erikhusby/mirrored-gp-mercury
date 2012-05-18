@@ -19,6 +19,26 @@ public class MockBSPService implements BSPSampleSearchService {
                 "0.293", // concentration
                 "Chicken"  // species
         });
+        addToMap("SM-1P3WY",new String[] {
+                "PT-2LK3",  // patient
+                "ROOT", // root
+                "STOCK", // stock
+                "CollaboratorSampleX", // collaborator sample id
+                "Hungarian Goulash", // collection
+                "1.3",  // volume
+                "0.293", // concentration
+                "Chicken"  // species
+        });
+        addToMap("SM-1P3XN",new String[] {
+                "PT-2LK3",  // patient
+                "ROOT", // root
+                "STOCK", // stock
+                "CollaboratorSampleX", // collaborator sample id
+                "Hungarian Goulash", // collection
+                "1.3",  // volume
+                "0.293", // concentration
+                "Chicken"  // species
+        });
     }
 
     private void addToMap(String sampleName,String[] attributes) {

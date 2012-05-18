@@ -21,25 +21,25 @@ public class DevExperimentDataBean {
     @XmlElement(name = "experiment")
     private String experiment;
 
-    @XmlElement(name = "conditionChain")
-    private List<String> conditionData;
+    @XmlElement(name = "condition")
+    private List<String> conditions;
 
     public DevExperimentDataBean() {}
 
     public DevExperimentDataBean(TZDevExperimentData experimentData) {
         this.experiment = experimentData.getExperiment();
-        conditionData = new ArrayList<String>();
+        conditions = new ArrayList<String>();
         for (String condition : experimentData.getConditionChain()) {
             if (condition != null) {
                 if (condition.length() > 0) {
-                    conditionData.add(condition);
+                    conditions.add(condition);
                 }
             }
         }
     }
 
     public Collection<String> getConditions() {
-        return conditionData;
+        return conditions;
     }
 
 

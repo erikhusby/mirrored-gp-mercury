@@ -22,7 +22,7 @@ public class MolecularIndexingSchemeBean {
     @XmlElement(name = "name")
     private String name;
 
-    @XmlElement(name = "sequence")
+    @XmlElement(name = "sequences")
     private List<IndexComponent> sequences = new ArrayList<IndexComponent>();
 
     public MolecularIndexingSchemeBean() {}
