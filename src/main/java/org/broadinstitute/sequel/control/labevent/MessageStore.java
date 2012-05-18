@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.control.labevent;
 
+import javax.xml.bind.UnmarshalException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -18,6 +19,9 @@ public class MessageStore {
 
     /** Name of the error directory, where messages with exceptions are stored */
     public static final String ERROR_DIR = "error";
+
+    /** Name of the ignore error directory, where messages with ignored exceptions are stored */
+    public static final String IGNORE_DIR = "ignore";
 
     /** directory below which to store inbox, error etc. */
     private final String directoryRoot;
@@ -80,7 +84,14 @@ public class MessageStore {
      * @param exception the exception to log
      */
     public void recordError(String message, Date receivedDate, Exception exception) {
-        File errorDirectory = new File(directoryRoot, ERROR_DIR);
+        String directoryName;
+        if(exception instanceof UnmarshalException || message.contains("DetectorPlateLoaded")) {
+            // SequeL doesn't currently handle Coral messages or detector plates
+            directoryName = IGNORE_DIR;
+        } else {
+            directoryName = ERROR_DIR;
+        }
+        File errorDirectory = new File(directoryRoot, directoryName);
         if(!errorDirectory.exists()) {
             if(!errorDirectory.mkdirs()) {
                 // mkdirs can fail if two threads attempt it simultaneously, so try again
