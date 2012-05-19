@@ -6,7 +6,9 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
@@ -52,7 +54,11 @@ public class DeploymentBuilder {
         sb.append("<beans>\n")
                 .append("  <alternatives>\n");
         for (Class alternative : alternatives) {
-            sb.append("    <class>").append(alternative.getName()).append("</class>\n");
+            if (alternative.isAnnotation()) {
+                sb.append("    <stereotype>").append(alternative.getName()).append("</stereotype>\n");
+            } else {
+                sb.append("    <class>").append(alternative.getName()).append("</class>\n");
+            }
         }
         sb.append("  </alternatives>\n")
                 .append("</beans>");
@@ -67,28 +73,33 @@ public class DeploymentBuilder {
     }
 
     private static WebArchive addWarDependencies(WebArchive archive) {
+        MavenResolutionFilter resolutionFilter = new MavenResolutionFilter() {
+            @Override
+            public boolean accept(MavenDependency dependency) {
+                if (dependency == null) {
+                    return false;
+                }
+                // TODO: remove all test-scoped dependencies; optionally explicitly add certain test dependencies that we commit to supporting
+                // TODO: remove exclusion of xerces, which is a workaround until all test-scoped dependencies are removed
+                return
+//                        !dependency.getScope().equals("test") &&
+                        !dependency.getScope().equals("provided") &&
+                        !dependency.getCoordinates().contains("xerces");
+            }
+
+            @Override
+            public MavenResolutionFilter configure(Collection<MavenDependency> dependencies) {
+                return this;
+            }
+        };
+
+//        MavenDependencyResolver resolver = DependencyResolvers.use(MavenDependencyResolver.class).includeDependenciesFromPom("pom.xml");
+//        return archive.addAsLibraries(resolver.resolveAsFiles(resolutionFilter);
+
         return archive
                 .as(MavenImporter.class)
                 .loadEffectivePom("pom.xml", "JavaEE")
-                .importAnyDependencies(new MavenResolutionFilter() {
-                    @Override
-                    public boolean accept(MavenDependency dependency) {
-                        if (dependency == null) {
-                            return false;
-                        }
-                        // TODO: remove all test-scoped dependencies; optionally explicitly add certain test dependencies that we commit to supporting
-                        // TODO: remove exclusion of xerces, which is a workaround until all test-scoped dependencies are removed
-                        return
-//                                !dependency.getScope().equals("test") &&
-                                !dependency.getScope().equals("provided")
-                                && !dependency.getCoordinates().contains("xerces");
-                    }
-
-                    @Override
-                    public MavenResolutionFilter configure(Collection<MavenDependency> dependencies) {
-                        return this;
-                    }
-                })
+                .importAnyDependencies(resolutionFilter)
                 .as(WebArchive.class);
     }
 }
