@@ -10,18 +10,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@XmlRootElement(name = "DevExperimentData")
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,
-        getterVisibility = JsonAutoDetect.Visibility.NONE,
-        creatorVisibility = JsonAutoDetect.Visibility.NONE,
-        setterVisibility = JsonAutoDetect.Visibility.NONE,
-        isGetterVisibility = JsonAutoDetect.Visibility.NONE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY,
+        fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class DevExperimentDataBean {
 
-    @XmlElement(name = "experiment")
     private String experiment;
 
-    @XmlElement(name = "condition")
     private List<String> conditions;
 
     public DevExperimentDataBean() {}

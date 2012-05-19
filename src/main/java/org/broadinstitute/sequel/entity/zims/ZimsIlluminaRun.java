@@ -16,55 +16,38 @@ import java.util.*;
  * See http://stackoverflow.com/questions/9576460/json-objects-returning-with-field-name-is-this-a-bug-or-a-feature
  * for more details.
  */
-@XmlRootElement(name = "IlluminaRun")
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,
-        getterVisibility = JsonAutoDetect.Visibility.NONE,
-        creatorVisibility = JsonAutoDetect.Visibility.NONE,
-        setterVisibility = JsonAutoDetect.Visibility.NONE,
-        isGetterVisibility = JsonAutoDetect.Visibility.NONE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY,
+        fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class ZimsIlluminaRun {
     
-    @XmlElement(name = "name")
     private String runName;
     
-    @XmlElement(name = "barcode")
     private String runBarcode;
 
-    @XmlElement(name = "flowcellBarcode")
     private String flowcellBarcode;
 
-    @XmlElement(name = "sequencer")
     private String sequencer;
 
-    @XmlElement(name = "sequencerModel")
     private String sequencerModel;
 
     private Date runDate;
 
-    @XmlElement(name = "firstCycle")
     private Integer firstCycle;
 
-    @XmlElement(name = "firstCycleReadLength")
     private Integer firstCycleReadLength;
 
-    @XmlElement(name = "lastCycle")
     private Integer lastCycle;
 
     final SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy HH:mm");
 
-    @XmlElement(name = "lane")
     private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();
 
-    @XmlElement(name = "molBarcodeCycle")
     private Integer molecularBarcodeCycle;
 
-    @XmlElement(name = "molBarcodeLength")
     private Integer molecularBarcodeLength;
 
-    @XmlElement(name = "pairedRun")
     private Boolean isPaired;
 
-    @XmlElement(name = "Read")
     private List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
 
     public ZimsIlluminaRun() {}
@@ -138,7 +121,6 @@ public class ZimsIlluminaRun {
      * Format is 01/03/2010 24:19
      * @return
      */
-    @XmlElement(name = "runDate")
     public String getRunDateString() {
         String date = null;
         if (runDate != null) {

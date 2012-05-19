@@ -3,124 +3,93 @@ package org.broadinstitute.sequel.entity.zims;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
-import javax.xml.bind.annotation.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * A library DTO for Zamboni.  Copied from
  * LIMQuery.thrift from squidThriftService.
  */
-@XmlRootElement(name = "Library")
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,
-                getterVisibility = JsonAutoDetect.Visibility.NONE,
-                creatorVisibility = JsonAutoDetect.Visibility.NONE,
-                setterVisibility = JsonAutoDetect.Visibility.NONE,
-                isGetterVisibility = JsonAutoDetect.Visibility.NONE)
+
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY,
+        fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class LibraryBean {
 
-    @XmlElement(name = "library")
     private String library;
 
-    @XmlElement(name = "project")
     private String project;
 
-    @XmlElement(name = "initiative")
     private String initiative;
 
-    @XmlElement(name = "workRequestId")
     private Long workRequest;
 
-    @XmlElement(name = "MolecularIndexingScheme")
     private MolecularIndexingSchemeBean indexingScheme;
     
     private Boolean hasIndexingRead;
-    
-    @XmlElement(name = "expectedInsertSize")
+
     private String expectedInsertSize;
     
-    @XmlElement(name = "analysisType")
     private String analysisType;
 
-    @XmlElement(name = "referenceSequence")
     private String referenceSequence;
 
-    @XmlElement(name = "referenceSequenceVersion")
     private String referenceSequenceVersion;
 
-    @XmlElement(name = "sampleAlias")
     /** the name the collaborator has given to the sample */
     private String collaboratorSampleId;
 
-    @XmlElement(name = "aggregate")
     private Boolean doAggregation;
 
-    @XmlElement(name = "sampleCollaborator")
     /** the name of the collaborator */
     private String collaborator;
 
-    @XmlElement(name = "organism")
     private String organism;
 
-    @XmlElement(name = "species")
     private String species;
 
-    @XmlElement(name = "strain")
     private String strain;
 
-    @XmlElement(name = "lsid")
     private String sampleLSID;
 
-    @XmlElement(name = "tissueType")
     private String tissueType;
 
-    @XmlElement(name = "expectedPlasmid")
     private String expectedPlasmid;
     
-    @XmlElement(name = "aligner")
     private String aligner;
 
-    @XmlElement(name = "rrbsSizeRange")
     private String rrbsSizeRange;
 
-    @XmlElement(name = "restrictionEnzyme")
     private String restrictionEnzyme;
 
-    @XmlElement(name = "cellLine")
     private String cellLine;
 
-    @XmlElement(name = "BaitSetName")
     private String bait;
 
-    @XmlElement(name = "individual")
     /** obfuscated name of the individual (person) from whence this sample was taken */
     private String individual;
 
     private Double labMeasuredInsertSize;
 
-    @XmlElement(name = "isPositiveControl")
     private Boolean isPositiveControl;
 
-    @XmlElement(name = "isNegativeControl")
     private Boolean isNegativeControl;
 
-    @XmlElement(name = "weirdness")
     private String weirdness;
 
     private Double preCircularizationDnaSize;
 
     private Boolean isPartOfDevExperiment;
 
-    @XmlElement(name = "devExperimentData")
     private DevExperimentDataBean devExperimentData;
 
-    @XmlElement(name = "gssrBarcodes")
-    private Collection<String> gssrBarcodes;
+    private Collection<String> gssrBarcodes = new ArrayList<String>();
 
-    @XmlElement(name = "gssrSampleType")
     private String gssrSampleType;
 
-    @XmlElement(name = "targetLaneCoverage")
     private Short targetLaneCoverage;
     
     public LibraryBean() {}
@@ -150,36 +119,24 @@ public class LibraryBean {
         this.cellLine = cellLine;
         this.bait = bait;
         this.individual = individual;
-        setLabMeasuredInsertSize(labMeasuredInsertSize);
+        this.labMeasuredInsertSize = ThriftConversionUtil.zeroAsNull(labMeasuredInsertSize);
         isPositiveControl = positiveControl;
         isNegativeControl = negativeControl;
         this.weirdness = weirdness;
-        setPreCircularizationSize(preCircularizationDnaSize);        
+        this.preCircularizationDnaSize = ThriftConversionUtil.zeroAsNull(preCircularizationDnaSize);
         isPartOfDevExperiment = partOfDevExperiment;
-        setDevExperimentData(devExperimentData);
+        this.devExperimentData = new DevExperimentDataBean(devExperimentData);
         this.gssrBarcodes = gssrBarcodes;
         this.gssrSampleType = gssrSampleType;
         this.targetLaneCoverage = targetLaneCoverage;
         this.doAggregation = doAggregation;
     }
 
-    public void setPreCircularizationSize(Double preCircularizationSize) {
-        if (preCircularizationSize != null) {
-            this.preCircularizationDnaSize = ThriftConversionUtil.zeroAsNull(preCircularizationSize.doubleValue());
-        }
-    }
 
-    @XmlElement(name = "preCircularizationDnaSize")
     public Double getPreCircularizationSize() {
         return preCircularizationDnaSize;
     }
 
-    public void setLabMeasuredInsertSize(Double labSize) {
-        if (labSize != null) {
-            this.labMeasuredInsertSize = ThriftConversionUtil.zeroAsNull(labSize.doubleValue());
-        }
-    }
-    
     public Long getWorkRequest() {
         return workRequest;
     }
@@ -256,7 +213,6 @@ public class LibraryBean {
         return expectedInsertSize;
     }
 
-    @XmlElement(name = "labMeasuredInsertSize")
     public Double getLabMeasuredInsertSize() {
         return labMeasuredInsertSize;
     }
@@ -293,20 +249,16 @@ public class LibraryBean {
         return devExperimentData;
     }
 
-    public void setDevExperimentData(TZDevExperimentData experimentData) {
-        this.devExperimentData = new DevExperimentDataBean(experimentData);
-    }
-
     public Boolean isNegativeControl() {
         return isNegativeControl;
     }
 
     public Boolean isPositiveControl() {
-        return isPositiveControl();
+        return isPositiveControl;
     }
 
     public Boolean isPartOfDevExperiment() {
-        return isPositiveControl();
+        return isNegativeControl;
     }
 
     public Boolean doAggregation() {
