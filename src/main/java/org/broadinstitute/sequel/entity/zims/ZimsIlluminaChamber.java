@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY,
-        fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class ZimsIlluminaChamber {
     
     private String chamberName;

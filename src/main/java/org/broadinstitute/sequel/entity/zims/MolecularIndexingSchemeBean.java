@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY,
-        fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class MolecularIndexingSchemeBean {
 
     private String name;

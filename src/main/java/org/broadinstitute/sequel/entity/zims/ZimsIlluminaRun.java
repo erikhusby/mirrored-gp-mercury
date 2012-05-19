@@ -10,14 +10,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-/**
- * Note that we use {@link XmlElement} here for fields
- * so that the resulting json isn't choc-full of "@"'s.
- * See http://stackoverflow.com/questions/9576460/json-objects-returning-with-field-name-is-this-a-bug-or-a-feature
- * for more details.
- */
-@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY,
-        fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class ZimsIlluminaRun {
     
     private String runName;

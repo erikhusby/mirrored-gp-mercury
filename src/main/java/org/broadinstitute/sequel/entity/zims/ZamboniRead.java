@@ -6,9 +6,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-
-@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY,
-        fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class ZamboniRead {
 
     private Integer firstCycle;

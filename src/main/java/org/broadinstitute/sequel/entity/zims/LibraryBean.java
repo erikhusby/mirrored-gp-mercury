@@ -15,8 +15,6 @@ import java.util.List;
  * LIMQuery.thrift from squidThriftService.
  */
 
-@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.PUBLIC_ONLY,
-        fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class LibraryBean {
 
     private String library;
