@@ -96,16 +96,16 @@ public class LabEventFactory {
      */
     public LabEvent buildFromBettaLims(final PlateCherryPickEvent plateCherryPickEvent) {
         Map<String, RackOfTubes> mapBarcodeToSourceRack = buildMapBarcodeToRack(plateCherryPickEvent.getSourcePositionMap());
-        if(plateCherryPickEvent.getPlate().getPhysType().equals(PHYS_TYPE_STRIP_TUBE_RACK_OF_12)) {
-            Map<String, StripTube> mapBarcodeToTargetStripTube = new HashMap<String, StripTube>();
-            // todo jmt decide about the two null parameters
-            return buildCherryPickRackToStripTubeDbFree(plateCherryPickEvent, mapBarcodeToSourceRack, null, null,
-                    mapBarcodeToTargetStripTube);
-        }
 
         Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<String, TwoDBarcodedTube>();
         for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
             mapBarcodeToSourceTube.putAll(findTubesByBarcodes(positionMapType));
+        }
+
+        if(plateCherryPickEvent.getPlate().getPhysType().equals(PHYS_TYPE_STRIP_TUBE_RACK_OF_12)) {
+            Map<String, StripTube> mapBarcodeToTargetStripTube = new HashMap<String, StripTube>();
+            return buildCherryPickRackToStripTubeDbFree(plateCherryPickEvent, mapBarcodeToSourceRack, mapBarcodeToSourceTube,
+                    null, mapBarcodeToTargetStripTube);
         }
 
         Map<String, RackOfTubes> mapBarcodeToTargetRack = buildMapBarcodeToRack(
@@ -146,22 +146,7 @@ public class LabEventFactory {
             Map<String, RackOfTubes> mapBarcodeToTargetRack,
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTube) {
         LabEvent labEvent = constructReferenceData(plateCherryPickEvent);
-        for (PlateType sourceRackJaxb : plateCherryPickEvent.getSourcePlate()) {
-            RackOfTubes sourceRackEntity = mapBarcodeToSourceRack.get(sourceRackJaxb.getBarcode());
-            if(sourceRackEntity == null) {
-                for (PositionMapType sourcePositionMap : plateCherryPickEvent.getSourcePositionMap()) {
-                    if(sourcePositionMap.getBarcode().equals(sourceRackJaxb.getBarcode())) {
-                        sourceRackEntity = buildRack(mapBarcodeToSourceTube, sourceRackJaxb, sourcePositionMap);
-                        break;
-                    }
-                }
-            }
-            if(sourceRackEntity == null) {
-                throw new RuntimeException("Failed to find source position map for " + sourceRackJaxb.getBarcode());
-            }
-            mapBarcodeToSourceRack.put(sourceRackJaxb.getBarcode(), sourceRackEntity);
-            labEvent.addSourceLabVessel(sourceRackEntity);
-        }
+        addSourceRack(plateCherryPickEvent, mapBarcodeToSourceRack, mapBarcodeToSourceTube, labEvent);
 
         for (Map.Entry<String, RackOfTubes> stringVesselContainerEntry : mapBarcodeToTargetRack.entrySet()) {
             if(stringVesselContainerEntry.getValue() == null) {
@@ -193,9 +178,7 @@ public class LabEventFactory {
             Map<String, RackOfTubes> mapBarcodeToTargetRack,
             Map<String, StripTube> mapBarcodeToTargetStripTube) {
         LabEvent labEvent = constructReferenceData(plateCherryPickEvent);
-        for (Map.Entry<String, RackOfTubes> stringVesselContainerEntry : mapBarcodeToSourceRack.entrySet()) {
-            labEvent.addSourceLabVessel(stringVesselContainerEntry.getValue());
-        }
+        addSourceRack(plateCherryPickEvent, mapBarcodeToSourceRack, mapBarcodeToSourceTube, labEvent);
 
 /*
         for (Map.Entry<String, VesselContainer<?>> stringVesselContainerEntry : mapBarcodeToTargetRack.entrySet()) {
@@ -231,6 +214,26 @@ public class LabEventFactory {
                     labEvent));
         }
         return labEvent;
+    }
+
+    private void addSourceRack(PlateCherryPickEvent plateCherryPickEvent, Map<String, RackOfTubes> mapBarcodeToSourceRack,
+            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube, LabEvent labEvent) {
+        for (PlateType sourceRackJaxb : plateCherryPickEvent.getSourcePlate()) {
+            RackOfTubes sourceRackEntity = mapBarcodeToSourceRack.get(sourceRackJaxb.getBarcode());
+            if(sourceRackEntity == null) {
+                for (PositionMapType sourcePositionMap : plateCherryPickEvent.getSourcePositionMap()) {
+                    if(sourcePositionMap.getBarcode().equals(sourceRackJaxb.getBarcode())) {
+                        sourceRackEntity = buildRack(mapBarcodeToSourceTube, sourceRackJaxb, sourcePositionMap);
+                        break;
+                    }
+                }
+            }
+            if(sourceRackEntity == null) {
+                throw new RuntimeException("Failed to find source position map for " + sourceRackJaxb.getBarcode());
+            }
+            mapBarcodeToSourceRack.put(sourceRackJaxb.getBarcode(), sourceRackEntity);
+            labEvent.addSourceLabVessel(sourceRackEntity);
+        }
     }
 
     /**
