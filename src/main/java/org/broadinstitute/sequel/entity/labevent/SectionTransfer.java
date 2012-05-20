@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.SBSSection;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
+import org.hibernate.annotations.Index;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -39,6 +40,7 @@ public class SectionTransfer {
     @Enumerated(EnumType.STRING)
     private SBSSection targetSection;
 
+    @Index(name = "ix_st_lab_event")
     @ManyToOne(fetch = FetchType.LAZY)
     private LabEvent labEvent;
 

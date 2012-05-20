@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
+import org.hibernate.annotations.Index;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -31,6 +32,7 @@ public class VesselToSectionTransfer {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel targetVessel;
 
+    @Index(name = "ix_vtst_lab_event")
     @ManyToOne
     private LabEvent labEvent;
 

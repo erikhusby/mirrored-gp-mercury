@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
+import org.hibernate.annotations.Index;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -38,6 +39,7 @@ public class CherryPickTransfer {
     @Enumerated(EnumType.STRING)
     private VesselPosition targetPosition;
 
+    @Index(name = "ix_cpt_lab_event")
     @ManyToOne
     private LabEvent labEvent;
 
