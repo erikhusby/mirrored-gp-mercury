@@ -84,24 +84,6 @@ public class IlluminaRunResourceTest extends Arquillian  {
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
 
 
-
-
-        //url += url + "?runName=" + RUN_NAME;
-
-        //RegisterBuiltin.register(ResteasyProviderFactory.getInstance());
-        //ZimsIlluminaRun run2=  ProxyFactory.create(IlluminaRunResource.class,baseUrl.toExternalForm() + "rest/IlluminaRun").getRun(RUN_NAME);
-
-        /*
-
-        ResteasyProviderFactory instance = ResteasyProviderFactory.getInstance();
-        RegisterBuiltin.register(instance);
-        instance.registerProvider(ZimsIlluminaRun.class);
-        ZimsIlluminaRun run2 = ProxyFactory.create(ZimsIlluminaRun.class,url);
-        
-        ResteasyProviderFactory.getInstance().getProvider(ZimsIlluminaRun.class);
-          */
-
-
          ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .queryParam("runName", RUN_NAME)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
