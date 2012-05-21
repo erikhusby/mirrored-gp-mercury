@@ -110,6 +110,9 @@ public enum LabEventType {
     POOLING_TRANSFER ("PoolingTransfer", false, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
+    NORMALIZATION_TRANSFER ("NormalizationTransfer", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
     DENATURE_TRANSFER ("DenatureTransfer", false, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
