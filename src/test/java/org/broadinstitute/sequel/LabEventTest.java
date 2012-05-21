@@ -15,6 +15,7 @@ import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.workflow.WorkflowParser;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
@@ -37,6 +38,7 @@ import org.broadinstitute.sequel.entity.vessel.SBSSection;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.StripTube;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -63,6 +65,26 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "OverlyCoupledMethod", "OverlyLongMethod"})
 public class LabEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
+
+    public static class ListTransfersFromStart implements VesselContainer.TransferTraverserCriteria {
+        private int hopCount = -1;
+        private final List<String> labEventNames = new ArrayList<String>();
+
+        @Override
+        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+            if (labEvent != null) {
+                if(hopCount > this.hopCount) {
+                    this.hopCount = hopCount;
+                    labEventNames.add(((GenericLabEvent) labEvent).getLabEventType().getName());
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        public List<String> getLabEventNames() {
+            return labEventNames;
+        }
+    }
 
     @Test(groups = {DATABASE_FREE})
     public void testHybridSelection() {
@@ -92,8 +114,9 @@ public class LabEventTest {
         labEventFactory.setPersonDAO(new PersonDAO());
         LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
 
+        // todo jmt fix preflight
         PreFlight preFlight = new PreFlight(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                mapBarcodeToTube);
+                mapBarcodeToTube);//.invoke();
         Shearing shearing = new Shearing(workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
                 labEventHandler, preFlight.getRackBarcode()).invoke();
         StaticPlate shearingCleanupPlate = shearing.getShearingCleanupPlate();
@@ -115,6 +138,16 @@ public class LabEventTest {
 
         new Qtp(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler, normCatchRack,
                 normCatchRackBarcode, normCatchBarcodes, mapBarcodeToNormCatchTubes).invoke();
+
+        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
+        VesselContainer<TwoDBarcodedTube> startingContainer = (VesselContainer<TwoDBarcodedTube>)
+                stringTwoDBarcodedTubeEntry.getValue().getContainers().iterator().next();
+        startingContainer.evaluateCriteria(
+                startingContainer.getPositionOfVessel(stringTwoDBarcodedTubeEntry.getValue()),
+                transferTraverserCriteria, VesselContainer.TraversalDirection.Descendants, null, 0);
+        List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
+        Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
 
         // Register run
 //        IlluminaSequencingRun illuminaSequencingRun = new IlluminaSequencingRun();
@@ -162,8 +195,9 @@ public class LabEventTest {
         labEventFactory.setPersonDAO(new PersonDAO());
         LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
 
+        // todo jmt fix preflight
         PreFlight preFlight = new PreFlight(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                mapBarcodeToTube).invoke();
+                mapBarcodeToTube);//.invoke();
         Shearing shearing = new Shearing(workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
                 labEventHandler, preFlight.getRackBarcode()).invoke();
         StaticPlate shearingCleanupPlate = shearing.getShearingCleanupPlate();
@@ -217,6 +251,7 @@ public class LabEventTest {
             sageUnloadRackRearrayed.getVesselContainer().addContainedVessel(sageUnloadTubes.get(i),
                     VesselPosition.getByName(bettaLimsMessageFactory.buildWellName(i + 1)));
         }
+        sageUnloadRackRearrayed.makeDigest();
         LabEvent sageCleanupEntity = labEventFactory.buildFromBettaLimsRackToRackDbFree(sageCleanupJaxb,
                 sageUnloadRackRearrayed, new HashMap<String, TwoDBarcodedTube>());
         labEventHandler.processEvent(sageCleanupEntity, null);
@@ -225,6 +260,16 @@ public class LabEventTest {
 
         new Qtp(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler, sageCleanupRack,
                 sageCleanupBarcode, sageCleanupTubeBarcodes, mapBarcodeToSageUnloadTubes).invoke();
+
+        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
+        VesselContainer<TwoDBarcodedTube> startingContainer = (VesselContainer<TwoDBarcodedTube>)
+                stringTwoDBarcodedTubeEntry.getValue().getContainers().iterator().next();
+        startingContainer.evaluateCriteria(
+                startingContainer.getPositionOfVessel(stringTwoDBarcodedTubeEntry.getValue()),
+                transferTraverserCriteria, VesselContainer.TraversalDirection.Descendants, null, 0);
+        List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
+        Assert.assertEquals(labEventNames.size(), 12, "Wrong number of transfers");
 
         // Register run
 //        IlluminaSequencingRun illuminaSequencingRun = new IlluminaSequencingRun();
@@ -745,17 +790,20 @@ public class LabEventTest {
 
             // EndRepairCleanup
             validateWorkflow(workflowDescription, "EndRepairCleanup", shearingCleanupPlate);
-            LabEvent endRepairCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(libraryConstructionJaxb.getEndRepairCleanupJaxb(), shearingCleanupPlate);
+            LabEvent endRepairCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxb.getEndRepairCleanupJaxb(), shearingCleanupPlate);
             labEventHandler.processEvent(endRepairCleanupEntity, null);
 
             // ABase
             validateWorkflow(workflowDescription, "ABase", shearingCleanupPlate);
-            LabEvent aBaseEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(libraryConstructionJaxb.getaBaseJaxb(), shearingCleanupPlate);
+            LabEvent aBaseEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxb.getaBaseJaxb(), shearingCleanupPlate);
             labEventHandler.processEvent(aBaseEntity, null);
 
             // ABaseCleanup
             validateWorkflow(workflowDescription, "ABaseCleanup", shearingCleanupPlate);
-            LabEvent aBaseCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(libraryConstructionJaxb.getaBaseCleanupJaxb(), shearingCleanupPlate);
+            LabEvent aBaseCleanupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxb.getaBaseCleanupJaxb(), shearingCleanupPlate);
             labEventHandler.processEvent(aBaseCleanupEntity, null);
 
             // IndexedAdapterLigation
@@ -776,19 +824,20 @@ public class LabEventTest {
             // AdapterLigationCleanup
             validateWorkflow(workflowDescription, "AdapterLigationCleanup", shearingCleanupPlate);
             LabEvent ligationCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    libraryConstructionJaxb.getLigationCleanupJaxb(), shearingPlate, null);
+                    libraryConstructionJaxb.getLigationCleanupJaxb(), shearingCleanupPlate, null);
             labEventHandler.processEvent(ligationCleanupEntity, null);
             StaticPlate ligationCleanupPlate = (StaticPlate) ligationCleanupEntity.getTargetLabVessels().iterator().next();
 
             // PondEnrichment
             validateWorkflow(workflowDescription, "PondEnrichment", ligationCleanupPlate);
-            LabEvent pondEnrichmentEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(libraryConstructionJaxb.getPondEnrichmentJaxb(), shearingCleanupPlate);
+            LabEvent pondEnrichmentEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    libraryConstructionJaxb.getPondEnrichmentJaxb(), ligationCleanupPlate);
             labEventHandler.processEvent(pondEnrichmentEntity, null);
 
             // HybSelPondEnrichmentCleanup
-            validateWorkflow(workflowDescription, "HybSelPondEnrichmentCleanup", shearingCleanupPlate);
+            validateWorkflow(workflowDescription, "HybSelPondEnrichmentCleanup", ligationCleanupPlate);
             LabEvent pondCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    libraryConstructionJaxb.getPondCleanupJaxb(), shearingPlate, null);
+                    libraryConstructionJaxb.getPondCleanupJaxb(), ligationCleanupPlate, null);
             labEventHandler.processEvent(pondCleanupEntity, null);
             StaticPlate pondCleanupPlate = (StaticPlate) pondCleanupEntity.getTargetLabVessels().iterator().next();
 
@@ -796,7 +845,7 @@ public class LabEventTest {
             validateWorkflow(workflowDescription, "PondRegistration", pondCleanupPlate);
             Map<String, TwoDBarcodedTube> mapBarcodeToPondRegTube = new HashMap<String, TwoDBarcodedTube>();
             LabEvent pondRegistrationEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(
-                    libraryConstructionJaxb.getPondRegistrationJaxb(), shearingCleanupPlate, mapBarcodeToPondRegTube);
+                    libraryConstructionJaxb.getPondRegistrationJaxb(), pondCleanupPlate, mapBarcodeToPondRegTube);
             labEventHandler.processEvent(pondRegistrationEntity, null);
             // asserts
             pondRegRack = (RackOfTubes) pondRegistrationEntity.getTargetLabVessels().iterator().next();
@@ -961,7 +1010,7 @@ public class LabEventTest {
 
             String pondCleanupBarcode = "pondCleanupPlate" + testPrefix;
             pondCleanupJaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                    "HybSelPondEnrichmentCleanup", shearCleanPlateBarcode, pondCleanupBarcode);
+                    "HybSelPondEnrichmentCleanup", ligationCleanupBarcode, pondCleanupBarcode);
             BettaLIMSMessage bettaLIMSMessage7 = new BettaLIMSMessage();
             bettaLIMSMessage7.getPlateTransferEvent().add(pondCleanupJaxb);
             messageList.add(bettaLIMSMessage7);
@@ -1084,7 +1133,8 @@ public class LabEventTest {
 
             // CatchEnrichmentSetup
             validateWorkflow(workflowDescription, "CatchEnrichmentSetup", hybridizationPlate);
-            LabEvent catchEnrichmentSetupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(hybridSelectionJaxb.getCatchEnrichmentSetupJaxb(), hybridizationPlate);
+            LabEvent catchEnrichmentSetupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    hybridSelectionJaxb.getCatchEnrichmentSetupJaxb(), hybridizationPlate);
             labEventHandler.processEvent(catchEnrichmentSetupEntity, null);
 
             // CatchEnrichmentCleanup
@@ -1092,12 +1142,13 @@ public class LabEventTest {
             LabEvent catchEnrichmentCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                     hybridSelectionJaxb.getCatchEnrichmentCleanupJaxb(), hybridizationPlate, null);
             labEventHandler.processEvent(catchEnrichmentCleanupEntity, null);
+            StaticPlate catchCleanPlate = (StaticPlate) catchEnrichmentCleanupEntity.getTargetLabVessels().iterator().next();
 
             // NormalizedCatchRegistration
-            validateWorkflow(workflowDescription, "NormalizedCatchRegistration", hybridizationPlate);
+            validateWorkflow(workflowDescription, "NormalizedCatchRegistration", catchCleanPlate);
             mapBarcodeToNormCatchTubes = new HashMap<String, TwoDBarcodedTube>();
-            LabEvent normCatchEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(hybridSelectionJaxb.getNormCatchJaxb(), hybridizationPlate,
-                    mapBarcodeToNormCatchTubes);
+            LabEvent normCatchEntity = labEventFactory.buildFromBettaLimsPlateToRackDbFree(hybridSelectionJaxb.getNormCatchJaxb(),
+                    catchCleanPlate, mapBarcodeToNormCatchTubes);
             labEventHandler.processEvent(normCatchEntity, null);
             normCatchRack = (RackOfTubes) normCatchEntity.getTargetLabVessels().iterator().next();
             return this;

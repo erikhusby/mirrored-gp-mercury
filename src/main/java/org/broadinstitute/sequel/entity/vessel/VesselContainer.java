@@ -56,7 +56,7 @@ public class VesselContainer<T extends LabVessel> {
         return this.mapPositionToVessel.get(position);
     }
 
-    private void applyProjectPlanOverrideIfPresent(LabEvent event,
+    private static void applyProjectPlanOverrideIfPresent(LabEvent event,
             Collection<SampleInstance> sampleInstances) {
         if (event.getProjectPlanOverride() != null) {
             for (SampleInstance sampleInstance : sampleInstances) {
@@ -64,60 +64,147 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
     }
+    
+    public interface TransferTraverserCriteria {
+        enum TraversalControl {
+            ContinueTraversing,
+            StopTraversing
+        }
+        TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount);
+    }
+
+    static class SampleInstanceCriteria implements TransferTraverserCriteria {
+
+        private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        private Set<Reagent> reagents = new HashSet<Reagent>();
+        private boolean reagentsApplied = false;
+
+        @Override
+        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+            // todo jmt this class shouldn't have to worry about plate wells that have no informatics contents
+            if (labVessel != null) {
+                if(labVessel.getSampleSheetCount() != null && labVessel.getSampleSheetCount() > 0) {
+                    sampleInstances.addAll(labVessel.getSampleInstances());
+                }
+                if (labVessel.getReagentContentsCount() != null && labVessel.getReagentContentsCount() > 0) {
+                    reagents.addAll(labVessel.getReagentContents());
+                }
+                if (labEvent != null) {
+                    applyProjectPlanOverrideIfPresent(labEvent, sampleInstances);
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        public Set<SampleInstance> getSampleInstances() {
+            if(!reagentsApplied) {
+                reagentsApplied = true;
+                for (Reagent reagent : reagents) {
+                    for (SampleInstance sampleInstance : sampleInstances) {
+                        sampleInstance.addReagent(reagent);
+                    }
+                }
+            }
+            return sampleInstances;
+        }
+    }
+
+    public enum TraversalDirection {
+        Ancestors,
+        Descendants
+    }
 
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
-        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        examineTransfers(position, sampleInstances);
+
+        SampleInstanceCriteria sampleInstanceCriteria = new SampleInstanceCriteria();
+
+        evaluateCriteria(position, sampleInstanceCriteria, TraversalDirection.Ancestors, null, 0);
+        return sampleInstanceCriteria.getSampleInstances();
+    }
+
+    public void evaluateCriteria(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
+            TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
         T vesselAtPosition = getVesselAtPosition(position);
+        TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVessel(
+                vesselAtPosition, labEvent, hopCount);
         if(vesselAtPosition != null) {
-            if(vesselAtPosition.getSampleSheetCount() != null && vesselAtPosition.getSampleSheetCount() > 0) {
-                sampleInstances.addAll(vesselAtPosition.getSampleInstances());
-            }
             // handle re-arrays of tubes - look in any other racks that the tube has been in
-            if (vesselAtPosition.getContainersCount() != null && vesselAtPosition.getContainersCount() > 1) {
-                for (VesselContainer vesselContainer : vesselAtPosition.getContainers()) {
-                    if (!vesselContainer.equals(this)) {
-                        vesselContainer.examineTransfers(vesselContainer.getPositionOfVessel(vesselAtPosition), sampleInstances);
+            if (this.getEmbedder() instanceof RackOfTubes) {
+                RackOfTubes thisRackOfTubes = (RackOfTubes) this.getEmbedder();
+                if (vesselAtPosition.getContainersCount() != null && vesselAtPosition.getContainersCount() > 1) {
+                    for (VesselContainer vesselContainer : vesselAtPosition.getContainers()) {
+                        if(OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), RackOfTubes.class)) {
+                            RackOfTubes otherRackOfTubes = OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), RackOfTubes.class);
+                            if(!otherRackOfTubes.getDigest().equals(thisRackOfTubes.getDigest())) {
+                                if(traversalDirection == TraversalDirection.Ancestors) {
+                                    vesselContainer.traverseAncestors(vesselContainer.getPositionOfVessel(vesselAtPosition),
+                                            transferTraverserCriteria, traversalDirection, hopCount);
+                                } else {
+                                    vesselContainer.traverseDescendants(vesselContainer.getPositionOfVessel(vesselAtPosition),
+                                            transferTraverserCriteria, traversalDirection, hopCount);
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-        return sampleInstances;
+        if (traversalControl == TransferTraverserCriteria.TraversalControl.ContinueTraversing) {
+            if(traversalDirection == TraversalDirection.Ancestors) {
+                traverseAncestors(position, transferTraverserCriteria, traversalDirection, hopCount);
+            } else {
+                traverseDescendants(position, transferTraverserCriteria, traversalDirection, hopCount);
+            }
+        }
     }
 
-    private void examineTransfers(VesselPosition position, Set<SampleInstance> sampleInstances) {
-        Set<SampleInstance> sampleInstancesAtPosition = new HashSet<SampleInstance>();
-        Set<Reagent> reagentsAtPosition = new HashSet<Reagent>();
+    private void traverseAncestors(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
+            TraversalDirection traversalDirection, int hopCount) {
         for (LabEvent labEvent : this.embedder.getTransfersTo()) {
             for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
                 VesselContainer sourceVesselContainer = sectionTransfer.getSourceVesselContainer();
                 // todo jmt replace indexOf with map lookup
                 VesselPosition sourcePosition = sectionTransfer.getSourceSection().getWells().get(
                         sectionTransfer.getTargetSection().getWells().indexOf(position));
-                sampleInstancesAtPosition.addAll(sourceVesselContainer.getSampleInstancesAtPosition(sourcePosition));
-                reagentsAtPosition.addAll(getReagentsAtPosition(sourceVesselContainer, sourcePosition));
-                applyProjectPlanOverrideIfPresent(labEvent, sampleInstancesAtPosition);
+                sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
+                        labEvent, hopCount + 1);
             }
             for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
                 // todo jmt optimize this
-                if(cherryPickTransfer.getTargetPosition().equals(position)) {
+                if(cherryPickTransfer.getTargetPosition() == position) {
                     VesselContainer<?> sourceVesselContainer = cherryPickTransfer.getSourceVesselContainer();
-                    sampleInstancesAtPosition.addAll(sourceVesselContainer.
-                            getSampleInstancesAtPosition(cherryPickTransfer.getSourcePosition()));
-                    reagentsAtPosition.addAll(getReagentsAtPosition(sourceVesselContainer, position));
-                    applyProjectPlanOverrideIfPresent(labEvent, sampleInstancesAtPosition);
+                    VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
+                    sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
+                            labEvent, hopCount + 1);
                 }
             }
         }
-        for (SampleInstance sampleInstance : sampleInstancesAtPosition) {
-            for (Reagent reagent : reagentsAtPosition) {
-                sampleInstance.addReagent(reagent);
-            }
-        }
-        sampleInstances.addAll(sampleInstancesAtPosition);
     }
 
-    private VesselPosition getPositionOfVessel(T vesselAtPosition) {
+    private void traverseDescendants(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
+            TraversalDirection traversalDirection, int hopCount) {
+        for (LabEvent labEvent : this.embedder.getTransfersFrom()) {
+            for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                VesselContainer targetVesselContainer = sectionTransfer.getTargetVesselContainer();
+                // todo jmt replace indexOf with map lookup
+                VesselPosition targetPosition = sectionTransfer.getTargetSection().getWells().get(
+                        sectionTransfer.getSourceSection().getWells().indexOf(position));
+                targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
+                        labEvent, hopCount + 1);
+            }
+            for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
+                // todo jmt optimize this
+                if(cherryPickTransfer.getSourcePosition() == position) {
+                    VesselContainer<?> targetVesselContainer = cherryPickTransfer.getTargetVesselContainer();
+                    VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
+                    targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
+                            labEvent, hopCount + 1);
+                }
+            }
+        }
+    }
+
+    public VesselPosition getPositionOfVessel(LabVessel vesselAtPosition) {
         // todo jmt map in both directions
         for (Map.Entry<VesselPosition, T> stringTEntry : mapPositionToVessel.entrySet()) {
             if(stringTEntry.getValue().equals(vesselAtPosition)) {
@@ -125,19 +212,6 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
         return null;
-    }
-
-    private Set<Reagent> getReagentsAtPosition(VesselContainer vesselContainer, VesselPosition position) {
-        Set<Reagent> reagents = new HashSet<Reagent>();
-        LabVessel vesselAtPosition = vesselContainer.getVesselAtPosition(position);
-        if (vesselAtPosition != null) {
-            if (vesselAtPosition.getReagentContentsCount() != null && vesselAtPosition.getReagentContentsCount() > 0) {
-                for (Reagent reagent : vesselAtPosition.getReagentContents()) {
-                    reagents.add(reagent);
-                }
-            }
-        }
-        return reagents;
     }
 
     @Transient
@@ -150,7 +224,8 @@ public class VesselContainer<T extends LabVessel> {
             for (LabEvent labEvent : this.embedder.getTransfersTo()) {
                 for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
                     if(OrmUtil.proxySafeIsInstance(sourceLabVessel, VesselContainerEmbedder.class)) {
-                        sampleInstances.addAll(OrmUtil.proxySafeCast(sourceLabVessel, VesselContainerEmbedder.class).getVesselContainer().getSampleInstances());
+                        sampleInstances.addAll(OrmUtil.proxySafeCast(sourceLabVessel,
+                                VesselContainerEmbedder.class).getVesselContainer().getSampleInstances());
                         applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                     }
                 }
