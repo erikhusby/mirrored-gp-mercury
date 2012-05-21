@@ -45,16 +45,18 @@
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
     <context-param>
-        <param-name>resteasy.scan</param-name>
-        <param-value>true</param-value>
-    </context-param>
-    <context-param>
         <param-name>resteasy.servlet.mapping.prefix</param-name>
         <param-value>/rest</param-value>
     </context-param>
     <context-param>
-        <param-name>resteasy.use.deployment.sensitive.factory</param-name>
+        <param-name>resteasy.scan.resources </param-name>
+        <!-- we don't scan for test performance reasons.  use resteasy.resources explicitly instead. -->
         <param-value>false</param-value>
+    </context-param>
+    <context-param>
+        <param-name>resteasy.resources</param-name>
+        <!-- comma separated list of jax-rs resource classes -->
+        <param-value>org.broadinstitute.sequel.boundary.zims.IlluminaRunResource</param-value>
     </context-param>
 
     <!-- for JBoss AS 7 -->
