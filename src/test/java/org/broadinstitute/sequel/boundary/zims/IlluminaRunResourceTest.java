@@ -18,9 +18,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.resteasy.client.ProxyFactory;
-import org.jboss.resteasy.plugins.providers.RegisterBuiltin;
-import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -115,12 +112,12 @@ public class IlluminaRunResourceTest extends Arquillian  {
         assertFalse(rawJson.contains("@")); // might see this if you use XmlAttribute instead of XmlElement
 
         assertNotNull(run);
-        assertEquals(run.getRunName(),RUN_NAME);
+        assertEquals(run.getName(),RUN_NAME);
         doAssertions(zamboniRun,run);
     }      
     
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {
-        assertEquals(runBean.getChambers().size(),thriftRun.getLanes().size());
+        assertEquals(runBean.getLanes().size(),thriftRun.getLanes().size());
         assertEquals(runBean.getFlowcellBarcode(),thriftRun.getFlowcellBarcode());
         assertEquals(runBean.getSequencer(),thriftRun.getSequencer());
         assertEquals(runBean.getSequencerModel(),thriftRun.getSequencerModel());
@@ -128,7 +125,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
         assertEquals(runBean.getFirstCycleReadLength(),new Integer(thriftRun.getFirstCycleReadLength()));
         assertEquals(runBean.getMolecularBarcodeCycle(),new Integer(thriftRun.getMolBarcodeCycle()));
         assertEquals(runBean.getMolecularBarcodeLength(),new Integer(thriftRun.getMolBarcodeLength()));
-        assertEquals(runBean.getIsPaired(),thriftRun.isPairedRun());
+        assertEquals(runBean.getPairedRun(),thriftRun.isPairedRun());
         assertEquals(runBean.getLastCycle(),new Integer(thriftRun.getLastCycle()));
 
         doReadAssertions(thriftRun,runBean);
@@ -196,7 +193,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
     }
     
     private static void doAssertions(TZamboniLane zLane,ZimsIlluminaChamber laneBean) {
-        assertEquals(laneBean.getChamberName(),Short.toString(zLane.getLaneNumber()));
+        assertEquals(laneBean.getName(),Short.toString(zLane.getLaneNumber()));
         assertEquals(laneBean.getPrimer(),zLane.getPrimer());
         assertEquals(laneBean.getLibraries().size(), zLane.getLibraries().size());
 
@@ -212,12 +209,12 @@ public class IlluminaRunResourceTest extends Arquillian  {
             assertNotNull(libBean.getLibrary());
             if (libBean.getLibrary().equals(zLib.getLibrary())) {
                 foundIt = true;
-                assertEquals(libBean.getPreCircularizationSize(),zLib.getPrecircularizationDnaSize() == 0 ? null : zLib.getPrecircularizationDnaSize(),
+                assertEquals(libBean.getPreCircularizationDnaSize(), zLib.getPrecircularizationDnaSize() == 0 ? null : zLib.getPrecircularizationDnaSize(),
                         "Precircularization size is wrong for " + libBean.getLibrary());
                 assertEquals(libBean.getProject(),zLib.getProject());
-                assertEquals(libBean.getWorkRequest().longValue(),zLib.getWorkRequestId());
+                assertEquals(libBean.getWorkRequestId().longValue(),zLib.getWorkRequestId());
                 assertEquals(libBean.getCellLine(),zLib.getCellLine());
-                assertEquals(libBean.getCollaboratorSampleName(),zLib.getSampleAlias());
+                assertEquals(libBean.getSampleAlias(),zLib.getSampleAlias());
                 assertEquals(libBean.getIndividual(),zLib.getIndividual());
                 assertEquals(libBean.getAligner(),zLib.getAligner());
                 assertEquals(libBean.getAnalysisType(),zLib.getAnalysisType());
@@ -247,8 +244,8 @@ public class IlluminaRunResourceTest extends Arquillian  {
                 else {
                     assertEquals(libBean.getOrganism(),zLib.getOrganism());
                 }
-                assertEquals(libBean.getSampleLSID(),zLib.getLsid());
-                checkEquality(zLib.getMolecularIndexes(), libBean.getIndexingScheme());
+                assertEquals(libBean.getLsid(),zLib.getLsid());
+                checkEquality(zLib.getMolecularIndexes(), libBean.getMolecularIndexingScheme());
                 assertEquals(libBean.getGssrBarcodes(),zLib.getGssrBarcodes());
                 checkEquality(libBean.getDevExperimentData(),zLib.getDevExperimentData());
             }
@@ -294,8 +291,8 @@ public class IlluminaRunResourceTest extends Arquillian  {
     }
 
     private static ZimsIlluminaChamber getLane(String laneName,ZimsIlluminaRun run) {
-        for (ZimsIlluminaChamber lane : run.getChambers()) {
-            if (laneName.equals(lane.getChamberName())) {
+        for (ZimsIlluminaChamber lane : run.getLanes()) {
+            if (laneName.equals(lane.getName())) {
                 return lane;
             }
         }

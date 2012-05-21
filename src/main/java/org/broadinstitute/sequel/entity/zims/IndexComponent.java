@@ -3,14 +3,18 @@ package org.broadinstitute.sequel.entity.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+@XmlRootElement(name = "IndexComponent")
 public class IndexComponent {
 
+    @JsonProperty("hint")
     private String hint;
 
+    @JsonProperty("sequence")
     private String sequence;
 
     public IndexComponent() {}

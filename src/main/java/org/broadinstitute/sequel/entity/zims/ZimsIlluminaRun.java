@@ -17,6 +17,7 @@ import java.util.*;
  * See http://stackoverflow.com/questions/9576460/json-objects-returning-with-field-name-is-this-a-bug-or-a-feature
  * for more details.
  */
+@XmlRootElement(name = "IlluminaRun")
 public class ZimsIlluminaRun {
     
     @JsonProperty("name")
@@ -34,6 +35,7 @@ public class ZimsIlluminaRun {
     @JsonProperty("sequencerModel")
     private String sequencerModel;
 
+    @JsonIgnore
     private Date runDate;
 
     @JsonProperty("firstCycle")
@@ -45,21 +47,22 @@ public class ZimsIlluminaRun {
     @JsonProperty("lastCycle")
     private Integer lastCycle;
 
-    final SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy HH:mm");
+    @JsonIgnore
+    private final SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy HH:mm");
 
-    @JsonProperty("lane")
+    @JsonProperty("lanes")
     private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();
 
-    @JsonProperty("molBarcodeCycle")
+    @JsonProperty("molecularBarcodeCycle")
     private Integer molecularBarcodeCycle;
 
-    @JsonProperty("molBarcodeLength")
+    @JsonProperty("molecularBarcodeLength")
     private Integer molecularBarcodeLength;
 
     @JsonProperty("pairedRun")
     private Boolean isPaired;
 
-    @JsonProperty("Read")
+    @JsonProperty("reads")
     private List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
 
     public ZimsIlluminaRun() {}
@@ -105,7 +108,7 @@ public class ZimsIlluminaRun {
         return reads;
     }
 
-    public boolean getIsPaired() {
+    public boolean getPairedRun() {
         return isPaired;
     }
 
@@ -115,10 +118,6 @@ public class ZimsIlluminaRun {
 
     public Integer getMolecularBarcodeCycle() {
         return molecularBarcodeCycle;
-    }
-
-    public Integer getLastCycle() {
-        return lastCycle;
     }
 
     public Integer getFirstCycleReadLength() {
@@ -133,7 +132,7 @@ public class ZimsIlluminaRun {
      * Format is 01/03/2010 24:19
      * @return
      */
-    @JsonProperty("runDate")
+    @JsonProperty("runDateString")
     public String getRunDateString() {
         String date = null;
         if (runDate != null) {
@@ -163,19 +162,23 @@ public class ZimsIlluminaRun {
         return flowcellBarcode;
     }
 
-    public String getRunName() {
+    public Integer getLastCycle() {
+        return lastCycle;
+    }
+
+    public String getName() {
         return runName;
     }
     
-    public String getRunBarcode() {
+    public String getBarcode() {
         return runBarcode;
     }
 
-    public void addChamber(ZimsIlluminaChamber chamber) {
+    public void addLane(ZimsIlluminaChamber chamber) {
         chambers.add(chamber);
     }
     
-    public Collection<ZimsIlluminaChamber> getChambers() {
+    public Collection<ZimsIlluminaChamber> getLanes() {
         return chambers;
     }
 

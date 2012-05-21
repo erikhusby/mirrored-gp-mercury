@@ -140,7 +140,7 @@ public class DumpFromSquidTest extends WeldBooter {
             projectPlan.addStarter(bspTube);
             projectPlan.addReagentDesign(new ReagentDesign(cart.getHybselBaitDesign().getName(), ReagentDesign.REAGENT_TYPE.BAIT));
 
-            for (LcSampleWorkReqCheckout checkout: LcSampleWorkReqCheckout.findByWorkRequest(cart.getWorkRequest(), em)){
+            for (LcSampleWorkReqCheckout checkout: LcSampleWorkReqCheckout.findByWorkRequest(cart.getWorkRequestId(), em)){
                 String bspName = checkout.getWorkRequestMaterial().getLcSample().getLsid().split("broadinstitute.org:bsp.prod.sample:")[1];
                 if (bspName.equals(bspSampleName)) {
                     Receptacle aliquot = checkout.getSeqContent().getReceptacle();

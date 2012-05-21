@@ -4,16 +4,21 @@ package org.broadinstitute.sequel.entity.zims;
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+@XmlRootElement(name = "MolecularIndexingScheme")
 public class MolecularIndexingSchemeBean {
 
+    @JsonProperty("name")
     private String name;
 
+    @JsonProperty("sequences")
     private List<IndexComponent> sequences = new ArrayList<IndexComponent>();
 
     public MolecularIndexingSchemeBean() {}

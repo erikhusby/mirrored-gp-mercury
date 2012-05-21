@@ -202,7 +202,7 @@ public class EndToEndTest  {
                                                         flowcellBarcode,
                                                         new IlluminaRunConfiguration(76,true));
         for (int i = 1; i < 9; i++) {
-            flowcell.addChamber(secondDestination,i++);
+            flowcell.addLane(secondDestination,i++);
         }
         
         Person testUser = new Person("QADude");

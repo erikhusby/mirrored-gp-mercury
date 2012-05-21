@@ -1,21 +1,16 @@
 package org.broadinstitute.sequel.entity.sample;
 
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateImpl;
-import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 
 import java.util.Collection;
 import java.util.HashSet;
 
 public class SampleInstanceImpl implements SampleInstance {
-
-    private static Log gLog = LogFactory.getLog(SampleInstanceImpl.class);
 
     private StartingSample sample;
     

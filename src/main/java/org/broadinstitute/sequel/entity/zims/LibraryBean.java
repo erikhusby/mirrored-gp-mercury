@@ -7,6 +7,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
  * LIMQuery.thrift from squidThriftService.
  */
 
+@XmlRootElement(name = "Library")
 public class LibraryBean {
 
     @JsonProperty("library")
@@ -30,7 +32,7 @@ public class LibraryBean {
     @JsonProperty("workRequestId")
     private Long workRequest;
 
-    @JsonProperty("MolecularIndexingScheme")
+    @JsonProperty("molecularIndexingScheme")
     private MolecularIndexingSchemeBean indexingScheme;
     
     private Boolean hasIndexingRead;
@@ -75,38 +77,51 @@ public class LibraryBean {
 
     @JsonProperty("expectedPlasmid")
     private String expectedPlasmid;
-    
+
+    @JsonProperty("aligner")
     private String aligner;
 
+    @JsonProperty("rrbsSizeRange")
     private String rrbsSizeRange;
 
+    @JsonProperty("restrictionEnzyme")
     private String restrictionEnzyme;
 
+    @JsonProperty("cellLine")
     private String cellLine;
 
+    @JsonProperty("baitSetName")
     private String bait;
 
     /** obfuscated name of the individual (person) from whence this sample was taken */
+    @JsonProperty("individual")
     private String individual;
 
+    @JsonProperty("labMeasuredInsertSize")
     private Double labMeasuredInsertSize;
 
+    @JsonProperty("positiveControl")
     private Boolean isPositiveControl;
 
+    @JsonProperty("negativeControl")
     private Boolean isNegativeControl;
 
+    @JsonProperty("weirdness")
     private String weirdness;
 
+    @JsonProperty("preCircularizationDnaSize")
     private Double preCircularizationDnaSize;
 
-    private Boolean isPartOfDevExperiment;
-
+    @JsonProperty("devExperimentData")
     private DevExperimentDataBean devExperimentData;
 
+    @JsonProperty("gssrBarcodes")
     private Collection<String> gssrBarcodes = new ArrayList<String>();
 
+    @JsonProperty("gssrSampleType")
     private String gssrSampleType;
 
+    @JsonProperty("targetLaneCoverage")
     private Short targetLaneCoverage;
     
     public LibraryBean() {}
@@ -141,7 +156,6 @@ public class LibraryBean {
         isNegativeControl = negativeControl;
         this.weirdness = weirdness;
         this.preCircularizationDnaSize = ThriftConversionUtil.zeroAsNull(preCircularizationDnaSize);
-        isPartOfDevExperiment = partOfDevExperiment;
         this.devExperimentData = new DevExperimentDataBean(devExperimentData);
         this.gssrBarcodes = gssrBarcodes;
         this.gssrSampleType = gssrSampleType;
@@ -150,11 +164,11 @@ public class LibraryBean {
     }
 
 
-    public Double getPreCircularizationSize() {
+    public Double getPreCircularizationDnaSize() {
         return preCircularizationDnaSize;
     }
 
-    public Long getWorkRequest() {
+    public Long getWorkRequestId() {
         return workRequest;
     }
 
@@ -166,11 +180,11 @@ public class LibraryBean {
         return organism;
     }
 
-    public String getCollaboratorSampleName() {
+    public String getSampleAlias() {
         return collaboratorSampleId;
     }
 
-    public String getSampleLSID() {
+    public String getLsid() {
         return sampleLSID;
     }
 
@@ -186,7 +200,7 @@ public class LibraryBean {
         return library;
     }
 
-    public MolecularIndexingSchemeBean getIndexingScheme() {
+    public MolecularIndexingSchemeBean getMolecularIndexingScheme() {
         return indexingScheme;
     }
 
@@ -272,10 +286,6 @@ public class LibraryBean {
 
     public Boolean isPositiveControl() {
         return isPositiveControl;
-    }
-
-    public Boolean isPartOfDevExperiment() {
-        return isNegativeControl;
     }
 
     public Boolean doAggregation() {

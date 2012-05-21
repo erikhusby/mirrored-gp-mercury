@@ -11,12 +11,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@XmlRootElement(name = "Lane")
 public class ZimsIlluminaChamber {
 
     @JsonProperty("name")
     private String chamberName;
 
-    @JsonProperty("library")
+    @JsonProperty("libraries")
     private List<LibraryBean> libraries = new ArrayList<LibraryBean>();
 
     @JsonProperty("primer")
@@ -36,7 +37,7 @@ public class ZimsIlluminaChamber {
         return primer;
     }
     
-    public String getChamberName() {
+    public String getName() {
         return chamberName;
     }
 

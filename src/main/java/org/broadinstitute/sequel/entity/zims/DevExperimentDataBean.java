@@ -4,17 +4,21 @@ package org.broadinstitute.sequel.entity.zims;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@XmlRootElement(name = "DevExperimentData")
 public class DevExperimentDataBean {
 
+    @JsonProperty("experiment")
     private String experiment;
 
-    private List<String> conditions;
+    @JsonProperty("conditions")
+    private List<String> conditions = new ArrayList<String>();
 
     public DevExperimentDataBean() {}
 

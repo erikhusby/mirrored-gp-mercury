@@ -12,8 +12,6 @@ import javax.el.ExpressionFactory;
 import javax.el.ValueExpression;
 import javax.enterprise.context.Conversation;
 import javax.enterprise.context.ConversationScoped;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -120,11 +118,11 @@ public class IlluminaRunQuery extends AbstractJsfBean {
 
             if (run != null) {
                 if (lanes == null) {
-                    lanes = new ArrayList<ZimsIlluminaChamber>(run.getChambers());
+                    lanes = new ArrayList<ZimsIlluminaChamber>(run.getLanes());
                     Collections.sort(lanes, new Comparator<ZimsIlluminaChamber>() {
                         @Override
                         public int compare(ZimsIlluminaChamber lane1, ZimsIlluminaChamber lane2) {
-                            return lane1.getChamberName().compareTo(lane2.getChamberName());
+                            return lane1.getName().compareTo(lane2.getName());
                         }
                     });
                 }
