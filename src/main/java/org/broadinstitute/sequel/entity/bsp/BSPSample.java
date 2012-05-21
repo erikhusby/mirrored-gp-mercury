@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.bsp;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
@@ -15,9 +16,12 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * The basic plan here is to store only the
@@ -34,6 +38,9 @@ public class BSPSample implements StartingSample {
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private ProjectPlan projectPlan;
+
+    @ManyToMany(mappedBy = "startingSamples")
+    private Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
 
     @Transient
     private BSPSampleDTO bspDTO;
@@ -145,5 +152,9 @@ public class BSPSample implements StartingSample {
      */
     public String getOrganism() {
         return bspDTO.getOrganism();
+    }
+
+    public Set<SampleSheet> getSampleSheets() {
+        return sampleSheets;
     }
 }

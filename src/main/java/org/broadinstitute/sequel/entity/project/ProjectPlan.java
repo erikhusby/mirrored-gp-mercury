@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
+import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import javax.persistence.CascadeType;
@@ -16,6 +17,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 
 /**
@@ -77,6 +79,9 @@ public class ProjectPlan {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Quote quote;
+
+    @OneToMany(mappedBy = "projectPlan")
+    private Set<BSPSample> bspSamples = new HashSet<BSPSample>();
     
     public ProjectPlan(Project project,
                        String name,
@@ -249,4 +254,7 @@ public class ProjectPlan {
         return planName;
     }
 
+    public Set<BSPSample> getBspSamples() {
+        return bspSamples;
+    }
 }

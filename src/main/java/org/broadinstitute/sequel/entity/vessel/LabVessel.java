@@ -64,7 +64,7 @@ public abstract class LabVessel  {
 
     /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
      * avoid an unnecessary database round trip  */
-    @Formula("(select count(*) from lab_vessel_sample_sheets where lab_vessel_sample_sheets.lab_vessel = lab_vessel_id)")
+    @Formula("(select count(*) from lab_vessel_sample_sheets where lab_vessel_sample_sheets.lab_vessels = lab_vessel_id)")
     private Integer sampleSheetCount = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)

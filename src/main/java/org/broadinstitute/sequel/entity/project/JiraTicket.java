@@ -2,11 +2,13 @@ package org.broadinstitute.sequel.entity.project;
 
 
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
-import javax.inject.Inject;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 public class JiraTicket {
@@ -20,8 +22,11 @@ public class JiraTicket {
     @Id
     private String ticketId;
 
+    @OneToMany(mappedBy = "jiraTicket")
+    private Set<Project> projects = new HashSet<Project>();
+
     @Transient
-    JiraService jiraService;
+    private JiraService jiraService;
 
     public JiraTicket() {}
     
@@ -84,5 +89,9 @@ public class JiraTicket {
         int result = ticketName != null ? ticketName.hashCode() : 0;
         result = 31 * result + (ticketId != null ? ticketId.hashCode() : 0);
         return result;
+    }
+
+    public Set<Project> getProjects() {
+        return projects;
     }
 }

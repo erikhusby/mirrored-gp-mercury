@@ -177,4 +177,8 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
         return this.label.hashCode();
     }
 */
+
+    public String getDigest() {
+        return digest;
+    }
 }

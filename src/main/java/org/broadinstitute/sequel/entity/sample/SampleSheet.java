@@ -9,7 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.ManyToMany;
 import javax.persistence.SequenceGenerator;
 import java.util.Collection;
 import java.util.HashSet;
@@ -26,8 +26,11 @@ public class SampleSheet {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SAMPLE_SHEET")
     private Long sampleSheetId;
 
-    @OneToMany(targetEntity = BSPSample.class, cascade = CascadeType.PERSIST)
+    @ManyToMany(targetEntity = BSPSample.class, cascade = CascadeType.PERSIST)
     private Collection<StartingSample> startingSamples = new HashSet<StartingSample>();
+
+    @ManyToMany(mappedBy = "sampleSheets")
+    private Set<LabVessel> labVessels = new HashSet<LabVessel>();
 
     public SampleSheet() {}
 
@@ -63,4 +66,7 @@ public class SampleSheet {
         return sampleInstances;
     }
 
+    public Set<LabVessel> getLabVessels() {
+        return labVessels;
+    }
 }
