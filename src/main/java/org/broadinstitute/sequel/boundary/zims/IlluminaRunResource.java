@@ -25,6 +25,7 @@ import org.codehaus.jackson.map.SerializationConfig;
 
 import javax.annotation.ManagedBean;
 import javax.ejb.Stateless;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -49,10 +50,10 @@ public class IlluminaRunResource {
 
     @Inject
     private RunChamberDAO runChamberDAO;
-    
+
     @Inject
     BSPSampleDataFetcher bspDataFetcher;
-    
+
     @Inject
     BSPSampleSearchService bspSearchService;
 
@@ -93,14 +94,14 @@ public class IlluminaRunResource {
         }
 
         final ZimsIlluminaRun runBean = new ZimsIlluminaRun(tRun.getRunName(),
-                                                            tRun.getRunBarcode(),
-                                                            tRun.getFlowcellBarcode(),
-                                                            tRun.getSequencer(),
-                                                            tRun.getSequencerModel(),
-                                                            tRun.getRunDate(),
-                                                            tRun.getFirstCycle(),
-                                                            tRun.getFirstCycleReadLength(),
-                                                            tRun.getLastCycle(),
+                tRun.getRunBarcode(),
+                tRun.getFlowcellBarcode(),
+                tRun.getSequencer(),
+                tRun.getSequencerModel(),
+                tRun.getRunDate(),
+                tRun.getFirstCycle(),
+                tRun.getFirstCycleReadLength(),
+                tRun.getLastCycle(),
                 tRun.getMolBarcodeCycle(),
                 tRun.getMolBarcodeLength(),
                 tRun.isPairedRun());
@@ -163,7 +164,7 @@ public class IlluminaRunResource {
         }
         return runBean;
     }
-    
+
     ZimsIlluminaRun getRun(ThriftService thriftService,
                            String runName) {
         ZimsIlluminaRun runBean = null;

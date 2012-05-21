@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.zims;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
@@ -11,11 +12,14 @@ import java.util.Collection;
 import java.util.List;
 
 public class ZimsIlluminaChamber {
-    
+
+    @JsonProperty("name")
     private String chamberName;
 
+    @JsonProperty("library")
     private List<LibraryBean> libraries = new ArrayList<LibraryBean>();
-    
+
+    @JsonProperty("primer")
     private String primer;
     
     public ZimsIlluminaChamber() {}

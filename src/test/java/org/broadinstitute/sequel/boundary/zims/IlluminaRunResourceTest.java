@@ -4,10 +4,6 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import edu.mit.broad.prodinfo.thrift.lims.*;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.entity.zims.*;
 
@@ -22,6 +18,9 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.resteasy.client.ProxyFactory;
+import org.jboss.resteasy.plugins.providers.RegisterBuiltin;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -86,7 +85,26 @@ public class IlluminaRunResourceTest extends Arquillian  {
 
         DefaultClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-               //IlluminaRun/query
+
+
+
+
+        //url += url + "?runName=" + RUN_NAME;
+
+        //RegisterBuiltin.register(ResteasyProviderFactory.getInstance());
+        //ZimsIlluminaRun run2=  ProxyFactory.create(IlluminaRunResource.class,baseUrl.toExternalForm() + "rest/IlluminaRun").getRun(RUN_NAME);
+
+        /*
+
+        ResteasyProviderFactory instance = ResteasyProviderFactory.getInstance();
+        RegisterBuiltin.register(instance);
+        instance.registerProvider(ZimsIlluminaRun.class);
+        ZimsIlluminaRun run2 = ProxyFactory.create(ZimsIlluminaRun.class,url);
+        
+        ResteasyProviderFactory.getInstance().getProvider(ZimsIlluminaRun.class);
+          */
+
+
          ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
                 .queryParam("runName", RUN_NAME)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);

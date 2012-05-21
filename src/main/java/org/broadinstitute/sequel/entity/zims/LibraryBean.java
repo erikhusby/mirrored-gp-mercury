@@ -5,6 +5,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,44 +18,62 @@ import java.util.List;
 
 public class LibraryBean {
 
+    @JsonProperty("library")
     private String library;
 
+    @JsonProperty("project")
     private String project;
 
+    @JsonProperty("initiative")
     private String initiative;
 
+    @JsonProperty("workRequestId")
     private Long workRequest;
 
+    @JsonProperty("MolecularIndexingScheme")
     private MolecularIndexingSchemeBean indexingScheme;
     
     private Boolean hasIndexingRead;
 
+    @JsonProperty("expectedInsertSize")
     private String expectedInsertSize;
-    
+
+    @JsonProperty("analysisType")
     private String analysisType;
 
+    @JsonProperty("referenceSequence")
     private String referenceSequence;
 
+    @JsonProperty("referenceSequenceVersion")
     private String referenceSequenceVersion;
 
     /** the name the collaborator has given to the sample */
+    @JsonProperty("sampleAlias")
     private String collaboratorSampleId;
 
+    @JsonProperty("aggregate")
     private Boolean doAggregation;
 
     /** the name of the collaborator */
+    @JsonProperty("sampleCollaborator")
     private String collaborator;
 
+    @JsonProperty("organism")
     private String organism;
 
+    @JsonProperty("species")
     private String species;
 
+    @JsonProperty("strain")
     private String strain;
 
+    @JsonProperty("lsid")
     private String sampleLSID;
 
+    @JsonProperty("tissueType")
     private String tissueType;
 
+    @JsonProperty("expectedPlasmid")
     private String expectedPlasmid;
     
     private String aligner;

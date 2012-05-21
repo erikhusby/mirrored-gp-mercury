@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.zims;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -10,36 +11,55 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+/**
+ * Note that we use {@link XmlElement} here for fields
+ * so that the resulting json isn't choc-full of "@"'s.
+ * See http://stackoverflow.com/questions/9576460/json-objects-returning-with-field-name-is-this-a-bug-or-a-feature
+ * for more details.
+ */
 public class ZimsIlluminaRun {
     
+    @JsonProperty("name")
     private String runName;
     
+    @JsonProperty("barcode")
     private String runBarcode;
 
+    @JsonProperty("flowcellBarcode")
     private String flowcellBarcode;
 
+    @JsonProperty("sequencer")
     private String sequencer;
 
+    @JsonProperty("sequencerModel")
     private String sequencerModel;
 
     private Date runDate;
 
+    @JsonProperty("firstCycle")
     private Integer firstCycle;
 
+    @JsonProperty("firstCycleReadLength")
     private Integer firstCycleReadLength;
 
+    @JsonProperty("lastCycle")
     private Integer lastCycle;
 
     final SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy HH:mm");
 
+    @JsonProperty("lane")
     private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();
 
+    @JsonProperty("molBarcodeCycle")
     private Integer molecularBarcodeCycle;
 
+    @JsonProperty("molBarcodeLength")
     private Integer molecularBarcodeLength;
 
+    @JsonProperty("pairedRun")
     private Boolean isPaired;
 
+    @JsonProperty("Read")
     private List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
 
     public ZimsIlluminaRun() {}
@@ -113,6 +133,7 @@ public class ZimsIlluminaRun {
      * Format is 01/03/2010 24:19
      * @return
      */
+    @JsonProperty("runDate")
     public String getRunDateString() {
         String date = null;
         if (runDate != null) {
