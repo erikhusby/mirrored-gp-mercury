@@ -1,11 +1,13 @@
 package org.broadinstitute.pmbridge.entity.experiments;
 
 import org.broad.squid.services.TopicService.AbstractPass;
+import org.broad.squid.services.TopicService.DirectedPass;
+import org.broad.squid.services.TopicService.RNASeqPass;
+import org.broad.squid.services.TopicService.WholeGenomePass;
 import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.experiments.gap.GapExperimentRequest;
-import org.broadinstitute.pmbridge.entity.experiments.seq.PMBPassType;
-import org.broadinstitute.pmbridge.entity.experiments.seq.SeqExperimentRequest;
+import org.broadinstitute.pmbridge.entity.experiments.seq.*;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.broadinstitute.pmbridge.infrastructure.gap.ExperimentPlan;
@@ -62,16 +64,27 @@ public class ExperimentRequestSummary {
 
     private SeqExperimentRequest createSeqExperimentRequest(String subType) {
         SeqExperimentRequest experimentRequest=null;
-        AbstractPass pass = null;
 
         PMBPassType pmbPassType=PMBPassType.convertToEnumElseNull(subType);
         if (  pmbPassType == null) {
             throw new IllegalArgumentException("Unsupported Sequencing Pass Type: "+ subType + ". Supported values are : " + PMBPassType.values().toString() );
         }
 
-
-        // create experiment request with pass
-        experimentRequest = new SeqExperimentRequest(this, pmbPassType);
+        switch (pmbPassType) {
+            //TODO set mandatory defaults for each ??
+            case WG:
+                experimentRequest = new WholeGenomeExperiment(this);
+                break;
+            case DIRECTED:
+                experimentRequest = new HybridSelectionExperiment(this);
+                break;
+            case RNASeq:
+                experimentRequest = new RNASeqExperiment(this);
+                break;
+            default:
+                // in case the enum is extended but not this code.
+                throw new IllegalArgumentException("Unsupported Sequencing Pass Type : " + pmbPassType.name() );
+        }
 
         return experimentRequest;
     }

@@ -7,10 +7,7 @@ import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.pmbridge.entity.experiments.RemoteId;
-import org.broadinstitute.pmbridge.entity.experiments.seq.BaitSetName;
-import org.broadinstitute.pmbridge.entity.experiments.seq.OrganismName;
-import org.broadinstitute.pmbridge.entity.experiments.seq.ReferenceSequenceName;
-import org.broadinstitute.pmbridge.entity.experiments.seq.SeqExperimentRequest;
+import org.broadinstitute.pmbridge.entity.experiments.seq.*;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
 import org.broadinstitute.pmbridge.entity.project.PlatformType;
@@ -161,7 +158,17 @@ public class SequencingServiceImpl implements SequencingService {
         }
 
         AbstractPass pass = getSquidServicePort().loadPassByNumber(experimentRequestSummary.getRemoteId().toString());
-        seqExperimentRequest = new SeqExperimentRequest(experimentRequestSummary, pass);
+
+        if (pass instanceof WholeGenomePass) {
+            seqExperimentRequest = new WholeGenomeExperiment(experimentRequestSummary, (WholeGenomePass) pass);
+        } else if ( pass instanceof DirectedPass) {
+            seqExperimentRequest = new HybridSelectionExperiment(experimentRequestSummary, (DirectedPass) pass);
+        } else if (pass instanceof RNASeqPass ){
+            seqExperimentRequest = new RNASeqExperiment(experimentRequestSummary, (RNASeqPass) pass);
+        } else {
+            throw new IllegalArgumentException("Unsupported type of PASS. Title  : " + pass.getClass().getName() );
+        }
+
 
         return seqExperimentRequest;
     }

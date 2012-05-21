@@ -109,7 +109,6 @@ public class EndToEndTest extends Arquillian {
         myResearchProject.addIrbNumber("irb0456");
         myResearchProject.setIrbNotes("There are two IRBs. One for this and the other for that.");
 
-
         //SCIENTISTS - Add a couple of scientists to the Research Project.
         // One manually created and added
         Person scientist = new Person("eric@broadinstitute.org", "Adam", "Bass", "2", RoleType.BROAD_SCIENTIST );
