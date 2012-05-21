@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.entity.zims;
 
 
-import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 
@@ -38,9 +37,11 @@ public class DevExperimentDataBean {
         }
     }
 
+    public String getExperiment() {
+        return experiment;
+    }
+
     public Collection<String> getConditions() {
         return conditions;
     }
-
-
 }
