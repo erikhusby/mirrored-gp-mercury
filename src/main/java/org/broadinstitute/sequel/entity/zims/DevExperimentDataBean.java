@@ -37,5 +37,9 @@ public class DevExperimentDataBean {
         return conditions;
     }
 
+    public String getExperiment() {
+        return experiment;
+    }
+
 
 }

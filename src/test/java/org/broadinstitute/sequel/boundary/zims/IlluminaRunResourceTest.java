@@ -116,6 +116,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
         assertEquals(runBean.getRunDateString(),thriftRun.getRunDate());
         boolean hasRealPreCircSize = false;
         boolean hasRealLabInsertSize = false;
+        boolean hasDevAliquotData = false;
         for (TZamboniLane thriftLane : thriftRun.getLanes()) {
             ZimsIlluminaChamber lane = getLane(Short.toString(thriftLane.getLaneNumber()),runBean);
             doAssertions(thriftLane, lane);
@@ -128,9 +129,19 @@ public class IlluminaRunResourceTest extends Arquillian  {
                     if (thriftLib.getLabMeasuredInsertSize() > 0) {
                         hasRealLabInsertSize = true;
                     }
+                    String experimentName = thriftLib.getDevExperimentData().getExperiment();
+                    if (experimentName != null) {
+                        experimentName = experimentName.trim();
+                    }
+                    if (experimentName != null && experimentName.length() > 0) {
+                        if (!thriftLib.getDevExperimentData().getConditionChain().isEmpty()) {
+                            hasDevAliquotData = true;
+                        }
+                    }
                 }
             }
         }
+        assertTrue(hasDevAliquotData);
         assertTrue(hasRealLabInsertSize);
         assertTrue(hasRealPreCircSize);
     }
@@ -244,6 +255,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
             for (String condition : devExperimentBean.getConditions()) {
                 assertTrue(thriftConditions.contains(condition));
             }
+            assertEquals(devExperimentBean.getExperiment(),thriftExperimentData.getExperiment());
         }
         else if (devExperimentBean == null && thriftExperimentData == null) {
             return;
