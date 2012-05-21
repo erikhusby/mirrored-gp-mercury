@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@XmlRootElement(name = "Lane")
 public class ZimsIlluminaChamber {
 
     @JsonProperty("name")

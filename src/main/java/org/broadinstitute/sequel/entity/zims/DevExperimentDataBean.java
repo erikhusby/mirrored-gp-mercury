@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@XmlRootElement(name = "DevExperimentData")
 public class DevExperimentDataBean {
 
     @JsonProperty("experiment")

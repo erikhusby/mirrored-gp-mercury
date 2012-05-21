@@ -8,7 +8,6 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "IndexComponent")
 public class IndexComponent {
 
     @JsonProperty("hint")

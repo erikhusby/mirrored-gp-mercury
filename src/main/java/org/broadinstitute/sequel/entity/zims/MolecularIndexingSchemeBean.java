@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@XmlRootElement(name = "MolecularIndexingScheme")
 public class MolecularIndexingSchemeBean {
 
     @JsonProperty("name")

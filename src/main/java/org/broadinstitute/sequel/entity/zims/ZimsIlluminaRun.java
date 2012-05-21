@@ -17,7 +17,6 @@ import java.util.*;
  * See http://stackoverflow.com/questions/9576460/json-objects-returning-with-field-name-is-this-a-bug-or-a-feature
  * for more details.
  */
-@XmlRootElement(name = "IlluminaRun")
 public class ZimsIlluminaRun {
     
     @JsonProperty("name")

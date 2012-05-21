@@ -110,6 +110,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
                 .queryParam("runName", RUN_NAME)
                 .accept(MediaType.APPLICATION_JSON).get(String.class);
         assertFalse(rawJson.contains("@")); // might see this if you use XmlAttribute instead of XmlElement
+        assertTrue(rawJson.contains("null")); // KT and others like to see field names present w/ null values instead of missing entirely
 
         assertNotNull(run);
         assertEquals(run.getName(),RUN_NAME);

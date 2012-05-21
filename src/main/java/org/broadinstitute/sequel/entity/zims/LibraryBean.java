@@ -17,7 +17,6 @@ import java.util.List;
  * LIMQuery.thrift from squidThriftService.
  */
 
-@XmlRootElement(name = "Library")
 public class LibraryBean {
 
     @JsonProperty("library")
