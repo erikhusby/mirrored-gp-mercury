@@ -13,8 +13,6 @@ import javax.el.ExpressionFactory;
 import javax.el.ValueExpression;
 import javax.enterprise.context.Conversation;
 import javax.enterprise.context.ConversationScoped;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -61,18 +59,18 @@ public class IlluminaRunQuery extends AbstractJsfBean {
 //        addColumn("Library Name", "library", null);
         addColumn("Project", "project", null);
         addColumn("Initiative", "initiative", null);
-        addColumn("Work Request", "workRequest", null);
-        addColumn("Indexing Scheme", null, "library.indexingScheme.name");
+        addColumn("Work Request", "workRequestId", null);
+        addColumn("Indexing Scheme", null, "library.molecularIndexingScheme.name");
         addColumn("Expected Insert Size", "expectedInsertSize", null);
         addColumn("Analysis Type", "analysisType", null);
         addColumn("Reference Sequence", "referenceSequence", null);
         addColumn("Reference Sequence Version", "referenceSequenceVersion", null);
-        addColumn("Sample Alias", "collaboratorSampleName", null);
+        addColumn("Sample Alias", "sampleAlias", null);
         addColumn("Collaborator", "sampleCollaborator", null);
         addColumn("Organism", "organism", null);
         addColumn("Species", "species", null);
         addColumn("Strain", "strain", null);
-        addColumn("LSID", "sampleLSID", null);
+        addColumn("LSID", "lsid", null);
         addColumn("Tissue Type", "tissueType", null);
 //        addColumn("Expected Plasmid", "expectedPlasmid", null);
         addColumn("Aligner", "aligner", null);
@@ -85,7 +83,7 @@ public class IlluminaRunQuery extends AbstractJsfBean {
 //        addColumn("Positive Control?", "isPositiveControl", null);
 //        addColumn("Negative Control?", "isNegativeControl", null);
         addColumn("Weirdness", "weirdness", null);
-        addColumn("Pre-Circularization DNA Size", "preCircularizationSize", null);
+        addColumn("Pre-Circularization DNA Size", "preCircularizationDnaSize", null);
         addColumn("Dev Experiment", null, "library.devExperimentData == null ? null : library.devExperimentData.experiment");
         addColumn("Dev Experiment Conditions", null, "illuminaRunQuery.join(library.devExperimentData.conditions)");
         addColumn("GSSR Barcodes", null, "illuminaRunQuery.join(library.gssrBarcodes)");
@@ -120,11 +118,11 @@ public class IlluminaRunQuery extends AbstractJsfBean {
 
             if (run != null) {
                 if (lanes == null) {
-                    lanes = new ArrayList<ZimsIlluminaChamber>(run.getChambers());
+                    lanes = new ArrayList<ZimsIlluminaChamber>(run.getLanes());
                     Collections.sort(lanes, new Comparator<ZimsIlluminaChamber>() {
                         @Override
                         public int compare(ZimsIlluminaChamber lane1, ZimsIlluminaChamber lane2) {
-                            return lane1.getChamberName().compareTo(lane2.getChamberName());
+                            return lane1.getName().compareTo(lane2.getName());
                         }
                     });
                 }

@@ -3,12 +3,6 @@ package org.broadinstitute.sequel.boundary.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TIOStreamTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.sequel.control.dao.run.RunChamberDAO;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
@@ -17,7 +11,6 @@ import org.broadinstitute.sequel.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 
 import javax.ejb.Stateless;
@@ -27,9 +20,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.io.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -43,10 +33,10 @@ public class IlluminaRunResource {
 
     @Inject
     private RunChamberDAO runChamberDAO;
-    
+
     @Inject
     BSPSampleDataFetcher bspDataFetcher;
-    
+
     @Inject
     BSPSampleSearchService bspSearchService;
 
@@ -87,14 +77,14 @@ public class IlluminaRunResource {
         }
 
         final ZimsIlluminaRun runBean = new ZimsIlluminaRun(tRun.getRunName(),
-                                                            tRun.getRunBarcode(),
-                                                            tRun.getFlowcellBarcode(),
-                                                            tRun.getSequencer(),
-                                                            tRun.getSequencerModel(),
-                                                            tRun.getRunDate(),
-                                                            tRun.getFirstCycle(),
-                                                            tRun.getFirstCycleReadLength(),
-                                                            tRun.getLastCycle(),
+                tRun.getRunBarcode(),
+                tRun.getFlowcellBarcode(),
+                tRun.getSequencer(),
+                tRun.getSequencerModel(),
+                tRun.getRunDate(),
+                tRun.getFirstCycle(),
+                tRun.getFirstCycleReadLength(),
+                tRun.getLastCycle(),
                 tRun.getMolBarcodeCycle(),
                 tRun.getMolBarcodeLength(),
                 tRun.isPairedRun());
@@ -153,11 +143,11 @@ public class IlluminaRunResource {
                         zamboniLibrary.aggregate);
                 libraries.add(libBean);
             }
-            runBean.addChamber(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(),libraries,tZamboniLane.getPrimer()));
+            runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer()));
         }
         return runBean;
     }
-    
+
     ZimsIlluminaRun getRun(ThriftService thriftService,
                            String runName) {
         ZimsIlluminaRun runBean = null;

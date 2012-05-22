@@ -31,24 +31,33 @@
     </servlet-mapping>
 
     <!-- for GlassFish -->
+    <listener>
+        <listener-class>org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap</listener-class>
+    </listener>
     <servlet>
-        <servlet-name>Jersey Web Application</servlet-name>
-        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
-        <init-param>
-            <param-name>com.sun.jersey.config.property.packages</param-name>
-            <!-- Scan for root resource and provider classes in these packages -->
-            <param-value>org.broadinstitute.sequel.boundary</param-value>
-        </init-param>
-        <init-param>
-            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
-            <param-value>true</param-value>
-        </init-param>
+        <display-name>rest</display-name>
+        <servlet-name>rest</servlet-name>
+        <servlet-class>org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
-        <servlet-name>Jersey Web Application</servlet-name>
+        <servlet-name>rest</servlet-name>
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
+    <context-param>
+        <param-name>resteasy.servlet.mapping.prefix</param-name>
+        <param-value>/rest</param-value>
+    </context-param>
+    <context-param>
+        <param-name>resteasy.scan.resources </param-name>
+        <!-- we don't scan for test performance reasons.  use resteasy.resources explicitly instead. -->
+        <param-value>false</param-value>
+    </context-param>
+    <context-param>
+        <param-name>resteasy.resources</param-name>
+        <!-- comma separated list of jax-rs resource classes -->
+        <param-value>org.broadinstitute.sequel.boundary.zims.IlluminaRunResource</param-value>
+    </context-param>
 
     <!-- for JBoss AS 7 -->
 <!--

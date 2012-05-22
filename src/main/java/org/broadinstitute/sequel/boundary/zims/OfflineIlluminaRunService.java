@@ -10,7 +10,6 @@ import org.broadinstitute.sequel.infrastructure.Offline;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -26,7 +25,7 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
     public ZimsIlluminaRun getRun(String runName) {
         ZimsIlluminaRun run = new ZimsIlluminaRun(runName, null, null, null, null, "05/11/2012 17:08", (short) 0, (short) 0, (short) 0, (short) 0, (short) 0, false);
         for (int i = 1; i <= 8; i++) {
-            run.addChamber(makeLane(i));
+            run.addLane(makeLane(i));
         }
         return run;
     }

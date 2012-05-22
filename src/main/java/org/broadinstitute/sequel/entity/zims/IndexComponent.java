@@ -3,22 +3,17 @@ package org.broadinstitute.sequel.entity.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "IndexPosition")
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,
-        getterVisibility = JsonAutoDetect.Visibility.NONE,
-        creatorVisibility = JsonAutoDetect.Visibility.NONE,
-        setterVisibility = JsonAutoDetect.Visibility.NONE,
-        isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public class IndexComponent {
 
-    @XmlElement(name = "hint")
+    @JsonProperty("hint")
     private String hint;
 
-    @XmlElement(name = "sequence")
+    @JsonProperty("sequence")
     private String sequence;
 
     public IndexComponent() {}

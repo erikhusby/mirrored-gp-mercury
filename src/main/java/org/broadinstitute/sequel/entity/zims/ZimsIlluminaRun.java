@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.zims;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 import org.codehaus.jackson.annotate.JsonAutoDetect;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -16,55 +17,51 @@ import java.util.*;
  * See http://stackoverflow.com/questions/9576460/json-objects-returning-with-field-name-is-this-a-bug-or-a-feature
  * for more details.
  */
-@XmlRootElement(name = "IlluminaRun")
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,
-        getterVisibility = JsonAutoDetect.Visibility.NONE,
-        creatorVisibility = JsonAutoDetect.Visibility.NONE,
-        setterVisibility = JsonAutoDetect.Visibility.NONE,
-        isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ZimsIlluminaRun {
     
-    @XmlElement(name = "name")
+    @JsonProperty("name")
     private String runName;
     
-    @XmlElement(name = "barcode")
+    @JsonProperty("barcode")
     private String runBarcode;
 
-    @XmlElement(name = "flowcellBarcode")
+    @JsonProperty("flowcellBarcode")
     private String flowcellBarcode;
 
-    @XmlElement(name = "sequencer")
+    @JsonProperty("sequencer")
     private String sequencer;
 
-    @XmlElement(name = "sequencerModel")
+    @JsonProperty("sequencerModel")
     private String sequencerModel;
 
+    @JsonIgnore
     private Date runDate;
 
-    @XmlElement(name = "firstCycle")
+    @JsonProperty("firstCycle")
     private Integer firstCycle;
 
-    @XmlElement(name = "firstCycleReadLength")
+    @JsonProperty("firstCycleReadLength")
     private Integer firstCycleReadLength;
 
-    @XmlElement(name = "lastCycle")
+    @JsonProperty("lastCycle")
     private Integer lastCycle;
 
-    final SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy HH:mm");
+    @JsonIgnore
+    private final SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy HH:mm");
 
-    @XmlElement(name = "lane")
+    @JsonProperty("lanes")
     private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();
 
-    @XmlElement(name = "molBarcodeCycle")
+    @JsonProperty("molecularBarcodeCycle")
     private Integer molecularBarcodeCycle;
 
-    @XmlElement(name = "molBarcodeLength")
+    @JsonProperty("molecularBarcodeLength")
     private Integer molecularBarcodeLength;
 
-    @XmlElement(name = "pairedRun")
+    @JsonProperty("pairedRun")
     private Boolean isPaired;
 
-    @XmlElement(name = "Read")
+    @JsonProperty("reads")
     private List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
 
     public ZimsIlluminaRun() {}
@@ -110,7 +107,7 @@ public class ZimsIlluminaRun {
         return reads;
     }
 
-    public boolean getIsPaired() {
+    public boolean getPairedRun() {
         return isPaired;
     }
 
@@ -120,10 +117,6 @@ public class ZimsIlluminaRun {
 
     public Integer getMolecularBarcodeCycle() {
         return molecularBarcodeCycle;
-    }
-
-    public Integer getLastCycle() {
-        return lastCycle;
     }
 
     public Integer getFirstCycleReadLength() {
@@ -138,7 +131,7 @@ public class ZimsIlluminaRun {
      * Format is 01/03/2010 24:19
      * @return
      */
-    @XmlElement(name = "runDate")
+    @JsonProperty("runDateString")
     public String getRunDateString() {
         String date = null;
         if (runDate != null) {
@@ -168,19 +161,23 @@ public class ZimsIlluminaRun {
         return flowcellBarcode;
     }
 
-    public String getRunName() {
+    public Integer getLastCycle() {
+        return lastCycle;
+    }
+
+    public String getName() {
         return runName;
     }
     
-    public String getRunBarcode() {
+    public String getBarcode() {
         return runBarcode;
     }
 
-    public void addChamber(ZimsIlluminaChamber chamber) {
+    public void addLane(ZimsIlluminaChamber chamber) {
         chambers.add(chamber);
     }
     
-    public Collection<ZimsIlluminaChamber> getChambers() {
+    public Collection<ZimsIlluminaChamber> getLanes() {
         return chambers;
     }
 

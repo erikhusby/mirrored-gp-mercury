@@ -1,29 +1,25 @@
 package org.broadinstitute.sequel.entity.zims;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
-@XmlRootElement(name = "Lane")
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,
-        getterVisibility = JsonAutoDetect.Visibility.NONE,
-        creatorVisibility = JsonAutoDetect.Visibility.NONE,
-        setterVisibility = JsonAutoDetect.Visibility.NONE,
-        isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ZimsIlluminaChamber {
-    
-    @XmlElement(name = "name")
+
+    @JsonProperty("name")
     private String chamberName;
 
-    @XmlElement(name = "library")
-    private List<LibraryBean> libraries;
-    
-    @XmlElement(name = "primer")
+    @JsonProperty("libraries")
+    private List<LibraryBean> libraries = new ArrayList<LibraryBean>();
+
+    @JsonProperty("primer")
     private String primer;
     
     public ZimsIlluminaChamber() {}
@@ -40,10 +36,10 @@ public class ZimsIlluminaChamber {
         return primer;
     }
     
-    public String getChamberName() {
+    public String getName() {
         return chamberName;
     }
-    
+
     public Collection<LibraryBean> getLibraries() {
         return libraries;
     }

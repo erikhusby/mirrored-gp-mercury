@@ -1,26 +1,21 @@
 package org.broadinstitute.sequel.entity.zims;
 
 import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "ZamboniRead")
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE,
-        getterVisibility = JsonAutoDetect.Visibility.NONE,
-        creatorVisibility = JsonAutoDetect.Visibility.NONE,
-        setterVisibility = JsonAutoDetect.Visibility.NONE,
-        isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ZamboniRead {
 
-    @XmlElement(name = "firstCycle")
+    @JsonProperty("firstCycle")
     private Integer firstCycle;
 
-    @XmlElement(name = "length")
+    @JsonProperty("length")
     private Integer length;
 
-    @XmlElement(name = "readType")
+    @JsonProperty("readType")
     private ZamboniReadType readType;
 
     public static final String TEMPLATE = "TEMPLATE";
