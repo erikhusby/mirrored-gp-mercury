@@ -25,8 +25,6 @@ public abstract class AbstractCacheControl implements CacheControlMXBean {
 
     private ObjectName objectName;
 
-    private int numDays;
-
     private static final String APP_NAME = "SequeL";
 
     public AbstractCacheControl() {}
@@ -36,7 +34,9 @@ public abstract class AbstractCacheControl implements CacheControlMXBean {
         try {
             objectName = new ObjectName(APP_NAME + ":class=" + this.getClass().getName());
             platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
-            platformMBeanServer.registerMBean(this, objectName);
+            if (!platformMBeanServer.isRegistered(objectName)) {
+                platformMBeanServer.registerMBean(this, objectName);
+            }
         } catch (Exception e) {
             throw new IllegalStateException("Problem during registration of Monitoring into JMX:" + e);
         }
