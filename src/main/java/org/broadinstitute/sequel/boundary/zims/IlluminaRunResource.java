@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.boundary.zims;
 
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
+import org.apache.commons.collections15.map.LRUMap;
 import org.apache.thrift.TException;
 import org.broadinstitute.sequel.control.dao.run.RunChamberDAO;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
@@ -11,6 +12,7 @@ import org.broadinstitute.sequel.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.sequel.infrastructure.jmx.ZimsCacheControl;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 
 import javax.ejb.Stateless;
@@ -29,7 +31,7 @@ import java.util.*;
  */
 @Path("/IlluminaRun")
 @Stateless
-public class IlluminaRunResource {
+public class IlluminaRunResource  {
 
     @Inject
     private RunChamberDAO runChamberDAO;
@@ -43,11 +45,26 @@ public class IlluminaRunResource {
     @Inject
     ThriftService thriftService;
 
-    public IlluminaRunResource() {}
+    @Inject
+    ZimsCacheControl cacheControl;
 
+    private static LRUMap<String,ZimsIlluminaRun> runCache;
 
-    public IlluminaRunResource(ThriftService thriftService) {
+    public IlluminaRunResource() {
+        initCache();
+    }
+
+    public IlluminaRunResource(ThriftService thriftService,
+                               ZimsCacheControl cacheControl) {
         this.thriftService = thriftService;
+        this.cacheControl = cacheControl;
+        initCache();
+    }
+
+    private static synchronized void initCache() {
+        if (runCache == null) {
+            runCache = new LRUMap<String, ZimsIlluminaRun>();
+        }
     }
 
     @GET
@@ -60,7 +77,17 @@ public class IlluminaRunResource {
             throw new NullPointerException("runName cannot be null");
         }
 
-        return getRun(thriftService,runName);
+        updateCache();
+        ZimsIlluminaRun runBean = getRunFromCache(runName);
+
+        if (runBean == null) {
+            runBean = getRun(thriftService,runName);
+            if (runBean != null) {
+                runCache.put(runName,runBean);
+            }
+        }
+
+        return runBean;
     }
 
     /**
@@ -148,6 +175,31 @@ public class IlluminaRunResource {
         return runBean;
     }
 
+    private ZimsIlluminaRun getRunFromCache(String runName) {
+        ZimsIlluminaRun run = null;
+        if (runCache.containsKey(runName)) {
+            run = runCache.get(runName);
+        }
+        return run;
+    }
+
+    /**
+     * Updates the cache.  If someone changed the cache size through
+     * JConsole, we resize the cache.  If the cache was invalidated through
+     * JConsole, we clear and reset it.
+     */
+    private void updateCache() {
+        if (cacheControl.wasInvalidated()) {
+            cacheControl.reset();
+            runCache.clear();
+        }
+        if (runCache.maxSize() != cacheControl.getMaximumCacheSize()) {
+            LRUMap<String,ZimsIlluminaRun> newCache = new LRUMap<String, ZimsIlluminaRun>(cacheControl.getMaximumCacheSize());
+            newCache.putAll(runCache);
+            runCache = newCache;
+        }
+    }
+
     ZimsIlluminaRun getRun(ThriftService thriftService,
                            String runName) {
         ZimsIlluminaRun runBean = null;
@@ -181,6 +233,7 @@ public class IlluminaRunResource {
     private Map<String,BSPSampleDTO> fetchAllBSPDataAtOnce(TZamboniRun run) {
         final Set<String> sampleLsids = new HashSet<String>();
         final Set<String> sampleNames = new HashSet<String>();
+        Map<String,BSPSampleDTO> sampleToBspDto = new HashMap<String, BSPSampleDTO>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
                 if (isBspSample(zamboniLibrary)) {
@@ -196,7 +249,10 @@ public class IlluminaRunResource {
                 sampleNames.add(lsIdToBareId.getValue());
             }
         }
-        return bspDataFetcher.fetchSamplesFromBSP(sampleNames);
+        if (!sampleNames.isEmpty()) {
+            sampleToBspDto = bspDataFetcher.fetchSamplesFromBSP(sampleNames);
+        }
+        return sampleToBspDto;
     }
 
     /**
