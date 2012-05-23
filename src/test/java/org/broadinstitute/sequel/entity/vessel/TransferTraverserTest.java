@@ -2,11 +2,11 @@ package org.broadinstitute.sequel.entity.vessel;
 
 import org.broadinstitute.sequel.LabEventTest;
 import org.broadinstitute.sequel.control.dao.project.JiraTicketDao;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.test.ContainerTest;
 import org.testng.annotations.Test;
 
@@ -34,8 +34,8 @@ public class TransferTraverserTest extends ContainerTest{
                 for (JiraTicket jiraTicket : jiraTickets) {
                     Project project = jiraTicket.getProjects().iterator().next();
                     ProjectPlan projectPlan = project.getProjectPlans().iterator().next();
-                    BSPSample bspSample = projectPlan.getBspSamples().iterator().next();
-                    SampleSheet sampleSheet = bspSample.getSampleSheets().iterator().next();
+                    StartingSample startingSample = projectPlan.getStartingSamples().iterator().next();
+                    SampleSheet sampleSheet = startingSample.getSampleSheets().iterator().next();
                     LabVessel labVessel = sampleSheet.getLabVessels().iterator().next();
                     VesselContainer<?> vesselContainer = labVessel.getContainers().iterator().next();
                     LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
