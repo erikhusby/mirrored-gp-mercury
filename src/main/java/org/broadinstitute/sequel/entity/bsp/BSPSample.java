@@ -1,27 +1,14 @@
 package org.broadinstitute.sequel.entity.bsp;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.entity.notice.StatusNote;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
-import org.broadinstitute.sequel.entity.vessel.MolecularState;
-import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.analysis.ReadBucket;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * The basic plan here is to store only the
@@ -29,18 +16,9 @@ import java.util.Set;
  * a service lookup the real data from bsp.
  */
 @Entity
-public class BSPSample implements StartingSample {
+public class BSPSample extends StartingSample {
 
     private static Log gLog = LogFactory.getLog(BSPSample.class);
-
-    @Id
-    private  String sampleName;
-
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    private ProjectPlan projectPlan;
-
-    @ManyToMany(mappedBy = "startingSamples")
-    private Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
 
     @Transient
     private BSPSampleDTO bspDTO;
@@ -68,47 +46,11 @@ public class BSPSample implements StartingSample {
     
     public BSPSample(String sampleName,
                      ProjectPlan plan) {
-        this.sampleName = sampleName;
-        this.projectPlan = plan;
+        super(sampleName, plan);
     }
 
     public void setBspDTO(BSPSampleDTO dto) {
         this.bspDTO = dto;
-    }
-
-    @Override
-    public void logNote(StatusNote note) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public MolecularState getRootMolecularState() {
-        throw new RuntimeException("not implemented");
-    }
-
-    @Override
-    public ProjectPlan getRootProjectPlan() {
-        return projectPlan;
-    }
-
-    @Override
-    public void setRootProjectPlan(ProjectPlan rootProjectPlan) {
-        this.projectPlan = rootProjectPlan;
-    }
-
-    @Override
-    public Collection<ReadBucket> getRootReadBuckets() {
-        throw new RuntimeException("not implemented");
-    }
-
-    @Override
-    public SampleInstance.GSP_CONTROL_ROLE getRootControlRole() {
-        throw new RuntimeException("not implemented");
-    }
-
-    @Override
-    public SampleInstance createSampleInstance() {
-        return new SampleInstance(this, SampleInstance.GSP_CONTROL_ROLE.NONE, projectPlan, new MolecularState(), null);
     }
 
     @Transient
@@ -130,11 +72,6 @@ public class BSPSample implements StartingSample {
     }
 
     @Override
-    public String getSampleName() {
-        return sampleName;
-    }
-
-    @Override
     @Transient
     /**
      * Gets the patient id from the underlying
@@ -152,9 +89,5 @@ public class BSPSample implements StartingSample {
      */
     public String getOrganism() {
         return bspDTO.getOrganism();
-    }
-
-    public Set<SampleSheet> getSampleSheets() {
-        return sampleSheets;
     }
 }
