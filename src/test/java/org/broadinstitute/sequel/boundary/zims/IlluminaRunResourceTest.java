@@ -98,10 +98,6 @@ public class IlluminaRunResourceTest extends Arquillian  {
         assertEquals(run.getName(),RUN_NAME);
         doAssertions(zamboniRun,run);
 
-        try {
-            Thread.sleep(60 * 1000);
-        }
-        catch(InterruptedException e) {}
     }      
     
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {
