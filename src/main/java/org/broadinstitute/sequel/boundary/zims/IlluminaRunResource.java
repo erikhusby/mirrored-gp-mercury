@@ -15,6 +15,7 @@ import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.sequel.infrastructure.jmx.ZimsCacheControl;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 
+import javax.annotation.concurrent.GuardedBy;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -48,6 +49,9 @@ public class IlluminaRunResource  {
     @Inject
     ZimsCacheControl cacheControl;
 
+    private static Object cacheSemaphore = Boolean.TRUE;
+
+    @GuardedBy("cacheSemaphore")
     private static LRUMap<String,ZimsIlluminaRun> runCache;
 
     public IlluminaRunResource() {
@@ -61,9 +65,11 @@ public class IlluminaRunResource  {
         initCache();
     }
 
-    private static synchronized void initCache() {
-        if (runCache == null) {
-            runCache = new LRUMap<String, ZimsIlluminaRun>();
+    private void initCache() {
+        synchronized (cacheSemaphore) {
+            if (runCache == null) {
+                runCache = new LRUMap<String, ZimsIlluminaRun>();
+            }
         }
     }
 
@@ -176,11 +182,13 @@ public class IlluminaRunResource  {
     }
 
     private ZimsIlluminaRun getRunFromCache(String runName) {
-        ZimsIlluminaRun run = null;
-        if (runCache.containsKey(runName)) {
-            run = runCache.get(runName);
+        synchronized (cacheSemaphore) {
+            ZimsIlluminaRun run = null;
+            if (runCache.containsKey(runName)) {
+                run = runCache.get(runName);
+            }
+            return run;
         }
-        return run;
     }
 
     /**
@@ -189,14 +197,16 @@ public class IlluminaRunResource  {
      * JConsole, we clear and reset it.
      */
     private void updateCache() {
-        if (cacheControl.wasInvalidated()) {
-            cacheControl.reset();
-            runCache.clear();
-        }
-        if (runCache.maxSize() != cacheControl.getMaximumCacheSize()) {
-            LRUMap<String,ZimsIlluminaRun> newCache = new LRUMap<String, ZimsIlluminaRun>(cacheControl.getMaximumCacheSize());
-            newCache.putAll(runCache);
-            runCache = newCache;
+        synchronized (cacheSemaphore) {
+            if (cacheControl.wasInvalidated()) {
+                cacheControl.reset();
+                runCache.clear();
+            }
+            if (runCache.maxSize() != cacheControl.getMaximumCacheSize()) {
+                LRUMap<String,ZimsIlluminaRun> newCache = new LRUMap<String, ZimsIlluminaRun>(cacheControl.getMaximumCacheSize());
+                newCache.putAll(runCache);
+                runCache = newCache;
+            }
         }
     }
 
