@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.control.labevent;
 
 import org.broadinstitute.sequel.bettalims.jaxb.CherryPickSourceType;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateType;
+import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.sequel.control.dao.vessel.RackOfTubesDao;
@@ -33,9 +34,12 @@ import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import javax.inject.Inject;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -55,16 +59,80 @@ public class LabEventFactory {
 
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDao;
+
     @Inject
     private StaticPlateDAO staticPlateDAO;
+
     @Inject
     private PersonDAO personDAO;
+
     @Inject
     private RackOfTubesDao rackOfTubesDao;
+
     @Inject
     private StripTubeDao stripTubeDao;
+
     @Inject
     private IlluminaFlowcellDao illuminaFlowcellDao;
+
+    @Inject
+    private LabEventDao labEventDao;
+
+    private static class UniqueEvent {
+        private final String eventLocation;
+        private final Date eventDate;
+        private final Long disambiguator;
+
+        private UniqueEvent(String eventLocation, Date eventDate, Long disambiguator) {
+            this.eventLocation = eventLocation;
+            this.eventDate = eventDate;
+            this.disambiguator = disambiguator;
+        }
+
+        public String getEventLocation() {
+            return eventLocation;
+        }
+
+        public Date getEventDate() {
+            return eventDate;
+        }
+
+        public Long getDisambiguator() {
+            return disambiguator;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            UniqueEvent other = (UniqueEvent) o;
+
+            if (disambiguator != null ? !disambiguator.equals(other.getDisambiguator()) : other.getDisambiguator() != null) {
+                return false;
+            }
+            if (eventDate != null ? !eventDate.equals(other.getEventDate()) : other.getEventDate() != null) {
+                return false;
+            }
+            if (eventLocation != null ? !eventLocation.equals(other.getEventLocation()) : other.getEventLocation() != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = eventLocation != null ? eventLocation.hashCode() : 0;
+            result = 31 * result + (eventDate != null ? eventDate.hashCode() : 0);
+            result = 31 * result + (disambiguator != null ? disambiguator.hashCode() : 0);
+            return result;
+        }
+    }
 
     /**
      * Builds one or more lab event entities from a JAXB message bean that contains one or more event beans
@@ -74,19 +142,41 @@ public class LabEventFactory {
     public List<LabEvent> buildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
         List<LabEvent> labEvents = new ArrayList<LabEvent>();
         bettaLIMSMessage.getMode();
+        Set<UniqueEvent> uniqueEvents = new HashSet<UniqueEvent>();
+
+        // Have to persist and flush inside each loop, because the first event may create
+        // vessels that are referenced by the second event, e.g. PreSelectionPool
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
-            labEvents.add(buildFromBettaLims(plateCherryPickEvent));
+            LabEvent labEvent = buildFromBettaLims(plateCherryPickEvent);
+            persistLabEvent(uniqueEvents, labEvent);
+            labEvents.add(labEvent);
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
-            labEvents.add(buildFromBettaLims(plateEventType));
+            LabEvent labEvent = buildFromBettaLims(plateEventType);
+            persistLabEvent(uniqueEvents, labEvent);
+            labEvents.add(labEvent);
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
-            labEvents.add(buildFromBettaLims(plateTransferEventType));
+            LabEvent labEvent = buildFromBettaLims(plateTransferEventType);
+            persistLabEvent(uniqueEvents, labEvent);
+            labEvents.add(labEvent);
         }
         if (bettaLIMSMessage.getReceptaclePlateTransferEvent() != null) {
-            labEvents.add(buildFromBettaLims(bettaLIMSMessage.getReceptaclePlateTransferEvent()));
+            LabEvent labEvent = buildFromBettaLims(bettaLIMSMessage.getReceptaclePlateTransferEvent());
+            persistLabEvent(uniqueEvents, labEvent);
+            labEvents.add(labEvent);
         }
         return labEvents;
+    }
+
+    private void persistLabEvent(Set<UniqueEvent> uniqueEvents, LabEvent labEvent) {
+        // The deck-side scripts don't always set the disambiguator correctly, so modify it, to make it unique
+        // within this message, if necessary
+        while (!uniqueEvents.add(new UniqueEvent(labEvent.getEventLocation(), labEvent.getEventDate(), labEvent.getDisambiguator()))) {
+            labEvent.setDisambiguator(labEvent.getDisambiguator() + 1);
+        }
+        labEventDao.persist(labEvent);
+        labEventDao.flush();
     }
 
     /**
@@ -549,7 +639,8 @@ public class LabEventFactory {
             throw new RuntimeException("Unexpected event type " + stationEventType.getEventType());
         }
         return new GenericLabEvent(labEventType, stationEventType.getStart().toGregorianCalendar().getTime(),
-                stationEventType.getStation(), this.personDAO.findByName(stationEventType.getOperator()));
+                stationEventType.getStation(), stationEventType.getDisambiguator(),
+                this.personDAO.findByName(stationEventType.getOperator()));
     }
 
     public void setPersonDAO(PersonDAO personDAO) {

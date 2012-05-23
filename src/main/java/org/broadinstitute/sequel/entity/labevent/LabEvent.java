@@ -59,7 +59,7 @@ import java.util.Set;
 // todo rename to "Event"--everything is an event, including
     // deltas in an aggregation in zamboni
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate"}))
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
 public abstract class LabEvent {
 
     @Id
@@ -73,6 +73,8 @@ public abstract class LabEvent {
     private Person eventOperator;
 
     private Date eventDate;
+
+    private Long disambiguator = 0L;
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "transfersFrom")
     private Set<LabVessel> sourceLabVessels = new HashSet<LabVessel>();
@@ -317,5 +319,13 @@ public abstract class LabEvent {
 
     public void setVesselToSectionTransfers(Set<VesselToSectionTransfer> vesselToSectionTransfers) {
         this.vesselToSectionTransfers = vesselToSectionTransfers;
+    }
+
+    public Long getDisambiguator() {
+        return disambiguator;
+    }
+
+    public void setDisambiguator(Long disambiguator) {
+        this.disambiguator = disambiguator;
     }
 }

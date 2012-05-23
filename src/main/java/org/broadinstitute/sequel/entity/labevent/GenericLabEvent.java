@@ -21,10 +21,11 @@ public class GenericLabEvent extends LabEvent {
     @Enumerated(EnumType.STRING)
     private LabEventType labEventType;
 
-    public GenericLabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Person operator) {
+    public GenericLabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Long disambiguator, Person operator) {
         this.labEventType = labEventType;
         this.setEventDate(eventDate);
         this.setEventLocation(eventLocation);
+        this.setDisambiguator(disambiguator);
         this.setEventOperator(operator);
     }
 
@@ -143,7 +144,6 @@ public class GenericLabEvent extends LabEvent {
         if (getSourceLabVessels().isEmpty() && !this.labEventType.isExpectedEmptySources()) {
             throw new InvalidMolecularStateException("No sources.");
         }
-/*
         for (LabVessel source: getSourceLabVessels()) { // todo jmt remove
             if (!this.labEventType.isExpectedEmptySources()) {
                 if (source.getSampleInstances().isEmpty()) {
@@ -151,7 +151,6 @@ public class GenericLabEvent extends LabEvent {
                 }
             }
         }
-*/
     }
 
     /**
@@ -166,7 +165,6 @@ public class GenericLabEvent extends LabEvent {
         if (getTargetLabVessels().isEmpty()) {
             throw new InvalidMolecularStateException("No destinations!");
         }
-/*
         for (LabVessel target: getTargetLabVessels()) {
             if (!this.labEventType.isExpectedEmptyTargets()) {
                 if (target.getSampleInstances().isEmpty()) {
@@ -174,7 +172,6 @@ public class GenericLabEvent extends LabEvent {
                 }
             }
         }
-*/
     }
 
     @Override
