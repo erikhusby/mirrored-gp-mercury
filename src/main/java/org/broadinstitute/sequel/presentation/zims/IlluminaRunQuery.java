@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.presentation.zims;
 
 import org.apache.commons.collections15.map.LRUMap;
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.sequel.boundary.zims.IlluminaRunService;
 import org.broadinstitute.sequel.entity.zims.ZamboniRead;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
@@ -58,18 +59,18 @@ public class IlluminaRunQuery extends AbstractJsfBean {
 //        addColumn("Library Name", "library", null);
         addColumn("Project", "project", null);
         addColumn("Initiative", "initiative", null);
-        addColumn("Work Request", "workRequest", null);
-        addColumn("Indexing Scheme", null, "library.indexingScheme.name");
+        addColumn("Work Request", "workRequestId", null);
+        addColumn("Indexing Scheme", null, "library.molecularIndexingScheme.name");
         addColumn("Expected Insert Size", "expectedInsertSize", null);
         addColumn("Analysis Type", "analysisType", null);
         addColumn("Reference Sequence", "referenceSequence", null);
         addColumn("Reference Sequence Version", "referenceSequenceVersion", null);
-        addColumn("Sample Alias", "collaboratorSampleName", null);
+        addColumn("Sample Alias", "sampleAlias", null);
         addColumn("Collaborator", "sampleCollaborator", null);
         addColumn("Organism", "organism", null);
         addColumn("Species", "species", null);
         addColumn("Strain", "strain", null);
-        addColumn("LSID", "sampleLSID", null);
+        addColumn("LSID", "lsid", null);
         addColumn("Tissue Type", "tissueType", null);
 //        addColumn("Expected Plasmid", "expectedPlasmid", null);
         addColumn("Aligner", "aligner", null);
@@ -82,11 +83,10 @@ public class IlluminaRunQuery extends AbstractJsfBean {
 //        addColumn("Positive Control?", "isPositiveControl", null);
 //        addColumn("Negative Control?", "isNegativeControl", null);
         addColumn("Weirdness", "weirdness", null);
-        addColumn("Pre-Circularization DNA Size", "precircularizationDnaSize", null);
-//        addColumn("Dev Experiment?", "isPartOfDevExperiment", null);
-        // TODO: dev experiment data?
-        addColumn("GSSR Barcode", "gssrBarcode", null);
-        // TODO: GSSR barcodes?
+        addColumn("Pre-Circularization DNA Size", "preCircularizationDnaSize", null);
+        addColumn("Dev Experiment", null, "library.devExperimentData == null ? null : library.devExperimentData.experiment");
+        addColumn("Dev Experiment Conditions", null, "illuminaRunQuery.join(library.devExperimentData.conditions)");
+        addColumn("GSSR Barcodes", null, "illuminaRunQuery.join(library.gssrBarcodes)");
         addColumn("GSSR Sample Type", "gssrSampleType", null);
         addColumn("Target Lane Coverage", "targetLaneCoverage", null);
 //        addColumn("", "", null);
@@ -101,7 +101,7 @@ public class IlluminaRunQuery extends AbstractJsfBean {
 
     public IlluminaRunQuery() {
         // use an ArrayList because Mojarra doesn't like to deal with the result of Arrays.asList()
-        setColumnNames(new ArrayList<String>(Arrays.asList("Project", "Work Request", "Sample Alias")));
+        setColumnNames(new ArrayList<String>(Arrays.asList("Project", "Work Request", "Sample Alias", "GSSR Barcodes")));
     }
 
     public void query() {
@@ -199,6 +199,10 @@ public class IlluminaRunQuery extends AbstractJsfBean {
         ExpressionFactory expressionFactory = FacesContext.getCurrentInstance().getApplication().getExpressionFactory();
         ValueExpression valueExpression = expressionFactory.createValueExpression(elContext, "#{" + el + "}", String.class);
         return (String) valueExpression.getValue(elContext);
+    }
+
+    public String join(List<String> values) {
+        return StringUtils.join(values, ", ");
     }
 
     public static class ColumnModel implements Serializable {
