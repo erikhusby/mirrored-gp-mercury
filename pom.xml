@@ -930,6 +930,14 @@
             <!-- cannot be test scoped because it is needed for compiling instrumented main sources -->
             <!--<scope>test</scope>-->
         </dependency>
+
+        <dependency>
+            <groupId>com.sun.xml.ws</groupId>
+            <artifactId>jaxws-rt</artifactId>
+            <version>2.2.6</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>
@@ -1010,6 +1018,8 @@
                 -->
 
             </plugins>
+
+
         </pluginManagement>
 
 
@@ -1020,7 +1030,42 @@
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
+                    <compilerArguments>
+                        <endorseddirs>${project.build.directory}/endorsed</endorseddirs>
+                    </compilerArguments>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/endorsed</outputDirectory>
+                            <silent>true</silent>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>javax.xml.bind</groupId>
+                                    <artifactId>jaxb-api</artifactId>
+                                    <version>2.2.4</version>
+                                    <type>jar</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>javax.xml.ws</groupId>
+                                    <artifactId>jaxws-api</artifactId>
+                                    <version>2.2.8</version>
+                                    <type>jar</type>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
 
@@ -1080,25 +1125,73 @@
                 </configuration>
             </plugin>
 
-<!--
+
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <configuration>
-                    <includes>
-                        <include>**/org/broadinstitute/sequel/integration/**/*Test.java</include>
-                    </includes>
-                </configuration>
+                <groupId>org.jvnet.jax-ws-commons</groupId>
+                <artifactId>jaxws-maven-plugin</artifactId>
+                <version>2.2</version>
                 <executions>
                     <execution>
                         <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
+                            <goal>wsimport</goal>
                         </goals>
-                     </execution>
+                    </execution>
                 </executions>
+                <configuration>
+                    <!-- The name of your generated source package -->
+                    <!-- this config seems to push hard to have all the generated WSDL end up in one package, which
+                         may require some hackery to break out for separate top-down generations -->
+                    <packageName>org.broadinstitute.sequel.pmbridge</packageName>
+                    <wsdlDirectory>${basedir}/src/main/wsdl</wsdlDirectory>
+                </configuration>
+
+                <!-- if you want to use a specific version of JAX-WS, you can do so like this -->
+                <dependencies>
+                    <dependency>
+                        <groupId>com.sun.xml.ws</groupId>
+                        <artifactId>jaxws-tools</artifactId>
+                        <version>2.1.7</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>org.jvnet.staxex</groupId>
+                                <artifactId>stax-ex</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.jvnet.staxex</groupId>
+                        <artifactId>stax-ex</artifactId>
+                        <version>1.2</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>javax.xml.stream</groupId>
+                                <artifactId>stax-api</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                </dependencies>
             </plugin>
--->
+
+
+            <!--
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-failsafe-plugin</artifactId>
+                            <configuration>
+                                <includes>
+                                    <include>**/org/broadinstitute/sequel/integration/**/*Test.java</include>
+                                </includes>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <goals>
+                                        <goal>integration-test</goal>
+                                        <goal>verify</goal>
+                                    </goals>
+                                 </execution>
+                            </executions>
+                        </plugin>
+            -->
 
         </plugins>
 
