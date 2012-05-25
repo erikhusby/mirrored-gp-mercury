@@ -10,6 +10,8 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.List;
 
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+
 /**
  * To prepare for sending past production BettaLIMS messages into SequeL, this class creates bait tubes.
  */
@@ -21,7 +23,7 @@ public class CreateBaitsTest extends ContainerTest {
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
-    @Test(enabled = false)
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
     public void createBaits() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "    DISTINCT r.barcode " +

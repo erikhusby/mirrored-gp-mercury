@@ -76,7 +76,7 @@ public class BettalimsMessageResourceTest extends ContainerTest {
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testProcessMessage() {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);

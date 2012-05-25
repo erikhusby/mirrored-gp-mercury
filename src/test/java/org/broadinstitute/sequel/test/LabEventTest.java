@@ -282,7 +282,7 @@ public class LabEventTest {
         // indexes
     }
 
-    @Test
+    @Test(groups = {DATABASE_FREE})
     public void testFluidigm() {
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));

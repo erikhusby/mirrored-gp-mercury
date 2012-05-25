@@ -163,7 +163,7 @@ public class ProjectTest extends Arquillian {
         Workflow workflowInstance = null;
         assertTrue(lcWorkQueue.isEmpty());
         for (LabVessel starter : allStarters) {
-            workflowInstance = projectManagerEnquesLabWork(starter,plan,lcSetParameters,lcWorkQueue);
+            projectManagerEnquesLabWork(starter,plan,lcSetParameters,lcWorkQueue);
         }
 
         assertFalse(lcWorkQueue.isEmpty());
@@ -320,7 +320,6 @@ public class ProjectTest extends Arquillian {
     }
     
     private FIFOLabWorkQueue<LcSetParameters> createLabWorkQueue(JiraService jiraService) {
-        WorkflowEngine workflowEngine = new WorkflowEngine();
         FIFOLabWorkQueue<LcSetParameters> labWorkQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,jiraService);
         return labWorkQueue;
     }
@@ -341,27 +340,15 @@ public class ProjectTest extends Arquillian {
      * @param labWorkQueue
      * @return
      */
-    private Workflow projectManagerEnquesLabWork(LabVessel starter,
+    private void projectManagerEnquesLabWork(LabVessel starter,
                                              ProjectPlan projectPlan,
                                              LabWorkQueueParameters queueParameters,
                                              LabWorkQueue labWorkQueue) {
        
-        WorkflowEngine workflowEngine = labWorkQueue.getWorkflowEngine();
-        Collection<Workflow> workflows = workflowEngine.getActiveWorkflows(starter,null);
+        labWorkQueue.add(starter,queueParameters,projectPlan.getWorkflowDescription(),null);
 
-
-        labWorkQueue.add(starter, queueParameters, projectPlan.getWorkflowDescription(), projectPlan);
-
-        workflows = workflowEngine.getActiveWorkflows(starter,null);
-        assertEquals(1, workflows.size());
-        Workflow workflowInstance = workflows.iterator().next();
-        assertNull(workflowInstance.getState());
-        assertEquals(1,workflowInstance.getAllVessels().size());
-        assertTrue(workflowInstance.getAllVessels().contains(starter));
-        assertEquals(projectPlan,workflowInstance.getProjectPlan());
         assertFalse(labWorkQueue.isEmpty());
         
-        return workflowInstance;
     }
 
 

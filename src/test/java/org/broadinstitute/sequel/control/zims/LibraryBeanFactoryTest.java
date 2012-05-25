@@ -8,6 +8,8 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+
 /**
  * Test the factory
  */
@@ -19,8 +21,9 @@ public class LibraryBeanFactoryTest extends ContainerTest {
     @Inject
     private StaticPlateDAO staticPlateDAO;
 
-    @Test
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void testBuildLibraries() {
+        // todo jmt fix this
         String runName = "TestRun0510120516";
 //        Controller.startCPURecording(true);
 //        LibrariesBean librariesBean = libraryBeanFactory.buildLibraries(runName);

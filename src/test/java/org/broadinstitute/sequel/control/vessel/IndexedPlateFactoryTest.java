@@ -9,6 +9,8 @@ import javax.inject.Inject;
 import java.io.File;
 import java.util.Map;
 
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+
 /**
  * Test creation of plates
  */
@@ -16,7 +18,7 @@ public class IndexedPlateFactoryTest extends ContainerTest {
     @Inject
     private IndexedPlateFactory indexedPlateFactory;
 
-    @Test
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
     public void testParseFile() {
 
         // Not sure about the following

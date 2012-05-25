@@ -13,6 +13,8 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.List;
 
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+
 /**
  * Validate that the traverser finds events correctly
  */
@@ -20,7 +22,7 @@ public class TransferTraverserTest extends ContainerTest{
     @Inject
     private JiraTicketDao jiraTicketDao;
 
-    @Test(enabled = false)
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
     public void testLcSetPaths() {
         boolean finished = false;
         int first = 0;
