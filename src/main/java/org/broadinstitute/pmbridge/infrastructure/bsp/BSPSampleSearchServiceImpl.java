@@ -58,10 +58,10 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             return new ArrayList<String[]>();
 
         List<String[]> ret = new ArrayList<String[]>();
-        
 
-        String urlString = "http://%s:%d/ws/bsp/search/runSampleSearch";
-        urlString = String.format(urlString, connParams.getHostname(), connParams.getPort());
+        String urlString = "http://%s:%d%s";
+        urlString = String.format(urlString, connParams.getHostname(), connParams.getPort(),
+                BSPConnectionParameters.ROOT_BSP_URL);
         
         _logger.info(String.format("url string is '%s'", urlString));
         

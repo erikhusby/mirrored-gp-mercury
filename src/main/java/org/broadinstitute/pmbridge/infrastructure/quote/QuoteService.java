@@ -53,4 +53,6 @@ public interface QuoteService {
      */
     public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType) throws QuoteServerException, QuoteNotFoundException;
 
+
+
 }

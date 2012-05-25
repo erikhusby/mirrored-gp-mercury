@@ -8,9 +8,9 @@ package org.broadinstitute.pmbridge.infrastructure.quote;
  */
 public enum QuotePlatformType {
 
-    BSP("Biological+Samples"),
-    SEQ("DNA+Sequencing"),
-    GAP("Genome+Analysis");
+    BSP("Biological Samples"),
+    SEQ("DNA Sequencing"),
+    GAP("Genome Analysis");
 
     private String platformName;
 

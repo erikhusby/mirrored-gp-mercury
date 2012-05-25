@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 import java.math.BigInteger;
 import java.util.List;
 
-import static org.broadinstitute.pmbridge.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.pmbridge.TestGroups.UNIT;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,7 +34,7 @@ public class SequencingServiceTest {
 
     }
 
-    @Test(groups = DATABASE_FREE)
+    @Test(groups = UNIT)
     public void testGetPlatformPeople() throws Exception {
 
         SquidTopicPortype mockSquidTopicPortype = EasyMock.createMock(SquidTopicPortype.class);

@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 
 import java.util.Date;
 
-import static org.broadinstitute.pmbridge.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.pmbridge.TestGroups.UNIT;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +25,7 @@ public class ResearchProjectTest {
     private static final Logger LOG = Logger.getLogger(ResearchProjectTest.class);
 
 
-    @Test(groups = DATABASE_FREE)
+    @Test(groups = UNIT)
     public void testResearchProject() throws Exception {
 
         Date start = new Date();

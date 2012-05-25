@@ -4,9 +4,10 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broadinstitute.pmbridge.entity.bsp.BSPSample;
+import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.person.Person;
 
-import java.util.Collection;
+import java.util.Set;
 
 /**
  * Abstract base class for experiment request
@@ -19,40 +20,46 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
 
 
     private final ExperimentRequestSummary experimentRequestSummary;
-    private Collection<Person> platformProjectManagers;
-    private Collection<Person> programProjectManagers; // Also defined at the RP level this data would/could override/supplement the values from the RP level
-    private Collection<BSPSample> samples;
+    private Set<Person> platformProjectManagers;
+    private Set<Person> programProjectManagers; // Also defined at the RP level this data would/could override/supplement the values from the RP level
+    private Set<BSPSample> samples;
 
     protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary) {
         this.experimentRequestSummary = experimentRequestSummary;
     }
 
-    protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary,
-                                        Collection<Person> platformProjectManagers,
-                                        Collection<Person> programProjectManagers,
-                                        Collection<BSPSample> samples) {
-        this.experimentRequestSummary = experimentRequestSummary;
-        this.platformProjectManagers = platformProjectManagers;
-        this.programProjectManagers = programProjectManagers;
-        this.samples = samples;
-    }
+//    protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary,
+//                                        Set<Person> platformProjectManagers,
+//                                        Set<Person> programProjectManagers,
+//                                        Set<BSPSample> samples) {
+//        this.experimentRequestSummary = experimentRequestSummary;
+//        this.platformProjectManagers = platformProjectManagers;
+//        this.programProjectManagers = programProjectManagers;
+//        this.samples = samples;
+//    }
 
     //Getters
     public ExperimentRequestSummary getExperimentRequestSummary() {
         return experimentRequestSummary;
     }
 
-    public Collection<Person> getPlatformProjectManagers() {
+    public Set<Person> getPlatformProjectManagers() {
         return platformProjectManagers;
     }
 
-    public Collection<Person> getProgramProjectManagers() {
+    public Set<Person> getProgramProjectManagers() {
         return programProjectManagers;
     }
 
-    public Collection<BSPSample> getSamples() {
+    public Set<BSPSample> getSamples() {
         return samples;
     }
+
+    public Name getTitle() {
+        return getExperimentRequestSummary().getTitle();
+    }
+
+    public abstract void setTitle(final Name title ) ;
 
     public LocalId getLocalId() {
         return this.experimentRequestSummary.getLocalId();
@@ -64,6 +71,22 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
 
     public void setRemoteId(RemoteId remoteId) {
         this.experimentRequestSummary.setRemoteId( remoteId );
+    }
+
+    public Name getExperimentStatus() {
+        return this.experimentRequestSummary.getStatus();
+    }
+
+    public void setSamples(final Set<BSPSample> samples) {
+        this.samples = samples;
+    }
+
+    public void setPlatformProjectManagers(final Set<Person> platformProjectManagers) {
+        this.platformProjectManagers = platformProjectManagers;
+    }
+
+    public void setProgramProjectManagers(final Set<Person> programProjectManagers) {
+        this.programProjectManagers = programProjectManagers;
     }
 
     @Override
@@ -78,6 +101,7 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
+
 
 
 }

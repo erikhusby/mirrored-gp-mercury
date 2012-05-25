@@ -39,7 +39,7 @@ public interface ExperimentRequest {
      * without officially submitting it to the platform.
      * @return
      */
-    ExperimentRequest save();
+    ExperimentRequest cloneRequest();
 
     /**
      * Method to generate a excel copy of the experiment request

@@ -58,7 +58,8 @@ public class MockSequencingServiceImpl implements  SequencingService {
     }
 
     @Override
-    public SeqExperimentRequest submitRequestToPlatform(SeqExperimentRequest seqExperimentRequest) throws ValidationException, SubmissionException {
-        throw new IllegalArgumentException("Not implemented yet.");
+    public SeqExperimentRequest submitRequestToPlatform(final Person programMgr, final SeqExperimentRequest seqExperimentRequest) throws ValidationException, SubmissionException {
+        throw new IllegalStateException("Not Yet Implemented");
+        //return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }

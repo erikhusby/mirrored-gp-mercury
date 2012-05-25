@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 @Alternative
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
@@ -197,4 +198,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
         return prices;
     }
+
+
 }

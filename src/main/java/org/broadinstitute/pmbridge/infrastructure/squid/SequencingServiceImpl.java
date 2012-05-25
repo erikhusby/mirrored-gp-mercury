@@ -4,6 +4,7 @@ import clover.org.jfree.util.Log;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
 import org.broad.squid.services.TopicService.*;
+import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.pmbridge.entity.experiments.RemoteId;
@@ -21,6 +22,8 @@ import javax.xml.ws.Service;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -137,11 +140,23 @@ public class SequencingServiceImpl implements SequencingService {
                 getSquidServicePort().searchPassesByCreator(creator.getUsername()).getSummarizedPassList();
 
         for (SummarizedPass summary : summarizedPassList ) {
-            ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(creator, PlatformType.GSP,
-                    summary.getType().name() );
-            experimentRequestSummary.setRemoteId(new RemoteId(summary.getPassNumber()));
-            experimentRequestSummary.setTitle(new Name(summary.getTitle()));
-            requestSummaries.add(experimentRequestSummary);
+            if ( summary != null ) {
+                Date updatedDate =null;
+                //TODO hmc - Created date not yet available in SummarizedPass, so using updatedDate for now !
+                if ( summary.getLastModified() != null ) {
+                    updatedDate = summary.getLastModified().getTime();
+                }
+                ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(
+                        creator, updatedDate,
+                        PlatformType.GSP,
+                        summary.getType().name() );
+                experimentRequestSummary.setRemoteId(new RemoteId(summary.getPassNumber()));
+                experimentRequestSummary.setTitle(new Name(summary.getTitle()));
+                experimentRequestSummary.setModification(new ChangeEvent(updatedDate, new Person(summary.getUpdatedBy(), RoleType.PROGRAM_PM)));
+                experimentRequestSummary.setStatus( new Name( summary.getStatus().name() ) );
+                experimentRequestSummary.setResearchProjectId( new Long( summary.getResearchProject().trim() ) );
+                requestSummaries.add(experimentRequestSummary);
+            }
         }
         return requestSummaries;
     }
@@ -207,10 +222,14 @@ public class SequencingServiceImpl implements SequencingService {
     }
 
     @Override
-    public SeqExperimentRequest submitRequestToPlatform(SeqExperimentRequest seqExperimentRequest)
+    public SeqExperimentRequest submitRequestToPlatform(Person programMgr, SeqExperimentRequest seqExperimentRequest)
             throws ValidationException, SubmissionException {
 
         validatePlatformRequest(seqExperimentRequest);
+
+        // Set the update information.
+        ChangeEvent updateEvent = new ChangeEvent(new  Date(),  programMgr );
+        seqExperimentRequest.getExperimentRequestSummary().setModification( updateEvent );
 
         //TODO hmc under construction
         seqExperimentRequest.submit(getSquidServicePort());

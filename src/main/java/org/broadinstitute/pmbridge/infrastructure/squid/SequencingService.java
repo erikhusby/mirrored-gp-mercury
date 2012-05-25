@@ -41,6 +41,6 @@ public interface SequencingService {
     void validatePlatformRequest(SeqExperimentRequest seqExperimentRequest) throws ValidationException;
 
     //submit pass
-    SeqExperimentRequest submitRequestToPlatform(SeqExperimentRequest seqExperimentRequest) throws ValidationException, SubmissionException;
+    SeqExperimentRequest submitRequestToPlatform(Person programMgr, SeqExperimentRequest seqExperimentRequest) throws ValidationException, SubmissionException;
 
 }

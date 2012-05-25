@@ -15,8 +15,8 @@ import java.util.regex.Pattern;
 @Default
 public class MockQuoteServiceImpl extends QuoteServiceImpl {
 
-    public static final String QUOTE_TEST_DATA_XML = "quoteTestData.xml";
-    public static final String PRICE_TEST_DATA_XML = "priceTestData.xml";
+    public static final String QUOTE_TEST_DATA_XML = "src/test/data/quote/quoteTestData.xml";
+    public static final String PRICE_TEST_DATA_XML = "src/test/data/quote/priceTestData.xml";
     Quotes quotes;
     PriceList prices;
 

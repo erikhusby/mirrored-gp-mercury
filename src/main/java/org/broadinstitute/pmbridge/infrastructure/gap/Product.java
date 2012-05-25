@@ -18,6 +18,11 @@ public class Product {
         this.id = id;
     }
 
+    public Product(final String name, final String displayName, final String id) {
+        this(name, id);
+        this.displayName = displayName;
+    }
+
     @XmlAttribute(name="id", required=true)
     public String getId() {
         return id;

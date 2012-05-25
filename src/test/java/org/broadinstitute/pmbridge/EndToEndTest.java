@@ -5,17 +5,20 @@ import org.broadinstitute.pmbridge.boundary.projects.ResearchProjectResource;
 import org.broadinstitute.pmbridge.control.dao.ResearchProjectDAO;
 import org.broadinstitute.pmbridge.entity.bsp.BSPCollection;
 import org.broadinstitute.pmbridge.entity.common.Name;
+import org.broadinstitute.pmbridge.entity.common.QuoteId;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequest;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.gap.GapExperimentRequest;
 import org.broadinstitute.pmbridge.entity.experiments.seq.SeqExperimentRequest;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
+import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.pmbridge.infrastructure.quote.Funding;
-import org.broadinstitute.pmbridge.infrastructure.quote.Quote;
-import org.broadinstitute.pmbridge.infrastructure.quote.QuoteService;
+import org.broadinstitute.pmbridge.infrastructure.gap.GenotypingService;
+import org.broadinstitute.pmbridge.infrastructure.gap.Product;
+import org.broadinstitute.pmbridge.infrastructure.quote.*;
 import org.broadinstitute.pmbridge.infrastructure.squid.SequencingService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -27,9 +30,10 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+
+import static org.broadinstitute.pmbridge.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Created by IntelliJ IDEA.
@@ -57,9 +61,12 @@ public class EndToEndTest extends Arquillian {
         }
     }
 
-    ResearchProject myResearchProject = null;
 
     @Inject private SequencingService sequencingService;
+
+
+    @Inject private GenotypingService genotypingService;
+
 
     @Deployment
     public static WebArchive buildBridgeWar() {
@@ -71,59 +78,17 @@ public class EndToEndTest extends Arquillian {
     private void init() throws MalformedURLException {
     }
 
-    @Test
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void testCreateResearchProjectWithSeqExperiment() throws Exception {
-        Date start = new Date();
 
         // A user (logs in) and gets created.
         Person programMgr = new Person("shefler@broad", "Erica", "Shefler",  "1", RoleType.PROGRAM_PM );
 
-        // Instantiates a research project object
-        myResearchProject = new ResearchProject(programMgr,
-                new Name("MyResearchProject"), "To study stuff.");
-
-        //COHORTS - Gets all cohorts from BSP for this program PM
-        List<BSPCollection> cohorts = bspService.getCohortsByUser(programMgr);
-        for ( BSPCollection bspCollection : cohorts) {
-            System.out.println("Found BSP collection : " + bspCollection.name);
-        }
-
-        // User chooses first BSP collection/cohort for test purposes.
-        BSPCollection selectedSampleCollection = cohorts.get(0);
-
-        // Add it to the research project.
-        myResearchProject.addBSPCollection( selectedSampleCollection );
-        // Check that it's been added.
-        Assert.assertEquals( myResearchProject.getSampleCohorts().size(), 1 );
-
-        //FUNDING - Get some funding sources and associated quotes (from a local file for test purposes).
-        Funding rpFunding = quoteService.getAllFundingSources().iterator().next();
-        myResearchProject.addFunding( rpFunding );
+        ResearchProject myResearchProject = createTestResearchProject(programMgr);
 
         Funding funding = myResearchProject.getFundings().iterator().next();
         System.out.println("Associated funding source : " + funding.getGrantDescription() + " " +
                 funding.getGrantNumber());
-
-        //IRBs - Add a couple of IRBs to the RP
-        myResearchProject.addIrbNumber("irb0123");
-        myResearchProject.addIrbNumber("irb0456");
-        myResearchProject.setIrbNotes("There are two IRBs. One for this and the other for that.");
-
-        //SCIENTISTS - Add a couple of scientists to the Research Project.
-        // One manually created and added
-        Person scientist = new Person("eric@broadinstitute.org", "Adam", "Bass", "2", RoleType.BROAD_SCIENTIST );
-        myResearchProject.addSponsoringScientist( scientist );
-        // & one selected from the list made available in Squid.
-        List<Person> squidPeople =  sequencingService.getPlatformPeople();
-        // Pick the first.
-        Person squidScientist = squidPeople.get(0);
-        myResearchProject.addSponsoringScientist( squidScientist );
-
-        // Save the Research Project
-        //TODO hmc - implement a persistence service for Research Project,just use DAO for now.
-        myResearchProject.setId( 381L );
-        researchProjectDAO.saveProject( myResearchProject);
-
 
         //SEQUENCING EXPERIMENT REQUEST - get all summarized passes for the program PM
         List<ExperimentRequestSummary> experimentRequestSummaries = null;
@@ -136,6 +101,7 @@ public class EndToEndTest extends Arquillian {
         // Retrieve the corresponding pass experiment request for this experiment summary from SQUID.
         SeqExperimentRequest seqExperimentRequest = sequencingService.getPlatformRequest(firstSeqExperimentRequestSummary);
 
+        System.out.println( "The Sequencing technology is : " + seqExperimentRequest.getSeqTechnology().getDisplayName() ) ;
 
         // Associate this sequencing experiment request with the above created new Research Project
         seqExperimentRequest.associateWithResearchProject(myResearchProject);
@@ -151,13 +117,13 @@ public class EndToEndTest extends Arquillian {
         Quote seqQuote = quoteService.getQuotesInFundingSource(funding).iterator().next();
 
         // Set the quote Alpha numeric Id with the seq experiment request.
-        seqExperimentRequest.setSeqQuoteId( seqQuote.getAlphanumericId() );
+        seqExperimentRequest.setSeqQuoteId( new QuoteId( seqQuote.getAlphanumericId() ) );
 
         // Get second quote from the fundingSource that was selected above. This will be the Bsp quote.
         Quote bspQuote = quoteService.getQuotesInFundingSource(funding).iterator().next();
 
         // Set the quote Alpha numeric Id with the seq experiment request for BSP
-        seqExperimentRequest.setBspQuoteId( bspQuote.getAlphanumericId() );
+        seqExperimentRequest.setBspQuoteId( new QuoteId (bspQuote.getAlphanumericId()) );
 
         // Update the synopsis with a human readable timestamp  just for test purposes
         Date updateDate = new Date();
@@ -166,7 +132,8 @@ public class EndToEndTest extends Arquillian {
 
 
         // Get the samples for this cohort.
-        List < String > sampleList = bspService.runSampleSearchByCohort(selectedSampleCollection);
+        BSPCollection bspCollection = myResearchProject.getSampleCohorts().iterator().next();
+        List < String > sampleList = bspService.runSampleSearchByCohort(bspCollection);
 
         // Get sample meta data for all of these samples
         List<String[]> sampleMetaData = bspService.runSampleSearch(sampleList, DefaultMetaDataColumns);
@@ -176,7 +143,7 @@ public class EndToEndTest extends Arquillian {
         sequencingService.validatePlatformRequest(seqExperimentRequest);
 
         //Now submit the experiment request to Squid.
-        seqExperimentRequest = sequencingService.submitRequestToPlatform(seqExperimentRequest);
+        seqExperimentRequest = sequencingService.submitRequestToPlatform(programMgr, seqExperimentRequest);
 
 
 
@@ -190,67 +157,132 @@ public class EndToEndTest extends Arquillian {
 
     }
 
+    @Test(groups = {EXTERNAL_INTEGRATION})
+    public void testSaveAndRetrieveRequestToGap() throws Exception {
+        // A user (logs in) and gets created.
+//        Person programMgr = new Person("shefler@broad", "Erica", "Shefler",  "1", RoleType.PROGRAM_PM );
+        Person programMgr = new Person("pmbridge", RoleType.PROGRAM_PM);
 
-    @Test
-    public void createGapExperimentRequest() throws Exception {
+        ResearchProject myResearchProject = createTestResearchProject(programMgr);
 
-        //TODO -
-//        Date stop = new Date();
-//        FundingSource fundingSource1 = new FundingSource(new GrantId("100"), new Name("SmallGrant"), start, stop,
-//                new Name("NIH") );
-//        FundingSource fundingSource2 = new FundingSource(new GrantId("200"), new Name("OtherGrant"), start, stop,
-//                new Name("NHGRI") );
+        ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary  (
+                new Person("mccrory", RoleType.PROGRAM_PM),
+                new Date(),
+                PlatformType.GAP,
+                ""
+        );
 
-//        // Create a GAP Experiment Request
-//        Person platformManager1 = new Person("Rob", "Onofrio", "onofrio@broad", "2", RoleType.PLATFORM_PM );
-//        Person platformManager2 = new Person("Maeghan", "harden", "harden@broad", "3", RoleType.PLATFORM_PM );
-//        List gapPlatformManagers =  new ArrayList<Person>();
-//        gapPlatformManagers.add(platformManager1);
-//        gapPlatformManagers.add(platformManager2);
-//
-//        List gapProgramManagers =  new ArrayList<Person>();
-//        gapProgramManagers.add(programMgr);
+        experimentRequestSummary.setStatus( new Name("DRAFT"));
+        long id = System.currentTimeMillis();
+        experimentRequestSummary.setTitle( new Name ("FunctionalTest_ExpRequest_" + id) );
+        experimentRequestSummary.setResearchProjectId( myResearchProject.getId() );
 
-        //TODO
-//        ExperimentPlan expPlan = new ExperimentPlan();
-//        expPlan.setProjectName();
-        /*
-               GapExperimentRequest gapExperimentRequest = new GapExperimentRequest(
-                       new RemoteId("GAP"), platformManagers, programManagers, null, new QuoteId("BSP-123"), new QuoteId("GAN-123") );
+        GapExperimentRequest gapExperimentRequest = new GapExperimentRequest(experimentRequestSummary);
+        FundingLevel fundLevel = new FundingLevel("50", new Funding("ABC", "Test Funding Description"));
+        Quote quoteBsp = new Quote("BSP2A3", new QuoteFunding(fundLevel), ApprovalStatus.APPROVED );
+        quoteBsp.setId("2955");
+        gapExperimentRequest.setBspQuote(quoteBsp);
 
 
-               researchProject.addExperimentRequest(gapExperimentRequest);
+        gapExperimentRequest.setTechnologyProduct(new Product("SeqChip", "T1000 Chip", "226"));
+        gapExperimentRequest.setGapGroupName("GapGroup");
+        gapExperimentRequest.setGapProjectName("GapProject");
+        Quote quoteGap = new Quote("MMM3W7", new QuoteFunding(fundLevel), ApprovalStatus.APPROVED );
+        quoteGap.setId("5047");
+        gapExperimentRequest.setGapQuote(quoteGap);
 
+        // Associate this sequencing experiment request with the above created new Research Project
+        gapExperimentRequest.associateWithResearchProject(myResearchProject);
 
-               // Retrieve a Sequencing Experiment Request
-               final String PASS_NUMBER = "PASS-5447";
-               final String PASS_TITLE = "1000 Genomes Seq Based Validation Using Custom Bait (Plate 2)";
+        {
+        // Get the first ( & only) experiment that is associated with the research project and display the association.
+        ExperimentRequest experimentRequest = myResearchProject.getExperimentRequests().iterator().next();
+        System.out.println( experimentRequest.getExperimentRequestSummary().getTitle().name + " refers to " +
+                experimentRequest.getExperimentRequestSummary().getLocalId().value + " and is currently associated with " +
+                " research project named " + myResearchProject.getTitle().name  + " id : " + myResearchProject.getId().longValue()  );
+        }
 
+        GapExperimentRequest submittedExperimentRequest = genotypingService.saveExperimentRequest(programMgr, gapExperimentRequest);
+        Assert.assertNotNull( submittedExperimentRequest );
 
-               //Get a PASS from Squid.
-               AbstractPass pass = squidServicePort.loadPassByNumber(PASS_NUMBER);
+        // Now retrieve the saved experiment by Id.
+        GapExperimentRequest savedExperimentRequest = genotypingService.getPlatformRequest(submittedExperimentRequest.getExperimentRequestSummary());
 
+        Assert.assertEquals(savedExperimentRequest.getExperimentRequestSummary().getResearchProjectId(),  myResearchProject.getId() );
+        Assert.assertEquals( savedExperimentRequest.getExperimentRequestSummary().getStatus().name, experimentRequestSummary.getStatus().name );
+        Assert.assertTrue(savedExperimentRequest.getTitle().name.startsWith("FunctionalTest_ExpRequest_"));
+        Assert.assertEquals(savedExperimentRequest.getExperimentRequestSummary().getCreation().person.getUsername(),
+                experimentRequestSummary.getCreation().person.getUsername());
 
-               // Verify that the the tile and number of the retrieved Pass is what we expect.
-               Assert.assertEquals(pass.getProjectInformation().getTitle(), PASS_TITLE );
-               Assert.assertEquals(pass.getProjectInformation().getPassNumber(), PASS_NUMBER);
+        Assert.assertNotNull(savedExperimentRequest.getRemoteId());
+        Assert.assertNotNull(savedExperimentRequest.getRemoteId().value.startsWith("GXP-"));
 
+        Assert.assertEquals( savedExperimentRequest.getBspQuote().getAlphanumericId(), quoteBsp.getAlphanumericId() );
+        Assert.assertEquals( savedExperimentRequest.getGapQuote().getAlphanumericId(), quoteGap.getAlphanumericId() );
 
+        // has not been submitted to plaform yet so no platform managers assigned.
+        Assert.assertNull( savedExperimentRequest.getPlatformProjectManagers() );
 
-               SeqExperimentRequest passExperimentRequest = new SeqExperimentRequest(programMgr, new ExperimentId("PASS-5555"),
-                       new Name("aPassTitle"),
-                       new RemoteId("SEQ"), platformManagers, programManagers, null, new QuoteId("BSP-123"), new QuoteId("GAN-123") );
+        Assert.assertEquals( savedExperimentRequest.getProgramProjectManagers().iterator().next().getUsername(),
+                programMgr.getUsername() );
 
-               passExperimentRequest.setPass(pass);
-
-               researchProject.addExperimentRequest(passExperimentRequest);
-
-               Assert.assertEquals(researchProject.getExperimentRequests().size(), 2 );
-
-               System.out.println(researchProject.toString());
-        */
+        Assert.assertEquals( savedExperimentRequest.getGapGroupName(), gapExperimentRequest.getGapGroupName() );
+        Assert.assertEquals( savedExperimentRequest.getGapProjectName(), gapExperimentRequest.getGapProjectName() );
+        Assert.assertEquals( savedExperimentRequest.getTechnologyProduct().getId(), gapExperimentRequest.getTechnologyProduct().getId() );
 
     }
+
+
+    private ResearchProject createTestResearchProject( Person programMgr ) throws QuoteServerException, QuoteNotFoundException {
+        Date start = new Date();
+        ResearchProject aResearchProject = null;
+
+
+        // Instantiates a research project object
+        aResearchProject = new ResearchProject(programMgr,
+                new Name("MyResearchProject"), "To study stuff.");
+
+        //COHORTS - Gets all cohorts from BSP for this program PM
+        List<BSPCollection> cohorts = bspService.getCohortsByUser(programMgr);
+        for ( BSPCollection bspCollection : cohorts) {
+            System.out.println("Found BSP collection : " + bspCollection.name);
+        }
+
+        // User chooses first BSP collection/cohort for test purposes.
+        BSPCollection selectedSampleCollection = cohorts.get(0);
+
+        // Add it to the research project.
+        aResearchProject.addBSPCollection(selectedSampleCollection);
+        // Check that it's been added.
+        Assert.assertEquals(aResearchProject.getSampleCohorts().size(), 1);
+
+        //FUNDING - Get some funding sources and associated quotes (from a local file for test purposes).
+        Funding rpFunding = quoteService.getAllFundingSources().iterator().next();
+        aResearchProject.addFunding( rpFunding );
+
+        //IRBs - Add a couple of IRBs to the RP
+        aResearchProject.addIrbNumber("irb0123");
+        aResearchProject.addIrbNumber("irb0456");
+        aResearchProject.setIrbNotes("There are two IRBs. One for this and the other for that.");
+
+        //SCIENTISTS - Add a couple of scientists to the Research Project.
+        // One manually created and added
+        Person scientist = new Person("eric@broadinstitute.org", "Adam", "Bass", "2", RoleType.BROAD_SCIENTIST );
+        aResearchProject.addSponsoringScientist( scientist );
+        // & one selected from the list made available in Squid.
+        List<Person> squidPeople =  sequencingService.getPlatformPeople();
+        // Pick the first.
+        Person squidScientist = squidPeople.get(0);
+        aResearchProject.addSponsoringScientist( squidScientist );
+
+        // Save the Research Project
+        //TODO hmc - implement a persistence service for Research Project,just use DAO for now.
+        aResearchProject.setId(381L);
+        researchProjectDAO.saveProject( aResearchProject);
+
+        return aResearchProject;
+    }
+
 
     @Test
     public void testGetPasses() throws Exception {

@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.broadinstitute.pmbridge.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.pmbridge.TestGroups.UNIT;
 
 /**
  * From Sequel
@@ -20,7 +20,7 @@ import static org.broadinstitute.pmbridge.TestGroups.DATABASE_FREE;
  */
 public class DBFreeBSPSampleTest {
 
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {UNIT})
     public void test_patient_id_mock() {
         List<String[]> resultColumns = new ArrayList<String[]>(1);
         resultColumns.add(new String[] {"1","2","3","4","5","6","7"});

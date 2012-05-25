@@ -39,9 +39,8 @@ public class ResearchProjectResource {
             throw new RuntimeException("ResearchProject Id is invalid.");
         }
 
-        // Convert to number
-        String numericRegex = "[\\d]+";
-        boolean isNumeric = Pattern.matches(numericRegex, researchProjectId);
+        // check is it a number
+        boolean isNumeric = Pattern.matches("[\\d]+", researchProjectId);
         if (! isNumeric ) {
             throw new RuntimeException("ResearchProject Id is not numeric.");
         }

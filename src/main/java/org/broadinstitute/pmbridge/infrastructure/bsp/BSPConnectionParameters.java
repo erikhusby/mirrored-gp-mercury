@@ -4,7 +4,8 @@ import org.broadinstitute.pmbridge.control.UsernameAndPassword;
 
 public interface BSPConnectionParameters extends UsernameAndPassword {
 
-    
+    static final String ROOT_BSP_URL = "/ws/bsp/search/runSampleSearch";
+
     public String getSuperuserLogin();
 
 

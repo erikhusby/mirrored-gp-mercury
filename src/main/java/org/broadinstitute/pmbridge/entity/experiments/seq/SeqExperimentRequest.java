@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.common.Name;
+import org.broadinstitute.pmbridge.entity.common.QuoteId;
 import org.broadinstitute.pmbridge.entity.experiments.AbstractExperimentRequest;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequest;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
@@ -129,18 +130,15 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         getConcretePass().setProjectInformation(projectInformation);
     }
 
-    public Name getTitle() {
-        return new Name( getOrCreateProjectInformation().getTitle() );
-    }
-
+    @Override
     public void setTitle(final Name title ) {
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         projectInformation.setTitle( getExperimentRequestSummary().getTitle().name );
         getConcretePass().setProjectInformation(projectInformation);
     }
 
-    protected List<Person> getOrCreatePersonsFromPass(SquidPersonList squidPersonList, RoleType roleType) {
-        List<Person> people = null;
+    protected Set<Person> getOrCreatePersonsFromPass(SquidPersonList squidPersonList, RoleType roleType) {
+        Set<Person> people = new HashSet<Person>();
         for (SquidPerson squidPerson : squidPersonList.getSquidPerson() ) {
             Person person = new Person(
                     squidPerson.getLogin(),
@@ -154,7 +152,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
 
-    public List<Person> getSponsoringScientists() {
+    public Set<Person> getSponsoringScientists() {
         return getOrCreatePersonsFromPass( getOrCreateSponsoringScientists(), RoleType.BROAD_SCIENTIST );
     }
 
@@ -202,10 +200,6 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         return result;
     }
 
-    @Override
-    public RemoteId getRemoteId() {
-        return super.getExperimentRequestSummary().getRemoteId();
-    }
 
     @Override
     public void setRemoteId(final RemoteId remoteId) {
@@ -232,42 +226,42 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
     @Override
-    public Collection<Person> getPlatformProjectManagers() {
+    public Set<Person> getPlatformProjectManagers() {
         // get the platform project managers list from the abstract pass the was received from squid.
         return getOrCreatePersonsFromPass( getOrCreatePlatformProjectManagers(), RoleType.PLATFORM_PM );
     }
 
-    public List<String> getIrbNumbers() {
-        List<String> result = new ArrayList<String>();
-
-        String irbNums = getOrCreateProjectInformation().getIrb();
-        if ( StringUtils.isNotBlank( irbNums ) ) {
-            StringTokenizer stringTokenizer = new StringTokenizer(irbNums);
-            while ( stringTokenizer.hasMoreTokens()) {
-                result.add( stringTokenizer.nextToken() );
-            }
-        }
-        return result;
-    }
-
-    public void setIrbNumbers(final List<String> irbNumbers) {
-        StringBuilder stringBuilder = new StringBuilder("");
-        if ( irbNumbers != null ) {
-            int i = 0;
-            for ( String irbNumber : irbNumbers) {
-                if ( i > 0 ) {
-                    stringBuilder.append(", ");
-                }
-                stringBuilder.append(irbNumber);
-                i++;
-            }
-            getOrCreateProjectInformation().setIrb( stringBuilder.toString() );
-        }
-    }
+//    public List<String> getIrbNumbers() {
+//        List<String> result = new ArrayList<String>();
+//
+//        String irbNums = getOrCreateProjectInformation().getIrb();
+//        if ( StringUtils.isNotBlank( irbNums ) ) {
+//            StringTokenizer stringTokenizer = new StringTokenizer(irbNums);
+//            while ( stringTokenizer.hasMoreTokens()) {
+//                result.add( stringTokenizer.nextToken() );
+//            }
+//        }
+//        return result;
+//    }
+//
+//    public void setIrbNumbers(final List<String> irbNumbers) {
+//        StringBuilder stringBuilder = new StringBuilder("");
+//        if ( irbNumbers != null ) {
+//            int i = 0;
+//            for ( String irbNumber : irbNumbers) {
+//                if ( i > 0 ) {
+//                    stringBuilder.append(", ");
+//                }
+//                stringBuilder.append(irbNumber);
+//                i++;
+//            }
+//            getOrCreateProjectInformation().setIrb( stringBuilder.toString() );
+//        }
+//    }
 
     @Override
-    public Collection<Person> getProgramProjectManagers() {
-        List<Person> result = new ArrayList<Person>();
+    public Set<Person> getProgramProjectManagers() {
+        Set<Person> result = new HashSet<Person>();
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         String programPms = projectInformation.getProgramProjectManagers();
         if ( StringUtils.isNotBlank(programPms) ) {
@@ -327,18 +321,18 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
 
-    public String getSeqQuoteId() {
-        return getOrCreateFundingInformation().getSequencingQuoteID();
+    public QuoteId getSeqQuoteId() {
+        return new QuoteId(getOrCreateFundingInformation().getSequencingQuoteID());
     }
-    public void setSeqQuoteId(final String seqQuoteId) {
-        getOrCreateFundingInformation().setSequencingQuoteID(seqQuoteId);
+    public void setSeqQuoteId(final QuoteId seqQuoteId) {
+        getOrCreateFundingInformation().setSequencingQuoteID(seqQuoteId.value);
     }
 
-    public String getBspQuoteId() {
-        return getOrCreateFundingInformation().getBspPlatingQuoteID();
+    public QuoteId getBspQuoteId() {
+        return new QuoteId(getOrCreateFundingInformation().getBspPlatingQuoteID());
     }
-    public void setBspQuoteId(final String bspQuoteId) {
-        getOrCreateFundingInformation().setBspPlatingQuoteID(bspQuoteId);
+    public void setBspQuoteId(final QuoteId bspQuoteId) {
+        getOrCreateFundingInformation().setBspPlatingQuoteID(bspQuoteId.value);
     }
 
 
@@ -406,7 +400,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
     @Override
-    public ExperimentRequest save() {
+    public ExperimentRequest cloneRequest() {
         throw new IllegalStateException("Not Yet Implemented");
         //return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
@@ -416,15 +410,6 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         throw new IllegalStateException("Not Yet Implemented");
         //return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
-
-    public Name getExperimentStatus() {
-         Name state = ExperimentRequestSummary.DRAFT_STATUS;
-         if (  getConcretePass().getStatus() != null) {
-             state = new Name( getConcretePass().getStatus().value() );
-         }
-         return state;
-     }
-
 
     public PMBPassType getPassType() {
         return passType;

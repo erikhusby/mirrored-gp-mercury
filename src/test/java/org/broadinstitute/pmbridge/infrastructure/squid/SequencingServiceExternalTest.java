@@ -50,7 +50,9 @@ public class SequencingServiceExternalTest extends Arquillian {
 
         List<OrganismName> aList = sequencingService.getOrganisms();
         assertNotNull(aList);
-        assertNotNull(aList.get(0));
+        OrganismName organismName = aList.get(0);
+        assertNotNull(organismName);
+        assertNotNull(organismName.getCommonName());
 
     }
 
@@ -58,20 +60,27 @@ public class SequencingServiceExternalTest extends Arquillian {
     public void testGetBaitSets() throws Exception {
         List<BaitSetName> aList = sequencingService.getBaitSets();
         assertNotNull(aList);
-        assertNotNull(aList.get(0));
+        BaitSetName baitSetName = aList.get(0);
+        assertNotNull(baitSetName.name);
     }
 
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void testGetReferenceSequences() throws Exception {
         List<ReferenceSequenceName> aList = sequencingService.getReferenceSequences();
         assertNotNull(aList);
-        assertNotNull(aList.get(0));
+        ReferenceSequenceName referenceSequenceName = aList.get(0);
+        assertNotNull(referenceSequenceName.name);
+        assertNotNull(referenceSequenceName.getId());
     }
 
     @Test
     public void testGetRequestSummariesByCreator() throws Exception {
-        List<ExperimentRequestSummary> aList = sequencingService.getRequestSummariesByCreator(new Person("mccrory", RoleType.PROGRAM_PM));
+        List<ExperimentRequestSummary> aList = sequencingService.getRequestSummariesByCreator(new Person("pmbridge", RoleType.PROGRAM_PM));
         assertNotNull(aList);
+        ExperimentRequestSummary experimentRequestSummary = aList.get(0);
+        assertNotNull(experimentRequestSummary.getTitle());
+        assertNotNull(experimentRequestSummary.getRemoteId().value);
+        assertNotNull(experimentRequestSummary.getStatus().name);
     }
 
 //    @Test
