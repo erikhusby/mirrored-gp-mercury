@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 import com.sun.jersey.api.client.Client;
-import org.broadinstitute.sequel.BettaLimsMessageFactory;
+import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.boundary.vessel.RackBean;
 import org.broadinstitute.sequel.boundary.vessel.TubeBean;
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
@@ -10,7 +10,7 @@ import org.broadinstitute.sequel.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.sequel.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventType;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;

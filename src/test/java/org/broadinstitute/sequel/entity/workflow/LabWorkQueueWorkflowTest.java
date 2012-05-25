@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.entity.workflow;
 
-import org.broadinstitute.sequel.BettaLimsMessageFactory;
+import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;

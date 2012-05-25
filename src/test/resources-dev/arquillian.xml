@@ -4,6 +4,15 @@
     xsi:schemaLocation="http://jboss.org/schema/arquillian
     http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
 
+    <container qualifier="remote-glassfish" default="true">
+        <configuration>
+            <property name="adminHost">localhost</property>
+            <!--<property name="adminHttps">true</property>-->
+            <!--<property name="adminUser">admin</property>-->
+            <!--<property name="adminPassword">admin</property>-->
+        </configuration>
+    </container>
+
     <!--  Uncomment to have test archives exported to the file system for inspection  -->
     <!--
     <engine>
@@ -34,6 +43,16 @@
     <container qualifier="dev" default="true">
         <configuration>
             <property name="jbossHome">target/jboss-as-${jboss.version:7.1.0.Final}</property>
+        </configuration>
+    </container>
+-->
+<!--
+    <container qualifier="remote-glassfish" default="true">
+        <configuration>
+            <property name="adminHost">seq01.broadinstitute.org</property>
+            <property name="adminHttps">true</property>
+            <property name="adminUser">admin</property>
+            <property name="adminPassword">sm@ck99</property>
         </configuration>
     </container>
 -->

@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;

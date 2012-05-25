@@ -7,8 +7,8 @@ import org.broadinstitute.sequel.entity.run.RunCartridge;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.StripTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
-import org.broadinstitute.sequel.entity.zims.LibrariesBean;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
+import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ public class LibraryBeanFactory {
     @Inject
     private IlluminaSequencingRunDao illuminaSequencingRunDao;
 
-    public LibrariesBean buildLibraries(String runName) {
+    public ZimsIlluminaRun buildLibraries(String runName) {
         List<LibraryBean> libraries = new ArrayList<LibraryBean>();
         IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunDao.findByRunName(runName);
         RunCartridge runCartridge = illuminaSequencingRun.getSampleCartridge().iterator().next();
@@ -72,6 +72,7 @@ public class LibraryBeanFactory {
 //                null/*String gssrSampleType*/,
 //                null/*Short targetLaneCoverage*/));
 
-        return new LibrariesBean(libraries);
+        // todo jmt fix this
+        return null;
     }
 }

@@ -1,13 +1,13 @@
 package org.broadinstitute.sequel.entity.vessel;
 
-import org.broadinstitute.sequel.LabEventTest;
+import org.broadinstitute.sequel.test.LabEventTest;
 import org.broadinstitute.sequel.control.dao.project.JiraTicketDao;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;

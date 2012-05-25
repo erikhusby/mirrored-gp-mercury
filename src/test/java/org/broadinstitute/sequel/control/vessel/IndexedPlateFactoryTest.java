@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.control.vessel;
 
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

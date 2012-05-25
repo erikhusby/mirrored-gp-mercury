@@ -3,7 +3,7 @@ package org.broadinstitute.sequel.entity.vessel;
 import com.sun.jersey.api.client.Client;
 import org.broadinstitute.sequel.boundary.vessel.RackBean;
 import org.broadinstitute.sequel.boundary.vessel.TubeBean;
-import org.broadinstitute.sequel.test.ContainerTest;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
