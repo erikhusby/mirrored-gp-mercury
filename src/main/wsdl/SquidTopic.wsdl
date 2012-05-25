@@ -488,11 +488,9 @@
 
     <wsdl:service name="SquidTopicService">
 
-        <!--
         <wsdl:port binding="sqtopic:SquidTopicImpl"
                    name="SquidTopicService">
-            <wsdlsoap:address location="/PMBridge"/>
+            <wsdlsoap:address location="http://localhost:8080/SequeL/PMBridge"/>
         </wsdl:port>
-        -->
     </wsdl:service>
 </wsdl:definitions>
