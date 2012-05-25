@@ -1,17 +1,30 @@
 package org.broadinstitute.sequel.entity.queue;
 
 import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import java.util.Collection;
+import java.util.Set;
 
-public interface LabWorkQueue<T extends LabWorkQueueParameters> {
+@Entity
+public abstract class LabWorkQueue<T extends LabWorkQueueParameters> {
 
-    public LabWorkQueueName getQueueName();
+    @Id
+    @SequenceGenerator(name = "SEQ_LAB_WORK_QUEUE", sequenceName = "SEQ_LAB_WORK_QUEUE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_WORK_QUEUE")
+    private Long labWorkQueueId;
+
+    public abstract LabWorkQueueName getQueueName();
 
     /**
      * Adds a sample to this queue.  Adding a sample
@@ -19,23 +32,28 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
      * visible to lab staff.
      *
      *
-     * @param vessel
+     * @param vessel The vessel, complete with a functioning
+     *               {@link org.broadinstitute.sequel.entity.vessel.LabVessel#getSampleInstances()}
+     *               that detail the {@link org.broadinstitute.sequel.entity.project.ProjectPlan}
+     *               relationships via {@link org.broadinstitute.sequel.entity.sample.SampleInstance#getAllProjectPlans()}
+     *               and {@link org.broadinstitute.sequel.entity.sample.SampleInstance#getSingleProjectPlan()}
      * @param workflowParameters the parameters, also considered
      *                   the "bucket" for the queue.
      * @return a response object, which may embody error information
      * like "Hey, I can't put this into the queue because the project
      * linked to this sample doesn't have the read length set".
      */
-    public LabWorkQueueResponse add(LabVessel vessel,
+    public abstract LabWorkQueueResponse add(LabVessel vessel,
                                     T workflowParameters,
-                                    SequencingPlanDetail sequencingPlan);
+                                    WorkflowDescription workflowDescription,
+                                    ProjectPlan projectPlanOverride);
 
     /**
      * What's the MolecularStateRange required for
      * entry into this queue?
      * @return
      */
-    public Collection<MolecularStateRange> getMolecularStateRequirements();
+    public abstract Collection<MolecularStateRange> getMolecularStateRequirements();
 
     /**
      * Remove the tangible from the given bucket.
@@ -44,13 +62,23 @@ public interface LabWorkQueue<T extends LabWorkQueueParameters> {
      * @param workflowParameters
      * @return
      */
-    public LabWorkQueueResponse startWork(Collection<LabVessel> vessels,
+    public abstract LabWorkQueueResponse startWork(Collection<LabVessel> vessels,
                                           T workflowParameters,
                                           WorkflowDescription workflow,
                                           Person user);
 
-    public boolean isEmpty();
-    
-    public WorkflowEngine getWorkflowEngine();
+    public abstract boolean isEmpty();
+
+    public abstract void remove(WorkQueueEntry workQueueEntry);
+
+    /**
+     * Returns any entires this queue has for the given
+     * workflow and vessel.
+     * @param workflow
+     * @param vessel
+     * @return
+     */
+    public abstract Collection<WorkQueueEntry<T>> getEntriesForWorkflow(WorkflowDescription workflow,
+                                                            LabVessel vessel);
 
 }

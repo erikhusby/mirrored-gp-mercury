@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
-public class SageUnloadingEvent extends AbstractLabEvent {
+public class SageUnloadingEvent extends LabEvent {
 
     
     @Override

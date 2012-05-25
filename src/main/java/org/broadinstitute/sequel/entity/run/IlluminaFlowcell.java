@@ -9,30 +9,62 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.vessel.VesselContainer;
+import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
-public class IlluminaFlowcell extends AbstractRunCartridge {
+@NamedQueries({
+        @NamedQuery(
+                name = "IlluminaFlowcell.findByBarcode",
+                query = "select f from IlluminaFlowcell f where label = :barcode"
+        )
+})
+@Entity
+public class IlluminaFlowcell extends AbstractRunCartridge implements VesselContainerEmbedder<RunChamber> {
 
-    private Collection<RunChamber> runChambers = new ArrayList<RunChamber>();
-
+    // todo jmt fix this
+    @Transient
     private IlluminaRunConfiguration runConfiguration;
 
+    @Enumerated(EnumType.STRING)
     private FLOWCELL_TYPE flowcellType;
+
+    // todo jmt how is this different from label?
+    private String flowcellBarcode;
+
+    @Embedded
+    VesselContainer<RunChamber> vesselContainer = new VesselContainer<RunChamber>(this);
 
     protected IlluminaFlowcell(String label) {
         super(label);
         this.flowcellBarcode = label;
     }
 
+    public IlluminaFlowcell() {
+    }
+
+    @Override
+    public VesselContainer<RunChamber> getVesselContainer() {
+        return this.vesselContainer;
+    }
+
     public enum FLOWCELL_TYPE {
         EIGHT_LANE,MISEQ
     }
-
-    private final String flowcellBarcode;
-
 
     public IlluminaFlowcell(FLOWCELL_TYPE flowcellType,String flowcellBarcode,IlluminaRunConfiguration runConfig) {
         super(flowcellBarcode);
@@ -41,6 +73,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge {
         this.flowcellType = flowcellType;
     }
         
+/*
+    todo jmt need something similar in VesselContainer
     public void addChamber(LabVessel library,int laneNumber) {
         if (flowcellType == FLOWCELL_TYPE.EIGHT_LANE) {
             if (laneNumber < 1 || laneNumber > 8) {
@@ -55,7 +89,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge {
         IlluminaRunChamber runChamber = new IlluminaRunChamber(this,laneNumber,library);
         runChambers.add(runChamber);
     }
-    
+*/
+
     /**
      * In the illumina world, one sets the run configuration
      * when the flowcell is made.  But other technologies
@@ -69,7 +104,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge {
 
     @Override
     public Iterable<RunChamber> getChambers() {
-        return runChambers;
+        return this.vesselContainer.getContainedVessels();
     }
 
     @Override
@@ -82,25 +117,9 @@ public class IlluminaFlowcell extends AbstractRunCartridge {
         return this.flowcellBarcode;
     }
 
-
-    @Override
-    public void addStateChange(StateChange stateChange) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<StateChange> getStateChanges() {
-        throw new RuntimeException("I haven't been written yet.");
+        return this.vesselContainer.getSampleInstances();
     }
 
     @Override
@@ -131,10 +150,5 @@ public class IlluminaFlowcell extends AbstractRunCartridge {
     @Override
     public Float getConcentration() {
         throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void applyTransfer(SectionTransfer sectionTransfer) {
-        throw new RuntimeException("Method not yet implemented.");
     }
 }

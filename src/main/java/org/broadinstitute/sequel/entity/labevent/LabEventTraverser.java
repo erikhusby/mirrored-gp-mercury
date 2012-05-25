@@ -22,7 +22,6 @@ public class LabEventTraverser {
      */
     public static Collection<StateChange> getStateChangesPriorToAndIncluding(SampleSheet sheet,
                                                                              LabVessel leaf) {
-        gLog.error("I haven't been written yet.  but I'll give you null.");
         return Collections.emptyList();
     }
 

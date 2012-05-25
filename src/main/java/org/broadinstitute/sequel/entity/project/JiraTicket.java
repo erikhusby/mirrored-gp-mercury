@@ -2,9 +2,25 @@ package org.broadinstitute.sequel.entity.project;
 
 
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
-import javax.inject.Inject;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
+@NamedQueries({
+        @NamedQuery(
+                name = "JiraTicket.fetchAllOrderByName",
+                query = "from JiraTicket j order by j.ticketName"),
+        @NamedQuery(
+                name = "JiraTicket.fetchByName",
+                query = "from JiraTicket j where j.ticketName = :ticketName")
+})
+@Entity
 public class JiraTicket {
 
     public static final String TEST_PROJECT_PREFIX = "TP";
@@ -12,10 +28,15 @@ public class JiraTicket {
     public static final String SEQUEL_PROJECT_ISSUE_TYPE = "SequeL Project";
     
     private String ticketName;
-    
+
+    @Id
     private String ticketId;
 
-    JiraService jiraService;
+    @OneToMany(mappedBy = "jiraTicket")
+    private Set<Project> projects = new HashSet<Project>();
+
+    @Transient
+    private JiraService jiraService;
 
     public JiraTicket() {}
     
@@ -49,11 +70,14 @@ public class JiraTicket {
      * @param text
      */
     public void addComment(String text) {
-        try {
-            jiraService.addComment(ticketName,text);
-        }
-        catch(IOException  e) {
-            throw new RuntimeException("Could not log message '" + text + "' to jira ticket " + ticketName + ".  Is the jira server okay?",e);
+        // todo jmt remove null check after initializing service for entities
+        if (jiraService != null) {
+            try {
+                jiraService.addComment(ticketName,text);
+            }
+            catch(IOException  e) {
+                throw new RuntimeException("Could not log message '" + text + "' to jira ticket " + ticketName + ".  Is the jira server okay?",e);
+            }
         }
     }
 
@@ -75,5 +99,9 @@ public class JiraTicket {
         int result = ticketName != null ? ticketName.hashCode() : 0;
         result = 31 * result + (ticketId != null ? ticketId.hashCode() : 0);
         return result;
+    }
+
+    public Set<Project> getProjects() {
+        return projects;
     }
 }

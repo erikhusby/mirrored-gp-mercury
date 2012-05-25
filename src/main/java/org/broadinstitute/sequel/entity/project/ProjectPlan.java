@@ -2,10 +2,22 @@ package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 
 /**
@@ -24,14 +36,24 @@ import java.util.HashSet;
  * was created when the lab work was started.
  *
  */
+@Entity
 public class ProjectPlan {
+    @Id
+    @SequenceGenerator(name = "SEQ_PROJECT_PLAN", sequenceName = "SEQ_PROJECT_PLAN")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PROJECT_PLAN")
+    private Long projectPlanId;
 
+    @OneToMany
     private Collection<LabVessel> starters = new HashSet<LabVessel>();
-    
+
+    // todo jmt fix this
+    @Transient
     private Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
 
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private WorkflowDescription workflowDescription;
 
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private Project project;
     
     private String planName;
@@ -40,15 +62,26 @@ public class ProjectPlan {
 
     // todo where does analysis type go here?
 
+    // todo jmt fix this
+    @Transient
     private Collection<PoolGroup> poolGroups = new HashSet<PoolGroup>();
 
+    // todo jmt fix this
+    @Transient
     private Collection<ReagentDesign> reagentDesigns = new HashSet<ReagentDesign>();
 
+    // todo jmt fix this
+    @Transient
     private final Collection<BSPPlatingRequest> platingRequests = new HashSet<BSPPlatingRequest>();
-    
+
+    @OneToMany
     private final Collection<JiraTicket> jiraTickets = new HashSet<JiraTicket>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
     private Quote quote;
+
+    @OneToMany(mappedBy = "projectPlan")
+    private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
     
     public ProjectPlan(Project project,
                        String name,
@@ -66,6 +99,9 @@ public class ProjectPlan {
         this.planName = name;
         this.workflowDescription = workflowDescription;
         project.addProjectPlan(this);
+    }
+
+    protected ProjectPlan() {
     }
 
     public Project getProject() {
@@ -132,7 +168,7 @@ public class ProjectPlan {
 
     public void addPlatingRequest(BSPPlatingRequest platingRequest) {
         if (platingRequest == null) {
-            throw new IllegalArgumentException("platingRequest must be non-null in AbstractProject.addPlatingRequest");
+            throw new IllegalArgumentException("platingRequest must be non-null in ProjectPlan.addPlatingRequest");
         }
         platingRequests.add(platingRequest);
     }
@@ -174,6 +210,14 @@ public class ProjectPlan {
         return notes;
     }
 
+    public boolean isComplete(LabVessel startingVessel) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public void setComplete(boolean isComplete) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
     /**
      * Basically how much sequencing are we going
      * to do for this project?  We assume that the
@@ -188,4 +232,29 @@ public class ProjectPlan {
     // organism, collaborator, initiative/funding source/quote, prep
     // type, sequencing type, outbreak,
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ProjectPlan that = (ProjectPlan) o;
+
+        if (planName != null ? !planName.equals(that.planName) : that.planName != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return planName != null ? planName.hashCode() : 0;
+    }
+
+    public String toString() {
+        return planName;
+    }
+
+    public Set<StartingSample> getStartingSamples() {
+        return startingSamples;
+    }
 }

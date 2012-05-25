@@ -4,10 +4,16 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.entity.person.Person;
 
-public class BasicProject extends AbstractProject {
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
+
+@Entity
+public class BasicProject extends Project {
     
     private static Log gLog = LogFactory.getLog(BasicProject.class);
 
+    @ManyToOne(fetch = FetchType.LAZY)
     private Person platformOwner;
     
     public BasicProject(String projectName,JiraTicket jiraTicket) {
@@ -22,7 +28,9 @@ public class BasicProject extends AbstractProject {
 
     }
 
-    @Override
+    protected BasicProject() {
+    }
+
     public Person getPlatformOwner() {
         return platformOwner;
     }

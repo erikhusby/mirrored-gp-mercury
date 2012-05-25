@@ -4,37 +4,24 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 
+import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
 import java.util.Set;
 
 /**
  * A Generic reagent that doesn't change the molecular envelope
  */
-public class GenericReagent implements Reagent {
+@Entity
+public class GenericReagent extends Reagent {
 
-    // todo jmt should this be in a reagent type class?
-    private MolecularEnvelope molecularEnvelope;
-    private String reagentName;
-    private String lot;
+    @ManyToMany
     private Set<LabVessel> containers;
 
-    public GenericReagent(String reagentName, String lot) {
-        this.reagentName = reagentName;
-        this.lot = lot;
+    public GenericReagent(String reagentName, String lot, MolecularEnvelope molecularEnvelope) {
+        super(reagentName, lot, molecularEnvelope);
     }
 
-    @Override
-    public MolecularEnvelope getMolecularEnvelopeDelta() {
-        return molecularEnvelope;
-    }
-
-    @Override
-    public String getReagentName() {
-        return reagentName;
-    }
-
-    @Override
-    public String getLot() {
-        return lot;
+    protected GenericReagent() {
     }
 
     @Override

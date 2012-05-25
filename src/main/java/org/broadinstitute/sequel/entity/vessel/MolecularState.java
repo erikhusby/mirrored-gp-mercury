@@ -1,5 +1,16 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import java.io.Serializable;
+
 /**
  * When we receive an event from lab, one of the
  * first things we do in the LabEvent class is
@@ -28,7 +39,13 @@ package org.broadinstitute.sequel.entity.vessel;
  * LabEvents and LabWorkQueues both make use of expected
  * molecular state.
  */
-public interface MolecularState {
+@Entity
+public class MolecularState implements Serializable {
+
+    @Id
+    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE", sequenceName = "SEQ_MOLECULAR_STATE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE")
+    private Long molecularStateId;
 
     public enum DNA_OR_RNA {
         DNA,
@@ -40,21 +57,39 @@ public interface MolecularState {
         SINGLE_STRANDED
     }
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    private MolecularEnvelope molecularEnvelope;
+
+    @Enumerated(EnumType.STRING)
+    private DNA_OR_RNA nucleicAcidState;
+
+    @Enumerated(EnumType.STRING)
+    private STRANDEDNESS strand;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private MolecularStateTemplate molecularStateTemplate = new MolecularStateTemplate();
+
     /**
      * The molecular envelope that contains
      * the sample.  This is the "outer" most
      * envelope.
      * @return
      */
-    public MolecularEnvelope getMolecularEnvelope();
+    public MolecularEnvelope getMolecularEnvelope() {
+        return molecularEnvelope;
+    }
 
-    void setMolecularEnvelope(MolecularEnvelope molecularEnvelopeDelta);
+    public void setMolecularEnvelope(MolecularEnvelope molecularEnvelopeDelta) {
+        molecularEnvelope = molecularEnvelopeDelta;
+    }
 
     /**
      * Is the target sample in the evenlope DNA or RNA?
      * @return
      */
-    public DNA_OR_RNA getNucleicAcidState();
+    public DNA_OR_RNA getNucleicAcidState() {
+        return nucleicAcidState;
+    }
 
     /**
      * Is the sample stranded on an island,
@@ -64,7 +99,9 @@ public interface MolecularState {
      * or has it been denatured?
      * @return
      */
-    public STRANDEDNESS getStrand();
+    public STRANDEDNESS getStrand() {
+        return strand;
+    }
 
     /**
      * While it might be stored as a metric and
@@ -73,7 +110,9 @@ public interface MolecularState {
      * up with the molecular state.
      * @return
      */
-    public Float getConcentration();
+    public Float getConcentration() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 
     /**
      * Fluid volume.  Could be considered a metric
@@ -81,13 +120,17 @@ public interface MolecularState {
      * state.
      * @return
      */
-    public Float getVolume();
+    public Float getVolume() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 
     /**
      * What's the generalized template used to determine
      * whether a {@link Goop} has consistent state?
      * @return
      */
-    public MolecularStateTemplate getMolecularStateTemplate();
+    public MolecularStateTemplate getMolecularStateTemplate() {
+        return molecularStateTemplate;
+    }
 
 }

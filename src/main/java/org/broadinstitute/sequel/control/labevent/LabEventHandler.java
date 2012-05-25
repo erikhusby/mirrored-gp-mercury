@@ -2,9 +2,15 @@ package org.broadinstitute.sequel.control.labevent;
 
 
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
+import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
+import org.broadinstitute.sequel.entity.queue.WorkQueueEntry;
+import org.broadinstitute.sequel.entity.sample.JiraCommentUtil;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.labevent.PartiallyProcessedLabEventCache;
@@ -13,15 +19,13 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventMessage;
+import org.broadinstitute.sequel.entity.vessel.VesselContainer;
+import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.sequel.infrastructure.quote.Billable;
-import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 public class LabEventHandler {
 
@@ -34,12 +38,24 @@ public class LabEventHandler {
     PartiallyProcessedLabEventCache unanchored;
 
     PartiallyProcessedLabEventCache invalidMolecularState;
-    
+
+    @Inject
+    WorkQueueDAO workQueueDAO;
+
     @Inject
     Event<Billable> billableEvents;
 
     @Inject
     private LabEventDao labEventDao;
+
+    public LabEventHandler() {}
+
+    public LabEventHandler(WorkQueueDAO workQueueDAO) {
+        if (workQueueDAO == null) {
+            throw new NullPointerException("workQueueDAO cannot be null.");
+        }
+        this.workQueueDAO = workQueueDAO;
+    }
 
     public HANDLER_RESPONSE handleEvent(LabEventMessage eventMessage) {
         // 0. write out the message to stable server-side storage,
@@ -48,7 +64,7 @@ public class LabEventHandler {
 
         // then on to the good stuff..
         LabEvent labEvent = createEvent(eventMessage);
-        HANDLER_RESPONSE response = processEvent(labEvent);
+        HANDLER_RESPONSE response = processEvent(labEvent, null);
         if (response == HANDLER_RESPONSE.OK) {
             this.labEventDao.persist(labEvent);
         }
@@ -68,7 +84,7 @@ public class LabEventHandler {
         throw new RuntimeException("Method not yet implemented.");
     }
 
-    public HANDLER_RESPONSE processEvent(LabEvent labEvent) {
+    public HANDLER_RESPONSE processEvent(LabEvent labEvent, WorkflowDescription workflow) {
         // random thought, which should go onto confluence doc:
         /*
 
@@ -121,6 +137,10 @@ public class LabEventHandler {
         }
         */
 
+        processProjectPlanOverrides(labEvent,workflow);
+        JiraCommentUtil.postUpdate(labEvent.getEventName().toString() + " Event Applied",
+                labEvent.getEventName().toString() + " has been applied to the following samples:",labEvent.getAllLabVessels());
+
         try {
             labEvent.validateSourceMolecularState();
         }
@@ -160,6 +180,71 @@ public class LabEventHandler {
             return HANDLER_RESPONSE.ERROR;
         }
 
+
+    }
+
+    /**
+     * If this is the first {@link LabEvent} seen for
+     * some {@link LabVessel}s that have been placed in
+     * a {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue},
+     * this method figures out whether there is a {@link org.broadinstitute.sequel.entity.queue.WorkQueueEntry#getProjectPlanOverride()}
+     * and, if so, applies the override via {@link org.broadinstitute.sequel.entity.labevent.LabEvent#getProjectPlanOverride()}.
+     *
+     * It also {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue#remove(org.broadinstitute.sequel.entity.queue.WorkQueueEntry)}s
+     * the {@link WorkQueueEntry} from the {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}.
+     *
+     * If #labEvent cannot be uniquely mapped to a {@link WorkQueueEntry}, an exception
+     * is thrown.
+     * @param labEvent
+     * @param workflow
+     */
+    private void processProjectPlanOverrides(LabEvent labEvent,
+                                             WorkflowDescription workflow) {
+        if (workflow != null) {
+            for (LabVessel labVessel : labEvent.getAllLabVessels()) {
+                if (OrmUtil.proxySafeIsInstance(labVessel, VesselContainerEmbedder.class)) {
+                    Collection<LabVessel> containedVessels = OrmUtil.proxySafeCast(labVessel, VesselContainerEmbedder.class).
+                            getVesselContainer().getContainedVessels();
+                    if (containedVessels.isEmpty()) {
+                        processProjectPlanOverrides(labEvent,labVessel,workflow);
+                    }
+                    else {
+                        for (LabVessel vessel : containedVessels) {
+                            processProjectPlanOverrides(labEvent,vessel,workflow);
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    /**
+     * {@link #processProjectPlanOverrides(org.broadinstitute.sequel.entity.labevent.LabEvent, org.broadinstitute.sequel.entity.vessel.LabVessel, org.broadinstitute.sequel.entity.project.WorkflowDescription)}
+     * @param labEvent
+     * @param vessel
+     * @param workflow
+     */
+    private void processProjectPlanOverrides(LabEvent labEvent,
+                                             LabVessel vessel,
+                                             WorkflowDescription workflow) {
+        for (LabWorkQueue labWorkQueue : workQueueDAO.getPendingQueues(vessel, workflow)) {
+            Collection<WorkQueueEntry> workQueueEntries = labWorkQueue.getEntriesForWorkflow(workflow,vessel);
+            if (workQueueEntries.size() == 1) {
+                // not ambiguous: single entry
+                WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
+                if (workQueueEntry.getProjectPlanOverride() != null) {
+                    labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
+                }
+                workQueueEntry.dequeue();
+            }
+            else if (workQueueEntries.size() > 1) {
+                // todo ambiguous: how do we narrow down the exact queue that this
+                // vessel was placed in?
+                throw new RuntimeException("SequeL doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
+            }
+            /** else this vessel wasn't place in a {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue} */
+        }
 
     }
 
@@ -228,7 +313,7 @@ public class LabEventHandler {
      */
     private void retryInvalidMolecularState(LabEvent labEvent) {
         for (LabEvent partiallyProcessedEvent: invalidMolecularState.findRelatedEvents(labEvent)) {
-            processEvent(partiallyProcessedEvent);
+            processEvent(partiallyProcessedEvent, null);
         }
     }
     
@@ -261,7 +346,7 @@ public class LabEventHandler {
         // pull back a pile of partially processed events and
         // reprocess them.
         for (LabEvent partiallyProcessedEvent: unanchored.findRelatedEvents(labEvent)) {
-            processEvent(partiallyProcessedEvent);
+            processEvent(partiallyProcessedEvent, null);
 
             /*
             interesting problems arise here.  if you have a compound out of order

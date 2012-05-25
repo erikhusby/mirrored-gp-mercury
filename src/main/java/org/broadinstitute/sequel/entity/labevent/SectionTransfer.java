@@ -1,42 +1,68 @@
 package org.broadinstitute.sequel.entity.labevent;
 
-import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.vessel.AbstractLabVessel;
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.vessel.PlateWell;
-import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.SBSSection;
-import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
-import org.broadinstitute.sequel.entity.vessel.WellName;
+import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
+import org.hibernate.annotations.Index;
 
-import java.util.Collection;
-import java.util.List;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
 
 /**
  * Represents a transfer between two sections.
  */
+@Entity
 @SuppressWarnings("rawtypes")
 public class SectionTransfer {
-    private VesselContainer sourceVesselContainer;
+    @Id
+    @SequenceGenerator(name = "SEQ_SECTION_TRANSFER", sequenceName = "SEQ_SECTION_TRANSFER")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SECTION_TRANSFER")
+    private Long sectionTransferId;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel sourceVessel;
+
+    @Enumerated(EnumType.STRING)
     private SBSSection sourceSection;
-    private VesselContainer targetVesselContainer;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel targetVessel;
+
+    @Enumerated(EnumType.STRING)
     private SBSSection targetSection;
 
+    @Index(name = "ix_st_lab_event")
+    @ManyToOne(fetch = FetchType.LAZY)
+    private LabEvent labEvent;
+
     public SectionTransfer(VesselContainer sourceVesselContainer, SBSSection sourceSection,
-            VesselContainer targetVesselContainer, SBSSection targetSection) {
-        this.sourceVesselContainer = sourceVesselContainer;
+            VesselContainer targetVesselContainer, SBSSection targetSection, LabEvent labEvent) {
+        this.labEvent = labEvent;
+        this.sourceVessel = sourceVesselContainer.getEmbedder();
         this.sourceSection = sourceSection;
-        this.targetVesselContainer = targetVesselContainer;
+        this.targetVessel = targetVesselContainer.getEmbedder();
         this.targetSection = targetSection;
     }
 
+    protected SectionTransfer() {
+    }
+
     public VesselContainer getSourceVesselContainer() {
-        return this.sourceVesselContainer;
+        return OrmUtil.proxySafeCast(this.sourceVessel, VesselContainerEmbedder.class).getVesselContainer();
     }
 
     public void setSourceVesselContainer(VesselContainer sourceVesselContainer) {
-        this.sourceVesselContainer = sourceVesselContainer;
+        this.sourceVessel = sourceVesselContainer.getEmbedder();
     }
 
     public SBSSection getSourceSection() {
@@ -48,11 +74,11 @@ public class SectionTransfer {
     }
 
     public VesselContainer getTargetVesselContainer() {
-        return this.targetVesselContainer;
+        return OrmUtil.proxySafeCast(this.targetVessel, VesselContainerEmbedder.class).getVesselContainer();
     }
 
     public void setTargetVesselContainer(VesselContainer targetVesselContainer) {
-        this.targetVesselContainer = targetVesselContainer;
+        this.targetVessel = targetVesselContainer.getEmbedder();
     }
 
     public SBSSection getTargetSection() {
@@ -64,62 +90,52 @@ public class SectionTransfer {
     }
 
     public void applyTransfer() {
-        List<WellName> wells = this.sourceSection.getWells();
+        // todo jmt remove this method?
+/*
+        List<VesselPosition> wells = this.sourceSection.getWells();
         for (int wellIndex = 0; wellIndex < wells.size(); wellIndex++) {
-            WellName sourceWellName = wells.get(wellIndex);
-            WellName targetWellName = this.targetSection.getWells().get(wellIndex);
-            if (!this.sourceVesselContainer.getContainedVessels().isEmpty()) {
-                LabVessel sourceWell = this.sourceVesselContainer.getVesselAtPosition(sourceWellName.getWellName());
+            VesselPosition sourceVesselPosition = wells.get(wellIndex);
+            VesselPosition targetVesselPosition = this.targetSection.getWells().get(wellIndex);
+            if (!this.getSourceVesselContainer().getContainedVessels().isEmpty()) {
+                LabVessel sourceWell = this.getSourceVesselContainer().getVesselAtPosition(sourceVesselPosition.toString());
                 if (sourceWell != null) {
                     Collection<Reagent> reagents = sourceWell.getReagentContents();
                     // todo jmt is it necessary to copy the reagent into the target, or would it be better to navigate?
                     for (Reagent reagent : reagents) {
-                        LabVessel plateWell = this.targetVesselContainer.getVesselAtPosition(targetWellName.getWellName());
+                        LabVessel plateWell = this.getTargetVesselContainer().getVesselAtPosition(targetVesselPosition.toString());
                         if (plateWell == null) {
-                            plateWell = new PlateWell((StaticPlate) this.targetVesselContainer.getEmbedder(), targetWellName);
-                            this.targetVesselContainer.addContainedVessel(plateWell, targetWellName.getWellName());
+                            plateWell = new PlateWell((StaticPlate) this.getTargetVesselContainer().getEmbedder(), targetVesselPosition);
+                            this.getTargetVesselContainer().addContainedVessel(plateWell, targetVesselPosition.toString());
                         }
                         plateWell.applyReagent(reagent);
                     }
                 }
             }
         }
-        // if source container is mutable, or sections are different: establish authorities at contained vessel level, based on section
-        LabVessel sourceVessel = this.sourceVesselContainer.getEmbedder();
+*/
+/*
+        LabVessel sourceVessel = this.getSourceVesselContainer().getEmbedder();
         // todo jmt, rather than checking for incoming transfers, check for other position maps?
-        if(this.sourceVesselContainer.getEmbedder() instanceof RackOfTubes && !sourceVessel.getTransfersTo().isEmpty() ||
+        if(Hibernate.getClass(this.getSourceVesselContainer().getEmbedder()).equals(RackOfTubes.class) && !sourceVessel.getTransfersTo().isEmpty() ||
                 this.sourceSection != this.targetSection) {
-            List<WellName> positions = this.sourceSection.getWells();
+            List<VesselPosition> positions = this.sourceSection.getWells();
             for (int wellIndex = 0; wellIndex < positions.size(); wellIndex++) {
-                WellName sourceWellName = positions.get(wellIndex);
-                WellName targetWellName = this.targetSection.getWells().get(wellIndex);
-                if (this.sourceVesselContainer.getContainedVessels().isEmpty()) {
+                VesselPosition sourceVesselPosition = positions.get(wellIndex);
+                VesselPosition targetVesselPosition = this.targetSection.getWells().get(wellIndex);
+                if (this.getSourceVesselContainer().getContainedVessels().isEmpty()) {
                     throw new RuntimeException("Vessel " + sourceVessel.getLabel()  + " has contained vessels");
                 }
-                LabVessel sourceContainedVessel = this.sourceVesselContainer.getVesselAtPosition(sourceWellName.getWellName());
+                LabVessel sourceContainedVessel = this.getSourceVesselContainer().getVesselAtPosition(sourceVesselPosition.toString());
                 if (sourceContainedVessel != null) {
-                    AbstractLabVessel targetContainedVessel = (AbstractLabVessel) this.targetVesselContainer.getVesselAtPosition(
-                            targetWellName.getWellName());
-                    if(targetContainedVessel != null) {
-                        targetContainedVessel.getSampleSheetAuthorities().add(sourceContainedVessel);
-                    }
+                    LabVessel targetContainedVessel = this.getTargetVesselContainer().getVesselAtPosition(
+                            targetVesselPosition.toString());
                 }
-            }
-        } else {
-            if ( this.sourceVesselContainer.getSampleSheetAuthorities().isEmpty()) {
-                if(sourceVessel.getReagentContents().isEmpty()) {
-                    this.targetVesselContainer.getSampleSheetAuthorities().add(this.sourceVesselContainer);
-                }
-            } else {
-                this.targetVesselContainer.getSampleSheetAuthorities().addAll(
-                        this.sourceVesselContainer.getSampleSheetAuthorities());
             }
         }
+*/
+    }
 
-        // if destination is empty and source and destination sections are identical
-        // else
-        //   establish sample authorities at child vessel level
-        // do re-arrays mess this up?  Look at Sage.  Primary should be positionMap, not rackOfTubes
-        // if the source is a rack, a re-array is possible
+    public LabEvent getLabEvent() {
+        return labEvent;
     }
 }

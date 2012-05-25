@@ -10,21 +10,76 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 
 import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * A traditional plate.
  */
-public class StaticPlate extends AbstractLabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell> {
+@NamedQueries(
+        @NamedQuery(
+                name = "StaticPlate.findByBarcode",
+                query = "select p from StaticPlate p where label = :barcode"
+        )
+)
+@Entity
+public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell>, Serializable {
+
+    public enum PlateType {
+        Eppendorf96("Eppendorf96"),
+        CovarisRack("CovarisRack"),
+        IndexedAdapterPlate96("IndexedAdapterPlate96"),
+        SageCassette("SageCassette"),
+        Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC"),
+        FilterPlate96("FilterPlate96");
+
+        private String displayName;
+
+        PlateType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        private static Map<String, PlateType> mapDisplayNameToType = new HashMap<String, PlateType>();
+        static {
+            for (PlateType plateType : PlateType.values()) {
+                mapDisplayNameToType.put(plateType.getDisplayName(), plateType);
+            }
+        }
+
+        public static PlateType getByDisplayName(String displayName) {
+            return mapDisplayNameToType.get(displayName);
+        }
+    }
+
 
     @Embedded
     private VesselContainer<PlateWell> vesselContainer = new VesselContainer<PlateWell>(this);
 
-    public StaticPlate(String label) {
+    @Enumerated(EnumType.STRING)
+    private PlateType plateType;
+
+    public StaticPlate(String label, PlateType plateType) {
         super(label);
+        this.plateType = plateType;
+    }
+
+    /** For Hibernate */
+    protected StaticPlate() {
     }
 
     @Override
@@ -43,28 +98,8 @@ public class StaticPlate extends AbstractLabVessel implements SBSSectionable, Ve
     }
 
     @Override
-    public void applyTransfer(SectionTransfer sectionTransfer) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void addStateChange(StateChange stateChange) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Set<SampleInstance> getSampleInstances() {
         return this.vesselContainer.getSampleInstances();
-    }
-
-    @Override
-    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<StateChange> getStateChanges() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

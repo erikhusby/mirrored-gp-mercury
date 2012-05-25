@@ -1,7 +1,9 @@
 package org.broadinstitute.sequel.entity.project;
 
 
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.billing.Quote;
+import org.broadinstitute.sequel.entity.notice.UserRemarks;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.run.SequenceAccessControlModel;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
@@ -13,45 +15,92 @@ import org.broadinstitute.sequel.entity.notice.Stalker;
 import org.broadinstitute.sequel.entity.run.CapacityDimension;
 import org.broadinstitute.sequel.entity.run.SequencingResult;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.infrastructure.quote.QuotesCache;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Transient;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
-// todo move interface down to abstract class,
-// maybe even just a single class
-public interface Project {
+@Entity
+public abstract class Project {
+
+    @Id
+    @SequenceGenerator(name = "SEQ_PROJECT", sequenceName = "SEQ_PROJECT")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PROJECT")
+    private Long projectId;
 
    public static final String JIRA_PROJECT_PREFIX = "TP";
-    
-    /**
-     * Is this project considered
-     * "in play"?  This is a slight
-     * abstraction around statuses
-     * like "Started", "Done",
-     * "Revoked", etc.
-     * @return
-     */
-    public boolean isActive();
 
-    public void setActive(boolean isActive);
-    
-    public String getProjectName();
+    @Transient
+    private QuotesCache quotesCache;
 
-    /**
-     * What if all the free-form data for a project
-     * was captured in a jira ticket?  We'd pick up
-     * lots of attachment, commenting, and communication
-     * capabilities.
-     *
-     * Project managers love jira.  Why not give them
-     * the ability to make a jira ticket for a project?
-     * They can configure jira to match their workflow.
-     * @return
-     */
-    public void addJiraComment(String comment);
+    private String projectName;
 
-    public boolean isDevelopment();
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    JiraTicket jiraTicket;
 
-    public ProjectPriority getPriority();
+    private boolean active;
+
+    @OneToMany
+    public Collection<LabVessel> starters = new HashSet<LabVessel>();
+
+    @OneToMany
+    private final Collection<LabWorkQueue> availableWorkQueues = new HashSet<LabWorkQueue>();
+
+    // todo jmt fix this
+    @Transient
+    private List<LabEventName> checkpointableEvents = new ArrayList<LabEventName>();
+
+    // todo jmt fix this
+    @Transient
+    private Collection<String> grants = new HashSet<String>();
+
+    @OneToMany
+    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
+
+    @OneToMany
+    private Collection<Quote> availableQuotes = new HashSet<Quote>();
+
+    @Embedded
+    private UserRemarks userRemarks;
+
+    public abstract Person getPlatformOwner();
+
+    public void setQuotesCache(QuotesCache cache) {
+        this.quotesCache = cache;
+    }
+
+    JiraTicket getJiraTicket() {
+        return jiraTicket;
+    }
+
+    public void setJiraTicket(JiraTicket jiraTicket) {
+        this.jiraTicket = jiraTicket;
+    }
+
+    public void addAvailableQuote(Quote quote) {
+        this.availableQuotes.add(quote);
+    }
+
+    public boolean isDevelopment() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public ProjectPriority getPriority() {
+        return ProjectPriority.NORMAL;
+    }
 
     /**
      * Got some insanely high priority samples
@@ -59,24 +108,17 @@ public interface Project {
      * bit on.
      * @return
      */
+    public void sendAlert(String alert) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
-    public void sendAlert(String alertText);
+    public Collection<LabVessel> getAllVessels() {
+        throw new RuntimeException("not implemented");
+    }
 
-    public Collection<LabVessel> getAllStarters();
-
-    public Collection<ProjectPlan> getProjectPlans();
-
-    public void addProjectPlan(ProjectPlan projectPlan);
-
-    public Collection<ProjectPlan> getAllPlans();
-
-    public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription);
-
-    public Collection<LabVessel> getAllVessels();
-
-    public void addStarter(LabVessel vessel);
-
-    public Collection<Person> getProjectOwners();
+    public Collection<Person> getProjectOwners() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
     /**
      * Some projects won't use every lab queue.
@@ -93,7 +135,9 @@ public interface Project {
      * going on in a queue.
      * @param q
      */
-    public void addWorkQueue(LabWorkQueue q);
+    public void addWorkQueue(LabWorkQueue q) {
+        availableWorkQueues.add(q);
+    }
 
     /**
      * Because lab work queues are shared across
@@ -101,7 +145,9 @@ public interface Project {
      * simultaneous updates to queues.
      * @return
      */
-    public Collection<LabWorkQueue> getWorkQueues();
+    public Collection<LabWorkQueue> getWorkQueues() {
+        return availableWorkQueues;
+    }
 
     /**
      * Sometimes PMs go on vacation, so someone else needs
@@ -111,7 +157,9 @@ public interface Project {
      * jira ticket.
      * @param p
      */
-    public void shareWith(Person p);
+    public void shareWith(Person p) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
     /**
      * There might be multiple stalkers,
@@ -122,12 +170,14 @@ public interface Project {
      * callbacks...
      * @return
      */
-    public Collection<Stalker> getAvailableStalkers();
+    public Collection<Stalker> getAvailableStalkers() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
-    public SequenceAccessControlModel getAccessControl();
+    public SequenceAccessControlModel getAccessControl() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
-    public void addGrant(String grantDescription);
-    
     /**
      * Gets a list of all quotes that have been
      * tenatively earmarked for use in this project.
@@ -144,7 +194,9 @@ public interface Project {
      * quotes server in realtime
      * @return
      */
-    public Collection<Quote> getAvailableQuotes();
+    public Collection<Quote> getAvailableQuotes() {
+        return availableQuotes;
+    }
 
     /**
      * Some projects might wish to proceed "at risk".  Consider
@@ -160,30 +212,17 @@ public interface Project {
      * thresholds, run it anyway.
      * @return
      */
-    public boolean ignoreLabThresholds();
+    public boolean ignoreLabThresholds() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
-    public SequencingResult getSequencingResults(StartingSample aliquot);
+    public SequencingResult getSequencingResults(StartingSample aliquot) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
-    public CapacityDimension getDefaultCapacityDimension();
-
-    /**
-     * It's up to the project to figure out for a given
-     * sample aliquot instance how the aggregation
-     * should work.
-     * @param sampleInstance
-     * @return
-     */
-    public SequenceAnalysisInstructions getSequenceAnalysisInstructions(SampleInstance sampleInstance);
-
-    /**
-     * What was the expected workflow that this
-     * sampleAliquotInstance was supposed to
-     * undergo?
-     *
-     * @param sampleInstance
-     * @return
-     */
-    public WorkflowDescription getWorkflowDescription(SampleInstance sampleInstance);
+    public CapacityDimension getDefaultCapacityDimension() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
     /**
      * Project managers want to know when various things
@@ -194,10 +233,138 @@ public interface Project {
      * immediate notification about.
      * @return
      */
-    public Collection<LabEventName> getCheckpointableEvents();
+    public Collection<LabEventName> getCheckpointableEvents() {
+        return checkpointableEvents;
+    }
 
-    public SampleAnalysisBuddies getAnalysisBuddies(StartingSample sample);
-    
-    public Person getPlatformOwner();
+    /**
+     * Is this project considered
+     * "in play"?  This is a slight
+     * abstraction around statuses
+     * like "Started", "Done",
+     * "Revoked", etc.
+     * @return
+     */
+    public boolean isActive() {
+        return active;
+    }
 
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public void addStarter(LabVessel vessel) {
+        if (vessel == null) {
+            throw new NullPointerException("labVessel cannot be null.");
+        }
+        starters.add(vessel);
+    }
+
+    /**
+     * It's up to the project to figure out for a given
+     * sample aliquot instance how the aggregation
+     * should work.
+     * @param sampleInstance
+     * @return
+     */
+    public SequenceAnalysisInstructions getSequenceAnalysisInstructions(SampleInstance sampleInstance) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    /**
+     * What was the expected workflow that this
+     * sampleAliquotInstance was supposed to
+     * undergo?
+     *
+     * @param sampleInstance
+     * @return
+     */
+    public WorkflowDescription getWorkflowDescription(SampleInstance sampleInstance) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+
+    public Collection<LabVessel> getAllStarters() {
+        return starters;
+    }
+
+    public Collection<ProjectPlan> getProjectPlans() {
+        return projectPlans;
+    }
+
+    public void addProjectPlan(ProjectPlan projectPlan) {
+        if (projectPlan == null) {
+            throw new NullPointerException("projectPlan cannot be null.");
+        }
+        projectPlans.add(projectPlan);
+    }
+
+    public Collection<LabVessel> getVessels(WorkflowDescription workflowDescription) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public void addGrant(String grantDescription) {
+        if (grantDescription == null) {
+            throw new NullPointerException("grantDescription cannot be null.");
+        }
+        grants.add(grantDescription);
+    }
+
+    /**
+     * What if all the free-form data for a project
+     * was captured in a jira ticket?  We'd pick up
+     * lots of attachment, commenting, and communication
+     * capabilities.
+     *
+     * Project managers love jira.  Why not give them
+     * the ability to make a jira ticket for a project?
+     * They can configure jira to match their workflow.
+     * @return
+     */
+    public void addJiraComment(String comment) {
+        if (jiraTicket != null) {
+            jiraTicket.addComment(comment);
+        }
+        else {
+            // todo figure out tool for logging and alerting.
+            throw new RuntimeException("There is no jira ticket for " + projectName);
+        }
+    }
+
+    public SampleAnalysisBuddies getAnalysisBuddies(StartingSample sample) {
+        throw new RuntimeException("not implemented");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!OrmUtil.proxySafeIsInstance(o, Project.class)) return false;
+
+        Project that = (Project) o;
+
+        if (projectName != null ? !projectName.equals(that.getProjectName()) : that.getProjectName()!= null) return false;
+
+        return true;
+    }
+
+    public Collection<ProjectPlan> getAllPlans() {
+        return projectPlans;
+    }
+
+    @Override
+    public int hashCode() {
+        return projectName != null ? projectName.hashCode() : 0;
+    }
+
+    public UserRemarks getUserRemarks() {
+        return userRemarks;
+    }
 }

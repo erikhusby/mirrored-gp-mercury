@@ -1,12 +1,26 @@
 package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -44,9 +58,52 @@ import java.util.Set;
  */
 // todo rename to "Event"--everything is an event, including
     // deltas in an aggregation in zamboni
-public interface LabEvent {
+@Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
+public abstract class LabEvent {
 
-    public LabEventName getEventName();
+    @Id
+    @SequenceGenerator(name = "SEQ_LAB_EVENT", sequenceName = "SEQ_LAB_EVENT")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_EVENT")
+    private Long labEventId;
+
+    private String eventLocation;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private Person eventOperator;
+
+    private Date eventDate;
+
+    private Long disambiguator = 0L;
+
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "transfersFrom")
+    private Set<LabVessel> sourceLabVessels = new HashSet<LabVessel>();
+
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "transfersTo")
+    private Set<LabVessel> targetLabVessels = new HashSet<LabVessel>();
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    private Set<Reagent> reagents = new HashSet<Reagent>();
+
+    /** for transfers using a tip box, e.g. Bravo */
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
+    private Set<SectionTransfer> sectionTransfers = new HashSet<SectionTransfer>();
+
+    /** for random access transfers, e.g. MultiProbe */
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
+    private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<CherryPickTransfer>();
+
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
+    private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<VesselToSectionTransfer>();
+    // todo jmt tube to tube transfers, or will they always be in a rack?
+
+    private String quoteServerBatchId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private ProjectPlan projectPlanOverride;
+
+
+    public abstract LabEventName getEventName();
 
     /**
      * This is the change to sample state that this
@@ -76,7 +133,7 @@ public interface LabEvent {
      * applied in such a way that the molecular state change it causes is not
      * what is expected.
      */
-    public void applyMolecularStateChanges() throws InvalidMolecularStateException;
+    public abstract void applyMolecularStateChanges() throws InvalidMolecularStateException;
 
     /**
      * Are the sources in the expected molecular state?
@@ -93,7 +150,7 @@ public interface LabEvent {
      *
      * @throws InvalidMolecularStateException
      */
-    public void validateSourceMolecularState() throws InvalidMolecularStateException;
+    public abstract void validateSourceMolecularState() throws InvalidMolecularStateException;
 
     /**
      * Are the targets in the expected molecular state?
@@ -110,24 +167,43 @@ public interface LabEvent {
      *
      * @throws InvalidMolecularStateException
      */
-    public void validateTargetMolecularState() throws InvalidMolecularStateException;
+    public abstract void validateTargetMolecularState() throws InvalidMolecularStateException;
 
-    public Collection<LabVessel> getTargetLabVessels();
+    public void addSourceLabVessel(LabVessel sourceVessel) {
+        sourceVessel.getTransfersFrom().add(this);
+        this.sourceLabVessels.add(sourceVessel);
+    }
 
-    public void addTargetLabVessel(LabVessel targetVessel);
+    public Collection<LabVessel> getTargetLabVessels() {
+        return this.targetLabVessels;
+    }
+
+    public void addTargetLabVessel(LabVessel targetVessel) {
+        targetVessel.getTransfersTo().add(this);
+        this.targetLabVessels.add(targetVessel);
+    }
 
     /**
      * For transfer events, this returns the sources
      * of the transfer
      * @return may return null
      */
-    public Collection<LabVessel> getSourceLabVessels();
+    public Collection<LabVessel> getSourceLabVessels() {
+        return this.sourceLabVessels;
+    }
 
-    public void addSourceLabVessel(LabVessel sourceVessel);
+    public void addReagent(Reagent reagent) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
-    public Collection<LabVessel> getSourcesForTarget(LabVessel targetVessel);
+    public Collection<LabVessel> getSourcesForTarget(LabVessel targetVessel) {
+        // todo jmt need some kind of mapping for cherry picks
+        return this.sourceLabVessels;
+    }
 
-    public Collection<LabVessel> getTargetsForSource(LabVessel sourceVessl);
+    public Collection<LabVessel> getTargetsForSource(LabVessel sourceVessl) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
     /**
      * Returns all the lab vessels involved in this
@@ -136,22 +212,33 @@ public interface LabEvent {
      * Useful convenience method for alerts
      * @return
      */
-    public Collection<LabVessel> getAllLabVessels();
+    public Collection<LabVessel> getAllLabVessels() {
+        Set<LabVessel> allLabVessels = new HashSet<LabVessel>();
+        allLabVessels.addAll(this.sourceLabVessels);
+        allLabVessels.addAll(this.targetLabVessels);
+        return allLabVessels;
+    }
 
     /**
      * Machine name?  Name of the bench?
      * GPS coordinates?
      * @return
      */
-    public String getEventLocation();
+    public String getEventLocation() {
+        return this.eventLocation;
+    }
 
-    public Person getEventOperator();
+    public Person getEventOperator() {
+        return this.eventOperator;
+    }
 
-    public Date getEventDate();
+    public Date getEventDate() {
+        return this.eventDate;
+    }
 
-    public Collection<Reagent> getReagents();
-
-    public void addReagent(Reagent reagent);
+    public Collection<Reagent> getReagents() {
+        return this.reagents;
+    }
 
     /**
      * Probably a transient method that iterates
@@ -165,13 +252,80 @@ public interface LabEvent {
      * sheets
      * @return
      */
-    public Collection<SampleSheet> getAllSampleSheets();
+    public abstract Collection<SampleSheet> getAllSampleSheets();
 
-    Set<SectionTransfer> getSectionTransfers();
-    
-    public void setQuoteServerBatchId(String batchId);
-    
-    public String getQuoteServerBatchId();
+    public Set<SectionTransfer> getSectionTransfers() {
+        return this.sectionTransfers;
+    }
 
-    Set<CherryPickTransfer> getCherryPickTransfers();
+    public void setQuoteServerBatchId(String batchId) {
+        this.quoteServerBatchId = batchId;
+    }
+
+    public String getQuoteServerBatchId() {
+        return quoteServerBatchId;
+    }
+
+    public Set<CherryPickTransfer> getCherryPickTransfers() {
+        return cherryPickTransfers;
+    }
+
+    public Set<VesselToSectionTransfer> getVesselToSectionTransfers() {
+        return vesselToSectionTransfers;
+    }
+
+
+    /**
+     * An "override" of the {@link ProjectPlan} effectively says "From
+     * this point forward in the transfer graph, consider all work
+     * related to the given projectPlan.  In this way, we're "overriding"
+     * the {@link ProjectPlan} referenced by {@link org.broadinstitute.sequel.entity.sample.StartingSample#getRootProjectPlan()}
+     * @param projectPlan
+     */
+    public void setProjectPlanOverride(ProjectPlan projectPlan) {
+        if (projectPlan == null) {
+            throw new RuntimeException("projectPlan override cannot be null.");
+        }
+        this.projectPlanOverride = projectPlan;
+    }
+
+    /**
+     * See {@link #setProjectPlanOverride(org.broadinstitute.sequel.entity.project.ProjectPlan)}.
+     * @return
+     */
+    public ProjectPlan getProjectPlanOverride() {
+        return projectPlanOverride;
+    }
+
+    public void setEventLocation(String eventLocation) {
+        this.eventLocation = eventLocation;
+    }
+
+    public void setEventOperator(Person eventOperator) {
+        this.eventOperator = eventOperator;
+    }
+
+    public void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
+    }
+
+    public void setSectionTransfers(Set<SectionTransfer> sectionTransfers) {
+        this.sectionTransfers = sectionTransfers;
+    }
+
+    public void setCherryPickTransfers(Set<CherryPickTransfer> cherryPickTransfers) {
+        this.cherryPickTransfers = cherryPickTransfers;
+    }
+
+    public void setVesselToSectionTransfers(Set<VesselToSectionTransfer> vesselToSectionTransfers) {
+        this.vesselToSectionTransfers = vesselToSectionTransfers;
+    }
+
+    public Long getDisambiguator() {
+        return disambiguator;
+    }
+
+    public void setDisambiguator(Long disambiguator) {
+        this.disambiguator = disambiguator;
+    }
 }

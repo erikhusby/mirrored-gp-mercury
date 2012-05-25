@@ -7,12 +7,23 @@ import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import java.util.Collection;
 
 /**
  * A change to the state (of a SampleSheet).
  */
+@Entity
 public class StateChange {
+
+    @Id
+    @SequenceGenerator(name = "SEQ_STATE_CHANGE", sequenceName = "SEQ_STATE_CHANGE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_STATE_CHANGE")
+    private Long stateChangeId;
 
     private static Log gLog = LogFactory.getLog(StateChange.class);
 

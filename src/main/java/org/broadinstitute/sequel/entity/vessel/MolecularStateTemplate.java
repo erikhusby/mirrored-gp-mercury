@@ -1,5 +1,11 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+
 /**
  * Basically a way to summarize certain critical
  * aspects of {@link MolecularState} to detect
@@ -41,7 +47,13 @@ package org.broadinstitute.sequel.entity.vessel;
  * not filling in the metadata, which means that at some
  * point, things will break.
  */
+@Entity
 public class MolecularStateTemplate {
+
+    @Id
+    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE_TEMPLATE", sequenceName = "SEQ_MOLECULAR_STATE_TEMPLATE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE_TEMPLATE")
+    private Long molecularStateTemplateId;
 
     /**
      * Human readable representation, such as

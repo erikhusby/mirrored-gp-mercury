@@ -26,9 +26,13 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
  * that we can reliably load with sample.
  *
  */
-public interface RunChamber extends LabVessel {
+public abstract class RunChamber extends LabVessel {
 
-    public RunConfiguration getRunConfiguration();
+    public RunChamber(String label) {
+        super(label);
+    }
+
+    public abstract RunConfiguration getRunConfiguration();
 
     /**
      * Does this belong on the chamber or the run
@@ -36,8 +40,8 @@ public interface RunChamber extends LabVessel {
      * Basically a pointer to the raw sequencer output.
      * @return
      */
-    public Iterable<OutputDataLocation> getDataDirectories();
+    public abstract Iterable<OutputDataLocation> getDataDirectories();
 
-    public String getChamberName();
+    public abstract String getChamberName();
 
 }
