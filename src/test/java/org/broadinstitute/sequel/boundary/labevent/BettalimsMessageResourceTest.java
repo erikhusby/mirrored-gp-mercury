@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.boundary.labevent;
 
 //import com.jprofiler.api.agent.Controller;
 import com.sun.jersey.api.client.Client;
+import org.apache.commons.io.FileUtils;
 import org.broadinstitute.sequel.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.LabEventTest;
 import org.broadinstitute.sequel.TestGroups;
@@ -33,7 +34,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -174,17 +177,36 @@ public class BettalimsMessageResourceTest extends ContainerTest {
             for (String messageFileName : messageFileNames) {
                 String response = null;
                 try {
-                    response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
-                            .type(MediaType.APPLICATION_XML_TYPE)
-                            .accept(MediaType.APPLICATION_XML)
-                            .entity(new File(dayDirectory, messageFileName))
-                            .post(String.class);
+//                    String message = FileUtils.readFileToString(new File(dayDirectory, messageFileName));
+//                    if(message.contains("PreSelectionPool")) {
+                        response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
+                                .type(MediaType.APPLICATION_XML_TYPE)
+                                .accept(MediaType.APPLICATION_XML)
+                                .entity(new File(dayDirectory, messageFileName))
+                                .post(String.class);
+//                    }
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                 }
                 System.out.println(response);
             }
         }
+    }
+
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testSingleFile(@ArquillianResource URL baseUrl) {
+        String response = null;
+        try {
+            response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
+                    .type(MediaType.APPLICATION_XML_TYPE)
+                    .accept(MediaType.APPLICATION_XML)
+                    .entity(new File("c:/Temp/sequel/messages/inbox/20120522/20120522_093905183.xml"))
+                    .post(String.class);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        System.out.println(response);
     }
 
 }

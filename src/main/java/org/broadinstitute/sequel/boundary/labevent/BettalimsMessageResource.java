@@ -3,7 +3,6 @@ package org.broadinstitute.sequel.boundary.labevent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
-import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.labevent.MessageStore;
@@ -34,7 +33,7 @@ import java.util.List;
  * Allows BettaLIMS messages to be submitted through JAX-RS
  */
 @Path("/bettalimsmessage")
-@Stateless
+@Stateless // todo jmt should this be stateful?  It has stateful DAOs injected.
 public class BettalimsMessageResource {
 
     private static final Log LOG = LogFactory.getLog(BettalimsMessageResource.class);
@@ -44,9 +43,6 @@ public class BettalimsMessageResource {
 
     @Inject
     private LabEventHandler labEventHandler;
-
-    @Inject
-    private LabEventDao labEventDao;
 
     public static class BettaLIMSException extends WebApplicationException {
         public BettaLIMSException(String message, int status) {
@@ -107,12 +103,11 @@ todo jmt fix this
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent, null);
-            labEventDao.persist(labEvent);
         }
     }
 
     /** Allows documents that don't include a namespace */
-    static class NamespaceFilter extends XMLFilterImpl {
+    private static class NamespaceFilter extends XMLFilterImpl {
 
         private String usedNamespaceUri;
         private boolean addNamespace;

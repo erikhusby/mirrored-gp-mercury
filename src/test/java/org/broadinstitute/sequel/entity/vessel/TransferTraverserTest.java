@@ -20,7 +20,7 @@ public class TransferTraverserTest extends ContainerTest{
     @Inject
     private JiraTicketDao jiraTicketDao;
 
-    @Test
+    @Test(enabled = false)
     public void testLcSetPaths() {
         boolean finished = false;
         int first = 0;
@@ -32,21 +32,31 @@ public class TransferTraverserTest extends ContainerTest{
                 finished = true;
             } else {
                 for (JiraTicket jiraTicket : jiraTickets) {
-                    Project project = jiraTicket.getProjects().iterator().next();
-                    ProjectPlan projectPlan = project.getProjectPlans().iterator().next();
-                    StartingSample startingSample = projectPlan.getStartingSamples().iterator().next();
-                    SampleSheet sampleSheet = startingSample.getSampleSheets().iterator().next();
-                    LabVessel labVessel = sampleSheet.getLabVessels().iterator().next();
-                    VesselContainer<?> vesselContainer = labVessel.getContainers().iterator().next();
-                    LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
-                    vesselContainer.evaluateCriteria(vesselContainer.getPositionOfVessel(labVessel),
-                            transferTraverserCriteria, VesselContainer.TraversalDirection.Descendants,
-                            null, 0);
-                    System.out.println(jiraTicket.getTicketName() + ": " + transferTraverserCriteria.getLabEventNames());
+                    printJiraTicket(jiraTicket);
                 }
             }
             jiraTicketDao.clear();
         }
         // todo jmt asserts
+    }
+
+    @Test(enabled = false)
+    public void testSingleLcSet() {
+        JiraTicket jiraTicket = jiraTicketDao.fetchByName("LCSET-600");
+        printJiraTicket(jiraTicket);
+    }
+
+    private void printJiraTicket(JiraTicket jiraTicket) {
+        Project project = jiraTicket.getProjects().iterator().next();
+        ProjectPlan projectPlan = project.getProjectPlans().iterator().next();
+        StartingSample startingSample = projectPlan.getStartingSamples().iterator().next();
+        SampleSheet sampleSheet = startingSample.getSampleSheets().iterator().next();
+        LabVessel labVessel = sampleSheet.getLabVessels().iterator().next();
+        VesselContainer<?> vesselContainer = labVessel.getContainers().iterator().next();
+        LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
+        vesselContainer.evaluateCriteria(vesselContainer.getPositionOfVessel(labVessel),
+                transferTraverserCriteria, VesselContainer.TraversalDirection.Descendants,
+                null, 0);
+        System.out.println(jiraTicket.getTicketName() + ": " + transferTraverserCriteria.getLabEventNames());
     }
 }

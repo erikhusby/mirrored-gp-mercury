@@ -75,7 +75,9 @@ public class LabEventTest {
             if (labEvent != null) {
                 if(hopCount > this.hopCount) {
                     this.hopCount = hopCount;
-                    labEventNames.add(((GenericLabEvent) labEvent).getLabEventType().getName());
+                    GenericLabEvent genericLabEvent = (GenericLabEvent) labEvent;
+                    labEventNames.add(genericLabEvent.getLabEventType().getName() + " into " +
+                            genericLabEvent.getTargetLabVessels().iterator().next().getLabel());
                 }
             }
             return TraversalControl.ContinueTraversing;
