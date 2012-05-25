@@ -4,12 +4,22 @@ package org.broadinstitute.sequel.entity.project;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+@NamedQueries({
+        @NamedQuery(
+                name = "JiraTicket.fetchAllOrderByName",
+                query = "from JiraTicket j order by j.ticketName"),
+        @NamedQuery(
+                name = "JiraTicket.fetchByName",
+                query = "from JiraTicket j where j.ticketName = :ticketName")
+})
 @Entity
 public class JiraTicket {
 

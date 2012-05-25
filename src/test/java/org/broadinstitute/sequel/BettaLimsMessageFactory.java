@@ -22,7 +22,7 @@ import java.util.List;
 public class BettaLimsMessageFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
 
-    String buildWellName(int positionNumber) {
+    public String buildWellName(int positionNumber) {
         @SuppressWarnings("NumericCastThatLosesPrecision")
         char row = (char) ('A' + (positionNumber / NUMBER_OF_RACK_COLUMNS));
         int column = positionNumber % NUMBER_OF_RACK_COLUMNS;

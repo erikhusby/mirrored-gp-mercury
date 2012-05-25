@@ -26,7 +26,7 @@ public class SampleSheet {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SAMPLE_SHEET")
     private Long sampleSheetId;
 
-    @ManyToMany(targetEntity = BSPSample.class, cascade = CascadeType.PERSIST)
+    @ManyToMany(cascade = CascadeType.PERSIST) // todo jmt hbm2ddl is still not generating an index!
     private Collection<StartingSample> startingSamples = new HashSet<StartingSample>();
 
     @ManyToMany(mappedBy = "sampleSheets")

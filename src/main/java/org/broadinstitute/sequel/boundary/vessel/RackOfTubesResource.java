@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.boundary.vessel;
 
 import org.broadinstitute.sequel.control.dao.vessel.RackOfTubesDao;
+import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
@@ -17,6 +18,9 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * For importing data from Squid, creates a rack of tubes
@@ -24,24 +28,51 @@ import javax.ws.rs.Path;
 @Path("/rackoftubes")
 @Stateless
 public class RackOfTubesResource {
+
     @Inject
     private RackOfTubesDao rackOfTubesDao;
 
-    @POST
-    public void createRack(RackBean rackBean) {
-        RackOfTubes rackOfTubes = new RackOfTubes(rackBean.barcode);
-        // todo jmt fix workflow
-        ProjectPlan projectPlan = new ProjectPlan(new BasicProject(rackBean.lcSet,
-                new JiraTicket(new DummyJiraService(), rackBean.lcSet, rackBean.lcSet)), rackBean.lcSet,
-                new WorkflowDescription("", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+    @Inject
+    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
+    @POST
+    public String createRack(RackBean rackBean) {
+        String label = rackBean.barcode + "_" + Long.toString(System.currentTimeMillis());
+        RackOfTubes rackOfTubes = new RackOfTubes(label);
+        ProjectPlan projectPlan = null;
+        if (rackBean.lcSet != null) {
+            // todo jmt fix workflow
+            projectPlan = new ProjectPlan(new BasicProject(rackBean.lcSet,
+                    new JiraTicket(new DummyJiraService(), rackBean.lcSet, rackBean.lcSet)), rackBean.lcSet,
+                    new WorkflowDescription("", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+        }
+
+        List<String> barcodes = new ArrayList<String>();
         for (TubeBean tubeBean : rackBean.tubeBeans) {
-            SampleSheet sampleSheet = new SampleSheet();
-            sampleSheet.addStartingSample(new BSPSample(tubeBean.sampleBarcode, projectPlan));
-            rackOfTubes.getVesselContainer().addContainedVessel(new TwoDBarcodedTube(tubeBean.barcode, sampleSheet),
+            barcodes.add(tubeBean.barcode);
+        }
+        Map<String,TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(barcodes);
+        for (TubeBean tubeBean : rackBean.tubeBeans) {
+            TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.barcode);
+            if (twoDBarcodedTube == null) {
+                if(tubeBean.sampleBarcode == null) {
+                    twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.barcode);
+                } else {
+                    SampleSheet sampleSheet = new SampleSheet();
+                    sampleSheet.addStartingSample(new BSPSample(tubeBean.sampleBarcode, projectPlan));
+                    twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.barcode, sampleSheet);
+                }
+            }
+            rackOfTubes.getVesselContainer().addContainedVessel(twoDBarcodedTube,
                     VesselPosition.getByName(tubeBean.position));
         }
         rackOfTubes.makeDigest();
-        rackOfTubesDao.persist(rackOfTubes);
+        List<RackOfTubes> byDigest = rackOfTubesDao.findByDigest(rackOfTubes.getDigest());
+        if(byDigest.isEmpty()) {
+            rackOfTubesDao.persist(rackOfTubes);
+            rackOfTubesDao.flush();
+            return label;
+        }
+        return byDigest.get(0).getLabel();
     }
 }

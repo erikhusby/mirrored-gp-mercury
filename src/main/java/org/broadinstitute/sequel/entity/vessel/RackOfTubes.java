@@ -31,12 +31,17 @@ import java.util.Set;
         @NamedQuery(
                 name = "RackOfTubes.fetchByDigest",
                 query = "select r from RackOfTubes r where digest = :digest"
+        ),
+        @NamedQuery(
+                name = "RackOfTubes.fetchByLabel",
+                query = "select r from RackOfTubes r where label = :label"
         )
 })
 @Entity
 public class RackOfTubes extends LabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
 
     // todo jmt can't make this non-null, because all LabVessels subtypes are in the same table
+    // todo jmt unique constraint?
 //    @Column(nullable = false)
     private String digest;
 
