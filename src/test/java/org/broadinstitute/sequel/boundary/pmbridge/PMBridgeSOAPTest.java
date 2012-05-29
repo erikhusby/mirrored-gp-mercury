@@ -21,12 +21,6 @@ public class PMBridgeSOAPTest extends ContainerTest {
 
     private static Log gLog = LogFactory.getLog(PMBridgeSOAPTest.class);
 
-    /**
-     * This only appears to be injected properly if the @Test is also annotated with @RunAsClient
-     */
-    @ArquillianResource
-    private URL deploymentURL;
-
 
     /**
      * 'Topic' was one of the many names PMBridge had in its past.  I've transitioned SequeL's URL to PMBridge,
@@ -37,11 +31,11 @@ public class PMBridgeSOAPTest extends ContainerTest {
      *
      * @throws Exception
      */
-    private SquidTopicPortype getPMBridgeServicePort() throws Exception {
+    private SquidTopicPortype getPMBridgeServicePort(URL baseURL) throws Exception {
         String namespace = "urn:SquidTopic";
         QName serviceName = new QName(namespace, "SquidTopicService");
 
-        String wsdlURL = deploymentURL.toString() + "PMBridge?WSDL";
+        String wsdlURL = baseURL.toString() + "PMBridge?WSDL";
         URL url = new URL(wsdlURL);
 
         Service service = Service.create(url, serviceName);
@@ -50,11 +44,11 @@ public class PMBridgeSOAPTest extends ContainerTest {
     }
 
 
-    @Test
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void smokeTest() throws Exception{
+    public void smokeTest(@ArquillianResource URL baseURL) throws Exception{
 
-        final SquidTopicPortype pmBridgeServicePort = getPMBridgeServicePort();
+        final SquidTopicPortype pmBridgeServicePort = getPMBridgeServicePort(baseURL);
         Assert.assertEquals("Hello PMBridge!", pmBridgeServicePort.getGreeting());
 
     }
