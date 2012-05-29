@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.boundary.pmbridge;
 
-import org.broadinstitute.sequel.pmbridge.*;
+import org.broadinstitute.sequel.boundary.*;
 
 import javax.jws.WebParam;
 import javax.jws.WebService;
@@ -10,7 +10,7 @@ import javax.jws.WebService;
         portName = "SquidTopicService",
         serviceName = "SquidTopicService",
         name = "SquidTopicService",
-        endpointInterface = "org.broadinstitute.sequel.pmbridge.SquidTopicPortype"
+        endpointInterface = "org.broadinstitute.sequel.boundary.SquidTopicPortype"
 )
 public class PMBridgeSOAPServiceImpl implements SquidTopicPortype {
 

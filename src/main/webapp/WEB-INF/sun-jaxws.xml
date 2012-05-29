@@ -6,4 +6,10 @@
         name='PMBridge'
         implementation='org.broadinstitute.sequel.boundary.pmbridge.PMBridgeSOAPServiceImpl'
         url-pattern='/PMBridge' />
+
+<endpoint
+        name='SampleKit'
+        implementation='org.broadinstitute.sequel.boundary.samplekit.SampleKitSOAPServiceImpl'
+        url-pattern='/SampleKit' />
+
         </endpoints>

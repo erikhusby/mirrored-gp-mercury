@@ -4,7 +4,7 @@ import junit.framework.Assert;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.integration.ContainerTest;
-import org.broadinstitute.sequel.pmbridge.SquidTopicPortype;
+import org.broadinstitute.sequel.boundary.SquidTopicPortype;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.testng.annotations.Test;

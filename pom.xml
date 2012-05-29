@@ -1209,7 +1209,7 @@
                     <!-- The name of your generated source package -->
                     <!-- this config seems to push hard to have all the generated WSDL end up in one package, which
                          may require some hackery to break out for separate top-down generations -->
-                    <packageName>org.broadinstitute.sequel.pmbridge</packageName>
+                    <packageName>org.broadinstitute.sequel.boundary</packageName>
                     <wsdlDirectory>${basedir}/src/main/wsdl</wsdlDirectory>
                 </configuration>
 

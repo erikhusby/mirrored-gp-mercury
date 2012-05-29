@@ -53,6 +53,11 @@
         <url-pattern>/PMBridge</url-pattern>
     </servlet-mapping>
 
+    <servlet-mapping>
+        <servlet-name>jaxws</servlet-name>
+        <url-pattern>/SampleKit</url-pattern>
+    </servlet-mapping>
+
     <servlet>
         <display-name>rest</display-name>
         <servlet-name>rest</servlet-name>
