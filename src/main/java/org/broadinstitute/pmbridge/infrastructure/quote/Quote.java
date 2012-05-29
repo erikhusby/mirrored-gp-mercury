@@ -10,6 +10,7 @@ public class Quote {
 
     private String alphanumericId;
     private ApprovalStatus approvalStatus;
+    private Boolean isExpired;
     private String id;
     private String name;
     private QuoteFunding quoteFunding;
@@ -76,6 +77,15 @@ public class Quote {
 
     public void setApprovalStatus(ApprovalStatus approvalStatus) {
         this.approvalStatus = approvalStatus;
+    }
+
+    @XmlAttribute(name="isExpired")
+    public Boolean getExpired() {
+        return isExpired;
+    }
+
+    public void setExpired(final Boolean expired) {
+        isExpired = expired;
     }
 
     @XmlAttribute(name="quoteType")

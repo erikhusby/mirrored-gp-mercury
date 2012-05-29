@@ -6,6 +6,7 @@ import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.pmbridge.control.AbstractJerseyClientService;
 
 import javax.enterprise.inject.Alternative;
@@ -20,6 +21,8 @@ import java.util.regex.Pattern;
 
 @Alternative
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
+
+    private org.apache.commons.logging.Log logger = LogFactory.getLog(QuoteServiceImpl.class);
 
     @Inject
     private QuoteConnectionParameters connectionParameters;
@@ -133,7 +136,15 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             if (quote.getQuoteFunding() != null) {
                 if (quote.getQuoteFunding().getFundingLevel() != null) {
                     if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
-                        fundingSources.add(quote.getQuoteFunding().getFundingLevel().getFunding());
+                        final Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
+                        // Add it , if it has a type and a number associated with it
+                        if ( (funding.getFundingType() != null) &&
+                            ((funding.getGrantNumber() != null)  || (funding.getPurchaseOrderNumber() != null) ) ) {
+                            fundingSources.add(funding);
+                        } else {
+                            String expiredState = ( quote.getExpired() ? "Expired. " : "Non-Expired. ");
+                            logger.info("Ignoring quote  " + quote.getAlphanumericId() + " because it has non-identifiable funding. " + expiredState + " Funds Remaining: " + quote.getQuoteFunding().getFundsRemaining() );
+                        }
                     }
                 }
             }
