@@ -32,68 +32,16 @@ public class ExperimentRequestSummary {
     private ChangeEvent modification;
     private RemoteId remoteId;
     private Long researchProjectId = ResearchProject.UNSPECIFIED_ID;
-    private Name status;
     public static Name DRAFT_STATUS = new Name("DRAFT");
+    private Name status = DRAFT_STATUS;
 
 
-    public ExperimentRequestSummary(Person creator, Date createdDate, PlatformType platformType, String subType) {
+    public ExperimentRequestSummary(Person creator, Date createdDate, PlatformType platformType) {
         this.creation = new ChangeEvent( createdDate, creator );
         this.platformType = platformType;
         this.localId = new LocalId( "" + this.creation.date.getTime());
         this.modification = new ChangeEvent(new Date(this.creation.date.getTime()), creator);
-//        this.experimentRequest = createNewExperimentRequest( platformType, subType );
     }
-
-//    /**
-//     * private method to initialize an experiment request member with the appropriates type of experiment request
-//     * based on the platform type a subType.
-//     */
-//    private ExperimentRequest createNewExperimentRequest ( PlatformType platformType, String subType ){
-//        ExperimentRequest experimentRequest = null;
-//
-//        switch (platformType) {
-//            case GSP:
-//                experimentRequest = createSeqExperimentRequest(subType);
-//                break;
-//            case GAP:
-//                //TODO - defaults for Experiment Plan ??
-//                experimentRequest = new GapExperimentRequest(this, new ExperimentPlan());
-//                break;
-//            default:
-//                break;
-//        }
-//        return experimentRequest;
-//    }
-//
-//
-//    private SeqExperimentRequest createSeqExperimentRequest(String subType) {
-//        SeqExperimentRequest experimentRequest=null;
-//
-//        PMBPassType pmbPassType=PMBPassType.convertToEnumElseNull(subType);
-//        if (  pmbPassType == null) {
-//            throw new IllegalArgumentException("Unsupported Sequencing Pass Type: "+ subType + ". Supported values are : " + PMBPassType.values().toString() );
-//        }
-//
-//        switch (pmbPassType) {
-//            //TODO set mandatory defaults for each ??
-//            case WG:
-//                experimentRequest = new WholeGenomeExperiment(this);
-//                break;
-//            case DIRECTED:
-//                experimentRequest = new HybridSelectionExperiment(this);
-//                break;
-//            case RNASeq:
-//                experimentRequest = new RNASeqExperiment(this);
-//                break;
-//            default:
-//                // in case the enum is extended but not this code.
-//                throw new IllegalArgumentException("Unsupported Sequencing Pass Type : " + pmbPassType.name() );
-//        }
-//
-//        return experimentRequest;
-//    }
-
-
 
     //GETTERS
     public Name getTitle() {

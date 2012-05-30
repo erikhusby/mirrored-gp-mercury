@@ -2,7 +2,9 @@ package org.broadinstitute.pmbridge.infrastructure.quote;
 
 import javax.enterprise.inject.Default;
 import javax.xml.bind.JAXBContext;
-import java.io.FileInputStream;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import java.io.*;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -110,8 +112,26 @@ public class MockQuoteServiceImpl extends QuoteServiceImpl {
         return prices;
     }
 
-    public void generateQuoteFile( String quoteTestFileName ) {
-        //TODO Need method to recreate the data files in case quote API changes/evolves.
+
+    public void generateQuoteFile( String quoteTestFileName ) throws QuoteServerException, QuoteNotFoundException, JAXBException, IOException {
+        //TODO Needed to recreate the data files in case quote API changes/evolves.
+        Quotes quotes = super.getAllQuotes();
+        JAXBContext jaxbContext = JAXBContext.newInstance(Quotes.class);
+
+        Marshaller marshaller = jaxbContext.createMarshaller();
+        marshaller.setProperty( Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE );
+        File newQuoteFile = new File(quoteTestFileName);
+
+        if (!newQuoteFile.exists()) {
+            if (!newQuoteFile.createNewFile()) {
+                throw new RuntimeException("Could not quotes file " + newQuoteFile.getAbsolutePath());
+            }
+        }
+        OutputStream quotesOutputStream = new FileOutputStream(newQuoteFile);
+        marshaller.marshal(quotes,quotesOutputStream);
+        quotesOutputStream.flush();
+        quotesOutputStream.close();
+
     }
 }
 

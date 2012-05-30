@@ -76,5 +76,7 @@ public class ResearchProjectResourceTest extends Arquillian {
 //        Assert.assertEquals(researchProjects.getProjects().get(3).getTitle().name + " " +
 //                researchProjects.getProjects().get(3).getId().longValue()
 //                , "FakeResearchProject 444" );
+
+
     }
 }

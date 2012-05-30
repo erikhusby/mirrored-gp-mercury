@@ -1,5 +1,8 @@
 package org.broadinstitute.pmbridge.entity.experiments.seq;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 
@@ -16,15 +19,20 @@ import java.util.Set;
 public class RNASeqExperiment extends SeqExperimentRequest {
 
     private final RNASeqPass rnaSeqPass;
+    public static final RNASeqProtocolType DEFAULT_RNA_PROTOCOL = RNASeqProtocolType.TRU_SEQ;
     public static final CoverageModelType DEFAULT_COVERAGE_MODEL = CoverageModelType.LANES;
+    public static final Long DEFAULT_REFERENCE_SEQUENCE_ID = new Long(-1);
     private static Set<CoverageModelType> coverageModelTypes =
             EnumSet.of(CoverageModelType.LANES, CoverageModelType.PFREADS);
 
     public RNASeqExperiment(final ExperimentRequestSummary experimentRequestSummary ) {
         this(experimentRequestSummary, new RNASeqPass());
         // Set defaults
-        this.rnaSeqPass.setProtocol(RNASeqProtocolType.TRU_SEQ);
-        this.rnaSeqPass.setTranscriptomeReferenceSequenceID( new Long(-1) );
+        CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
+        coverageAndAnalysisInformation.setAligner(AlignerType.TOPHAT);
+        this.rnaSeqPass.setCoverageAndAnalysisInformation(coverageAndAnalysisInformation);
+        this.rnaSeqPass.setProtocol(DEFAULT_RNA_PROTOCOL);
+        this.rnaSeqPass.setTranscriptomeReferenceSequenceID(DEFAULT_REFERENCE_SEQUENCE_ID);
     }
 
     public RNASeqExperiment(final ExperimentRequestSummary experimentRequestSummary, final RNASeqPass rnaSeqPass) {
@@ -51,7 +59,7 @@ public class RNASeqExperiment extends SeqExperimentRequest {
     public void setAlignerType(final AlignerType alignerType) {
         //TODO hmc Need to request TopHat be added to the AlignerType.
         if (AlignerType.MAQ.equals(alignerType) || AlignerType.BWA.equals(alignerType)) {
-            throw new IllegalStateException(alignerType.toString() + " aligner type no longer supported. Please use TopHat.");
+            throw new IllegalArgumentException(alignerType.toString() + " aligner type no longer supported. Please use TopHat.");
         }
         getOrCreateCoverageAndAnalysisInformation().setAligner( alignerType );
     }
@@ -63,7 +71,7 @@ public class RNASeqExperiment extends SeqExperimentRequest {
      *     {@link Long }
      *
      */
-    public Long getTranscriptomeReferenceSequenceID() {
+    public Long  getTranscriptomeReferenceSequenceID() {
         return rnaSeqPass.getTranscriptomeReferenceSequenceID();
     }
 
@@ -99,7 +107,7 @@ public class RNASeqExperiment extends SeqExperimentRequest {
 
     public static RNASeqProtocolType convertToRNASeqProtocolEnumElseNull(String str) {
         for (RNASeqProtocolType eValue : RNASeqProtocolType.values()) {
-            if (eValue.name().equalsIgnoreCase(str))
+            if (eValue.value().equalsIgnoreCase(str))
                 return eValue;
         }
         return null;
@@ -137,5 +145,41 @@ public class RNASeqExperiment extends SeqExperimentRequest {
         coverageAndAnalysisInformation.setReferenceSequenceId( -1 );
 
         return coverageAndAnalysisInformation;
+    }
+
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof RNASeqExperiment)) return false;
+        if (!super.equals(o)) return false;
+
+        final RNASeqExperiment that = (RNASeqExperiment) o;
+
+        if (getRNAProtocol() != null ? !getRNAProtocol().equals(that.getRNAProtocol()) : that.getRNAProtocol() != null) return false;
+        if (getTranscriptomeReferenceSequenceID() != null
+                ? !getTranscriptomeReferenceSequenceID().equals(that.getTranscriptomeReferenceSequenceID())
+                : that.getTranscriptomeReferenceSequenceID() != null) return false;
+        if (getAlignerType() != null ? !getAlignerType().equals(that.getAlignerType()) : that.getAlignerType() != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (getRNAProtocol() != null ? getRNAProtocol().hashCode() : 0);
+        result = 31 * result + (getTranscriptomeReferenceSequenceID() != null ? getTranscriptomeReferenceSequenceID().intValue() : 0);
+        result = 31 * result + (getAlignerType() != null ? getAlignerType().hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "RNASeqExperiment{" +
+                "RNAProtocol=" + getRNAProtocol() +
+                "TranscriptomeReferenceSequenceID=" + getTranscriptomeReferenceSequenceID() +
+                "AlignerType=" + getAlignerType() +
+                '}';
     }
 }

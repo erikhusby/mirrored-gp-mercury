@@ -25,6 +25,7 @@ import static org.testng.Assert.assertNotNull;
  * Date: 5/3/12
  * Time: 2:55 PM
  */
+@Test(groups = {EXTERNAL_INTEGRATION})
 public class SequencingServiceExternalTest extends Arquillian {
 
     @Inject
@@ -36,7 +37,6 @@ public class SequencingServiceExternalTest extends Arquillian {
         return war;
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
     public void testGetPlatformPeople() throws Exception {
 
         List<Person> aList = sequencingService.getPlatformPeople();
@@ -45,7 +45,6 @@ public class SequencingServiceExternalTest extends Arquillian {
 
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
     public void testGetOrganisms() throws Exception {
 
         List<OrganismName> aList = sequencingService.getOrganisms();
@@ -56,7 +55,6 @@ public class SequencingServiceExternalTest extends Arquillian {
 
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
     public void testGetBaitSets() throws Exception {
         List<BaitSetName> aList = sequencingService.getBaitSets();
         assertNotNull(aList);
@@ -64,7 +62,6 @@ public class SequencingServiceExternalTest extends Arquillian {
         assertNotNull(baitSetName.name);
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
     public void testGetReferenceSequences() throws Exception {
         List<ReferenceSequenceName> aList = sequencingService.getReferenceSequences();
         assertNotNull(aList);
@@ -73,7 +70,6 @@ public class SequencingServiceExternalTest extends Arquillian {
         assertNotNull(referenceSequenceName.getId());
     }
 
-    @Test
     public void testGetRequestSummariesByCreator() throws Exception {
         List<ExperimentRequestSummary> aList = sequencingService.getRequestSummariesByCreator(new Person("pmbridge", RoleType.PROGRAM_PM));
         assertNotNull(aList);

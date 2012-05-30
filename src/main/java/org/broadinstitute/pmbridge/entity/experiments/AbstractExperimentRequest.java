@@ -7,6 +7,7 @@ import org.broadinstitute.pmbridge.entity.bsp.BSPSample;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.person.Person;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -26,6 +27,9 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
 
     protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary) {
         this.experimentRequestSummary = experimentRequestSummary;
+        this.platformProjectManagers = new HashSet<Person>();
+        this.programProjectManagers = new HashSet<Person>();
+        this.samples = new HashSet<BSPSample>();
     }
 
 //    protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary,
@@ -89,19 +93,43 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
         this.programProjectManagers = programProjectManagers;
     }
 
+//    @Override
+//    public boolean equals(Object obj) {
+//        return EqualsBuilder.reflectionEquals(this, obj);
+//     }
+
+
     @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-     }
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof AbstractExperimentRequest)) return false;
+
+        final AbstractExperimentRequest that = (AbstractExperimentRequest) o;
+
+        if (!experimentRequestSummary.equals(that.experimentRequestSummary)) return false;
+        if (!platformProjectManagers.equals(that.platformProjectManagers)) return false;
+        if (!programProjectManagers.equals(that.programProjectManagers)) return false;
+        if (!samples.equals(that.samples)) return false;
+
+        return true;
+    }
+
     @Override
     public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this);
+        int result = experimentRequestSummary.hashCode();
+        result = 31 * result + platformProjectManagers.hashCode();
+        result = 31 * result + programProjectManagers.hashCode();
+        result = 31 * result + samples.hashCode();
+        return result;
     }
+
     @Override
     public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+        return "AbstractExperimentRequest{" +
+                "experimentRequestSummary=" + experimentRequestSummary +
+                ", platformProjectManagers=" + platformProjectManagers +
+                ", programProjectManagers=" + programProjectManagers +
+                ", samples=" + samples +
+                '}';
     }
-
-
-
 }

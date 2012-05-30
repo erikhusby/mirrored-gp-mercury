@@ -22,7 +22,6 @@ import javax.xml.ws.Service;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -148,8 +147,8 @@ public class SequencingServiceImpl implements SequencingService {
                 }
                 ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(
                         creator, updatedDate,
-                        PlatformType.GSP,
-                        summary.getType().name() );
+                        PlatformType.GSP
+                );
                 experimentRequestSummary.setRemoteId(new RemoteId(summary.getPassNumber()));
                 experimentRequestSummary.setTitle(new Name(summary.getTitle()));
                 experimentRequestSummary.setModification(new ChangeEvent(updatedDate, new Person(summary.getUpdatedBy(), RoleType.PROGRAM_PM)));

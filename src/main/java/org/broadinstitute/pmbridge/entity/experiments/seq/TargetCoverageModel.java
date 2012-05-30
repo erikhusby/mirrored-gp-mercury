@@ -49,4 +49,23 @@ public class TargetCoverageModel extends SeqCoverageModel {
     protected CoverageModelType getConcreteModelType() {
         return CoverageModelType.TARGETCOVERAGE;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TargetCoverageModel)) return false;
+
+        final TargetCoverageModel that = (TargetCoverageModel) o;
+
+        if (targetCoverageModel != null ? !targetCoverageModel.equals(that.targetCoverageModel) : that.targetCoverageModel != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return targetCoverageModel != null ? targetCoverageModel.hashCode() : 0;
+    }
+
 }

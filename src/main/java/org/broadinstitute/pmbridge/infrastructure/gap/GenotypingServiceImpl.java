@@ -7,7 +7,6 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.pmbridge.control.AbstractJerseyClientService;
 import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
-import org.broadinstitute.pmbridge.entity.common.EntityUtils;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.pmbridge.entity.experiments.RemoteId;
@@ -15,7 +14,6 @@ import org.broadinstitute.pmbridge.entity.experiments.gap.GapExperimentRequest;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
 import org.broadinstitute.pmbridge.entity.project.PlatformType;
-import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 import org.broadinstitute.pmbridge.infrastructure.SubmissionException;
 import org.broadinstitute.pmbridge.infrastructure.ValidationException;
 import org.broadinstitute.pmbridge.infrastructure.quote.Quote;
@@ -23,6 +21,7 @@ import org.broadinstitute.pmbridge.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.pmbridge.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.pmbridge.infrastructure.quote.QuoteService;
 
+import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -39,6 +38,7 @@ import java.util.regex.Pattern;
  * Date: 5/22/12
  * Time: 12:27 PM
  */
+@Alternative
 public class GenotypingServiceImpl  extends AbstractJerseyClientService implements GenotypingService {
 
     private org.apache.commons.logging.Log logger = LogFactory.getLog(GenotypingServiceImpl.class);
@@ -73,7 +73,7 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
             Product product=null;
             Integer gapProductId = experimentPlan.getProductId();
             try {
-                product = lookupProductById( gapProductId );
+                product = lookupTechnologyProductById(gapProductId);
             } catch (ProductNotFoundException e) {
                 // Nothing to do here made an effort to translate the productId
                 product = new Product("Unknown", "" + gapProductId);
@@ -283,7 +283,7 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
                 if (expPlan != null) {
                     ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary (
                             user, expPlan.getDateCreated(),
-                            PlatformType.GAP, "");
+                            PlatformType.GAP);
                     experimentRequestSummary.setRemoteId( new RemoteId(expPlan.getId()) );
                     experimentRequestSummary.setCreation( new ChangeEvent( expPlan.getDateCreated(),
                             new Person( expPlan.getCreatedBy(), RoleType.PROGRAM_PM ) ) );
@@ -380,30 +380,16 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
 
 
     @Override
-    public Product lookupProductById(final Integer productId) throws ProductNotFoundException {
+    public Product lookupTechnologyProductById(final Integer productId) throws ProductNotFoundException {
         final Product result;
+        Platforms platforms = null;
 
         String url =  gapConnectionParameters.getUrl( GapConnectionParameters.GAP_TECHNOLOGIES_URL );
         logger.info(String.format("url string is '%s'", url));
-        WebResource resource = getJerseyClient().resource(url);
 
         try {
-            Platforms platforms = resource.accept(MediaType.APPLICATION_XML).get(Platforms.class);
-            // Traverse the platform tree of products to find a match.
-            // The lists of platforms and products are pretty small lists.
-            if ((platforms != null) && (platforms.getPlatforms() != null) && platforms.getPlatforms().size() > 0 ) {
-                for ( Platform platform : platforms.getPlatforms() ) {
-                    if (( platform != null ) && (platform.getProducts() != null )
-                            && (platform.getProducts().getProducts() != null) &&  (platform.getProducts().getProducts().size() >0) ) {
-                        for ( Product product : platform.getProducts().getProducts() ) {
-                            if (( product != null ) && (product.getId() != null) && product.getId().trim().equals("" + productId.intValue()) ) {
-                                result = product;
-                                return result;
-                            }
-                        }
-                    }
-                }
-            }
+            WebResource resource = getJerseyClient().resource(url);
+            platforms = resource.accept(MediaType.APPLICATION_XML).get(Platforms.class);
         } catch(UniformInterfaceException e) {
             String errMsg = "Could not find GAP technologies for product id : " + productId.intValue();
             logger.error( errMsg + " at " + url );
@@ -416,6 +402,22 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
             String errMsg = "Exception occurred trying to retrieve GAP technology for product id : " + productId.intValue();
             logger.error(errMsg + " at " + url , exp);
             throw new RuntimeException( errMsg , exp);
+        }
+
+        // Traverse the platform tree of products to find a match.
+        // The lists of platforms and products are pretty small lists.
+        if ((platforms != null) && (platforms.getPlatforms() != null) && platforms.getPlatforms().size() > 0 ) {
+            for ( Platform platform : platforms.getPlatforms() ) {
+                if (( platform != null ) && (platform.getProducts() != null )
+                        && (platform.getProducts().getProducts() != null) &&  (platform.getProducts().getProducts().size() >0) ) {
+                    for ( Product product : platform.getProducts().getProducts() ) {
+                        if (( product != null ) && (product.getId() != null) && product.getId().trim().equals("" + productId.intValue()) ) {
+                            result = product;
+                            return result;
+                        }
+                    }
+                }
+            }
         }
 
         String errMsg = "Could not find GAP technologies for product id : " + productId.intValue();

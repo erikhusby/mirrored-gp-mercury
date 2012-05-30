@@ -38,4 +38,22 @@ public class PFReadsCoverageModel extends SeqCoverageModel{
     protected CoverageModelType getConcreteModelType() {
         return CoverageModelType.PFREADS;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PFReadsCoverageModel)) return false;
+
+        final PFReadsCoverageModel that = (PFReadsCoverageModel) o;
+
+        if (pfReadsCoverageModel != null ? !pfReadsCoverageModel.equals(that.pfReadsCoverageModel) : that.pfReadsCoverageModel != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return pfReadsCoverageModel != null ? pfReadsCoverageModel.hashCode() : 0;
+    }
 }

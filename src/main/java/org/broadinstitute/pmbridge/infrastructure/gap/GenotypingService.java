@@ -31,6 +31,6 @@ public interface GenotypingService {
     public List<ExperimentRequestSummary> getRequestSummariesByCreator(final Person creator);
 
     // Lookup the product given an Id
-    public Product lookupProductById( final Integer productId ) throws ProductNotFoundException;
+    public Product lookupTechnologyProductById(final Integer productId) throws ProductNotFoundException;
 
 }

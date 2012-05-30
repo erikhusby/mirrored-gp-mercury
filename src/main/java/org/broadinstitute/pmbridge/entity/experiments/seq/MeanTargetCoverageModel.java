@@ -38,4 +38,22 @@ public class MeanTargetCoverageModel extends SeqCoverageModel {
     protected CoverageModelType getConcreteModelType() {
         return CoverageModelType.MEANTARGETCOVERAGE;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof MeanTargetCoverageModel)) return false;
+
+        final MeanTargetCoverageModel that = (MeanTargetCoverageModel) o;
+
+        if (meanTargetCoverageModel != null ? !meanTargetCoverageModel.equals(that.meanTargetCoverageModel) : that.meanTargetCoverageModel != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return meanTargetCoverageModel != null ? meanTargetCoverageModel.hashCode() : 0;
+    }
 }

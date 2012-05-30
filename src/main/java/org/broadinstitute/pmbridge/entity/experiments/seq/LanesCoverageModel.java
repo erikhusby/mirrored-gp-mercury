@@ -42,4 +42,21 @@ public class LanesCoverageModel extends SeqCoverageModel {
         return CoverageModelType.LANES;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LanesCoverageModel)) return false;
+
+        final LanesCoverageModel that = (LanesCoverageModel) o;
+
+        if (attemptedLanesCoverageModel != null ? !attemptedLanesCoverageModel.equals(that.attemptedLanesCoverageModel) : that.attemptedLanesCoverageModel != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return attemptedLanesCoverageModel != null ? attemptedLanesCoverageModel.hashCode() : 0;
+    }
 }

@@ -168,8 +168,7 @@ public class EndToEndTest extends Arquillian {
         ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary  (
                 new Person("mccrory", RoleType.PROGRAM_PM),
                 new Date(),
-                PlatformType.GAP,
-                ""
+                PlatformType.GAP
         );
 
         experimentRequestSummary.setStatus( new Name("DRAFT"));

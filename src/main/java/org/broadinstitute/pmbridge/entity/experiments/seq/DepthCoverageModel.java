@@ -41,4 +41,22 @@ public class DepthCoverageModel extends SeqCoverageModel {
     protected CoverageModelType getConcreteModelType() {
         return CoverageModelType.DEPTH;
      }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DepthCoverageModel)) return false;
+
+        final DepthCoverageModel that = (DepthCoverageModel) o;
+
+        if (programPseudoDepthCoverageModel != null ? !programPseudoDepthCoverageModel.equals(that.programPseudoDepthCoverageModel) : that.programPseudoDepthCoverageModel != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return programPseudoDepthCoverageModel != null ? programPseudoDepthCoverageModel.hashCode() : 0;
+    }
 }

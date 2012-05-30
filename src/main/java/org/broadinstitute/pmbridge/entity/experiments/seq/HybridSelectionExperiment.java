@@ -1,5 +1,8 @@
 package org.broadinstitute.pmbridge.entity.experiments.seq;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broad.squid.services.TopicService.*;
 import org.broad.squid.services.TopicService.TargetCoverageModel;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
@@ -21,7 +24,7 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
     private final DirectedPass directedPass;
 
     public static final CoverageModelType DEFAULT_COVERAGE_MODEL = CoverageModelType.LANES;
-
+    public static final Long DEFAULT_BAIT_SET_ID = new Long(-1);
     private static Set<CoverageModelType> coverageModelTypes =
             EnumSet.of(CoverageModelType.LANES, CoverageModelType.TARGETCOVERAGE, CoverageModelType.MEANTARGETCOVERAGE);
 
@@ -29,7 +32,7 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
     public HybridSelectionExperiment(final ExperimentRequestSummary experimentRequestSummary ) {
         this(experimentRequestSummary, new DirectedPass());
         // Set defaults
-        this.directedPass.setBaitSetID( new Long(-1) );
+        this.directedPass.setBaitSetID( DEFAULT_BAIT_SET_ID );
     }
 
     public HybridSelectionExperiment(final ExperimentRequestSummary experimentRequestSummary, final DirectedPass directedPass) {
@@ -63,7 +66,7 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
     @Override
     public void setAlignerType(final AlignerType alignerType) {
         if (AlignerType.MAQ.equals(alignerType)) {
-            throw new IllegalStateException(AlignerType.MAQ.toString() + " aligner type no longer supported. Please use BWA.");
+            throw new IllegalArgumentException(AlignerType.MAQ.toString() + " aligner type no longer supported. Please use BWA.");
         }
         getOrCreateCoverageAndAnalysisInformation().setAligner( alignerType );
     }
@@ -106,4 +109,31 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
         return coverageAndAnalysisInformation;
     }
 
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof HybridSelectionExperiment)) return false;
+        if (!super.equals(o)) return false;
+
+        final HybridSelectionExperiment that = (HybridSelectionExperiment) o;
+
+        if (directedPass != null ? !directedPass.equals(that.directedPass) : that.directedPass != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (getAlignerType() != null ? getAlignerType().hashCode() : 0);
+        result = 31 * result + (getBaitSetID() != null ? getBaitSetID().intValue() : 0);
+
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
 }

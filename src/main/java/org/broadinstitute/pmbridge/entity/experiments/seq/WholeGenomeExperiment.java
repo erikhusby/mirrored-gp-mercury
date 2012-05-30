@@ -1,5 +1,8 @@
 package org.broadinstitute.pmbridge.entity.experiments.seq;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 
@@ -45,19 +48,19 @@ public class WholeGenomeExperiment extends SeqExperimentRequest {
     protected CoverageAndAnalysisInformation createDefaultCoverageModel() {
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
 
-        if (  DEFAULT_COVERAGE_MODEL.equals(CoverageModelType.LANES)) {
+//        if (  DEFAULT_COVERAGE_MODEL.equals(CoverageModelType.LANES)) {
             AttemptedLanesCoverageModel attemptedLanesCoverageModel = new AttemptedLanesCoverageModel();
             LanesCoverageModel lanesCoverageModel = new LanesCoverageModel(attemptedLanesCoverageModel);
             attemptedLanesCoverageModel.setAttemptedLanes( lanesCoverageModel.getLanesCoverage() );
             coverageAndAnalysisInformation.setAttemptedLanesCoverageModel(attemptedLanesCoverageModel);
             setSeqCoverageModel( lanesCoverageModel );
-        } else {
-            ProgramPseudoDepthCoverageModel programPseudoDepthCoverageModel = new ProgramPseudoDepthCoverageModel();
-            DepthCoverageModel depthCoverageModel = new DepthCoverageModel();
-            programPseudoDepthCoverageModel.setCoverageDesired(depthCoverageModel.getCoverageDesired());
-            coverageAndAnalysisInformation.setProgramPseudoDepthCoverageModel(programPseudoDepthCoverageModel);
-            setSeqCoverageModel( depthCoverageModel );
-        }
+//        } else {
+//            ProgramPseudoDepthCoverageModel programPseudoDepthCoverageModel = new ProgramPseudoDepthCoverageModel();
+//            DepthCoverageModel depthCoverageModel = new DepthCoverageModel();
+//            programPseudoDepthCoverageModel.setCoverageDesired(depthCoverageModel.getCoverageDesired());
+//            coverageAndAnalysisInformation.setProgramPseudoDepthCoverageModel(programPseudoDepthCoverageModel);
+//            setSeqCoverageModel( depthCoverageModel );
+//        }
 
         //Set default analysis pipeline
         coverageAndAnalysisInformation.setAnalysisPipeline( AnalysisPipelineType.MPG  );
@@ -84,10 +87,33 @@ public class WholeGenomeExperiment extends SeqExperimentRequest {
     public void setAlignerType(final AlignerType alignerType) {
 
         if (AlignerType.MAQ.equals(alignerType)) {
-            throw new IllegalStateException(AlignerType.MAQ.toString() + " aligner type no longer supported. Please use BWA.");
+            throw new IllegalArgumentException( AlignerType.MAQ.toString() + " aligner type no longer supported. Please use BWA.");
         }
         getOrCreateCoverageAndAnalysisInformation().setAligner( alignerType );
     }
 
 
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof WholeGenomeExperiment)) return false;
+        if (!super.equals(o)) return false;
+
+        final WholeGenomeExperiment that = (WholeGenomeExperiment) o;
+
+//        if (!wholeGenomePass.equals(that.wholeGenomePass)) return false;
+
+        return true;
+    }
+
+    @Override
+      public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return  super.toString() ;
+    }
 }

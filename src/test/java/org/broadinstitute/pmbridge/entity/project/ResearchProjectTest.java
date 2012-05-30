@@ -20,12 +20,12 @@ import static org.broadinstitute.pmbridge.TestGroups.UNIT;
  * Date: 4/12/12
  * Time: 11:26 AM
  */
+@Test(groups = {UNIT})
 public class ResearchProjectTest {
 
     private static final Logger LOG = Logger.getLogger(ResearchProjectTest.class);
 
 
-    @Test(groups = UNIT)
     public void testResearchProject() throws Exception {
 
         Date start = new Date();

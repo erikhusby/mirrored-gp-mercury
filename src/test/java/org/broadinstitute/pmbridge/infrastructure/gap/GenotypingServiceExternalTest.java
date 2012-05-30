@@ -48,6 +48,21 @@ public class GenotypingServiceExternalTest extends Arquillian {
         return war;
     }
 
+
+    @Test(groups = {EXTERNAL_INTEGRATION})
+    public void testLookupTechnologyProductById() throws Exception {
+
+        // <product name="HumanCytoSNP-12v1-0_D" display-name="Cyto 12" id="153"/>
+        Product product = genotypingService.lookupTechnologyProductById( new Integer( 153 ));
+        Assert.assertNotNull( product );
+        Assert.assertNotNull( product.getId() );
+        Assert.assertEquals(product.getId(), "153");
+        Assert.assertEquals(product.getDisplayName(), "Cyto 12");
+        Assert.assertEquals(product.getName(), "HumanCytoSNP-12v1-0_D");
+    }
+
+
+
 //    @Test(groups = {EXTERNAL_INTEGRATION})
 //    public void testGetPlatformRequest() throws Exception {
 //        //Person creator, Date createdDate, PlatformType platformType, String subType
@@ -69,66 +84,66 @@ public class GenotypingServiceExternalTest extends Arquillian {
 //
 //    }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
-    public void testSaveAndRetrieveRequestToPlatform() throws Exception {
-
-        ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary  (
-                new Person("mccrory", RoleType.PROGRAM_PM),
-                new Date(),
-                PlatformType.GAP,
-                ""
-        );
-
-        experimentRequestSummary.setResearchProjectId( 111L );
-        experimentRequestSummary.setStatus( new Name("DRAFT"));
-        long id = System.currentTimeMillis();
-        experimentRequestSummary.setTitle( new Name ("FunctionalTest_ExpRequest_" + id) );
-
-        Person programMgr = new Person("pmbridge", RoleType.PROGRAM_PM);
-        GapExperimentRequest gapExperimentRequest = new GapExperimentRequest(experimentRequestSummary);
-        FundingLevel fundLevel = new FundingLevel("50", new Funding("ABC", "Test Funding Description"));
-        Quote quoteBsp = new Quote("BSP2A3", new QuoteFunding(fundLevel), ApprovalStatus.APPROVED );
-        quoteBsp.setId("2955");
-        gapExperimentRequest.setBspQuote(quoteBsp);
-
-
-        gapExperimentRequest.setTechnologyProduct(new Product("SeqChip", "T1000 Chip", "226"));
-        gapExperimentRequest.setGapGroupName("GapGroup");
-        gapExperimentRequest.setGapProjectName("GapProject");
-        Quote quoteGap = new Quote("MMM3W7", new QuoteFunding(fundLevel), ApprovalStatus.APPROVED );
-        quoteGap.setId("5047");
-        gapExperimentRequest.setGapQuote(quoteGap);
-
-        GapExperimentRequest submittedExperimentRequest = genotypingService.saveExperimentRequest(programMgr, gapExperimentRequest);
-        Assert.assertNotNull( submittedExperimentRequest );
-
-        // Now retrieve the saved experiment by Id.
-        GapExperimentRequest savedExperimentRequest = genotypingService.getPlatformRequest(submittedExperimentRequest.getExperimentRequestSummary());
-
-        Assert.assertEquals(savedExperimentRequest.getExperimentRequestSummary().getResearchProjectId(), new Long(111L));
-        Assert.assertEquals( savedExperimentRequest.getExperimentRequestSummary().getStatus().name, "DRAFT" );
-        Assert.assertTrue(savedExperimentRequest.getTitle().name.startsWith("FunctionalTest_ExpRequest_"));
-        Assert.assertEquals(savedExperimentRequest.getExperimentRequestSummary().getCreation().person.getUsername(), "pmbridge");
-
-        Assert.assertNotNull(savedExperimentRequest.getRemoteId());
-        Assert.assertNotNull(savedExperimentRequest.getRemoteId().value.startsWith("GXP-"));
-
-        Assert.assertEquals( savedExperimentRequest.getBspQuote().getAlphanumericId(), quoteBsp.getAlphanumericId() );
-        Assert.assertEquals( savedExperimentRequest.getGapQuote().getAlphanumericId(), quoteGap.getAlphanumericId() );
-
-        // has not been submitted to plaform yet so no platform managers assigned.
-        Assert.assertNull( savedExperimentRequest.getPlatformProjectManagers() );
-
-        Assert.assertEquals( savedExperimentRequest.getProgramProjectManagers().iterator().next().getUsername(), "pmbridge");
-
-        Assert.assertEquals( savedExperimentRequest.getGapGroupName(), "GapGroup");
-        Assert.assertEquals( savedExperimentRequest.getGapProjectName(), "GapProject");
-        Assert.assertEquals( savedExperimentRequest.getTechnologyProduct().getId(), "226");
-
-
-        //TODO  Add Samples to the Gap Experiment Request
-
-    }
+//    @Test(groups = {EXTERNAL_INTEGRATION})
+//    public void testSaveAndRetrieveRequestToPlatform() throws Exception {
+//
+//        ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary  (
+//                new Person("mccrory", RoleType.PROGRAM_PM),
+//                new Date(),
+//                PlatformType.GAP,
+//                ""
+//        );
+//
+//        experimentRequestSummary.setResearchProjectId( 111L );
+//        experimentRequestSummary.setStatus( new Name("DRAFT"));
+//        long id = System.currentTimeMillis();
+//        experimentRequestSummary.setTitle( new Name ("FunctionalTest_ExpRequest_" + id) );
+//
+//        Person programMgr = new Person("pmbridge", RoleType.PROGRAM_PM);
+//        GapExperimentRequest gapExperimentRequest = new GapExperimentRequest(experimentRequestSummary);
+//        FundingLevel fundLevel = new FundingLevel("50", new Funding("ABC", "Test Funding Description"));
+//        Quote quoteBsp = new Quote("BSP2A3", new QuoteFunding(fundLevel), ApprovalStatus.APPROVED );
+//        quoteBsp.setId("2955");
+//        gapExperimentRequest.setBspQuote(quoteBsp);
+//
+//
+//        gapExperimentRequest.setTechnologyProduct(new Product("SeqChip", "T1000 Chip", "226"));
+//        gapExperimentRequest.setGapGroupName("GapGroup");
+//        gapExperimentRequest.setGapProjectName("GapProject");
+//        Quote quoteGap = new Quote("MMM3W7", new QuoteFunding(fundLevel), ApprovalStatus.APPROVED );
+//        quoteGap.setId("5047");
+//        gapExperimentRequest.setGapQuote(quoteGap);
+//
+//        GapExperimentRequest submittedExperimentRequest = genotypingService.saveExperimentRequest(programMgr, gapExperimentRequest);
+//        Assert.assertNotNull( submittedExperimentRequest );
+//
+//        // Now retrieve the saved experiment by Id.
+//        GapExperimentRequest savedExperimentRequest = genotypingService.getPlatformRequest(submittedExperimentRequest.getExperimentRequestSummary());
+//
+//        Assert.assertEquals(savedExperimentRequest.getExperimentRequestSummary().getResearchProjectId(), new Long(111L));
+//        Assert.assertEquals( savedExperimentRequest.getExperimentRequestSummary().getStatus().name, "DRAFT" );
+//        Assert.assertTrue(savedExperimentRequest.getTitle().name.startsWith("FunctionalTest_ExpRequest_"));
+//        Assert.assertEquals(savedExperimentRequest.getExperimentRequestSummary().getCreation().person.getUsername(), "pmbridge");
+//
+//        Assert.assertNotNull(savedExperimentRequest.getRemoteId());
+//        Assert.assertNotNull(savedExperimentRequest.getRemoteId().value.startsWith("GXP-"));
+//
+//        Assert.assertEquals( savedExperimentRequest.getBspQuote().getAlphanumericId(), quoteBsp.getAlphanumericId() );
+//        Assert.assertEquals( savedExperimentRequest.getGapQuote().getAlphanumericId(), quoteGap.getAlphanumericId() );
+//
+//        // has not been submitted to plaform yet so no platform managers assigned.
+//        Assert.assertNull( savedExperimentRequest.getPlatformProjectManagers() );
+//
+//        Assert.assertEquals( savedExperimentRequest.getProgramProjectManagers().iterator().next().getUsername(), "pmbridge");
+//
+//        Assert.assertEquals( savedExperimentRequest.getGapGroupName(), "GapGroup");
+//        Assert.assertEquals( savedExperimentRequest.getGapProjectName(), "GapProject");
+//        Assert.assertEquals( savedExperimentRequest.getTechnologyProduct().getId(), "226");
+//
+//
+//        //TODO  Add Samples to the Gap Experiment Request
+//
+//    }
 
     @Test
     public void testGetRequestSummariesByCreator() throws Exception {
