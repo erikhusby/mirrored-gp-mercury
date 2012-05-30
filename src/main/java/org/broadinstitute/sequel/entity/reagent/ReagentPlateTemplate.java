@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.entity.reagent;
 
-import org.broadinstitute.sequel.entity.vessel.WellName;
+import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 
 /**
  * A template for how different reagents
@@ -15,7 +15,7 @@ public interface ReagentPlateTemplate {
 
     public String getTemplateName();
 
-    public WellName getWell();
+    public VesselPosition getWell();
 
     public Reagent getReagent();
 }

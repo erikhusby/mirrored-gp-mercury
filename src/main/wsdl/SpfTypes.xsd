@@ -1,0 +1,978 @@
+<?xml version="1.0" ?>
+
+<xsd:schema targetNamespace="urn:SpfTypes"
+            xmlns:spftypes="urn:SpfTypes"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"  
+            xmlns:jxb="http://java.sun.com/xml/ns/jaxb"  jxb:version="2.0">
+
+    <xsd:import namespace="http://www.w3.org/2001/XMLSchema"/>
+
+    <xsd:simpleType name="SpfSampleVolumeUnitEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="ul"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="SpfSampleConcentrationUnitEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="ng/ul"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="SpfShipFromEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="BSP"/>
+            <xsd:enumeration value="Collaborator"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="SpfSampleRecepatcleGroupTypeEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="GAP Generated"/>
+            <xsd:enumeration value="Pool Oligo Group"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="SpfShippingMethodEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="FedEx"/>
+            <xsd:enumeration value="UPS"/>
+            <xsd:enumeration value="USPS"/>
+            <xsd:enumeration value="Airborne"/>
+            <xsd:enumeration value="Hand Delivered"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="SpfQCOptionEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="None"/>
+            <xsd:enumeration value="Pico"/>
+            <xsd:enumeration value="2 Hour Gel">
+            <xsd:annotation>
+                <xsd:appinfo>
+                    <jxb:typesafeEnumMember name="TWO_HOUR_GEL" />
+                 </xsd:appinfo>
+            </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="Pulse Field Gel"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="SpfSectionEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="ALL96"/>
+            <xsd:enumeration value="ALL384"/>
+            <xsd:enumeration value="A1"/>
+            <xsd:enumeration value="A2"/>
+            <xsd:enumeration value="B1"/>
+            <xsd:enumeration value="B2"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="SpfFreezerGroupEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="Core Sequencing"/>
+            <xsd:enumeration value="Finishing"/>
+            <xsd:enumeration value="Library Construction"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <!-- lc_work_group.description -->
+    <xsd:simpleType name="SpfWorkGroupEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="Cancer Resequencing"/>
+            <xsd:enumeration value="Dog Genome"/>
+            <xsd:enumeration value="HT-PCR sequencing"/>
+            <xsd:enumeration value="Library Construction"/>
+            <xsd:enumeration value="Next Generation Sequencing"/>
+            <xsd:enumeration value="Viral Sequencing"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <!--place holder for more data mapping -->
+
+    <xsd:complexType name="SpfNameValuePair">
+        <xsd:sequence>
+            <xsd:element name="name" type="xsd:string"/>
+            <xsd:element name="value" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <!-- plate_physical_type.name -->
+    <xsd:simpleType name="SpfPhysicalPlateEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="PureDNA"/>
+            <!-- name="PureDNA1" -->
+            <xsd:enumeration value="PCR96"/>
+            <xsd:enumeration value="GreinerDeepWell384"/>
+            <xsd:enumeration value="FalconTube"/>
+            <xsd:enumeration value="RoundBottom96"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <!-- lc_sample_receptacle_type.name -->
+    <xsd:simpleType name="SpfReceptacleTypeEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="96 Well Plate">
+            <xsd:annotation>
+                <xsd:appinfo>
+                    <jxb:typesafeEnumMember name="NINETYSIX_WELL_PLATE" />
+                 </xsd:appinfo>
+            </xsd:annotation>
+            </xsd:enumeration>
+            <xsd:enumeration value="Bag"/>
+            <xsd:enumeration value="Box"/>
+            <xsd:enumeration value="Large Tube"/>
+            <xsd:enumeration value="Medium Tube"/>
+            <xsd:enumeration value="Plate"/>
+            <xsd:enumeration value="Small Tube"/>
+            <xsd:enumeration value="2D Tube">
+            <xsd:annotation>
+                <xsd:appinfo>
+                    <jxb:typesafeEnumMember name="TWO_D_TUBE" />
+                 </xsd:appinfo>
+            </xsd:annotation>
+            </xsd:enumeration>
+            <xsd:enumeration value="2D Medium Tube">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="TWO_D_MEDIUM_TUBE" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+            <xsd:enumeration value="2D xSmall Tube">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="TWO_D_XSMALLTUBE" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+            <xsd:enumeration value="Unspecified"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <!-- lc_sample_receptacle_status.name -->
+    <xsd:simpleType name="SpfReceptacleStatusEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="Empty"/>
+            <xsd:enumeration value="Received"/>
+            <xsd:enumeration value="QC Complete"/>
+            <xsd:enumeration value="Not Received"/>
+            <xsd:enumeration value="Handed off to outside lab"/>
+            <xsd:enumeration value="DNA Extracted"/>
+            <xsd:enumeration value="Destroyed"/>
+            <xsd:enumeration value="Shipped"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <!-- lc_sample_status.name -->
+    <xsd:simpleType name="SpfSampleStatusEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="Consumed"/>
+            <xsd:enumeration value="Consumed - Container destroyed"/>
+            <xsd:enumeration value="DNA Extracted"/>
+            <xsd:enumeration value="Destroyed/Discarded"/>
+            <xsd:enumeration value="Empty"/>
+            <xsd:enumeration value="Handed off to outside lab"/>
+            <xsd:enumeration value="Missing"/>
+            <xsd:enumeration value="QC Complete"/>
+            <xsd:enumeration value="Received"/>
+            <xsd:enumeration value="Registered"/>
+            <xsd:enumeration value="Restricted - Do Not Distribute"/>
+            <xsd:enumeration value="Returned to GSSR"/>
+            <xsd:enumeration value="Temporarily removed for processing"/>
+            <xsd:enumeration value="Wait For QC"/>
+            <xsd:enumeration value="Virtual"/>
+            <xsd:enumeration value="Re-registered in BSP"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="SpfMaterialTypeEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="BAC/Fosmid Library"/>
+            <xsd:enumeration value="Genomic DNA"/>
+            <xsd:enumeration value="Glycerol clone"/>
+            <xsd:enumeration value="PCR Product"/>
+            <xsd:enumeration value="Primer"/>
+            <xsd:enumeration value="Tissue"/>
+            <xsd:enumeration value="Viral cDNA"/>
+            <xsd:enumeration value="Voucher"/>
+            <xsd:enumeration value="cDNA Library"/>
+            <xsd:enumeration value="sstDNA library"/>
+            <xsd:enumeration value="New Tech Library"/>
+            <xsd:enumeration value="HybSelection Pool Oligo"/>
+            <xsd:enumeration value="Other"/>
+            <xsd:enumeration value="RNA"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <!-- genomic_material_format.material_format_name -->
+    <xsd:simpleType name="SpfMaterialFormatEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="0.5ml screwcap tube">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="ZERO_POINT_FIVE_ML_SCREWCAP_TUBE" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="1.5ml Nalgene cryotube - screwcap">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="ONE_POINT_FIVE_ML_NALGENE_CYRO_TUBE_SCREWCAP" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="1.5ml eppi tube - fliptop">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="ONE_POINT_FIVE_ML_EPPI_TUBE_FLIPTOP" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="15ml Falcon Tube">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="FIFTEEN_ML_FALCON_TUBE" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="2.0ml Nunc cryotube - screwcap">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="TWO_ML_NUNC_CYRO_TUBE_SCREWCAP" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="2.0ml Nunc roundbottom cryotube - screwcap internal thread">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="TWO_ML_NUNC_RB_CYRO_TUBE_SCREWCAP" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="50ml Costar Tube">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="FIFTY_ML_COSTAR_TUBE" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="50ml Falcon Tube - freestanding">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="FIFTY_ML_FALCON_TUBE_FREESTANDING" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="50ml Falcon Tube">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="FIFTY_ML_FALCON_TUBE" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="Agar Plates"/>
+            <xsd:enumeration value="Bag in box"/>
+            <xsd:enumeration value="Bag"/>
+            <xsd:enumeration value="Bags in boxes"/>
+            <xsd:enumeration value="Boxes"/>
+            <xsd:enumeration value="Packet"/>
+            <xsd:enumeration value="Plate - 384 Well"/>
+            <xsd:enumeration value="Plate - 96 Well"/>
+            <xsd:enumeration value="Tubes with stab cultures"/>
+            <xsd:enumeration value="Ziploc"/>
+            <xsd:enumeration value="vacutainer tube"/>
+            <xsd:enumeration value="0.5ml 2D Barcoded Tube">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="ZERO_POINT_FIVE_ML_2D_BARCODED_TUBE" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="1.0ml 2D Barcoded Tube">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="ONE_ML_2D_BARCODED_TUBE" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="10ml 2D Barcoded Tube">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="TEN_ML_2D_BARCODED_TUBE" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="Unspecified"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+
+    <!-- genomic_material_suspension.material_suspension_name -->
+    <xsd:simpleType name="SpfMaterialSuspensionEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="agarose plugs"/>
+            <xsd:enumeration value="dried pellets"/>
+            <xsd:enumeration value="frozen"/>
+            <xsd:enumeration value="glycerol"/>
+            <xsd:enumeration value="ligation"/>
+            <xsd:enumeration value="precip in alcohol or salt"/>
+            <xsd:enumeration value="unspecified"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <!-- genomic_sample_organism.sex -->
+    <xsd:simpleType name="SpfOrganismSexEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="M"/>
+            <xsd:enumeration value="F"/>
+            <xsd:enumeration value="O"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <!-- lc_sample_receptacle_location.location -->
+    <xsd:simpleType name="SpfReceptacleLocationEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="+4 Freezer">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="PLUS_4_FREEZER" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="-20 Freezer">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="MINUS_20_FREEZER" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="-80 Freezer">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <jxb:typesafeEnumMember name="MINUS_80_FREEZER" />
+                     </xsd:appinfo>
+                </xsd:annotation>
+            </xsd:enumeration>
+
+            <xsd:enumeration value="Outside Repository"/>
+            <xsd:enumeration value="Unknown"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <!-- project_status_type.status_type -->
+    <xsd:simpleType name="SpfProjectStatusTypeEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="Abandoned"/>
+            <xsd:enumeration value="Annotated"/>
+            <xsd:enumeration value="Annotation Check"/>
+            <xsd:enumeration value="Annotation submitted"/>
+            <xsd:enumeration value="Annotation under review"/>
+            <xsd:enumeration value="Archived"/>
+            <xsd:enumeration value="Assembly Complete"/>
+            <xsd:enumeration value="Assembly Failed"/>
+            <xsd:enumeration value="Assembly Inspection"/>
+            <xsd:enumeration value="Awaiting Genbank ID"/>
+            <xsd:enumeration value="Back to Collaborator"/>
+            <xsd:enumeration value="Consistent"/>
+            <xsd:enumeration value="Data Integrated"/>
+            <xsd:enumeration value="Dearchived"/>
+            <xsd:enumeration value="External Finishing"/>
+            <xsd:enumeration value="External Sequencing"/>
+            <xsd:enumeration value="Failed Full Inspection Process"/>
+            <xsd:enumeration value="Failed Inspection Process"/>
+            <xsd:enumeration value="Failed MTR Selection Process"/>
+            <xsd:enumeration value="Final Assembly-Annotation Submission Generated"/>
+            <xsd:enumeration value="Final Assembly-Annotation Submission Submitted"/>
+            <xsd:enumeration value="Finished"/>
+            <xsd:enumeration value="Full Assembly Complete"/>
+            <xsd:enumeration value="Full Assembly Failed"/>
+            <xsd:enumeration value="Full Assembly Inspection"/>
+            <xsd:enumeration value="Gap Identified"/>
+            <xsd:enumeration value="Genbank ID Assigned"/>
+            <xsd:enumeration value="Group Analysis"/>
+            <xsd:enumeration value="Hold"/>
+            <xsd:enumeration value="In Analysis"/>
+            <xsd:enumeration value="In Annotation"/>
+            <xsd:enumeration value="In Assembly"/>
+            <xsd:enumeration value="In DNA Preparation"/>
+            <xsd:enumeration value="In Final Review"/>
+            <xsd:enumeration value="In Finishing"/>
+            <xsd:enumeration value="In Full Assembly"/>
+            <xsd:enumeration value="In GenBank"/>
+            <xsd:enumeration value="In Library Construction"/>
+            <xsd:enumeration value="In Manual Annotation"/>
+            <xsd:enumeration value="In Path QC"/>
+            <xsd:enumeration value="In Polishing"/>
+            <xsd:enumeration value="In Pre-Finishing"/>
+            <xsd:enumeration value="In Shotgun"/>
+            <xsd:enumeration value="Inactive Invalid Assembly"/>
+            <xsd:enumeration value="Inconsistent"/>
+            <xsd:enumeration value="Initial Assembly-Annotation Submission Generated"/>
+            <xsd:enumeration value="Invalid Assembly"/>
+            <xsd:enumeration value="Killed"/>
+            <xsd:enumeration value="Library QC"/>
+            <xsd:enumeration value="MTR Complete"/>
+            <xsd:enumeration value="MTR Ordered"/>
+            <xsd:enumeration value="Needs ReSequencing"/>
+            <xsd:enumeration value="New Sample Requested"/>
+            <xsd:enumeration value="Online"/>
+            <xsd:enumeration value="Passed Assembly Inspection"/>
+            <xsd:enumeration value="Passed Full Assembly Inspection"/>
+            <xsd:enumeration value="Path QC Blast Error"/>
+            <xsd:enumeration value="Path QC Blast"/>
+            <xsd:enumeration value="Polished"/>
+            <xsd:enumeration value="Project Artifacts Trashed"/>
+            <xsd:enumeration value="Project Complete"/>
+            <xsd:enumeration value="Project Number Allocated"/>
+            <xsd:enumeration value="Ready for Full Re-Inspection"/>
+            <xsd:enumeration value="Ready for Polishing"/>
+            <xsd:enumeration value="Ready for Pre-Finishing"/>
+            <xsd:enumeration value="Ready for Re-Inspection"/>
+            <xsd:enumeration value="Ready for WGS Addition"/>
+            <xsd:enumeration value="Receipt NCBI No."/>
+            <xsd:enumeration value="Received"/>
+            <xsd:enumeration value="Redo DNA Preparation"/>
+            <xsd:enumeration value="Redo Library"/>
+            <xsd:enumeration value="Requested"/>
+            <xsd:enumeration value="Returned to Shotgun"/>
+            <xsd:enumeration value="Sent"/>
+            <xsd:enumeration value="Suspended"/>
+            <xsd:enumeration value="Suspending"/>
+            <xsd:enumeration value="Validated"/>
+            <xsd:enumeration value="Validation Failed"/>
+            <xsd:enumeration value="Waiting for Assembly"/>
+            <xsd:enumeration value="Waiting for Finishing"/>
+            <xsd:enumeration value="Waiting for Full Assembly"/>
+            <xsd:enumeration value="Waiting for Full Manual Inspection"/>
+            <xsd:enumeration value="Waiting for MTR Selection"/>
+            <xsd:enumeration value="Waiting for Manual Inspection"/>
+            <xsd:enumeration value="Waiting for Plate Transfer"/>
+            <xsd:enumeration value="Waiting for Shotgun"/>
+            <xsd:enumeration value="Waiting for Trace Submission"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="SpfSampleTypeEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="Positive Control"/>
+            <xsd:enumeration value="Negative Control"/>
+            <xsd:enumeration value="BSP Sample"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <!-- entry_plate -->
+    <xsd:complexType name="SpfPlate">
+        <xsd:sequence>
+            <xsd:element name="plateSection" type="spftypes:SpfSectionEnum"/>
+            <!-- entry_plate.barcode -->
+            <xsd:element name="plateBarcode" type="xsd:string"/>
+            <xsd:element name="platePhysical"
+                         type="spftypes:SpfPhysicalPlateEnum"/>
+            <!-- station_event.comments -->
+            <xsd:element name="plateComment" type="xsd:string" maxOccurs="1"
+                         minOccurs="0"/>
+        </xsd:sequence>
+
+    </xsd:complexType>
+
+    <!-- This is only used internally for all bettalims plate registrations -->
+    <xsd:complexType name="SpfPlateRegRequest">
+        <xsd:sequence>
+            <!-- sequencing_library.library_name -->
+            <xsd:element name="plateSeqLibrary" type="xsd:string"
+                         maxOccurs="1"
+                         minOccurs="0"/>
+            <xsd:element name="registrationPlate" type="spftypes:SpfPlate"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <!-- genomic_sample_material -->
+    <xsd:complexType name="SpfSampleMaterial">
+        <xsd:sequence>
+
+            <!-- genomic_material_type.material_type_name -->
+            <xsd:element name="materialType"
+                         type="spftypes:SpfMaterialTypeEnum"/>
+
+            <!-- genomic_material_format.material_format_name -->
+            <xsd:element name="materialFormat"
+                         type="spftypes:SpfMaterialFormatEnum"/>
+
+            <!-- genomic_material_suspension.material_suspension_name -->
+            <xsd:element name="materialSuspension"
+                         type="spftypes:SpfMaterialSuspensionEnum"/>
+
+        </xsd:sequence>
+    </xsd:complexType>
+
+
+    <!-- genomic_sample_organism -->
+    <xsd:complexType name="SpfSampleOrganism">
+        <xsd:sequence>
+
+            <!-- genomic_sample_organism.organism -->
+            <xsd:element name="orgName" type="xsd:string"/>
+
+            <!-- genomic_sample_organism.individual_name -->
+            <xsd:element name="orgIndividualName" type="xsd:string"/>
+
+            <!-- genomic_sample_organism.sex -->
+            <xsd:element name="OrganismSex"
+                         type="spftypes:SpfOrganismSexEnum"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- genomic_sample_organism.strain -->
+            <xsd:element name="strain" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- genomic_sample_organism.external_identifier -->
+            <xsd:element name="orgMatingType" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- genomic_sample_organism.cell_line -->
+            <xsd:element name="orgCellLine" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- genomic_sample_organism.method_of_immortalization -->
+            <xsd:element name="orgMethOfImmortalization"
+                         type="xsd:string" maxOccurs="1" minOccurs="0"/>
+
+            <!-- genomic_sample_organism.external_identifier -->
+            <xsd:element name="orgExternalID" type="xsd:string"/>
+
+            <!-- genomic_sample_organism.irb_number -->
+            <xsd:element name="orgIrbNumber" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- genomic_sample_organism.other_description -->
+            <xsd:element name="otherDescription" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+
+    </xsd:complexType>
+
+    <xsd:complexType name="SpfSampleOrganismAttributes">
+        <xsd:sequence>
+            <xsd:element name="LSId" type="xsd:string" maxOccurs="1"
+                         minOccurs="0"/>
+            <xsd:element name="BCR_GSC_Full_Biospecimen_ID" type="xsd:string" maxOccurs="1"
+                         minOccurs="0"/>
+            <xsd:element name="externalID" type="xsd:string"/>
+            <xsd:element name="individualName" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="strain" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="sex"
+                         type="spftypes:SpfOrganismSexEnum"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="matingType" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="cellLine" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="irbNumber" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="otherOrganismDescription" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+
+
+    </xsd:complexType>
+
+    <!-- lc_sample_amount_data -->
+    <xsd:complexType name="SpfSampleAmountData">
+        <xsd:sequence>
+            <!-- lc_sample_amount_data.amount_measure_unit -->
+            <xsd:element name="amountMeasureUnit" type="spftypes:SpfSampleVolumeUnitEnum"/>
+            <!-- lc_sample_amount_data.initial_amount -->
+            <xsd:element name="amountInitial" type="xsd:double"/>
+
+            <!-- lc_sample_amount_data.remaining_amount -->
+            <xsd:element name="amountRemaining" type="xsd:double"/>
+
+            <!-- lc_sample_amount_data.concentration -->
+            <xsd:element name="amountConcentration" type="xsd:double"
+                         maxOccurs="1" minOccurs="0"/>
+            <!-- lc_sample_amount_data.concentration -->
+            <xsd:element name="concentrationUnit" type="spftypes:SpfSampleConcentrationUnitEnum"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <!-- lc_sample_amount_data -->
+    <xsd:complexType name="SpfSampleAmount">
+        <xsd:sequence>
+            <!-- lc_sample_amount_data.amount_measure_unit -->
+            <xsd:element name="amountMeasureUnit" type="xsd:string"/>
+
+            <!-- lc_sample_amount_data.initial_amount -->
+            <xsd:element name="amountInitial" type="xsd:double"/>
+
+            <!-- lc_sample_amount_data.remaining_amount -->
+            <xsd:element name="amountRemaining" type="xsd:double"/>
+
+            <!-- lc_sample_amount_data.concentration -->
+            <xsd:element name="amountConcentration" type="xsd:double"
+                         maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+
+    <!-- lc_sample_genome_data -->
+    <xsd:complexType name="SpfSampleGenome">
+        <xsd:sequence>
+            <!-- lc_sample_genome_data.fragment_size -->
+            <xsd:element name="genomeFragmentSize"
+                         type="xsd:string" maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_genome_data.tissue_source -->
+            <xsd:element name="genomeTissueSource"
+                         type="xsd:string" maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_genome_data.buffer -->
+            <xsd:element name="genomeBuffer" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_genome_data.dna_extraction_method -->
+            <xsd:element name="genomeExtractionMethod"
+                         type="xsd:string" maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="sampleSpike" type="xsd:string" maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="SpfGenomicDNASampleData">
+        <xsd:sequence>
+            <!-- lc_sample_genome_data.fragment_size -->
+            <xsd:element name="fragmentSize"
+                         type="xsd:string" maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_genome_data.buffer -->
+            <xsd:element name="buffer" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_genome_data.dna_extraction_method -->
+            <xsd:element name="extractionMethod"
+                         type="xsd:string" maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="sampleSpike"
+                         type="xsd:string" maxOccurs="1" minOccurs="0"/>
+
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <!-- lc_sample_pcr_data -->
+    <xsd:complexType name="SpfSamplePCR">
+        <xsd:sequence>
+            <!-- lc_sample_pcr_data.forward_primer_name -->
+            <xsd:element name="pcrForwardPrimerName" type="xsd:string"/>
+
+            <!-- lc_sample_pcr_data.forward_primer
+               required by NCBI rfc: AMPLIFICATION_FORWARD -->
+            <xsd:element name="pcrForwardPrimerSequence" type="xsd:string"/>
+
+            <!-- lc_sample_pcr_data.reverse_primer_name -->
+            <xsd:element name="pcrReversePrimerName" type="xsd:string"/>
+
+            <!-- lc_sample_pcr_data.reverse_primer
+               required by NCBI rfc: AMPLIFICATION_REVERSE -->
+            <xsd:element name="pcrReversePrimerSequence" type="xsd:string"/>
+
+            <!-- lc_sample_pcr_data.pooled_pcr -->
+            <xsd:element name="pcrPooled" type="xsd:boolean"/>
+
+            <!-- lc_sample_pcr_data.product_size
+               optional by NCBI rfc: AMPLIFICATION_SIZE -->
+            <xsd:element name="pcrProductSize" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_pcr_data.reference_accession -->
+            <!-- required by NCBI rfc: REFERENCE_ACCESSION -->
+            <xsd:element name="pcrReferenceAccession" type="xsd:string"/>
+
+            <!-- lc_sample_pcr_data.reference_accession_max -->
+            <!-- NCBI rfc: REFERENCE_ACC_MAX -->
+            <xsd:element name="pcrReferenceAccessionMax" type="xsd:long"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_pcr_data.reference_accession_mim -->
+            <!-- NCBI rfc: REFERENCE_ACC_MIN -->
+            <xsd:element name="pcrReferenceAccessionMin" type="xsd:long"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_pcr_data.exon_number -->
+            <xsd:element name="pcrExonNumber" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_pcr_data.gene_name -->
+            <xsd:element name="pcrGeneName" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <xsd:element name="primerMolBarcodeName" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="primerMolBarcodeSeq" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <!-- lc_sample_viral_data.single_or_double_stranded -->
+    <xsd:simpleType name="SpfViralDataStrand">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="S"/>
+            <xsd:enumeration value="D"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <!-- lc_sample_viral_data -->
+    <xsd:complexType name="SpfSampleViral">
+        <xsd:sequence>
+            <!-- lc_sample_viral_data.serotype -->
+            <xsd:element name="serotype" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_viral_data.viral_host -->
+            <xsd:element name="viralHost" type="xsd:string"/>
+
+            <!-- lc_sample_viral_data.population_id -->
+            <xsd:element name="populationId" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_viral_data.concentration -->
+            <xsd:element name="intendedSeqMethod" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_viral_data.single_or_double_stranded -->
+            <xsd:element name="singleOrDoubleStranded" type="spftypes:SpfViralDataStrand"
+                         maxOccurs="1" minOccurs="0"/>
+
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="SpfViralcDNASampleData">
+        <xsd:sequence>
+            <xsd:element name="serotype" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="viralHost" type="xsd:string"/>
+            <xsd:element name="sampleCohortPopulation" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="intendedSeqMethod" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="passageHistory" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="singleOrDoubleStranded" type="spftypes:SpfViralDataStrand"
+                         maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="SpfNewTechLibData">
+        <xsd:sequence>
+            <xsd:element name="sequencingTechnology" type="xsd:string"/>
+            <!--IPI-57758 -->
+            <xsd:element name="dataAnalysisType" type="xsd:string"
+                     maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="restrictionEnzyme" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="libraryType" type="xsd:string"/>
+            <xsd:element name="adapterTypeAndName" type="xsd:string"/>
+            <xsd:element name="insertSizeRange" type="xsd:string"/>
+            <xsd:element name="librarySizeRange" type="xsd:string"/>
+            <xsd:element name="jumpSize" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="molBarName" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="molBarSeq" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+             <xsd:element name="HybBaitDesignName" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+        </xsd:sequence>
+    </xsd:complexType>
+    
+    <xsd:complexType name="SpfPoolOligoData">
+        <xsd:sequence>
+            <xsd:element name="name" type="xsd:string"/>
+            <xsd:element name="referenceSequenceAlias" type="xsd:string"/>
+            <xsd:element name="referenceSequenceVersion" type="xsd:int"
+                         minOccurs="0"/>
+            <xsd:element name="targetSetName" type="xsd:string" maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="SpfSampleReceptacleGroupData">
+        <xsd:sequence>
+            <xsd:element name="groupType" type="spftypes:SpfSampleRecepatcleGroupTypeEnum"/>
+            <xsd:element name="groupName" type="xsd:string"/>
+            <xsd:element name="referenceSequenceAlias" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="SpfSampleCollectionDate">
+        <xsd:sequence>
+            <xsd:element name="dd" type="xsd:string"/>
+            <xsd:element name="mm" type="xsd:string"/>
+            <xsd:element name="yyyy" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="SpfSampleCollectionData">
+        <xsd:sequence>
+            <xsd:element name="collectionDate" type="spftypes:SpfSampleCollectionDate"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="country" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="city" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="stateRegion" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="hostId" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="hostOrganism" type="spftypes:SpfOrganism"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="hostLocation" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="SpfProjectCreationData">
+        <xsd:sequence>
+            <xsd:element name="initiativeName" type="xsd:string"/>
+            <xsd:element name="fundingSource" type="xsd:string"/>
+            <xsd:element name="projectComment" type="xsd:string" maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:simpleType name="SpfCreateProjectEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="Yes"/>
+            <xsd:enumeration value="No"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <!-- lc_sample_collection_data -->
+    <xsd:complexType name="SpfSampleCollection">
+        <xsd:sequence>
+            <!-- lc_sample_collection_data.collection_date -->
+            <xsd:element name="collectionDate" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_collection_data.country -->
+            <xsd:element name="country" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_collection_data.city -->
+            <xsd:element name="city" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+            <!-- lc_sample_collection_data.state_region -->
+            <xsd:element name="stateRegion" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="hostId" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="hostOrganism" type="spftypes:SpfOrganism"
+                         maxOccurs="1" minOccurs="0"/>
+            <xsd:element name="hostLocation" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+
+        </xsd:sequence>
+    </xsd:complexType>
+    
+    <!-- LCT-363 -->
+    <xsd:complexType name="SampleKitCollaboratorWithOrg">
+        <xsd:sequence>
+            <xsd:element name="firstName"
+                         type="xsd:string"/>
+            <xsd:element name="lastName"
+                         type="xsd:string"/>
+            <xsd:element name="organization"
+                         type="xsd:string" maxOccurs="1"
+                         minOccurs="0"/>
+            <xsd:element name="gssrCollaboratorID"
+                         type="xsd:long" maxOccurs="1"
+                         minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <!-- LCT-363 end-->
+
+    <!-- Organism -->
+    <xsd:complexType name="SpfOrganism">
+        <xsd:sequence>
+            <xsd:element name="genus" type="xsd:string"
+                         maxOccurs="1" minOccurs="1"/>
+            <xsd:element name="species" type="xsd:string"
+                         maxOccurs="1" minOccurs="1"/>
+                <xsd:element name="commonName" type="xsd:string"
+                         maxOccurs="1" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <!-- object to pass/return a list of Sample LSID's -->
+    <xsd:complexType name="SpfSampleLSID">
+        <xsd:sequence>
+            <xsd:element name="gssrSampleLSID" type="xsd:string" minOccurs="1" maxOccurs="1000"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="OrganismTaxon">
+        <xsd:sequence>
+            <xsd:element name="species" type="spftypes:SpfOrganism"/>
+            <xsd:element name="strain" type="xsd:string" maxOccurs="unbounded" minOccurs="0"/>
+            <xsd:element name="serotype" type="xsd:string" maxOccurs="unbounded" minOccurs="0"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:simpleType name="SpfExtraIdEnum">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="UNKOWN"/>
+            <xsd:enumeration value="Dog Genome Pedigree LSID"/>
+            <xsd:enumeration value="BSP Sample ID"/>
+            <xsd:enumeration value="Kinome Sample Instance ID"/>
+            <xsd:enumeration value="BCR GSC Full Biospecimen ID"/>
+            <xsd:enumeration value="TCGA UUID"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:complexType name="SpfExtraIdValuePair">
+        <xsd:sequence>
+            <xsd:element name="name" type="spftypes:SpfExtraIdEnum"/>
+            <xsd:element name="value" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="SpfChildParentSampleMap">
+        <xsd:sequence>
+            <xsd:element name="childLsid" type="xsd:string"></xsd:element>
+            <xsd:element name="parentLsid" type="xsd:string" maxOccurs="unbounded" minOccurs="1"></xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+    
+    
+    <xsd:complexType name="SpfInitiative">
+      <xsd:annotation>
+        <xsd:documentation>
+          Currently modeling the only two attributes of an initiative that we care about
+          to satisfy INF-446
+        </xsd:documentation>
+      </xsd:annotation>
+      <xsd:sequence>
+        <xsd:element name="name" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+        <xsd:element name="protected" type="xsd:boolean" minOccurs="0" maxOccurs="1"/>
+      </xsd:sequence>
+    </xsd:complexType>
+    
+    
+    <xsd:complexType name="SpfInitiativeListResult">
+      <xsd:sequence>
+        <xsd:element name="initiativeList" minOccurs="0" maxOccurs="unbounded" type="spftypes:SpfInitiative" />
+      </xsd:sequence>
+    </xsd:complexType>    
+</xsd:schema>

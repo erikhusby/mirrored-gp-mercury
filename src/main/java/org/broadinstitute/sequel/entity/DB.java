@@ -27,8 +27,8 @@ public class DB implements Serializable {
     private Map<String, AuthorizedRole> authorizedRoleMap = new HashMap<String, AuthorizedRole>();
 
     public DB() {
-        addWorkflowDescription(new WorkflowDescription("Hybrid Selection", "v7.2", null, null));
-        addWorkflowDescription(new WorkflowDescription("Whole Genome Shotgun", "v7.2", null, null));
+        addWorkflowDescription(new WorkflowDescription("Hybrid Selection", null, null));
+        addWorkflowDescription(new WorkflowDescription("Whole Genome Shotgun", null, null));
         initAuthorizedRoles();
         initPageAuthorizations();
     }

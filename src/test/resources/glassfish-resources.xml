@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE resources PUBLIC
+        "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions//EN"
+        "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+<resources>
+    <jdbc-connection-pool name="java:app/jdbc/test_pool"
+                          res-type="javax.sql.DataSource"
+                          datasource-classname="org.postgresql.ds.PGSimpleDataSource">
+        <property name="serverName" value="localhost"/>
+        <property name="databaseName" value="postgres"/>
+        <property name="portNumber" value="5432"/>
+        <property name="user" value="sequel"/>
+        <property name="password" value="sequel_local"/>
+    </jdbc-connection-pool>
+<!--
+    <jdbc-connection-pool
+            name="java:app/jdbc/test_pool"
+            res-type="javax.sql.DataSource"
+            datasource-classname="oracle.jdbc.pool.OracleDataSource"
+            pool-resize-quantity="1"
+            max-pool-size="5"
+            steady-pool-size="0"
+            statement-timeout-in-seconds="30">
+        <property name="URL" value="jdbc:oracle:thin:@seqdev1:1521:seqdev1"></property>
+        <property name="User" value="sequel"></property>
+        <property name="Password" value="sequel_dev1"></property>
+    </jdbc-connection-pool>
+-->
+    <jdbc-resource pool-name="java:app/jdbc/test_pool"
+                   jndi-name="java:app/jdbc/test"/>
+
+    <jdbc-connection-pool
+            name="java:app/jdbc/squid_pool"
+            res-type="javax.sql.DataSource"
+            datasource-classname="oracle.jdbc.pool.OracleDataSource"
+            pool-resize-quantity="1"
+            max-pool-size="5"
+            steady-pool-size="0"
+            statement-timeout-in-seconds="30">
+        <property name="URL" value="jdbc:oracle:thin:@seqdev1:1521:seqdev1"></property>
+        <property name="User" value="seq20"></property>
+        <property name="Password" value="seq_dev1"></property>
+    </jdbc-connection-pool>
+    <jdbc-resource pool-name="java:app/jdbc/squid_pool"
+                   jndi-name="java:app/jdbc/squid"/>
+</resources>

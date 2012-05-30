@@ -1,27 +1,35 @@
 package org.broadinstitute.sequel.entity.labevent;
 
-import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
-import java.util.*;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Transient;
+import java.util.Collection;
+import java.util.Date;
 
 /**
  * Most general form of lab event
  */
-public class GenericLabEvent extends AbstractLabEvent {
-    private final LabEventType labEventType;
+@Entity
+public class GenericLabEvent extends LabEvent {
 
-    public GenericLabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Person operator) {
+    @Enumerated(EnumType.STRING)
+    private LabEventType labEventType;
+
+    public GenericLabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Long disambiguator, Person operator) {
         this.labEventType = labEventType;
         this.setEventDate(eventDate);
         this.setEventLocation(eventLocation);
+        this.setDisambiguator(disambiguator);
         this.setEventOperator(operator);
+    }
+
+    protected GenericLabEvent() {
     }
 
     @Override
@@ -33,13 +41,14 @@ public class GenericLabEvent extends AbstractLabEvent {
      * Are we going to change the molecular
      * state?
      *
-     * Perhaps this should be up at {@link AbstractLabEvent}
+     * Perhaps this should be up at {@link LabEvent}
      *
      * Events that denature or that transform from
      * RNA into DNA also change molecular state.  So perhaps
      * these
      * @return
      */
+    @Transient
     private boolean isMolecularStateBeingChanged() {
         boolean hasMolStateChange = false;
         for (Reagent reagent: getReagents()) {
@@ -74,9 +83,11 @@ public class GenericLabEvent extends AbstractLabEvent {
 */
             // after the target goop is transferred,
             // apply the reagent
+/*
             for (Reagent reagent : getReagents()) {
                 target.applyReagent(reagent);
             }
+*/
         }
 
         /**
@@ -130,16 +141,18 @@ public class GenericLabEvent extends AbstractLabEvent {
      */
     @Override
     public void validateSourceMolecularState() throws InvalidMolecularStateException {
-        if (getSourceLabVessels().isEmpty()) {
+        if (getSourceLabVessels().isEmpty() && !this.labEventType.isExpectedEmptySources()) {
             throw new InvalidMolecularStateException("No sources.");
         }
-        for (LabVessel source: getSourceLabVessels()) {
-            if (!labEventType.isExpectedEmptySources()) {
+/*
+        for (LabVessel source: getSourceLabVessels()) { // todo jmt remove
+            if (!this.labEventType.isExpectedEmptySources()) {
                 if (source.getSampleInstances().isEmpty()) {
                     throw new InvalidMolecularStateException("Source " + source.getLabCentricName() + " is empty");
                 }
             }
         }
+*/
     }
 
     /**
@@ -154,17 +167,23 @@ public class GenericLabEvent extends AbstractLabEvent {
         if (getTargetLabVessels().isEmpty()) {
             throw new InvalidMolecularStateException("No destinations!");
         }
+/*
         for (LabVessel target: getTargetLabVessels()) {
-            if (!labEventType.isExpectedEmptyTargets()) {
+            if (!this.labEventType.isExpectedEmptyTargets()) {
                 if (target.getSampleInstances().isEmpty()) {
                     throw new InvalidMolecularStateException("Target " + target.getLabCentricName() + " is empty");
                 }
             }
         }
+*/
     }
 
     @Override
     public Collection<SampleSheet> getAllSampleSheets() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public LabEventType getLabEventType() {
+        return this.labEventType;
     }
 }

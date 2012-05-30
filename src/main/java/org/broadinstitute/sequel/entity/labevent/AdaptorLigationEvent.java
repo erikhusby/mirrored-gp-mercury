@@ -20,7 +20,7 @@ import java.util.Collection;
  * {@link GenericLabEvent} to
  * get a different (perhaps better) take on this.
  */
-public class AdaptorLigationEvent extends AbstractLabEvent  {
+public class AdaptorLigationEvent extends LabEvent  {
 
     private LabEventConfiguration eventConfiguration;
 

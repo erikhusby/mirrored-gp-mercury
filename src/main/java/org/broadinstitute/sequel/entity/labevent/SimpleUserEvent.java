@@ -6,7 +6,7 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import java.util.Collection;
 import java.util.Date;
 
-public class SimpleUserEvent extends AbstractLabEvent {
+public class SimpleUserEvent extends LabEvent {
 
     private LabEventName eventName;
 

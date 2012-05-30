@@ -1,29 +1,98 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.entity.sample.StateChange;
 
 import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+// todo jmt rename to TubeFormation, create separate (non-LabVessel) class for rack
 /**
  * A rack of tubes
  */
-public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
+@NamedQueries({
+        @NamedQuery(
+                name = "RackOfTubes.fetchByDigest",
+                query = "select r from RackOfTubes r where digest = :digest"
+        ),
+        @NamedQuery(
+                name = "RackOfTubes.fetchByLabel",
+                query = "select r from RackOfTubes r where label = :label"
+        )
+})
+@Entity
+public class RackOfTubes extends LabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
+
+    // todo jmt can't make this non-null, because all LabVessels subtypes are in the same table
+    // todo jmt unique constraint?
+//    @Column(nullable = false)
+    private String digest;
 
     @Embedded
     private VesselContainer<TwoDBarcodedTube> vesselContainer = new VesselContainer<TwoDBarcodedTube>(this);
 
     public RackOfTubes(String label) {
         super(label);
+    }
+
+    protected RackOfTubes() {
+    }
+
+    public void makeDigest() {
+        List<Map.Entry<VesselPosition, String>> positionBarcodeList = new ArrayList<Map.Entry<VesselPosition, String>>();
+        for (Map.Entry<VesselPosition, TwoDBarcodedTube> barcodedTubeEntry : vesselContainer.getMapPositionToVessel().entrySet()) {
+            positionBarcodeList.add(new AbstractMap.SimpleEntry<VesselPosition, String>(
+                    barcodedTubeEntry.getKey(), barcodedTubeEntry.getValue().getLabel()));
+        }
+        this.digest = makeDigest(positionBarcodeList);
+    }
+
+    public static String makeDigest(List<Map.Entry<VesselPosition, String>> positionBarcodeList) {
+        Collections.sort(positionBarcodeList, new Comparator<Map.Entry<VesselPosition, String>>() {
+            @Override
+            public int compare(Map.Entry<VesselPosition, String> o1, Map.Entry<VesselPosition, String> o2) {
+                return o1.getKey().compareTo(o2.getKey());
+            }
+        });
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Map.Entry<VesselPosition, String> positionBarcodeEntry : positionBarcodeList) {
+            stringBuilder.append(positionBarcodeEntry.getKey());
+            stringBuilder.append(positionBarcodeEntry.getValue());
+        }
+        return makeDigest(stringBuilder.toString());
+    }
+
+    public static String makeDigest(String positionBarcodeTupleString) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] array = md.digest(positionBarcodeTupleString.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte anArray : array) {
+                sb.append(Integer.toHexString((anArray & 0xFF) | 0x100).substring(1, 3));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -42,23 +111,8 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
     }
 
     @Override
-    public void addStateChange(StateChange stateChange) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Set<SampleInstance> getSampleInstances() {
         return this.getVesselContainer().getSampleInstances();
-    }
-
-    @Override
-    public Collection<SampleInstance> getSampleInstances(SampleSheet sheet) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<StateChange> getStateChanges() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override
@@ -95,14 +149,11 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
     public Collection<SampleSheet> getSampleSheets() {
         Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
         for (TwoDBarcodedTube twoDBarcodedTube : this.vesselContainer.getContainedVessels()) {
-            sampleSheets.addAll(twoDBarcodedTube.getSampleSheets());
+            if(twoDBarcodedTube.getSampleSheetCount() != null && twoDBarcodedTube.getSampleSheetCount() > 0) {
+                sampleSheets.addAll(twoDBarcodedTube.getSampleSheets());
+            }
         }
         return sampleSheets;
-    }
-
-    @Override
-    public void applyTransfer(SectionTransfer sectionTransfer) {
-        throw new RuntimeException("Method not yet implemented.");
     }
 
     public VesselContainer<TwoDBarcodedTube> getVesselContainer() {
@@ -111,5 +162,28 @@ public class RackOfTubes extends AbstractLabVessel implements SBSSectionable, Ve
 
     public void setVesselContainer(VesselContainer<TwoDBarcodedTube> vesselContainer) {
         this.vesselContainer = vesselContainer;
+    }
+
+/*
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(Hibernate.getClass(o).equals(RackOfTubes.class))) return false;
+
+        RackOfTubes that = (RackOfTubes) o;
+
+        if (!this.label.equals(that.getLabel())) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.label.hashCode();
+    }
+*/
+
+    public String getDigest() {
+        return digest;
     }
 }

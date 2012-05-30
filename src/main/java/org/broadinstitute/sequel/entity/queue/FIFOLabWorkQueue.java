@@ -25,28 +25,21 @@ import java.util.*;
  * for every batch of {@link LabVessel}s 
  * when {@link #startWork(java.util.Collection, LabWorkQueueParameters, org.broadinstitute.sequel.entity.project.WorkflowDescription, org.broadinstitute.sequel.entity.person.Person)} is called.
  */
-public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullAccessLabWorkQueue<T> {
+public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> extends FullAccessLabWorkQueue<T> {
 
     // order matters: fifo
     private List<WorkQueueEntry<T>> requestedWork = new ArrayList<WorkQueueEntry<T>>();
 
     private LabWorkQueueName name;
     
-    private WorkflowEngine workflowEngine;
-    
     private JiraService jiraService;
     
     public FIFOLabWorkQueue(LabWorkQueueName name,
-                            WorkflowEngine workflowEngine,
                             JiraService jiraService) {
         if (name == null) {
              throw new NullPointerException("name cannot be null.");
         }
-        if (workflowEngine == null) {
-             throw new NullPointerException("workflowEngine cannot be null."); 
-        }
         this.name = name;
-        this.workflowEngine = workflowEngine;
         this.jiraService = jiraService;
     }
 
@@ -136,7 +129,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         boolean foundIt = false;
         for (WorkQueueEntry<T> queuedWork: requestedWork) {
             if (vessel.equals(queuedWork.getLabVessel())) {
-                if (workflow.equals(queuedWork.getSequencingPlan().getProjectPlan().getWorkflowDescription())) {
+                if (workflow.equals(queuedWork.getWorkflowDescription())) {
                     if (workflowParameters == null) {
                         if (queuedWork.getLabWorkQueueParameters() == null) {
                             foundIt = true;
@@ -151,7 +144,6 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
             }
             if (foundIt) {
                 requestedWork.remove(queuedWork);
-                applyWorkflowStateChange(vessel,workflow);
                 break;
             }
         }
@@ -163,48 +155,26 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
     private void startWorkflow(LabVessel vessel,ProjectPlan plan,T workflowParameters) {
         Collection<LabVessel> vessels = new ArrayList<LabVessel>(1);
         vessels.add(vessel);
-        workflowEngine.addWorkflow(new Workflow(plan,vessels,workflowParameters));
     }
-    
-    private void applyWorkflowStateChange(LabVessel vessel,
-                                          WorkflowDescription workflowDescription) {
-        Collection<Workflow> activeWorkflows = workflowEngine.getActiveWorkflows(vessel,workflowDescription);
-        
-        if (activeWorkflows.isEmpty()) {
-            // todo: basic logging and email writing infrastructure
-        }
-        if (activeWorkflows.size() > 1) {
-            // instead of dumping this stuff to a log file that no one
-            // reads, we could put it in the face of project managers...
-            vessel.addNoteToProjects(vessel.getLabel() + " is mapped to " + activeWorkflows.size() + " active workflows.");
-        }
-        
-        // suppose there are multiple active workflows for this container
-        // and workflow description.  That means the system has duplicate
-        // work queued up.  If that's the case, then it doesn't matter
-        // which one workflow chooses, as long as eventually it chooses
-        // both.
-        Workflow workflow = activeWorkflows.iterator().next();
-        workflow.setState(new WorkflowState("work has stated"));
-    }
+
 
     @Override
     public LabWorkQueueResponse add(LabVessel vessel, 
                                     T workflowParameters, 
-                                    SequencingPlanDetail sequencingDetail) {
+                                    WorkflowDescription workflowDescription,
+                                    ProjectPlan projectPlanOverride) {
         if (vessel == null) {
              throw new NullPointerException("vessel cannot be null.");
         }
-        if (sequencingDetail == null) {
-             throw new NullPointerException("projectPlan cannot be null.");
+        if (workflowDescription == null) {
+             throw new NullPointerException("workflowDescription cannot be null.");
         }
-        WorkQueueEntry newWork = new WorkQueueEntry(vessel,workflowParameters,sequencingDetail);
+        WorkQueueEntry newWork = new WorkQueueEntry(this,vessel,workflowParameters,workflowDescription,projectPlanOverride);
         LabWorkQueueResponse response = null;
         if (requestedWork.contains(newWork)) {
             response = new StandardLabWorkQueueResponse(vessel.getLabel() + " is already in " + getQueueName() + "; duplicate work has been requested."); 
         }
         else {
-            startWorkflow(vessel,sequencingDetail.getProjectPlan(),workflowParameters);
             response = new StandardLabWorkQueueResponse("Added " + vessel.getLabel() + " to " + getQueueName());
         }
         requestedWork.add(newWork);
@@ -272,9 +242,22 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> implements FullA
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public WorkflowEngine getWorkflowEngine() {
-        return workflowEngine;
+    public void remove(WorkQueueEntry workQueueEntry) {
+        if (!requestedWork.remove(workQueueEntry)) {
+            throw new RuntimeException("WorkQueueEntry " + workQueueEntry + " was not part of the queued work for " + getQueueName());
+        }
     }
 
+    @Override
+    public Collection<WorkQueueEntry<T>> getEntriesForWorkflow(WorkflowDescription workflow, LabVessel vessel) {
+        final Collection<WorkQueueEntry<T>> workQueueEntries = new HashSet<WorkQueueEntry<T>>();
+        for (WorkQueueEntry<T> workQueueEntry : requestedWork) {
+            if (workQueueEntry.getWorkflowDescription().equals(workflow)) {
+                if (workQueueEntry.getLabVessel().equals(vessel)) {
+                    workQueueEntries.add(workQueueEntry);
+                }
+            }
+        }
+        return workQueueEntries;
+    }
 }

@@ -264,7 +264,7 @@
                 <xs:element name="plateEvent" type="plateEventType" maxOccurs="unbounded"/>
                 <xs:element name="plateTransferEvent" type="plateTransferEventType" maxOccurs="unbounded"/>
                 <xs:element ref="stationSetupEvent" />
-                <xs:element ref="plateCherryPickEvent" />
+                <xs:element ref="plateCherryPickEvent" maxOccurs="unbounded"/>
                 <xs:element ref="receptaclePlateTransferEvent" />
                 <xs:element name="receptacleEvent" type="receptacleEventType" minOccurs="0" maxOccurs="1" />
                 <xs:element name="receptacleSampleEvent" type="receptacleSampleEventType" minOccurs="0" maxOccurs="1" />

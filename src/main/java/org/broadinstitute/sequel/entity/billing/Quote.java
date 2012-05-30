@@ -3,6 +3,9 @@ package org.broadinstitute.sequel.entity.billing;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Transient;
 import java.util.Collection;
 
 /**
@@ -10,11 +13,14 @@ import java.util.Collection;
  * and a wrapper around a quote DTO for more
  * details.
  */
+@Entity
 public class Quote {
-    
-    private final org.broadinstitute.sequel.infrastructure.quote.Quote quoteDTO;
-    
-    private final String alphanumericId;
+
+    @Transient
+    private org.broadinstitute.sequel.infrastructure.quote.Quote quoteDTO;
+
+    @Id
+    private String alphanumericId;
 
     /**
      * @param alphanumericId the alphanumeric id of the quote,
@@ -27,7 +33,10 @@ public class Quote {
         this.quoteDTO = quoteDTO;
         this.alphanumericId = alphanumericId;
     }
-    
+
+    protected Quote() {
+    }
+
     public org.broadinstitute.sequel.infrastructure.quote.Quote getQuote() {
         return quoteDTO;
     }

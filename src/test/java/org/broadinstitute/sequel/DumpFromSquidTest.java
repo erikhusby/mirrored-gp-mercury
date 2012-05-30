@@ -33,7 +33,6 @@ import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
@@ -132,7 +131,7 @@ public class DumpFromSquidTest extends WeldBooter {
             ProjectPlan projectPlan = sequelProject.getAllPlans().iterator().next();
             String bspSampleName = cartSample.getLcSample().getLsid().split("broadinstitute.org:bsp.prod.sample:")[1];
             
-            SampleSheet bspSampleSheet = new SampleSheetImpl();
+            SampleSheet bspSampleSheet = new SampleSheet();
             BSPSampleDTO bspSampleDto = bspLookup.fetchSingleSampleFromBSP(bspSampleName); 
             bspSampleSheet.addStartingSample(new BSPSample(bspSampleName,projectPlan,bspSampleDto));
             LabVessel bspTube = new TwoDBarcodedTube(bspSampleName,bspSampleSheet);

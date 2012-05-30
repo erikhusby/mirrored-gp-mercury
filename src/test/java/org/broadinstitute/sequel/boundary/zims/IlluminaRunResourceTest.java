@@ -97,6 +97,7 @@ public class IlluminaRunResourceTest extends Arquillian  {
         assertNotNull(run);
         assertEquals(run.getName(),RUN_NAME);
         doAssertions(zamboniRun,run);
+
     }      
     
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {

@@ -64,7 +64,7 @@ import java.util.Collection;
  * where we're only putting things into the queue, not
  * taking things out.
  */
-public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extends LabWorkQueue<T> {
+public abstract class FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extends LabWorkQueue<T> {
 
     /**
      * We're all about communication at the Broad, and this
@@ -81,7 +81,7 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * @param batchSize
      * @return
      */
-    public Collection<LabVessel> suggestNextBatch(int batchSize, T bucket);
+    public abstract Collection<LabVessel> suggestNextBatch(int batchSize, T bucket);
 
     /**
      * Returns the contents which are waiting for
@@ -91,10 +91,10 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * demand.
      * @return
      */
-    public Collection<LabVessel> peek(T bucket);
+    public abstract Collection<LabVessel> peek(T bucket);
 
 
-    public Collection<LabVessel> peekAll();
+    public abstract Collection<LabVessel> peekAll();
 
     /**
      * Sometimes you just gotta put something
@@ -103,7 +103,7 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * how you do that.
      * @param vessel
      */
-    public void moveToTop(LabVessel vessel,T bucket);
+    public abstract void moveToTop(LabVessel vessel,T bucket);
 
     /**
      * When the lab actually starts work, they
@@ -114,7 +114,7 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * should be okay.
      * @param vessel
      */
-    public void startWork(LabVessel vessel, T bucket);
+    public abstract void startWork(LabVessel vessel, T bucket);
 
     /**
      * This should be considered optional.  Most of the time
@@ -146,7 +146,7 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * starting material, you're probably screwed.
      * @param vessel
      */
-    public void markComplete(LabVessel vessel, T bucket);
+    public abstract void markComplete(LabVessel vessel, T bucket);
 
     /**
      * Prints a work sheet for the operator.  Could be a zebra printer,
@@ -159,7 +159,7 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      * that lab techs use to track their work.
      * @param vessel
      */
-    public void printWorkSheet(Collection<LabVessel> vessel,T bucket);
+    public abstract void printWorkSheet(Collection<LabVessel> vessel,T bucket);
 
 
     /**
@@ -174,7 +174,7 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      *
      * @param vessel@return
      */
-    public Collection<T> getContainingBuckets(LabVessel vessel);
+    public abstract Collection<T> getContainingBuckets(LabVessel vessel);
 
     /**
      * How many times has the given tangible
@@ -182,6 +182,6 @@ public interface FullAccessLabWorkQueue<T extends LabWorkQueueParameters> extend
      *
      * @param vessel@return
      */
-    public int getNumOrbits(LabVessel vessel);
+    public abstract int getNumOrbits(LabVessel vessel);
 
 }

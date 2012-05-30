@@ -1,5 +1,11 @@
 package org.broadinstitute.sequel.entity.person;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+
 /**
  * Let's make a very simple person model
  * which basically delgates everything
@@ -22,7 +28,13 @@ package org.broadinstitute.sequel.entity.person;
  * as a collaborator, PI, or owner of things
  * like projects.
  */
+@Entity
 public class Person {
+
+    @Id
+    @SequenceGenerator(name = "SEQ_PERSON", sequenceName = "SEQ_PERSON")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PERSON")
+    private Long personId;
 
     private String username;
     
@@ -41,7 +53,10 @@ public class Person {
     public Person(String username) {
         this.username = username;
     }
-    
+
+    public Person() {
+    }
+
     public String getFirstName() {
         return firstName;
     }

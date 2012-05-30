@@ -34,6 +34,30 @@
     <listener>
         <listener-class>org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap</listener-class>
     </listener>
+
+    <listener>
+        <listener-class>
+            com.sun.xml.ws.transport.http.servlet.WSServletContextListener
+        </listener-class>
+    </listener>
+
+    <servlet>
+        <description>JAX-WS endpoint</description>
+        <display-name>The JAX-WS servlet</display-name>
+        <servlet-name>jaxws</servlet-name>
+        <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>jaxws</servlet-name>
+        <url-pattern>/PMBridge</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jaxws</servlet-name>
+        <url-pattern>/SampleKit</url-pattern>
+    </servlet-mapping>
+
     <servlet>
         <display-name>rest</display-name>
         <servlet-name>rest</servlet-name>

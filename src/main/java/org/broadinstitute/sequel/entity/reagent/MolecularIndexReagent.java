@@ -1,33 +1,26 @@
 package org.broadinstitute.sequel.entity.reagent;
 
 
-import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 
-public class MolecularIndexReagent implements Reagent {
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
 
-    private MolecularEnvelope envelopeDelta;
+@Entity
+public class MolecularIndexReagent extends Reagent {
 
-    public MolecularIndexReagent(MolecularEnvelope envelope) {
-        this.envelopeDelta = envelope;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private MolecularIndexingScheme molecularIndexingScheme;
+
+    public MolecularIndexReagent(MolecularIndexingScheme molecularIndexingScheme) {
+        super(null, null, null);
+        this.molecularIndexingScheme = molecularIndexingScheme;
     }
 
-    @Override
-    public MolecularEnvelope getMolecularEnvelopeDelta() {
-        return envelopeDelta;
-    }
-
-    @Override
-    public String getReagentName() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public String getLot() {
-        throw new RuntimeException("I haven't been written yet.");
+    public MolecularIndexReagent() {
     }
 
     @Override
@@ -43,5 +36,9 @@ public class MolecularIndexReagent implements Reagent {
     @Override
     public Iterable<LabVessel> getContainers(MolecularStateRange molecularStateRange) {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    public MolecularIndexingScheme getMolecularIndexingScheme() {
+        return molecularIndexingScheme;
     }
 }

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+// todo jmt factories should be in control
 /**
  * Factory that creates instances of {@link Billable}
  * for a given {@link LabEvent}.  The created {@link Billable}

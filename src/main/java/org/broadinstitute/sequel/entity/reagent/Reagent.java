@@ -3,6 +3,15 @@ package org.broadinstitute.sequel.entity.reagent;
 import org.broadinstitute.sequel.entity.vessel.Containable;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Transient;
+
 /**
  * Some chemistry bits applied to {@link Goop} to help
  * transform it into a sequenceable state.
@@ -15,17 +24,52 @@ import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
  * Although they contain DNA, they are considered
  * {@link Reagent}s.
  */
-public interface Reagent extends Containable {
+@Entity
+public abstract class Reagent implements Containable {
+
+    @Id
+    @SequenceGenerator(name = "SEQ_REAGENT", sequenceName = "SEQ_REAGENT")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT")
+    private Long reagentId;
+
+    private String reagentName;
+
+    private String lot;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    private MolecularEnvelope molecularEnvelope;
+
+    protected Reagent(String reagentName, String lot, MolecularEnvelope molecularEnvelope) {
+        this.reagentName = reagentName;
+        this.lot = lot;
+        this.molecularEnvelope = molecularEnvelope;
+    }
+
+    protected Reagent() {
+    }
 
     /**
      * Returns the MolecularEnvelope that this
      * reagent applies to the target sample.
      * @return
      */
-    public MolecularEnvelope getMolecularEnvelopeDelta();
+    public MolecularEnvelope getMolecularEnvelopeDelta() {
+        return molecularEnvelope;
+    }
 
-    public String getReagentName();
+    public String getReagentName() {
+        return reagentName;
+    }
 
-    public String getLot();
+    public void setReagentName(String reagentName) {
+        this.reagentName = reagentName;
+    }
 
+    public String getLot() {
+        return lot;
+    }
+
+    public void setLot(String lot) {
+        this.lot = lot;
+    }
 }
