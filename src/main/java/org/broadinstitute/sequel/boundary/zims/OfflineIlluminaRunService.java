@@ -3,6 +3,8 @@ package org.broadinstitute.sequel.boundary.zims;
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+import edu.mit.broad.prodinfo.thrift.lims.TZReadType;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
@@ -23,24 +25,34 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
 
     @Override
     public ZimsIlluminaRun getRun(String runName) {
-        ZimsIlluminaRun run = new ZimsIlluminaRun(runName, null, null, null, null, "05/11/2012 17:08", (short) 0, (short) 0, (short) 0, (short) 0, (short) 0, false);
-        for (int i = 1; i <= 8; i++) {
-            run.addLane(makeLane(i));
+        return makeRun(runName, 8, 12);
+    }
+
+    public static ZimsIlluminaRun makeRun(String runName, int numLanes, int numLibraries) {
+        ZimsIlluminaRun run = new ZimsIlluminaRun(runName, "Run-123", "Flowcell-123", "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", (short) 1, (short) 2, (short) 3, (short) 4, (short) 5, false);
+        run.addRead(new TZamboniRead((short) 1, (short) 10, TZReadType.INDEX));
+        run.addRead(new TZamboniRead((short) 11, (short) 20, TZReadType.TEMPLATE));
+        for (int i = 1; i <= numLanes; i++) {
+            run.addLane(makeLane(i, numLibraries));
         }
         return run;
     }
 
-    private ZimsIlluminaChamber makeLane(int laneNumber) {
+    public static ZimsIlluminaChamber makeLane(int laneNumber, int numLibraries) {
         List<LibraryBean> libraries = new ArrayList<LibraryBean>();
         libraries.toArray(new LibraryBean[] {});
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < numLibraries; i++) {
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
             libraryNumber++;
         }
         return new ZimsIlluminaChamber((short) laneNumber, libraries, "PESP1+T");
     }
 
-    private LibraryBean makeLibrary(String number) {
+    private ZimsIlluminaChamber makeLane(int laneNumber) {
+        return makeLane(laneNumber, 12);
+    }
+
+    private static LibraryBean makeLibrary(String number) {
         List<String> conditions = new ArrayList<String>();
         for (int i = 0; i < 3; i++) {
             conditions.add("condition " + number + "-" + i);
