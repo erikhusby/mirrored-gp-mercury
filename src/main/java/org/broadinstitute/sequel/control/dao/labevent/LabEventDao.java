@@ -1,12 +1,14 @@
 package org.broadinstitute.sequel.control.dao.labevent;
 
-import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.control.dao.GenericDao;
+
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 
 /**
  * Data Access Object for LabEvents
  */
-public class LabEventDao {
-    public void persist(LabEvent labEvent) {
-        // todo jmt implement
-    }
+@Stateful
+@RequestScoped
+public class LabEventDao extends GenericDao {
 }

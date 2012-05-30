@@ -108,6 +108,16 @@
             </snapshots>
         </repository>
 
+        <!-- For Arquillian-JRebel -->
+<!--
+        <repository>
+            <id>Arquillian-JRebel snapshots</id>
+            <name>libs-snapshot</name>
+            <url>http://artifactory.it-crowd.com.pl/libs-snapshot</url>
+            <snapshots />
+        </repository>
+-->
+
         <!-- PrimeFaces Repository for PrimeFaces and themes -->
         <repository>
             <id>prime-repo</id>
@@ -409,7 +419,7 @@
                 </dependency>
                 <dependency>
                     <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-simple</artifactId>
+                    <artifactId>slf4j-log4j12</artifactId>
                     <version>1.6.4</version>
                     <scope>test</scope>
                 </dependency>
@@ -660,6 +670,13 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>org.jboss.arquillian.extension</groupId>
+                <artifactId>arquillian-drone-bom</artifactId>
+                <version>1.0.0.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
             <!-- this is needed for any seam 3 dependencies to work -->
 <!--
@@ -716,6 +733,64 @@
             <version>1.1.0-alpha-3</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.extension</groupId>
+            <artifactId>arquillian-drone-impl</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.extension</groupId>
+            <artifactId>arquillian-drone-selenium</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.extension</groupId>
+            <artifactId>arquillian-drone-webdriver</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.extension</groupId>
+            <artifactId>arquillian-drone-selenium-server</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>2.21.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-server</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mortbay.jetty</groupId>
+                    <artifactId>servlet-api-2.5</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+<!-- ???
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <scope>test</scope>
+        </dependency>
+-->
+
+<!-- not really ready yet. following https://community.jboss.org/thread/197981
+        <dependency>
+            <groupId>org.jboss.arquillian.extension</groupId>
+            <artifactId>arquillian-jrebel-impl</artifactId>
+            <version>1.0.0.Alpha1-SNAPSHOT</version>
+        </dependency>
+-->
 
         <dependency>
             <groupId>commons-collections</groupId>
@@ -885,6 +960,18 @@
         </dependency>
 
         <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.1-901.jdbc4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc</artifactId>
+            <version>6-11.2.0.1.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
             <version>1.3</version>
@@ -921,6 +1008,16 @@
             <artifactId>limsThrift</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>3.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>3.8</version>
+        </dependency>
 
         <!-- exists only to be included in ShrinkWrap deployments. would be better to include explicitly in DeploymentBuilder -->
         <dependency>
@@ -930,6 +1027,19 @@
             <!-- cannot be test scoped because it is needed for compiling instrumented main sources -->
             <!--<scope>test</scope>-->
         </dependency>
+
+        <dependency>
+            <groupId>com.sun.xml.ws</groupId>
+            <artifactId>jaxws-rt</artifactId>
+            <version>2.2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>
@@ -1010,6 +1120,8 @@
                 -->
 
             </plugins>
+
+
         </pluginManagement>
 
 
@@ -1020,7 +1132,42 @@
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
+                    <compilerArguments>
+                        <endorseddirs>${project.build.directory}/endorsed</endorseddirs>
+                    </compilerArguments>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/endorsed</outputDirectory>
+                            <silent>true</silent>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>javax.xml.bind</groupId>
+                                    <artifactId>jaxb-api</artifactId>
+                                    <version>2.2.4</version>
+                                    <type>jar</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>javax.xml.ws</groupId>
+                                    <artifactId>jaxws-api</artifactId>
+                                    <version>2.2.8</version>
+                                    <type>jar</type>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
 
@@ -1068,6 +1215,47 @@
             </plugin>
 
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>hibernate3-maven-plugin</artifactId>
+                <version>2.2</version>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>hbm2ddl</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <components>
+                        <component>
+                            <name>hbm2ddl</name>
+                            <implementation>jpaconfiguration</implementation>
+                            <outputDirectory>
+                                src/main/resources
+                            </outputDirectory>
+                        </component>
+                    </components>
+                    <componentProperties>
+                        <persistenceunit>test_pu</persistenceunit>
+                        <console>false</console>
+                        <format>true</format>
+                        <jdk5>true</jdk5>
+                        <propertyfile>
+                            src/main/resources/database.properties
+                        </propertyfile>
+                        <outputfilename>generated_schema.sql</outputfilename>
+                        <scan-classes>true</scan-classes>
+                        <drop>true</drop>
+                        <create>true</create>
+                        <export>false</export>
+                        <format>true</format>
+                        <namingstrategy>org.hibernate.cfg.ImprovedNamingStrategy</namingstrategy>
+                    </componentProperties>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
@@ -1080,25 +1268,73 @@
                 </configuration>
             </plugin>
 
-<!--
+
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <configuration>
-                    <includes>
-                        <include>**/org/broadinstitute/sequel/integration/**/*Test.java</include>
-                    </includes>
-                </configuration>
+                <groupId>org.jvnet.jax-ws-commons</groupId>
+                <artifactId>jaxws-maven-plugin</artifactId>
+                <version>2.2</version>
                 <executions>
                     <execution>
                         <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
+                            <goal>wsimport</goal>
                         </goals>
-                     </execution>
+                    </execution>
                 </executions>
+                <configuration>
+                    <!-- The name of your generated source package -->
+                    <!-- this config seems to push hard to have all the generated WSDL end up in one package, which
+                         may require some hackery to break out for separate top-down generations -->
+                    <packageName>org.broadinstitute.sequel.boundary</packageName>
+                    <wsdlDirectory>${basedir}/src/main/wsdl</wsdlDirectory>
+                </configuration>
+
+                <!-- if you want to use a specific version of JAX-WS, you can do so like this -->
+                <dependencies>
+                    <dependency>
+                        <groupId>com.sun.xml.ws</groupId>
+                        <artifactId>jaxws-tools</artifactId>
+                        <version>2.1.7</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>org.jvnet.staxex</groupId>
+                                <artifactId>stax-ex</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.jvnet.staxex</groupId>
+                        <artifactId>stax-ex</artifactId>
+                        <version>1.2</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>javax.xml.stream</groupId>
+                                <artifactId>stax-api</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                </dependencies>
             </plugin>
--->
+
+
+            <!--
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-failsafe-plugin</artifactId>
+                            <configuration>
+                                <includes>
+                                    <include>**/org/broadinstitute/sequel/integration/**/*Test.java</include>
+                                </includes>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <goals>
+                                        <goal>integration-test</goal>
+                                        <goal>verify</goal>
+                                    </goals>
+                                 </execution>
+                            </executions>
+                        </plugin>
+            -->
 
         </plugins>
 

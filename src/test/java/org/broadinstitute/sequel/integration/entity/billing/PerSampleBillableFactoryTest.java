@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.integration.entity.billing;
 
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.billing.Quote;
+import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
@@ -17,7 +18,6 @@ import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.sample.SampleSheetImpl;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.integration.ContainerTest;
 import org.easymock.EasyMock;
@@ -90,7 +90,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
             else {
                 projectPlan = plan2;
             }
-            SampleSheetImpl sampleSheet = new SampleSheetImpl();
+            SampleSheet sampleSheet = new SampleSheet();
             sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, projectPlan, null));
             String barcode = "R" + rackPosition;
             mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
@@ -112,7 +112,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
                                           Map<LabEventName,PriceItem> billableEvents) {
         ProjectPlan plan = new ProjectPlan(new BasicProject(projectName,null),
                 projectPlanName,
-                new WorkflowDescription("ChocolateChipCookies","3.1",billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+                new WorkflowDescription("ChocolateChipCookies", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         Quote quote = new org.broadinstitute.sequel.entity.billing.Quote(quoteAlphanumericId,
                 new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteAlphanumericId,new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
         plan.setQuote(quote);   
@@ -180,7 +180,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
         biller.setQuoteService(quoteService);  // there has to be a better way to do this.
                                                                                 // how can we configure injection of particular
                                                                                 // classes from within a single unit test?
-        labEventHandler.processEvent(labEvent);
+        labEventHandler.processEvent(labEvent, null);
         EasyMock.verify(service);
         Assert.assertEquals(labEvent.getQuoteServerBatchId(),workBatchId);
     }

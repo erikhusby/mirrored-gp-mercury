@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.queue;
 
 import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -30,7 +31,7 @@ import java.util.HashSet;
  * used to build a list which is then sent to
  * BSP when we call some method.
  */
-public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,ExternalLabWorkQueue<BSPPlatingResponse> {
+public class BSPAliquotWorkQueue extends LabWorkQueue<AliquotParameters> implements ExternalLabWorkQueue<BSPPlatingResponse> {
 
     // Can we first make db-free unit tests and then play some
     // CDI configuration to turn them into various flavors
@@ -77,15 +78,16 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
         throw new RuntimeException("I haven't been written yet.");
     }
 
+
     @Override
-    public LabWorkQueueResponse add(LabVessel vessel, AliquotParameters aliquotParameters,SequencingPlanDetail sequencingPlan) {
+    public LabWorkQueueResponse add(LabVessel vessel, AliquotParameters workflowParameters, WorkflowDescription workflowDescription, ProjectPlan projectPlanOverride) {
         if (vessel == null) {
-             throw new IllegalArgumentException("labTangible must be non-null in BSPAliquotWorkQueue.add");
+            throw new IllegalArgumentException("labTangible must be non-null in BSPAliquotWorkQueue.add");
         }
-        if (aliquotParameters == null) {
-             throw new IllegalArgumentException("bucket must be non-null in BSPAliquotWorkQueue.add");
+        if (workflowParameters == null) {
+            throw new IllegalArgumentException("bucket must be non-null in BSPAliquotWorkQueue.add");
         }
-        aliquotRequests.add(new BSPPlatingRequest(vessel.getLabCentricName(),aliquotParameters));
+        aliquotRequests.add(new BSPPlatingRequest(vessel.getLabCentricName(),workflowParameters));
 
         // todo some service call to BSP to say "does this look right?"
         // and then respond accordingly
@@ -97,6 +99,7 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
             }
         };
     }
+
 
     @Override
     public Collection<MolecularStateRange> getMolecularStateRequirements() {
@@ -129,7 +132,12 @@ public class BSPAliquotWorkQueue implements LabWorkQueue<AliquotParameters>,Exte
     }
 
     @Override
-    public WorkflowEngine getWorkflowEngine() {
+    public void remove(WorkQueueEntry workQueueEntry) {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Collection<WorkQueueEntry<AliquotParameters>> getEntriesForWorkflow(WorkflowDescription workflow, LabVessel vessel) {
         throw new RuntimeException("I haven't been written yet.");
     }
 }

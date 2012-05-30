@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions
+        targetNamespace="urn:SquidTopic"
+        xmlns:topic="urn:Topic"
+        xmlns:sqtopic="urn:SquidTopic"
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+        xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+
+    <wsdl:types>
+        <xsd:schema targetNamespace="urn:SquidTopic" xmlns:topic="urn:Topic" >
+            <xsd:import namespace="urn:Topic" schemaLocation="../xsd/Topic.xsd"/>
+
+            <xsd:complexType name="SummarizedPassListResult">
+                <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+                    <xsd:element name="summarizedPassList" type="topic:SummarizedPass" />
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="BaitSetListResult">
+                <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+                    <xsd:element name="baitSetList" type="topic:BaitSet" />
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="ReferenceSequenceListResult">
+                <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+                    <xsd:element name="referenceSequenceList" type="topic:ReferenceSequence" />
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="OrganismListResult">
+                <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+                    <xsd:element name="organismList" type="topic:Organism" />
+                </xsd:sequence>
+            </xsd:complexType>
+
+        </xsd:schema>
+    </wsdl:types>
+
+
+    <wsdl:message name="RequestGreetingMessage">
+    </wsdl:message>
+    <wsdl:message name="ResponseGreetingMessage">
+        <wsdl:part name="responseData" type="xsd:string"/>
+    </wsdl:message>
+
+
+    <wsdl:message name="RequestCanEditPassesMessage">
+        <wsdl:part name="login" type="xsd:string" />
+    </wsdl:message>
+    <wsdl:message name="ResponseCanEditPassesMessage">
+        <wsdl:part name="responseData" type="xsd:boolean" />
+    </wsdl:message>
+
+
+    <wsdl:message name="RequestStorePassMessage">
+        <wsdl:part name="pass" type="topic:AbstractPass" />
+    </wsdl:message>
+    <wsdl:message name="ResponseStorePassMessage">
+        <wsdl:part name="passNumber" type="xsd:string" />
+    </wsdl:message>
+
+
+    <wsdl:message name="RequestValidatePassMessage">
+        <wsdl:part name="pass" type="topic:AbstractPass" />
+    </wsdl:message>
+    <wsdl:message name="ResponseValidatePassMessage">
+        <wsdl:part name="responseData" type="topic:PassCritique" />
+    </wsdl:message>
+
+
+    <wsdl:message name="RequestSearchPassesByCreatorMessage">
+        <wsdl:part name="creator" type="xsd:string" />
+    </wsdl:message>
+    <wsdl:message name="ResponseSearchPassesByCreatorMessage">
+        <wsdl:part name="results" type="sqtopic:SummarizedPassListResult" />
+    </wsdl:message>
+
+    <wsdl:message name="RequestSearchPassesMessage">
+    </wsdl:message>
+
+    <wsdl:message name="ResponseSearchPassesMessage">
+        <wsdl:part name="results" type="sqtopic:SummarizedPassListResult" />
+    </wsdl:message>
+
+    <wsdl:message name="RequestSearchPassesByResearchProjectMessage">
+        <wsdl:part name="researchProject" type="xsd:string" />
+    </wsdl:message>
+    <wsdl:message name="ResponseSearchPassesByResearchProjectMessage">
+        <wsdl:part name="results" type="sqtopic:SummarizedPassListResult" />
+    </wsdl:message>
+
+
+
+    <!--
+    <wsdl:message name="RequestGetPersonListMessage">
+      <wsdl:part name="personType" type="topic:SquidPerson" />
+    </wsdl:message>
+    <wsdl:message name="ResponseGetPersonListMessage">
+      <wsdl:part name="personList" type="topic:SquidPersonList" />
+    </wsdl:message>
+
+
+    <wsdl:message name="RequestGetPersonMessage">
+      <wsdl:part name="inputPerson"  type="topic:SquidPerson" />
+    </wsdl:message>
+    <wsdl:message name="ResponseGetPersonMessage">
+      <wsdl:part name="outputPerson" type="topic:SquidPerson" />
+    </wsdl:message>
+    -->
+
+    <wsdl:message name="RequestGetReferenceSequencesByOrganismMessage">
+        <wsdl:part name="organism" type="topic:Organism" />
+    </wsdl:message>
+    <wsdl:message name="ResponseGetReferenceSequencesByOrganismMessage">
+        <wsdl:part name="referenceSequenceListResult" type="sqtopic:ReferenceSequenceListResult" />
+    </wsdl:message>
+
+    <wsdl:message name="RequestGetReferenceSequencesByBaitSetMessage">
+        <wsdl:part name="baitSet" type="topic:BaitSet" />
+    </wsdl:message>
+    <wsdl:message name="ResponseGetReferenceSequencesByBaitSetMessage">
+        <wsdl:part name="referenceSequenceListResult" type="sqtopic:ReferenceSequenceListResult" />
+    </wsdl:message>
+
+    <wsdl:message name="RequestGetReferenceSequencesMessage">
+    </wsdl:message>
+
+    <wsdl:message name="ResponseGetReferenceSequencesMessage">
+        <wsdl:part name="referenceSequenceListResult" type="sqtopic:ReferenceSequenceListResult" />
+    </wsdl:message>
+
+    <wsdl:message name="RequestGetBaitSetsByReferenceSequenceMessage">
+        <wsdl:part name="referenceSequence" type="topic:ReferenceSequence" />
+    </wsdl:message>
+
+    <wsdl:message name="ResponseGetBaitSetsByReferenceSequenceMessage">
+        <wsdl:part name="baitSetListResult" type="sqtopic:BaitSetListResult" />
+    </wsdl:message>
+
+    <wsdl:message name="RequestGetBaitSetsMessage">
+    </wsdl:message>
+
+    <wsdl:message name="ResponseGetBaitSetsMessage">
+        <wsdl:part name="baitSetListResult" type="sqtopic:BaitSetListResult" />
+    </wsdl:message>
+
+    <wsdl:message name="RequestGetOrganismsMessage">
+    </wsdl:message>
+
+    <wsdl:message name="ResponseGetOrganismsMessage">
+        <wsdl:part name="organismListResult" type="sqtopic:OrganismListResult" />
+    </wsdl:message>
+
+    <!--
+    <wsdl:message name="RequestLoadPassByIdMessage">
+      <wsdl:part name="id" type="xsd:long" />
+    </wsdl:message>
+
+    <wsdl:message name="ResponseLoadPassByIdMessage">
+      <wsdl:part name="pass" type="topic:AbstractPass" />
+    </wsdl:message>
+
+    -->
+
+    <wsdl:message name="RequestLoadPassByNumberMessage">
+        <wsdl:part name="passNumber" type="xsd:string" />
+    </wsdl:message>
+
+    <wsdl:message name="ResponseLoadPassByNumberMessage">
+        <wsdl:part name="pass" type="topic:AbstractPass" />
+    </wsdl:message>
+
+
+    <wsdl:message name="RequestBroadPIListMessage" />
+    <wsdl:message name="ResponseBroadPIListMessage">
+        <wsdl:part name="broadPIList" type="topic:SquidPersonList" />
+    </wsdl:message>
+
+
+    <wsdl:message name="RequestValidatePassNumber">
+        <wsdl:part name="passNumber" type="xsd:string" />
+    </wsdl:message>
+    <wsdl:message name="ResponseValidatePassNumber">
+        <wsdl:part name="result" type="xsd:boolean" />
+    </wsdl:message>
+
+
+    <wsdl:message name="RequestAbandonPassMessage">
+        <wsdl:part name="passNumber" type="xsd:string" />
+    </wsdl:message>
+    <wsdl:message name="ResponseAbandonPassMessage" />
+
+
+
+    <wsdl:portType name="SquidTopicPortype">
+        <wsdl:operation name="getGreeting">
+            <wsdl:input name="getGreetingRequest" message="sqtopic:RequestGreetingMessage"/>
+            <wsdl:output name="getGreetingResponse" message="sqtopic:ResponseGreetingMessage"/>
+        </wsdl:operation>
+        <wsdl:operation name="canEditPasses">
+            <wsdl:input name="canEditPassesRequest" message="sqtopic:RequestCanEditPassesMessage" />
+            <wsdl:output name="canEditPassesResponse" message="sqtopic:ResponseCanEditPassesMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="storePass">
+            <wsdl:input name="storePassRequest" message="sqtopic:RequestStorePassMessage" />
+            <wsdl:output name="storePassResponse" message="sqtopic:ResponseStorePassMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="validatePass">
+            <wsdl:input name="validatePassRequest" message="sqtopic:RequestValidatePassMessage" />
+            <wsdl:output name="validatePassResponse" message="sqtopic:ResponseValidatePassMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="abandonPass">
+            <wsdl:input name="abandonPassRequest" message="sqtopic:RequestAbandonPassMessage" />
+            <wsdl:output name="abandonPassResponse" message="sqtopic:ResponseAbandonPassMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="searchPassesByCreator">
+            <wsdl:input name="searchPassesByCreatorRequest" message="sqtopic:RequestSearchPassesByCreatorMessage" />
+            <wsdl:output name="searchPassesByCreatorResponse" message="sqtopic:ResponseSearchPassesByCreatorMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="searchPasses">
+            <wsdl:input name="searchPassesRequest" message="sqtopic:RequestSearchPassesMessage" />
+            <wsdl:output name="searchPassesResponse" message="sqtopic:ResponseSearchPassesMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="searchPassesByResearchProject">
+            <wsdl:input name="searchPassesByResearchProjectRequest" message="sqtopic:RequestSearchPassesByResearchProjectMessage" />
+            <wsdl:output name="searchPassesByResearchProjectResponse" message="sqtopic:ResponseSearchPassesByResearchProjectMessage" />
+        </wsdl:operation>
+
+
+
+        <!--
+        <wsdl:operation name="getPersonList">
+          <wsdl:input name="getPersonListRequest" message="sqtopic:RequestGetPersonListMessage" />
+          <wsdl:output name="getPersonListResponse" message="sqtopic:ResponseGetPersonListMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="getPerson">
+          <wsdl:input name="getPersonRequest" message="sqtopic:RequestGetPersonMessage" />
+          <wsdl:output name="getPersonResponse" message="sqtopic:ResponseGetPersonMessage" />
+        </wsdl:operation>
+
+        -->
+        <wsdl:operation name="getReferenceSequencesByOrganism">
+            <wsdl:input name="getReferenceSequencesByOrganismRequest" message="sqtopic:RequestGetReferenceSequencesByOrganismMessage" />
+            <wsdl:output name="getReferenceSequencesByOrganismResponse" message="sqtopic:ResponseGetReferenceSequencesByOrganismMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="getReferenceSequencesByBaitSet">
+            <wsdl:input name="getReferenceSequencesByBaitSetRequest" message="sqtopic:RequestGetReferenceSequencesByBaitSetMessage" />
+            <wsdl:output name="getReferenceSequencesByBaitSetResponse" message="sqtopic:ResponseGetReferenceSequencesByBaitSetMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="getReferenceSequences">
+            <wsdl:input name="getReferenceSequencesRequest" message="sqtopic:RequestGetReferenceSequencesMessage" />
+            <wsdl:output name="getReferenceSequencesResponse" message="sqtopic:ResponseGetReferenceSequencesMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="getBaitSetsByReferenceSequence">
+            <wsdl:input name="getBaitSetsByReferenceSequenceRequest" message="sqtopic:RequestGetBaitSetsByReferenceSequenceMessage" />
+            <wsdl:output name="getBaitSetsByReferenceSequenceResponse" message="sqtopic:ResponseGetBaitSetsByReferenceSequenceMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="getBaitSets">
+            <wsdl:input name="getBaitSetsRequest" message="sqtopic:RequestGetBaitSetsMessage" />
+            <wsdl:output name="getBaitSetsResponse" message="sqtopic:ResponseGetBaitSetsMessage" />
+        </wsdl:operation>
+        <wsdl:operation name="getOrganisms">
+            <wsdl:input name="getOrganismsRequest" message="sqtopic:RequestGetOrganismsMessage" />
+            <wsdl:output name="getOrganismsResponse" message="sqtopic:ResponseGetOrganismsMessage" />
+        </wsdl:operation>
+        <!-- <wsdl:operation name="loadPassById">
+          <wsdl:input name="loadPassByIdRequest" message="sqtopic:RequestLoadPassByIdMessage" />
+          <wsdl:output name="loadPassByIdResponse" message="sqtopic:ResponseLoadPassByIdMessage" />
+        </wsdl:operation> -->
+        <wsdl:operation name="loadPassByNumber">
+            <wsdl:input name="loadPassByNumberRequest" message="sqtopic:RequestLoadPassByNumberMessage" />
+            <wsdl:output name="loadPassByNumberResponse" message="sqtopic:ResponseLoadPassByNumberMessage" />
+        </wsdl:operation>
+
+        <wsdl:operation name="getBroadPIList">
+            <wsdl:input name="getBroadPIListRequest" message="sqtopic:RequestBroadPIListMessage" />
+            <wsdl:output name="getBroadPIListResponse" message="sqtopic:ResponseBroadPIListMessage" />
+        </wsdl:operation>
+
+
+        <wsdl:operation name="validatePassNumber">
+            <wsdl:input name="validatePassNumberRequest" message="sqtopic:RequestValidatePassNumber" />
+            <wsdl:output name="validatePassNumberResponse" message="sqtopic:ResponseValidatePassNumber" />
+        </wsdl:operation>
+
+
+    </wsdl:portType>
+
+    <wsdl:binding name="SquidTopicImpl"
+                  type="sqtopic:SquidTopicPortype">
+        <wsdlsoap:binding style="rpc"
+                          transport="http://schemas.xmlsoap.org/soap/http"/>
+
+        <wsdl:operation name="getGreeting">
+            <wsdl:input name="getGreetingRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal"/>
+            </wsdl:input>
+            <wsdl:output name="getGreetingResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal"/>
+            </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="canEditPasses">
+            <wsdl:input name="canEditPassesRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal"/>
+            </wsdl:input>
+            <wsdl:output name="canEditPassesResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal"/>
+            </wsdl:output>
+
+        </wsdl:operation>
+
+        <wsdl:operation name="storePass">
+            <wsdl:input name="storePassRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output  name="storePassResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+
+        <wsdl:operation name="validatePass">
+            <wsdl:input name="validatePassRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="validatePassResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+
+        <wsdl:operation name="abandonPass">
+            <wsdl:input name="abandonPassRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="abandonPassResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="searchPassesByCreator">
+            <wsdl:input name="searchPassesByCreatorRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="searchPassesByCreatorResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="searchPassesByResearchProject">
+            <wsdl:input name="searchPassesByResearchProjectRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="searchPassesByResearchProjectResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+
+        <wsdl:operation name="searchPasses">
+            <wsdl:input name="searchPassesRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="searchPassesResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+        <!--
+        <wsdl:operation name="getPersonList">
+          <wsdl:input name="getPersonListRequest">
+            <wsdlsoap:body namespace="urn:Topic" use="literal" />
+          </wsdl:input>
+          <wsdl:output name="getPersonListResponse">
+            <wsdlsoap:body namespace="urn:Topic" use="literal" />
+          </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="getPerson">
+          <wsdl:input name="getPersonRequest">
+            <wsdlsoap:body namespace="urn:Topic" use="literal" />
+          </wsdl:input>
+          <wsdl:output name="getPersonResponse">
+            <wsdlsoap:body namespace="urn:Topic" use="literal" />
+          </wsdl:output>
+        </wsdl:operation>
+        -->
+
+        <wsdl:operation name="getReferenceSequencesByOrganism">
+            <wsdl:input name="getReferenceSequencesByOrganismRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="getReferenceSequencesByOrganismResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="getReferenceSequencesByBaitSet">
+            <wsdl:input name="getReferenceSequencesByBaitSetRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="getReferenceSequencesByBaitSetResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="getReferenceSequences">
+            <wsdl:input name="getReferenceSequencesRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="getReferenceSequencesResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="getBaitSetsByReferenceSequence">
+            <wsdl:input name="getBaitSetsByReferenceSequenceRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="getBaitSetsByReferenceSequenceResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="getBaitSets">
+            <wsdl:input name="getBaitSetsRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="getBaitSetsResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+        <wsdl:operation name="getOrganisms">
+            <wsdl:input name="getOrganismsRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="getOrganismsResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+        <!--
+        <wsdl:operation name="loadPassById">
+          <wsdl:input name="loadPassByIdRequest">
+            <wsdlsoap:body namespace="urn:Topic" use="literal" />
+          </wsdl:input>
+          <wsdl:output name="loadPassByIdResponse">
+            <wsdlsoap:body namespace="urn:Topic" use="literal" />
+          </wsdl:output>
+        </wsdl:operation>
+        -->
+
+        <wsdl:operation name="loadPassByNumber">
+            <wsdl:input name="loadPassByNumberRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="loadPassByNumberResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+
+        <wsdl:operation name="getBroadPIList">
+            <wsdl:input name="getBroadPIListRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output>
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+
+        <wsdl:operation name="validatePassNumber">
+            <wsdl:input name="validatePassNumberRequest">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:input>
+            <wsdl:output name="validatePassNumberResponse">
+                <wsdlsoap:body namespace="urn:Topic" use="literal" />
+            </wsdl:output>
+        </wsdl:operation>
+
+    </wsdl:binding>
+
+    <wsdl:service name="SquidTopicService">
+
+        <wsdl:port binding="sqtopic:SquidTopicImpl"
+                   name="SquidTopicService">
+            <wsdlsoap:address location="http://localhost:8080/SequeL/PMBridge"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

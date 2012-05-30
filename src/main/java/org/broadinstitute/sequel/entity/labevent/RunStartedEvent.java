@@ -8,7 +8,7 @@ import java.util.Collection;
 /**
  * Event processed when a run starts on a sequencer.
  */
-public class RunStartedEvent extends AbstractLabEvent {
+public class RunStartedEvent extends LabEvent {
 
 
     @Override
