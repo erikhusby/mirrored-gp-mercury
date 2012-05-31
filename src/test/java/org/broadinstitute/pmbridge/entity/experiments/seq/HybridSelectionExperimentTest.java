@@ -1,10 +1,7 @@
 package org.broadinstitute.pmbridge.entity.experiments.seq;
 
 import junit.framework.Assert;
-import org.broad.squid.services.TopicService.AlignerType;
-import org.broad.squid.services.TopicService.CoverageAndAnalysisInformation;
-import org.broad.squid.services.TopicService.DirectedPass;
-import org.broad.squid.services.TopicService.RNASeqPass;
+import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
@@ -98,15 +95,27 @@ public class HybridSelectionExperimentTest {
 
     }
 
+
     @Test
-    public void testEquals() throws Exception {
+    public void testEqualsAndHashCode() throws Exception {
+
+        HybridSelectionExperiment hybridSelectionExperiment2 = new HybridSelectionExperiment(experimentRequestSummary);
+        Assert.assertTrue( hybridSelectionExperiment.equals( hybridSelectionExperiment2 ) );
+        int code  =  hybridSelectionExperiment.hashCode() ;
+        int code2 =  hybridSelectionExperiment2.hashCode() ;
+        Assert.assertTrue( code == code2 );
+
+        // Change the baitset
+        hybridSelectionExperiment2.setBaitSetID( nonDefaultId );
+        Assert.assertFalse(hybridSelectionExperiment.equals(hybridSelectionExperiment2));
+        Assert.assertFalse( hybridSelectionExperiment.hashCode() == hybridSelectionExperiment2.hashCode()  );
+
+        hybridSelectionExperiment2.setBaitSetID( HybridSelectionExperiment.DEFAULT_BAIT_SET_ID );
+        Assert.assertTrue(hybridSelectionExperiment.equals(hybridSelectionExperiment2));
+        Assert.assertTrue( hybridSelectionExperiment.hashCode() == hybridSelectionExperiment2.hashCode()  );
 
     }
 
-    @Test
-    public void testHashCode() throws Exception {
-
-    }
 
     @Test
     public void testToString() throws Exception {

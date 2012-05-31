@@ -12,8 +12,8 @@ import java.math.BigDecimal;
  */
 public class LanesCoverageModel extends SeqCoverageModel {
 
-    private final org.broad.squid.services.TopicService.AttemptedLanesCoverageModel attemptedLanesCoverageModel;
     public final static BigDecimal DEFAULT_LANES = new BigDecimal(8);
+    private org.broad.squid.services.TopicService.AttemptedLanesCoverageModel attemptedLanesCoverageModel;
 
 
     public LanesCoverageModel() {
@@ -49,14 +49,16 @@ public class LanesCoverageModel extends SeqCoverageModel {
 
         final LanesCoverageModel that = (LanesCoverageModel) o;
 
-        if (attemptedLanesCoverageModel != null ? !attemptedLanesCoverageModel.equals(that.attemptedLanesCoverageModel) : that.attemptedLanesCoverageModel != null)
-            return false;
+        // Need to use BigDecimal.compareTo
+        if ((getLanesCoverage() != null)
+                ? ! (getLanesCoverage().compareTo(that.getLanesCoverage()) == 0 )
+                : that.getLanesCoverage() != null) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return attemptedLanesCoverageModel != null ? attemptedLanesCoverageModel.hashCode() : 0;
+        return attemptedLanesCoverageModel != null ? attemptedLanesCoverageModel.getAttemptedLanes().hashCode() : 0;
     }
 }

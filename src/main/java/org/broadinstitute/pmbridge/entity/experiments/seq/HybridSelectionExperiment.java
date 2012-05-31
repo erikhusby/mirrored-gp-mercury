@@ -77,8 +77,9 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
 
         if (  DEFAULT_COVERAGE_MODEL.equals(CoverageModelType.LANES)) {
             AttemptedLanesCoverageModel attemptedLanesCoverageModel = new AttemptedLanesCoverageModel();
+            attemptedLanesCoverageModel.setAttemptedLanes( LanesCoverageModel.DEFAULT_LANES );
+//            attemptedLanesCoverageModel.setAttemptedLanes( lanesCoverageModel.getLanesCoverage() );
             LanesCoverageModel lanesCoverageModel = new LanesCoverageModel(attemptedLanesCoverageModel);
-            attemptedLanesCoverageModel.setAttemptedLanes( lanesCoverageModel.getLanesCoverage() );
             coverageAndAnalysisInformation.setAttemptedLanesCoverageModel(attemptedLanesCoverageModel);
             setSeqCoverageModel( lanesCoverageModel );
         } else {
@@ -118,7 +119,8 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
 
         final HybridSelectionExperiment that = (HybridSelectionExperiment) o;
 
-        if (directedPass != null ? !directedPass.equals(that.directedPass) : that.directedPass != null) return false;
+        if (getBaitSetID() != null ? !getBaitSetID().equals(that.getBaitSetID()) : that.getBaitSetID() != null) return false;
+        if (getAlignerType() != null ? !getAlignerType().equals(that.getAlignerType()) : that.getAlignerType() != null) return false;
 
         return true;
     }
