@@ -15,7 +15,8 @@ import javax.persistence.PersistenceContextType;
 @Stateful
 @RequestScoped
 public class ThreadEntityManager {
-    @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "test_pu")
+    //todo:  SGM/JMT  uncomment when we are ready to add JDBC definitions to Glassfish Servers
+//    @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "test_pu")
     private EntityManager entityManager;
 
     public EntityManager getEntityManager() {
