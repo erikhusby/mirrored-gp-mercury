@@ -5,6 +5,7 @@ import org.broadinstitute.pmbridge.entity.person.Person;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 
 public interface BSPSampleSearchService {
@@ -16,7 +17,7 @@ public interface BSPSampleSearchService {
      * @param bspUser
      * @return
      */
-    List<BSPCollection> getCohortsByUser(Person bspUser);
+    Set<BSPCollection> getCohortsByUser(Person bspUser);
 
 
     /**

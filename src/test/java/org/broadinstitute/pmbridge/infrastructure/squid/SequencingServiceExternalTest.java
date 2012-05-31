@@ -1,5 +1,6 @@
 package org.broadinstitute.pmbridge.infrastructure.squid;
 
+import junit.framework.Assert;
 import org.broadinstitute.pmbridge.DeploymentBuilder;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.pmbridge.entity.experiments.seq.BaitSetName;
@@ -25,7 +26,6 @@ import static org.testng.Assert.assertNotNull;
  * Date: 5/3/12
  * Time: 2:55 PM
  */
-@Test(groups = {EXTERNAL_INTEGRATION})
 public class SequencingServiceExternalTest extends Arquillian {
 
     @Inject
@@ -37,14 +37,17 @@ public class SequencingServiceExternalTest extends Arquillian {
         return war;
     }
 
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void testGetPlatformPeople() throws Exception {
 
+        Assert.fail("should not pass");
         List<Person> aList = sequencingService.getPlatformPeople();
         assertNotNull(aList);
         assertNotNull(aList.get(0));
 
     }
 
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void testGetOrganisms() throws Exception {
 
         List<OrganismName> aList = sequencingService.getOrganisms();

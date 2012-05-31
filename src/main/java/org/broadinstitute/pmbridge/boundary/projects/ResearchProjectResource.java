@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
  * Restful webservice to list the research project info.
  * Used by Squid, PMBridge reports, perhaps BSP and Quotes.
  *
- * TODO: Need to replace reponse with actual ResearchProject xml bean
  * Created by IntelliJ IDEA.
  * User: mccrory
  * Date: 4/17/12
@@ -110,7 +109,6 @@ public class ResearchProjectResource {
 //    @Override
 //    public ResearchProject createResearchProject(Person creator, Name title, ResearchProjectId id, String synopsis) {
 //
-//        //TODO - May need to remove Id from params and generate it internally
 //        ResearchProject researchProject = new ResearchProject( creator, title, id, synopsis  );
 //
 //        return researchProject;

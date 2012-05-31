@@ -52,7 +52,6 @@ public class ResearchProjectResourceTest extends Arquillian {
 
         researchProject = null;
         // Try to get rp using an invalid rpid - non-numeric
-        //TODO - should we change this api call to that the search switches to look up by name ?
         try {
             researchProject = researchProjectResource.findResearchProjectById("abc");
             fail("Should throw exception");

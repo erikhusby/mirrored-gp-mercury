@@ -32,6 +32,7 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import static org.broadinstitute.pmbridge.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -242,13 +243,13 @@ public class EndToEndTest extends Arquillian {
                 new Name("MyResearchProject"), "To study stuff.");
 
         //COHORTS - Gets all cohorts from BSP for this program PM
-        List<BSPCollection> cohorts = bspService.getCohortsByUser(programMgr);
+        Set<BSPCollection> cohorts = bspService.getCohortsByUser(programMgr);
         for ( BSPCollection bspCollection : cohorts) {
             System.out.println("Found BSP collection : " + bspCollection.name);
         }
 
         // User chooses first BSP collection/cohort for test purposes.
-        BSPCollection selectedSampleCollection = cohorts.get(0);
+        BSPCollection selectedSampleCollection = cohorts.iterator().next();
 
         // Add it to the research project.
         aResearchProject.addBSPCollection(selectedSampleCollection);

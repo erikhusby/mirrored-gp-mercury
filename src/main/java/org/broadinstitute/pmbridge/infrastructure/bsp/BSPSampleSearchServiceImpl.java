@@ -11,6 +11,7 @@ import org.broadinstitute.pmbridge.control.AbstractJerseyClientService;
 import org.broadinstitute.pmbridge.entity.bsp.BSPCollection;
 import org.broadinstitute.pmbridge.entity.bsp.BSPCollectionID;
 import org.broadinstitute.pmbridge.entity.person.Person;
+import org.omg.CosNaming.NamingContextPackage.CannotProceed;
 
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
@@ -61,7 +62,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
         String urlString = "http://%s:%d%s";
         urlString = String.format(urlString, connParams.getHostname(), connParams.getPort(),
-                BSPConnectionParameters.ROOT_BSP_URL);
+                BSPConnectionParameters.BSP_SAMPLE_SEARCH_URL);
         
         _logger.info(String.format("url string is '%s'", urlString));
         
@@ -150,22 +151,82 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
     }
 
+
+    private Set<BSPCollection> runCollectionSearch(Person bspUser ) {
+
+        if ((bspUser == null) || (StringUtils.isBlank(bspUser.getUsername())) )  {
+            throw new IllegalArgumentException( "Cannot lookup cohorts for user without a valid username." );
+        }
+
+        HashSet<BSPCollection> usersCohorts = new HashSet<BSPCollection>();
+
+        String urlString = "http://%s:%d%s";
+        urlString = String.format(urlString, connParams.getHostname(), connParams.getPort(),
+                BSPConnectionParameters.BSP_USERS_COHORT_URL + bspUser.getUsername().trim() );
+        _logger.info(String.format("url string is '%s'", urlString));
+
+        WebResource webResource = getJerseyClient().resource(urlString);
+
+        try {
+            ClientResponse clientResponse =
+                    webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, urlString);
+
+            InputStream is = clientResponse.getEntityInputStream();
+            BufferedReader rdr = new BufferedReader(new InputStreamReader(is));
+
+            if (clientResponse.getStatus() / 100 != 2) {
+                _logger.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+                return usersCohorts;
+                // throw new RuntimeException("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+            }
+
+            // skip the header line
+            rdr.readLine();
+            // what should be the first real data line
+            String readLine = rdr.readLine();
+            while (readLine != null) {
+                String[] rawBSPData = readLine.split("\t", -1);
+
+                //TODO - For now only interested in the first two fields
+                if ( (rawBSPData.length >= 2 ) &&
+                        StringUtils.isNotBlank( rawBSPData[0] ) &&
+                        StringUtils.isNotBlank( rawBSPData[1]) ) {
+
+                    BSPCollectionID bspCollectionID = new BSPCollectionID(rawBSPData[0]);
+                    BSPCollection bspCollection = new BSPCollection ( bspCollectionID, rawBSPData[1] );
+                    usersCohorts.add( bspCollection );
+                } else {
+                    _logger.error( "Found a line from BSP Cohort for user " + bspUser.getUsername() + " which had less than two fields of real data <" + readLine  + ">");
+                }
+            }
+            is.close();
+
+        }
+        catch (UnsupportedEncodingException uex) {
+            throw new RuntimeException(uex);
+        }
+        catch (MalformedURLException mux) {
+            throw new RuntimeException(mux);
+        }
+        catch (IOException iox) {
+            throw new RuntimeException(iox);
+        }
+
+        return usersCohorts;
+    }
+
+
+
     @Override
-    public List<BSPCollection> getCohortsByUser(Person bspUser) {
+    public Set<BSPCollection> getCohortsByUser(Person bspUser) {
 
         if ((bspUser == null ) || (StringUtils.isBlank(bspUser.getUsername()))) {
             throw new IllegalArgumentException("Bsp Username is not valid. Canot retrieve list of cohorts from BSP.");
         }
 
-        List<BSPCollection> cohortSet = new ArrayList<BSPCollection>();
+        Set<BSPCollection> bspCollections = runCollectionSearch(bspUser);
 
-        // TODO hmc Mocked out here as API is not yet available.
-        Collection<BSPCollection> bspCollections = getFakeCollections();
-        // TODO end
-
-        cohortSet.addAll(bspCollections);
-
-        return cohortSet;
+        return bspCollections;
 
     }
 
