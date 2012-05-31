@@ -19,7 +19,7 @@ import java.util.*;
  */
 public class ZimsIlluminaRun {
     
-    @JsonProperty("runName")
+    @JsonProperty("name")
     private String runName;
     
     @JsonProperty("barcode")
