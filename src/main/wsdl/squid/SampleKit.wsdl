@@ -13,7 +13,7 @@
                     xmlns:spftypes="urn:SpfTypes"
                     xmlns:xsd="http://www.w3.org/2001/XMLSchema">
 
-            <xsd:import namespace="urn:SpfTypes" schemaLocation="../xsd/SpfTypes.xsd"/>
+            <xsd:import namespace="urn:SpfTypes" schemaLocation="../../xsd/squid/SpfTypes.xsd"/>
 
             <xsd:complexType name="SampleKitRequestor">
                 <xsd:sequence>
@@ -76,7 +76,7 @@
                     <xsd:element name="sampleComment" type="xsd:string" maxOccurs="1"
                                  minOccurs="0"/>
                     <xsd:element name="factoryBarcode"
-                                 type="xsd:string" maxOccurs="1" minOccurs="0"/>
+                                 type="xsd:string" maxOccurs="1" minOccurs="0" nillable="true"/>
                     <xsd:element name="sampleType" type="spftypes:SpfSampleTypeEnum" maxOccurs="1" minOccurs="0" />
                 </xsd:sequence>
             </xsd:complexType>
@@ -265,7 +265,7 @@
         <wsdl:port binding="impl:SampleKitServiceSoapBinding"
                    name="SampleKitService">
 
-            <wsdlsoap:address location="http://localhost:8080/SequeL/SampleKitService"/>
+            <wsdlsoap:address location="@tomcat.url@/services/SampleKitService"/>
 
         </wsdl:port>
 

@@ -1,12 +1,12 @@
 package org.broadinstitute.sequel.boundary.pmbridge;
 
-import junit.framework.Assert;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.sequel.integration.ContainerTest;
 import org.broadinstitute.sequel.boundary.SquidTopicPortype;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.xml.namespace.QName;

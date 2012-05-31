@@ -1275,18 +1275,30 @@
                 <version>2.2</version>
                 <executions>
                     <execution>
+                        <id>sequel-wsimport</id>
                         <goals>
                             <goal>wsimport</goal>
                         </goals>
+                        <configuration>
+                            <!-- The name of your generated source package -->
+                            <packageName>org.broadinstitute.sequel.boundary</packageName>
+                            <wsdlDirectory>${basedir}/src/main/wsdl</wsdlDirectory>
+                        </configuration>
                     </execution>
+                    <execution>
+                        <id>squid-wsimport</id>
+                        <goals>
+                            <goal>wsimport</goal>
+                        </goals>
+                        <configuration>
+                            <!-- The name of your generated source package -->
+                            <packageName>org.broadinstitute.sequel.boundary.squid</packageName>
+                            <wsdlDirectory>${basedir}/src/main/wsdl/squid</wsdlDirectory>
+                        </configuration>
+                    </execution>
+
                 </executions>
-                <configuration>
-                    <!-- The name of your generated source package -->
-                    <!-- this config seems to push hard to have all the generated WSDL end up in one package, which
-                         may require some hackery to break out for separate top-down generations -->
-                    <packageName>org.broadinstitute.sequel.boundary</packageName>
-                    <wsdlDirectory>${basedir}/src/main/wsdl</wsdlDirectory>
-                </configuration>
+
 
                 <!-- if you want to use a specific version of JAX-WS, you can do so like this -->
                 <dependencies>
