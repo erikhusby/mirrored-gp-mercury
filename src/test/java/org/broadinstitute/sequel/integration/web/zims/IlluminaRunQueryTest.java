@@ -47,7 +47,7 @@ public class IlluminaRunQueryTest extends Arquillian {
         page = new IlluminaRunQueryPage(driver, deploymentUrl);
     }
 
-    @Test
+//    @Test
     public void testLoadQueryFormWebDriver() throws InterruptedException {
         page.get();
 
