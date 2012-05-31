@@ -49,7 +49,8 @@ public class PMBridgeSOAPTest extends ContainerTest {
     public void smokeTest(@ArquillianResource URL baseURL) throws Exception{
 
         final SquidTopicPortype pmBridgeServicePort = getPMBridgeServicePort(baseURL);
-        Assert.assertEquals("Hello PMBridge!", pmBridgeServicePort.getGreeting());
+        String ret = pmBridgeServicePort.getGreeting();
+        Assert.assertEquals("Hello PMBridge!", ret);
 
     }
 }
