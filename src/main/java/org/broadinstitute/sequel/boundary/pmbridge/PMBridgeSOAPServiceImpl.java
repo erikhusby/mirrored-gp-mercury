@@ -12,6 +12,9 @@ import javax.xml.ws.Service;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static org.broadinstitute.sequel.boundary.pmbridge.ToSequel.sequelize;
+import static org.broadinstitute.sequel.boundary.pmbridge.ToSquid.squidify;
+
 
 @WebService(targetNamespace = "urn:SquidTopic",
         portName = "SquidTopicService",
@@ -36,7 +39,7 @@ public class PMBridgeSOAPServiceImpl implements SquidTopicPortype {
 
     private org.broadinstitute.sequel.boundary.squid.SquidTopicPortype squidServicePort;
 
-    private org.broadinstitute.sequel.boundary.squid.SquidTopicPortype getSquidServicePort() {
+    private org.broadinstitute.sequel.boundary.squid.SquidTopicPortype squidCall() {
 
         if (squidServicePort == null) {
             String namespace = "urn:SquidTopic";
@@ -63,32 +66,38 @@ public class PMBridgeSOAPServiceImpl implements SquidTopicPortype {
 
     @Override
     public String getGreeting() {
+        // the one method I'm not proxying
         return "Hello PMBridge!";
     }
 
+
     @Override
     public boolean canEditPasses(@WebParam(name = "login", partName = "login") String login) {
-        return getSquidServicePort().canEditPasses(login);
+        return squidCall().canEditPasses(login);
     }
 
 
+
     @Override
-    // TODO
     public String storePass(@WebParam(name = "pass", partName = "pass") AbstractPass pass) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return squidCall().storePass(squidify(pass));
     }
 
 
+
     @Override
-    // TODO
     public PassCritique validatePass(@WebParam(name = "pass", partName = "pass") AbstractPass pass) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+
+        return sequelize(squidCall().validatePass(squidify(pass)));
+
     }
 
 
     @Override
     public void abandonPass(@WebParam(name = "passNumber", partName = "passNumber") String passNumber) {
-        getSquidServicePort().abandonPass(passNumber);
+
+        squidCall().abandonPass(passNumber);
+
     }
 
 
@@ -96,10 +105,7 @@ public class PMBridgeSOAPServiceImpl implements SquidTopicPortype {
     @Override
     public SummarizedPassListResult searchPassesByCreator(@WebParam(name = "creator", partName = "creator") String creator) {
 
-        final org.broadinstitute.sequel.boundary.squid.SummarizedPassListResult summarizedPassListResult =
-                getSquidServicePort().searchPassesByCreator(creator);
-
-        return ToSequel.map(summarizedPassListResult);
+        return sequelize(squidCall().searchPassesByCreator(creator));
     }
 
 
@@ -107,49 +113,37 @@ public class PMBridgeSOAPServiceImpl implements SquidTopicPortype {
     @Override
     public SummarizedPassListResult searchPassesByResearchProject(@WebParam(name = "researchProject", partName = "researchProject") String researchProject) {
 
-        final org.broadinstitute.sequel.boundary.squid.SummarizedPassListResult summarizedPassListResult =
-                getSquidServicePort().searchPassesByResearchProject(researchProject);
-
-        return ToSequel.map(summarizedPassListResult);
+        return sequelize(squidCall().searchPassesByResearchProject(researchProject));
     }
 
 
     @Override
     public SummarizedPassListResult searchPasses() {
 
-        final org.broadinstitute.sequel.boundary.squid.SummarizedPassListResult summarizedPassListResult =
-                getSquidServicePort().searchPasses();
-
-        return ToSequel.map(summarizedPassListResult);
+        return sequelize(squidCall().searchPasses());
     }
 
 
     @Override
     public ReferenceSequenceListResult getReferenceSequencesByOrganism(@WebParam(name = "organism", partName = "organism") Organism organism) {
 
-        final org.broadinstitute.sequel.boundary.squid.Organism squidOrganism = ToSquid.map(organism);
-
-        final org.broadinstitute.sequel.boundary.squid.ReferenceSequenceListResult refseqs =
-                getSquidServicePort().getReferenceSequencesByOrganism(squidOrganism);
-
-        return ToSequel.map(refseqs);
+        return sequelize(squidCall().getReferenceSequencesByOrganism(squidify(organism)));
     }
+
 
     @Override
     public ReferenceSequenceListResult getReferenceSequencesByBaitSet(@WebParam(name = "baitSet", partName = "baitSet") BaitSet baitSet) {
 
-        final org.broadinstitute.sequel.boundary.squid.BaitSet squidBaitSet = ToSquid.map(baitSet);
-
-        final org.broadinstitute.sequel.boundary.squid.ReferenceSequenceListResult refseqs =
-                getSquidServicePort().getReferenceSequencesByBaitSet(squidBaitSet);
-
-        return ToSequel.map(refseqs);
+        return sequelize(squidCall().getReferenceSequencesByBaitSet(squidify(baitSet)));
     }
+
 
 
     @Override
     public ReferenceSequenceListResult getReferenceSequences() {
-        return ToSequel.map(getSquidServicePort().getReferenceSequences());
+
+        return sequelize(squidCall().getReferenceSequences());
+
     }
 
 
@@ -157,45 +151,50 @@ public class PMBridgeSOAPServiceImpl implements SquidTopicPortype {
     @Override
     public BaitSetListResult getBaitSetsByReferenceSequence(@WebParam(name = "referenceSequence", partName = "referenceSequence") ReferenceSequence referenceSequence) {
 
-        final org.broadinstitute.sequel.boundary.squid.ReferenceSequence squidRefseq = ToSquid.map(referenceSequence);
-
-        return ToSequel.map(getSquidServicePort().getBaitSetsByReferenceSequence(squidRefseq));
+        return sequelize(squidCall().getBaitSetsByReferenceSequence(squidify(referenceSequence)));
     }
 
 
     @Override
     public BaitSetListResult getBaitSets() {
 
-        final org.broadinstitute.sequel.boundary.squid.BaitSetListResult baitSets = getSquidServicePort().getBaitSets();
-
-        return ToSequel.map(baitSets);
+        return sequelize(squidCall().getBaitSets());
     }
 
 
 
     @Override
     public OrganismListResult getOrganisms() {
-        return ToSequel.map(getSquidServicePort().getOrganisms());
+
+        return sequelize(squidCall().getOrganisms());
+
     }
 
 
 
     @Override
-    // TODO
     public AbstractPass loadPassByNumber(@WebParam(name = "passNumber", partName = "passNumber") String passNumber) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+
+        return sequelize(squidCall().loadPassByNumber(passNumber));
+
     }
 
 
 
     @Override
     public SquidPersonList getBroadPIList() {
-        return ToSequel.map(getSquidServicePort().getBroadPIList());
+
+        return sequelize(squidCall().getBroadPIList());
+
     }
 
 
     @Override
     public boolean validatePassNumber(@WebParam(name = "passNumber", partName = "passNumber") String passNumber) {
-        return getSquidServicePort().validatePassNumber(passNumber);
+
+        return squidCall().validatePassNumber(passNumber);
+
     }
+
+
 }
