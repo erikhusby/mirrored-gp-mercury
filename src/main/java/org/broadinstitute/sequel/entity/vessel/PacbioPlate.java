@@ -24,6 +24,16 @@ public class PacbioPlate extends RunCartridge {
     }
 
     @Override
+    public Set<LabEvent> getTransfersFrom() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Set<LabEvent> getTransfersTo() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
     public Set<SampleInstance> getSampleInstances() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }

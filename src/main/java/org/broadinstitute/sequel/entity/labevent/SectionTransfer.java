@@ -49,8 +49,10 @@ public class SectionTransfer {
             VesselContainer targetVesselContainer, SBSSection targetSection, LabEvent labEvent) {
         this.labEvent = labEvent;
         this.sourceVessel = sourceVesselContainer.getEmbedder();
+        sourceVesselContainer.getSectionTransfersFrom().add(this);
         this.sourceSection = sourceSection;
         this.targetVessel = targetVesselContainer.getEmbedder();
+        targetVesselContainer.getSectionTransfersTo().add(this);
         this.targetSection = targetSection;
     }
 

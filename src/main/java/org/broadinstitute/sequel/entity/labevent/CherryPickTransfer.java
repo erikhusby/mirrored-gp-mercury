@@ -7,6 +7,7 @@ import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.hibernate.annotations.Index;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -27,13 +28,13 @@ public class CherryPickTransfer {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_CHERRY_PICK_TRANSFER")
     private Long cherryPickTransferId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
 
     @Enumerated(EnumType.STRING)
     private VesselPosition sourcePosition;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel targetVessel;
 
     @Enumerated(EnumType.STRING)
@@ -47,8 +48,10 @@ public class CherryPickTransfer {
             VesselContainer<?> targetVesselContainer, VesselPosition targetPosition, LabEvent labEvent) {
         this.labEvent = labEvent;
         this.sourceVessel = sourceVesselContainer.getEmbedder();
+        sourceVesselContainer.getCherryPickTransfersFrom().add(this);
         this.sourcePosition = sourcePosition;
         this.targetVessel = targetVesselContainer.getEmbedder();
+        targetVesselContainer.getCherryPickTransfersTo().add(this);
         this.targetPosition = targetPosition;
     }
 

@@ -83,12 +83,6 @@ public abstract class LabVessel  {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel readBucketAuthority;
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    private Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
-
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    private Set<LabEvent> transfersTo = new HashSet<LabEvent>();
-
     // todo jmt fix this
     @Transient
     private final Collection<Stalker> stalkers = new HashSet<Stalker>();
@@ -108,6 +102,9 @@ public abstract class LabVessel  {
      * avoid an unnecessary database round trip  */
     @Formula("(select count(*) from lab_vessel_containers where lab_vessel_containers.lab_vessel = lab_vessel_id)")
     private Integer containersCount = 0;
+
+    @OneToMany(mappedBy = "inPlaceLabVessel")
+    private Set<LabEvent> inPlaceLabEvents = new HashSet<LabEvent>();
 
     @Embedded
     private UserRemarks userRemarks;
@@ -296,17 +293,13 @@ public abstract class LabVessel  {
      * This needs to be really, really fast.
      * @return
      */
-    public Set<LabEvent> getTransfersFrom() {
-        return transfersFrom;
-    }
+    public abstract Set<LabEvent> getTransfersFrom();
 
     /**
      * This needs to be really, really fast.
      * @return
      */
-    public Set<LabEvent> getTransfersTo() {
-        return transfersTo;
-    }
+    public abstract Set<LabEvent> getTransfersTo();
 
     public void addNoteToProjects(String message) {
         Collection<Project> ticketsToNotify = new HashSet<Project>();
@@ -355,6 +348,15 @@ public abstract class LabVessel  {
 
     public void setCreatedOn(Date createdOn) {
         this.createdOn = createdOn;
+    }
+
+    public Set<LabEvent> getInPlaceEvents() {
+        return inPlaceLabEvents;
+    }
+
+    public void addInPlaceEvent(LabEvent labEvent) {
+        this.inPlaceLabEvents.add(labEvent);
+        labEvent.setInPlaceLabVessel(this);
     }
 
     public enum CONTAINER_TYPE {

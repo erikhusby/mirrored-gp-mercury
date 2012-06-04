@@ -17,6 +17,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -48,7 +49,7 @@ public class TwoDBarcodedTube extends LabVessel {
         }
     }
 
-    public TwoDBarcodedTube(String twoDBarcode,SampleSheet sheet) {
+    public TwoDBarcodedTube(String twoDBarcode, SampleSheet sheet) {
         super(twoDBarcode);
         if (twoDBarcode == null) {
              throw new IllegalArgumentException("twoDBarcode must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
@@ -93,6 +94,16 @@ public class TwoDBarcodedTube extends LabVessel {
     @Override
     public boolean isAncestor(LabVessel progeny) {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public Set<LabEvent> getTransfersFrom() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public Set<LabEvent> getTransfersTo() {
+        return Collections.emptySet();
     }
 
     @Override

@@ -76,12 +76,6 @@ public abstract class LabEvent {
 
     private Long disambiguator = 0L;
 
-    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "transfersFrom")
-    private Set<LabVessel> sourceLabVessels = new HashSet<LabVessel>();
-
-    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "transfersTo")
-    private Set<LabVessel> targetLabVessels = new HashSet<LabVessel>();
-
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> reagents = new HashSet<Reagent>();
 
@@ -93,9 +87,13 @@ public abstract class LabEvent {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<CherryPickTransfer>();
 
+    /** for transfers from a single vessel to an entire section, e.g. from a tube to a plate */
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<VesselToSectionTransfer>();
     // todo jmt tube to tube transfers, or will they always be in a rack?
+
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    private LabVessel inPlaceLabVessel;
 
     private String quoteServerBatchId;
 
@@ -169,18 +167,18 @@ public abstract class LabEvent {
      */
     public abstract void validateTargetMolecularState() throws InvalidMolecularStateException;
 
-    public void addSourceLabVessel(LabVessel sourceVessel) {
-        sourceVessel.getTransfersFrom().add(this);
-        this.sourceLabVessels.add(sourceVessel);
-    }
-
-    public Collection<LabVessel> getTargetLabVessels() {
-        return this.targetLabVessels;
-    }
-
-    public void addTargetLabVessel(LabVessel targetVessel) {
-        targetVessel.getTransfersTo().add(this);
-        this.targetLabVessels.add(targetVessel);
+    public Set<LabVessel> getTargetLabVessels() {
+        Set<LabVessel> targetLabVessels = new HashSet<LabVessel>();
+        for (SectionTransfer sectionTransfer : sectionTransfers) {
+            targetLabVessels.add(sectionTransfer.getTargetVesselContainer().getEmbedder());
+        }
+        for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
+            targetLabVessels.add(cherryPickTransfer.getTargetVesselContainer().getEmbedder());
+        }
+        for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfers) {
+            targetLabVessels.add(vesselToSectionTransfer.getTargetVesselContainer().getEmbedder());
+        }
+        return targetLabVessels;
     }
 
     /**
@@ -188,17 +186,22 @@ public abstract class LabEvent {
      * of the transfer
      * @return may return null
      */
-    public Collection<LabVessel> getSourceLabVessels() {
-        return this.sourceLabVessels;
+    public Set<LabVessel> getSourceLabVessels() {
+        Set<LabVessel> sourceLabVessels = new HashSet<LabVessel>();
+        for (SectionTransfer sectionTransfer : sectionTransfers) {
+            sourceLabVessels.add(sectionTransfer.getSourceVesselContainer().getEmbedder());
+        }
+        for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
+            sourceLabVessels.add(cherryPickTransfer.getSourceVesselContainer().getEmbedder());
+        }
+        for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfers) {
+            sourceLabVessels.add(vesselToSectionTransfer.getSourceVessel());
+        }
+        return sourceLabVessels;
     }
 
     public void addReagent(Reagent reagent) {
         throw new RuntimeException("I haven't been written yet.");
-    }
-
-    public Collection<LabVessel> getSourcesForTarget(LabVessel targetVessel) {
-        // todo jmt need some kind of mapping for cherry picks
-        return this.sourceLabVessels;
     }
 
     public Collection<LabVessel> getTargetsForSource(LabVessel sourceVessl) {
@@ -214,8 +217,8 @@ public abstract class LabEvent {
      */
     public Collection<LabVessel> getAllLabVessels() {
         Set<LabVessel> allLabVessels = new HashSet<LabVessel>();
-        allLabVessels.addAll(this.sourceLabVessels);
-        allLabVessels.addAll(this.targetLabVessels);
+        allLabVessels.addAll(getSourceLabVessels());
+        allLabVessels.addAll(getTargetLabVessels());
         return allLabVessels;
     }
 
@@ -327,5 +330,13 @@ public abstract class LabEvent {
 
     public void setDisambiguator(Long disambiguator) {
         this.disambiguator = disambiguator;
+    }
+
+    public LabVessel getInPlaceLabVessel() {
+        return inPlaceLabVessel;
+    }
+
+    public void setInPlaceLabVessel(LabVessel inPlaceLabVessel) {
+        this.inPlaceLabVessel = inPlaceLabVessel;
     }
 }

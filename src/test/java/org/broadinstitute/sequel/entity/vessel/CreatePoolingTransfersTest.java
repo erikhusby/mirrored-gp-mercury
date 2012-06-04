@@ -134,9 +134,6 @@ public class CreatePoolingTransfersTest extends ContainerTest {
                                 eventDate, eventLocation, 1L, personDAO.findByName(operator));
                         RackOfTubes dbSourceRackOfTubes = rackOfTubesDao.getByLabel(sourceRackLabel);
                         RackOfTubes dbTargetRackOfTubes = rackOfTubesDao.getByLabel(targetRackLabel);
-                        // todo jmt are these redundant wrt to the cherry and section transfers?
-                        genericLabEvent.addSourceLabVessel(dbSourceRackOfTubes);
-                        genericLabEvent.addTargetLabVessel(dbTargetRackOfTubes);
                         for (TubeBean tubeBean : tubeBeans) {
                             genericLabEvent.getCherryPickTransfers().add(new CherryPickTransfer(
                                     dbSourceRackOfTubes.getVesselContainer(),

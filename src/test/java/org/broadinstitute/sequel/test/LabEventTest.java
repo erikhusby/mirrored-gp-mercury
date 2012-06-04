@@ -14,6 +14,7 @@ import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.workflow.WorkflowParser;
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
@@ -75,7 +76,7 @@ public class LabEventTest {
             if (labEvent != null) {
                 if(hopCount > this.hopCount) {
                     this.hopCount = hopCount;
-                    GenericLabEvent genericLabEvent = (GenericLabEvent) labEvent;
+                    GenericLabEvent genericLabEvent = OrmUtil.proxySafeCast(labEvent, GenericLabEvent.class);
                     labEventNames.add(genericLabEvent.getLabEventType().getName() + " into " +
                             genericLabEvent.getTargetLabVessels().iterator().next().getLabel());
                 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.run;
 
 
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
@@ -55,6 +56,16 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     public IlluminaFlowcell() {
+    }
+
+    @Override
+    public Set<LabEvent> getTransfersFrom() {
+        return vesselContainer.getTransfersFrom();
+    }
+
+    @Override
+    public Set<LabEvent> getTransfersTo() {
+        return vesselContainer.getTransfersTo();
     }
 
     @Override

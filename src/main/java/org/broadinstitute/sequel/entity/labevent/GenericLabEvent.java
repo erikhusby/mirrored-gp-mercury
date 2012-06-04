@@ -72,30 +72,28 @@ public class GenericLabEvent extends LabEvent {
     @Override
     public void applyMolecularStateChanges() throws InvalidMolecularStateException {
         // apply reagents in message
-        for (LabVessel target: getTargetLabVessels()) {
 /*
+        for (LabVessel target: getTargetLabVessels()) {
             for (LabVessel source: getSourcesForTarget(target)) {
                 // apply all goop from all sources
                 for (SampleSheet sampleSheet : source.getSampleSheets()) {
                     target.addSampleSheet(sampleSheet);
                 }
             }
-*/
             // after the target goop is transferred,
             // apply the reagent
-/*
             for (Reagent reagent : getReagents()) {
                 target.applyReagent(reagent);
             }
-*/
         }
+*/
 
         /**
          * Here is why we probably only need a single {@link #applyMolecularStateChanges()}
          * method.
          */
-        for (LabVessel target: getTargetLabVessels()) {
 /*
+        for (LabVessel target: getTargetLabVessels()) {
             // todo jmt restore this
             // check the molecular state per target.
             Set<MolecularStateTemplate> molecularStateTemplatesInTarget = new HashSet<MolecularStateTemplate>();
@@ -115,7 +113,6 @@ public class GenericLabEvent extends LabEvent {
                 // todo post this error message back to PM jira
                 throw new InvalidMolecularStateException(errorMessage.toString());
             }
-*/
             // if no molecular envelope change, set backlink
 
             // create pool, or set backlink
@@ -125,6 +122,7 @@ public class GenericLabEvent extends LabEvent {
 
             // setting backlinks must be section based, unless the section is ALL* (without flips)
         }
+*/
 
         for (SectionTransfer sectionTransfer : getSectionTransfers()) {
             sectionTransfer.applyTransfer();
@@ -164,7 +162,7 @@ public class GenericLabEvent extends LabEvent {
      */
     @Override
     public void validateTargetMolecularState() throws InvalidMolecularStateException {
-        if (getTargetLabVessels().isEmpty()) {
+        if (getTargetLabVessels().isEmpty() && getInPlaceLabVessel() == null) {
             throw new InvalidMolecularStateException("No destinations!");
         }
 /*

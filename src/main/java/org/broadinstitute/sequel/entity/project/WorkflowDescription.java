@@ -117,6 +117,10 @@ public class WorkflowDescription {
                 found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
                         found, labVessel.getTransfersTo());
             }
+            if(!found) {
+                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                        found, labVessel.getInPlaceEvents());
+            }
             if(!found && !start) {
                 errors.add("Vessel " + labVessel.getLabCentricName() + " has actual events " + actualEventNames +
                         ", but none are predecessors to " + nextEventTypeName + ": " + validPredecessorEventNames);
@@ -126,8 +130,8 @@ public class WorkflowDescription {
     }
 
     private boolean validateTransfers(String nextEventTypeName, List<String> errors, Set<String> validPredecessorEventNames,
-            LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<LabEvent> transfersFrom) {
-        for (LabEvent labEvent : transfersFrom) {
+            LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers) {
+        for (LabEvent labEvent : transfers) {
             GenericLabEvent genericLabEvent = (GenericLabEvent) labEvent;
             String actualEventName = genericLabEvent.getLabEventType().getName();
             actualEventNames.add(actualEventName);

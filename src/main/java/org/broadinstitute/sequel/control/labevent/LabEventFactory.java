@@ -244,7 +244,6 @@ public class LabEventFactory {
                         plateCherryPickEvent.getPositionMap());
                 stringVesselContainerEntry.setValue(targetRack);
             }
-            labEvent.addTargetLabVessel(stringVesselContainerEntry.getValue());
         }
 
         for (CherryPickSourceType cherryPickSourceType : plateCherryPickEvent.getSource()) {
@@ -290,7 +289,6 @@ public class LabEventFactory {
             if(stripTube == null) {
                 stripTube = new StripTube(receptacleType.getBarcode());
             }
-            labEvent.addTargetLabVessel(stripTube);
             mapPositionToStripTube.put(receptacleType.getPosition(), stripTube);
         }
 
@@ -322,7 +320,6 @@ public class LabEventFactory {
                 throw new RuntimeException("Failed to find source position map for " + sourceRackJaxb.getBarcode());
             }
             mapBarcodeToSourceRack.put(sourceRackJaxb.getBarcode(), sourceRackEntity);
-            labEvent.addSourceLabVessel(sourceRackEntity);
         }
     }
 
@@ -354,6 +351,7 @@ public class LabEventFactory {
         if(plateTransferEvent.getSourcePositionMap() == null) {
             if(plateTransferEvent.getSourcePlate().getPhysType().equals(PHYS_TYPE_STRIP_TUBE) &&
                     plateTransferEvent.getPlate().getPhysType().equals(PHYS_TYPE_FLOWCELL)) {
+                // todo jmt create if null
                 StripTube stripTube = stripTubeDao.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
                 IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(plateTransferEvent.getPlate().getBarcode());
                 return buildFromBettaLimsPlateToPlateDbFree(plateTransferEvent, stripTube, illuminaFlowcell);
@@ -436,8 +434,6 @@ public class LabEventFactory {
             targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
         }
 
-        labEvent.addSourceLabVessel(rackOfTubes);
-        labEvent.addTargetLabVessel(targetPlate);
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 rackOfTubes.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
                 targetPlate.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
@@ -461,8 +457,6 @@ public class LabEventFactory {
             targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
         }
 
-        labEvent.addSourceLabVessel(rackOfTubes);
-        labEvent.addTargetLabVessel(targetPlate);
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 rackOfTubes.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
                 targetPlate.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
@@ -501,8 +495,6 @@ public class LabEventFactory {
         RackOfTubes targetRackOfTubes = buildRack(mapBarcodeToTargetTubes, plateTransferEvent.getPlate(),
                 plateTransferEvent.getPositionMap());
 
-        labEvent.addSourceLabVessel(sourceRack);
-        labEvent.addTargetLabVessel(targetRackOfTubes);
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourceRack.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
                 targetRackOfTubes.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
@@ -514,8 +506,6 @@ public class LabEventFactory {
             RackOfTubes sourceRack,
             RackOfTubes targetRack) {
         LabEvent labEvent = constructReferenceData(plateTransferEvent);
-        labEvent.addSourceLabVessel(sourceRack);
-        labEvent.addTargetLabVessel(targetRack);
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourceRack.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
                 targetRack.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
@@ -530,8 +520,6 @@ public class LabEventFactory {
         RackOfTubes rackOfTubes = buildRack(mapBarcodeToTargetTubes, plateTransferEvent.getPlate(),
                 plateTransferEvent.getPositionMap());
 
-        labEvent.addSourceLabVessel(sourcePlate);
-        labEvent.addTargetLabVessel(rackOfTubes);
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourcePlate.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
                 rackOfTubes.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
@@ -540,26 +528,26 @@ public class LabEventFactory {
 
     public LabEvent buildFromBettaLimsPlateEventDbFree(
             PlateEventType plateEvent,
-            StaticPlate targetPlate) {
+            StaticPlate plate) {
         LabEvent labEvent = constructReferenceData(plateEvent);
-        if(targetPlate == null) {
-            targetPlate = new StaticPlate(plateEvent.getPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
+        if(plate == null) {
+            plate = new StaticPlate(plateEvent.getPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
         }
 
-        labEvent.addTargetLabVessel(targetPlate);
+        plate.addInPlaceEvent(labEvent);
         return labEvent;
     }
 
     public LabEvent buildFromBettaLimsRackEventDbFree(
             PlateEventType plateEvent,
-            RackOfTubes targetRackOfTubes,
+            RackOfTubes rackOfTubes,
             Map<String, TwoDBarcodedTube> mapBarcodeToTubes) {
         LabEvent labEvent = constructReferenceData(plateEvent);
-        if(targetRackOfTubes == null) {
-            targetRackOfTubes = buildRack(mapBarcodeToTubes, plateEvent.getPlate(), plateEvent.getPositionMap());
+        if(rackOfTubes == null) {
+            rackOfTubes = buildRack(mapBarcodeToTubes, plateEvent.getPlate(), plateEvent.getPositionMap());
         }
 
-        labEvent.addTargetLabVessel(targetRackOfTubes);
+        rackOfTubes.addInPlaceEvent(labEvent);
         return labEvent;
     }
 
@@ -572,8 +560,6 @@ public class LabEventFactory {
             targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
         }
 
-        labEvent.addSourceLabVessel(sourcePlate);
-        labEvent.addTargetLabVessel(targetPlate);
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourcePlate.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
                 targetPlate.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
@@ -592,8 +578,6 @@ public class LabEventFactory {
                     plateTransferEvent.getPlate().getBarcode(), null);
         }
 
-        labEvent.addSourceLabVessel(sourceStripTube);
-        labEvent.addTargetLabVessel(targetFlowcell);
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourceStripTube.getVesselContainer(), SBSSection.STRIP_TUBE8,
                 targetFlowcell.getVesselContainer(), SBSSection.FLOWCELL8, labEvent));
@@ -606,8 +590,6 @@ public class LabEventFactory {
         if(targetPlate == null) {
             targetPlate = new StaticPlate(receptaclePlateTransferEvent.getDestinationPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
         }
-        labEvent.addSourceLabVessel(sourceTube);
-        labEvent.addTargetLabVessel(targetPlate);
         labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube, targetSection,
                 targetPlate.getVesselContainer(), labEvent));
         return labEvent;

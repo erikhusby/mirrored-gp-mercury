@@ -15,6 +15,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.MapKeyEnumerated;
+import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,6 +42,18 @@ public class VesselContainer<T extends LabVessel> {
     @MapKeyColumn(name = "mapkey")
     private final Map<VesselPosition, T> mapPositionToVessel = new HashMap<VesselPosition, T>();
 
+    @OneToMany(mappedBy = "sourceVessel")
+    private Set<SectionTransfer> sectionTransfersFrom = new HashSet<SectionTransfer>();
+
+    @OneToMany(mappedBy = "targetVessel")
+    private Set<SectionTransfer> sectionTransfersTo = new HashSet<SectionTransfer>();
+
+    @OneToMany(mappedBy = "sourceVessel")
+    private Set<CherryPickTransfer> cherryPickTransfersFrom = new HashSet<CherryPickTransfer>();
+
+    @OneToMany(mappedBy = "targetVessel")
+    private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<CherryPickTransfer>();
+
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
     @Parent
     private LabVessel embedder;
@@ -64,7 +77,29 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
     }
-    
+
+    public Set<LabEvent> getTransfersFrom() {
+        Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
+        for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
+            transfersFrom.add(sectionTransfer.getLabEvent());
+        }
+        for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersFrom) {
+            transfersFrom.add(cherryPickTransfer.getLabEvent());
+        }
+        return transfersFrom;
+    }
+
+    public Set<LabEvent> getTransfersTo() {
+        Set<LabEvent> transfersTo = new HashSet<LabEvent>();
+        for (SectionTransfer sectionTransfer : sectionTransfersTo) {
+            transfersTo.add(sectionTransfer.getLabEvent());
+        }
+        for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersTo) {
+            transfersTo.add(cherryPickTransfer.getLabEvent());
+        }
+        return transfersTo;
+    }
+
     public interface TransferTraverserCriteria {
         enum TraversalControl {
             ContinueTraversing,
@@ -160,50 +195,46 @@ public class VesselContainer<T extends LabVessel> {
 
     private void traverseAncestors(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
             TraversalDirection traversalDirection, int hopCount) {
-        for (LabEvent labEvent : this.embedder.getTransfersTo()) {
-            for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
-                if (sectionTransfer.getTargetVesselContainer().equals(this)) {
-                    VesselContainer sourceVesselContainer = sectionTransfer.getSourceVesselContainer();
-                    // todo jmt replace indexOf with map lookup
-                    VesselPosition sourcePosition = sectionTransfer.getSourceSection().getWells().get(
-                            sectionTransfer.getTargetSection().getWells().indexOf(position));
-                    sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
-                            labEvent, hopCount + 1);
-                }
+        for (SectionTransfer sectionTransfer : this.sectionTransfersTo) {
+            if (sectionTransfer.getTargetVesselContainer().equals(this)) {
+                VesselContainer sourceVesselContainer = sectionTransfer.getSourceVesselContainer();
+                // todo jmt replace indexOf with map lookup
+                VesselPosition sourcePosition = sectionTransfer.getSourceSection().getWells().get(
+                        sectionTransfer.getTargetSection().getWells().indexOf(position));
+                sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
+                        sectionTransfer.getLabEvent(), hopCount + 1);
             }
-            for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
-                // todo jmt optimize this
-                if(cherryPickTransfer.getTargetPosition() == position && cherryPickTransfer.getTargetVesselContainer().equals(this)) {
-                    VesselContainer<?> sourceVesselContainer = cherryPickTransfer.getSourceVesselContainer();
-                    VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
-                    sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
-                            labEvent, hopCount + 1);
-                }
+        }
+        for (CherryPickTransfer cherryPickTransfer : this.cherryPickTransfersTo) {
+            // todo jmt optimize this
+            if(cherryPickTransfer.getTargetPosition() == position && cherryPickTransfer.getTargetVesselContainer().equals(this)) {
+                VesselContainer<?> sourceVesselContainer = cherryPickTransfer.getSourceVesselContainer();
+                VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
+                sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
+                        cherryPickTransfer.getLabEvent(), hopCount + 1);
             }
         }
     }
 
     private void traverseDescendants(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
             TraversalDirection traversalDirection, int hopCount) {
-        for (LabEvent labEvent : this.embedder.getTransfersFrom()) {
-            for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
-                if (sectionTransfer.getSourceVesselContainer().equals(this)) {
-                    VesselContainer targetVesselContainer = sectionTransfer.getTargetVesselContainer();
-                    // todo jmt replace indexOf with map lookup
-                    VesselPosition targetPosition = sectionTransfer.getTargetSection().getWells().get(
-                            sectionTransfer.getSourceSection().getWells().indexOf(position));
-                    targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
-                            labEvent, hopCount + 1);
-                }
+        for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
+            if (sectionTransfer.getSourceVesselContainer().equals(this)) {
+                VesselContainer targetVesselContainer = sectionTransfer.getTargetVesselContainer();
+                // todo jmt replace indexOf with map lookup
+                VesselPosition targetPosition = sectionTransfer.getTargetSection().getWells().get(
+                        sectionTransfer.getSourceSection().getWells().indexOf(position));
+                targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
+                        sectionTransfer.getLabEvent(), hopCount + 1);
             }
-            for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
-                // todo jmt optimize this
-                if(cherryPickTransfer.getSourcePosition() == position && cherryPickTransfer.getSourceVesselContainer().equals(this)) {
-                    VesselContainer<?> targetVesselContainer = cherryPickTransfer.getTargetVesselContainer();
-                    VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
-                    targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
-                            labEvent, hopCount + 1);
-                }
+        }
+        for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersFrom) {
+            // todo jmt optimize this
+            if(cherryPickTransfer.getSourcePosition() == position && cherryPickTransfer.getSourceVesselContainer().equals(this)) {
+                VesselContainer<?> targetVesselContainer = cherryPickTransfer.getTargetVesselContainer();
+                VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
+                targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
+                        cherryPickTransfer.getLabEvent(), hopCount + 1);
             }
         }
     }
@@ -272,5 +303,21 @@ public class VesselContainer<T extends LabVessel> {
 
     public void setEmbedder(LabVessel embedder) {
         this.embedder = embedder;
+    }
+
+    public Set<SectionTransfer> getSectionTransfersFrom() {
+        return sectionTransfersFrom;
+    }
+
+    public Set<SectionTransfer> getSectionTransfersTo() {
+        return sectionTransfersTo;
+    }
+
+    public Set<CherryPickTransfer> getCherryPickTransfersFrom() {
+        return cherryPickTransfersFrom;
+    }
+
+    public Set<CherryPickTransfer> getCherryPickTransfersTo() {
+        return cherryPickTransfersTo;
     }
 }

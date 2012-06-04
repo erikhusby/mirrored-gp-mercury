@@ -83,6 +83,16 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
     }
 
     @Override
+    public Set<LabEvent> getTransfersFrom() {
+        return vesselContainer.getTransfersFrom();
+    }
+
+    @Override
+    public Set<LabEvent> getTransfersTo() {
+        return vesselContainer.getTransfersTo();
+    }
+
+    @Override
     public LabVessel getContainingVessel() {
         throw new RuntimeException("I haven't been written yet.");
     }

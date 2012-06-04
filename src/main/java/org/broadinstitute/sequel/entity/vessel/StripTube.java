@@ -59,7 +59,6 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
         super(label);
     }
 
-    // todo jmt remove these empty methods
     @Override
     public VesselContainer<StripTubeWell> getVesselContainer() {
         return vesselContainer;
@@ -70,6 +69,17 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
         return this.getVesselContainer().getSampleInstances();
     }
 
+    @Override
+    public Set<LabEvent> getTransfersFrom() {
+        return vesselContainer.getTransfersFrom();
+    }
+
+    @Override
+    public Set<LabEvent> getTransfersTo() {
+        return this.vesselContainer.getTransfersTo();
+    }
+
+    // todo jmt remove these empty methods
     @Override
     public LabVessel getContainingVessel() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
