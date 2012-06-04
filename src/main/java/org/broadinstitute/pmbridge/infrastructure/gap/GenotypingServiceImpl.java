@@ -1,6 +1,6 @@
 package org.broadinstitute.pmbridge.infrastructure.gap;
 
-import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.core.util.MultivaluedMapImpl;

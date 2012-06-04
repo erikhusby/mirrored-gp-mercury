@@ -1,6 +1,5 @@
 package org.broadinstitute.pmbridge.infrastructure.squid;
 
-import clover.org.jfree.util.Log;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
 import org.broad.squid.services.TopicService.*;
@@ -24,6 +23,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -66,11 +66,12 @@ public class SequencingServiceImpl implements SequencingService {
 
             // Try to test connection.
             String greeting = squidServicePort.getGreeting();
-            logger.info("Greeting from SQUID is : " + greeting);
+            logger.debug("Greeting from SQUID is : " + greeting);
 
         }  catch (Exception e ) {
             initialized = false;
             String squidRoot = ( seqConnectionParameters != null ? seqConnectionParameters.getSquidRoot() : "Null SeqConnectionParameters.");
+            logger.error( "Could not get SquidServicePort during initialization. Squidroot : " + squidRoot );
             throw new RuntimeException( "Cannot connect to SQUID at : " +
                     squidRoot, e );
         }
@@ -153,7 +154,10 @@ public class SequencingServiceImpl implements SequencingService {
                 experimentRequestSummary.setTitle(new Name(summary.getTitle()));
                 experimentRequestSummary.setModification(new ChangeEvent(updatedDate, new Person(summary.getUpdatedBy(), RoleType.PROGRAM_PM)));
                 experimentRequestSummary.setStatus( new Name( summary.getStatus().name() ) );
-                experimentRequestSummary.setResearchProjectId( new Long( summary.getResearchProject().trim() ) );
+
+                if ( StringUtils.isNotBlank( summary.getResearchProject())  && Pattern.matches("[\\d]+", summary.getResearchProject().trim() ) ) {
+                    experimentRequestSummary.setResearchProjectId( new Long( summary.getResearchProject().trim() ) );
+                }
                 requestSummaries.add(experimentRequestSummary);
             }
         }
@@ -207,7 +211,7 @@ public class SequencingServiceImpl implements SequencingService {
 
         List<String>  errorMessages = seqExperimentRequest.validate ( getSquidServicePort() );
 
-        Log.debug("Validated experiment request: " + identifier + " with " + errorMessages.size() +  " messages.");
+        logger.debug("Validated experiment request: " + identifier + " with " + errorMessages.size() + " messages.");
 
         // Handle the error messages returned here and propagate upwards to clients in an exception.
         if ( errorMessages.size() > 0 ) {

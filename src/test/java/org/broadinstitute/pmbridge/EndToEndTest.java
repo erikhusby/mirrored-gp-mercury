@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.broadinstitute.pmbridge.TestGroups.EXTERNAL_INTEGRATION;
+import static org.testng.Assert.fail;
 
 /**
  * Created by IntelliJ IDEA.
@@ -83,7 +84,7 @@ public class EndToEndTest extends Arquillian {
     public void testCreateResearchProjectWithSeqExperiment() throws Exception {
 
         // A user (logs in) and gets created.
-        Person programMgr = new Person("shefler@broad", "Erica", "Shefler",  "1", RoleType.PROGRAM_PM );
+        Person programMgr = new Person("namrata", "Namrata", "Gupta",  "1", RoleType.PROGRAM_PM );
 
         ResearchProject myResearchProject = createTestResearchProject(programMgr);
 
@@ -93,7 +94,8 @@ public class EndToEndTest extends Arquillian {
 
         //SEQUENCING EXPERIMENT REQUEST - get all summarized passes for the program PM
         List<ExperimentRequestSummary> experimentRequestSummaries = null;
-        experimentRequestSummaries = sequencingService.getRequestSummariesByCreator(new Person("mccrory", RoleType.PROGRAM_PM));
+//        experimentRequestSummaries = sequencingService.getRequestSummariesByCreator(new Person("mccrory", RoleType.PROGRAM_PM));
+        experimentRequestSummaries = sequencingService.getRequestSummariesByCreator(programMgr);
 
         // Select the first experiment request Summary returned
         ExperimentRequestSummary firstSeqExperimentRequestSummary = experimentRequestSummaries.get(0);
@@ -129,7 +131,7 @@ public class EndToEndTest extends Arquillian {
         // Update the synopsis with a human readable timestamp  just for test purposes
         Date updateDate = new Date();
         String updateDateStr = updateDate.toLocaleString() + " - " + updateDate.getTime();
-        seqExperimentRequest.setSynopsis( "Timestamp : " + updateDateStr );
+        seqExperimentRequest.setSynopsis( seqExperimentRequest.getSynopsis() + "\n" + "Timestamp : " + updateDateStr );
 
 
         // Get the samples for this cohort.
@@ -249,7 +251,12 @@ public class EndToEndTest extends Arquillian {
         }
 
         // User chooses first BSP collection/cohort for test purposes.
-        BSPCollection selectedSampleCollection = cohorts.iterator().next();
+        BSPCollection selectedSampleCollection=null;
+        if (cohorts.size() > 0 ) {
+            selectedSampleCollection = cohorts.iterator().next();
+        } else {
+            fail ( "No elements found");
+        }
 
         // Add it to the research project.
         aResearchProject.addBSPCollection(selectedSampleCollection);

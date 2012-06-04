@@ -1,9 +1,6 @@
 package org.broadinstitute.pmbridge.entity.experiments.seq;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broad.squid.services.TopicService.*;
@@ -357,6 +354,10 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     public abstract AlignerType getAlignerType();
 
     public abstract void setAlignerType(final AlignerType alignerType);
+
+
+
+
 
 
     @Override

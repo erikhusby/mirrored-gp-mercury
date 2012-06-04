@@ -1,6 +1,7 @@
 package org.broadinstitute.pmbridge.infrastructure.bsp;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -11,7 +12,6 @@ import org.broadinstitute.pmbridge.control.AbstractJerseyClientService;
 import org.broadinstitute.pmbridge.entity.bsp.BSPCollection;
 import org.broadinstitute.pmbridge.entity.bsp.BSPCollectionID;
 import org.broadinstitute.pmbridge.entity.person.Person;
-import org.omg.CosNaming.NamingContextPackage.CannotProceed;
 
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
@@ -154,13 +154,14 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
     private Set<BSPCollection> runCollectionSearch(Person bspUser ) {
 
+        String urlString = "http://%s:%d%s";
+
         if ((bspUser == null) || (StringUtils.isBlank(bspUser.getUsername())) )  {
             throw new IllegalArgumentException( "Cannot lookup cohorts for user without a valid username." );
         }
 
         HashSet<BSPCollection> usersCohorts = new HashSet<BSPCollection>();
 
-        String urlString = "http://%s:%d%s";
         urlString = String.format(urlString, connParams.getHostname(), connParams.getPort(),
                 BSPConnectionParameters.BSP_USERS_COHORT_URL + bspUser.getUsername().trim() );
         _logger.info(String.format("url string is '%s'", urlString));
@@ -198,18 +199,18 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                 } else {
                     _logger.error( "Found a line from BSP Cohort for user " + bspUser.getUsername() + " which had less than two fields of real data <" + readLine  + ">");
                 }
+
+                readLine = rdr.readLine();
             }
             is.close();
 
-        }
-        catch (UnsupportedEncodingException uex) {
-            throw new RuntimeException(uex);
-        }
-        catch (MalformedURLException mux) {
-            throw new RuntimeException(mux);
-        }
-        catch (IOException iox) {
-            throw new RuntimeException(iox);
+        } catch(ClientHandlerException e) {
+            String errMsg = "Could not communicate with BSP server for user " +
+                    bspUser.getUsername();
+            _logger.error( errMsg + " at " + urlString );
+            throw e;
+        } catch (Exception exp) {
+            throw new RuntimeException(exp);
         }
 
         return usersCohorts;

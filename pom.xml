@@ -142,7 +142,7 @@
         <profile>
             <id>Clover.report</id>
             <properties>
-                <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
+                <squid.root>${squid.root}</squid.root>
             </properties>
             <build>
                 <plugins>
@@ -185,7 +185,7 @@
         <profile>
             <id>Clover.optimize</id>
             <properties>
-                <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
+                <squid.root>${squid.root}</squid.root>
             </properties>
             <build>
                 <plugins>
@@ -216,7 +216,7 @@
         <profile>
             <id>Clover.All</id>
             <properties>
-                <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
+                <squid.root>${squid.root}</squid.root>
             </properties>
             <build>
                 <plugins>
@@ -243,7 +243,7 @@
         <profile>
             <id>Clover.site</id>
             <properties>
-                <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
+                <squid.root>${squid.root}</squid.root>
             </properties>
             <build>
                 <plugins>
@@ -302,7 +302,7 @@
         <profile>
             <id>Tests.ExternalIntegration</id>
             <!--<properties>-->
-                <!--<squid.root>http://vsquidrc.broadinstitute.org:8000/</squid.root>-->
+                <!--<squid.root>${squid.root}</squid.root>-->
             <!--</properties>-->
             <build>
                 <plugins>
@@ -319,9 +319,9 @@
         </profile>
 
         <profile>
-            <id>Tests.DatabaseFree</id>
+            <id>Tests.Unit</id>
             <properties>
-                <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
+                <squid.root>${squid.root}</squid.root>
             </properties>
             <build>
                 <plugins>
@@ -329,7 +329,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <groups>DatabaseFree</groups>
+                            <groups>Unit</groups>
                             <parallel>methods</parallel>
                             <threadCount>10</threadCount>
                         </configuration>
@@ -341,7 +341,7 @@
         <profile>
             <id>Tests.Parallel</id>
             <properties>
-                <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
+                <squid.root>${squid.root}</squid.root>
             </properties>
             <build>
                 <plugins>
