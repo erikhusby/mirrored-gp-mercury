@@ -71,7 +71,9 @@ public class ToSquid {
             ret = rnaSeqPass;
 
             rnaSeqPass.setTranscriptomeReferenceSequenceID(sequelRNASeqPass.getTranscriptomeReferenceSequenceID());
-            rnaSeqPass.setProtocol(RNASeqProtocolType.fromValue(sequelRNASeqPass.getProtocol().value()));
+
+            if (sequelRNASeqPass.getProtocol() != null)
+                rnaSeqPass.setProtocol(RNASeqProtocolType.fromValue(sequelRNASeqPass.getProtocol().value()));
 
         }
         else {
@@ -83,6 +85,7 @@ public class ToSquid {
 
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
         ret.setCoverageAndAnalysisInformation(coverageAndAnalysisInformation);
+
         coverageAndAnalysisInformation.setAligner(AlignerType.fromValue(sequelPass.getCoverageAndAnalysisInformation().getAligner().value()));
         coverageAndAnalysisInformation.setAnalysisPipeline(AnalysisPipelineType.fromValue(sequelPass.getCoverageAndAnalysisInformation().getAnalysisPipeline().value()));
         coverageAndAnalysisInformation.setKeepFastQs(sequelPass.getCoverageAndAnalysisInformation().isKeepFastQs());

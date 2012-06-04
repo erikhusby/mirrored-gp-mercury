@@ -147,7 +147,8 @@ public class ToSequel {
             ret = rnaSeqRet;
 
             rnaSeqRet.setTranscriptomeReferenceSequenceID(squidRNASeqPass.getTranscriptomeReferenceSequenceID());
-            rnaSeqRet.setProtocol(RNASeqProtocolType.fromValue(squidRNASeqPass.getProtocol().value()));
+            if (squidRNASeqPass.getProtocol() != null)
+                rnaSeqRet.setProtocol(RNASeqProtocolType.fromValue(squidRNASeqPass.getProtocol().value()));
         }
         else
             throw new RuntimeException("Unrecognized PASS type: " + squidPass.getClass().getCanonicalName());
@@ -159,6 +160,7 @@ public class ToSequel {
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
         ret.setCoverageAndAnalysisInformation(coverageAndAnalysisInformation);
         coverageAndAnalysisInformation.setAligner(AlignerType.fromValue(squidPass.getCoverageAndAnalysisInformation().getAligner().value()));
+        coverageAndAnalysisInformation.setAnalysisPipeline(AnalysisPipelineType.fromValue(squidPass.getCoverageAndAnalysisInformation().getAnalysisPipeline().value()));
         coverageAndAnalysisInformation.setKeepFastQs(squidPass.getCoverageAndAnalysisInformation().isKeepFastQs());
         coverageAndAnalysisInformation.setPlex(squidPass.getCoverageAndAnalysisInformation().getPlex());
         coverageAndAnalysisInformation.setReferenceSequenceId(squidPass.getCoverageAndAnalysisInformation().getReferenceSequenceId());
