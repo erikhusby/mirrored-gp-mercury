@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.boundary.pmbridge;
+package org.broadinstitute.sequel.boundary.pass;
 
 
 import org.broadinstitute.sequel.boundary.squid.*;

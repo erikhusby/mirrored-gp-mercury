@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.boundary.pmbridge;
+package org.broadinstitute.sequel.boundary.pass;
 
 import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
@@ -12,8 +12,8 @@ import javax.xml.ws.Service;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import static org.broadinstitute.sequel.boundary.pmbridge.ToSequel.sequelize;
-import static org.broadinstitute.sequel.boundary.pmbridge.ToSquid.squidify;
+import static org.broadinstitute.sequel.boundary.pass.ToSequel.sequelize;
+import static org.broadinstitute.sequel.boundary.pass.ToSquid.squidify;
 
 
 @WebService(targetNamespace = "urn:SquidTopic",
@@ -23,7 +23,7 @@ import static org.broadinstitute.sequel.boundary.pmbridge.ToSquid.squidify;
         endpointInterface = "org.broadinstitute.sequel.boundary.SquidTopicPortype"
 )
 @Stateless
-public class PMBridgeSOAPServiceImpl implements SquidTopicPortype {
+public class PassSOAPService implements SquidTopicPortype {
 
     // @Inject not working in Glassfish @Webservices, either a hole in the spec or a bug in Glassfish.  See
     //

@@ -3,9 +3,9 @@
         xmlns='http://java.sun.com/xml/ns/jax-ws/ri/runtime'
         version='2.0'>
 <endpoint
-        name='PMBridge'
-        implementation='org.broadinstitute.sequel.boundary.pmbridge.PMBridgeSOAPServiceImpl'
-        url-pattern='/PMBridge' />
+        name='PASSService'
+        implementation='org.broadinstitute.sequel.boundary.pass.PassSOAPService'
+        url-pattern='/PASS' />
 
 <endpoint
         name='SampleKit'

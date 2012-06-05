@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.boundary.pmbridge;
+package org.broadinstitute.sequel.boundary.pass;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -15,11 +15,11 @@ import java.net.URL;
 
 
 /**
- * Integration test to connect to the PMBridge webservice in SequeL.
+ * Integration test to connect to the PASS webservice in SequeL.
  */
-public class PMBridgeSOAPTest extends ContainerTest {
+public class PassSOAPServiceTest extends ContainerTest {
 
-    private static Log gLog = LogFactory.getLog(PMBridgeSOAPTest.class);
+    private static Log gLog = LogFactory.getLog(PassSOAPServiceTest.class);
 
 
     /**
@@ -35,7 +35,7 @@ public class PMBridgeSOAPTest extends ContainerTest {
         String namespace = "urn:SquidTopic";
         QName serviceName = new QName(namespace, "SquidTopicService");
 
-        String wsdlURL = baseURL.toString() + "PMBridge?WSDL";
+        String wsdlURL = baseURL.toString() + "PASS?WSDL";
         URL url = new URL(wsdlURL);
 
         Service service = Service.create(url, serviceName);
