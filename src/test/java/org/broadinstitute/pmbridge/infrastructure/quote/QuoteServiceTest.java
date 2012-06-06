@@ -1,26 +1,30 @@
 package org.broadinstitute.pmbridge.infrastructure.quote;
 
+/**
+ * Based on test from SequeL
+ */
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.HashSet;
 import java.util.Set;
-import static org.broadinstitute.pmbridge.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.pmbridge.TestGroups.UNIT;
 
-@Test(groups = {EXTERNAL_INTEGRATION})
+@Test(groups = {UNIT})
 public class QuoteServiceTest {
 
     @Test
     public void test_get_a_quote() throws Exception {
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
-        Quote quote = service.getQuoteByAlphaId("DNA3CD");
+        QuoteService service = new MockQuoteServiceImpl();
+        Quote quote = service.getQuoteByAlphaId("DNA23H");
+
         Assert.assertNotNull(quote);
-        Assert.assertEquals("Regev ChIP Sequencing 8-1-2011", quote.getName());
-        Assert.assertEquals("6820110", quote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
-        Assert.assertEquals("ZEBRAFISH_NIH_REGEV",quote.getQuoteFunding().getFundingLevel().getFunding().getGrantDescription());
+        Assert.assertEquals("NIAID (CO 5035331)", quote.getName());
+        Assert.assertEquals("5035331", quote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
+        Assert.assertEquals("GENSEQCTR_(NIH)NIAID",quote.getQuoteFunding().getFundingLevel().getFunding().getGrantDescription());
         Assert.assertEquals(Funding.FUNDS_RESERVATION,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
-        Assert.assertEquals("DNA3CD",quote.getAlphanumericId());
+        Assert.assertEquals("DNA23H",quote.getAlphanumericId());
 
         quote = service.getQuoteByAlphaId("DNA3A9");
         Assert.assertEquals("HARVARD UNIVERSITY",quote.getQuoteFunding().getFundingLevel().getFunding().getInstitute());
@@ -29,10 +33,10 @@ public class QuoteServiceTest {
 
     }
 
-    @Test(enabled = false)
+    @Test
     public void test_get_all_quotes_for_sequencing() throws Exception {
 
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
+        QuoteService service = new MockQuoteServiceImpl();
         Quotes quotes = service.getAllQuotes();
 
         Assert.assertNotNull(quotes);
@@ -46,7 +50,7 @@ public class QuoteServiceTest {
                     if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
                         Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
                         fundingTypes.add(funding.getFundingType());
-
+                        //System.out.println(funding.getFundingType());
                         if (Funding.FUNDS_RESERVATION.equals(funding.getFundingType())) {
                             grants.add(funding.getGrantDescription());
                         }
@@ -58,7 +62,7 @@ public class QuoteServiceTest {
 
             }
         }
-        Assert.assertEquals(2,fundingTypes.size());
+        Assert.assertEquals(fundingTypes.size(), 3);   // includes null fundingType
         Assert.assertTrue(fundingTypes.contains(Funding.FUNDS_RESERVATION));
         Assert.assertTrue(fundingTypes.contains(Funding.PURCHASE_ORDER));
     }

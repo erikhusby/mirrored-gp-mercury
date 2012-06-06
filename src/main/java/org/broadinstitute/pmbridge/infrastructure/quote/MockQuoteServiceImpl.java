@@ -90,7 +90,7 @@ public class MockQuoteServiceImpl extends QuoteServiceImpl {
      * Mocked method to get the mocked quotes.
      */
     @Override
-    protected Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+    public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
         return quotes;
     }
 

@@ -54,5 +54,9 @@ public interface QuoteService {
     public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType) throws QuoteServerException, QuoteNotFoundException;
 
 
+    /**
+     *  Method to return a list of all quotes
+     */
+    public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException;
 
 }

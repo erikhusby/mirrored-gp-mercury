@@ -101,7 +101,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
      * @throws QuoteServerException
      * @throws QuoteNotFoundException
      */
-    protected Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
+    @Override
+    public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
 
         //TODO probably best to Cache this data some how and refresh frequently async on separate thread.
         String url = connectionParameters.getUrl(QuoteConnectionParameters.GET_QUOTES_BASE_URL);
