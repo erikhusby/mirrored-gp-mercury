@@ -4,7 +4,6 @@ import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationJNDIProfileDrivenImpl;
 
-import javax.ejb.Stateless;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.namespace.QName;
@@ -22,7 +21,6 @@ import static org.broadinstitute.sequel.boundary.pass.ToSquid.squidify;
         name = "SquidTopicService",
         endpointInterface = "org.broadinstitute.sequel.boundary.SquidTopicPortype"
 )
-@Stateless
 public class PassSOAPService implements SquidTopicPortype {
 
     // @Inject not working in Glassfish @Webservices, either a hole in the spec or a bug in Glassfish.  See
