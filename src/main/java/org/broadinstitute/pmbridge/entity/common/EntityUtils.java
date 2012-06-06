@@ -1,6 +1,8 @@
 package org.broadinstitute.pmbridge.entity.common;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
 
@@ -16,6 +18,8 @@ import java.util.Set;
  * Time: 1:20 PM
  */
 public class EntityUtils {
+    private static Log logger = LogFactory.getLog(EntityUtils.class);
+
     public static String flattenSetOfStrings(final Set<String> stringSet ) {
         StringBuilder stringBuilder = new StringBuilder();
         if ( stringSet != null ) {
@@ -38,6 +42,9 @@ public class EntityUtils {
                     if (i > 0) stringBuilder.append(", ");
                     stringBuilder.append(person.getUsername());
                     i++;
+                } else {
+                    String msg = ( person != null ? person.getFirstName() + " " + person.getLastName() : "Null username");
+                    logger.error("Person has no username : " + msg );
                 }
             }
         }
@@ -58,4 +65,6 @@ public class EntityUtils {
         }
         return personSet;
     }
+
+
 }

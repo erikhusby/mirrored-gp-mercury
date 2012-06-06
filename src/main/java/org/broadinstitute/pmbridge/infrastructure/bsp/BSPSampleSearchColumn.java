@@ -1,10 +1,14 @@
 package org.broadinstitute.pmbridge.infrastructure.bsp;
 
+/*
+ * @author - From SequeL
+ */
 
 public enum BSPSampleSearchColumn {
     SAMPLE_ID("Sample ID"),
     PARTICIPANT_ID("Participant ID(s)"),
     COLLABORATOR_SAMPLE_ID("Collaborator Sample ID"),
+    SPECIES("Species"),
     COLLABORATOR_PARTICIPANT_ID("Collaborator Participant ID"),
     MATERIAL_TYPE("Material Type"),
     VOLUME("Vol(uL)"),
@@ -17,7 +21,6 @@ public enum BSPSampleSearchColumn {
     FINGERPRINT("Fingerprint"),
     // ALERT("!", "Alert"),
     // MESSAGE("message");
-
     LSID("Sample LSID"),
     ROOT_SAMPLE("Root Sample(s)"),
     COLLECTION("Collection"),
@@ -32,5 +35,4 @@ public enum BSPSampleSearchColumn {
     BSPSampleSearchColumn(String name) {
         this.columnName = name;
     }
-
 }

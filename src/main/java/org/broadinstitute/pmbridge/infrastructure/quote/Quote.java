@@ -28,10 +28,9 @@ public class Quote {
         this.approvalStatus = approvalStatus;
     }
 
-    //Unit test only TODO hmc Temp remove later
-    public Quote(String alphanumericId) {
-        this(alphanumericId, null, null);
-    }
+//    Quote(String alphanumericId) {
+//        this(alphanumericId, null, null);
+//    }
 
     @XmlElement(name = "QuoteFunding")
     public QuoteFunding getQuoteFunding() {

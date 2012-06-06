@@ -22,6 +22,8 @@ public class BSPSampleDTO implements Serializable {
     private final BigDecimal volume;
     
     private final BigDecimal concentration;
+
+    private final String organism;
     
     public BSPSampleDTO(String containerId,
                         String stockSample,
@@ -40,6 +42,7 @@ public class BSPSampleDTO implements Serializable {
         this.collection = collection;
         this.volume = volume;
         this.concentration = concentration;
+        this.organism = organism;
         
     }
    
@@ -86,6 +89,6 @@ public class BSPSampleDTO implements Serializable {
     }
 
     public String getOrganism() {
-        throw new RuntimeException("not implemented yet.");
+        return organism;
     }
 }

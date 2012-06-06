@@ -9,7 +9,14 @@ import org.broadinstitute.pmbridge.entity.common.Name;
  * Time: 2:58 PM
  */
 public class BaitSetName extends Name {
-    public BaitSetName(String name) {
+    private long id;
+
+    public BaitSetName(final String name, final long id) {
         super(name);
+        this.id = id;
+    }
+
+    public long getId() {
+        return id;
     }
 }

@@ -1,9 +1,9 @@
 package org.broadinstitute.pmbridge.infrastructure.gap;
 
-import org.apache.commons.lang.StringUtils;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.pmbridge.control.AbstractJerseyClientService;
 import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
@@ -21,7 +21,7 @@ import org.broadinstitute.pmbridge.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.pmbridge.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.pmbridge.infrastructure.quote.QuoteService;
 
-import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
  * Date: 5/22/12
  * Time: 12:27 PM
  */
-@Alternative
+@Default
 public class GenotypingServiceImpl  extends AbstractJerseyClientService implements GenotypingService {
 
     private org.apache.commons.logging.Log logger = LogFactory.getLog(GenotypingServiceImpl.class);
@@ -143,8 +143,6 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
 
                 gapExperimentRequest = populateGapProduct(gapExperimentRequest);
 
-                //TODO hmc -Set a version string for Gap since they don't use a version number - use a date.
-
             } else {
                 String errMsg = "Expected 1 but no GAP experiment request data retrieved from GAP for experiment ID : "
                         + expId;
@@ -228,8 +226,6 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
                         submittedExperimentRequest = new GapExperimentRequest(experimentRequestSummary, receivedExperimentPlan );
                         submittedExperimentRequest = populateQuotes(submittedExperimentRequest, quoteService);
                         submittedExperimentRequest = populateGapProduct(submittedExperimentRequest);
-
-                        //TODO hmc -Set a version string for Gap since they don't use a version number - use a date.
 
                     } else {
                         logger.error("Expected 1 but received " + response.getExperimentPlans().size() +
@@ -501,6 +497,7 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
         }
         return resultBuffer.toString();
     }
+
 
 
 

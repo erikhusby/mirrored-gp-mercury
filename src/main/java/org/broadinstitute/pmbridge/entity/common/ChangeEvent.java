@@ -1,8 +1,5 @@
 package org.broadinstitute.pmbridge.entity.common;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broadinstitute.pmbridge.entity.person.Person;
 
 import java.util.Date;
@@ -22,15 +19,31 @@ public class ChangeEvent {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-     }
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ChangeEvent)) return false;
+
+        final ChangeEvent that = (ChangeEvent) o;
+
+        if (date != null ? !date.equals(that.date) : that.date != null) return false;
+        if (person != null ? !person.equals(that.person) : that.person != null) return false;
+
+        return true;
+    }
+
     @Override
     public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this);
+        int result = date != null ? date.hashCode() : 0;
+        result = 31 * result + (person != null ? person.hashCode() : 0);
+        return result;
     }
+
     @Override
     public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+        return "ChangeEvent{" +
+                "date=" + date +
+                ", person=" + person +
+                '}';
     }
+
 }

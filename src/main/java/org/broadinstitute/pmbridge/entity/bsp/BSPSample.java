@@ -1,8 +1,5 @@
 package org.broadinstitute.pmbridge.entity.bsp;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleDTO;
 
 import javax.persistence.Transient;
@@ -96,18 +93,31 @@ public class BSPSample {
     }
 
 
-
     @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-     }
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof BSPSample)) return false;
+
+        final BSPSample bspSample = (BSPSample) o;
+
+        if (bspDTO != null ? !bspDTO.equals(bspSample.bspDTO) : bspSample.bspDTO != null) return false;
+        if (id != null ? !id.equals(bspSample.id) : bspSample.id != null) return false;
+
+        return true;
+    }
+
     @Override
     public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this);
-    }
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (bspDTO != null ? bspDTO.hashCode() : 0);
+        return result;
     }
 
+    @Override
+    public String toString() {
+        return "BSPSample{" +
+                "id=" + id +
+                ", bspDTO=" + bspDTO +
+                '}';
+    }
 }

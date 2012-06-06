@@ -1,8 +1,5 @@
 package org.broadinstitute.pmbridge.entity.experiments.seq;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 
@@ -30,7 +27,7 @@ public class WholeGenomeExperiment extends SeqExperimentRequest {
     }
 
     public WholeGenomeExperiment(final ExperimentRequestSummary experimentRequestSummary, final WholeGenomePass wholeGenomePass) {
-        super(experimentRequestSummary, PMBPassType.WG);
+        super(experimentRequestSummary, PassType.WG);
         this.wholeGenomePass = wholeGenomePass;
 
     }

@@ -2,13 +2,13 @@ package org.broadinstitute.pmbridge.infrastructure.bsp;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * Wrapper around {@link BSPSampleSearchService} that
  * does a bit more object-ifying and type-safety.
+ * From Sequel
+ * modified by mccrory
  */
 public class BSPSampleDataFetcher {
     
@@ -32,7 +32,6 @@ public class BSPSampleDataFetcher {
      * @param sampleName
      * @return
      */
-    // todo expose bulk fetch
     public BSPSampleDTO fetchSingleSampleFromBSP(String sampleName) {
         if (service == null) {
             throw new RuntimeException("No BSP service has been declared.");
@@ -40,43 +39,74 @@ public class BSPSampleDataFetcher {
         else {
             Collection<String> sampleNames = new HashSet<String>();
             sampleNames.add(sampleName);
-            // todo query multiple attributes at once for better efficiency.
-            // don't just copy paste this!
-            List<String[]> results = service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PARTICIPANT_ID,
-                    BSPSampleSearchColumn.ROOT_SAMPLE,
-                    BSPSampleSearchColumn.STOCK_SAMPLE,
-                    BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
-                    BSPSampleSearchColumn.COLLECTION,
-                    BSPSampleSearchColumn.VOLUME,
-                    BSPSampleSearchColumn.CONCENTRATION);
+            Map<String,BSPSampleDTO> sampleNameToDTO = fetchSamplesFromBSP(sampleNames);
 
-            if (results == null) {
-                throw new RuntimeException("Sample " + sampleName + " not found in BSP");
+            if (sampleNameToDTO.isEmpty()) {
+                throw new RuntimeException("Could not find " + sampleName + " in bsp.");
             }
-            if (results.isEmpty()) {
-                throw new RuntimeException("Sample " + sampleName + " not found in BSP");
+            else if (sampleNameToDTO.size() > 1) {
+                throw new RuntimeException("Found " + sampleNameToDTO.size() + " possible matches in bsp.");
             }
-            if (results.size() > 1) {
-                throw new RuntimeException(results.size() + " sample results from BSP.  We were expecting just one.");
+            else {
+                return sampleNameToDTO.entrySet().iterator().next().getValue();
             }
-            
-            String[] columns = results.iterator().next();
-            String patientId = columns[0];
-            String rootSample = columns[1];
-            String stockSample = columns[2];
-            String collaboratorSampleId = columns[3];
-            String collection = columns[4];
-
-            String volumeStr =  columns[5];
-            BigDecimal volume = new BigDecimal(volumeStr);
-
-            String concentrationStr = columns[6];
-            BigDecimal concentration = new BigDecimal(concentrationStr);
-
-            return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,null,collaboratorSampleId,collection,volume,concentration);
         }
     }
-    
 
+    /**
+     * Fetch the data from bsp for multiple samples.
+     * @param sampleNames
+     * @return
+     */
+    public Map<String,BSPSampleDTO> fetchSamplesFromBSP(Collection<String> sampleNames) {
+        if (sampleNames == null) {
+            throw new NullPointerException("sampleNames cannot be null.");
+        }
+        if (sampleNames.isEmpty()) {
+            throw new RuntimeException("sampleNames is empty.  No samples to lookup.");
+        }
+        final Map<String,BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
+        final List<String[]> results = getBSPResponse(sampleNames);
 
+        for (String[] result : results) {
+            BSPSampleDTO bspDTO = toDTO(result);
+            String sampleName = bspDTO.getStockSample();
+
+            if (sampleName.equals(bspDTO.getStockSample()) || sampleName.equals(bspDTO.getRootSample())) {
+                sampleNames.remove(sampleName);
+                sampleNameToDTO.put(sampleName,bspDTO);
+            }
+            else {
+                throw new RuntimeException("Can't map bsp sample " + bspDTO.getStockSample() + " any of the " + sampleNames.size() + " queried samples");
+            }
+        }
+        return sampleNameToDTO;
+    }
+
+    private BSPSampleDTO toDTO(String[] bspColumns) {
+        String patientId = bspColumns[0];
+        String rootSample = bspColumns[1];
+        String stockSample = bspColumns[2];
+        String collaboratorSampleId = bspColumns[3];
+        String collection = bspColumns[4];
+        String volumeStr =  bspColumns[5];
+        BigDecimal volume = new BigDecimal(volumeStr);
+        String concentrationStr = bspColumns[6];
+        BigDecimal concentration = new BigDecimal(concentrationStr);
+        String organism = bspColumns[7];
+
+        return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,volume,concentration);
+    }
+
+    private List<String[]> getBSPResponse(Collection<String> sampleNames) {
+        return  service.runSampleSearch(sampleNames,
+                BSPSampleSearchColumn.PARTICIPANT_ID,
+                BSPSampleSearchColumn.ROOT_SAMPLE,
+                BSPSampleSearchColumn.STOCK_SAMPLE,
+                BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
+                BSPSampleSearchColumn.COLLECTION,
+                BSPSampleSearchColumn.VOLUME,
+                BSPSampleSearchColumn.CONCENTRATION,
+                BSPSampleSearchColumn.SPECIES);
+    }
 }

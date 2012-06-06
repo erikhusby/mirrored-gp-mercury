@@ -114,7 +114,8 @@ public class MockQuoteServiceImpl extends QuoteServiceImpl {
 
 
     public void generateQuoteFile( String quoteTestFileName ) throws QuoteServerException, QuoteNotFoundException, JAXBException, IOException {
-        //TODO Needed to recreate the data files in case quote API changes/evolves.
+        // Needed to recreate the data files in case quote API changes/evolves.
+        // Not completed and tested yet.
         Quotes quotes = super.getAllQuotes();
         JAXBContext jaxbContext = JAXBContext.newInstance(Quotes.class);
 

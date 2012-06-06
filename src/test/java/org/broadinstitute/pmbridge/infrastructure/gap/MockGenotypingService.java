@@ -6,8 +6,7 @@ import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.infrastructure.SubmissionException;
 import org.broadinstitute.pmbridge.infrastructure.ValidationException;
 
-import javax.enterprise.inject.Default;
-import javax.inject.Inject;
+import javax.enterprise.inject.Alternative;
 import java.util.List;
 
 /**
@@ -16,12 +15,11 @@ import java.util.List;
  * Date: 5/29/12
  * Time: 1:20 PM
  */
-@Default
-public class MockGenotypingService extends GenotypingServiceImpl {
+@Alternative
+public class MockGenotypingService implements GenotypingService {
 
-    @Inject
-    public MockGenotypingService(final GapConnectionParameters gapConnectionParameters) {
-        super(gapConnectionParameters);
+
+    public MockGenotypingService() {
     }
 
     @Override
@@ -54,11 +52,12 @@ public class MockGenotypingService extends GenotypingServiceImpl {
 
     @Override
     public Product lookupTechnologyProductById(final Integer productId) throws ProductNotFoundException {
-        Product product = new Product( "Super Chip", "SuperChipCytoSNP-12v1-0_D", "007" );
-        return product;
+        //TODO
+        throw new IllegalStateException("Not Yet Implemented");
+        //return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-//    protected Client getJerseyClient() {
+    //    protected Client getJerseyClient() {
 //
 //        DefaultClientConfig clientConfig = new DefaultClientConfig();
 //        customizeConfig(clientConfig);

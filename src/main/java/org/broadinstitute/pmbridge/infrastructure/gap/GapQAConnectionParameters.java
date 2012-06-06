@@ -1,7 +1,5 @@
 package org.broadinstitute.pmbridge.infrastructure.gap;
 
-import org.broadinstitute.pmbridge.infrastructure.bsp.BSPConnectionParameters;
-
 import javax.enterprise.inject.Default;
 
 /**

@@ -11,7 +11,6 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 public class BSPCollection {
 
 
-    //TODO This class is not finished as we are not yet sure what the BSP Collection Ids will look like.
     public final BSPCollectionID id;
     public final String name;
 

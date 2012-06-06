@@ -1,9 +1,5 @@
 package org.broadinstitute.pmbridge.entity.experiments.gap;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.pmbridge.entity.common.EntityUtils;
@@ -17,9 +13,10 @@ import org.broadinstitute.pmbridge.entity.person.RoleType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 import org.broadinstitute.pmbridge.infrastructure.gap.ExperimentPlan;
 import org.broadinstitute.pmbridge.infrastructure.gap.Product;
-import org.broadinstitute.pmbridge.infrastructure.quote.*;
+import org.broadinstitute.pmbridge.infrastructure.quote.Quote;
 
-import java.util.*;
+import java.util.Date;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -32,7 +29,6 @@ import java.util.regex.Pattern;
 public class GapExperimentRequest extends AbstractExperimentRequest {
 
     private Log logger = LogFactory.getLog(GapExperimentRequest.class);
-    //TODO hmc May have to hide the experimentPlanDTO within and not expose it to clients GapExperimentRequest except for the constructors.
     private ExperimentPlan experimentPlanDTO;
     private Quote bspQuote;
     private Quote gapQuote;
@@ -43,7 +39,7 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
         setExperimentPlanDTO(new ExperimentPlan());
         getExperimentPlanDTO().setExperimentName(experimentRequestSummary.getTitle().name);
         getExperimentPlanDTO().setPlanningStatus( experimentRequestSummary.getStatus().name );
-        //TODO hmc does pmb need to set the start  date ?
+         //TODO This dates need to be formatted such that GAp an handle it.
 //        getExperimentPlanDTO().setProjectStartDate(new Date());
         getExperimentPlanDTO().setResearchProjectId( "" + experimentRequestSummary.getResearchProjectId() );
         getExperimentPlanDTO().setProgramPm( experimentRequestSummary.getCreation().person.getUsername());
@@ -53,39 +49,10 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
     public GapExperimentRequest(ExperimentRequestSummary experimentRequestSummary, ExperimentPlan experimentPlan ) {
         super(experimentRequestSummary);
         setExperimentPlanDTO(experimentPlan);
-        if (StringUtils.isNotBlank( experimentPlan.getPlatformPm()) ) {
-            Set<Person>  platformPeople = EntityUtils.extractPeopleFromUsernameList(experimentPlan.getPlatformPm(), RoleType.PLATFORM_PM);
-            this.setPlatformProjectManagers(platformPeople);
-        }
-        if (StringUtils.isNotBlank( experimentPlan.getProgramPm()) ) {
-            Set<Person> programPeople = EntityUtils.extractPeopleFromUsernameList(experimentPlan.getProgramPm(), RoleType.PROGRAM_PM);
-            this.setProgramProjectManagers(programPeople);
-        }
+        // if the remoteId is not yet set on the Summary ( in the case of initial submission ) then set it.
         if ((experimentRequestSummary.getRemoteId() == null ) && (experimentPlan.getId() != null) ) {
             experimentRequestSummary.setRemoteId( new RemoteId(experimentPlan.getId()) );
         }
-    }
-
-
-    public static GapExperimentRequest populateResearchProjectFields ( final GapExperimentRequest gapExperimentRequest, final ResearchProject researchProject ) {
-
-        if ( (researchProject != null)  && (gapExperimentRequest != null) ) {
-            //Set irb number and info ron the gap experiment.
-            if ( researchProject.getIrbNumbers() != null )  {
-                String irbNumbersStr = EntityUtils.flattenSetOfStrings(researchProject.getIrbNumbers());
-                gapExperimentRequest.getExperimentPlanDTO().setIrbNumbers(irbNumbersStr);
-            }
-            gapExperimentRequest.getExperimentPlanDTO().setIrbInfo( researchProject.getIrbNotes() );
-
-            // Set the programPM
-            String programPMStr = EntityUtils.flattenSetOfPersonUsernames(gapExperimentRequest.getProgramProjectManagers());
-            gapExperimentRequest.getExperimentPlanDTO().setProgramPm( programPMStr );
-
-            //TODO hmc - IRB Engaged needs to be set somehow during this workflow.
-
-        }
-
-        return gapExperimentRequest;
     }
 
     public Name getExperimentStatus() {
@@ -93,9 +60,6 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
     }
 
     public ExperimentPlan getExperimentPlanDTO() {
-
-
-
         return experimentPlanDTO;
     }
 
@@ -152,6 +116,31 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
         }
     }
 
+    @Override
+    public Set<Person> getPlatformProjectManagers() {
+
+        Set<Person>  platformPeople = EntityUtils.extractPeopleFromUsernameList(getExperimentPlanDTO().getPlatformPm(),
+                    RoleType.PLATFORM_PM);
+            return platformPeople;
+    }
+
+    @Override
+    public Set<Person> getProgramProjectManagers() {
+            Set<Person> programPeople = EntityUtils.extractPeopleFromUsernameList(getExperimentPlanDTO().getProgramPm(),
+                    RoleType.PROGRAM_PM);
+        return programPeople;
+    }
+
+
+    @Override
+    public void setProgramProjectManagers(final Set<Person> programProjectManagers) {
+        String programPmList = "";
+        if ( programProjectManagers != null ) {
+            programPmList = EntityUtils.flattenSetOfPersonUsernames( programProjectManagers );
+        }
+        getExperimentPlanDTO().setProgramPm( programPmList );
+    }
+
     public String getSynopsis() {
         return getExperimentPlanDTO().getExperimentDescription();
     }
@@ -162,8 +151,17 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
 
     @Override
     public void setTitle(final Name title) {
-        experimentPlanDTO.setExperimentName(title.name);
+        getExperimentPlanDTO().setExperimentName(title.name);
         getExperimentRequestSummary().setTitle( title );
+    }
+
+
+    public String getVersion() {
+        String versionStr = "";
+        if ( getExperimentPlanDTO().getEffectiveDate() != null ) {
+            versionStr = formatDate(getExperimentPlanDTO().getEffectiveDate());
+        }
+        return versionStr;
     }
 
     public Date getExpectedKitReceiptDate() {
@@ -195,10 +193,13 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
             // Update the RP id that is associated with the research project.
             getExperimentPlanDTO().setResearchProjectId("" + researchProject.getId().longValue() );
 
-            //Set irb number and info ron the gap experiment.
+            //Set irb number and info on the gap experiment.
             if ( researchProject.getIrbNumbers() != null )  {
                 String irbNumbersStr = EntityUtils.flattenSetOfStrings(researchProject.getIrbNumbers());
                 this.getExperimentPlanDTO().setIrbNumbers(irbNumbersStr);
+                this.getExperimentPlanDTO().setIrbEngaged(true);
+            } else {
+                this.getExperimentPlanDTO().setIrbEngaged(false);
             }
             this.getExperimentPlanDTO().setIrbInfo( researchProject.getIrbNotes() );
 
@@ -206,21 +207,50 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
             String programPMStr = EntityUtils.flattenSetOfPersonUsernames(this.getProgramProjectManagers());
             this.getExperimentPlanDTO().setProgramPm( programPMStr );
 
-            //TODO hmc - IRB Engaged needs to be set somehow during this workflow.
-
         }
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-     }
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof GapExperimentRequest)) return false;
+        if (!super.equals(o)) return false;
+
+        final GapExperimentRequest that = (GapExperimentRequest) o;
+
+        if (bspQuote != null ? !bspQuote.equals(that.bspQuote) : that.bspQuote != null) return false;
+        if (experimentPlanDTO != null ? !experimentPlanDTO.equals(that.experimentPlanDTO) : that.experimentPlanDTO != null)
+            return false;
+        if (gapQuote != null ? !gapQuote.equals(that.gapQuote) : that.gapQuote != null) return false;
+        if (technologyProduct != null ? !technologyProduct.equals(that.technologyProduct) : that.technologyProduct != null)
+            return false;
+
+        return true;
+    }
+
     @Override
     public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this);
+        int result = super.hashCode();
+        result = 31 * result + (experimentPlanDTO != null ? experimentPlanDTO.hashCode() : 0);
+        result = 31 * result + (bspQuote != null ? bspQuote.hashCode() : 0);
+        result = 31 * result + (gapQuote != null ? gapQuote.hashCode() : 0);
+        result = 31 * result + (technologyProduct != null ? technologyProduct.hashCode() : 0);
+        return result;
     }
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+
+    private static String formatDate(Date d) {
+        if ( d != null ) {
+            return (1900+d.getYear())+"-"+pad(d.getMonth()+1,2)+"-"+pad(d.getDate(),2);
+        } else {
+            return "";
+        }
+    }
+    private static String pad(int n, int nDigits) {
+        StringBuilder sb = new StringBuilder();
+        for( int i=(int)Math.log10(n)+1; i<nDigits; i++ ) {
+            sb.append("0");
+        }
+        sb.append(n);
+        return sb.toString();
     }
 }

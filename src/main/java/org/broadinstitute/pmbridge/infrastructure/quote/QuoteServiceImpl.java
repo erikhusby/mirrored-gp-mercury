@@ -10,14 +10,10 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.pmbridge.control.AbstractJerseyClientService;
 
 import javax.enterprise.inject.Alternative;
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 @Alternative
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {

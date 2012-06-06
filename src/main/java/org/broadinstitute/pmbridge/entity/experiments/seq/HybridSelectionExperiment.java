@@ -1,13 +1,9 @@
 package org.broadinstitute.pmbridge.entity.experiments.seq;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broad.squid.services.TopicService.*;
-import org.broad.squid.services.TopicService.TargetCoverageModel;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 
-import javax.xml.bind.annotation.XmlAttribute;
 import java.math.BigDecimal;
 import java.util.EnumSet;
 import java.util.Set;
@@ -36,7 +32,7 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
     }
 
     public HybridSelectionExperiment(final ExperimentRequestSummary experimentRequestSummary, final DirectedPass directedPass) {
-        super(experimentRequestSummary, PMBPassType.DIRECTED);
+        super(experimentRequestSummary, PassType.DIRECTED);
         this.directedPass = directedPass;
     }
 

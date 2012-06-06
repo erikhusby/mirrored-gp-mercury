@@ -2,8 +2,6 @@ package org.broadinstitute.pmbridge.infrastructure.gap;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.ArrayList;
-import java.util.List;
 
 @XmlRootElement(name="product")
 public class Product {

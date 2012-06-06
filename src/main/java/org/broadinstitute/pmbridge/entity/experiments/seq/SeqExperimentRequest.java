@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broad.squid.services.TopicService.*;
+import org.broadinstitute.pmbridge.entity.common.EntityUtils;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.common.QuoteId;
 import org.broadinstitute.pmbridge.entity.experiments.AbstractExperimentRequest;
@@ -16,7 +17,10 @@ import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 import org.broadinstitute.pmbridge.infrastructure.SubmissionException;
 import org.broadinstitute.pmbridge.infrastructure.ValidationException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,7 +32,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
     private Log logger = LogFactory.getLog(SeqExperimentRequest.class);
 
-    protected PMBPassType passType;
+    protected PassType passType;
     protected SeqCoverageModel seqCoverageModel;
 
     // Need the following to store lookup data since the pass only stores the integer id.
@@ -36,10 +40,10 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     private ReferenceSequenceName referenceSequenceName;
 
 
-    public SeqExperimentRequest(ExperimentRequestSummary experimentRequestSummary, PMBPassType passType ) {
+    public SeqExperimentRequest(ExperimentRequestSummary experimentRequestSummary, PassType passType ) {
         super(experimentRequestSummary);
         this.passType = passType;
-        //TODO set defaults for other pass members ??
+        // TODO set any defaults for other pass members ??
     }
 
     protected CoverageAndAnalysisInformation getOrCreateCoverageAndAnalysisInformation() {
@@ -137,13 +141,15 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     protected Set<Person> getOrCreatePersonsFromPass(SquidPersonList squidPersonList, RoleType roleType) {
         Set<Person> people = new HashSet<Person>();
         for (SquidPerson squidPerson : squidPersonList.getSquidPerson() ) {
-            Person person = new Person(
-                    squidPerson.getLogin(),
-                    squidPerson.getFirstName(),
-                    squidPerson.getLastName(),
-                    squidPerson.getPersonID().toString(),
-                    roleType );
-            people.add(person);
+            if ((squidPerson != null) && (squidPerson.getPersonID() != null) ) {
+                Person person = new Person(
+                        squidPerson.getLogin(),
+                        squidPerson.getFirstName(),
+                        squidPerson.getLastName(),
+                        squidPerson.getPersonID().toString(),
+                        roleType );
+                people.add(person);
+            }
         }
         return people;
     }
@@ -173,7 +179,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         projectInformation.setSponsoringScientists( squidPersonList );
     }
 
-    protected SquidPersonList getOrCreateSponsoringScientists() {
+    private SquidPersonList getOrCreateSponsoringScientists() {
         SquidPersonList result = null;
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         if ( null == projectInformation.getSponsoringScientists() ) {
@@ -185,7 +191,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         return result;
     }
 
-    protected SquidPersonList getOrCreatePlatformProjectManagers() {
+    private SquidPersonList getOrCreatePlatformProjectManagers() {
         SquidPersonList result = null;
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         if ( null == projectInformation.getPlatformProjectManagers() ) {
@@ -234,18 +240,14 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         String programPms = projectInformation.getProgramProjectManagers();
         if ( StringUtils.isNotBlank(programPms) ) {
-            StringTokenizer stringTokenizer = new StringTokenizer( programPms );
-            while ( stringTokenizer.hasMoreTokens()) {
-                String programPMUsername = stringTokenizer.nextToken();
-                Person person = new Person( programPMUsername, RoleType.PROGRAM_PM );
-                result.add(person);
-            }
+            result = EntityUtils.extractPeopleFromUsernameList(programPms, RoleType.PROGRAM_PM);
+            //TODO - Do we need to lookup these usernames in a cache to get further info ??
         }
         return result;
     }
 
-
-    public void setProgramProjectManagers(final Collection<Person> programPmPeople) {
+    @Override
+    public void setProgramProjectManagers(final Set<Person> programPmPeople) {
         if ( programPmPeople != null ) {
             StringBuilder stringBuilder = new StringBuilder("");
             int i = 0;
@@ -264,7 +266,6 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
             getOrCreateProjectInformation().setProgramProjectManagers( stringBuilder.toString() );
         }
     }
-
 
     public String getSynopsis() {
         return getOrCreateProjectInformation().getExperimentGoals();
@@ -384,7 +385,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         //return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    public PMBPassType getPassType() {
+    public PassType getPassType() {
         return passType;
     }
 
@@ -400,7 +401,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
             throw new ValidationException("No Samples found in experiment request " +  identifier);
         }
 
-        //TODO hmc Add validation logic for submitting a pass
+        //TODO hmc Add any other validation logic for submitting a pass ??
 
         PassCritique passCritique  = squidServicePort.validatePass( getConcretePass() );
         errorMessages = passCritique.getErrors();
@@ -413,8 +414,6 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         List<String>  errorMessages = new ArrayList<String>();
 
         String identifier = (getRemoteId() != null) ? getRemoteId().value : getLocalId().value;
-
-        //TODO Under construction !!!!
 
         String passNumber = squidServicePort.storePass( getConcretePass() );
 
@@ -435,7 +434,6 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 //        if ((pass == null) && (passType != null)) {
 //        // Create pass from pmbPassType.
 //        switch (passType) {
-//            //TODO set mandatory defaults for each ??
 //            case WG:
 //                pass = new WholeGenomePass();
 //                break;
@@ -447,21 +445,21 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 //                break;
 //            default:
 //                // in case the enum is extended but not this code.
-//                throw new IllegalArgumentException("Unsupported Sequencing Pass Type. Supported values are : " + PMBPassType.values().toString() );
+//                throw new IllegalArgumentException("Unsupported Sequencing Pass Type. Supported values are : " + PassType.values().toString() );
 //        }        }
 //        return pass;
 //    }
 
 
-//    public PMBPassType determinePassTypeFromPass(final AbstractPass pass) {
-//        PMBPassType result = null;
+//    public PassType determinePassTypeFromPass(final AbstractPass pass) {
+//        PassType result = null;
 //        if ( pass != null ) {
 //            if (pass instanceof WholeGenomePass) {
-//                result = PMBPassType.WG;
+//                result = PassType.WG;
 //            } else if ( pass instanceof DirectedPass) {
-//                result = PMBPassType.DIRECTED;
+//                result = PassType.DIRECTED;
 //            } else if (pass instanceof RNASeqPass ){
-//                result = PMBPassType.RNASeq;
+//                result = PassType.RNASeq;
 //            } else {
 //                throw new IllegalArgumentException("Unsupported type of PASS. Contents of pass : " + pass.toString() );
 //            }

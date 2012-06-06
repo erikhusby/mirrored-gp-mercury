@@ -1,17 +1,10 @@
 package org.broadinstitute.pmbridge.entity.experiments;
 
-import org.broad.squid.services.TopicService.AbstractPass;
-import org.broad.squid.services.TopicService.DirectedPass;
-import org.broad.squid.services.TopicService.RNASeqPass;
-import org.broad.squid.services.TopicService.WholeGenomePass;
 import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
 import org.broadinstitute.pmbridge.entity.common.Name;
-import org.broadinstitute.pmbridge.entity.experiments.gap.GapExperimentRequest;
-import org.broadinstitute.pmbridge.entity.experiments.seq.*;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
-import org.broadinstitute.pmbridge.infrastructure.gap.ExperimentPlan;
 
 import java.util.Date;
 

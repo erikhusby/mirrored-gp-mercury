@@ -16,8 +16,10 @@ import org.broadinstitute.pmbridge.entity.person.Person;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
-import java.io.*;
-import java.net.MalformedURLException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -25,7 +27,7 @@ import java.util.*;
 public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
 
 
-    private static Log _logger = LogFactory.getLog(BSPSampleSearchServiceImpl.class);
+    private static Log logger = LogFactory.getLog(BSPSampleSearchServiceImpl.class);
 
     @Inject
     private BSPConnectionParameters connParams;
@@ -54,7 +56,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
         if (sampleIDs == null)
             return null;
-        
+
         if (sampleIDs.size() == 0)
             return new ArrayList<String[]>();
 
@@ -63,17 +65,16 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
         String urlString = "http://%s:%d%s";
         urlString = String.format(urlString, connParams.getHostname(), connParams.getPort(),
                 BSPConnectionParameters.BSP_SAMPLE_SEARCH_URL);
-        
-        _logger.info(String.format("url string is '%s'", urlString));
-        
+
+        logger.info(String.format("url string is '%s'", urlString));
+
         WebResource webResource = getJerseyClient().resource(urlString);
 
 
         List<String> queryParameters = new ArrayList<String>();
-       
-        
-        try {
+        InputStream is = null;
 
+        try {
             for (BSPSampleSearchColumn column : queryColumns)
                 queryParameters.add("columns=" + URLEncoder.encode(column.columnName(), "UTF-8"));
 
@@ -84,72 +85,59 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             if (queryParameters.size() > 0)
                 queryString = StringUtils.join(queryParameters, "&");
 
-            _logger.info("query string to be POSTed is '" + queryString + "'");
-            
+            logger.info("query string to be POSTed is '" + queryString + "'");
+
             ClientResponse clientResponse =
                     webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, queryString);
-            
-            InputStream is = clientResponse.getEntityInputStream();
-            BufferedReader rdr = new BufferedReader(new InputStreamReader(is));     
-            
-            if (clientResponse.getStatus() / 100 != 2) {
-                _logger.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
-                return ret;
-                // throw new RuntimeException("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+
+            is = clientResponse.getEntityInputStream();
+            BufferedReader rdr = new BufferedReader(new InputStreamReader(is));
+
+            if (clientResponse.getStatus() != ClientResponse.Status.OK.getStatusCode()) {
+                String errMsg = "Cannot retrieve sample data from BSP platform. Received response code : " + clientResponse.getStatus();
+                logger.error(errMsg + " : " + rdr.readLine());
+                throw new RuntimeException(errMsg);
             }
 
             // skip header line
             rdr.readLine();
-            
+
             // what should be the first real data line
             String readLine = rdr.readLine();
-            
+
             while (readLine != null) {
-                
                 String[] rawBSPData = readLine.split("\t", -1);
-                
                 // BSP always seems to return 1 more field than we asked for?
                 String[] truncatedData = new String[rawBSPData.length - 1];
                 System.arraycopy(rawBSPData, 0, truncatedData, 0, truncatedData.length);
-                
                 ret.add(truncatedData);
-                
                 readLine = rdr.readLine();
-                
             }
-
             is.close();
-
-        }
-        catch (UnsupportedEncodingException uex) {
-            throw new RuntimeException(uex);
-        }
-        catch (MalformedURLException mux) {
-            throw new RuntimeException(mux);
-        }
-        catch (IOException iox) {
-            throw new RuntimeException(iox);
+        } catch(ClientHandlerException e) {
+            String errMsg = "Could not communicate with BSP platform to retrieve sample data.";
+            logger.error(errMsg + " at " + urlString, e);
+            throw e;
+        } catch (Exception exp) {
+            logger.error("Exception occurred trying to retrieve BSP sample data  : " + exp.getMessage(), exp);
+            throw new RuntimeException(exp);
+        }  finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) { }
+            }
         }
 
         return ret;
 
     }
 
-    @Override
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
-        BSPSampleSearchColumn [] dummy = new BSPSampleSearchColumn[resultColumns.size()];
-        return runSampleSearch(sampleIDs, resultColumns.toArray(dummy));
-    }
-
-
-    //TODO hmc Fake up a retrieved collection.
-    private Collection<BSPCollection> getFakeCollections() {
-
-        HashSet<BSPCollection> fakeCohorts = new HashSet<BSPCollection>();
-        fakeCohorts.add( new BSPCollection(new BSPCollectionID("12345"), "AlxCollection1"));
-        return fakeCohorts;
-
-    }
+//    @Override
+//    public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
+//        BSPSampleSearchColumn [] dummy = new BSPSampleSearchColumn[resultColumns.size()];
+//        return runSampleSearch(sampleIDs, resultColumns.toArray(dummy));
+//    }
 
 
     private Set<BSPCollection> runCollectionSearch(Person bspUser ) {
@@ -161,63 +149,80 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
         }
 
         HashSet<BSPCollection> usersCohorts = new HashSet<BSPCollection>();
-
         urlString = String.format(urlString, connParams.getHostname(), connParams.getPort(),
                 BSPConnectionParameters.BSP_USERS_COHORT_URL + bspUser.getUsername().trim() );
-        _logger.info(String.format("url string is '%s'", urlString));
-
+        logger.info(String.format("url string is '%s'", urlString));
         WebResource webResource = getJerseyClient().resource(urlString);
 
+        InputStream is = null;
         try {
             ClientResponse clientResponse =
                     webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, urlString);
 
-            InputStream is = clientResponse.getEntityInputStream();
+            is = clientResponse.getEntityInputStream();
             BufferedReader rdr = new BufferedReader(new InputStreamReader(is));
 
-            if (clientResponse.getStatus() / 100 != 2) {
-                _logger.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
-                return usersCohorts;
-                // throw new RuntimeException("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+
+            // Check for 200
+            if (clientResponse.getStatus() != ClientResponse.Status.OK.getStatusCode()) {
+                String errMsg = "Cannot retrieve cohorts from BSP platform for user " + bspUser.getUsername() + ". Received response code : " + clientResponse.getStatus();
+                logger.error(errMsg + " : " + rdr.readLine());
+                throw new RuntimeException(errMsg);
             }
 
-            // skip the header line
+            // Skip the header line.
             rdr.readLine();
             // what should be the first real data line
             String readLine = rdr.readLine();
             while (readLine != null) {
                 String[] rawBSPData = readLine.split("\t", -1);
 
-                //TODO - For now only interested in the first two fields
+                // For now only interested in the first two fields
                 if ( (rawBSPData.length >= 2 ) &&
                         StringUtils.isNotBlank( rawBSPData[0] ) &&
                         StringUtils.isNotBlank( rawBSPData[1]) ) {
-
+                    /* Example record:
+                     * Collection ID Collection Name	          Collection Category Group Name   PI Lastname	PI Firstname Collaborator Lastname	                Collaborator Firstname
+                     * SC-912	      Cell Line Samples - Coriell		              1000 Genomes Gabriel	    Stacey	     Coriell Institute for Medical Research	Institute:
+                     */
                     BSPCollectionID bspCollectionID = new BSPCollectionID(rawBSPData[0]);
                     BSPCollection bspCollection = new BSPCollection ( bspCollectionID, rawBSPData[1] );
                     usersCohorts.add( bspCollection );
                 } else {
-                    _logger.error( "Found a line from BSP Cohort for user " + bspUser.getUsername() + " which had less than two fields of real data <" + readLine  + ">");
+                    logger.error("Found a line from BSP Cohort for user " + bspUser.getUsername() + " which had less than two fields of real data. Ignoring this line  <" + readLine + ">");
                 }
-
                 readLine = rdr.readLine();
             }
             is.close();
-
         } catch(ClientHandlerException e) {
-            String errMsg = "Could not communicate with BSP server for user " +
-                    bspUser.getUsername();
-            _logger.error( errMsg + " at " + urlString );
+            String errMsg = "Could not communicate with BSP platform for user " + bspUser.getUsername();
+            logger.error(errMsg + " at " + urlString, e);
             throw e;
         } catch (Exception exp) {
+            logger.error(exp.getMessage(), exp);
             throw new RuntimeException(exp);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) { }
+            }
         }
-
         return usersCohorts;
     }
 
 
 
+    /* Method to retrieve all of the cohorts associated with a particular BSP user. The available columns of data are
+     * Collection ID
+     * Collection Name
+     * Collection Category
+     * Group Name
+     * PI Lastname
+     * PI Firstname
+     * Collaborator Lastname
+     * Collaborator Firstname
+     */
     @Override
     public Set<BSPCollection> getCohortsByUser(Person bspUser) {
 

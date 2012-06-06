@@ -1,14 +1,6 @@
 package org.broadinstitute.pmbridge.infrastructure.gap;
 
 import org.broadinstitute.pmbridge.DeploymentBuilder;
-import org.broadinstitute.pmbridge.entity.common.Name;
-import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
-import org.broadinstitute.pmbridge.entity.experiments.RemoteId;
-import org.broadinstitute.pmbridge.entity.experiments.gap.GapExperimentRequest;
-import org.broadinstitute.pmbridge.entity.person.Person;
-import org.broadinstitute.pmbridge.entity.person.RoleType;
-import org.broadinstitute.pmbridge.entity.project.PlatformType;
-import org.broadinstitute.pmbridge.infrastructure.quote.*;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -18,7 +10,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.Date;
 
 import static org.broadinstitute.pmbridge.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -80,7 +71,6 @@ public class GenotypingServiceExternalTest extends Arquillian {
 //        Assert.assertNotNull(gapExperimentRequest.getRemoteId());
 //        Assert.assertEquals( gapExperimentRequest.getRemoteId().value, "GXP-10601" );
 //
-//        //TODO check quotes and Product ? ??
 //
 //    }
 
@@ -139,9 +129,6 @@ public class GenotypingServiceExternalTest extends Arquillian {
 //        Assert.assertEquals( savedExperimentRequest.getGapGroupName(), "GapGroup");
 //        Assert.assertEquals( savedExperimentRequest.getGapProjectName(), "GapProject");
 //        Assert.assertEquals( savedExperimentRequest.getTechnologyProduct().getId(), "226");
-//
-//
-//        //TODO  Add Samples to the Gap Experiment Request
 //
 //    }
 

@@ -1,8 +1,6 @@
 package org.broadinstitute.pmbridge.entity.common;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,15 +20,27 @@ public class Id {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-     }
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Id)) return false;
+
+        final Id id = (Id) o;
+
+        if (!value.equals(id.value)) return false;
+
+        return true;
+    }
+
     @Override
     public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this);
+        return value.hashCode();
     }
+
     @Override
     public String toString() {
-        return value;
+        return "Id{" +
+                "value='" + value + '\'' +
+                '}';
     }
+
 }

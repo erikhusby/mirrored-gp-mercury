@@ -6,7 +6,6 @@ import org.testng.annotations.Test;
 import java.util.Collection;
 
 import static org.broadinstitute.pmbridge.TestGroups.UNIT;
-import static org.broadinstitute.pmbridge.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,7 +34,7 @@ public class PriceListCacheTest {
         Assert.assertTrue(priceItems.contains(item2));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = UNIT)
     public void test_gsp_prices() throws Exception {
         PriceListCache cache = new PriceListCache(new MockQuoteServiceImpl().getAllPriceItems());
         Assert.assertFalse(cache.getPlatformPriceList(QuotePlatformType.SEQ.getPlatformName()).isEmpty());

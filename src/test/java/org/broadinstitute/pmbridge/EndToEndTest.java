@@ -29,7 +29,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -56,13 +55,7 @@ public class EndToEndTest extends Arquillian {
     // Just for now can later be replaced by ResearchProjectResource
     @Inject private ResearchProjectDAO researchProjectDAO;
 
-    private static final List<BSPSampleSearchColumn> DefaultMetaDataColumns = new ArrayList<BSPSampleSearchColumn>();
-    static {
-        for ( BSPSampleSearchColumn bspSampleSearchColumn : BSPSampleSearchColumn.values() ) {
-            DefaultMetaDataColumns.add(bspSampleSearchColumn);
-        }
-    }
-
+    private static final BSPSampleSearchColumn[] DefaultMetaDataColumns = BSPSampleSearchColumn.values();
 
     @Inject private SequencingService sequencingService;
 
@@ -164,7 +157,7 @@ public class EndToEndTest extends Arquillian {
     public void testSaveAndRetrieveRequestToGap() throws Exception {
         // A user (logs in) and gets created.
 //        Person programMgr = new Person("shefler@broad", "Erica", "Shefler",  "1", RoleType.PROGRAM_PM );
-        Person programMgr = new Person("pmbridge", RoleType.PROGRAM_PM);
+        Person programMgr = new Person("namrata", RoleType.PROGRAM_PM);
 
         ResearchProject myResearchProject = createTestResearchProject(programMgr);
 
@@ -223,7 +216,7 @@ public class EndToEndTest extends Arquillian {
         Assert.assertEquals( savedExperimentRequest.getGapQuote().getAlphanumericId(), quoteGap.getAlphanumericId() );
 
         // has not been submitted to plaform yet so no platform managers assigned.
-        Assert.assertNull( savedExperimentRequest.getPlatformProjectManagers() );
+        Assert.assertTrue( savedExperimentRequest.getPlatformProjectManagers().size() == 0 );
 
         Assert.assertEquals( savedExperimentRequest.getProgramProjectManagers().iterator().next().getUsername(),
                 programMgr.getUsername() );

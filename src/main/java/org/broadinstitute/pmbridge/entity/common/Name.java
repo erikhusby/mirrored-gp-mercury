@@ -1,9 +1,6 @@
 package org.broadinstitute.pmbridge.entity.common;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,21 +15,33 @@ public class Name {
 
     public Name(String name) {
         if ((name == null ) || StringUtils.isBlank(name)) {
-            throw new IllegalArgumentException("Value for name is invalid. Must be non-null and non-empty.");
+            throw new IllegalArgumentException("Value for name is invalid. Must be non-null and non-empty. Name supplied was : " + name);
         }
         this.name = name;
     }
 
+
     @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj);
-     }
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Name)) return false;
+
+        final Name name1 = (Name) o;
+
+        if (!name.equals(name1.name)) return false;
+
+        return true;
+    }
+
     @Override
     public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this);
+        return name.hashCode();
     }
+
     @Override
     public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+        return "Name{" +
+                "name='" + name + '\'' +
+                '}';
     }
 }

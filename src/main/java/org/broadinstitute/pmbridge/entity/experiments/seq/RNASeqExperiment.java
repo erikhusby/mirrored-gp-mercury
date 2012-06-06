@@ -1,8 +1,5 @@
 package org.broadinstitute.pmbridge.entity.experiments.seq;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 
@@ -36,7 +33,7 @@ public class RNASeqExperiment extends SeqExperimentRequest {
     }
 
     public RNASeqExperiment(final ExperimentRequestSummary experimentRequestSummary, final RNASeqPass rnaSeqPass) {
-        super(experimentRequestSummary, PMBPassType.RNASeq );
+        super(experimentRequestSummary, PassType.RNASEQ );
         this.rnaSeqPass = rnaSeqPass;
     }
 
@@ -57,8 +54,7 @@ public class RNASeqExperiment extends SeqExperimentRequest {
 
     @Override
     public void setAlignerType(final AlignerType alignerType) {
-        //TODO hmc Need to request TopHat be added to the AlignerType.
-        if (AlignerType.MAQ.equals(alignerType) || AlignerType.BWA.equals(alignerType)) {
+        if (! AlignerType.TOPHAT.equals(alignerType) ) {
             throw new IllegalArgumentException(alignerType.toString() + " aligner type no longer supported. Please use TopHat.");
         }
         getOrCreateCoverageAndAnalysisInformation().setAligner( alignerType );
@@ -135,8 +131,8 @@ public class RNASeqExperiment extends SeqExperimentRequest {
         //Set default analysis pipeline
         coverageAndAnalysisInformation.setAnalysisPipeline( AnalysisPipelineType.MPG  );
 
-        //Set default Aligner
-        coverageAndAnalysisInformation.setAligner( AlignerType.BWA );
+        //Set default Aligner for RNASeq
+        coverageAndAnalysisInformation.setAligner( AlignerType.TOPHAT );
 
         //Set remaining defaults
         coverageAndAnalysisInformation.setSamplesPooled(Boolean.FALSE);

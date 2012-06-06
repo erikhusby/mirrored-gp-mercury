@@ -1,6 +1,5 @@
 package org.broadinstitute.pmbridge.entity.experiments.seq;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 /**
