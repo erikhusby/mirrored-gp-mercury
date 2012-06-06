@@ -16,10 +16,13 @@ import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchServiceImpl;
 import org.broadinstitute.pmbridge.infrastructure.gap.GenotypingService;
+import org.broadinstitute.pmbridge.infrastructure.gap.GenotypingServiceImpl;
 import org.broadinstitute.pmbridge.infrastructure.gap.Product;
 import org.broadinstitute.pmbridge.infrastructure.quote.*;
 import org.broadinstitute.pmbridge.infrastructure.squid.SequencingService;
+import org.broadinstitute.pmbridge.infrastructure.squid.SequencingServiceImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -42,30 +45,28 @@ import static org.testng.Assert.fail;
  * Date: 4/12/12
  * Time: 11:26 AM
  */
+@Test(groups = {EXTERNAL_INTEGRATION})
 public class EndToEndTest extends Arquillian {
 
     private static final Logger LOG = Logger.getLogger(EndToEndTest.class);
-
-    @Inject private ResearchProjectResource researchProjectResource;
-
-    @Inject private QuoteService quoteService;
-
-    @Inject private BSPSampleSearchService bspService;
-
-    // Just for now can later be replaced by ResearchProjectResource
-    @Inject private ResearchProjectDAO researchProjectDAO;
-
     private static final BSPSampleSearchColumn[] DefaultMetaDataColumns = BSPSampleSearchColumn.values();
 
+    @Inject private ResearchProjectResource researchProjectResource;
+    // Just for now can later be replaced by ResearchProjectResource
+    @Inject private ResearchProjectDAO researchProjectDAO;
+    @Inject private BSPSampleSearchService bspService;
     @Inject private SequencingService sequencingService;
-
-
     @Inject private GenotypingService genotypingService;
-
+    @Inject private QuoteService quoteService;
 
     @Deployment
     public static WebArchive buildBridgeWar() {
-        WebArchive war = DeploymentBuilder.buildBridgeWar();
+//        WebArchive war = DeploymentBuilder.buildBridgeWar();
+       WebArchive war = DeploymentBuilder.buildBridgeWarWithAlternatives(
+               SequencingServiceImpl.class,
+               GenotypingServiceImpl.class,
+               BSPSampleSearchServiceImpl.class
+               );
         return war;
     }
 
@@ -73,7 +74,7 @@ public class EndToEndTest extends Arquillian {
     private void init() throws MalformedURLException {
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test
     public void testCreateResearchProjectWithSeqExperiment() throws Exception {
 
         // A user (logs in) and gets created.
@@ -153,7 +154,7 @@ public class EndToEndTest extends Arquillian {
 
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test
     public void testSaveAndRetrieveRequestToGap() throws Exception {
         // A user (logs in) and gets created.
 //        Person programMgr = new Person("shefler@broad", "Erica", "Shefler",  "1", RoleType.PROGRAM_PM );
@@ -298,10 +299,5 @@ public class EndToEndTest extends Arquillian {
         }
     }
 
-
-//    @Test
-//    public void testGettersSetters() throws Exception {
-//
-//    }
 
 }

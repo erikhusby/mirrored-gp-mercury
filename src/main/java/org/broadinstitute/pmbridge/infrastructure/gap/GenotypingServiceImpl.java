@@ -21,7 +21,7 @@ import org.broadinstitute.pmbridge.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.pmbridge.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.pmbridge.infrastructure.quote.QuoteService;
 
-import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
  * Date: 5/22/12
  * Time: 12:27 PM
  */
-@Default
+@Alternative
 public class GenotypingServiceImpl  extends AbstractJerseyClientService implements GenotypingService {
 
     private org.apache.commons.logging.Log logger = LogFactory.getLog(GenotypingServiceImpl.class);

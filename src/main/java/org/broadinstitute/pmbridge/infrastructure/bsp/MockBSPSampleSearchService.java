@@ -7,7 +7,7 @@ import org.broadinstitute.pmbridge.entity.bsp.BSPCollection;
 import org.broadinstitute.pmbridge.entity.bsp.BSPCollectionID;
 import org.broadinstitute.pmbridge.entity.person.Person;
 
-import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Default;
 import java.util.*;
 
 /**
@@ -16,7 +16,7 @@ import java.util.*;
  * Date: 6/6/12
  * Time: 10:01 AM
  */
-@Alternative
+@Default
 public class MockBSPSampleSearchService implements BSPSampleSearchService  {
 
     private static Log logger = LogFactory.getLog(MockBSPSampleSearchService.class);

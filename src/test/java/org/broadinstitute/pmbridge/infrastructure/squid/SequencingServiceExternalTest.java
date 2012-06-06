@@ -33,7 +33,10 @@ public class SequencingServiceExternalTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildBridgeWar() {
-        WebArchive war = DeploymentBuilder.buildBridgeWar();
+//        WebArchive war = DeploymentBuilder.buildBridgeWar();
+        WebArchive war = DeploymentBuilder.buildBridgeWarWithAlternatives(
+                SequencingServiceImpl.class
+        );
         return war;
     }
 

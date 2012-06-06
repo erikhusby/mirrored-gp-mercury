@@ -14,7 +14,7 @@ import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.broadinstitute.pmbridge.infrastructure.SubmissionException;
 import org.broadinstitute.pmbridge.infrastructure.ValidationException;
 
-import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  * Date: 5/1/12
  * Time: 12:58 PM
  */
-@Default
+@Alternative
 public class SequencingServiceImpl implements SequencingService {
 
     private org.apache.commons.logging.Log logger = LogFactory.getLog(SequencingServiceImpl.class);

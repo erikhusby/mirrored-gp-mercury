@@ -8,9 +8,10 @@ import java.util.HashSet;
 import java.util.Set;
 import static org.broadinstitute.pmbridge.TestGroups.EXTERNAL_INTEGRATION;
 
+@Test(groups = {EXTERNAL_INTEGRATION})
 public class QuoteServiceTest {
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test
     public void test_get_a_quote() throws Exception {
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
         Quote quote = service.getQuoteByAlphaId("DNA3CD");
@@ -28,7 +29,7 @@ public class QuoteServiceTest {
 
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test(enabled = false)
     public void test_get_all_quotes_for_sequencing() throws Exception {
 
         QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());

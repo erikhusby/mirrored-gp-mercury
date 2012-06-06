@@ -13,7 +13,7 @@ import org.broadinstitute.pmbridge.entity.bsp.BSPCollection;
 import org.broadinstitute.pmbridge.entity.bsp.BSPCollectionID;
 import org.broadinstitute.pmbridge.entity.person.Person;
 
-import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
@@ -23,7 +23,7 @@ import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.util.*;
 
-@Default
+@Alternative
 public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
 
 
@@ -32,8 +32,9 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     @Inject
     private BSPConnectionParameters connParams;
 
-
-    public BSPSampleSearchServiceImpl() {
+    @Inject
+    public BSPSampleSearchServiceImpl(BSPConnectionParameters connParams) {
+        this.connParams = connParams;
     }
 
     @Override

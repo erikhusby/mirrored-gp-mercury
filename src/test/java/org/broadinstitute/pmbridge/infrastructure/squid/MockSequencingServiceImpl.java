@@ -9,7 +9,7 @@ import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.infrastructure.SubmissionException;
 import org.broadinstitute.pmbridge.infrastructure.ValidationException;
 
-import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Default;
 import java.util.List;
 
 /**
@@ -18,7 +18,7 @@ import java.util.List;
  * Date: 5/11/12
  * Time: 1:54 PM
  */
-@Alternative
+@Default
 public class MockSequencingServiceImpl implements  SequencingService {
 
     @Override

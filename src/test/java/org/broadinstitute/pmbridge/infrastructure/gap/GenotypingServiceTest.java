@@ -1,9 +1,11 @@
 package org.broadinstitute.pmbridge.infrastructure.gap;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
+import static org.broadinstitute.pmbridge.TestGroups.UNIT;
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,11 +13,22 @@ import javax.inject.Inject;
  * Date: 5/29/12
  * Time: 3:13 PM
  */
+@Test(groups = {UNIT})
 public class GenotypingServiceTest {
 
-
-    @Inject
     GenotypingService genotypingService;
+
+    public GenotypingServiceTest() {
+    }
+
+    @BeforeMethod
+    public void setUp() throws Exception {
+        genotypingService = new MockGenotypingService();
+    }
+
+    @AfterMethod
+    public void tearDown() throws Exception {
+    }
 
     @Test
     public void testGetPlatformRequest() throws Exception {

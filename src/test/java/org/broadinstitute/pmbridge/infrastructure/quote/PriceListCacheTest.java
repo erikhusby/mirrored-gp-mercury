@@ -41,7 +41,7 @@ public class PriceListCacheTest {
 
         for (PriceItem priceItem : cache.getPlatformPriceList(QuotePlatformType.SEQ.getPlatformName()) ) {
             Assert.assertTrue(QuotePlatformType.SEQ.getPlatformName().equalsIgnoreCase(priceItem.getPlatform()));
-            System.out.println(priceItem.getName());
+//            System.out.println(priceItem.getName());
         }
     }
 }

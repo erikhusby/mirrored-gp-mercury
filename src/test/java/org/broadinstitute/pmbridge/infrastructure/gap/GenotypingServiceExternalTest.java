@@ -35,7 +35,10 @@ public class GenotypingServiceExternalTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildBridgeWar() {
-        WebArchive war = DeploymentBuilder.buildBridgeWar();
+//        WebArchive war = DeploymentBuilder.buildBridgeWar();
+        WebArchive war = DeploymentBuilder.buildBridgeWarWithAlternatives(
+                GenotypingServiceImpl.class
+        );
         return war;
     }
 
