@@ -7,6 +7,7 @@ import org.broadinstitute.sequel.presentation.AbstractJsfBean;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
+import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -33,11 +34,24 @@ public class PassDashboard extends AbstractJsfBean {
     private final int PASS_NUMBER_OFFSET = "PASS-".length();
 
 
+    private boolean onlyMine;
+
+    // TODO build Squid WS to return this stuff.  The methods to do this already exist, they just need WS wrappers
+    private boolean onlyActive;
+
 
     public List<SummarizedPass> getPassList() {
         if (passes == null) {
-            log.info("Loading all PASSes...");
-            passes = service.searchPasses().getSummarizedPassList();
+
+            log.info("Loading PASSes with onlyMine = " + onlyMine);
+
+            if ( ! onlyMine )
+                passes = service.searchPasses().getSummarizedPassList();
+            else if ( ! onlyActive )
+                // TODO mlc figure out how to get the logged in user
+                passes = service.searchPassesByCreator("mcovarr").getSummarizedPassList();
+
+
         }
         return passes;
     }
@@ -71,6 +85,40 @@ public class PassDashboard extends AbstractJsfBean {
 
     public String format(Calendar calendar) {
         return dateFormat.format(calendar.getTime());
+    }
+
+    public boolean isOnlyMine() {
+        return onlyMine;
+    }
+
+    public void setOnlyMine(boolean onlyMine) {
+        this.onlyMine = onlyMine;
+    }
+
+    public boolean isOnlyActive() {
+        return onlyActive;
+    }
+
+    public void setOnlyActive(boolean onlyActive) {
+        this.onlyActive = onlyActive;
+    }
+
+
+    private void issueSummarizedPassReload() {
+        passes = null;
+
+    }
+
+
+    public void onOnlyMine(AjaxBehaviorEvent event) {
+        onlyMine = !onlyMine;
+        issueSummarizedPassReload();
+    }
+
+
+    public void onOnlyActive(AjaxBehaviorEvent event) {
+        onlyActive = !onlyActive;
+        issueSummarizedPassReload();
     }
 
 }
