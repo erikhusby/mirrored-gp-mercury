@@ -138,7 +138,62 @@ public enum LabEventType {
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     FLUIDIGM_HARVESTING_TO_RACK ("FluidigmHarvestingToRack", true, false,
-            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA);
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_INITIAL_SHEARING_TRANSFER("JumpInitialShearingTransfer", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_INITIAL_SIZE_SELECTION("JumpInitialSizeSelection", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_END_REPAIR_1_CLEANUP("JumpEndRepair1Cleanup", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_CIRCULARIZATION_SETUP("JumpCircularizationSetup", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_EXO_INACTIVATION("JumpExoInactivation", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_POST_CIRC_SIZE_SELECTION("JumpPostCircSizeSelection", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_IMMOBILIZATION_WASH("JumpImmobilizationWash", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_END_REPAIR_2("JumpEndRepair2", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_END_REPAIR_2_WASH("JumpEndRepair2Wash", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_A_TAILING("JumpATailing", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_A_TAILING_WASH("JumpATailingWash", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_ADD_INDEX("JumpAddIndex", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_ADAPTER_LIGATION("JumpAdapterLigation", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_ADAPTER_LIGATION_WASH("JumpAdapterLigationWash", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_AMPLIFICATION("JumpAmplification", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_FINAL_LIBRARY_ELUTION("JumpFinalLibraryElution", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_FINAL_LIBRARY_SIZE_SELECTION("JumpFinalLibrarySizeSelection", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_ENRICHED_LIBRARY_REGISTRATION("JumpEnrichedLibraryRegistration", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+    ;
 
     private final String name;
 
