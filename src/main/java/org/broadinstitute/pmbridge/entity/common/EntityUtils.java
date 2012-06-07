@@ -66,5 +66,11 @@ public class EntityUtils {
         return personSet;
     }
 
+//    protected void throwIntegerTooSmallRuntimeException(BigInteger invalidValue, BigInteger validLowestValue) {
+//        String invalidVal = ( invalidValue != null ) ? "" + invalidValue.intValue() : "null";
+//        throw new IllegalArgumentException("Invalid value " + invalidVal + " " +
+//                        "Valid values are any integer greater or equal to " + validLowestValue.intValue());
+//    }
+
 
 }

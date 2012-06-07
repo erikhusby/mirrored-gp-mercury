@@ -4,6 +4,7 @@ import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -17,6 +18,7 @@ public class WholeGenomeExperiment extends SeqExperimentRequest {
 
     private final WholeGenomePass wholeGenomePass;
     public static final CoverageModelType DEFAULT_COVERAGE_MODEL = CoverageModelType.LANES;
+    public static final BigInteger MINIMUM_WGS_DEPTH = BigInteger.ZERO;
 
     private static Set<CoverageModelType> coverageModelTypes =
             EnumSet.of(CoverageModelType.LANES, CoverageModelType.DEPTH );
@@ -90,6 +92,29 @@ public class WholeGenomeExperiment extends SeqExperimentRequest {
     }
 
 
+    @Override
+    protected void setSeqCoverageModel(final SeqCoverageModel seqCoverageModel) {
+
+        if ( (seqCoverageModel != null) && getCoverageModelTypes().contains( seqCoverageModel.getConcreteModelType()) ) {
+
+            // Explicit check for depth value for WholeGenomeExperiment
+            if (CoverageModelType.DEPTH.equals( seqCoverageModel.getConcreteModelType()) ) {
+                DepthCoverageModel depthCoverageModel = (DepthCoverageModel) seqCoverageModel;
+
+                // If MINIMUM_WGS_DEPTH is numerically greater than the non-null depth arg then throw an exception.
+                if ( depthCoverageModel.getCoverageDesired() != null  &&
+                        ((MINIMUM_WGS_DEPTH.compareTo(depthCoverageModel.getCoverageDesired()) > 0 ) ) ) {
+                    String invalidVal = ( depthCoverageModel.getCoverageDesired() != null ) ? "" +
+                            depthCoverageModel.getCoverageDesired().intValue() : "null";
+                    throw new IllegalArgumentException("Invalid value " + invalidVal + " - " +
+                                    "Valid depth is any integer greater or equal to " + MINIMUM_WGS_DEPTH.intValue());
+                }
+            }
+            this.seqCoverageModel = seqCoverageModel;
+        } else {
+            throwInvalidCoverageRuntimeException(seqCoverageModel.getConcreteModelType());
+        }
+    }
 
     @Override
     public boolean equals(final Object o) {

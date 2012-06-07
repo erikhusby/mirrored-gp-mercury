@@ -33,6 +33,10 @@ public class TargetCoverageModel extends SeqCoverageModel {
     }
 
     public void setPercent(final BigInteger percent) {
+        // Check if percent is greater than or equal to 0   AND is percent is less than or equal to 100.
+        if (! ((BigInteger.ZERO.compareTo(percent) >= 0 ) && (BigInteger.TEN.multiply(BigInteger.TEN).compareTo(percent) <= 0)) ){
+            throw new IllegalArgumentException("percentage must be an integer between 0 and 100." );
+        }
         this.targetCoverageModel.setCoveragePercentage( percent );
     }
 

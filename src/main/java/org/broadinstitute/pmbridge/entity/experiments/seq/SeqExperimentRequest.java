@@ -72,18 +72,8 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
     public abstract Set<CoverageModelType> getCoverageModelTypes();
 
+    protected abstract void  setSeqCoverageModel(final SeqCoverageModel seqCoverageModel);
 
-    public void setSeqCoverageModel(final SeqCoverageModel seqCoverageModel) {
-        if ( getCoverageModelTypes().contains( seqCoverageModel.getConcreteModelType()) ) {
-            this.seqCoverageModel = seqCoverageModel;
-        } else {
-            StringBuilder msg = new StringBuilder( this.getClass().getSimpleName()  +  " Experiment only supports :" );
-            for ( CoverageModelType coverageModelType : getCoverageModelTypes() ) {
-                msg.append( " ").append( coverageModelType.getFullName() );
-            }
-            throw new RuntimeException(msg.toString());
-        }
-    }
 
     protected abstract CoverageAndAnalysisInformation createDefaultCoverageModel();
 
@@ -508,6 +498,18 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
                 '}';
     }
 
+    protected void throwInvalidCoverageRuntimeException(CoverageModelType illegalCoverageModelType) {
+        String invalidVal = ( illegalCoverageModelType != null ) ? illegalCoverageModelType.name() : "null";
+        StringBuilder msg = new StringBuilder( "Invalid coverage type " + invalidVal + ". " +
+                "Valid coverage models are :" );
+        int i=0;
+        for ( CoverageModelType coverageModelType : getCoverageModelTypes() ) {
+            if (i>0) { msg.append(","); };
+            msg.append(" ").append( coverageModelType.getFullName() );
+            i++;
+        }
+        throw new IllegalArgumentException(msg.toString());
+    }
 
 }
 

@@ -10,10 +10,12 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigInteger;
 import java.util.Date;
 import java.util.Set;
 
 import static org.broadinstitute.pmbridge.TestGroups.UNIT;
+import static org.testng.Assert.fail;
 
 /**
  * Created by IntelliJ IDEA.
@@ -52,6 +54,26 @@ public class HybridSelectionExperimentTest {
         Assert.assertTrue(coverageModelTypeSet.contains(CoverageModelType.LANES));
         Assert.assertTrue( coverageModelTypeSet.contains( CoverageModelType.TARGETCOVERAGE) );
         Assert.assertTrue( coverageModelTypeSet.contains( CoverageModelType.MEANTARGETCOVERAGE) );
+
+        {
+            try {
+                SeqCoverageModel seqCoverageModel = new DepthCoverageModel(BigInteger.ZERO);
+                hybridSelectionExperiment.setSeqCoverageModel( seqCoverageModel );
+                fail("Should be invalid coverage type");
+            } catch (Exception exp ) {
+                //Should throw exception
+            }
+        }
+        {
+            try {
+                SeqCoverageModel seqCoverageModel = new PFReadsCoverageModel(BigInteger.ZERO);
+                hybridSelectionExperiment.setSeqCoverageModel( seqCoverageModel );
+                fail("Should be invalid coverage type");
+            } catch (Exception exp ) {
+               //Should throw exception
+            }
+        }
+
 
     }
 

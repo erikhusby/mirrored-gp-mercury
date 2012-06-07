@@ -1,7 +1,10 @@
 package org.broadinstitute.pmbridge.entity.experiments.seq;
 
 import junit.framework.Assert;
-import org.broad.squid.services.TopicService.*;
+import org.broad.squid.services.TopicService.AlignerType;
+import org.broad.squid.services.TopicService.CoverageAndAnalysisInformation;
+import org.broad.squid.services.TopicService.RNASeqPass;
+import org.broad.squid.services.TopicService.RNASeqProtocolType;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
@@ -14,6 +17,7 @@ import java.util.Date;
 import java.util.Set;
 
 import static org.broadinstitute.pmbridge.TestGroups.UNIT;
+import static org.testng.Assert.fail;
 
 /**
  * Created by IntelliJ IDEA.
@@ -51,6 +55,33 @@ public class RNASeqExperimentTest {
         Assert.assertEquals(coverageModelTypeSet.size(), 2);
         Assert.assertTrue(coverageModelTypeSet.contains(CoverageModelType.LANES));
         Assert.assertTrue(coverageModelTypeSet.contains(CoverageModelType.PFREADS));
+        {
+            try {
+                SeqCoverageModel seqCoverageModel = new DepthCoverageModel();
+                rnaSeqExperiment.setSeqCoverageModel( seqCoverageModel );
+                fail("Should be invalid coverage type");
+            } catch (Exception exp ) {
+                //Should throw exception
+            }
+        }
+        {
+            try {
+                SeqCoverageModel seqCoverageModel = new MeanTargetCoverageModel();
+                rnaSeqExperiment.setSeqCoverageModel( seqCoverageModel );
+                fail("Should be invalid coverage type");
+            } catch (Exception exp ) {
+               //Should throw exception
+            }
+        }
+        {
+            try {
+                SeqCoverageModel seqCoverageModel = new TargetCoverageModel();
+                rnaSeqExperiment.setSeqCoverageModel( seqCoverageModel );
+                fail("Should be invalid coverage type");
+            } catch (Exception exp ) {
+               //Should throw exception
+            }
+        }
 
     }
 

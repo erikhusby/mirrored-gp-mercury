@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.Set;
 
 import static org.broadinstitute.pmbridge.TestGroups.UNIT;
+import static org.testng.Assert.fail;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,6 +50,35 @@ public class WholeGenomeExperimentTest {
         Set<CoverageModelType> coverageModelTypeSet = wholeGenomeExperiment.getCoverageModelTypes();
         Assert.assertNotNull(coverageModelTypeSet);
         Assert.assertEquals( coverageModelTypeSet.size(), 2 );
+        Assert.assertTrue(coverageModelTypeSet.contains(CoverageModelType.LANES));
+        Assert.assertTrue(coverageModelTypeSet.contains(CoverageModelType.DEPTH));
+        {
+            try {
+                SeqCoverageModel seqCoverageModel = new PFReadsCoverageModel();
+                wholeGenomeExperiment.setSeqCoverageModel( seqCoverageModel );
+                fail("Should be invalid coverage type");
+            } catch (Exception exp ) {
+                //Should throw exception
+            }
+        }
+        {
+            try {
+                SeqCoverageModel seqCoverageModel = new MeanTargetCoverageModel();
+                wholeGenomeExperiment.setSeqCoverageModel( seqCoverageModel );
+                fail("Should be invalid coverage type");
+            } catch (Exception exp ) {
+               //Should throw exception
+            }
+        }
+        {
+            try {
+                SeqCoverageModel seqCoverageModel = new TargetCoverageModel();
+                wholeGenomeExperiment.setSeqCoverageModel( seqCoverageModel );
+                fail("Should be invalid coverage type");
+            } catch (Exception exp ) {
+               //Should throw exception
+            }
+        }
     }
 
     @Test
@@ -87,7 +117,6 @@ public class WholeGenomeExperimentTest {
         Assert.assertEquals( wholeGenomeExperiment , wholeGenomeExperiment2 );
 
         Assert.assertEquals( wholeGenomeExperiment , wholeGenomeExperiment2 );
-
 
         Assert.assertFalse(wholeGenomeExperiment2.equals(""));
 

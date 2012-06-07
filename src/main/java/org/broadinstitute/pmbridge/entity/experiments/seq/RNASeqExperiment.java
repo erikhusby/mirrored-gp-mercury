@@ -4,6 +4,7 @@ import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -16,6 +17,7 @@ import java.util.Set;
 public class RNASeqExperiment extends SeqExperimentRequest {
 
     private final RNASeqPass rnaSeqPass;
+    public static final BigInteger MINIMUM_RNA_PFREADS = BigInteger.ONE;
     public static final RNASeqProtocolType DEFAULT_RNA_PROTOCOL = RNASeqProtocolType.TRU_SEQ;
     public static final CoverageModelType DEFAULT_COVERAGE_MODEL = CoverageModelType.LANES;
     public static final Long DEFAULT_REFERENCE_SEQUENCE_ID = new Long(-1);
@@ -141,6 +143,34 @@ public class RNASeqExperiment extends SeqExperimentRequest {
         coverageAndAnalysisInformation.setReferenceSequenceId( -1 );
 
         return coverageAndAnalysisInformation;
+    }
+
+    @Override
+    protected void setSeqCoverageModel(final SeqCoverageModel seqCoverageModel) {
+
+        if ( (seqCoverageModel == null) || (seqCoverageModel.getConcreteModelType() == null) ) {
+            throwInvalidCoverageRuntimeException( null );
+        }
+
+        if ( getCoverageModelTypes().contains( seqCoverageModel.getConcreteModelType()) ) {
+
+            // Explicit check for depth value for WholeGenomeExperiment
+            if (CoverageModelType.PFREADS.equals( seqCoverageModel.getConcreteModelType()) ) {
+                PFReadsCoverageModel pfReadsCoverageModel = (PFReadsCoverageModel) seqCoverageModel;
+
+                // If MINIMUM_RNA_PFREADS is numerically greater than the non-null reads arg then throw an exception.
+                if ( pfReadsCoverageModel.getReadsDesired() != null  &&
+                        ((MINIMUM_RNA_PFREADS.compareTo(pfReadsCoverageModel.getReadsDesired()) > 0 ) ) ) {
+                    String invalidVal = ( pfReadsCoverageModel.getReadsDesired() != null ) ? "" +
+                            pfReadsCoverageModel.getReadsDesired().intValue() : "null";
+                    throw new IllegalArgumentException("Invalid value " + invalidVal + " - " +
+                                    "Valid pfread values is any integer greater or equal to " + MINIMUM_RNA_PFREADS.intValue());
+                }
+            }
+            this.seqCoverageModel = seqCoverageModel;
+        } else {
+            throwInvalidCoverageRuntimeException(seqCoverageModel.getConcreteModelType());
+        }
     }
 
 

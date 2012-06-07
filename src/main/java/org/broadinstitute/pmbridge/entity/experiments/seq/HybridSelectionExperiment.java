@@ -5,7 +5,9 @@ import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -24,6 +26,13 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
     private static Set<CoverageModelType> coverageModelTypes =
             EnumSet.of(CoverageModelType.LANES, CoverageModelType.TARGETCOVERAGE, CoverageModelType.MEANTARGETCOVERAGE);
 
+    private static final HashSet<BigInteger> supportedDepths = new HashSet<BigInteger>();
+    static {
+        supportedDepths.add( new BigInteger("2") );
+        supportedDepths.add( BigInteger.TEN );
+        supportedDepths.add( new BigInteger("20") );
+        supportedDepths.add( new BigInteger("30") );
+    }
 
     public HybridSelectionExperiment(final ExperimentRequestSummary experimentRequestSummary ) {
         this(experimentRequestSummary, new DirectedPass());
@@ -106,6 +115,37 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
         return coverageAndAnalysisInformation;
     }
 
+
+    @Override
+    protected void setSeqCoverageModel(final SeqCoverageModel seqCoverageModel) {
+
+        if ( (seqCoverageModel != null) && getCoverageModelTypes().contains( seqCoverageModel.getConcreteModelType()) ) {
+
+            // Explicit check for depths values specific to HybridSelection
+            if ( CoverageModelType.DEPTH.equals( seqCoverageModel.getConcreteModelType()) ) {
+                TargetCoverageModel targetCoverageModel = (TargetCoverageModel) seqCoverageModel;
+                if (! supportedDepths.contains( targetCoverageModel.getDepth()) ) {
+                    throwInvalidDepthException( targetCoverageModel.getDepth() );
+                }
+            }
+            this.seqCoverageModel = seqCoverageModel;
+        } else {
+            throwInvalidCoverageRuntimeException(seqCoverageModel.getConcreteModelType());
+        }
+    }
+
+
+
+
+    private void throwInvalidDepthException(BigInteger depth) {
+        String invalidVal = ( depth != null ) ? "" + depth.intValue() : "null";
+        StringBuilder msg = new StringBuilder( "Invalid depth " + invalidVal + " - " +
+                "Valid depths for HybridSelection are :" );
+        for ( BigInteger supportedDepth : supportedDepths ) {
+            msg.append(" ").append( supportedDepth.intValue() );
+        }
+        throw new IllegalArgumentException(msg.toString());
+    }
 
     @Override
     public boolean equals(final Object o) {

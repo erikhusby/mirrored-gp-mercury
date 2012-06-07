@@ -11,7 +11,8 @@ import java.math.BigInteger;
 public class PFReadsCoverageModel extends SeqCoverageModel{
 
     private final org.broad.squid.services.TopicService.PFReadsCoverageModel pfReadsCoverageModel;
-    public final static BigInteger DEFAULT_READS = BigInteger.ZERO;
+    public final static BigInteger DEFAULT_READS = BigInteger.ONE;
+    public final static BigInteger MINIMUM_READS = DEFAULT_READS;
 
     public PFReadsCoverageModel() {
         this(DEFAULT_READS);
@@ -31,6 +32,14 @@ public class PFReadsCoverageModel extends SeqCoverageModel{
     }
 
     public void setReadsDesired(final BigInteger readsDesired) {
+
+        // If MINIMUM_READS is numerically greater than the non-null reads arg then throw an exception.
+        if ( readsDesired != null  &&
+                ((MINIMUM_READS.compareTo(readsDesired) > 0 ) ) ) {
+            String invalidVal = ( readsDesired != null ) ? "" + readsDesired.intValue() : "null";
+            throw new IllegalArgumentException("Invalid pfread value " + invalidVal + " " +
+                            "Valid values are any integer greater or equal to " + MINIMUM_READS.intValue() );
+        }
         this.pfReadsCoverageModel.setReadsDesired(readsDesired);
     }
 
