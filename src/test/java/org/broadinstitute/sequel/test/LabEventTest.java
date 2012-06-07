@@ -295,13 +295,16 @@ public class LabEventTest {
         labEventFactory.setPersonDAO(new PersonDAO());
         LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
         BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke();
-        FluidigmMessages fluidigmMessages = new FluidigmMessages("", bettaLimsMessageFactory, labEventFactory,
+        FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageFactory, labEventFactory,
                 labEventHandler, mapBarcodeToTube, buildIndexPlate.getIndexPlate());
-        fluidigmMessages.buildJaxb();
-        fluidigmMessages.buildObjectGraph();
+        fluidigmMessagesBuilder.buildJaxb();
+        fluidigmMessagesBuilder.buildObjectGraph();
     }
 
-    private static class FluidigmMessages {
+    /**
+     * Builds entity graph for Fluidigm events
+     */
+    private static class FluidigmMessagesBuilder {
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final LabEventFactory labEventFactory;
         private final LabEventHandler labEventHandler;
@@ -318,7 +321,7 @@ public class LabEventTest {
         private String harvestRackBarcode;
         private final Map<String, TwoDBarcodedTube> mapBarcodeToHarvestTube = new HashMap<String, TwoDBarcodedTube>();
 
-        private FluidigmMessages(String testPrefix, BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
+        private FluidigmMessagesBuilder(String testPrefix, BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
                 LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube, StaticPlate indexPlate) {
             this.testPrefix = testPrefix;
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
@@ -867,6 +870,9 @@ public class LabEventTest {
         }
     }
 
+    /**
+     * Builds a plate of molecular indexes
+     */
     public static class BuildIndexPlate {
         private final String indexPlateBarcode;
         private StaticPlate indexPlate;
