@@ -30,15 +30,15 @@
                 <h:panelGrid columns="2">
 
                     <h:panelGrid columns="2">
-                        <p:selectBooleanCheckbox value="#{passDashboard.onlyMine}">
-                            <f:ajax event="click" listener="#{passDashboard.onOnlyMine}" render="dataTable" />
+                        <p:selectBooleanCheckbox value="#{passDashboard.onlyMine}" >
+                            <p:ajax event="click" listener="#{passDashboard.onOnlyMine}" update="dataTable" global="true"/>
                         </p:selectBooleanCheckbox>
                         <h:outputText value="Only mine" />
                     </h:panelGrid>
 
                     <h:panelGrid columns="2">
                         <p:selectBooleanCheckbox value="#{passDashboard.onlyActive}" disabled="true">
-                            <f:ajax event="click" listener="#{passDashboard.onOnlyActive}" render="dataTable" />
+                            <p:ajax event="click" listener="#{passDashboard.onOnlyActive}" update="dataTable" global="true"/>
                         </p:selectBooleanCheckbox>
                         <h:outputText value="Only active" />
                     </h:panelGrid>
