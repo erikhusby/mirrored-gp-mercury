@@ -17,7 +17,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
- * A factory for BettaLIMSMessage JAXB beans
+ * This class is a factory for BettaLIMSMessage JAXB objects.  It is intended to facilitate building messages in test cases.
  */
 public class BettaLimsMessageFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;

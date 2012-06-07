@@ -2,7 +2,6 @@ package org.broadinstitute.sequel.boundary.labevent;
 
 //import com.jprofiler.api.agent.Controller;
 import com.sun.jersey.api.client.Client;
-import org.apache.commons.io.FileUtils;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.test.LabEventTest;
 import org.broadinstitute.sequel.TestGroups;
@@ -34,9 +33,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -101,17 +98,17 @@ public class BettalimsMessageResourceTest extends ContainerTest {
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
 
-        LabEventTest.PreFlightJaxb preFlightJaxb = new LabEventTest.PreFlightJaxb(bettaLimsMessageFactory, testPrefix,
+        LabEventTest.PreFlightJaxbBuilder preFlightJaxbBuilder = new LabEventTest.PreFlightJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 new ArrayList<String>(mapBarcodeToTube.keySet())).invoke();
-        for (BettaLIMSMessage bettaLIMSMessage : preFlightJaxb.getMessageList()) {
+        for (BettaLIMSMessage bettaLIMSMessage : preFlightJaxbBuilder.getMessageList()) {
             bettalimsMessageResource.processMessage(bettaLIMSMessage);
             twoDBarcodedTubeDAO.flush();
             twoDBarcodedTubeDAO.clear();
         }
 
-        LabEventTest.ShearingJaxb shearingJaxb = new LabEventTest.ShearingJaxb(bettaLimsMessageFactory,
-                new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, preFlightJaxb.getRackBarcode()).invoke();
-        for (BettaLIMSMessage bettaLIMSMessage : shearingJaxb.getMessageList()) {
+        LabEventTest.ShearingJaxbBuilder shearingJaxbBuilder = new LabEventTest.ShearingJaxbBuilder(bettaLimsMessageFactory,
+                new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, preFlightJaxbBuilder.getRackBarcode()).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
             bettalimsMessageResource.processMessage(bettaLIMSMessage);
             twoDBarcodedTubeDAO.flush();
             twoDBarcodedTubeDAO.clear();
@@ -126,30 +123,30 @@ public class BettalimsMessageResourceTest extends ContainerTest {
             staticPlateDAO.flush();
             staticPlateDAO.clear();
         }
-        LabEventTest.LibraryConstructionJaxb libraryConstructionJaxb = new LabEventTest.LibraryConstructionJaxb(
-                bettaLimsMessageFactory, testPrefix, shearingJaxb.getShearCleanPlateBarcode(), indexPlate.getLabel()).invoke();
+        LabEventTest.LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LabEventTest.LibraryConstructionJaxbBuilder(
+                bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(), indexPlate.getLabel()).invoke();
 
-        for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxb.getMessageList()) {
+        for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             bettalimsMessageResource.processMessage(bettaLIMSMessage);
             twoDBarcodedTubeDAO.flush();
             twoDBarcodedTubeDAO.clear();
         }
 
-        LabEventTest.HybridSelectionJaxb hybridSelectionJaxb = new LabEventTest.HybridSelectionJaxb(bettaLimsMessageFactory,
-                testPrefix, libraryConstructionJaxb.getPondRegRackBarcode(),
-                libraryConstructionJaxb.getPondRegTubeBarcodes()).invoke();
-        twoDBarcodedTubeDAO.persist(LabEventTest.buildBaitTube(hybridSelectionJaxb.getBaitTubeBarcode()));
+        LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new LabEventTest.HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
+                testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
+                libraryConstructionJaxbBuilder.getPondRegTubeBarcodes()).invoke();
+        twoDBarcodedTubeDAO.persist(LabEventTest.buildBaitTube(hybridSelectionJaxbBuilder.getBaitTubeBarcode()));
         twoDBarcodedTubeDAO.flush();
         twoDBarcodedTubeDAO.clear();
-        for (BettaLIMSMessage bettaLIMSMessage : hybridSelectionJaxb.getMessageList()) {
+        for (BettaLIMSMessage bettaLIMSMessage : hybridSelectionJaxbBuilder.getMessageList()) {
             bettalimsMessageResource.processMessage(bettaLIMSMessage);
             twoDBarcodedTubeDAO.flush();
             twoDBarcodedTubeDAO.clear();
         }
 
-        LabEventTest.QtpJaxb qtpJaxb = new LabEventTest.QtpJaxb(bettaLimsMessageFactory, testPrefix,
-                hybridSelectionJaxb.getNormCatchBarcodes(), hybridSelectionJaxb.getNormCatchRackBarcode()).invoke();
-        for (BettaLIMSMessage bettaLIMSMessage : qtpJaxb.getMessageList()) {
+        LabEventTest.QtpJaxbBuilder qtpJaxbBuilder = new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
+                hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode()).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             bettalimsMessageResource.processMessage(bettaLIMSMessage);
             twoDBarcodedTubeDAO.flush();
             twoDBarcodedTubeDAO.clear();
@@ -158,7 +155,7 @@ public class BettalimsMessageResourceTest extends ContainerTest {
 
         String runName = "TestRun" + testPrefix;
         IlluminaSequencingRun illuminaSequencingRun = new IlluminaSequencingRun(
-                illuminaFlowcellDao.findByBarcode(qtpJaxb.getFlowcellBarcode()), runName, runName, "SL-HAL", null, false);
+                illuminaFlowcellDao.findByBarcode(qtpJaxbBuilder.getFlowcellBarcode()), runName, runName, "SL-HAL", null, false);
         illuminaSequencingRunDao.persist(illuminaSequencingRun);
         illuminaSequencingRunDao.flush();
         System.out.println("Test run name " + runName);
