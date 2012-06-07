@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.presentation.pass;
 
 import org.apache.commons.logging.Log;
+import org.broadinstitute.sequel.boundary.PassStatus;
 import org.broadinstitute.sequel.boundary.SummarizedPass;
 import org.broadinstitute.sequel.boundary.pass.PassSOAPService;
 import org.broadinstitute.sequel.presentation.AbstractJsfBean;
@@ -11,6 +12,7 @@ import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -36,25 +38,47 @@ public class PassDashboard extends AbstractJsfBean {
 
     private boolean onlyMine;
 
-    // TODO build Squid WS to return this stuff.  The methods to do this already exist, they just need WS wrappers
+    // TODO mlc build Squid WS to return this stuff.  The methods to do this already exist, they just need WS wrappers
+    // TODO actually not needed urgently since we can filter on the JEE "client" of the Squid WS
     private boolean onlyActive;
 
 
     public List<SummarizedPass> getPassList() {
+
         if (passes == null) {
 
-            log.info("Loading PASSes with onlyMine = " + onlyMine);
+            log.info("Loading PASSes with onlyMine = " + onlyMine + ", onlyActive = " + onlyActive);
 
-            if ( ! onlyMine )
-                passes = service.searchPasses().getSummarizedPassList();
-            else if ( ! onlyActive )
+            if ( onlyMine )
                 // TODO mlc figure out how to get the logged in user
                 passes = service.searchPassesByCreator("mcovarr").getSummarizedPassList();
 
+            else
+                passes = service.searchPasses().getSummarizedPassList();
+
+
+            // cheating and doing ACTIVE filtering on the JEE "client" of the Squid WS since Squid does not offer a
+            // WS that will calculate this for us
+            if ( onlyActive ) {
+
+                final Iterator<SummarizedPass> iterator = passes.iterator();
+
+                while (iterator.hasNext()) {
+
+                    final PassStatus status = iterator.next().getStatus();
+
+                    if ( status == PassStatus.COMPLETE || status == PassStatus.ABANDONED )
+
+                        iterator.remove();
+                }
+            }
 
         }
+
         return passes;
+
     }
+
 
 
     public void setSelectedPass(SummarizedPass pass) {

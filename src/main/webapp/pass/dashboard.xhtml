@@ -37,7 +37,7 @@
                     </h:panelGrid>
 
                     <h:panelGrid columns="2">
-                        <p:selectBooleanCheckbox value="#{passDashboard.onlyActive}" disabled="true">
+                        <p:selectBooleanCheckbox value="#{passDashboard.onlyActive}" >
                             <p:ajax event="click" listener="#{passDashboard.onOnlyActive}" update="dataTable" global="true"/>
                         </p:selectBooleanCheckbox>
                         <h:outputText value="Only active" />
