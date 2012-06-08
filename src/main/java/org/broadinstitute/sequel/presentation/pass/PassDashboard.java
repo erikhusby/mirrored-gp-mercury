@@ -37,7 +37,7 @@ public class PassDashboard extends AbstractJsfBean {
     private SummarizedPassDataModel passModel = new SummarizedPassDataModel();
 
 
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd yyyy 'at' hh:mm aa");
 
     // how much to skip when parsing pass numbers
     private final int PASS_NUMBER_OFFSET = "PASS-".length();
