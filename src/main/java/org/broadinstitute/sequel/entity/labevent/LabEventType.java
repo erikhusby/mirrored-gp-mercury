@@ -146,16 +146,31 @@ public enum LabEventType {
     JUMP_INITIAL_SIZE_SELECTION("JumpInitialSizeSelection", false, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
+    JUMP_END_REPAIR_1("JumpEndRepair1", true, false,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_INITIAL_SIZE_SELECTION_QC("JumpInitialSizeSelectionQC", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
     JUMP_END_REPAIR_1_CLEANUP("JumpEndRepair1Cleanup", false, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
+    JUMP_END_REPAIR_1_QC("JumpEndRepair1QC", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
     JUMP_CIRCULARIZATION_SETUP("JumpCircularizationSetup", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_EXONUCLEASE_TREATMENT("JumpExonucleaseTreatment", true, false,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     JUMP_EXO_INACTIVATION("JumpExoInactivation", false, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     JUMP_POST_CIRC_SIZE_SELECTION("JumpPostCircSizeSelection", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_IMMOBILIZATION("JumpImmobilization", true, false,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     JUMP_IMMOBILIZATION_WASH("JumpImmobilizationWash", false, true,
@@ -189,6 +204,9 @@ public enum LabEventType {
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     JUMP_FINAL_LIBRARY_SIZE_SELECTION("JumpFinalLibrarySizeSelection", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    JUMP_FINAL_LIBRARY_QC("JumpFinalLibraryQC", false, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     JUMP_ENRICHED_LIBRARY_REGISTRATION("JumpEnrichedLibraryRegistration", false, true,
