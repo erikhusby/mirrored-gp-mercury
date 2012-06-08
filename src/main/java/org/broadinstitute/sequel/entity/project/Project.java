@@ -49,7 +49,7 @@ public abstract class Project {
     private String projectName;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    JiraTicket jiraTicket;
+    private JiraTicket jiraTicket;
 
     private boolean active;
 
