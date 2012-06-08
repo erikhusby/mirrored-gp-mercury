@@ -25,7 +25,7 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
  */
 public class ExomeExpressEndToEndTest {
 
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {DATABASE_FREE}, enabled = false)
     public void testAll() {
         // PASS with quote IDs, price items (need PMBridge 2 for price items)
         new DirectedPass();
