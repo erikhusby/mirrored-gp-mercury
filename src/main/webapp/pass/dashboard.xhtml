@@ -61,13 +61,7 @@
                         <f:facet name="header">
                             <h:outputText value="Number"/>
                         </f:facet>
-                        <h:outputText value="#{pass.passNumber}"/>
-                    </p:column>
-                    <p:column sortBy="#{pass.version}">
-                        <f:facet name="header">
-                            <h:outputText value="Version"/>
-                        </f:facet>
-                        <h:outputText value="#{pass.version}"/>
+                        <h:outputText value="#{pass.passNumber} ver #{pass.version}"/>
                     </p:column>
                     <p:column sortBy="#{pass.title}">
                         <f:facet name="header">
