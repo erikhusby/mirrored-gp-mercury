@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.integration.entity.billing;
 
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.billing.Quote;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
@@ -110,7 +111,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
                                           String projectPlanName,
                                           String quoteAlphanumericId,
                                           Map<LabEventName,PriceItem> billableEvents) {
-        ProjectPlan plan = new ProjectPlan(new BasicProject(projectName,null),
+        ProjectPlan plan = new ProjectPlan(new BasicProject(projectName,new JiraTicket()),
                 projectPlanName,
                 new WorkflowDescription("ChocolateChipCookies", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         Quote quote = new org.broadinstitute.sequel.entity.billing.Quote(quoteAlphanumericId,
