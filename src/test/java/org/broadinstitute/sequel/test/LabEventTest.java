@@ -602,7 +602,7 @@ public class LabEventTest {
     /**
      * Builds entity graph for Shearing events
      */
-    private static class ShearingEntityBuilder {
+    public static class ShearingEntityBuilder {
         private final WorkflowDescription workflowDescription;
         private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
@@ -614,7 +614,7 @@ public class LabEventTest {
         private String shearCleanPlateBarcode;
         private StaticPlate shearingCleanupPlate;
 
-        private ShearingEntityBuilder(WorkflowDescription workflowDescription, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+        public ShearingEntityBuilder(WorkflowDescription workflowDescription, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
                 BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
                 LabEventHandler labEventHandler, String rackBarcode) {
             this.workflowDescription = workflowDescription;
@@ -753,7 +753,7 @@ public class LabEventTest {
     /**
      * Builds entity graph for Library Construction events
      */
-    private static class LibraryConstructionEntityBuilder {
+    public static class LibraryConstructionEntityBuilder {
         private final WorkflowDescription workflowDescription;
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final LabEventFactory labEventFactory;
@@ -765,7 +765,7 @@ public class LabEventTest {
         private List<String> pondRegTubeBarcodes;
         private RackOfTubes pondRegRack;
 
-        private LibraryConstructionEntityBuilder(WorkflowDescription workflowDescription, BettaLimsMessageFactory bettaLimsMessageFactory,
+        public LibraryConstructionEntityBuilder(WorkflowDescription workflowDescription, BettaLimsMessageFactory bettaLimsMessageFactory,
                 LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
                 String shearCleanPlateBarcode, StaticPlate shearingPlate) {
             this.workflowDescription = workflowDescription;
@@ -1051,7 +1051,7 @@ public class LabEventTest {
     /**
      * Builds entity graph for Hybrid Selection events
      */
-    private static class HybridSelectionEntityBuilder {
+    public static class HybridSelectionEntityBuilder {
         private final WorkflowDescription workflowDescription;
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final LabEventFactory labEventFactory;
@@ -1064,7 +1064,7 @@ public class LabEventTest {
         private Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes;
         private RackOfTubes normCatchRack;
 
-        private HybridSelectionEntityBuilder(WorkflowDescription workflowDescription, BettaLimsMessageFactory bettaLimsMessageFactory,
+        public HybridSelectionEntityBuilder(WorkflowDescription workflowDescription, BettaLimsMessageFactory bettaLimsMessageFactory,
                 LabEventFactory labEventFactory, LabEventHandler labEventHandler, RackOfTubes pondRegRack,
                 String pondRegRackBarcode, List<String> pondRegTubeBarcodes) {
             this.workflowDescription = workflowDescription;
@@ -1370,7 +1370,7 @@ public class LabEventTest {
     /**
      * Builds entity graph for Qtp events
      */
-    private static class QtpEntityBuilder {
+    public static class QtpEntityBuilder {
         private final WorkflowDescription workflowDescription;
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final LabEventFactory labEventFactory;
@@ -1380,7 +1380,7 @@ public class LabEventTest {
         private final List<String> normCatchBarcodes;
         private final Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes;
 
-        private QtpEntityBuilder(WorkflowDescription workflowDescription, BettaLimsMessageFactory bettaLimsMessageFactory,
+        public QtpEntityBuilder(WorkflowDescription workflowDescription, BettaLimsMessageFactory bettaLimsMessageFactory,
                 LabEventFactory labEventFactory, LabEventHandler labEventHandler, RackOfTubes normCatchRack,
                 String normCatchRackBarcode, List<String> normCatchBarcodes, Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes) {
             this.workflowDescription = workflowDescription;
