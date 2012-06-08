@@ -80,7 +80,11 @@
     <context-param>
         <param-name>resteasy.resources</param-name>
         <!-- comma separated list of jax-rs resource classes -->
-        <param-value>org.broadinstitute.sequel.boundary.zims.IlluminaRunResource</param-value>
+        <param-value>
+            org.broadinstitute.sequel.boundary.zims.IlluminaRunResource,
+            org.broadinstitute.sequel.boundary.vessel.RackOfTubesResource,
+            org.broadinstitute.sequel.boundary.labevent.BettalimsMessageResource
+        </param-value>
     </context-param>
 
     <!-- for JBoss AS 7 -->
