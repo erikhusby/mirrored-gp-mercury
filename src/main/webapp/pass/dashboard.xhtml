@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Created by IntelliJ IDEA.
+  User: scottmat
+  Date: 5/3/12
+  Time: 3:07 PM
+-->
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+
+<h:head>
+    <title>SequeL PASS Dashboard</title>
+</h:head>
+
+<h:body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">SequeL PASS Dashboard</ui:define>
+        <ui:define name="body">
+
+            <h:form id="form">
+
+                <h:panelGrid columns="2">
+
+                    <h:panelGrid columns="2">
+                        <p:selectBooleanCheckbox value="#{passDashboard.onlyMine}" >
+                            <p:ajax event="click" listener="#{passDashboard.onOnlyMine}" update="dataTable" global="true"/>
+                        </p:selectBooleanCheckbox>
+                        <h:outputText value="Only mine" />
+                    </h:panelGrid>
+
+                    <h:panelGrid columns="2">
+                        <p:selectBooleanCheckbox value="#{passDashboard.onlyActive}" >
+                            <p:ajax event="click" listener="#{passDashboard.onOnlyActive}" update="dataTable" global="true"/>
+                        </p:selectBooleanCheckbox>
+                        <h:outputText value="Only active" />
+                    </h:panelGrid>
+
+                </h:panelGrid>
+
+                <!-- Datatable seems to require containment in a form, probably for AJAX reasons.
+                     Without a form there is silent failure. -->
+
+                <p:dataTable id="dataTable" value="#{passDashboard.passModel}" var="pass"
+                             selection="#{passDashboard.selectedPass}" selectionMode="single"
+                             paginator="true" rows="25"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="15,25,50">
+
+                    <p:ajax event="rowSelect" listener="#{passDashboard.onRowSelect}" update=":form:display" oncomplete="passDialog.show()" />
+                    <p:ajax event="rowUnselect" listener="#{passDashboard.onRowUnselect}" />
+
+                    <p:column sortBy="#{pass.passNumber}" sortFunction="#{passDashboard.sortByPassNumber}">
+                        <f:facet name="header">
+                            <h:outputText value="Number"/>
+                        </f:facet>
+                        <h:outputText value="#{pass.passNumber}"/>
+                    </p:column>
+                    <p:column sortBy="#{pass.version}">
+                        <f:facet name="header">
+                            <h:outputText value="Version"/>
+                        </f:facet>
+                        <h:outputText value="#{pass.version}"/>
+                    </p:column>
+                    <p:column sortBy="#{pass.title}">
+                        <f:facet name="header">
+                            <h:outputText value="Title"/>
+                        </f:facet>
+                        <h:outputText value="#{pass.title}"/>
+                    </p:column>
+                    <p:column sortBy="#{pass.createdDate}" sortFunction="#{passDashboard.sortByCalendar}">
+                        <f:facet name="header">
+                            <h:outputText value="Created" />
+                        </f:facet>
+                        <h:outputText value="#{passDashboard.format(pass.createdDate)}" />
+                    </p:column>
+                    <p:column sortBy="#{pass.lastModified}" sortFunction="#{passDashboard.sortByCalendar}">
+                        <f:facet name="header">
+                            <h:outputText value="Updated" />
+                        </f:facet>
+                        <h:outputText value="#{passDashboard.format(pass.lastModified)}" />
+                    </p:column>
+                </p:dataTable>
+
+
+                <p:dialog id="passDialog" header="PASS Detail" widgetVar="passDialog" resizable="false"
+                          hideEffect="explode" modal="true">
+
+                    <p:panelGrid id="display" columns="1" cellpadding="4" >
+
+                        <h:outputText value="All about #{passDashboard.selectedPass.passNumber}!" />
+
+                    </p:panelGrid>
+
+
+                </p:dialog>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+
+</h:body>
+
+</html>

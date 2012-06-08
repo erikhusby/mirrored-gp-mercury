@@ -50,7 +50,7 @@
 
     <servlet-mapping>
         <servlet-name>jaxws</servlet-name>
-        <url-pattern>/PMBridge</url-pattern>
+        <url-pattern>/PASS</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

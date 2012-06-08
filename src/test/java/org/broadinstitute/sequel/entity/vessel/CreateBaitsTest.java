@@ -16,8 +16,8 @@ import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
  * To prepare for sending past production BettaLIMS messages into SequeL, this class creates bait tubes.
  */
 public class CreateBaitsTest extends ContainerTest {
-
-    @PersistenceContext(unitName = "squid_pu")
+    //todo:  SGM/JMT  uncomment when we are ready to add JDBC definitions to Glassfish Servers
+//    @PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
     @Inject
