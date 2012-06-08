@@ -1,37 +1,55 @@
 package org.broadinstitute.sequel.integration.entity.project;
 
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
-import org.broadinstitute.sequel.entity.project.*;
+import org.broadinstitute.sequel.entity.billing.Quote;
+import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.labevent.LabEventName;
+import org.broadinstitute.sequel.entity.person.Person;
+import org.broadinstitute.sequel.entity.project.BasicProject;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.ReagentDesign;
+import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.project.XFoldCoverage;
+import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
+import org.broadinstitute.sequel.entity.queue.JiraLabWorkQueueResponse;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
+import org.broadinstitute.sequel.entity.queue.LabWorkQueueParameters;
+import org.broadinstitute.sequel.entity.queue.LcSetParameters;
+import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
+import org.broadinstitute.sequel.entity.run.SequencingTechnology;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
-import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.queue.*;
-import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
-import org.broadinstitute.sequel.entity.run.SequencingTechnology;
-import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.StartingSample;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.entity.workflow.Workflow;
-import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
-import org.broadinstitute.sequel.entity.billing.Quote;
-import org.broadinstitute.sequel.infrastructure.quote.*;
+import org.broadinstitute.sequel.infrastructure.quote.Funding;
+import org.broadinstitute.sequel.infrastructure.quote.FundingLevel;
+import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.sequel.infrastructure.quote.Quotes;
+import org.broadinstitute.sequel.infrastructure.quote.QuotesCache;
 import org.broadinstitute.sequel.integration.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
-
 import javax.inject.Inject;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
@@ -160,7 +178,7 @@ public class ProjectTest extends Arquillian {
         assertTrue(lcWorkQueue.isEmpty());
 
         LcSetParameters lcSetParameters = new LcSetParameters();
-        Workflow workflowInstance = null;
+//        Workflow workflowInstance = null;
         assertTrue(lcWorkQueue.isEmpty());
         for (LabVessel starter : allStarters) {
             projectManagerEnquesLabWork(starter,plan,lcSetParameters,lcWorkQueue);
@@ -179,7 +197,8 @@ public class ProjectTest extends Arquillian {
         
         assertTrue(lcWorkQueue.isEmpty());
 
-        assertEquals("work has stated", workflowInstance.getState().getState());
+        // todo jmt what is the current equivalent?
+//        assertEquals("work has stated", workflowInstance.getState().getState());
 
         postSomethingFunToJira(jiraTicket,allStarters,project);
         
