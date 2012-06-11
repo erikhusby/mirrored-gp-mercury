@@ -48,11 +48,11 @@
                 <!-- Datatable seems to require containment in a form, probably for AJAX reasons.
                      Without a form there is silent failure. -->
 
-                <p:dataTable id="dataTable" value="#{passDashboard.passModel}" var="pass"
-                             selection="#{passDashboard.selectedPass}" selectionMode="single"
-                             paginator="true" rows="25"
+                <p:dataTable id="dataTable" value="#{passDashboard.summarizedPassModel}" var="pass"
+                             selection="#{passDashboard.selectedSummarizedPass}" selectionMode="single"
+                             paginator="true" rows="15"
                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                             rowsPerPageTemplate="15,25,50">
+                             rowsPerPageTemplate="10,15,25">
 
                     <p:ajax event="rowSelect" listener="#{passDashboard.onRowSelect}" update=":form:display" oncomplete="passDialog.show()" />
                     <p:ajax event="rowUnselect" listener="#{passDashboard.onRowUnselect}" />
@@ -87,9 +87,73 @@
                 <p:dialog id="passDialog" header="PASS Detail" widgetVar="passDialog" resizable="false"
                           hideEffect="explode" modal="true">
 
-                    <p:panelGrid id="display" columns="1" cellpadding="4" >
+                    <p:panelGrid id="display" cellpadding="4" >
 
-                        <h:outputText value="All about #{passDashboard.selectedPass.passNumber}!" />
+
+
+                        <f:facet name="header">
+                            <p:row>
+                                <p:column colspan="3">
+                                    <h:outputText value="#{passDashboard.projectInfo.passNumber} ver #{passDashboard.projectInfo.version}" />
+                                </p:column>
+                            </p:row>
+                        </f:facet>
+
+
+                        <p:row>
+                            <p:column colspan="3">
+                                <span class="pass-section">Project</span>
+                            </p:column>
+                        </p:row>
+
+                        <p:row>
+                            <p:column>
+                                <span class="pass-label">PASS Number:</span>
+                                <span class="pass-data">#{passDashboard.projectInfo.passNumber}</span>
+                            </p:column>
+                            <p:column>
+                                <span class="pass-label">Version:</span>
+                                <span class="pass-data">#{passDashboard.projectInfo.version}</span>
+                            </p:column>
+                            <p:column>
+                                <span class="pass-label">PASS Type:</span>
+                                <span class="pass-data">#{passDashboard.passType}</span>
+                            </p:column>
+                        </p:row>
+
+                        <p:row>
+                            <p:column colspan="3">
+                                <span class="pass-label">Research Project:</span>
+                                <span class="pass-data">#{passDashboard.selectedPass.researchProject}</span>
+                            </p:column>
+                        </p:row>
+
+                        <p:row>
+                            <p:column colspan="2">
+                                <span class="pass-label">Title:</span>
+                                <span class="pass-data">#{passDashboard.projectInfo.title}</span>
+                            </p:column>
+                            <p:column>
+                                <span class="pass-label">Nickname:</span>
+                                <span class="pass-data">#{passDashboard.projectInfo.nickname}</span>
+                            </p:column>
+                        </p:row>
+                        <p:row>
+                            <p:column>
+                                <span class="pass-label">Creator:</span>
+                                <span class="pass-data">#{passDashboard.selectedPass.creator}</span>
+                            </p:column>
+                            <p:column>
+                                <span class="pass-label">Date Created:</span>
+                                <span class="pass-data">#{passDashboard.createdDate}</span>
+                            </p:column>
+                            <p:column>
+                                <span class="pass-label">Last Modified:</span>
+                                <span class="pass-data">#{passDashboard.modifiedDate}</span>
+                            </p:column>
+                        </p:row>
+
+
 
                     </p:panelGrid>
 

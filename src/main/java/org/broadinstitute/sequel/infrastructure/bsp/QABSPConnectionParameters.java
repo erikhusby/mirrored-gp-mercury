@@ -7,7 +7,7 @@ public class QABSPConnectionParameters implements BSPConnectionParameters {
 
     private String superuserLogin = "seqsystem";
     private String superuserPassword = "bspbsp";
-    private String hostname = "gapqa04.broadinstitute.org";
+    private String hostname = "gapqa3.broadinstitute.org";
     private int port = 8080;
 
 
