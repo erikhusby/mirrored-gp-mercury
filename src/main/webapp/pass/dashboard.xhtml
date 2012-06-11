@@ -84,8 +84,8 @@
                 </p:dataTable>
 
 
-                <p:dialog id="passDialog" header="PASS Detail" widgetVar="passDialog" resizable="false"
-                          hideEffect="explode" modal="true">
+                <p:dialog id="passDialog" header="PASS Detail" widgetVar="passDialog" resizable="true"
+                          hideEffect="fade" modal="true">
 
                     <p:panelGrid id="display" cellpadding="4" >
 
@@ -94,7 +94,7 @@
                         <f:facet name="header">
                             <p:row>
                                 <p:column colspan="3">
-                                    <h:outputText value="#{passDashboard.projectInfo.passNumber} ver #{passDashboard.projectInfo.version}" />
+                                    <h:outputText value="#{passDashboard.projectInfo.passNumber} version #{passDashboard.projectInfo.version}" />
                                 </p:column>
                             </p:row>
                         </f:facet>
@@ -154,11 +154,36 @@
                         </p:row>
 
 
+                        <p:row >
+                            <p:column colspan="3">
+                                <p:dataTable id="sampleTable" value="#{passDashboard.passSampleDataModel}" var="passSample"
+                                             paginator="true" rows="15"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             rowsPerPageTemplate="10, 15">
+
+                                    <p:column sortBy="#{passSample.sampleId}">
+                                        <f:facet name="header">
+                                            Sample ID
+                                        </f:facet>
+                                        <h:outputText value="#{passSample.sampleId}"/>
+                                    </p:column>
+                                    <p:column sortBy="#{passSample.volume}"
+                                              sortFunction="#{passDashboard.sortFloatingPoint}">
+                                        <f:facet name="header">
+                                            Volume
+                                        </f:facet>
+                                        <h:outputText value="#{passSample.volume}"/>
+                                    </p:column>
+
+                                </p:dataTable>
+                            </p:column>
+                        </p:row>
 
                     </p:panelGrid>
 
-
                 </p:dialog>
+
+
             </h:form>
         </ui:define>
     </ui:composition>

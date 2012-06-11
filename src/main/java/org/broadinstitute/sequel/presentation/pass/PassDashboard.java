@@ -41,10 +41,10 @@ public class PassDashboard extends AbstractJsfBean {
     private AbstractPass selectedPass = null;
 
 
-    private List<PassSample> selectedPassSamples = null;
-
-
     private SummarizedPassDataModel summarizedPassModel = new SummarizedPassDataModel();
+
+
+    private PassSampleDataModel passSampleDataModel = new PassSampleDataModel();
 
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd yyyy 'at' hh:mm aa");
@@ -82,7 +82,7 @@ public class PassDashboard extends AbstractJsfBean {
 
                 final Iterator<SummarizedPass> iterator = summarizedPassModel.iterator();
 
-                while (iterator.hasNext()) {
+                while ( iterator.hasNext() ) {
 
                     final PassStatus status = iterator.next().getStatus();
 
@@ -127,6 +127,49 @@ public class PassDashboard extends AbstractJsfBean {
     }
 
 
+    public int sortFloatingPoint(Object o1, Object o2) {
+
+        if (o1 == null && o2 == null)
+            return 0;
+
+        if (o1 == null)
+            return 1;
+
+        if (o2 == null)
+            return -1;
+
+        String str1 = (String) o1;
+        String str2 = (String) o2;
+
+        Double d1 = null;
+        Double d2 = null;
+
+        try {
+            d1 = Double.valueOf(str1);
+        }
+        catch (NumberFormatException e) {
+        }
+
+        try {
+            d2 = Double.valueOf(str2);
+        }
+        catch (NumberFormatException e) {
+        }
+
+        if (d1 == null && d2 == null)
+            return 0;
+
+        if (d1 == null)
+            return 1;
+
+        if (d2 == null)
+            return -1;
+
+        return d1.compareTo(d2);
+
+    }
+
+
     public String format(Calendar calendar) {
         return dateFormat.format(calendar.getTime());
     }
@@ -165,7 +208,7 @@ public class PassDashboard extends AbstractJsfBean {
 
         this.selectedPass = service.loadPassByNumber(selectedSummarizedPass.getPassNumber());
 
-        selectedPassSamples = new ArrayList<PassSample>();
+        List<PassSample> selectedPassSamples = new ArrayList<PassSample>();
 
         for (Sample sample : selectedPass.getSampleDetailsInformation().getSample()) {
             PassSample passSample = new PassSample();
@@ -173,7 +216,9 @@ public class PassDashboard extends AbstractJsfBean {
             selectedPassSamples.add(passSample);
         }
 
-        // bspSampleSearchService.lookupSampleDataInBSP(selectedPassSamples);
+        bspSampleSearchService.lookupSampleDataInBSP(selectedPassSamples);
+
+        passSampleDataModel.setWrappedData(selectedPassSamples);
     }
 
 
@@ -243,5 +288,7 @@ public class PassDashboard extends AbstractJsfBean {
     }
 
 
-
+    public PassSampleDataModel getPassSampleDataModel() {
+        return passSampleDataModel;
+    }
 }

@@ -168,8 +168,19 @@
 
         <seam.version>3.1.0.Final</seam.version>
         <!--<jersey.version>1.8</jersey.version>-->
-        <jersey.version>1.10</jersey.version>
         <!--<jersey.version>1.12</jersey.version>-->
+
+        <!--
+
+             Jersey 1.11 is supplied with Glassfish 3.1.2.  If I specify any version other than this in the POM,
+             deploy to GF 3.1.2, and run a code path that calls Client.create(), that call seems to never return.
+
+             From inspecting the stack of the never-returning worker thread, this seems to be an OGSi issue.
+             I think the call should either find the desired version of Jersey or it should fail with an error,
+             but instead it seems to search endlessly.
+
+        -->
+        <jersey.version>1.11</jersey.version>
 
         <jbossas_7.version>7.1.1.Final</jbossas_7.version>
     </properties>
