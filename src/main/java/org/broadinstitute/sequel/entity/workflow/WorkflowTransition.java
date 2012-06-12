@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.entity.workflow;
 
+import java.util.Collection;
+
 /**
  * Represents a transition from one WorkflowState to another, caused by receipt of a message.
  */
@@ -27,5 +29,14 @@ public class WorkflowTransition {
 
     public WorkflowState getToState() {
         return this.toState;
+    }
+
+    /**
+     * Gets all the annotations that have been added
+     * to this transition
+     * @return
+     */
+    public Collection<WorkflowAnnotation> getWorkflowAnnotations() {
+        throw new RuntimeException("I haven't been written yet.");
     }
 }

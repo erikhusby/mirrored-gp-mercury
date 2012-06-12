@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.control.labevent;
 
 
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
+import org.broadinstitute.sequel.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
@@ -21,6 +22,8 @@ import org.broadinstitute.sequel.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventMessage;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
+import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.infrastructure.quote.Billable;
 
 import javax.enterprise.event.Event;
@@ -137,7 +140,39 @@ public class LabEventHandler {
         }
         */
 
-        processProjectPlanOverrides(labEvent,workflow);
+        LabBatchDAO labBatchDAO = null;
+        Collection<LabBatch> possibleBatches = null;
+        Collection<LabVessel> vessels = null;
+
+        if (!labEvent.getSourceLabVessels().isEmpty()) {
+            vessels = labEvent.getSourceLabVessels();
+        }
+        else {
+            vessels = labEvent.getTargetLabVessels();
+        }
+        possibleBatches = labBatchDAO.guessActiveBatchesForVessels(vessels);
+
+        if (!possibleBatches.isEmpty()) {
+            if (possibleBatches.size() > 1) {
+                throw new RuntimeException("We're sorry, but SequeL can't pick between " + possibleBatches.size() + " possible lab batches");
+            }
+            LabBatch activeBatch = possibleBatches.iterator().next();
+            for (LabVessel vessel : vessels) {
+                WorkflowDescription workflowDescription = activeBatch.getWorkflowForVessel(vessel);
+                Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations(labEvent.getEventName().name());
+
+                for (WorkflowAnnotation workflowAnnotation : workflowAnnotations) {
+                    if (WorkflowAnnotation.IS_SINGLE_SAMPLE_LIBRARY == workflowAnnotation) {
+                        // this field can be used during history traversal to identify which library
+                        // should be considered the single sample ancestor
+                        labEvent.setIsSingleSampleLibrary(true);
+                    }
+                }
+            }
+        }
+
+
+        processProjectPlanOverrides(labEvent, workflow);
 
         JiraCommentUtil.postUpdate(labEvent.getEventName().toString() + " Event Applied",
                 labEvent.getEventName().toString() + " has been applied to the following samples:",labEvent.getAllLabVessels());

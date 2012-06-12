@@ -324,4 +324,17 @@ public abstract class LabEvent {
     public void setInPlaceLabVessel(LabVessel inPlaceLabVessel) {
         this.inPlaceLabVessel = inPlaceLabVessel;
     }
+
+    /**
+     * This bit can be used to help identify the single sample ancestor across different
+     * workflows over time.  Instead of having a complex single sample ancestor finder method
+     * that must understand all possible variations of workflows, instead we mark on the
+     * workflow BPMN diagram which transition results in the official single sample
+     * library.  When we need to find the single sample library for some downstream pool,
+     * which just search the history to find the event that has this bit turned on.
+     * @param isSingleSampleLibrary
+     */
+    public void setIsSingleSampleLibrary(boolean isSingleSampleLibrary) {
+
+    }
 }

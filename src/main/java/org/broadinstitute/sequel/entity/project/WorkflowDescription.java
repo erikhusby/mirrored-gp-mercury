@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.project;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowState;
 import org.broadinstitute.sequel.entity.workflow.WorkflowTransition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -15,12 +16,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A stub description of the end-to-end
@@ -91,6 +87,14 @@ public class WorkflowDescription {
 
     public CreateIssueRequest.Fields.Issuetype getJiraIssueType() {
         return issueType;
+    }
+
+    public Collection<WorkflowAnnotation> getAnnotations(String nextEventTypeName) {
+        final Collection<WorkflowAnnotation> workflowAnnotations = new ArrayList<WorkflowAnnotation>();
+        for (WorkflowTransition workflowTransition : mapNameToTransitionList.get(nextEventTypeName)) {
+            workflowAnnotations.addAll(workflowTransition.getWorkflowAnnotations());
+        }
+        return workflowAnnotations;
     }
 
     public List<String> validate(List<LabVessel> labVessels, String nextEventTypeName) {
