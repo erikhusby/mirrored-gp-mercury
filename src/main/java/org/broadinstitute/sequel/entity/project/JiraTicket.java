@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.project;
 
 
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -36,6 +37,9 @@ public class JiraTicket {
     private Set<Project> projects = new HashSet<Project>();
 
     @Transient
+    private LabBatch labBatch;
+
+    @Transient // todo arz make real hibernate relationship
     private JiraService jiraService;
 
     public JiraTicket() {}
@@ -103,5 +107,9 @@ public class JiraTicket {
 
     public Set<Project> getProjects() {
         return projects;
+    }
+
+    public LabBatch getLabBatch() {
+        return labBatch;
     }
 }

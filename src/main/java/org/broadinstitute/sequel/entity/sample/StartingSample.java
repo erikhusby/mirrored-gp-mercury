@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.sample;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 
 import javax.persistence.CascadeType;
@@ -31,7 +32,7 @@ import java.util.Set;
  * bypassing the usual BSP checkout.
  */
 @Entity
-public abstract class StartingSample {
+public abstract class StartingSample implements Starter {
 
     @SequenceGenerator(name = "SEQ_STARTING_SAMPLE", sequenceName = "SEQ_STARTING_SAMPLE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_STARTING_SAMPLE")
@@ -42,9 +43,6 @@ public abstract class StartingSample {
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private ProjectPlan projectPlan;
-
-    @ManyToMany(mappedBy = "startingSamples")
-    private Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
 
     protected StartingSample(String sampleName, ProjectPlan projectPlan) {
         this.sampleName = sampleName;
@@ -59,6 +57,11 @@ public abstract class StartingSample {
     public abstract String getContainerId();
 
     public String getSampleName() {
+        return sampleName;
+    }
+
+    @Override
+    public String getLabel() {
         return sampleName;
     }
 
@@ -90,11 +93,5 @@ public abstract class StartingSample {
         throw new RuntimeException("not implemented");
     }
 
-    public SampleInstance createSampleInstance() {
-        return new SampleInstance(this, SampleInstance.GSP_CONTROL_ROLE.NONE, projectPlan, new MolecularState(), null);
-    }
 
-    public Set<SampleSheet> getSampleSheets() {
-        return sampleSheets;
-    }
 }

@@ -112,10 +112,8 @@ public class LabEventTest {
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
-            SampleSheet sampleSheet = new SampleSheet();
-            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, projectPlan, null));
             String barcode = "R" + rackPosition;
-            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
+            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, new BSPSample("SM-" + rackPosition, projectPlan, null)));
         }
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
@@ -181,10 +179,8 @@ public class LabEventTest {
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
-            SampleSheet sampleSheet = new SampleSheet();
-            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, projectPlan, null));
             String barcode = "R" + rackPosition;
-            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
+            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, new BSPSample("SM-" + rackPosition, projectPlan, null)));
         }
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
@@ -284,10 +280,8 @@ public class LabEventTest {
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= SBSSection.P96COLS1_6BYROW.getWells().size(); rackPosition++) {
-            SampleSheet sampleSheet = new SampleSheet();
-            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, projectPlan, null));
             String barcode = "R" + rackPosition;
-            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
+            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, new BSPSample("SM-" + rackPosition, projectPlan, null)));
         }
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();

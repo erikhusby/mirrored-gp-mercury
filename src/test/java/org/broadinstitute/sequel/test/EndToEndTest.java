@@ -45,13 +45,11 @@ public class EndToEndTest  {
     LabEventHandler handler;
 
     private LabVessel createBSPStock(String sampleName,String tubeBarcode,ProjectPlan projectPlan) {
-        SampleSheet sampleSheet = new SampleSheet();
         // this seems redundant: we're adding a sample sheet with only the stock
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        sampleSheet.addStartingSample(new BSPSample(sampleName, projectPlan,null));
-        return new TwoDBarcodedTube(tubeBarcode,sampleSheet);
+        return new TwoDBarcodedTube(tubeBarcode,new BSPSample(sampleName, projectPlan,null));
     }
     
     private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode,ProjectPlan projectPlan) {

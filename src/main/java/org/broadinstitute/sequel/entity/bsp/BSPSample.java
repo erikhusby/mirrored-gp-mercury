@@ -3,12 +3,15 @@ package org.broadinstitute.sequel.entity.bsp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 
 import javax.persistence.Entity;
 import javax.persistence.Transient;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * The basic plan here is to store only the
@@ -89,5 +92,12 @@ public class BSPSample extends StartingSample {
      */
     public String getOrganism() {
         return bspDTO.getOrganism();
+    }
+
+    @Override
+    public Set<SampleInstance> getSampleInstances() {
+        final Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        sampleInstances.add(new SampleInstance(this,null,getRootProjectPlan(),null,getRootProjectPlan().getWorkflowDescription()));
+        return sampleInstances;
     }
 }

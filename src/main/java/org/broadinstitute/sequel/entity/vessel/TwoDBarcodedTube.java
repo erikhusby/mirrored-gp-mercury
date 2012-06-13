@@ -10,11 +10,9 @@ import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 
-import javax.persistence.Entity;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,7 +39,10 @@ public class TwoDBarcodedTube extends LabVessel {
     
     @OneToMany
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
-    
+
+    @Transient
+    private StartingSample startingSample;
+
     public TwoDBarcodedTube(String twoDBarcode) {
         super(twoDBarcode);
         if (twoDBarcode == null) {
@@ -49,18 +50,12 @@ public class TwoDBarcodedTube extends LabVessel {
         }
     }
 
-    public TwoDBarcodedTube(String twoDBarcode, SampleSheet sheet) {
+    public TwoDBarcodedTube(String twoDBarcode,StartingSample startingSample) {
         super(twoDBarcode);
         if (twoDBarcode == null) {
              throw new IllegalArgumentException("twoDBarcode must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
         }
-        if (sheet == null) {
-            // todo jmt decide how to follow the spirit of this
-//             throw new IllegalArgumentException("sheet must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
-        } else {
-            addSampleSheet(sheet);
-//            sheet.addToVessel(this);
-        }
+        this.startingSample = startingSample;
     }
 
     protected TwoDBarcodedTube() {
@@ -123,14 +118,7 @@ public class TwoDBarcodedTube extends LabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-
-        if (getSampleSheetCount() != null && getSampleSheetCount() > 0) {
-            for (SampleSheet sampleSheet : getSampleSheets()) {
-                sampleInstances.addAll(sampleSheet.getSampleInstances(this));
-            }
-        }
-        return sampleInstances;
+        return startingSample.getSampleInstances();
     }
 
     @Override

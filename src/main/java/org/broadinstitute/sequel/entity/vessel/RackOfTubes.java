@@ -146,17 +146,6 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
     }
 
     @Override
-    public Collection<SampleSheet> getSampleSheets() {
-        Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
-        for (TwoDBarcodedTube twoDBarcodedTube : this.vesselContainer.getContainedVessels()) {
-            if(twoDBarcodedTube.getSampleSheetCount() != null && twoDBarcodedTube.getSampleSheetCount() > 0) {
-                sampleSheets.addAll(twoDBarcodedTube.getSampleSheets());
-            }
-        }
-        return sampleSheets;
-    }
-
-    @Override
     public Set<LabEvent> getTransfersFrom() {
         return this.vesselContainer.getTransfersFrom();
     }

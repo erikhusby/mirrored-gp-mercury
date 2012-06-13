@@ -86,10 +86,8 @@ public class BettalimsMessageResourceTest extends ContainerTest {
         ProjectPlan projectPlan = new ProjectPlan(project, "To test whole genome shotgun", workflowDescription);
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
-            SampleSheet sampleSheet = new SampleSheet();
-            sampleSheet.addStartingSample(new BSPSample("SM-" + testPrefix + rackPosition, projectPlan, null));
             String barcode = "R" + testPrefix + rackPosition;
-            TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode, sampleSheet);
+            TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode, new BSPSample("SM-" + testPrefix + rackPosition, projectPlan, null));
             mapBarcodeToTube.put(barcode, twoDBarcodedTube);
             twoDBarcodedTubeDAO.persist(twoDBarcodedTube);
         }

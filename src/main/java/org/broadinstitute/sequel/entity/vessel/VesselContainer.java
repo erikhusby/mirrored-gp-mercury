@@ -118,9 +118,7 @@ public class VesselContainer<T extends LabVessel> {
         public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             // todo jmt this class shouldn't have to worry about plate wells that have no informatics contents
             if (labVessel != null) {
-                if(labVessel.getSampleSheetCount() != null && labVessel.getSampleSheetCount() > 0) {
-                    sampleInstances.addAll(labVessel.getSampleInstances());
-                }
+                sampleInstances.addAll(labVessel.getSampleInstances());
                 if (labVessel.getReagentContentsCount() != null && labVessel.getReagentContentsCount() > 0) {
                     reagents.addAll(labVessel.getReagentContents());
                 }

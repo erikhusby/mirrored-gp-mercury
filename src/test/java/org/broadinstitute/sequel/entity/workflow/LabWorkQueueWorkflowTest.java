@@ -67,10 +67,8 @@ public class LabWorkQueueWorkflowTest {
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
-            SampleSheet sampleSheet = new SampleSheet();
-            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, rootPlan, null));
             String barcode = "R" + rackPosition;
-            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
+            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, new BSPSample("SM-" + rackPosition, rootPlan, null)));
         }
 
         // add the samples to the queue, no project plan override

@@ -307,13 +307,11 @@ public class ProjectTest extends Arquillian {
     }
     
     private LabVessel makeRootSample(String sampleName,ProjectPlan projectPlan,BSPSampleDataFetcher bspFetcher) {
-        SampleSheet sampleSheet = new SampleSheet();
-        StartingSample startingSample = new BSPSample(sampleName,projectPlan,bspFetcher.fetchSingleSampleFromBSP(sampleName));
-        sampleSheet.addStartingSample(startingSample);
+
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose
         // methods throw exceptions that say "Hey, I'm from BSP, you can't do that!"
-        LabVessel starter = new TwoDBarcodedTube(sampleName, sampleSheet);
+        LabVessel starter = new TwoDBarcodedTube(sampleName, new BSPSample(sampleName,projectPlan,bspFetcher.fetchSingleSampleFromBSP(sampleName)));
         return starter;
     }
     

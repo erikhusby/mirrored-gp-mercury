@@ -10,6 +10,7 @@ import org.broadinstitute.sequel.entity.notice.UserRemarks;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.SampleSheet;
@@ -45,7 +46,7 @@ import java.util.Set;
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
 @BatchSize(size = 50)
-public abstract class LabVessel  {
+public abstract class LabVessel implements Starter {
 
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
@@ -58,9 +59,6 @@ public abstract class LabVessel  {
 
     @OneToMany(cascade = CascadeType.PERSIST)
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
-
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    private final Set<SampleSheet> sampleSheets = new HashSet<SampleSheet>();
 
     /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
      * avoid an unnecessary database round trip  */
@@ -247,46 +245,6 @@ public abstract class LabVessel  {
     public String getLabCentricName() {
         // todo jmt what should this do?
         return label;
-    }
-
-    /**
-     * May return null if no sample sheet
-     * has been registered.  Consider
-     * a "new" destination in a transfer event.
-     * When first encountered, the plate
-     * may have no sample sheet, and it's up
-     * to the message processor to fill
-     * in the sample sheet.
-     * @return
-     */
-    public Collection<SampleSheet> getSampleSheets() {
-        return sampleSheets;
-    }
-
-    /**
-     * We want GSP to let you walk in with a tube, declare
-     * the contents of the tube, and then inject the tube
-     * into the middle of the lab process, into
-     * whatever LabWorkQueue you need.
-     *
-     * This method is the key to this feature.  We do not
-     * care <b>how</b> the sample metadata was built
-     * for a container, but we care deeply that
-     * we have consistent metadata.  Whether it was
-     * built half at 320, half at the collaborator,
-     * all at 320, all in Mozambique, it does not
-     * matter.  Just declare the sample metadata
-     * in one place.
-     *
-     * @param sampleSheet
-     */
-    public void addSampleSheet(SampleSheet sampleSheet) {
-        this.sampleSheets.add(sampleSheet);
-        sampleSheetCount++;
-    }
-
-    public Integer getSampleSheetCount() {
-        return sampleSheetCount;
     }
 
     /**

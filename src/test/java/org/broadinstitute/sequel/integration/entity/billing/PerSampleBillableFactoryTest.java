@@ -91,10 +91,8 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
             else {
                 projectPlan = plan2;
             }
-            SampleSheet sampleSheet = new SampleSheet();
-            sampleSheet.addStartingSample(new BSPSample("SM-" + rackPosition, projectPlan, null));
             String barcode = "R" + rackPosition;
-            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, sampleSheet));
+            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, new BSPSample("SM-" + rackPosition, projectPlan, null)));
         }
         
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();

@@ -7,7 +7,6 @@ import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
@@ -58,9 +57,7 @@ public class RackOfTubesResource {
                 if(tubeBean.sampleBarcode == null) {
                     twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.barcode);
                 } else {
-                    SampleSheet sampleSheet = new SampleSheet();
-                    sampleSheet.addStartingSample(new BSPSample(tubeBean.sampleBarcode, projectPlan));
-                    twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.barcode, sampleSheet);
+                    twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.barcode, new BSPSample(tubeBean.sampleBarcode, projectPlan));
                 }
             }
             rackOfTubes.getVesselContainer().addContainedVessel(twoDBarcodedTube,
