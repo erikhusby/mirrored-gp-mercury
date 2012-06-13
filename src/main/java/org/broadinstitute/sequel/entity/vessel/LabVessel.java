@@ -8,9 +8,12 @@ import org.broadinstitute.sequel.entity.notice.Stalker;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.notice.UserRemarks;
 import org.broadinstitute.sequel.entity.project.*;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StateChange;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
+import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 
@@ -457,4 +460,31 @@ public abstract class LabVessel implements Starter {
     public boolean isAliquotExpected() {
         return false;
     }
+       /**
+     * In the context of the given {@link WorkflowDescription}, are there any
+     * events for this vessel which are annotated as {@link WorkflowAnnotation#IS_SINGLE_SAMPLE_LIBRARY}?
+     * @param workflowDescription
+     * @return
+     */
+    public boolean isSingleSampleLibrary(WorkflowDescription workflowDescription) {
+        if (workflowDescription == null) {
+            throw new RuntimeException("workflowDescription cannot be null.");
+        }
+        boolean isSingleSample = false;
+
+        final Set<LabEvent> allEvents = new HashSet<LabEvent>();
+        allEvents.addAll(getInPlaceEvents());
+        allEvents.addAll(getTransfersTo());
+
+        for (LabEvent event: allEvents) {
+            Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations(event.getEventName().name());
+            if (workflowAnnotations.contains(WorkflowAnnotation.IS_SINGLE_SAMPLE_LIBRARY)) {
+                isSingleSample = true;
+                break;
+            }
+        }
+        return isSingleSample;
+    }
+
+
 }

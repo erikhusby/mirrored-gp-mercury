@@ -89,9 +89,9 @@ public class WorkflowDescription {
         return issueType;
     }
 
-    public Collection<WorkflowAnnotation> getAnnotations(String nextEventTypeName) {
+    public Collection<WorkflowAnnotation> getAnnotations(String eventTypeName) {
         final Collection<WorkflowAnnotation> workflowAnnotations = new ArrayList<WorkflowAnnotation>();
-        for (WorkflowTransition workflowTransition : mapNameToTransitionList.get(nextEventTypeName)) {
+        for (WorkflowTransition workflowTransition : mapNameToTransitionList.get(eventTypeName)) {
             workflowAnnotations.addAll(workflowTransition.getWorkflowAnnotations());
         }
         return workflowAnnotations;

@@ -8,6 +8,7 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
 
 import javax.persistence.CascadeType;
@@ -110,6 +111,44 @@ public class VesselContainer<T extends LabVessel> {
             StopTraversing
         }
         TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount);
+    }
+
+    /**
+     * Traverses transfers to find the single sample libraries.
+     */
+    static class SingleSampleLibraryCriteria implements TransferTraverserCriteria {
+        private final Map<SampleInstance,Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<SampleInstance, Collection<LabVessel>>();
+
+        @Override
+        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+            for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
+                if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
+                    if (!singleSampleLibrariesForInstance.containsKey(sampleInstance)) {
+                        singleSampleLibrariesForInstance.put(sampleInstance,new HashSet<LabVessel>());
+                    }
+                    singleSampleLibrariesForInstance.get(sampleInstance).add(labVessel);
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        public Map<SampleInstance,Collection<LabVessel>> getSingleSampleLibraries() {
+            return singleSampleLibrariesForInstance;
+        }
+    }
+
+    /**
+     * Traverses transfer history to find the single sample libraries, as defined
+     * by the {@link org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation}
+     * for the {@link org.broadinstitute.sequel.entity.project.WorkflowDescription}
+     * @param position
+     * @return
+     */
+    public Map<SampleInstance,Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
+        SingleSampleLibraryCriteria singleSampleLibraryCriteria = new SingleSampleLibraryCriteria();
+
+        evaluateCriteria(position, singleSampleLibraryCriteria, TraversalDirection.Ancestors, null, 0);
+        return singleSampleLibraryCriteria.getSingleSampleLibraries();
     }
 
     static class SampleInstanceCriteria implements TransferTraverserCriteria {
@@ -264,6 +303,7 @@ public class VesselContainer<T extends LabVessel> {
                     if(OrmUtil.proxySafeIsInstance(sourceLabVessel, VesselContainerEmbedder.class)) {
                         sampleInstances.addAll(OrmUtil.proxySafeCast(sourceLabVessel,
                                 VesselContainerEmbedder.class).getVesselContainer().getSampleInstances());
+                        // todo arz fix this, probably by using LabBatch properly
                         applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                     }
                 }

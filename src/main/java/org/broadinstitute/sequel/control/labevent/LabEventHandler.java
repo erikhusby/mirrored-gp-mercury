@@ -140,38 +140,9 @@ public class LabEventHandler {
         }
         */
 
-        LabBatchDAO labBatchDAO = null;
-        Collection<LabBatch> possibleBatches = null;
-        Collection<LabVessel> vessels = null;
 
-        if (!labEvent.getSourceLabVessels().isEmpty()) {
-            vessels = labEvent.getSourceLabVessels();
-        }
-        else {
-            vessels = labEvent.getTargetLabVessels();
-        }
-        possibleBatches = labBatchDAO.guessActiveBatchesForVessels(vessels);
-
-        if (!possibleBatches.isEmpty()) {
-            if (possibleBatches.size() > 1) {
-                throw new RuntimeException("We're sorry, but SequeL can't pick between " + possibleBatches.size() + " possible lab batches");
-            }
-            LabBatch activeBatch = possibleBatches.iterator().next();
-            for (LabVessel vessel : vessels) {
-                WorkflowDescription workflowDescription = activeBatch.getWorkflowForVessel(vessel);
-                Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations(labEvent.getEventName().name());
-
-                for (WorkflowAnnotation workflowAnnotation : workflowAnnotations) {
-                    if (WorkflowAnnotation.IS_SINGLE_SAMPLE_LIBRARY == workflowAnnotation) {
-                        // this field can be used during history traversal to identify which library
-                        // should be considered the single sample ancestor
-                        labEvent.setIsSingleSampleLibrary(true);
-                    }
-                }
-            }
-        }
-
-
+        // todo arz fix this by using LabBatch instead.  maybe strip out this denormalization entirely,
+        // and leave the override processing for on-the-fly work in VesselContainer
         processProjectPlanOverrides(labEvent, workflow);
 
         JiraCommentUtil.postUpdate(labEvent.getEventName().toString() + " Event Applied",
