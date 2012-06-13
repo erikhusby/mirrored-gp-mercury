@@ -1,9 +1,9 @@
 package org.broadinstitute.sequel.presentation.pass;
 
 import org.apache.commons.logging.Log;
-import org.broadinstitute.sequel.boundary.PassStatus;
-import org.broadinstitute.sequel.boundary.SummarizedPass;
+import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.boundary.pass.PassSOAPService;
+import org.broadinstitute.sequel.control.pass.PassBSPSampleSearchService;
 import org.broadinstitute.sequel.presentation.AbstractJsfBean;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
@@ -13,6 +13,7 @@ import javax.faces.bean.SessionScoped;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
@@ -28,13 +29,22 @@ public class PassDashboard extends AbstractJsfBean {
     @Inject
     private Log log;
 
+    @Inject
+    private PassBSPSampleSearchService bspSampleSearchService;
+
     private boolean rebuild = true;
 
 
-    private SummarizedPass selectedPass = null;
+    private SummarizedPass selectedSummarizedPass = null;
 
 
-    private SummarizedPassDataModel passModel = new SummarizedPassDataModel();
+    private AbstractPass selectedPass = null;
+
+
+    private SummarizedPassDataModel summarizedPassModel = new SummarizedPassDataModel();
+
+
+    private PassSampleDataModel passSampleDataModel = new PassSampleDataModel();
 
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd yyyy 'at' hh:mm aa");
@@ -50,7 +60,7 @@ public class PassDashboard extends AbstractJsfBean {
     private boolean onlyActive;
 
 
-    public SummarizedPassDataModel getPassModel() {
+    public SummarizedPassDataModel getSummarizedPassModel() {
 
         if ( rebuild ) {
 
@@ -70,9 +80,9 @@ public class PassDashboard extends AbstractJsfBean {
             // WS that will calculate this for us
             if ( onlyActive ) {
 
-                final Iterator<SummarizedPass> iterator = passModel.iterator();
+                final Iterator<SummarizedPass> iterator = summarizedPassModel.iterator();
 
-                while (iterator.hasNext()) {
+                while ( iterator.hasNext() ) {
 
                     final PassStatus status = iterator.next().getStatus();
 
@@ -82,13 +92,13 @@ public class PassDashboard extends AbstractJsfBean {
                 }
             }
 
-            passModel.setWrappedData(passList);
+            summarizedPassModel.setWrappedData(passList);
 
             rebuild = false;
 
         }
 
-        return passModel;
+        return summarizedPassModel;
 
     }
 
@@ -114,6 +124,49 @@ public class PassDashboard extends AbstractJsfBean {
         Integer int2 = Integer.valueOf(((String) passNumber2).substring(PASS_NUMBER_OFFSET));
 
         return int1.compareTo(int2);
+    }
+
+
+    public int sortFloatingPoint(Object o1, Object o2) {
+
+        if (o1 == null && o2 == null)
+            return 0;
+
+        if (o1 == null)
+            return 1;
+
+        if (o2 == null)
+            return -1;
+
+        String str1 = (String) o1;
+        String str2 = (String) o2;
+
+        Double d1 = null;
+        Double d2 = null;
+
+        try {
+            d1 = Double.valueOf(str1);
+        }
+        catch (NumberFormatException e) {
+        }
+
+        try {
+            d2 = Double.valueOf(str2);
+        }
+        catch (NumberFormatException e) {
+        }
+
+        if (d1 == null && d2 == null)
+            return 0;
+
+        if (d1 == null)
+            return 1;
+
+        if (d2 == null)
+            return -1;
+
+        return d1.compareTo(d2);
+
     }
 
 
@@ -151,22 +204,91 @@ public class PassDashboard extends AbstractJsfBean {
 
 
     public void onRowSelect(SelectEvent event) {
-        this.selectedPass = (SummarizedPass) event.getObject();
+        this.selectedSummarizedPass = (SummarizedPass) event.getObject();
+
+        this.selectedPass = service.loadPassByNumber(selectedSummarizedPass.getPassNumber());
+
+        List<PassSample> selectedPassSamples = new ArrayList<PassSample>();
+
+        for (Sample sample : selectedPass.getSampleDetailsInformation().getSample()) {
+            PassSample passSample = new PassSample();
+            passSample.setSampleId(sample.getBspSampleID());
+            selectedPassSamples.add(passSample);
+        }
+
+        bspSampleSearchService.lookupSampleDataInBSP(selectedPassSamples);
+
+        passSampleDataModel.setWrappedData(selectedPassSamples);
     }
 
 
     public void onRowUnselect(UnselectEvent event) {
-        this.selectedPass = null;
+        this.selectedSummarizedPass = null;
     }
 
 
 
-    public SummarizedPass getSelectedPass() {
+    public Object getSelectedSummarizedPass() {
+        return selectedSummarizedPass;
+    }
+
+    public void setSelectedSummarizedPass(Object selectedSummarizedPass) {
+        this.selectedSummarizedPass = (SummarizedPass) selectedSummarizedPass;
+    }
+
+
+    public AbstractPass getSelectedPass() {
         return selectedPass;
     }
 
-    public void setSelectedPass(Object selectedPass) {
-        this.selectedPass = (SummarizedPass) selectedPass;
+    public void setSelectedPass(AbstractPass selectedPass) {
+        this.selectedPass = selectedPass;
     }
 
+
+    public ProjectInformation getProjectInfo() {
+        if (selectedPass == null)
+            return null;
+        return selectedPass.getProjectInformation();
+    }
+
+
+    public String getCreatedDate() {
+        if (selectedPass == null)
+            return null;
+
+        return format(selectedPass.getProjectInformation().getDateCreated());
+    }
+
+
+    public String getModifiedDate() {
+        if (selectedPass == null)
+            return null;
+
+        return format(selectedPass.getProjectInformation().getLastModified());
+    }
+
+
+    public String getPassType() {
+
+        if (selectedPass == null)
+            return null;
+
+        String text;
+        if (selectedPass instanceof DirectedPass)
+            text = "Directed";
+        else if (selectedPass instanceof WholeGenomePass)
+            text = "Whole Genome";
+        else if (selectedPass instanceof RNASeqPass)
+            text = "RNASeq";
+        else
+            throw new RuntimeException("Unrecognized PASS type: " + selectedPass.getClass().getCanonicalName());
+
+        return text;
+    }
+
+
+    public PassSampleDataModel getPassSampleDataModel() {
+        return passSampleDataModel;
+    }
 }

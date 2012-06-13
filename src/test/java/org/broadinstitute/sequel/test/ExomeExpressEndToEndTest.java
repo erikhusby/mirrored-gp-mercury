@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.test;
 
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
+import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.boundary.zims.IlluminaRunResource;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
@@ -11,14 +12,20 @@ import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.sequel.entity.zims.LibraryBean;
+import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
+import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+
+import static org.testng.Assert.*;
 
 /**
  * A container free test of Exome Express
@@ -28,12 +35,14 @@ public class ExomeExpressEndToEndTest {
     @Test(groups = {DATABASE_FREE}, enabled = false)
     public void testAll() {
         // PASS with quote IDs, price items (need PMBridge 2 for price items)
-        new DirectedPass();
+        DirectedPass sourcePass = null;
         // factory or something to convert from JAX-WS DTOs to entities (or refer to Squid PASS)
         // Check volume and concentration?  Or expose web services to allow PMBridge to check
         // labBatch
         // Project
         BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
+        String runName = "theRun";
+        String laneNumber = "3";
         // ProjectPlan
         HashMap<LabEventName, PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         ProjectPlan projectPlan = new ProjectPlan(
@@ -87,6 +96,37 @@ public class ExomeExpressEndToEndTest {
         // Designation in Squid (7 lanes Squid + 1 lane SequeL)
         // Call Squid web service to add to queue (lanes, read length)
         // ZIMS
-        IlluminaRunResource illuminaRunResource;
+        /*
+        IlluminaRunResource illuminaRunResource = new IlluminaRunResource();
+
+        ZimsIlluminaRun zimsRun = illuminaRunResource.getRun(runName);
+
+        assertNotNull(zimsRun);
+        boolean foundLane = false;
+        boolean foundSample = false;
+        for (ZimsIlluminaChamber zimsLane : zimsRun.getLanes()) {
+            if (laneNumber.equals(zimsLane)) {
+                foundLane = true;
+                Collection<LibraryBean> libraries = zimsLane.getLibraries();
+                assertFalse(libraries.isEmpty());
+                for (LibraryBean library : libraries) {
+                    assertEquals(library.getProject(),sourcePass.getResearchProject());
+                    // todo how to get from pass bait set id to bait name?
+                    assertEquals(library.getBaitSetName(),sourcePass.getBaitSetID());
+                    // todo how to get from pass organism id to organism name?
+                    assertEquals(library.getOrganism(), sourcePass.getProjectInformation().getOrganismID());
+                    for (Sample sample : sourcePass.getSampleDetailsInformation().getSample()) {
+                        // todo probably wrong, not sure whether the sample id is lsid or stock id
+                        if (library.getLsid().equals(sample)) {
+                            foundSample = true;
+                        }
+                    }
+                    assertTrue(foundSample);
+                    // todo single sample ancestor comparison
+                }
+            }
+        }
+        assertTrue(foundLane);
+        */
     }
 }

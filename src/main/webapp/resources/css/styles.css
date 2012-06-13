@@ -50,3 +50,21 @@ h1 {
     font-size: 100%;
  }
  */
+
+
+.pass-section {
+
+    font-weight: bold;
+}
+
+
+.pass-label {
+
+    font-style: italic;
+    padding-right: 10px;
+}
+
+
+.pass-data {
+
+}
