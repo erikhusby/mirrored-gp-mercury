@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.test.LabEventTest;
 import org.broadinstitute.sequel.control.dao.project.JiraTicketDao;
@@ -48,7 +49,7 @@ public class TransferTraverserTest extends ContainerTest{
 
     private void printJiraTicket(JiraTicket jiraTicket) {
         LabBatch labBatch = jiraTicket.getLabBatch();
-        LabVessel labVessel = labBatch.getStartingVessels().iterator().next();
+        LabVessel labVessel = labBatch.getStarters().entrySet().iterator().next().getValue();
         VesselContainer<?> vesselContainer = labVessel.getContainers().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
         vesselContainer.evaluateCriteria(vesselContainer.getPositionOfVessel(labVessel),

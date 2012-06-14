@@ -54,7 +54,7 @@ public abstract class Project {
     private boolean active;
 
     @OneToMany
-    public Collection<LabVessel> starters = new HashSet<LabVessel>();
+    public Collection<Starter> starters = new HashSet<Starter>();
 
     @OneToMany
     private final Collection<LabWorkQueue> availableWorkQueues = new HashSet<LabWorkQueue>();
@@ -261,11 +261,11 @@ public abstract class Project {
         this.projectName = projectName;
     }
 
-    public void addStarter(LabVessel vessel) {
-        if (vessel == null) {
-            throw new NullPointerException("labVessel cannot be null.");
+    public void addStarter(Starter starter) {
+        if (starter == null) {
+            throw new NullPointerException("starter cannot be null.");
         }
-        starters.add(vessel);
+        starters.add(starter);
     }
 
     /**
@@ -292,7 +292,7 @@ public abstract class Project {
     }
 
 
-    public Collection<LabVessel> getAllStarters() {
+    public Collection<Starter> getAllStarters() {
         return starters;
     }
 

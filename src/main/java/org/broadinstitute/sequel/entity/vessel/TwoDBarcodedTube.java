@@ -47,14 +47,6 @@ public class TwoDBarcodedTube extends LabVessel {
         }
     }
 
-    public TwoDBarcodedTube(String twoDBarcode,StartingSample startingSample) {
-        super(twoDBarcode);
-        if (twoDBarcode == null) {
-             throw new IllegalArgumentException("twoDBarcode must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
-        }
-        this.startingSample = startingSample;
-    }
-
     protected TwoDBarcodedTube() {
     }
 

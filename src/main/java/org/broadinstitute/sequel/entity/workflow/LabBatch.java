@@ -2,10 +2,12 @@ package org.broadinstitute.sequel.entity.workflow;
 
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -20,7 +22,15 @@ public interface LabBatch {
     
     public String getBatchId();
 
-    public Set<LabVessel> getStartingVessels();
+    /**
+     * Key is the actual {@link Starter}, and value
+     * is the {@link LabVessel} that is the concrete
+     * vessel used.  We need this flexibility so we can
+     * start jira tickets with either samples, kits, or
+     * {@link LabVessel}s
+     * @return
+     */
+    public Map<Starter,LabVessel> getStarters();
 
     public WorkflowDescription getWorkflowForVessel(LabVessel vessel);
 

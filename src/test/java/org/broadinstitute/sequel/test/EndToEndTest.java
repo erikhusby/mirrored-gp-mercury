@@ -1,6 +1,8 @@
 package org.broadinstitute.sequel.test;
 
 
+import org.broadinstitute.sequel.boundary.squid.Sample;
+import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.infrastructure.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.infrastructure.bsp.MockBSPConnector;
 import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
@@ -48,7 +50,10 @@ public class EndToEndTest  {
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        return new TwoDBarcodedTube(tubeBarcode,new BSPSample(sampleName, projectPlan,null));
+        Sample passSample = new Sample();
+        passSample.setBspSampleID(sampleName);
+        BSPSampleAuthorityTwoDTube stockSample = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(sampleName, projectPlan,null));
+        return stockSample;
     }
     
     private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode,ProjectPlan projectPlan) {

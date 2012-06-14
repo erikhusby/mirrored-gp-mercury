@@ -6,14 +6,7 @@ import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.ReagentDesign;
-import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
-import org.broadinstitute.sequel.entity.project.WorkflowDescription;
-import org.broadinstitute.sequel.entity.project.XFoldCoverage;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
 import org.broadinstitute.sequel.entity.queue.JiraLabWorkQueueResponse;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
@@ -131,7 +124,7 @@ public class ProjectTest extends Arquillian {
 
         Collection<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
 
-        for (LabVessel vessel : project.getAllStarters()) {
+        for (Starter vessel : project.getAllStarters()) {
             sampleInstances.addAll(vessel.getSampleInstances());
         }
 

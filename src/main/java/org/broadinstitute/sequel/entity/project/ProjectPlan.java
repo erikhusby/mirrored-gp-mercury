@@ -1,9 +1,15 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.boundary.squid.AbstractPass;
+import org.broadinstitute.sequel.boundary.squid.DirectedPass;
+import org.broadinstitute.sequel.boundary.squid.Sample;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
+import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -17,6 +23,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -44,7 +51,7 @@ public class ProjectPlan {
     private Long projectPlanId;
 
     @OneToMany
-    private Collection<LabVessel> starters = new HashSet<LabVessel>();
+    private Collection<Starter> starters = new HashSet<Starter>();
 
     // todo jmt fix this
     @Transient
@@ -82,7 +89,38 @@ public class ProjectPlan {
 
     @OneToMany(mappedBy = "projectPlan")
     private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
-    
+
+    /**
+     * Creates a new ProjectPlan from a pass.
+     * @param pass
+     * @param bspDataFetcher
+     */
+    public ProjectPlan(AbstractPass pass,
+                       BSPSampleDataFetcher bspDataFetcher) {
+        this.project = new BasicProject(pass.getResearchProject(),null);
+        this.planName = pass.getProjectInformation().getPassNumber();
+        final Set<String> bspSamples = new HashSet<String>();
+
+        // todo arz this is sloppy: clean up workflow mapping, jira ticket, billing items, etc.
+        if (pass instanceof DirectedPass) {
+            this.workflowDescription = new WorkflowDescription("Hybrid Selection",null,null);
+        }
+        else {
+            throw new RuntimeException("SequeL can only deal with HS passes");
+        }
+
+        for (Sample passSample : pass.getSampleDetailsInformation().getSample()) {
+            bspSamples.add(passSample.getBspSampleID());
+        }
+        final Map<String,BSPSampleDTO> sampleNameToSampleDTO = bspDataFetcher.fetchSamplesFromBSP(bspSamples);
+
+        for (Sample passSample : pass.getSampleDetailsInformation().getSample()) {
+            String bspSampleName = passSample.getBspSampleID();
+            addStarter(new BSPSample(bspSampleName,this,sampleNameToSampleDTO.get(bspSampleName)));
+        }
+        this.project.addProjectPlan(this);
+    }
+
     public ProjectPlan(Project project,
                        String name,
                        WorkflowDescription workflowDescription)  {
@@ -143,15 +181,15 @@ public class ProjectPlan {
         this.quote = quote;
     }
     
-    public void addStarter(LabVessel vessel) {
-        if (vessel == null) {
+    public void addStarter(Starter starter) {
+        if (starter == null) {
             throw new NullPointerException("vessel cannot be null.");
         }
-        project.addStarter(vessel);
-        starters.add(vessel);
+        project.addStarter(starter);
+        starters.add(starter);
     }
     
-    public Collection<LabVessel> getStarters() {
+    public Collection<Starter> getStarters() {
         return starters;
     }
 
