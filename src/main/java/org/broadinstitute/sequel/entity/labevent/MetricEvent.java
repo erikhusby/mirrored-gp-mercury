@@ -2,7 +2,6 @@ package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.vessel.LabMetric;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import java.util.Collection;
 
@@ -20,11 +19,6 @@ public class MetricEvent extends LabEvent {
     @Override
     public LabEventName getEventName() {
         return LabEventName.METRIC_APPLIED;
-    }
-
-    @Override
-    public Collection<SampleSheet> getAllSampleSheets() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

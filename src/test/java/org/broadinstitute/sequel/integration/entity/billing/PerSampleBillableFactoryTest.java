@@ -4,7 +4,6 @@ package org.broadinstitute.sequel.integration.entity.billing;
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;

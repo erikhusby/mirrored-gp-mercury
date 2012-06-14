@@ -92,7 +92,7 @@ public class LabEventHandler {
         Recording what has actually happened in terms of container
         motion (fluid motion) is paramount.  This means that the
         entire app must tolerate the fact that we might
-        have {@link LabVessel}s that have no {@link SampleSheet}s.
+        have {@link LabVessel}s that have no {@link SampleInstance}s.
 
         We need to support this because {@link LabEvents} tend to be
         sent to us *after* they have happened, and subsequent events,
@@ -138,26 +138,9 @@ public class LabEventHandler {
         */
 
         processProjectPlanOverrides(labEvent,workflow);
+
         JiraCommentUtil.postUpdate(labEvent.getEventName().toString() + " Event Applied",
                 labEvent.getEventName().toString() + " has been applied to the following samples:",labEvent.getAllLabVessels());
-
-        try {
-            labEvent.validateSourceMolecularState();
-        }
-        catch(InvalidMolecularStateException e) {
-            invalidMolecularState.addEvent(labEvent);
-            return HANDLER_RESPONSE.ERROR;
-        }
-        try {
-            labEvent.validateTargetMolecularState();
-        }
-        catch(InvalidMolecularStateException e) {
-            invalidMolecularState.addEvent(labEvent);
-            return HANDLER_RESPONSE.ERROR;
-        }
-
-        // have the event alter the molecular state
-        // of the target samples
         try {
             labEvent.applyMolecularStateChanges();
             enqueueForPostProcessing(labEvent);
@@ -174,12 +157,12 @@ public class LabEventHandler {
                     billableEvents.fire(billable);
                 }
             }
-            return HANDLER_RESPONSE.OK;
+
         }
         catch(InvalidMolecularStateException e) {
             return HANDLER_RESPONSE.ERROR;
         }
-
+        return HANDLER_RESPONSE.OK;
 
     }
 

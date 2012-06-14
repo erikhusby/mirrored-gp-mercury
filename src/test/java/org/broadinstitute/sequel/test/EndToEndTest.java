@@ -21,7 +21,6 @@ import org.broadinstitute.sequel.entity.run.RunCartridge;
 import org.broadinstitute.sequel.entity.run.RunChamber;
 import org.broadinstitute.sequel.entity.run.SequencingRun;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
@@ -242,10 +241,6 @@ public class EndToEndTest  {
                         if (projectPlan.equals(fetchedPlan)) {
                             foundProject = true;
                         }
-                    }
-                    Set<SampleSheet> allSampleSheetsForAliquot = new HashSet<SampleSheet>();
-                    if (allSampleSheetsForAliquot.size() != numberOfSampleSheetsPerSample) {
-                        Assert.fail("Should have found exactly " + numberOfSampleSheetsPerSample + " sample sheets.  One for the unindexed SampleAliquotInstance and one with the index.");
                     }
                 }
             }               

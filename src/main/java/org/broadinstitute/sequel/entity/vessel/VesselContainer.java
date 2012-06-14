@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
@@ -28,6 +30,8 @@ import java.util.Set;
  */
 @Embeddable
 public class VesselContainer<T extends LabVessel> {
+
+    private static final Log LOG = LogFactory.getLog(VesselContainer.class);
 
     /* rack holds tubes, tubes have barcodes and can be removed.
     * plate holds wells, wells can't be removed.
@@ -113,12 +117,13 @@ public class VesselContainer<T extends LabVessel> {
         private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         private Set<Reagent> reagents = new HashSet<Reagent>();
         private boolean reagentsApplied = false;
-
         @Override
         public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             // todo jmt this class shouldn't have to worry about plate wells that have no informatics contents
             if (labVessel != null) {
-                sampleInstances.addAll(labVessel.getSampleInstances());
+                if (labVessel.isSampleAuthority()) {
+                    sampleInstances.addAll(labVessel.getSampleInstances());
+                }
                 if (labVessel.getReagentContentsCount() != null && labVessel.getReagentContentsCount() > 0) {
                     reagents.addAll(labVessel.getReagentContents());
                 }
@@ -157,7 +162,7 @@ public class VesselContainer<T extends LabVessel> {
 
     public void evaluateCriteria(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
             TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
-        T vesselAtPosition = getVesselAtPosition(position);
+       T vesselAtPosition = getVesselAtPosition(position);
         TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVessel(
                 vesselAtPosition, labEvent, hopCount);
         if(vesselAtPosition != null) {
@@ -197,7 +202,7 @@ public class VesselContainer<T extends LabVessel> {
             if (sectionTransfer.getTargetVesselContainer().equals(this)) {
                 VesselContainer sourceVesselContainer = sectionTransfer.getSourceVesselContainer();
                 // todo jmt replace indexOf with map lookup
-                VesselPosition sourcePosition = sectionTransfer.getSourceSection().getWells().get(
+                 VesselPosition sourcePosition = sectionTransfer.getSourceSection().getWells().get(
                         sectionTransfer.getTargetSection().getWells().indexOf(position));
                 sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
                         sectionTransfer.getLabEvent(), hopCount + 1);
@@ -318,4 +323,5 @@ public class VesselContainer<T extends LabVessel> {
     public Set<CherryPickTransfer> getCherryPickTransfersTo() {
         return cherryPickTransfersTo;
     }
+
 }

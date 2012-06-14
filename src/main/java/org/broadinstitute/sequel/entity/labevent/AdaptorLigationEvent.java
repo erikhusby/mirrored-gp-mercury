@@ -7,7 +7,6 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.JiraCommentUtil;
 
 import java.util.Collection;
@@ -89,18 +88,10 @@ public class AdaptorLigationEvent extends LabEvent  {
     @Override
     public void validateTargetMolecularState() throws InvalidMolecularStateException {
         for (LabVessel tangible: getTargetLabVessels()) {
-            for (SampleSheet sampleSheet : tangible.getSampleSheets()) {
-                if (sampleSheet != null && eventConfiguration.getOutputMode() == LabEventConfiguration.OutputMaterialMode.NEW_LIBRARY) {
-                    throw new InvalidMolecularStateException("There's already a sample sheet; I expected empty destinations");
-                }    
+             if (eventConfiguration.getOutputMode() == LabEventConfiguration.OutputMaterialMode.NEW_LIBRARY) {
+                throw new InvalidMolecularStateException("There's already a sample sheet; I expected empty destinations");
             }
-            
         }
-    }
-
-    @Override
-    public Collection<SampleSheet> getAllSampleSheets() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

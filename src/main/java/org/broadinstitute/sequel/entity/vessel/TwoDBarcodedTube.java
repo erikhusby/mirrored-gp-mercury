@@ -9,15 +9,12 @@ import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 
 import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 @Entity
 @NamedQueries({
@@ -118,7 +115,12 @@ public class TwoDBarcodedTube extends LabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        return startingSample.getSampleInstances();
+        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+
+        if (startingSample != null) {
+            sampleInstances = startingSample.getSampleInstances();
+        }
+        return sampleInstances;
     }
 
     @Override
@@ -161,4 +163,10 @@ public class TwoDBarcodedTube extends LabVessel {
     public Float getConcentration() {
         throw new RuntimeException("I haven't been written yet.");
     }
+
+    @Override
+    public boolean isSampleAuthority() {
+        return startingSample != null;
+    }
+
 }

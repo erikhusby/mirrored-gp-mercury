@@ -22,7 +22,6 @@ import org.broadinstitute.sequel.entity.queue.LcSetParameters;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;

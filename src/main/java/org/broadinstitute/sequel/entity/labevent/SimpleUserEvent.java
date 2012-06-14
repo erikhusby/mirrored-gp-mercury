@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import java.util.Collection;
 import java.util.Date;
@@ -47,8 +46,4 @@ public class SimpleUserEvent extends LabEvent {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public Collection<SampleSheet> getAllSampleSheets() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
 }

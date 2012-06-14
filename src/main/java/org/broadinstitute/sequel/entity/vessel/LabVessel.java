@@ -13,12 +13,9 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
-import org.hibernate.annotations.Index;
-import org.hibernate.annotations.NaturalId;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
@@ -59,11 +56,6 @@ public abstract class LabVessel implements Starter {
 
     @OneToMany(cascade = CascadeType.PERSIST)
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
-
-    /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
-     * avoid an unnecessary database round trip  */
-    @Formula("(select count(*) from lab_vessel_sample_sheets where lab_vessel_sample_sheets.lab_vessels = lab_vessel_id)")
-    private Integer sampleSheetCount = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private MolecularState molecularState;
@@ -395,8 +387,8 @@ public abstract class LabVessel implements Starter {
 
     /**
      * Returns all projects.  Convenience method vs.
-     * iterating over {@link #getSampleSheets()} and
-     * calling {@link org.broadinstitute.sequel.entity.sample.SampleInstance#getProject()}
+     * iterating over {@link #getSampleInstances()} and
+     * calling {@link org.broadinstitute.sequel.entity.sample.SampleInstance#getAllProjectPlans()}
      * @return
      */
     public abstract Collection<Project> getAllProjects();
@@ -438,4 +430,8 @@ public abstract class LabVessel implements Starter {
     public abstract Float getVolume();
 
     public abstract Float getConcentration();
+
+    public boolean isSampleAuthority() {
+        return false;
+    }
 }

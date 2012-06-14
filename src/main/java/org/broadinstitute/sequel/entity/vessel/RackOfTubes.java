@@ -4,7 +4,6 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -18,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -185,4 +183,6 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
     public String getDigest() {
         return digest;
     }
+
+
 }

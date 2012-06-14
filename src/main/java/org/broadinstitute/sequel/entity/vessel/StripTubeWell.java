@@ -1,12 +1,9 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.entity.sample.StateChange;
 
 import javax.persistence.Entity;
 import java.util.Collection;

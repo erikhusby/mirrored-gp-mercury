@@ -4,10 +4,9 @@ import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
-import org.broadinstitute.sequel.entity.sample.StartingSample;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 /**
  * Service called when a third party service
@@ -101,10 +100,8 @@ public class AliquotReceiver {
                     // instructions with the aliquot yet.  We're just requesting
                     // particular aliquots.
                     possibleRequest.setFulfilled(true);
-                    for (SampleSheet sampleSheet : aliquot.getSampleSheets()) {
-                        for (StartingSample startingSample : sampleSheet.getStartingSamples()) {
-                            startingSample.setRootProjectPlan(possibleRequest.getAliquotParameters().getProjectPlan());
-                        }
+                    for (SampleInstance sampleInstance: aliquot.getSampleInstances()) {
+                        sampleInstance.getStartingSample().setRootProjectPlan(possibleRequest.getAliquotParameters().getProjectPlan());
                     }
 
                     platingRequest = possibleRequest;

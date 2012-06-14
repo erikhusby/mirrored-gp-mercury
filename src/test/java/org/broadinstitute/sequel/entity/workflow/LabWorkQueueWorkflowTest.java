@@ -16,7 +16,6 @@ import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
 import org.broadinstitute.sequel.entity.queue.LcSetParameters;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;

@@ -1,7 +1,5 @@
 package org.broadinstitute.sequel.entity.project;
 
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
-
 /**
  * A {@link ProjectBranchable} is a branch
  * point in the transfer graph where all
@@ -20,8 +18,6 @@ import org.broadinstitute.sequel.entity.sample.SampleSheet;
  * to particular {@link Project}s.
  */
 public interface ProjectBranchable {
-    
-    public void branchFor(Project p,SampleSheet sampleSheet);
     
     public void branchAll(Project p);
 }

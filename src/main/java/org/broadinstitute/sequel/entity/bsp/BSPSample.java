@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.bsp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
@@ -97,7 +98,12 @@ public class BSPSample extends StartingSample {
     @Override
     public Set<SampleInstance> getSampleInstances() {
         final Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        sampleInstances.add(new SampleInstance(this,null,getRootProjectPlan(),null,getRootProjectPlan().getWorkflowDescription()));
+        ProjectPlan rootPlan = getRootProjectPlan();
+        WorkflowDescription workflow = null;
+        if (rootPlan != null) {
+            workflow = rootPlan.getWorkflowDescription();
+        }
+        sampleInstances.add(new SampleInstance(this,null,rootPlan,null,workflow));
         return sampleInstances;
     }
 }

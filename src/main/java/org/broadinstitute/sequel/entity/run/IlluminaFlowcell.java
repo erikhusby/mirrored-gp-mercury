@@ -2,29 +2,19 @@ package org.broadinstitute.sequel.entity.run;
 
 
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.sample.StateChange;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
 import javax.persistence.Transient;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 

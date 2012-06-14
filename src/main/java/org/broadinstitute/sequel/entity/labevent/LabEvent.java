@@ -4,7 +4,6 @@ import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -242,20 +241,6 @@ public abstract class LabEvent {
     public Collection<Reagent> getReagents() {
         return this.reagents;
     }
-
-    /**
-     * Probably a transient method that iterates
-     * over all {@link org.broadinstitute.sequel.entity.vessel.LabVessel}s involved
-     * in this event and builds a Collection of
-     * {@link org.broadinstitute.sequel.entity.sample.SampleSheet}s
-     *
-     * Useful for sending out alerts about
-     * the event.  Otherwise clients have to iterate
-     * over containers and iterate over sample
-     * sheets
-     * @return
-     */
-    public abstract Collection<SampleSheet> getAllSampleSheets();
 
     public Set<SectionTransfer> getSectionTransfers() {
         return this.sectionTransfers;

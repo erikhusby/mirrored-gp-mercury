@@ -31,7 +31,6 @@ import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.sequel.entity.run.IlluminaFlowcell;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.PlateWell;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
@@ -48,15 +47,7 @@ import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 

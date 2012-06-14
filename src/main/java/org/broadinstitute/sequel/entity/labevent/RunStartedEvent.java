@@ -1,8 +1,6 @@
 package org.broadinstitute.sequel.entity.labevent;
 
 
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
-
 import java.util.Collection;
 
 /**
@@ -14,11 +12,6 @@ public class RunStartedEvent extends LabEvent {
     @Override
     public LabEventName getEventName() {
         return LabEventName.RUN_STARTED;
-    }
-
-    @Override
-    public Collection<SampleSheet> getAllSampleSheets() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

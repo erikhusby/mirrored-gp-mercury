@@ -4,14 +4,11 @@ import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.test.LabEventTest;
 import org.broadinstitute.sequel.control.dao.project.JiraTicketDao;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;

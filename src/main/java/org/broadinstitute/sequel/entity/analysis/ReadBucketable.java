@@ -1,8 +1,6 @@
 package org.broadinstitute.sequel.entity.analysis;
 
 
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
-
 import java.util.Collection;
 
 /**
@@ -34,8 +32,6 @@ import java.util.Collection;
 public interface ReadBucketable {
 
     public void branchAll(ReadBucket bucket);
-
-    public void branchFor(ReadBucket bucket, SampleSheet sampleSheet);
 
     public Collection<ReadBucket> getReadBuckets();
 

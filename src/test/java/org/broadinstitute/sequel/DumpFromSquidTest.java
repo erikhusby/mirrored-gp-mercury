@@ -21,34 +21,6 @@ import edu.mit.broad.prodinfo.squid.quant.entity.LibraryQuant;
 import edu.mit.broad.prodinfo.squid.services.labopsjira.samples.LcSetSampleDataServiceImpl;
 import edu.mit.broad.prodinfo.squid.workrequest.entity.*;
 */
-import org.broadinstitute.sequel.entity.billing.Quote;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
-import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.project.*;
-import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
-import org.broadinstitute.sequel.entity.queue.LcSetParameters;
-import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
-import org.broadinstitute.sequel.entity.run.SequencingTechnology;
-import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
-import org.broadinstitute.sequel.infrastructure.bsp.*;
-import org.broadinstitute.sequel.infrastructure.jira.JiraService;
-import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
-import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
-import org.hibernate.Hibernate;
-import org.testng.annotations.Test;
-
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import java.util.*;
 
 /**
  * Commented out because it's an experiment

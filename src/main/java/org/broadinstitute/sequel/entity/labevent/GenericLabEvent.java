@@ -2,8 +2,6 @@ package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.sample.SampleSheet;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -174,11 +172,6 @@ public class GenericLabEvent extends LabEvent {
             }
         }
 */
-    }
-
-    @Override
-    public Collection<SampleSheet> getAllSampleSheets() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     public LabEventType getLabEventType() {
