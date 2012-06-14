@@ -6,9 +6,7 @@ import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
@@ -25,7 +23,8 @@ public class DeploymentBuilder {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, SEQUEL_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
-                .addPackages(true, "org.broadinstitute.sequel");
+                .addPackages(true, "org.broadinstitute.sequel")
+                .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=STUBBY"), "classes/jndi.properties");
         war = addWarDependencies(war);
         return war;
     }

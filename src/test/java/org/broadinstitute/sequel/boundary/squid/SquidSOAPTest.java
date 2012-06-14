@@ -2,10 +2,7 @@ package org.broadinstitute.sequel.boundary.squid;
 
 
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
-import org.broadinstitute.sequel.integration.DeploymentBuilder;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -14,15 +11,11 @@ import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.URL;
 
-public class SquidSOAPTest extends Arquillian {
-
-    @Deployment
-    public static WebArchive buildSequelWar() {
-        return DeploymentBuilder.buildSequelWar();
-    }
+public class SquidSOAPTest extends ContainerTest {
 
     @Inject
     private SquidConfiguration squidConfiguration;
+
 
     private SquidTopicPortype getPMBridgeServicePort() throws Exception {
         String namespace = "urn:SquidTopic";

@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.infrastructure.deployment;
+package org.broadinstitute.sequel.infrastructure;
 
 
 import javax.naming.NamingException;

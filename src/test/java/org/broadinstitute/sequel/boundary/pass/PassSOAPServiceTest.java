@@ -1,14 +1,15 @@
 package org.broadinstitute.sequel.boundary.pass;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.boundary.SquidTopicPortype;
+import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.integration.ContainerTest;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.URL;
@@ -19,7 +20,12 @@ import java.net.URL;
  */
 public class PassSOAPServiceTest extends ContainerTest {
 
-    private static Log gLog = LogFactory.getLog(PassSOAPServiceTest.class);
+    @Inject
+    private Log log;
+
+
+    @Inject
+    private Deployment deployment;
 
 
     /**
@@ -50,7 +56,14 @@ public class PassSOAPServiceTest extends ContainerTest {
 
         final SquidTopicPortype pmBridgeServicePort = getPMBridgeServicePort(baseURL);
         String ret = pmBridgeServicePort.getGreeting();
-        Assert.assertEquals("Hello PMBridge!", ret);
+        Assert.assertEquals(ret, "Hello PMBridge!");
 
     }
+
+
+    @Test
+    public void deploymentTest() {
+        Assert.assertEquals(deployment, Deployment.STUBBY, "For Arquillian tests deployment should be STUBBY!");
+    }
+
 }
