@@ -1,9 +1,11 @@
 package org.broadinstitute.sequel.integration.entity.billing;
 
 
+import org.broadinstitute.sequel.boundary.squid.Sample;
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
@@ -91,7 +93,12 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
                 projectPlan = plan2;
             }
             String barcode = "R" + rackPosition;
-            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, new BSPSample("SM-" + rackPosition, projectPlan, null)));
+            String bspStock = "SM-" + rackPosition;
+            Sample passSample = new Sample();
+            passSample.setBspSampleID(bspStock);
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            mapBarcodeToTube.put(barcode,bspAliquot);
+
         }
         
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();

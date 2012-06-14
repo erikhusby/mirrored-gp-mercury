@@ -9,6 +9,7 @@ import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptacleType;
+import org.broadinstitute.sequel.boundary.squid.Sample;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
@@ -31,18 +32,11 @@ import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.sequel.entity.run.IlluminaFlowcell;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.vessel.PlateWell;
-import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
-import org.broadinstitute.sequel.entity.vessel.SBSSection;
-import org.broadinstitute.sequel.entity.vessel.StaticPlate;
-import org.broadinstitute.sequel.entity.vessel.StripTube;
-import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.entity.vessel.VesselContainer;
-import org.broadinstitute.sequel.entity.vessel.VesselPosition;
+import org.broadinstitute.sequel.entity.vessel.*;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
+import org.broadinstitute.sequel.presentation.pass.PassSample;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -106,7 +100,12 @@ public class LabEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + rackPosition;
-            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, new BSPSample("SM-" + rackPosition, projectPlan, null)));
+            String bspStock = "SM-" + rackPosition;
+            Sample passSample = new Sample();
+            passSample.setBspSampleID(bspStock);
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            mapBarcodeToTube.put(barcode,bspAliquot);
+
         }
 
         // Messaging
@@ -170,7 +169,14 @@ public class LabEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + rackPosition;
-            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, new BSPSample("SM-" + rackPosition, projectPlan, null)));
+
+            String bspStock = "SM-" + rackPosition;
+            Sample passSample = new Sample();
+            passSample.setBspSampleID(bspStock);
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            mapBarcodeToTube.put(barcode,bspAliquot);
+
+
         }
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
@@ -270,7 +276,12 @@ public class LabEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= SBSSection.P96COLS1_6BYROW.getWells().size(); rackPosition++) {
             String barcode = "R" + rackPosition;
-            mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, new BSPSample("SM-" + rackPosition, projectPlan, null)));
+
+            String bspStock = "SM-" + rackPosition;
+            Sample passSample = new Sample();
+            passSample.setBspSampleID(bspStock);
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            mapBarcodeToTube.put(barcode,bspAliquot);
         }
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
@@ -647,7 +658,7 @@ public class LabEventTest {
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
             Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A08);
             Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
-            Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
+            Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(), "SM-8.aliquot", "Wrong sample");
 
             // ShearingQC
             validateWorkflow(workflowDescription, "ShearingQC", shearingCleanupPlate);
@@ -848,7 +859,7 @@ public class LabEventTest {
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
             Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A08);
             Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
-            Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(), "SM-8", "Wrong sample");
+            Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(), "SM-8.aliquot", "Wrong sample");
             return this;
         }
     }

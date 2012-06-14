@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.integration.entity.project;
 
+import org.broadinstitute.sequel.boundary.squid.Sample;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
@@ -23,6 +24,7 @@ import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
+import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
@@ -310,8 +312,10 @@ public class ProjectTest extends Arquillian {
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose
         // methods throw exceptions that say "Hey, I'm from BSP, you can't do that!"
-        LabVessel starter = new TwoDBarcodedTube(sampleName, new BSPSample(sampleName,projectPlan,bspFetcher.fetchSingleSampleFromBSP(sampleName)));
-        return starter;
+        Sample passSample = new Sample();
+        passSample.setBspSampleID(sampleName);
+        BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(sampleName + ".aliquot", projectPlan, bspFetcher.fetchSingleSampleFromBSP(sampleName)));
+        return bspAliquot;
     }
     
     private void projectManagerAddsStartersToPlan(LabVessel starter,

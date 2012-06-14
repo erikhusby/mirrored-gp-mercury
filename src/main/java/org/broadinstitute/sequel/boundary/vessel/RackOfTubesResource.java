@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.boundary.vessel;
 
+import org.broadinstitute.sequel.boundary.squid.Sample;
 import org.broadinstitute.sequel.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
@@ -7,6 +8,7 @@ import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
@@ -57,7 +59,11 @@ public class RackOfTubesResource {
                 if(tubeBean.sampleBarcode == null) {
                     twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.barcode);
                 } else {
-                    twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.barcode, new BSPSample(tubeBean.sampleBarcode, projectPlan));
+                    Sample passSample = new Sample();
+                    passSample.setBspSampleID(tubeBean.sampleBarcode);
+                    BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(tubeBean.sampleBarcode + ".aliquot", projectPlan, null));
+
+                    twoDBarcodedTube = bspAliquot;
                 }
             }
             rackOfTubes.getVesselContainer().addContainedVessel(twoDBarcodedTube,

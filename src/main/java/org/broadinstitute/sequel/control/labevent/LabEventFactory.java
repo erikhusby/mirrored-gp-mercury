@@ -528,7 +528,7 @@ public class LabEventFactory {
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if(twoDBarcodedTube == null) {
-                twoDBarcodedTube = new TwoDBarcodedTube(receptacleType.getBarcode(), null);
+                twoDBarcodedTube = new TwoDBarcodedTube(receptacleType.getBarcode());
                 mapBarcodeToTubes.put(receptacleType.getBarcode(), twoDBarcodedTube);
             }
             rackOfTubes.getVesselContainer().addContainedVessel(twoDBarcodedTube, VesselPosition.getByName(receptacleType.getPosition()));
