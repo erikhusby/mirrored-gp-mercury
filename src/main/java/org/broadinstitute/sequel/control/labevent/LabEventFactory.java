@@ -48,13 +48,19 @@ import java.util.regex.Pattern;
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "serial", "CloneableClassWithoutClone", "ClassExtendsConcreteCollection"})
 public class LabEventFactory {
 
+    /** Section for all wells in a 96 well plate */
     public static final String SECTION_ALL_96 = "ALL96";
-
+    /** Physical type for rack of tubes */
     public static final String PHYS_TYPE_TUBE_RACK = "TubeRack";
+    /** Physical type for Eppendorf plate with 96 wells */
     public static final String PHYS_TYPE_EPPENDORF_96 = "Eppendorf96";
+    /** Physical type for a rack that holds 12 strip tubes */
     public static final String PHYS_TYPE_STRIP_TUBE_RACK_OF_12 = "StripTubeRackOf12";
+    /** Physical type for a strip tube*/
     public static final String PHYS_TYPE_STRIP_TUBE = "StripTube";
+    /** Physical type for a flowcell */
     public static final String PHYS_TYPE_FLOWCELL = "Flowcell";
+    /** Pattern that groups non-zero trailing digits */
     private static final Pattern LEADING_ZERO_PATTERN = Pattern.compile("^0+(?!$)");
 
     @Inject
@@ -78,9 +84,15 @@ public class LabEventFactory {
     @Inject
     private LabEventDao labEventDao;
 
+    /**
+     * This class is used in a map, to detect duplicate events from a deck.
+     */
     private static class UniqueEvent {
+        /** where the event happened */
         private final String eventLocation;
+        /** when the event happened */
         private final Date eventDate;
+        /** Needed if the deck is sending two transfers in the same message */
         private final Long disambiguator;
 
         private UniqueEvent(String eventLocation, Date eventDate, Long disambiguator) {
@@ -169,6 +181,11 @@ public class LabEventFactory {
         return labEvents;
     }
 
+    /**
+     * Modify disambiguators of other events in the same message, if necessary, and persist an event
+     * @param uniqueEvents events in a message
+     * @param labEvent     event to be persisted
+     */
     private void persistLabEvent(Set<UniqueEvent> uniqueEvents, LabEvent labEvent) {
         // The deck-side scripts don't always set the disambiguator correctly, so modify it, to make it unique
         // within this message, if necessary
@@ -205,6 +222,11 @@ public class LabEventFactory {
                 mapBarcodeToSourceTube, mapBarcodeToTargetRack, findTubesByBarcodes(plateCherryPickEvent.getPositionMap()));
     }
 
+    /**
+     * From a list of positionMaps, create a map from barcode to rack
+     * @param positionMap list of positionMaps
+     * @return map from barcode to rack
+     */
     private Map<String, RackOfTubes> buildMapBarcodeToRack(List<PositionMapType> positionMap) {
         Map<String, RackOfTubes> mapBarcodeToSourceRack = new HashMap<String, RackOfTubes>();
         for (PositionMapType positionMapType : positionMap) {
@@ -214,6 +236,11 @@ public class LabEventFactory {
         return mapBarcodeToSourceRack;
     }
 
+    /**
+     * Fetch an existing tube formation from the database
+     * @param positionMapType tube barcodes and positions
+     * @return database rack
+     */
     private RackOfTubes fetchRack(PositionMapType positionMapType) {
         List<Map.Entry<VesselPosition, String>> positionBarcodeList  = new ArrayList<Map.Entry<VesselPosition, String>>();
         for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
@@ -230,13 +257,22 @@ public class LabEventFactory {
         return rackOfTubes;
     }
 
+    /**
+     * Build an entity to represent a cherry pick (random access) transfer from a source rack to a target rack
+     * @param plateCherryPickEvent JAXB
+     * @param mapBarcodeToSourceRack obvious
+     * @param mapBarcodeToSourceTube obvious
+     * @param mapBarcodeToTargetRack obvious
+     * @param mapBarcodeToTargetTube obvious
+     * @return event
+     */
     public LabEvent buildCherryPickRackToRackDbFree(PlateCherryPickEvent plateCherryPickEvent,
             Map<String, RackOfTubes> mapBarcodeToSourceRack,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
             Map<String, RackOfTubes> mapBarcodeToTargetRack,
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTube) {
         LabEvent labEvent = constructReferenceData(plateCherryPickEvent);
-        addSourceRack(plateCherryPickEvent, mapBarcodeToSourceRack, mapBarcodeToSourceTube, labEvent);
+        addSourceRackToMap(plateCherryPickEvent, mapBarcodeToSourceRack, mapBarcodeToSourceTube);
 
         for (Map.Entry<String, RackOfTubes> stringVesselContainerEntry : mapBarcodeToTargetRack.entrySet()) {
             if(stringVesselContainerEntry.getValue() == null) {
@@ -261,13 +297,23 @@ public class LabEventFactory {
         return labEvent;
     }
 
+    /**
+     * Build an entity to represent a cherry pick (random access) transfer between a source rack and a target strip
+     * tube
+     * @param plateCherryPickEvent JAXB
+     * @param mapBarcodeToSourceRack obvious
+     * @param mapBarcodeToSourceTube obvious
+     * @param mapBarcodeToTargetRack obvious
+     * @param mapBarcodeToTargetStripTube obvious
+     * @return entity
+     */
     public LabEvent buildCherryPickRackToStripTubeDbFree(PlateCherryPickEvent plateCherryPickEvent,
             Map<String, RackOfTubes> mapBarcodeToSourceRack,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
             Map<String, RackOfTubes> mapBarcodeToTargetRack,
             Map<String, StripTube> mapBarcodeToTargetStripTube) {
         LabEvent labEvent = constructReferenceData(plateCherryPickEvent);
-        addSourceRack(plateCherryPickEvent, mapBarcodeToSourceRack, mapBarcodeToSourceTube, labEvent);
+        addSourceRackToMap(plateCherryPickEvent, mapBarcodeToSourceRack, mapBarcodeToSourceTube);
 
 /*
         for (Map.Entry<String, VesselContainer<?>> stringVesselContainerEntry : mapBarcodeToTargetRack.entrySet()) {
@@ -304,8 +350,14 @@ public class LabEventFactory {
         return labEvent;
     }
 
-    private void addSourceRack(PlateCherryPickEvent plateCherryPickEvent, Map<String, RackOfTubes> mapBarcodeToSourceRack,
-            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube, LabEvent labEvent) {
+    /**
+     * if a source rack is not already in the map, add it
+     * @param plateCherryPickEvent JAXB
+     * @param mapBarcodeToSourceRack map
+     * @param mapBarcodeToSourceTube needed to build the rack
+     */
+    private void addSourceRackToMap(PlateCherryPickEvent plateCherryPickEvent, Map<String, RackOfTubes> mapBarcodeToSourceRack,
+            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube) {
         for (PlateType sourceRackJaxb : plateCherryPickEvent.getSourcePlate()) {
             RackOfTubes sourceRackEntity = mapBarcodeToSourceRack.get(sourceRackJaxb.getBarcode());
             if(sourceRackEntity == null) {
@@ -324,7 +376,7 @@ public class LabEventFactory {
     }
 
     /**
-    * Builds a lab event entity from a JAXB plate event bean
+    * Builds a lab event entity from a JAXB plate event (reagent addition) bean
     * @param plateEventType JAXB event bean
     * @return entity
     */
@@ -417,7 +469,7 @@ public class LabEventFactory {
     // todo jmt combine following two methods?
     /**
      * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
-     * lab event entity
+     * lab event entity for transfer from rack to plate
      * @param plateTransferEvent JAXB plate transfer event
      * @param mapBarcodeToSourceTubes existing source tubes (in new rack)
      * @param targetPlate existing plate, or null for new plate
@@ -442,7 +494,7 @@ public class LabEventFactory {
 
     /**
      * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
-     * lab event entity
+     * lab event entity for transfer from rack to plate
      * @param plateTransferEvent JAXB plate transfer event
      * @param rackOfTubes existing source rack
      * @param targetPlate existing plate, or null for new plate
@@ -485,6 +537,14 @@ public class LabEventFactory {
         return rackOfTubes;
     }
 
+    /**
+     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
+     * lab event entity for transfer from rack to rack
+     * @param plateTransferEvent JAXB
+     * @param sourceRack from database
+     * @param mapBarcodeToTargetTubes each entry may be null, if it isn't in the database
+     * @return entity
+     */
     // todo jmt combine following two methods?
     public LabEvent buildFromBettaLimsRackToRackDbFree(
             PlateTransferEventType plateTransferEvent,
@@ -501,6 +561,14 @@ public class LabEventFactory {
         return labEvent;
     }
 
+    /**
+     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
+     * lab event entity for transfer from rack to rack
+     * @param plateTransferEvent JAXB
+     * @param sourceRack from database
+     * @param targetRack from database
+     * @return entity
+     */
     public LabEvent buildFromBettaLimsRackToRackDbFree(
             PlateTransferEventType plateTransferEvent,
             RackOfTubes sourceRack,
@@ -603,6 +671,11 @@ public class LabEventFactory {
         return this.twoDBarcodedTubeDao.findByBarcodes(barcodes);
     }
 
+    /**
+     * Build an entity to represent a transfer from a tube to an entire section of a plate
+     * @param receptaclePlateTransferEvent JAXB
+     * @return entity
+     */
     public LabEvent buildFromBettaLims(ReceptaclePlateTransferEvent receptaclePlateTransferEvent) {
         return buildVesselToSectionDbFree(receptaclePlateTransferEvent,
                 twoDBarcodedTubeDao.findByBarcode(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode()),

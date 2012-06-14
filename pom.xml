@@ -1267,7 +1267,7 @@
                             <name>hbm2ddl</name>
                             <implementation>jpaconfiguration</implementation>
                             <outputDirectory>
-                                src/main/resources
+                                target/generated-sources/ddl
                             </outputDirectory>
                         </component>
                     </components>

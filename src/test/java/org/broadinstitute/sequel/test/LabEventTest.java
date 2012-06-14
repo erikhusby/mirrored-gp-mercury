@@ -90,9 +90,11 @@ public class LabEventTest {
     public void testHybridSelection() {
 //        Controller.startCPURecording(true);
 
+        // Project and workflow
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("HS", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        WorkflowDescription workflowDescription = new WorkflowDescription("HS", billableEvents,
+                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         ProjectPlan projectPlan = new ProjectPlan(project,"To test hybrid selection", workflowDescription);
 
         WorkflowParser workflowParser = new WorkflowParser(
@@ -107,35 +109,32 @@ public class LabEventTest {
             mapBarcodeToTube.put(barcode, new TwoDBarcodedTube(barcode, new BSPSample("SM-" + rackPosition, projectPlan, null)));
         }
 
+        // Messaging
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setPersonDAO(new PersonDAO());
         LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
 
-        // todo jmt fix preflight
-        PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                mapBarcodeToTube);//.invoke();
-        ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
-                labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
-        StaticPlate shearingCleanupPlate = shearingEntityBuilder.getShearingCleanupPlate();
-        String shearCleanPlateBarcode = shearingEntityBuilder.getShearCleanPlateBarcode();
-        StaticPlate shearingPlate = shearingEntityBuilder.getShearingPlate();
+        PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(workflowDescription,
+                bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
 
-        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(workflowDescription, bettaLimsMessageFactory,
-                labEventFactory, labEventHandler, shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate).invoke();
-        RackOfTubes pondRegRack = libraryConstructionEntityBuilder.getPondRegRack();
-        String pondRegRackBarcode = libraryConstructionEntityBuilder.getPondRegRackBarcode();
-        List<String> pondRegTubeBarcodes = libraryConstructionEntityBuilder.getPondRegTubeBarcodes();
+        ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(workflowDescription, mapBarcodeToTube,
+                bettaLimsMessageFactory, labEventFactory, labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
-        HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new HybridSelectionEntityBuilder(workflowDescription, bettaLimsMessageFactory, labEventFactory,
-                labEventHandler, pondRegRack, pondRegRackBarcode, pondRegTubeBarcodes).invoke();
-        RackOfTubes normCatchRack = hybridSelectionEntityBuilder.getNormCatchRack();
-        String normCatchRackBarcode = hybridSelectionEntityBuilder.getNormCatchRackBarcode();
-        List<String> normCatchBarcodes = hybridSelectionEntityBuilder.getNormCatchBarcodes();
-        Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes = hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes();
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
+                workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
+                shearingEntityBuilder.getShearingPlate()).invoke();
 
-        new QtpEntityBuilder(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler, normCatchRack,
-                normCatchRackBarcode, normCatchBarcodes, mapBarcodeToNormCatchTubes).invoke();
+        HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new HybridSelectionEntityBuilder(
+                workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
+
+        new QtpEntityBuilder(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes()).invoke();
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -180,19 +179,16 @@ public class LabEventTest {
         LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
 
         // todo jmt fix preflight
-        PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                mapBarcodeToTube);//.invoke();
-        ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
-                labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
-        StaticPlate shearingCleanupPlate = shearingEntityBuilder.getShearingCleanupPlate();
-        String shearCleanPlateBarcode = shearingEntityBuilder.getShearCleanPlateBarcode();
-        StaticPlate shearingPlate = shearingEntityBuilder.getShearingPlate();
+        PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(workflowDescription,
+                bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
 
-        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(workflowDescription, bettaLimsMessageFactory,
-                labEventFactory, labEventHandler, shearingCleanupPlate, shearCleanPlateBarcode, shearingPlate).invoke();
-        RackOfTubes pondRegRack = libraryConstructionEntityBuilder.getPondRegRack();
-        String pondRegRackBarcode = libraryConstructionEntityBuilder.getPondRegRackBarcode();
-        List<String> pondRegTubeBarcodes = libraryConstructionEntityBuilder.getPondRegTubeBarcodes();
+        ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(workflowDescription, mapBarcodeToTube,
+                bettaLimsMessageFactory, labEventFactory, labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
+
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
+                workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
+                shearingEntityBuilder.getShearingPlate()).invoke();
 
         List<String> sageUnloadTubeBarcodes = new ArrayList<String>();
         for(int i = 1; i <= NUM_POSITIONS_IN_RACK; i++) {
@@ -204,9 +200,11 @@ public class LabEventTest {
             // SageLoading
             String sageCassetteBarcode = "SageCassette" + i;
             PlateTransferEventType sageLoadingJaxb = bettaLimsMessageFactory.buildRackToPlate("SageLoading",
-                    pondRegRackBarcode, pondRegTubeBarcodes.subList(i * 4, i * 4 + 4), sageCassetteBarcode);
+                    libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                    libraryConstructionEntityBuilder.getPondRegTubeBarcodes().subList(i * 4, i * 4 + 4), sageCassetteBarcode);
             // todo jmt SAGE section
-            LabEvent sageLoadingEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(sageLoadingJaxb, pondRegRack, null);
+            LabEvent sageLoadingEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(sageLoadingJaxb,
+                    libraryConstructionEntityBuilder.getPondRegRack(), null);
             labEventHandler.processEvent(sageLoadingEntity, null);
             StaticPlate sageCassette = (StaticPlate) sageLoadingEntity.getTargetLabVessels().iterator().next();
 
