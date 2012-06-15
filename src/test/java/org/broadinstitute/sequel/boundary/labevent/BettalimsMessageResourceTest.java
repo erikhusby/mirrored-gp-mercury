@@ -2,9 +2,9 @@ package org.broadinstitute.sequel.boundary.labevent;
 
 //import com.jprofiler.api.agent.Controller;
 import com.sun.jersey.api.client.Client;
-import org.broadinstitute.sequel.boundary.squid.Sample;
+import org.broadinstitute.sequel.boundary.Sample;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
-import org.broadinstitute.sequel.presentation.pass.PassSample;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.test.LabEventTest;
 import org.broadinstitute.sequel.TestGroups;
@@ -16,11 +16,7 @@ import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
@@ -85,7 +81,7 @@ public class BettalimsMessageResourceTest extends ContainerTest {
                 "TP-" + testPrefix, testPrefix));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS" + testPrefix, billableEvents,
                 CreateIssueRequest.Fields.Issuetype.Whole_Genome_Shotgun);
-        ProjectPlan projectPlan = new ProjectPlan(project, "To test whole genome shotgun", workflowDescription);
+        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + testPrefix + rackPosition;

@@ -4,11 +4,10 @@ package org.broadinstitute.sequel.entity.sample;
 
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
 import java.util.Collection;
 import java.util.HashMap;

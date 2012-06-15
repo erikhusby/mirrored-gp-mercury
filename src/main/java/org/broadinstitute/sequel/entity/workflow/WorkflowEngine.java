@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.entity.workflow;
 
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -40,7 +40,7 @@ public class WorkflowEngine {
         return workflowsForVessel;
     }
     
-    public Collection<ProjectPlan> getActiveProjectPlans(SampleInstance sampleInstance) {
+    public Collection<BasicProjectPlan> getActiveProjectPlans(SampleInstance sampleInstance) {
         throw new RuntimeException("not implemented");
     }
 }

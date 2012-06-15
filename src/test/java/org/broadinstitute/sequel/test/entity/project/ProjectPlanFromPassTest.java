@@ -1,21 +1,19 @@
 package org.broadinstitute.sequel.test.entity.project;
 
-import org.broadinstitute.sequel.boundary.squid.AbstractPass;
-import org.broadinstitute.sequel.boundary.squid.DirectedPass;
-import org.broadinstitute.sequel.boundary.squid.ProjectInformation;
-import org.broadinstitute.sequel.boundary.squid.Sample;
-import org.broadinstitute.sequel.boundary.squid.SampleList;
+import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
+import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.bsp.MockBSPService;
+import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
 import org.testng.annotations.Test;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -39,6 +37,13 @@ public class ProjectPlanFromPassTest {
             sampleList.getSample().add(sample);
         }
         hsPass.setSampleDetailsInformation(sampleList);
+        hsPass.setBaitSetID(new Long(123));
+        CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
+        TargetCoverageModel targetCoverageModel = new TargetCoverageModel();
+        targetCoverageModel.setCoveragePercentage(new BigInteger("80"));
+        targetCoverageModel.setDepth(new BigInteger("20"));
+        coverageAndAnalysisInformation.setTargetCoverageModel(targetCoverageModel);
+        hsPass.setCoverageAndAnalysisInformation(coverageAndAnalysisInformation);
         return hsPass;
 
     }
@@ -47,7 +52,7 @@ public class ProjectPlanFromPassTest {
     public void test_create_project_plan_from_pass() {
         AbstractPass pass = setupProjectAndPass("SM-123","SM-456");
         BSPSampleDataFetcher bspDataFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
-        ProjectPlan projectPlan = new ProjectPlan(pass,bspDataFetcher);
+        ProjectPlan projectPlan = new PassBackedProjectPlan(pass,bspDataFetcher,new MockQuoteService());
 
         assertEquals(projectPlan.getStarters().size(),pass.getSampleDetailsInformation().getSample().size());
         assertEquals(projectPlan.getProject().getProjectName(),pass.getResearchProject());

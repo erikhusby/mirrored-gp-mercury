@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.boundary.project;
 
-import org.broadinstitute.sequel.entity.DB;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.presentation.AbstractJsfBean;
 
@@ -33,7 +32,7 @@ public class ProjectPlanForm extends AbstractJsfBean implements Serializable {
         projectDetail.loadProject();
 
         try {
-            ProjectPlan plan = new ProjectPlan(projectDetail.getProject(), projectPlanName, workflowDescription);
+            BasicProjectPlan plan = new BasicProjectPlan(projectDetail.getProject(), projectPlanName, workflowDescription);
         } catch (Exception e) {
 
             // should probably not be using FacesContext in a boundary object

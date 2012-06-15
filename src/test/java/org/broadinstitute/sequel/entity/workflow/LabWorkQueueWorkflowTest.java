@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.entity.workflow;
 
-import org.broadinstitute.sequel.boundary.squid.Sample;
+import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
@@ -56,7 +56,7 @@ public class LabWorkQueueWorkflowTest {
         WorkflowDescription workflow = new WorkflowDescription(WorkflowResolver.TEST_WORKFLOW_1,
                                                                           billableEvents,
                                                                           CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-        ProjectPlan rootPlan = new ProjectPlan(rootProject,"The root plan", workflow);
+        BasicProjectPlan rootPlan = new BasicProjectPlan(rootProject,"The root plan", workflow);
 
         WorkflowParser workflowParser = new WorkflowParser(
                 Thread.currentThread().getContextClassLoader().getResourceAsStream(WorkflowResolver.TEST_WORKFLOW_1));
@@ -64,7 +64,7 @@ public class LabWorkQueueWorkflowTest {
         workflow.setStartState(workflowParser.getStartState());
 
 
-        ProjectPlan planOverride = new ProjectPlan(overrideProject,"Override tech dev plan", workflow);
+        BasicProjectPlan planOverride = new BasicProjectPlan(overrideProject,"Override tech dev plan", workflow);
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {

@@ -1,14 +1,12 @@
 package org.broadinstitute.sequel.entity.workflow;
 
 import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
-import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The batch of work, as tracked by a person
@@ -34,9 +32,9 @@ public interface LabBatch {
 
     public WorkflowDescription getWorkflowForVessel(LabVessel vessel);
 
-    public void setProjectPlanOverride(LabVessel vessel,ProjectPlan planOverride);
+    public void setProjectPlanOverride(LabVessel vessel,BasicProjectPlan planOverride);
 
-    public ProjectPlan getProjectPlanOverride(LabVessel labVessel);
+    public BasicProjectPlan getProjectPlanOverride(LabVessel labVessel);
 
     public JiraTicket getJiraTicket();
 

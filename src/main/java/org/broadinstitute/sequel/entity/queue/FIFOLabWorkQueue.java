@@ -3,14 +3,11 @@ package org.broadinstitute.sequel.entity.queue;
 
 import org.broadinstitute.sequel.entity.sample.JiraCommentUtil;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.workflow.Workflow;
-import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
-import org.broadinstitute.sequel.entity.workflow.WorkflowState;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 
@@ -124,7 +121,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> extends FullAcce
         // because we allow duplicate entries for duplicate work,
         // and because we expect to see the same {@link LabVessel}
         // queued for work across different {@link Project}s and
-        // different {@link ProjectPlan}s, we play pin-the-tail-on-the-ProjectPlan
+        // different {@link BasicProjectPlan}s, we play pin-the-tail-on-the-BasicProjectPlan
         // here, in FIFO order.
         boolean foundIt = false;
         for (WorkQueueEntry<T> queuedWork: requestedWork) {
@@ -152,7 +149,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> extends FullAcce
         }
     }
     
-    private void startWorkflow(LabVessel vessel,ProjectPlan plan,T workflowParameters) {
+    private void startWorkflow(LabVessel vessel,BasicProjectPlan plan,T workflowParameters) {
         Collection<LabVessel> vessels = new ArrayList<LabVessel>(1);
         vessels.add(vessel);
     }
@@ -162,7 +159,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> extends FullAcce
     public LabWorkQueueResponse add(LabVessel vessel, 
                                     T workflowParameters, 
                                     WorkflowDescription workflowDescription,
-                                    ProjectPlan projectPlanOverride) {
+                                    BasicProjectPlan projectPlanOverride) {
         if (vessel == null) {
              throw new NullPointerException("vessel cannot be null.");
         }

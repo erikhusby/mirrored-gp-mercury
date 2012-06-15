@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.entity.workflow;
 
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueueParameters;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
@@ -9,7 +9,7 @@ import java.util.Collection;
 
 public class Workflow {
 
-    private ProjectPlan projectPlan;
+    private BasicProjectPlan projectPlan;
     
     private Collection<LabVessel> vessels;
     
@@ -17,7 +17,7 @@ public class Workflow {
 
     private WorkflowState state;
     
-    public Workflow(ProjectPlan projectPlan,
+    public Workflow(BasicProjectPlan projectPlan,
                     Collection<LabVessel> labVessels,
                     LabWorkQueueParameters labQueueParameters) {
         if (projectPlan == null) {
@@ -39,7 +39,7 @@ public class Workflow {
         return state;
     }
 
-    public ProjectPlan getProjectPlan() {
+    public BasicProjectPlan getProjectPlan() {
         return projectPlan;
     }
 

@@ -1,15 +1,13 @@
 package org.broadinstitute.sequel.entity.queue;
 
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConnector;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
-import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -80,7 +78,7 @@ public class BSPAliquotWorkQueue extends LabWorkQueue<AliquotParameters> impleme
 
 
     @Override
-    public LabWorkQueueResponse add(LabVessel vessel, AliquotParameters workflowParameters, WorkflowDescription workflowDescription, ProjectPlan projectPlanOverride) {
+    public LabWorkQueueResponse add(LabVessel vessel, AliquotParameters workflowParameters, WorkflowDescription workflowDescription, BasicProjectPlan projectPlanOverride) {
         if (vessel == null) {
             throw new IllegalArgumentException("labTangible must be non-null in BSPAliquotWorkQueue.add");
         }

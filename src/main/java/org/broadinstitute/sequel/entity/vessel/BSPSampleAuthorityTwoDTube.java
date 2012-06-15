@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.entity.vessel;
 
-import org.broadinstitute.sequel.boundary.squid.Sample;
+import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 

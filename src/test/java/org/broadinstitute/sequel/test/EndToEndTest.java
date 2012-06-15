@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.test;
 
 
-import org.broadinstitute.sequel.boundary.squid.Sample;
+import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.infrastructure.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.infrastructure.bsp.MockBSPConnector;
@@ -26,14 +26,11 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
-import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -45,7 +42,7 @@ public class EndToEndTest  {
     //@Inject
     LabEventHandler handler;
 
-    private LabVessel createBSPStock(String sampleName,String tubeBarcode,ProjectPlan projectPlan) {
+    private LabVessel createBSPStock(String sampleName,String tubeBarcode,BasicProjectPlan projectPlan) {
         // this seems redundant: we're adding a sample sheet with only the stock
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
@@ -56,7 +53,7 @@ public class EndToEndTest  {
         return stockSample;
     }
     
-    private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode,ProjectPlan projectPlan) {
+    private LabVessel createBSPAliquot(String aliquotName,String tubeBarcode,BasicProjectPlan projectPlan) {
         // yowza, it's the same code!
         return createBSPStock(aliquotName,tubeBarcode,projectPlan);
     }
@@ -76,9 +73,9 @@ public class EndToEndTest  {
                 billableEvents,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         Project project = new BasicProject("Project1",new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        ProjectPlan plan1 = new ProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+        BasicProjectPlan plan1 = new BasicProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         Project project2 = new BasicProject("Project2", new JiraTicket(new DummyJiraService(),"TP-1","1"));
-        ProjectPlan plan2 = new ProjectPlan(project2,"Plan for "  + project2.getProjectName(),new WorkflowDescription("WGS", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+        BasicProjectPlan plan2 = new BasicProjectPlan(project2,"Plan for "  + project2.getProjectName(),new WorkflowDescription("WGS", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
         LabVessel stock1 = createBSPStock(masterSample1,"00001234",plan1);
         LabVessel stock2 = createBSPStock(masterSample2,"00005678",plan2);
@@ -216,7 +213,7 @@ public class EndToEndTest  {
     }
 
     private void checkForSampleProjectData(SequencingRun srun,
-                                          ProjectPlan projectPlan,
+                                          BasicProjectPlan projectPlan,
                                           StartingSample sam,
                                           int numberOfSampleSheetsPerSample,
                                           MolecularEnvelope expectedEnvelope) {

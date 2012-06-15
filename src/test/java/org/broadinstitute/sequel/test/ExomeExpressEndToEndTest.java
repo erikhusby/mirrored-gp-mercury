@@ -2,30 +2,22 @@ package org.broadinstitute.sequel.test;
 
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
-import org.broadinstitute.sequel.boundary.Sample;
-import org.broadinstitute.sequel.boundary.zims.IlluminaRunResource;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.entity.zims.LibraryBean;
-import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
-import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
-
-import static org.testng.Assert.*;
 
 /**
  * A container free test of Exome Express
@@ -43,9 +35,9 @@ public class ExomeExpressEndToEndTest {
         BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
         String runName = "theRun";
         String laneNumber = "3";
-        // ProjectPlan
+        // BasicProjectPlan
         HashMap<LabEventName, PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
-        ProjectPlan projectPlan = new ProjectPlan(
+        BasicProjectPlan projectPlan = new BasicProjectPlan(
                 project,
                 "ExomeExpressPlan1",
                 new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));

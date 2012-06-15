@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.integration.entity.project;
 
-import org.broadinstitute.sequel.boundary.squid.Sample;
+import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
@@ -19,7 +19,6 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -80,7 +79,7 @@ public class ProjectTest extends Arquillian {
     public void test_simple_project() {
         Project project = projectManagerCreatesProject(jiraService);
         projectManagerAddsFundingSourceToProject(project,"NHGRI");
-        ProjectPlan plan = projectManagerAddsProjectPlan(project);
+        BasicProjectPlan plan = projectManagerAddsProjectPlan(project);
         ReagentDesign bait = projectManagerAddsBait(plan);
         SequencingPlanDetail sequencingDetail = projectManagerAddsSequencingDetails(plan);
         
@@ -274,13 +273,13 @@ public class ProjectTest extends Arquillian {
      * @param project
      * @return
      */
-    private ProjectPlan projectManagerAddsProjectPlan(Project project) {
+    private BasicProjectPlan projectManagerAddsProjectPlan(Project project) {
         PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
 
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         billableEvents.put(LabEventName.SAGE_UNLOADED,priceItem);
         WorkflowDescription workflow = new WorkflowDescription("HybridSelection", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-        ProjectPlan plan = new ProjectPlan(project,project.getProjectName() + " Plan",workflow);
+        BasicProjectPlan plan = new BasicProjectPlan(project,project.getProjectName() + " Plan",workflow);
         String quoteId = "DNA23";
         plan.setQuote(new Quote(quoteId,
                 new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteId,new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))))));
@@ -293,14 +292,14 @@ public class ProjectTest extends Arquillian {
      * more {@link SequencingPlanDetail} 
      * @param projectPlan
      */
-    private SequencingPlanDetail projectManagerAddsSequencingDetails(ProjectPlan projectPlan) {
+    private SequencingPlanDetail projectManagerAddsSequencingDetails(BasicProjectPlan projectPlan) {
         return new SequencingPlanDetail(
                 new IonSequencingTechnology(65, IonSequencingTechnology.CHIP_TYPE.CHIP1),
                 new XFoldCoverage(30),
                 projectPlan);
     }
     
-    private LabVessel makeRootSample(String sampleName,ProjectPlan projectPlan,BSPSampleDataFetcher bspFetcher) {
+    private LabVessel makeRootSample(String sampleName,BasicProjectPlan projectPlan,BSPSampleDataFetcher bspFetcher) {
 
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose
@@ -312,7 +311,7 @@ public class ProjectTest extends Arquillian {
     }
     
     private void projectManagerAddsStartersToPlan(LabVessel starter,
-                                                  ProjectPlan projectPlan) {       
+                                                  BasicProjectPlan projectPlan) {
         
         projectPlan.addStarter(starter);
     }
@@ -325,7 +324,7 @@ public class ProjectTest extends Arquillian {
      * @param projectPlan
      * @return
      */
-    private ReagentDesign projectManagerAddsBait(ProjectPlan projectPlan) {
+    private ReagentDesign projectManagerAddsBait(BasicProjectPlan projectPlan) {
         ReagentDesign bait = new ReagentDesign("agilent_foo", ReagentDesign.REAGENT_TYPE.BAIT);
         projectPlan.addReagentDesign(bait);
         
@@ -338,7 +337,7 @@ public class ProjectTest extends Arquillian {
     }
 
     /**
-     * The UI would have a {@link ProjectPlan} context.  The PM adds
+     * The UI would have a {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan} context.  The PM adds
      * a starter to the plan and chooses the {@link LcSetParameters}
      * work queue parameters exactly as they are currently expressed
      * in Jira.  In other words, the "queueing" UI is a thin wrapper
@@ -354,7 +353,7 @@ public class ProjectTest extends Arquillian {
      * @return
      */
     private void projectManagerEnquesLabWork(LabVessel starter,
-                                             ProjectPlan projectPlan,
+                                             BasicProjectPlan projectPlan,
                                              LabWorkQueueParameters queueParameters,
                                              LabWorkQueue labWorkQueue) {
        

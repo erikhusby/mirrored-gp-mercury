@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.sample;
 
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
@@ -12,12 +13,9 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Read-only sample metadata at the finest granularity necessary
@@ -81,7 +79,7 @@ public abstract class StartingSample implements Starter {
         return projectPlan;
     }
 
-    public void setRootProjectPlan(ProjectPlan rootProjectPlan) {
+    public void setRootProjectPlan(BasicProjectPlan rootProjectPlan) {
         this.projectPlan = rootProjectPlan;
     }
 

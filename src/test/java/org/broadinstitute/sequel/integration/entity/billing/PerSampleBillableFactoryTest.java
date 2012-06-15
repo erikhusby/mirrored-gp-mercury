@@ -1,9 +1,10 @@
 package org.broadinstitute.sequel.integration.entity.billing;
 
 
-import org.broadinstitute.sequel.boundary.squid.Sample;
+import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.billing.Quote;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
@@ -14,7 +15,6 @@ import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -65,7 +65,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
      * Makes a new {@link BettaLimsMessageFactory#buildRackToPlate(String, String, java.util.List, String) rack to plate event}
      * where the
      * tubes are semi-equally distributed between
-     * two different {@link ProjectPlan}s. This helps us test that
+     * two different {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan}s. This helps us test that
      * we bill the single {@link LabEvent} back to two different
      * {@link org.broadinstitute.sequel.entity.billing.Quote}s.
      *
@@ -77,15 +77,15 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
      *                     to add to the source rack
      * @return
      */
-    private LabEvent buildLabEvent(ProjectPlan plan1,
-                                   ProjectPlan plan2,
+    private LabEvent buildLabEvent(BasicProjectPlan plan1,
+                                   BasicProjectPlan plan2,
                                    int totalSamples) {
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setPersonDAO(new PersonDAO());
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= totalSamples; rackPosition++) {
-            ProjectPlan projectPlan = null;
+            BasicProjectPlan projectPlan = null;
             if (rackPosition % 2 == 0) {
                 projectPlan = plan1;
             }
@@ -111,11 +111,11 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
         return shearingTransferEventEntity;
     }
 
-    private ProjectPlan createProjectPlan(String projectName,
+    private BasicProjectPlan createProjectPlan(String projectName,
                                           String projectPlanName,
                                           String quoteAlphanumericId,
                                           Map<LabEventName,PriceItem> billableEvents) {
-        ProjectPlan plan = new ProjectPlan(new BasicProject(projectName,new JiraTicket()),
+        BasicProjectPlan plan = new BasicProjectPlan(new BasicProject(projectName,new JiraTicket()),
                 projectPlanName,
                 new WorkflowDescription("ChocolateChipCookies", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         Quote quote = new org.broadinstitute.sequel.entity.billing.Quote(quoteAlphanumericId,
@@ -128,7 +128,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
 
     /**
      * Verifies that a rack -> plate event, which contains
-     * {@link StartingSample} from different (@link ProjectPlan}s
+     * {@link StartingSample} from different (@link BasicProjectPlan}s
      * and different {@link org.broadinstitute.sequel.entity.billing.Quote}s
      * will be billed properly.
      * 
@@ -148,8 +148,8 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
     public void test_billing() {
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         String expectedBatchId = "QuoteWorkItemBatchId123";
-        ProjectPlan plan1 = createProjectPlan("Project1","Plan1","DNA33",billableEvents);
-        ProjectPlan plan2 = createProjectPlan("Project2","Plan2","DNA35",billableEvents);
+        BasicProjectPlan plan1 = createProjectPlan("Project1","Plan1","DNA33",billableEvents);
+        BasicProjectPlan plan2 = createProjectPlan("Project2","Plan2","DNA35",billableEvents);
 
         int totalSampleCount = 24; // keep it even; we're just splitting across two quotes
         LabEvent labEvent = buildLabEvent(plan1,plan2,totalSampleCount);

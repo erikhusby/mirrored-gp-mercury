@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.sample;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
@@ -155,17 +156,17 @@ public class SampleInstance  {
      *
      * Major assumption: an aliquot for a production
      * process is only ever used for a single {@link Project}.
-     * It can be used for multiple {@link org.broadinstitute.sequel.entity.project.ProjectPlan}s
+     * It can be used for multiple {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan}s
      * within the same {@link Project}, however, and so
      * the challenge here is to map a {@link SampleInstance}
-     * to a single {@link org.broadinstitute.sequel.entity.project.ProjectPlan} 
+     * to a single {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan}
      * whenever possible, and tolerate ambiguity when necessary,
      * for example for "universal LC" with Fluidigm.
      * 
      * Can be empty for control samples.
      * 
      * It's critical that reworks (topoffs in particular)
-     * are <b>not implemented by a new {@link org.broadinstitute.sequel.entity.project.ProjectPlan}!</b>
+     * are <b>not implemented by a new {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan}!</b>
      * Instead, topoffs are just another entry into the appropriate
      * {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}.
      * If you want to know the status of your topoff work,
@@ -240,12 +241,12 @@ public class SampleInstance  {
     /**
      * Based the entry/exit of a {@link org.broadinstitute.sequel.entity.vessel.LabVessel} into
      * or out of a {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}, SequeL has the
-     * ability to "override" the {@link ProjectPlan} for a {@link org.broadinstitute.sequel.entity.vessel.LabVessel}
+     * ability to "override" the {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan} for a {@link org.broadinstitute.sequel.entity.vessel.LabVessel}
      * at a particular spot in the worklow.  This method is how
-     * your override the {@link ProjectPlan}.
+     * your override the {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan}.
      * @param projectPlan
      */
-    public void resetProjectPlan(ProjectPlan projectPlan) {
+    public void resetProjectPlan(BasicProjectPlan projectPlan) {
         if (projectPlan == null) {
             throw new RuntimeException("Cannot reset projectPlan to null.");
         }

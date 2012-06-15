@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
@@ -97,7 +97,7 @@ public abstract class LabEvent {
     private String quoteServerBatchId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private ProjectPlan projectPlanOverride;
+    private BasicProjectPlan projectPlanOverride;
 
 
     public abstract LabEventName getEventName();
@@ -264,13 +264,13 @@ public abstract class LabEvent {
 
 
     /**
-     * An "override" of the {@link ProjectPlan} effectively says "From
+     * An "override" of the {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan} effectively says "From
      * this point forward in the transfer graph, consider all work
      * related to the given projectPlan.  In this way, we're "overriding"
-     * the {@link ProjectPlan} referenced by {@link org.broadinstitute.sequel.entity.sample.StartingSample#getRootProjectPlan()}
+     * the {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan} referenced by {@link org.broadinstitute.sequel.entity.sample.StartingSample#getRootProjectPlan()}
      * @param projectPlan
      */
-    public void setProjectPlanOverride(ProjectPlan projectPlan) {
+    public void setProjectPlanOverride(BasicProjectPlan projectPlan) {
         if (projectPlan == null) {
             throw new RuntimeException("projectPlan override cannot be null.");
         }
@@ -278,10 +278,10 @@ public abstract class LabEvent {
     }
 
     /**
-     * See {@link #setProjectPlanOverride(org.broadinstitute.sequel.entity.project.ProjectPlan)}.
+     * See {@link #setProjectPlanOverride(org.broadinstitute.sequel.entity.project.BasicProjectPlan)}.
      * @return
      */
-    public ProjectPlan getProjectPlanOverride() {
+    public BasicProjectPlan getProjectPlanOverride() {
         return projectPlanOverride;
     }
 

@@ -93,14 +93,14 @@ public class DumpFromSquidTest extends WeldBooter {
                 BasicProject sequelProject = new BasicProject(new Person(person.getName(),person.getName(),person.getName()),
                         cartProject.getName(),
                         projectTicket);
-                sequelProject.addProjectPlan(new ProjectPlan(sequelProject,
+                sequelProject.addProjectPlan(new BasicProjectPlan(sequelProject,
                         "Squid cart " + cart.getName(),
                         workflowDescription));
                 projectsByName.put(cartProject.getName(),sequelProject);
             }
             BasicProject sequelProject = projectsByName.get(cartProject.getProjectName());
            
-            ProjectPlan projectPlan = sequelProject.getAllPlans().iterator().next();
+            BasicProjectPlan projectPlan = sequelProject.getAllPlans().iterator().next();
             String bspSampleName = cartSample.getLcSample().getLsid().split("broadinstitute.org:bsp.prod.sample:")[1];
             
             SampleSheet bspSampleSheet = new SampleSheet();
@@ -132,7 +132,7 @@ public class DumpFromSquidTest extends WeldBooter {
         LcSetParameters lcSetParams = new LcSetParameters();
         FIFOLabWorkQueue<LcSetParameters> labQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,new WorkflowEngine(),jiraService);
         for (BasicProject sequelProject : projectsByName.values()) {
-            for (ProjectPlan projectPlan: sequelProject.getAllPlans()) {
+            for (BasicProjectPlan projectPlan: sequelProject.getAllPlans()) {
                 for (LabVessel starter : projectPlan.getStarters()) {
                     allStarters.add(starter);
                     SequencingPlanDetail sequencingPlan = new SequencingPlanDetail(new IonSequencingTechnology(5, IonSequencingTechnology.CHIP_TYPE.CHIP1),

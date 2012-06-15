@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.boundary.project;
 
 import org.broadinstitute.sequel.entity.DB;
 import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.presentation.AbstractJsfBean;
 

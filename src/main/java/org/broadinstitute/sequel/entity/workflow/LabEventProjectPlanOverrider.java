@@ -2,7 +2,7 @@ package org.broadinstitute.sequel.entity.workflow;
 
 import org.broadinstitute.sequel.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
@@ -12,9 +12,9 @@ import java.util.Collection;
 /**
  * When someone puts a {@link LabVessel} into a
  * {@link LabBatch}, there is an opportunity to set
- * an "override" for the {@link ProjectPlan}, so that
+ * an "override" for the {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan}, so that
  * a user can say "Do this {@link org.broadinstitute.sequel.entity.project.WorkflowDescription workflow},
- * but do it on behalf of a different {@link ProjectPlan}.
+ * but do it on behalf of a different {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan}.
  */
 public class LabEventProjectPlanOverrider {
 
@@ -46,7 +46,7 @@ public class LabEventProjectPlanOverrider {
             LabBatch batch = possibleBatches.iterator().next();
             batch.getJiraTicket().addComment(labEvent.getEventOperator().getLogin() + "is processing " + labEvent.getEventName().name() + " at " + labEvent.getEventLocation());
             for (LabVessel vessel : vessels) {
-                ProjectPlan projectPlanOverride = batch.getProjectPlanOverride(vessel);
+                BasicProjectPlan projectPlanOverride = batch.getProjectPlanOverride(vessel);
                 if (projectPlanOverride != null) {
                     throw new RuntimeException("I haven't been written yet");
                     //labEvent.setProjectPlanOverride(vessel,projectPlanOverride);
@@ -62,7 +62,7 @@ public class LabEventProjectPlanOverrider {
     }
 
     /**
-     * Figures out what (if any) {@link ProjectPlan} overrides
+     * Figures out what (if any) {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan} overrides
      * should be and sets them, per {@link LabVessel} in the
      * {@link LabEvent}
      * @param labEvent

@@ -1,12 +1,10 @@
 package org.broadinstitute.sequel.entity.queue;
 
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
+import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
-import org.broadinstitute.sequel.entity.workflow.WorkflowEngine;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -14,7 +12,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import java.util.Collection;
-import java.util.Set;
 
 @Entity
 public abstract class LabWorkQueue<T extends LabWorkQueueParameters> {
@@ -34,7 +31,7 @@ public abstract class LabWorkQueue<T extends LabWorkQueueParameters> {
      *
      * @param vessel The vessel, complete with a functioning
      *               {@link org.broadinstitute.sequel.entity.vessel.LabVessel#getSampleInstances()}
-     *               that detail the {@link org.broadinstitute.sequel.entity.project.ProjectPlan}
+     *               that detail the {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan}
      *               relationships via {@link org.broadinstitute.sequel.entity.sample.SampleInstance#getAllProjectPlans()}
      *               and {@link org.broadinstitute.sequel.entity.sample.SampleInstance#getSingleProjectPlan()}
      * @param workflowParameters the parameters, also considered
@@ -46,7 +43,7 @@ public abstract class LabWorkQueue<T extends LabWorkQueueParameters> {
     public abstract LabWorkQueueResponse add(LabVessel vessel,
                                     T workflowParameters,
                                     WorkflowDescription workflowDescription,
-                                    ProjectPlan projectPlanOverride);
+                                    BasicProjectPlan projectPlanOverride);
 
     /**
      * What's the MolecularStateRange required for
