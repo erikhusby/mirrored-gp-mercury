@@ -50,7 +50,8 @@ public class ProjectPlan {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PROJECT_PLAN")
     private Long projectPlanId;
 
-    @OneToMany
+//    @OneToMany
+    @Transient
     private Collection<Starter> starters = new HashSet<Starter>();
 
     // todo jmt fix this
