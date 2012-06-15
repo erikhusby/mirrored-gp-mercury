@@ -23,8 +23,11 @@ import static org.testng.Assert.*;
 
 public class ProjectPlanFromPassTest {
 
+    private final long BAIT_ID = 5;
+
     private AbstractPass setupProjectAndPass(String...sampleNames) {
         DirectedPass hsPass = new DirectedPass();
+        hsPass.setBaitSetID(BAIT_ID);
         ProjectInformation projectInfo = new ProjectInformation();
         projectInfo.setPassNumber("PASS-123");
         hsPass.setProjectInformation(projectInfo);
@@ -37,7 +40,6 @@ public class ProjectPlanFromPassTest {
             sampleList.getSample().add(sample);
         }
         hsPass.setSampleDetailsInformation(sampleList);
-        hsPass.setBaitSetID(new Long(123));
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
         TargetCoverageModel targetCoverageModel = new TargetCoverageModel();
         targetCoverageModel.setCoveragePercentage(new BigInteger("80"));
@@ -52,7 +54,13 @@ public class ProjectPlanFromPassTest {
     public void test_create_project_plan_from_pass() {
         AbstractPass pass = setupProjectAndPass("SM-123","SM-456");
         BSPSampleDataFetcher bspDataFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
-        ProjectPlan projectPlan = new PassBackedProjectPlan(pass,bspDataFetcher,new MockQuoteService());
+        BaitSetListResult baitsCache = new BaitSetListResult();
+        BaitSet baitSet = new BaitSet();
+        baitSet.setDesignName("interesting genes");
+        baitSet.setId(BAIT_ID);
+        baitsCache.getBaitSetList().add(baitSet);
+
+        ProjectPlan projectPlan = new PassBackedProjectPlan(pass,bspDataFetcher,new MockQuoteService(),baitsCache);
 
         assertEquals(projectPlan.getStarters().size(),pass.getSampleDetailsInformation().getSample().size());
         assertEquals(projectPlan.getProject().getProjectName(),pass.getResearchProject());

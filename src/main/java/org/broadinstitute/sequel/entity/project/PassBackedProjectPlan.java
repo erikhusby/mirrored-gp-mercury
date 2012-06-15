@@ -53,7 +53,8 @@ public class PassBackedProjectPlan implements ProjectPlan {
      */
     public PassBackedProjectPlan(AbstractPass pass,
                                 BSPSampleDataFetcher bspDataFetcher,
-                                QuoteService quoteService) {
+                                QuoteService quoteService,
+                                BaitSetListResult baitsCache) {
         if (!(pass instanceof DirectedPass)) {
             throw new RuntimeException("SequeL can only deal with HS passes");
         }
@@ -63,7 +64,7 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
         initSamples();
         initProject();
-        initBaits();
+        initBaits((DirectedPass)pass,baitsCache);
         initWorkflow();
         initSequencePlanDetails();
 
@@ -107,13 +108,19 @@ public class PassBackedProjectPlan implements ProjectPlan {
         }
     }
 
-    private void initBaits() {
-        if (pass instanceof DirectedPass) {
-            DirectedPass hsPass = (DirectedPass)pass;
-            hsPass.getBaitSetID();
-            // todo arz find out how to get the actual design name
-            baits.add(new ReagentDesign(hsPass.getBaitSetID().toString(), ReagentDesign.REAGENT_TYPE.BAIT));
+    private void initBaits(DirectedPass hsPass,
+                               BaitSetListResult baitsCache) {
+        Long baitSetId = hsPass.getBaitSetID();
+        BaitSet bait = null;
+        for (BaitSet baitSet : baitsCache.getBaitSetList()) {
+            if (baitSetId.equals(baitSet.getId())) {
+                bait = baitSet;
+            }
         }
+        if (bait == null) {
+            throw new RuntimeException("Could not find bait with id " +baitSetId);
+        }
+        baits.add(new ReagentDesign(bait.getDesignName(), ReagentDesign.REAGENT_TYPE.BAIT));
     }
 
     @Override
