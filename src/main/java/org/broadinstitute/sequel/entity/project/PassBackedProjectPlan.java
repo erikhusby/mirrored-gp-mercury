@@ -30,6 +30,9 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
     private Set<ReagentDesign> baits = new HashSet<ReagentDesign>();
 
+    // todo arz pull out injected services and have constructors
+    // take in pre-fetched DTOs (Quote, BSPSample)
+
     @Inject
     private QuoteService quoteService;
 
@@ -57,7 +60,6 @@ public class PassBackedProjectPlan implements ProjectPlan {
         this.quoteService = quoteService;
         this.bspDataFetcher = bspDataFetcher;
         this.pass = pass;
-        final Set<String> bspSamples = new HashSet<String>();
 
         initSamples();
         initProject();
