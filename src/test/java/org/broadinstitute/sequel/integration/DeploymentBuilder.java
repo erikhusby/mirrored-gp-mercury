@@ -98,7 +98,7 @@ public class DeploymentBuilder {
 
         return archive
                 .as(MavenImporter.class)
-                .loadEffectivePom("pom.xml", "JavaEE")
+                .loadEffectivePom("pom.xml")
                 .importAnyDependencies(resolutionFilter)
                 .as(WebArchive.class);
     }

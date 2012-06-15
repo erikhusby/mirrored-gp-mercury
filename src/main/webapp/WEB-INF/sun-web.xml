@@ -3,7 +3,8 @@
         "-//Sun Microsystems, Inc.//DTD GlassFish Application Server 3.0 Servlet 3.0//EN"
         "http://www.sun.com/software/appserver/dtds/sun-web-app_3_0-0.dtd">
 <sun-web-app>
-  <context-root>/SequeL</context-root>
+    <context-root>/SequeL</context-root>
+
     <security-role-mapping>
         <role-name>Sequel-Admins</role-name>
         <group-name>Sequel-Admins</group-name>
@@ -29,4 +30,5 @@
         <group-name>Sequel-Developers</group-name>
     </security-role-mapping>
 
+    <parameter-encoding default-charset="UTF-8"/>
 </sun-web-app>

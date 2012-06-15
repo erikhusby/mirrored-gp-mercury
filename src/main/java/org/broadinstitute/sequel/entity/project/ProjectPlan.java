@@ -4,6 +4,8 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.quote.Quote;
 
 import java.util.Collection;
+//    @OneToMany
+    @Transient
 
 public interface ProjectPlan {
 

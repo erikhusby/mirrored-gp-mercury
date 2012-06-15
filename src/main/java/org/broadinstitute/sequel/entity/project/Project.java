@@ -53,7 +53,8 @@ public abstract class Project {
 
     private boolean active;
 
-    @OneToMany
+//    @OneToMany
+    @Transient
     public Collection<Starter> starters = new HashSet<Starter>();
 
     @OneToMany

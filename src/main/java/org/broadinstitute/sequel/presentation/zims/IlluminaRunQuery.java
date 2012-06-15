@@ -2,7 +2,7 @@ package org.broadinstitute.sequel.presentation.zims;
 
 import org.apache.commons.collections15.map.LRUMap;
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.sequel.boundary.zims.IlluminaRunService;
+import org.broadinstitute.sequel.boundary.zims.IlluminaRunResource;
 import org.broadinstitute.sequel.entity.zims.ZamboniRead;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
@@ -30,15 +30,10 @@ import java.util.Map;
  */
 @Named
 @ConversationScoped
-//@ManagedBean
-//@ViewScoped
 public class IlluminaRunQuery extends AbstractJsfBean {
 
     @Inject
-    private IlluminaRunService illuminaRunService;
-
-    @Inject @IlluminaRunQueryCache
-    private LRUMap<String, ZimsIlluminaRun> runCache;
+    private IlluminaRunResource illuminaRunResource;
 
     @Inject
     private Conversation conversation;
@@ -56,7 +51,6 @@ public class IlluminaRunQuery extends AbstractJsfBean {
     private ZimsIlluminaChamber selectedLane;
 
     static {
-//        addColumn("Library Name", "library", null);
         addColumn("Project", "project", null);
         addColumn("Initiative", "initiative", null);
         addColumn("Work Request", "workRequestId", null);
@@ -72,7 +66,6 @@ public class IlluminaRunQuery extends AbstractJsfBean {
         addColumn("Strain", "strain", null);
         addColumn("LSID", "lsid", null);
         addColumn("Tissue Type", "tissueType", null);
-//        addColumn("Expected Plasmid", "expectedPlasmid", null);
         addColumn("Aligner", "aligner", null);
         addColumn("RRBS Size Range", "rrbsSizeRange", null);
         addColumn("Restriction Enzyme", "restrictionEnzyme", null);
@@ -80,8 +73,6 @@ public class IlluminaRunQuery extends AbstractJsfBean {
         addColumn("Bait Set", "baitSetName", null);
         addColumn("Individual", "individual", null);
         addColumn("Measured Insert Size", "labMeasuredInsertSize", null);
-//        addColumn("Positive Control?", "isPositiveControl", null);
-//        addColumn("Negative Control?", "isNegativeControl", null);
         addColumn("Weirdness", "weirdness", null);
         addColumn("Pre-Circularization DNA Size", "preCircularizationDnaSize", null);
         addColumn("Dev Experiment", null, "library.devExperimentData == null ? null : library.devExperimentData.experiment");
@@ -89,7 +80,6 @@ public class IlluminaRunQuery extends AbstractJsfBean {
         addColumn("GSSR Barcodes", null, "illuminaRunQuery.join(library.gssrBarcodes)");
         addColumn("GSSR Sample Type", "gssrSampleType", null);
         addColumn("Target Lane Coverage", "targetLaneCoverage", null);
-//        addColumn("", "", null);
     }
 
     public static void addColumn(String header, String property, String expression) {
@@ -100,21 +90,17 @@ public class IlluminaRunQuery extends AbstractJsfBean {
     }
 
     public IlluminaRunQuery() {
-        // use an ArrayList because Mojarra doesn't like to deal with the result of Arrays.asList()
+        // use an ArrayList because Mojarra doesn't like to deal with the return value of Arrays.asList()
         setColumnNames(new ArrayList<String>(Arrays.asList("Project", "Work Request", "Sample Alias", "GSSR Barcodes")));
     }
 
-    public void query() {
+    public String query() {
         if (conversation.isTransient()) {
             conversation.begin();
         }
 
         if (run == null) {
-            run = runCache.get(runName);
-            if (run == null) {
-                run = illuminaRunService.getRun(runName);
-                runCache.put(runName, run);
-            }
+            run = illuminaRunResource.getRun(runName);
 
             if (run != null) {
                 if (lanes == null) {
@@ -132,10 +118,8 @@ public class IlluminaRunQuery extends AbstractJsfBean {
                 }
             }
         }
-    }
 
-    public void clearCache() {
-        runCache.clear();
+        return "illuminaRun";
     }
 
     public String getRunName() {
