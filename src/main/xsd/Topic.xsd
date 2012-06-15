@@ -707,6 +707,7 @@
 
     <xsd:attributeGroup name="directedPassAttributeGroup">
         <xsd:attribute name="baitSetID" type="xsd:long" />
+        <xsd:attribute name="exomeExpress" type="xsd:boolean" use="optional" />
     </xsd:attributeGroup>
 
     <xsd:complexType name="DirectedPass">
