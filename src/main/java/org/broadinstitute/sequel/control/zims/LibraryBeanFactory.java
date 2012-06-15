@@ -42,6 +42,7 @@ public class LibraryBeanFactory {
             }
 
             LabVessel singleSampleLibrary = singleSampleLibraries.iterator().next();
+            String libraryName = singleSampleLibrary.getLabCentricName();
 
         }
 /*
