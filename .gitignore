@@ -3,3 +3,5 @@
 .clover
 target
 SequeL.iml
+out
+.DS_Store

@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -41,6 +43,8 @@ import java.util.Set;
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
 @BatchSize(size = 50)
 public abstract class LabVessel implements Starter {
+
+    private final static Logger logger = Logger.getLogger(LabVessel.class.getName());
 
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
@@ -229,11 +233,28 @@ public abstract class LabVessel implements Starter {
      * Get the name of the thing.  This
      * isn't just getName() because that would
      * probably clash with something else.
+     * 
+     * SGM: 6/15/2012 Update.  Added code to return the
+     * <a href="http://en.wikipedia.org/wiki/Base_36#Java_implementation" >Base 36 </a> version of the of the label.
+     * This implementation assumes that the label can be converted to a long
+     * 
      * @return
      */
+    @Transient
     public String getLabCentricName() {
         // todo jmt what should this do?
-        return label;
+        String vesselContentName;
+
+        try {
+
+            vesselContentName = Long.toString(Long.parseLong(label), 36);
+
+        } catch (NumberFormatException nfe) {
+            vesselContentName = label;
+            logger.log(Level.WARNING, "Could not return Base 36 version of label.  Returning original label instead");
+        }
+
+        return vesselContentName;
     }
 
     /**
