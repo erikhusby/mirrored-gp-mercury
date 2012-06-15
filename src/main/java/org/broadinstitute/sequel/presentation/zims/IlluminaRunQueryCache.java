@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+import javax.inject.Named;
 import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -23,6 +24,11 @@ public @interface IlluminaRunQueryCache {
 }
 
 class Cache {
-    @Produces @ApplicationScoped @IlluminaRunQueryCache
-    LRUMap<String, ZimsIlluminaRun> runCache = new LRUMap<String, ZimsIlluminaRun>();
+//    @Produces @Named @ApplicationScoped @IlluminaRunQueryCache
+//    LRUMap<String, ZimsIlluminaRun> illuminaRunQueryCache = new LRUMap<String, ZimsIlluminaRun>();
+
+    @Produces @Named @ApplicationScoped @IlluminaRunQueryCache
+    public LRUMap<String, ZimsIlluminaRun> getIlluminaRunQueryCache() {
+        return new LRUMap<String, ZimsIlluminaRun>();
+    }
 }

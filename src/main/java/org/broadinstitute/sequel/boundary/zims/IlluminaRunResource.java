@@ -23,6 +23,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.io.Serializable;
 import java.util.*;
 
 
@@ -32,7 +33,7 @@ import java.util.*;
  */
 @Path("/IlluminaRun")
 @Stateless
-public class IlluminaRunResource  {
+public class IlluminaRunResource implements Serializable {
 
     @Inject
     private RunChamberDAO runChamberDAO;

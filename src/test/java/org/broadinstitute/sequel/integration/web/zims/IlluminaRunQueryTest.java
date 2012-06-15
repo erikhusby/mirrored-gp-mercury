@@ -1,8 +1,10 @@
 package org.broadinstitute.sequel.integration.web.zims;
 
-import org.broadinstitute.sequel.boundary.zims.IlluminaRunService;
-import org.broadinstitute.sequel.boundary.zims.OfflineIlluminaRunService;
-import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
+import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import org.apache.thrift.TException;
+import org.broadinstitute.sequel.infrastructure.thrift.OfflineThriftService;
+import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 import org.broadinstitute.sequel.integration.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.drone.api.annotation.Drone;
@@ -14,7 +16,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
-import java.io.Serializable;
 import java.net.URL;
 import java.util.Arrays;
 
@@ -27,7 +28,7 @@ public class IlluminaRunQueryTest extends Arquillian {
 
     @Deployment(testable = false)
     public static WebArchive createDeployment() {
-        return DeploymentBuilder.buildSequelWarWithAlternatives(StubIlluminaRunService.class);
+        return DeploymentBuilder.buildSequelWarWithAlternatives(StubThriftService.class);
     }
 
     @Drone
@@ -110,10 +111,10 @@ public class IlluminaRunQueryTest extends Arquillian {
     }
 
     @Alternative
-    public static class StubIlluminaRunService implements IlluminaRunService, Serializable {
+    public static class StubThriftService implements ThriftService {
         @Override
-        public ZimsIlluminaRun getRun(String runName) {
-            return OfflineIlluminaRunService.makeRun(runName, 4, 3);
+        public TZamboniRun fetchRun(String runName) throws TZIMSException, TException {
+            return OfflineThriftService.makeRun(runName, 4, 3);
         }
     }
 }
