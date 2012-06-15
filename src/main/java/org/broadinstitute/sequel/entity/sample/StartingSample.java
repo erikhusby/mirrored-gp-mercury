@@ -7,14 +7,8 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
+import javax.ejb.TransactionAttribute;
+import javax.persistence.*;
 import java.util.Collection;
 
 /**
@@ -39,7 +33,9 @@ public abstract class StartingSample implements Starter {
 
     private  String sampleName;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    //@ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    // todo arz: I'm undoing a lot of persistence stuff here, we should come back to this soon.
+    @Transient
     private ProjectPlan projectPlan;
 
     protected StartingSample(String sampleName, ProjectPlan projectPlan) {

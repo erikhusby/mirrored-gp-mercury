@@ -80,7 +80,8 @@ public class BasicProjectPlan implements ProjectPlan {
     @ManyToOne(fetch = FetchType.LAZY)
     private Quote quote;
 
-    @OneToMany(mappedBy = "projectPlan")
+    //@OneToMany(mappedBy = "projectPlan")
+    @Transient
     private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
 
 

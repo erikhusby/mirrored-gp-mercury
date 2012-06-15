@@ -68,7 +68,8 @@ public abstract class Project {
     @Transient
     private Collection<String> grants = new HashSet<String>();
 
-    @OneToMany
+    //@OneToMany
+    @Transient
     private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
 
     @OneToMany
