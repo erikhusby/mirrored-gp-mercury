@@ -72,20 +72,23 @@ public class ProjectPlanFromPassTest {
             passSampleNames.add(sample.getBspSampleID());
         }
 
-        for (Sample passSample : pass.getSampleDetailsInformation().getSample()) {
-            String aliquotName = passSample.getBspSampleID() + ".aliquot";
-            BSPSampleAuthorityTwoDTube aliquot = new BSPSampleAuthorityTwoDTube(passSample,
-                    new BSPSample(aliquotName,projectPlan,bspDataFetcher.fetchSingleSampleFromBSP(aliquotName)));
-
-            assertEquals(aliquot.getSampleInstances().size(),1);
-            assertTrue(passSampleNames.contains(aliquot.getPassSample().getBspSampleID()));
-            assertEquals(aliquot.getSampleInstances().iterator().next().getStartingSample().getSampleName(),aliquot.getPassSample().getBspSampleID() + ".aliquot");
-        }
 
         for (Starter starter : projectPlan.getStarters()) {
+            assertNull(projectPlan.getAliquot(starter));
             assertEquals(starter.getSampleInstances().size(),1);
             SampleInstance sampleInstance = starter.getSampleInstances().iterator().next();
             assertTrue(passSampleNames.contains(sampleInstance.getStartingSample().getSampleName()));
+
+            String aliquotName = starter.getLabel() + ".aliquot";
+            BSPSampleAuthorityTwoDTube aliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(aliquotName,projectPlan,bspDataFetcher.fetchSingleSampleFromBSP(aliquotName)));
+
+            // plating export will call this
+            projectPlan.setAliquot(starter,aliquot);
+            assertEquals(aliquot,projectPlan.getAliquot(starter));
+
+            assertEquals(aliquot.getSampleInstances().size(),1);
+            assertTrue(passSampleNames.contains(starter.getLabel()));
+            assertEquals(aliquot.getSampleInstances().iterator().next().getStartingSample().getSampleName(),starter.getLabel() + ".aliquot");
         }
 
         assertFalse(projectPlan.getReagentDesigns().isEmpty());

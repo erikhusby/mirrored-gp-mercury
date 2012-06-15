@@ -15,9 +15,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -38,6 +36,10 @@ import java.util.Set;
  */
 @Entity
 public class BasicProjectPlan implements ProjectPlan {
+
+    @Transient // todo arz fix me
+    private Map<Starter,LabVessel> aliquotForStarter = new HashMap<Starter, LabVessel>();
+
     @Id
     @SequenceGenerator(name = "SEQ_PROJECT_PLAN", sequenceName = "SEQ_PROJECT_PLAN")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PROJECT_PLAN")
@@ -270,5 +272,18 @@ public class BasicProjectPlan implements ProjectPlan {
 
     public Set<StartingSample> getStartingSamples() {
         return startingSamples;
+    }
+
+    @Override
+    public void setAliquot(Starter starter, LabVessel aliquot) {
+        if (!getStarters().contains(starter)) {
+            throw new RuntimeException(starter.getLabel() + " is not a starter for this project plan");
+        }
+        aliquotForStarter.put(starter,aliquot);
+    }
+
+    @Override
+    public LabVessel getAliquot(Starter starter) {
+        return aliquotForStarter.get(starter);
     }
 }

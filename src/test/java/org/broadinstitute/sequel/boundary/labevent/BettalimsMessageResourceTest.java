@@ -87,9 +87,7 @@ public class BettalimsMessageResourceTest extends ContainerTest {
             String barcode = "R" + testPrefix + rackPosition;
 
             String bspStock = "SM-" +  testPrefix + rackPosition;
-            Sample passSample = new Sample();
-            passSample.setBspSampleID(bspStock);
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", projectPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
             twoDBarcodedTubeDAO.persist(bspAliquot);

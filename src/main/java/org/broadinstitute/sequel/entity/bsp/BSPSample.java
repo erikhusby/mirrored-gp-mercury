@@ -21,6 +21,7 @@ import java.util.Set;
  * a service lookup the real data from bsp.
  */
 @Entity
+// todo arz rename this BSPStartingSample
 public class BSPSample extends StartingSample {
 
     private static Log gLog = LogFactory.getLog(BSPSample.class);

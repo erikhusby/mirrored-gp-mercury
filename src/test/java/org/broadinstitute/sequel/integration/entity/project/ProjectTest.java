@@ -304,9 +304,7 @@ public class ProjectTest extends Arquillian {
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose
         // methods throw exceptions that say "Hey, I'm from BSP, you can't do that!"
-        Sample passSample = new Sample();
-        passSample.setBspSampleID(sampleName);
-        BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(sampleName + ".aliquot", projectPlan, bspFetcher.fetchSingleSampleFromBSP(sampleName)));
+        BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(sampleName + ".aliquot", projectPlan, bspFetcher.fetchSingleSampleFromBSP(sampleName)));
         return bspAliquot;
     }
     

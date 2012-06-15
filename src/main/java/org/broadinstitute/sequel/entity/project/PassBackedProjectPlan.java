@@ -22,6 +22,8 @@ import java.util.*;
  */
 public class PassBackedProjectPlan implements ProjectPlan {
 
+
+    private Map<Starter,LabVessel> aliquotForStarter = new HashMap<Starter, LabVessel>();
     private AbstractPass pass;
 
     private Project project;
@@ -198,5 +200,18 @@ public class PassBackedProjectPlan implements ProjectPlan {
     @Override
     public void addJiraTicket(JiraTicket jiraTicket) {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public void setAliquot(Starter starter, LabVessel aliquot) {
+        if (!getStarters().contains(starter)) {
+            throw new RuntimeException(starter.getLabel() + " is not a starter for this project plan");
+        }
+        aliquotForStarter.put(starter,aliquot);
+    }
+
+    @Override
+    public LabVessel getAliquot(Starter starter) {
+        return aliquotForStarter.get(starter);
     }
 }

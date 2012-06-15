@@ -97,9 +97,7 @@ public class LabEventTest {
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + rackPosition;
             String bspStock = "SM-" + rackPosition;
-            Sample passSample = new Sample();
-            passSample.setBspSampleID(bspStock);
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", projectPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
         }
@@ -167,9 +165,7 @@ public class LabEventTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            Sample passSample = new Sample();
-            passSample.setBspSampleID(bspStock);
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", projectPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
 
@@ -274,9 +270,7 @@ public class LabEventTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            Sample passSample = new Sample();
-            passSample.setBspSampleID(bspStock);
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", projectPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
         }
 

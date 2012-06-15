@@ -16,6 +16,7 @@ public interface ProjectPlan {
     public Collection<PoolGroup> getPoolGroups();
 
     public Quote getQuoteDTO();
+
     public Collection<Starter> getStarters();
 
     public Collection<SequencingPlanDetail> getPlanDetails();
@@ -33,5 +34,9 @@ public interface ProjectPlan {
     public void addSequencingDetail(SequencingPlanDetail sequencingDetail);
 
     public void addJiraTicket(JiraTicket jiraTicket);
+
+    public void setAliquot(Starter starter,LabVessel aliquot);
+
+    public LabVessel getAliquot(Starter starter);
 }
 

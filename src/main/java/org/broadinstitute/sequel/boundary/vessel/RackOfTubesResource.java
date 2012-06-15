@@ -59,9 +59,7 @@ public class RackOfTubesResource {
                 if(tubeBean.sampleBarcode == null) {
                     twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.barcode);
                 } else {
-                    Sample passSample = new Sample();
-                    passSample.setBspSampleID(tubeBean.sampleBarcode);
-                    BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(tubeBean.sampleBarcode + ".aliquot", projectPlan, null));
+                    BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(tubeBean.sampleBarcode + ".aliquot", projectPlan, null));
 
                     twoDBarcodedTube = bspAliquot;
                 }

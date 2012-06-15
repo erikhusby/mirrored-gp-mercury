@@ -94,9 +94,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
             }
             String barcode = "R" + rackPosition;
             String bspStock = "SM-" + rackPosition;
-            Sample passSample = new Sample();
-            passSample.setBspSampleID(bspStock);
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", projectPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
         }

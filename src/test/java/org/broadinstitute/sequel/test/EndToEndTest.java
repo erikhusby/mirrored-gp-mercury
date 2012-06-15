@@ -47,9 +47,7 @@ public class EndToEndTest  {
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        Sample passSample = new Sample();
-        passSample.setBspSampleID(sampleName);
-        BSPSampleAuthorityTwoDTube stockSample = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(sampleName, projectPlan,null));
+        BSPSampleAuthorityTwoDTube stockSample = new BSPSampleAuthorityTwoDTube(new BSPSample(sampleName, projectPlan,null));
         return stockSample;
     }
     

@@ -71,9 +71,7 @@ public class LabWorkQueueWorkflowTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            Sample passSample = new Sample();
-            passSample.setBspSampleID(bspStock);
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSample,new BSPSample(bspStock + ".aliquot", rootPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", rootPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
         }
