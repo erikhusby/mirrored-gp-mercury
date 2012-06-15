@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.integration.entity.billing;
 
 
-import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
@@ -12,7 +11,7 @@ import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
@@ -94,7 +93,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
             }
             String barcode = "R" + rackPosition;
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
         }

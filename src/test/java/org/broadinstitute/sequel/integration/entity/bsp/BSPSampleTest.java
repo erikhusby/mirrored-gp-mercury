@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.integration.entity.bsp;
 
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.infrastructure.bsp.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -13,7 +13,7 @@ public class BSPSampleTest {
     public void test_patient_id_integration() {
         BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(new MockBSPService());
         String sampleName = "SM-12CO4";
-        BSPSample bspSample = new BSPSample(sampleName,
+        BSPStartingSample bspSample = new BSPStartingSample(sampleName,
                 null,
                 fetcher.fetchSingleSampleFromBSP(sampleName));
         String patientId = bspSample.getPatientId();

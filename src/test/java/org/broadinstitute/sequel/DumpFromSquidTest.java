@@ -105,7 +105,7 @@ public class DumpFromSquidTest extends WeldBooter {
             
             SampleSheet bspSampleSheet = new SampleSheet();
             BSPSampleDTO bspSampleDto = bspLookup.fetchSingleSampleFromBSP(bspSampleName); 
-            bspSampleSheet.addStartingSample(new BSPSample(bspSampleName,projectPlan,bspSampleDto));
+            bspSampleSheet.addStartingSample(new BSPStartingSample(bspSampleName,projectPlan,bspSampleDto));
             LabVessel bspTube = new TwoDBarcodedTube(bspSampleName,bspSampleSheet);
             
             projectPlan.addStarter(bspTube);

@@ -1,9 +1,8 @@
 package org.broadinstitute.sequel.integration.entity.project;
 
-import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.entity.billing.Quote;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.*;
@@ -304,7 +303,7 @@ public class ProjectTest extends Arquillian {
         // todo: instead of a bogus TwoDBarcodedTube for the root, lookup BSP
         // container information inside a BSPVessel object, most of whose
         // methods throw exceptions that say "Hey, I'm from BSP, you can't do that!"
-        BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(sampleName + ".aliquot", projectPlan, bspFetcher.fetchSingleSampleFromBSP(sampleName)));
+        BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(sampleName + ".aliquot", projectPlan, bspFetcher.fetchSingleSampleFromBSP(sampleName)));
         return bspAliquot;
     }
     

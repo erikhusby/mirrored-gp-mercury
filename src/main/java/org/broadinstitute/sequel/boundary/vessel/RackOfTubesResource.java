@@ -1,9 +1,8 @@
 package org.broadinstitute.sequel.boundary.vessel;
 
-import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
@@ -59,7 +58,7 @@ public class RackOfTubesResource {
                 if(tubeBean.sampleBarcode == null) {
                     twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.barcode);
                 } else {
-                    BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(tubeBean.sampleBarcode + ".aliquot", projectPlan, null));
+                    BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(tubeBean.sampleBarcode + ".aliquot", projectPlan, null));
 
                     twoDBarcodedTube = bspAliquot;
                 }

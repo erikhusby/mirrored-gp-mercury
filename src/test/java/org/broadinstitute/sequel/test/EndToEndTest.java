@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.test;
 
 
-import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.infrastructure.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.infrastructure.bsp.MockBSPConnector;
@@ -13,7 +12,7 @@ import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.*;
@@ -47,7 +46,7 @@ public class EndToEndTest  {
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        BSPSampleAuthorityTwoDTube stockSample = new BSPSampleAuthorityTwoDTube(new BSPSample(sampleName, projectPlan,null));
+        BSPSampleAuthorityTwoDTube stockSample = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(sampleName, projectPlan,null));
         return stockSample;
     }
     

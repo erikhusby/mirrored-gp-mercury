@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.entity.workflow;
 
-import org.broadinstitute.sequel.boundary.Sample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
@@ -9,7 +9,6 @@ import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.workflow.WorkflowParser;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.*;
@@ -71,7 +70,7 @@ public class LabWorkQueueWorkflowTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", rootPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", rootPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
         }

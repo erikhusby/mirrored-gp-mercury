@@ -9,14 +9,13 @@ import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptacleType;
-import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.workflow.WorkflowParser;
 import org.broadinstitute.sequel.entity.OrmUtil;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
@@ -97,7 +96,7 @@ public class LabEventTest {
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + rackPosition;
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
         }
@@ -165,7 +164,7 @@ public class LabEventTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
 
@@ -270,7 +269,7 @@ public class LabEventTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
         }
 

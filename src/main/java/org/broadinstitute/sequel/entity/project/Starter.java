@@ -11,4 +11,6 @@ public interface Starter {
 
     public Set<SampleInstance> getSampleInstances();
 
+    public boolean isAliquotExpected();
+
 }

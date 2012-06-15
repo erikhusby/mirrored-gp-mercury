@@ -1,15 +1,12 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.boundary.*;
-import org.broadinstitute.sequel.boundary.pass.ToSequel;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingTechnology;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.quote.Quote;
-import org.broadinstitute.sequel.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.sequel.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
 import javax.inject.Inject;
@@ -33,7 +30,7 @@ public class PassBackedProjectPlan implements ProjectPlan {
     private Set<ReagentDesign> baits = new HashSet<ReagentDesign>();
 
     // todo arz pull out injected services and have constructors
-    // take in pre-fetched DTOs (Quote, BSPSample)
+    // take in pre-fetched DTOs (Quote, BSPStartingSample)
 
     @Inject
     private QuoteService quoteService;
@@ -106,7 +103,7 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
         for (Sample passSample : pass.getSampleDetailsInformation().getSample()) {
             String bspSampleName = passSample.getBspSampleID();
-            starters.add(new BSPSample(bspSampleName, this, sampleNameToSampleDTO.get(bspSampleName)));
+            starters.add(new BSPStartingSample(bspSampleName, this, sampleNameToSampleDTO.get(bspSampleName)));
         }
     }
 

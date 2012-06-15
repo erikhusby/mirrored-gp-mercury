@@ -431,4 +431,9 @@ public abstract class LabVessel implements Starter {
     public boolean isSampleAuthority() {
         return false;
     }
+
+    @Override
+    public boolean isAliquotExpected() {
+        return false;
+    }
 }

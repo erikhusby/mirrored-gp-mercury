@@ -2,7 +2,6 @@ package org.broadinstitute.sequel.entity.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -21,15 +20,14 @@ import java.util.Set;
  * a service lookup the real data from bsp.
  */
 @Entity
-// todo arz rename this BSPStartingSample
-public class BSPSample extends StartingSample {
+public class BSPStartingSample extends StartingSample {
 
-    private static Log gLog = LogFactory.getLog(BSPSample.class);
+    private static Log gLog = LogFactory.getLog(BSPStartingSample.class);
 
     @Transient
     private BSPSampleDTO bspDTO;
 
-    protected BSPSample() {}
+    protected BSPStartingSample() {}
     /**
      * Is there a distinction in BSP between
      * the name of the sample and the container
@@ -43,15 +41,15 @@ public class BSPSample extends StartingSample {
      *                drills into it.  Either way, you have some decisions to make
      *                about performance.
      */
-    public BSPSample(String sampleName,
-                     ProjectPlan plan,
-                     BSPSampleDTO bspDTO) {
+    public BSPStartingSample(String sampleName,
+                             ProjectPlan plan,
+                             BSPSampleDTO bspDTO) {
         this(sampleName,plan);
         this.bspDTO = bspDTO;
     }
     
-    public BSPSample(String sampleName,
-                     ProjectPlan plan) {
+    public BSPStartingSample(String sampleName,
+                             ProjectPlan plan) {
         super(sampleName, plan);
     }
 
@@ -107,5 +105,10 @@ public class BSPSample extends StartingSample {
         }
         sampleInstances.add(new SampleInstance(this,null,rootPlan,null,workflow));
         return sampleInstances;
+    }
+
+    @Override
+    public boolean isAliquotExpected() {
+        return true;
     }
 }

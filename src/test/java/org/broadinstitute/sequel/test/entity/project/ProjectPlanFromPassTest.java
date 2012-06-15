@@ -2,7 +2,7 @@ package org.broadinstitute.sequel.test.entity.project;
 
 import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
@@ -80,7 +80,7 @@ public class ProjectPlanFromPassTest {
             assertTrue(passSampleNames.contains(sampleInstance.getStartingSample().getSampleName()));
 
             String aliquotName = starter.getLabel() + ".aliquot";
-            BSPSampleAuthorityTwoDTube aliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(aliquotName,projectPlan,bspDataFetcher.fetchSingleSampleFromBSP(aliquotName)));
+            BSPSampleAuthorityTwoDTube aliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(aliquotName,projectPlan,bspDataFetcher.fetchSingleSampleFromBSP(aliquotName)));
 
             // plating export will call this
             projectPlan.setAliquot(starter,aliquot);
@@ -88,7 +88,7 @@ public class ProjectPlanFromPassTest {
 
             assertEquals(aliquot.getSampleInstances().size(),1);
             assertTrue(passSampleNames.contains(starter.getLabel()));
-            assertEquals(aliquot.getSampleInstances().iterator().next().getStartingSample().getSampleName(),starter.getLabel() + ".aliquot");
+            assertEquals(aliquot.getSampleInstances().iterator().next().getStartingSample().getSampleName(), starter.getLabel() + ".aliquot");
         }
 
         assertFalse(projectPlan.getReagentDesigns().isEmpty());
@@ -97,6 +97,8 @@ public class ProjectPlanFromPassTest {
         ReagentDesign baitDesign = projectPlan.getReagentDesigns().iterator().next();
         assertEquals(baitDesign.getDesignName(), BAIT_DESIGN_NAME);
         assertEquals(baitDesign.getReagentType(), ReagentDesign.REAGENT_TYPE.BAIT);
+
+        // todo add xfers from aliquots
 
     }
 }

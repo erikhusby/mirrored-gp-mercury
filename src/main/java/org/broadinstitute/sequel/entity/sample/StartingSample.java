@@ -7,7 +7,6 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 
-import javax.ejb.TransactionAttribute;
 import javax.persistence.*;
 import java.util.Collection;
 
@@ -15,7 +14,7 @@ import java.util.Collection;
  * Read-only sample metadata at the finest granularity necessary
  * for de-multiplexing.
  * 
- * Primary implementation is a {@link org.broadinstitute.sequel.entity.bsp.BSPSample},
+ * Primary implementation is a {@link org.broadinstitute.sequel.entity.bsp.BSPStartingSample},
  * although an interesting alternative implementation
  * could be used for scenarios where we want to
  * declare a tube completely divorced from upstream

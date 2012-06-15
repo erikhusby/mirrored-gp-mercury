@@ -2,7 +2,6 @@ package org.broadinstitute.sequel.boundary.labevent;
 
 //import com.jprofiler.api.agent.Controller;
 import com.sun.jersey.api.client.Client;
-import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
@@ -14,7 +13,7 @@ import org.broadinstitute.sequel.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.sequel.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.control.vessel.IndexedPlateFactory;
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
@@ -87,7 +86,7 @@ public class BettalimsMessageResourceTest extends ContainerTest {
             String barcode = "R" + testPrefix + rackPosition;
 
             String bspStock = "SM-" +  testPrefix + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
             twoDBarcodedTubeDAO.persist(bspAliquot);

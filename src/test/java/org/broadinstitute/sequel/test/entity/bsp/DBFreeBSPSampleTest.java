@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.test.entity.bsp;
 
-import org.broadinstitute.sequel.entity.bsp.BSPSample;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
@@ -37,7 +37,7 @@ public class DBFreeBSPSampleTest {
         ).andReturn(resultColumns).atLeastOnce();
 
         EasyMock.replay(service);
-        BSPSample sample = new BSPSample(sampleName,null,new BSPSampleDataFetcher(service).fetchSingleSampleFromBSP(sampleName));
+        BSPStartingSample sample = new BSPStartingSample(sampleName,null,new BSPSampleDataFetcher(service).fetchSingleSampleFromBSP(sampleName));
         Assert.assertEquals(resultColumns.iterator().next()[0], sample.getPatientId());
     }
 }
