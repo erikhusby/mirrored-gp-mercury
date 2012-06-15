@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
 import org.testng.annotations.Test;
@@ -59,7 +60,7 @@ public class ProjectPlanFromPassTest {
         baitSet.setId(BAIT_ID);
         baitsCache.getBaitSetList().add(baitSet);
 
-        ProjectPlan projectPlan = new PassBackedProjectPlan(pass,bspDataFetcher,new MockQuoteService(),baitsCache);
+        PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(pass,bspDataFetcher,new MockQuoteService(),baitsCache);
 
         assertEquals(projectPlan.getStarters().size(),pass.getSampleDetailsInformation().getSample().size());
         assertEquals(projectPlan.getProject().getProjectName(),pass.getResearchProject());
@@ -89,6 +90,19 @@ public class ProjectPlanFromPassTest {
             assertEquals(aliquot.getSampleInstances().size(),1);
             assertTrue(passSampleNames.contains(starter.getLabel()));
             assertEquals(aliquot.getSampleInstances().iterator().next().getStartingSample().getSampleName(), starter.getLabel() + ".aliquot");
+
+        }
+
+        for (Sample sample : pass.getSampleDetailsInformation().getSample()) {
+            boolean foundIt = false;
+            for (Starter starter : projectPlan.getStarters()) {
+                if (sample.getBspSampleID().equals(starter.getLabel())) {
+                    foundIt = true;
+                    LabVessel aliquot = projectPlan.getAliquot(starter);
+                    assertNotNull(aliquot);
+                }
+            }
+            assertTrue(foundIt);
         }
 
         assertFalse(projectPlan.getReagentDesigns().isEmpty());

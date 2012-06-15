@@ -211,4 +211,8 @@ public class PassBackedProjectPlan implements ProjectPlan {
     public LabVessel getAliquot(Starter starter) {
         return aliquotForStarter.get(starter);
     }
+
+    public AbstractPass getPass() {
+        return pass;
+    }
 }
