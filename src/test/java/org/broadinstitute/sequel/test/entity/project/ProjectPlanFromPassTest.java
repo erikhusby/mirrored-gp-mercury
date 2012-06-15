@@ -3,10 +3,7 @@ package org.broadinstitute.sequel.test.entity.project;
 import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.entity.bsp.BSPSample;
-import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
-import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.Starter;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
@@ -24,6 +21,8 @@ import static org.testng.Assert.*;
 public class ProjectPlanFromPassTest {
 
     private final long BAIT_ID = 5;
+
+    private final String BAIT_DESIGN_NAME = "interesting genes";
 
     private AbstractPass setupProjectAndPass(String...sampleNames) {
         DirectedPass hsPass = new DirectedPass();
@@ -56,7 +55,7 @@ public class ProjectPlanFromPassTest {
         BSPSampleDataFetcher bspDataFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
         BaitSetListResult baitsCache = new BaitSetListResult();
         BaitSet baitSet = new BaitSet();
-        baitSet.setDesignName("interesting genes");
+        baitSet.setDesignName(BAIT_DESIGN_NAME);
         baitSet.setId(BAIT_ID);
         baitsCache.getBaitSetList().add(baitSet);
 
@@ -88,5 +87,13 @@ public class ProjectPlanFromPassTest {
             SampleInstance sampleInstance = starter.getSampleInstances().iterator().next();
             assertTrue(passSampleNames.contains(sampleInstance.getStartingSample().getSampleName()));
         }
+
+        assertFalse(projectPlan.getReagentDesigns().isEmpty());
+        assertEquals(projectPlan.getReagentDesigns().size(),1);
+
+        ReagentDesign baitDesign = projectPlan.getReagentDesigns().iterator().next();
+        assertEquals(baitDesign.getDesignName(), BAIT_DESIGN_NAME);
+        assertEquals(baitDesign.getReagentType(), ReagentDesign.REAGENT_TYPE.BAIT);
+
     }
 }
