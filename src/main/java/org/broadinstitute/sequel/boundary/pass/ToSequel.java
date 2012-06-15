@@ -136,6 +136,7 @@ public class ToSequel {
             ret = directedRet;
 
             directedRet.setBaitSetID(squidDirectedPass.getBaitSetID());
+            directedRet.setExomeExpress(squidDirectedPass.isExomeExpress());
         }
         else if (squidPass instanceof org.broadinstitute.sequel.boundary.squid.RNASeqPass) {
 

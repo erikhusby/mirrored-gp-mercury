@@ -61,6 +61,7 @@ public class ToSquid {
             ret = directedPass;
 
             directedPass.setBaitSetID(sequelDirectedPass.getBaitSetID());
+            directedPass.setExomeExpress(sequelDirectedPass.isExomeExpress());
         }
         else if (sequelPass instanceof org.broadinstitute.sequel.boundary.RNASeqPass) {
 
