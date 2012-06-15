@@ -2,7 +2,7 @@ package org.broadinstitute.sequel.boundary.pass;
 
 import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationJNDIProfileDrivenImpl;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationProducer;
 
 import javax.jws.WebParam;
 import javax.jws.WebService;
@@ -29,10 +29,14 @@ public class PassSOAPService implements SquidTopicPortype {
     //
     // http://java.net/jira/browse/GLASSFISH-18406
     //
+    //
+    // Should look like:
+    //
     // @Inject
+    // @TestInstance
     // private SquidConfiguration squidConfiguration;
 
-    private SquidConfiguration squidConfiguration = new SquidConfigurationJNDIProfileDrivenImpl();
+    private SquidConfiguration squidConfiguration = SquidConfigurationProducer.getTestInstance();
 
 
     private org.broadinstitute.sequel.boundary.squid.SquidTopicPortype squidServicePort;
@@ -43,7 +47,7 @@ public class PassSOAPService implements SquidTopicPortype {
             String namespace = "urn:SquidTopic";
             QName serviceName = new QName(namespace, "SquidTopicService");
 
-            String wsdlURL = squidConfiguration.getBaseURL() + "services/SquidTopicService?WSDL";
+            String wsdlURL = squidConfiguration.getBaseUrl() + "/services/SquidTopicService?WSDL";
 
             URL url;
             try {
