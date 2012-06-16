@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.control.labevent;
 
 
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
+import org.broadinstitute.sequel.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
@@ -21,6 +22,8 @@ import org.broadinstitute.sequel.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventMessage;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
+import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.infrastructure.quote.Billable;
 
 import javax.enterprise.event.Event;
@@ -137,7 +140,10 @@ public class LabEventHandler {
         }
         */
 
-        processProjectPlanOverrides(labEvent,workflow);
+
+        // todo arz fix this by using LabBatch instead.  maybe strip out this denormalization entirely,
+        // and leave the override processing for on-the-fly work in VesselContainer
+        processProjectPlanOverrides(labEvent, workflow);
 
         JiraCommentUtil.postUpdate(labEvent.getEventName().toString() + " Event Applied",
                 labEvent.getEventName().toString() + " has been applied to the following samples:",labEvent.getAllLabVessels());
