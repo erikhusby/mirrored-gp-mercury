@@ -9,7 +9,7 @@ import javax.inject.Inject;
 
 import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.*;
 
-public class SquidConfigurationProducer {
+public class SquidConfigurationProducer implements BaseConfigurationProducer<SquidConfiguration> {
 
 
     @Inject
@@ -19,56 +19,109 @@ public class SquidConfigurationProducer {
     @Inject
     private Deployment deployment;
 
+    /**
+     * ConfigurationHolder tries to take some of the pain out of the restriction that managed beans cannot be
+     * parameterized types, but we still end up with a slew of non-DRY @Produces methods that delegate to the
+     * ConfigurationHolder.  I believe there is currently no way around this, the @Produces methods need to be on
+     * the implementing class.
+     */
+    private ConfigurationHolder<SquidConfiguration> configurationHolder
+            = new ConfigurationHolder<SquidConfiguration>();
 
-    @Produces
-    @TestInstance
-    public SquidConfiguration testInstance() {
 
-        return new SquidConfiguration(
-                TEST,
-                "http://prodinfobuild.broadinstitute.org:8020/squid");
+
+    private void add(Deployment deployment, String url) {
+        configurationHolder.add(deployment, new SquidConfiguration(url));
     }
+
+
+    public SquidConfigurationProducer() {
+
+        Deployment deployment;
+        String url;
+
+
+        // How do we allow for local overrides of DEV parameters?  or a la carte stubs?
+        deployment = DEV;
+        url        = "http://localhost:8080/squid";
+
+        add(deployment, url);
+
+
+
+        deployment = TEST;
+        url        = "http://prodinfobuild.broadinstitute.org:8020/squid";
+
+        add(deployment, url);
+
+
+
+        deployment = QA;
+        url        = "http://vsquidrc.broadinstitute.org:8000/squid";
+
+        add(deployment, url);
+
+
+
+        deployment = PROD;
+        url        = "http://squid-ui.broadinstitute.org:8000/squid";
+
+        add(deployment, url);
+
+
+
+        configurationHolder.add(STUBBY, new SquidConfiguration(null) {
+            @Override
+            // base URL should never be consulted in a STUBBY deployment, this is a sign of something seriously wrong
+            public String getBaseUrl() {
+                throw new RuntimeException("Interrogating base URL for STUBBY configuration!");
+            }
+        });
+
+
+    }
+
 
 
     @Produces
     @DevInstance
     public SquidConfiguration devInstance() {
-
-        // How do we allow for local overrides of DEV parameters?
-        return new SquidConfiguration(
-                DEV,
-                "http://localhost:8080/squid");
+        return configurationHolder.get(DEV);
     }
+
+
+
+    @Produces
+    @TestInstance
+    public SquidConfiguration testInstance() {
+        return configurationHolder.get(TEST);
+    }
+
+
 
 
     @Produces
     @QAInstance
     public SquidConfiguration qaInstance() {
-
-        return new SquidConfiguration(
-                QA,
-                "http://vsquidrc.broadinstitute.org:8000/squid");
+        return configurationHolder.get(QA);
     }
+
 
 
     @Produces
     @ProdInstance
     public SquidConfiguration prodInstance() {
-
-        return new SquidConfiguration(
-                PROD,
-                "http://squid-ui.broadinstitute.org:8000/squid");
+        return configurationHolder.get(PROD);
     }
+
 
 
     @Produces
     @StubInstance
     public SquidConfiguration stubInstance() {
-
-        return new SquidConfiguration(
-                STUBBY,
-                null);
+        return configurationHolder.get(STUBBY);
     }
+
 
 
     public static SquidConfiguration getTestInstance() {
@@ -79,28 +132,7 @@ public class SquidConfigurationProducer {
 
     @Produces
     public SquidConfiguration produce() {
-
-        switch (deployment) {
-
-            case DEV:
-                return devInstance();
-
-            case TEST:
-                return testInstance();
-
-            case QA:
-                return qaInstance();
-
-            case PROD:
-                return prodInstance();
-
-            case STUBBY:
-                return stubInstance();
-
-            default:
-                throw new RuntimeException("Unrecognized Deployment: " + deployment);
-
-        }
+        return configurationHolder.get(deployment);
 
     }
 
