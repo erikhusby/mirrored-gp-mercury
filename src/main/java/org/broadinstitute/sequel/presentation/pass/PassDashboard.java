@@ -2,8 +2,8 @@ package org.broadinstitute.sequel.presentation.pass;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.boundary.*;
-import org.broadinstitute.sequel.boundary.pass.PassSOAPService;
 import org.broadinstitute.sequel.control.pass.PassBSPSampleSearchService;
+import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.presentation.AbstractJsfBean;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
@@ -24,7 +24,7 @@ import java.util.List;
 public class PassDashboard extends AbstractJsfBean {
 
     @Inject
-    private PassSOAPService service;
+    private PassService service;
 
     @Inject
     private Log log;

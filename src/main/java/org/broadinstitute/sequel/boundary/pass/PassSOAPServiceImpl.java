@@ -1,9 +1,16 @@
 package org.broadinstitute.sequel.boundary.pass;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.boundary.*;
+import org.broadinstitute.sequel.control.pass.PassService;
+import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
+import org.broadinstitute.sequel.infrastructure.deployment.DeploymentConfig;
+import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationProducer;
 
+import javax.ejb.EJB;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.namespace.QName;
@@ -14,32 +21,80 @@ import java.net.URL;
 import static org.broadinstitute.sequel.boundary.pass.ToSequel.sequelize;
 import static org.broadinstitute.sequel.boundary.pass.ToSquid.squidify;
 
-
 @WebService(targetNamespace = "urn:SquidTopic",
         portName = "SquidTopicService",
         serviceName = "SquidTopicService",
         name = "SquidTopicService",
         endpointInterface = "org.broadinstitute.sequel.boundary.SquidTopicPortype"
 )
-public class PassSOAPService implements SquidTopicPortype {
+@Impl
+/**
+ * This class exposes a PASS SOAP interface that mimics that of Squid.  The implementations of the web service
+ * methods all live in Squid, so SequeL just delegates all calls over to Squid (except for the trivial
+ * {@link #getGreeting()} method which is handled here).  Beginning with the Exome Express project we would like to
+ * point PMBridge at SequeL instead of Squid.  Most calls would just pass through SequeL, but Exome Express
+ * PASSes would kick off the pipeline in SequeL as well.
+ *
+ */
+public class PassSOAPServiceImpl implements PassService {
 
-    // @Inject not working in Glassfish @Webservices, either a hole in the spec or a bug in Glassfish.  See
-    //
-    // https://community.jboss.org/message/718492
-    //
-    // http://java.net/jira/browse/GLASSFISH-18406
-    //
-    //
-    // Should look like:
-    //
-    // @Inject
-    // @TestInstance
-    // private SquidConfiguration squidConfiguration;
+    // @Injection does not work on @WebServices, see comments in constructor below
+    private static final Log log = LogFactory.getLog(PassSOAPServiceImpl.class);
 
-    private SquidConfiguration squidConfiguration = SquidConfigurationProducer.getTestInstance();
+    private String baseUrl;
+
+    @EJB
+    // Using @EJB annotation since @Inject doesn't work on @WebServices, see comments below
+    private DeploymentConfig deploymentConfig;
+
+
+
+    public PassSOAPServiceImpl() {
+
+        /*
+            // @Inject currently not working in Glassfish @WebServices, either a hole in the spec or a bug in Glassfish.
+            // See
+            //
+            // https://community.jboss.org/message/718492
+            //
+            // http://java.net/jira/browse/GLASSFISH-18406
+
+            // Link for @EJB workaround:
+            //
+            // http://www.coderanch.com/t/499391/Web-Services/java/JEE-Inject-ApplicationScoped-bean-WebService
+            //
+            //
+
+        */
+        log.info("PassSOAPServiceImpl constructor invoked!");
+    }
+
+
+    private String getBaseUrl() {
+
+        // I wanted to make SquidConfiguration a @Startup @Singleton bean so I could grab it directly through
+        // a JNDI lookup or have it @EJB injected, but something seems to go very wrong when SquidConfiguration
+        // is so annotated and the webapp will not deploy.  Unfortunately I can't find any diagnostics in the log
+        // to tell me what's going wrong.
+
+        if (baseUrl == null) {
+
+            Deployment deployment = deploymentConfig.getDeployment();
+
+            final SquidConfiguration squidConfiguration = SquidConfigurationProducer.produce(deployment);
+
+            baseUrl = squidConfiguration.getBaseUrl();
+
+        }
+
+        return baseUrl;
+
+    }
+
 
 
     private org.broadinstitute.sequel.boundary.squid.SquidTopicPortype squidServicePort;
+
 
     private org.broadinstitute.sequel.boundary.squid.SquidTopicPortype squidCall() {
 
@@ -47,7 +102,7 @@ public class PassSOAPService implements SquidTopicPortype {
             String namespace = "urn:SquidTopic";
             QName serviceName = new QName(namespace, "SquidTopicService");
 
-            String wsdlURL = squidConfiguration.getBaseUrl() + "/services/SquidTopicService?WSDL";
+            String wsdlURL = getBaseUrl() + "/services/SquidTopicService?WSDL";
 
             URL url;
             try {
@@ -64,6 +119,7 @@ public class PassSOAPService implements SquidTopicPortype {
         return squidServicePort;
 
     }
+
 
 
     @Override
@@ -197,6 +253,7 @@ public class PassSOAPService implements SquidTopicPortype {
         return squidCall().validatePassNumber(passNumber);
 
     }
+
 
 
 }

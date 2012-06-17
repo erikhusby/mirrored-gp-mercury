@@ -18,7 +18,7 @@ import java.net.URL;
 /**
  * Integration test to connect to the PASS webservice in SequeL.
  */
-public class PassSOAPServiceTest extends ContainerTest {
+public class PassSOAPServiceImplTest extends ContainerTest {
 
     @Inject
     private Log log;

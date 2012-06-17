@@ -124,18 +124,24 @@ public class SquidConfigurationProducer implements BaseConfigurationProducer<Squ
 
 
 
-    public static SquidConfiguration getTestInstance() {
-        return new SquidConfigurationProducer().testInstance();
-    }
-
-
-
     @Produces
     public SquidConfiguration produce() {
         return configurationHolder.get(deployment);
 
     }
 
+
+    /**
+     * The use case for this method is the SOAP service impl where CDI currently does not work.
+     * See {@link org.broadinstitute.sequel.boundary.pass.PassSOAPServiceImpl}.
+     *
+     * @param deployment
+     *
+     * @return
+     */
+    public static SquidConfiguration produce(Deployment deployment) {
+        return new SquidConfigurationProducer().configurationHolder.get(deployment);
+    }
 
 
 }
