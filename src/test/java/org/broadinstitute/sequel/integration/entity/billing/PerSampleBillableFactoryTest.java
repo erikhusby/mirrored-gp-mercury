@@ -114,7 +114,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
                                           Map<LabEventName,PriceItem> billableEvents) {
         BasicProjectPlan plan = new BasicProjectPlan(new BasicProject(projectName,new JiraTicket()),
                 projectPlanName,
-                new WorkflowDescription("ChocolateChipCookies", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+                new WorkflowDescription("ChocolateChipCookies", billableEvents, CreateIssueRequest.Fields.Issuetype.Illumina_Library_Construction_Tracking));
         Quote quote = new org.broadinstitute.sequel.entity.billing.Quote(quoteAlphanumericId,
                 new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteAlphanumericId,new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
         plan.setQuote(quote);   

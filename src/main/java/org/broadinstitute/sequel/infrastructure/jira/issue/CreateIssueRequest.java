@@ -32,8 +32,7 @@ public class CreateIssueRequest implements Serializable {
             // very sensitive to case.
             Bug,
             SequeL_Project,
-            Whole_Exome_HybSel,
-            Whole_Genome_Shotgun
+            Illumina_Library_Construction_Tracking
         }
 
         

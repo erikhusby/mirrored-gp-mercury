@@ -41,7 +41,7 @@ public abstract class Project {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PROJECT")
     private Long projectId;
 
-   public static final String JIRA_PROJECT_PREFIX = "TP";
+   public static final String JIRA_PROJECT_PREFIX = "LCSET";
 
     @Transient
     private QuotesCache quotesCache;

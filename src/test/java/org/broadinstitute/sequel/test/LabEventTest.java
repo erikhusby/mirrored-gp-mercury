@@ -83,7 +83,7 @@ public class LabEventTest {
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("HS", billableEvents,
-                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+                CreateIssueRequest.Fields.Issuetype.Illumina_Library_Construction_Tracking);
         BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
 
         WorkflowParser workflowParser = new WorkflowParser(
@@ -150,7 +150,7 @@ public class LabEventTest {
 
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Genome_Shotgun);
+        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", billableEvents, CreateIssueRequest.Fields.Issuetype.Illumina_Library_Construction_Tracking);
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         WorkflowParser workflowParser = new WorkflowParser(
@@ -260,7 +260,7 @@ public class LabEventTest {
     public void testFluidigm() {
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Genome_Shotgun);
+        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", billableEvents, CreateIssueRequest.Fields.Issuetype.Illumina_Library_Construction_Tracking);
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack

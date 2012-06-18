@@ -277,7 +277,7 @@ public class ProjectTest extends Arquillian {
 
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         billableEvents.put(LabEventName.SAGE_UNLOADED,priceItem);
-        WorkflowDescription workflow = new WorkflowDescription("HybridSelection", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        WorkflowDescription workflow = new WorkflowDescription("HybridSelection", billableEvents,CreateIssueRequest.Fields.Issuetype.Illumina_Library_Construction_Tracking);
         BasicProjectPlan plan = new BasicProjectPlan(project,project.getProjectName() + " Plan",workflow);
         String quoteId = "DNA23";
         plan.setQuote(new Quote(quoteId,
