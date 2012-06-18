@@ -2,11 +2,13 @@ package org.broadinstitute.sequel.test.entity.project;
 
 import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
+import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
 import org.testng.annotations.Test;
@@ -14,6 +16,7 @@ import org.testng.annotations.Test;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -111,6 +114,22 @@ public class ProjectPlanFromPassTest {
         ReagentDesign baitDesign = projectPlan.getReagentDesigns().iterator().next();
         assertEquals(baitDesign.getDesignName(), BAIT_DESIGN_NAME);
         assertEquals(baitDesign.getReagentType(), ReagentDesign.REAGENT_TYPE.BAIT);
+
+        Set<LabBatch> batches = PassBatchUtil.createBatches(projectPlan, 1, "TestBatch");
+        assertNotNull(batches);
+        assertEquals(batches.size(),2);
+
+        for (Starter starter : projectPlan.getStarters()) {
+            boolean isStarterInBatch = false;
+            for (LabBatch batch : batches) {
+                assertEquals(batch.getStarters().size(),1);
+                if (batch.getStarters().contains(starter)) {
+                    isStarterInBatch = true;
+                }
+            }
+            assertTrue(isStarterInBatch,"Starter " + starter + " did not make it into a batch");
+        }
+
 
         // todo add xfers from aliquots
 

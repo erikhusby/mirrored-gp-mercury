@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.workflow;
 import org.broadinstitute.sequel.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
@@ -46,7 +47,7 @@ public class LabEventProjectPlanOverrider {
             LabBatch batch = possibleBatches.iterator().next();
             batch.getJiraTicket().addComment(labEvent.getEventOperator().getLogin() + "is processing " + labEvent.getEventName().name() + " at " + labEvent.getEventLocation());
             for (LabVessel vessel : vessels) {
-                BasicProjectPlan projectPlanOverride = batch.getProjectPlanOverride(vessel);
+                ProjectPlan projectPlanOverride = batch.getProjectPlanOverride(vessel);
                 if (projectPlanOverride != null) {
                     throw new RuntimeException("I haven't been written yet");
                     //labEvent.setProjectPlanOverride(vessel,projectPlanOverride);

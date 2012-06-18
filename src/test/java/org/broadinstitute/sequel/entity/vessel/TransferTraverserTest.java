@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.test.LabEventTest;
@@ -49,7 +50,17 @@ public class TransferTraverserTest extends ContainerTest{
 
     private void printJiraTicket(JiraTicket jiraTicket) {
         LabBatch labBatch = jiraTicket.getLabBatch();
-        LabVessel labVessel = labBatch.getStarters().entrySet().iterator().next().getValue();
+        Starter starter = labBatch.getStarters().iterator().next();
+        LabVessel labVessel = null;
+
+        // either the starter is a bsp sample, in which case we need to get the aliquot
+        if (OrmUtil.proxySafeIsInstance(starter,Starter.class)) {
+            labVessel = starter.getSampleInstances().iterator().next().getSingleProjectPlan().getAliquot(starter);
+        }
+        // or the start is itself a lab vessel for something like topoffs or rework
+        else {
+            labVessel = OrmUtil.proxySafeCast(starter,LabVessel.class);
+        }
         VesselContainer<?> vesselContainer = labVessel.getContainers().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
         vesselContainer.evaluateCriteria(vesselContainer.getPositionOfVessel(labVessel),
