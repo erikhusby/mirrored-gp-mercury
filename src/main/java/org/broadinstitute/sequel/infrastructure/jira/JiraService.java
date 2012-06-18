@@ -46,4 +46,6 @@ public interface JiraService {
      */
     void addComment(String key, String body, Visibility.Type visibilityType, Visibility.Value visibilityValue) throws IOException;
 
+    public void updateField(String key,String fieldName,String value) throws IOException;
+
 }

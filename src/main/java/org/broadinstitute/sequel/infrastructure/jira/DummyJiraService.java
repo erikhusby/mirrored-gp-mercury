@@ -34,4 +34,9 @@ public class DummyJiraService implements JiraService {
     public void addComment(String key, String body, Visibility.Type visibilityType, Visibility.Value visibilityValue) throws IOException {
         logger.info("Dummy jira service! " + body + " for " + key);
     }
+
+    @Override
+    public void updateField(String key, String fieldName, String value) throws IOException {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 }

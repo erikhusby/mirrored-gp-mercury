@@ -23,6 +23,12 @@ public class LabBatch {
 
     private JiraTicket jiraTicket;
 
+    /**
+     * Create a new batch with the given name
+     * and set of {@link Starter starting materials}
+     * @param batchId
+     * @param starters
+     */
     public LabBatch(String batchId,
                     Set<Starter> starters) {
         if (batchId == null) {

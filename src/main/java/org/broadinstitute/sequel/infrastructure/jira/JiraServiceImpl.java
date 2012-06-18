@@ -7,6 +7,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.AbstractJsonJerseyClientService;
+import org.broadinstitute.sequel.infrastructure.jira.issue.ChangeStringField;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
@@ -104,7 +105,16 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         // don't really care about the response, not sure why JIRA sends us back so much stuff...
         post(webResource, addCommentRequest, new GenericType<AddCommentResponse>() {
         });
-                
 
+    }
+
+    @Override
+    public void updateField(String key, String fieldName, String value) throws IOException {
+        String urlString = getBaseUrl() + "/issue/" + key;
+
+        WebResource webResource = getJerseyClient().resource(urlString);
+        ChangeStringField changeField = new ChangeStringField(fieldName,value);
+
+        put(webResource,changeField);
     }
 }

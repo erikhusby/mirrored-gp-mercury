@@ -77,8 +77,13 @@ public class PassBatchUtil {
         if (createResponse.getId() == null) {
             throw new RuntimeException("Could not create jira ticket.");
         }
+        final String ticketName = batch.getJiraTicket().getTicketName();
+        // todo arz set work request field to something bogus, add bsp stock samples to list of samples.
+        final StringBuilder sampleNames = new StringBuilder();
         for (Starter starter : batch.getStarters()) {
-            // todo arz add starters (bsp samples) to lc set ticket
+            sampleNames.append(starter).append("\n");
         }
+        //jiraService.updateField(ticketName,"WorkRequestId","SequeL");
+        //jiraService.updateField(ticketName,"Samples",sampleNames.toString());
     }
 }
