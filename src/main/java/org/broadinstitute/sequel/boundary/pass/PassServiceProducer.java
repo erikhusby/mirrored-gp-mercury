@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
+import org.broadinstitute.sequel.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
@@ -23,16 +24,12 @@ public class PassServiceProducer {
 
     @Inject
     @Impl
-    // We need the {@link @Impl} qualifier or we get errors with multiple {@link @Default} implementations
-    // to @Inject PassService injection points,
-    // and putting {@link @Alternative} on {@link PassSOAPServiceImpl} makes it impossible to inject instances of that
-    // class here without a change to beans.xml
-    private PassSOAPServiceImpl impl;
+    private PassService impl;
 
 
-
-    // The instance we'll return to our @Injection points
-    private PassService instance;
+    @Inject
+    @Stub
+    private PassService stub;
 
 
 
@@ -40,21 +37,15 @@ public class PassServiceProducer {
     @Default
     public PassService produce() {
 
-        if (instance == null) {
-
-            if (deployment == Deployment.STUBBY) {
-                log.info("Creating PassServiceStub for STUBBY deployment");
-                instance = new PassServiceStub();
-            }
-            else {
-                log.info("Non-STUBBY deployment, instance = impl");
-                instance = impl;
-
-            }
-
+        if (deployment == Deployment.STUBBY) {
+            log.info("STUBBY deployment, returning stub");
+            return stub;
+        }
+        else {
+            log.info("Non-STUBBY deployment, returning impl");
+            return impl;
         }
 
-        return instance;
 
     }
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.boundary.squid;
 
 
 import org.apache.commons.logging.Log;
+import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.infrastructure.deployment.TestInstance;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
 import org.broadinstitute.sequel.integration.ContainerTest;
@@ -18,6 +19,10 @@ public class SquidSOAPTest extends ContainerTest {
     @Inject
     @TestInstance
     private SquidConfiguration squidConfiguration;
+
+
+    @Inject
+    private PassService passService;
 
 
     @Inject

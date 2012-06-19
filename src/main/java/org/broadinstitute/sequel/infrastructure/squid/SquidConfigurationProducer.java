@@ -6,6 +6,8 @@ import org.broadinstitute.sequel.infrastructure.deployment.*;
 
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.*;
 
@@ -19,64 +21,47 @@ public class SquidConfigurationProducer implements BaseConfigurationProducer<Squ
     @Inject
     private Deployment deployment;
 
-    /**
-     * ConfigurationHolder tries to take some of the pain out of the restriction that managed beans cannot be
-     * parameterized types, but we still end up with a slew of non-DRY @Produces methods that delegate to the
-     * ConfigurationHolder.  I believe there is currently no way around this, the @Produces methods need to be on
-     * the implementing class.
-     */
-    private ConfigurationHolder<SquidConfiguration> configurationHolder
-            = new ConfigurationHolder<SquidConfiguration>();
 
+    private Map<Deployment, SquidConfiguration> configurationMap;
 
-
-    private void add(Deployment deployment, String url) {
-        configurationHolder.add(deployment, new SquidConfiguration(url));
-    }
 
 
     public SquidConfigurationProducer() {
 
-        Deployment deployment;
-        String url;
+        SquidConfiguration [] configs = new SquidConfiguration[] {
+
+                new SquidConfiguration(
+                        DEV,
+                        "http://localhost:8080/squid"
+                ),
+
+                new SquidConfiguration(
+                        TEST,
+                        "http://prodinfobuild.broadinstitute.org:8020/squid"
+                ),
+
+                new SquidConfiguration(
+                        QA,
+                        "http://vsquidrc.broadinstitute.org:8000/squid"
+                ),
+
+                new SquidConfiguration(
+                        PROD,
+                        "http://squid-ui.broadinstitute.org:8000/squid"
+                ),
+
+                new SquidConfiguration(
+                        STUBBY,
+                        null
+                )
+
+        };
+
+        configurationMap = new HashMap<Deployment, SquidConfiguration>();
 
 
-        // How do we allow for local overrides of DEV parameters?  or a la carte stubs?
-        deployment = DEV;
-        url        = "http://localhost:8080/squid";
-
-        add(deployment, url);
-
-
-
-        deployment = TEST;
-        url        = "http://prodinfobuild.broadinstitute.org:8020/squid";
-
-        add(deployment, url);
-
-
-
-        deployment = QA;
-        url        = "http://vsquidrc.broadinstitute.org:8000/squid";
-
-        add(deployment, url);
-
-
-
-        deployment = PROD;
-        url        = "http://squid-ui.broadinstitute.org:8000/squid";
-
-        add(deployment, url);
-
-
-
-        configurationHolder.add(STUBBY, new SquidConfiguration(null) {
-            @Override
-            // base URL should never be consulted in a STUBBY deployment, this is a sign of something seriously wrong
-            public String getBaseUrl() {
-                throw new RuntimeException("Interrogating base URL for STUBBY configuration!");
-            }
-        });
+        for (SquidConfiguration config : configs)
+            configurationMap.put(config.getDeployment(), config);
 
 
     }
@@ -86,7 +71,8 @@ public class SquidConfigurationProducer implements BaseConfigurationProducer<Squ
     @Produces
     @DevInstance
     public SquidConfiguration devInstance() {
-        return configurationHolder.get(DEV);
+        log.info("explicitly asked for DEV instance");
+        return configurationMap.get(DEV);
     }
 
 
@@ -94,7 +80,8 @@ public class SquidConfigurationProducer implements BaseConfigurationProducer<Squ
     @Produces
     @TestInstance
     public SquidConfiguration testInstance() {
-        return configurationHolder.get(TEST);
+        log.info("explicitly asked for TEST instance");
+        return configurationMap.get(TEST);
     }
 
 
@@ -103,7 +90,8 @@ public class SquidConfigurationProducer implements BaseConfigurationProducer<Squ
     @Produces
     @QAInstance
     public SquidConfiguration qaInstance() {
-        return configurationHolder.get(QA);
+        log.info("explicitly asked for QA instance");
+        return configurationMap.get(QA);
     }
 
 
@@ -111,7 +99,8 @@ public class SquidConfigurationProducer implements BaseConfigurationProducer<Squ
     @Produces
     @ProdInstance
     public SquidConfiguration prodInstance() {
-        return configurationHolder.get(PROD);
+        log.info("explicitly asked for PROD instance");
+        return configurationMap.get(PROD);
     }
 
 
@@ -119,20 +108,23 @@ public class SquidConfigurationProducer implements BaseConfigurationProducer<Squ
     @Produces
     @StubInstance
     public SquidConfiguration stubInstance() {
-        return configurationHolder.get(STUBBY);
+        log.info("explicitly asked for STUBBY instance");
+        return configurationMap.get(STUBBY);
     }
 
 
 
     @Produces
     public SquidConfiguration produce() {
-        return configurationHolder.get(deployment);
+        log.info("Returning SquidConfiguration for deployment " + deployment);
+        return configurationMap.get(deployment);
 
     }
 
 
     /**
-     * The use case for this method is the SOAP service impl where CDI currently does not work.
+     * The use case for this method is the SOAP service impl where direct @Injection of a @Singleton @Startup
+     * SquidConfiguration currently does not work.
      * See {@link org.broadinstitute.sequel.boundary.pass.PassSOAPServiceImpl}.
      *
      * @param deployment
@@ -140,7 +132,7 @@ public class SquidConfigurationProducer implements BaseConfigurationProducer<Squ
      * @return
      */
     public static SquidConfiguration produce(Deployment deployment) {
-        return new SquidConfigurationProducer().configurationHolder.get(deployment);
+        return new SquidConfigurationProducer().configurationMap.get(deployment);
     }
 
 

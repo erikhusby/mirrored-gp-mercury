@@ -8,8 +8,8 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.control.pass.PassService;
+import org.broadinstitute.sequel.infrastructure.deployment.Stub;
 
-import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.jws.WebParam;
 import java.lang.reflect.InvocationTargetException;
@@ -17,9 +17,9 @@ import java.util.*;
 
 
 
-@Alternative
+@Stub
 /**
- * Stub implementation for testing
+ * Stub implementation for non-integration testing
  */
 public class PassServiceStub implements PassService {
 

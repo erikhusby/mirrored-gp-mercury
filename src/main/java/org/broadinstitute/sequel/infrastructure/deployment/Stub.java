@@ -12,8 +12,8 @@ import static java.lang.annotation.ElementType.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({METHOD, FIELD, PARAMETER, TYPE})
 /**
- * Qualifier used to annotate the real implementation of a service or to specify the injection of
- * that real version.
+ * Qualifier used to annotate the stub version of a service or to specify the injection of
+ * that stub version.
  */
-public @interface Impl {
+public @interface Stub {
 }
