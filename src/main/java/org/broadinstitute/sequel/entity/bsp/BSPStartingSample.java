@@ -28,6 +28,7 @@ public class BSPStartingSample extends StartingSample {
     private BSPSampleDTO bspDTO;
 
     protected BSPStartingSample() {}
+
     /**
      * Is there a distinction in BSP between
      * the name of the sample and the container
