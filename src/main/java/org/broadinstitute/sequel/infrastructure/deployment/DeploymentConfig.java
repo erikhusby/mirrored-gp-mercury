@@ -14,6 +14,15 @@ import javax.naming.NamingException;
 @Startup
 @Singleton
 /**
+ * This class is responsible for looking up the value of <pre>SEQUEL_DEPLOYMENT</pre> from JNDI or the JNDI environment.
+ * The former is set in Glassfish Custom JNDI resources (resource type is String, name = 'value', value is one of
+ * DEV, TEST, QA, or PROD).  In Arquillian tests extending {@link ContainerTest}, a jndi.properties file is supplied in
+ * the archive that
+ * will set SEQUEL_DEPLOYMENT to the value of STUBBY in the JNDI environment.  This class is annotated as
+ * {@link Startup} and {@link Singleton}, so it will do this JNDI lookup on artifact deployment.  Failure to resolve
+ * SEQUEL_DEPLOYMENT or have the value match one of DEV, TEST, QA, PROD, or STUBBY is a fatal error that will halt
+ * deployment.
+ *
  * I originally named this class just 'Config' but there was a clash on startup with Brian's
  * conversation-related Config class.
  */

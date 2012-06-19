@@ -108,8 +108,7 @@ public class SquidConfigurationProducer implements BaseConfigurationProducer<Squ
     @Produces
     @StubInstance
     public SquidConfiguration stubInstance() {
-        log.info("explicitly asked for STUBBY instance");
-        return configurationMap.get(STUBBY);
+        throw new RuntimeException("explicitly asked for STUBBY instance of SquidConfiguration, should not happen!");
     }
 
 

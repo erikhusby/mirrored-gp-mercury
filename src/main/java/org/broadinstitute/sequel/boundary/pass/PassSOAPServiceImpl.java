@@ -21,13 +21,8 @@ import java.net.URL;
 import static org.broadinstitute.sequel.boundary.pass.ToSequel.sequelize;
 import static org.broadinstitute.sequel.boundary.pass.ToSquid.squidify;
 
-@WebService(targetNamespace = "urn:SquidTopic",
-        portName = "SquidTopicService",
-        serviceName = "SquidTopicService",
-        name = "SquidTopicService",
-        endpointInterface = "org.broadinstitute.sequel.boundary.SquidTopicPortype"
-)
-@Impl
+
+
 /**
  * This class exposes a PASS SOAP interface that mimics that of Squid.  The implementations of the web service
  * methods all live in Squid, so SequeL just delegates all calls over to Squid (except for the trivial
@@ -36,6 +31,13 @@ import static org.broadinstitute.sequel.boundary.pass.ToSquid.squidify;
  * PASSes would kick off the pipeline in SequeL as well.
  *
  */
+@WebService(targetNamespace = "urn:SquidTopic",
+        portName = "SquidTopicService",
+        serviceName = "SquidTopicService",
+        name = "SquidTopicService",
+        endpointInterface = "org.broadinstitute.sequel.boundary.SquidTopicPortype"
+)
+@Impl
 public class PassSOAPServiceImpl implements PassService {
 
     // @Injection does not work on @WebServices, see comments in constructor below
@@ -51,21 +53,19 @@ public class PassSOAPServiceImpl implements PassService {
 
     public PassSOAPServiceImpl() {
 
-        /*
-            // @Inject currently not working in Glassfish @WebServices, either a hole in the spec or a bug in Glassfish.
-            // See
-            //
-            // https://community.jboss.org/message/718492
-            //
-            // http://java.net/jira/browse/GLASSFISH-18406
+        // @Inject currently not working in Glassfish @WebServices, either a hole in the spec or a bug in Glassfish.
+        // See
+        //
+        // https://community.jboss.org/message/718492
+        //
+        // http://java.net/jira/browse/GLASSFISH-18406
 
-            // Link for @EJB workaround:
-            //
-            // http://www.coderanch.com/t/499391/Web-Services/java/JEE-Inject-ApplicationScoped-bean-WebService
-            //
-            //
+        // Link for @EJB workaround:
+        //
+        // http://www.coderanch.com/t/499391/Web-Services/java/JEE-Inject-ApplicationScoped-bean-WebService
+        //
+        //
 
-        */
         log.info("PassSOAPServiceImpl constructor invoked!");
     }
 

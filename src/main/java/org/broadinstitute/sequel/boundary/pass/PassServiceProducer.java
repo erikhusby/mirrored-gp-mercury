@@ -11,6 +11,12 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 
+/**
+ * Class to produce instances of {@link PassService} appropriate to the current {@link Deployment}.  Arquillian
+ * micro-deployments should be running in a {@link Deployment#STUBBY} deployment which will yield a
+ * {@link PassServiceStub} implementation, while non-STUBBY deployments will get
+ * {@link PassSOAPServiceImpl} implementations configured to point to the correct underlying Squid instance.
+ */
 public class PassServiceProducer {
 
 

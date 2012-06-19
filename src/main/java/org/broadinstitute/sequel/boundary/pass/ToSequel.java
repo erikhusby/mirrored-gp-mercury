@@ -4,6 +4,7 @@ package org.broadinstitute.sequel.boundary.pass;
 import org.broadinstitute.sequel.boundary.*;
 
 
+
 public class ToSequel {
 
     public static ReferenceSequenceListResult sequelize(org.broadinstitute.sequel.boundary.squid.ReferenceSequenceListResult squidList) {

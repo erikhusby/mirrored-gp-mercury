@@ -19,7 +19,7 @@ import java.util.*;
 
 @Stub
 /**
- * Stub implementation for non-integration testing
+ * Stub implementation for Arquillian non-integration container tests or other non-integration tests.
  */
 public class PassServiceStub implements PassService {
 
@@ -62,6 +62,7 @@ public class PassServiceStub implements PassService {
         return true;
     }
 
+
     @Override
     public String storePass(@WebParam(name = "pass", partName = "pass") AbstractPass pass) {
 
@@ -73,11 +74,13 @@ public class PassServiceStub implements PassService {
         return pass.getProjectInformation().getPassNumber();
     }
 
+
     @Override
     public PassCritique validatePass(@WebParam(name = "pass", partName = "pass") AbstractPass pass) {
         // pretty sure this is not used, always returning error-free PASSes
         return new PassCritique();
     }
+
 
     @Override
     public void abandonPass(@WebParam(name = "passNumber", partName = "passNumber") String passNumber) {
@@ -132,7 +135,7 @@ public class PassServiceStub implements PassService {
 
 
     /**
-     * Pick out a bean property from search objects and compare to a filter value.  There's probably an implementation
+     * Pick out a bean property from an object and compare to a query value.  There's probably an implementation
      * of this in a Commons library someplace but I couldn't find it.
      *
      * @param <T> Type of the object containing the property to be searched
