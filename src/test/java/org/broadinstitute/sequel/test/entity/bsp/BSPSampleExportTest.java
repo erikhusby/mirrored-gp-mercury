@@ -9,6 +9,7 @@ import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.AliquotParameters;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.BSPStockSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -18,9 +19,7 @@ import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -68,24 +67,18 @@ public class BSPSampleExportTest {
         aliquotPassSourceMap.put(aliquot1LSID, passSample1);
         aliquotPassSourceMap.put(aliquot2LSID, passSample2);
 
-/*
-        Map<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem> billableEvents = new HashMap<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem>();
-        Project project = new BasicProject("BSPExportTestingProject", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("HS", billableEvents,
-                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-        BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test BSP export", workflowDescription);
-*/
-
         BSPPlatingReceipt bspPlatingReceipt = buildBSPPlatingReceipt();
         BasicProjectPlan projectPlan  = (BasicProjectPlan)bspPlatingReceipt.getPlatingRequests().iterator().next().getAliquotParameters().getProjectPlan();
 
         Map<String, BSPStartingSample> aliquotSourceMap = new HashMap<String, BSPStartingSample>();
-        //LabVessel bspParentSample1 = new BSPStockSample("parent sample1", null);
-        //LabVessel bspParentSample2 = new BSPStockSample("parent sample2", null);
-        BSPStartingSample startingSample1 = new BSPStartingSample(masterSample1, null);
-        BSPStartingSample startingSample2 = new BSPStartingSample(masterSample2, null);
-        startingSample1.setRootProjectPlan(projectPlan);
-        startingSample2.setRootProjectPlan(projectPlan);
+
+        //should be two starters in projectPlan
+        Collection<Starter> starters = projectPlan.getStarters();
+        Assert.assertNotNull(starters);
+        Assert.assertEquals(2, starters.size());
+        Iterator<Starter> starterIterator = starters.iterator();
+        BSPStartingSample startingSample1 = (BSPStartingSample)starterIterator.next();
+        BSPStartingSample startingSample2 = (BSPStartingSample)starterIterator.next();
 
         aliquotSourceMap.put(aliquot1LSID, startingSample1);
         aliquotSourceMap.put(aliquot2LSID, startingSample2);
@@ -93,18 +86,44 @@ public class BSPSampleExportTest {
         BSPSampleFactory bspSampleFactory = new BSPSampleFactory();
         List<Starter> bspAliquots = bspSampleFactory.receiveBSPAliquots(bspPlatingReceipt, aliquotPassSourceMap, aliquotSourceMap, null);
 
-        //TODO .. now iterate through these aliquots, do some asserts and see if we can navigate back to requests.
+        //now iterate through these aliquots, do some asserts and see if we can navigate back to requests.
         Assert.assertNotNull(bspAliquots);
         Assert.assertEquals(bspAliquots.size(), 2);
         for (Starter aliquot : bspAliquots) {
             Assert.assertTrue(aliquot.getLabel().contains("Aliquot"));
-            //BSPStockSample stockSample = (BSPStockSample) aliquot;
-            //TODO .. check the source stock sample of each aliquot
-            //stockSample.getSampleInstances();
+            //check the source stock sample of each aliquot
             BSPSampleAuthorityTwoDTube bspAliquot = (BSPSampleAuthorityTwoDTube)aliquot;
             Project project = bspAliquot.getAllProjects().iterator().next();
             Assert.assertEquals("BSPExportTestingProject", project.getProjectName());
             //navigate from aliquot to ----> BSPStartingSample - !!
+            StartingSample stockAliquot = bspAliquot.getSampleInstances().iterator().next().getStartingSample();
+            Assert.assertNotNull(stockAliquot);
+            ProjectPlan projPlan = stockAliquot.getRootProjectPlan();
+            Assert.assertNotNull(projPlan);
+            Collection<Starter> starterStocks = projPlan.getStarters();
+            //should have starters
+            Assert.assertNotNull(starterStocks);
+            //Iterator<Starter> starterStocksIterator = starterStocks.iterator();
+            Assert.assertEquals(2, starterStocks.size());
+        }
+
+        //iterate through Starters (BSPStartingSample) and make sure they all have aliquots
+        Collection<Starter> starterStocks = projectPlan.getStarters();
+        //should have starter
+        Assert.assertNotNull(starterStocks);
+        Iterator<Starter> starterStocksIterator = starterStocks.iterator();
+        Assert.assertEquals(2, starterStocks.size());
+        while (starterStocksIterator.hasNext()) {
+            Starter starter = starterStocksIterator.next();
+            LabVessel aliquot = projectPlan.getAliquot(starter);
+            Assert.assertNotNull(aliquot);
+            Assert.assertEquals(true, aliquot.getLabel().contains("Aliquot"));
+//            if (masterSample1.equals(starter.getLabel()) ) {
+//                Assert.assertEquals(true, projectPlan.getAliquot(starter).getLabel().contains("Aliquot 1"));
+//            }
+//            if (masterSample2.equals(starter.getLabel()) ) {
+//                Assert.assertEquals(true, projectPlan.getAliquot(starter).getLabel().contains("Aliquot 2"));
+//            }
         }
 
     }
@@ -160,10 +179,11 @@ public class BSPSampleExportTest {
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test BSP export", workflowDescription);
 
-//        BSPStartingSample startingSample1 = new BSPStartingSample(masterSample1, null);
-//        BSPStartingSample startingSample2 = new BSPStartingSample(masterSample2, null);
-//        startingSample1.setRootProjectPlan(projectPlan);
-//        startingSample2.setRootProjectPlan(projectPlan);
+        BSPStartingSample startingSample1 = new BSPStartingSample(masterSample1, projectPlan);
+        BSPStartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
+        projectPlan.getStarters().add(startingSample1);
+        projectPlan.getStarters().add(startingSample2);
+
 
         //TODO .. BSPAliquotWorkQueue & SampleSheet to be deprecated/deleted
         // request an aliquot from bsp
