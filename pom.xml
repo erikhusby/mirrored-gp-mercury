@@ -80,12 +80,12 @@
             </snapshots>
         </repository>
 
-        <!--<repository>-->
-            <!--<id>prime-repo</id>-->
-            <!--<name>PrimeFaces Maven Repository</name>-->
-            <!--<url>http://repository.primefaces.org</url>-->
-            <!--<layout>default</layout>-->
-        <!--</repository>-->
+        <repository>
+            <id>prime-repo</id>
+            <name>PrimeFaces Maven Repository</name>
+            <url>http://repository.primefaces.org</url>
+            <layout>default</layout>
+        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -714,17 +714,20 @@
             <scope>provided</scope>
         </dependency>
         -->
-        <!--<dependency>-->
-            <!--<groupId>org.primefaces</groupId>-->
-            <!--<artifactId>primefaces</artifactId>-->
-            <!--<version>3.0.RC1</version>-->
-        <!--</dependency>-->
 
-        <!--<dependency>-->
-            <!--<groupId>org.primefaces.themes</groupId>-->
-            <!--<artifactId>pepper-grinder</artifactId>-->
-            <!--<version>1.0.4</version>-->
-        <!--</dependency>-->
+        <!-- BEGIN primefaces -->
+        <dependency>
+            <groupId>org.primefaces</groupId>
+            <artifactId>primefaces</artifactId>
+            <version>3.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.primefaces.themes</groupId>
+            <artifactId>pepper-grinder</artifactId>
+            <version>1.0.4</version>
+        </dependency>
+        <!-- END primefaces -->
 
         <!--<dependency>-->
             <!--<groupId>org.slf4j</groupId>-->

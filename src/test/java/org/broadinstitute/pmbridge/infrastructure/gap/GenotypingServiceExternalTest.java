@@ -47,12 +47,12 @@ public class GenotypingServiceExternalTest extends Arquillian {
     public void testLookupTechnologyProductById() throws Exception {
 
         // <product name="HumanCytoSNP-12v1-0_D" display-name="Cyto 12" id="153"/>
-        Product product = genotypingService.lookupTechnologyProductById( new Integer( 153 ));
+        Product product = genotypingService.lookupTechnologyProductById( new Integer( 236 ));
         Assert.assertNotNull( product );
         Assert.assertNotNull( product.getId() );
-        Assert.assertEquals(product.getId(), "153");
-        Assert.assertEquals(product.getDisplayName(), "Cyto 12");
-        Assert.assertEquals(product.getName(), "HumanCytoSNP-12v1-0_D");
+        Assert.assertEquals(product.getId(), "236");
+        Assert.assertEquals(product.getDisplayName(), "HumanOmni2.5-8v1_A");
+        Assert.assertEquals(product.getName(), "HumanOmni2.5-8v1_A");
     }
 
 

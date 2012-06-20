@@ -1,0 +1,52 @@
+/*
+ * The Broad Institute
+ * SOFTWARE COPYRIGHT NOTICE AGREEMENT
+ * This software and its documentation are copyright 2011 by the
+ * Broad Institute/Massachusetts Institute of Technology. All rights are
+ * reserved.
+ *
+ * This software is supplied without any warranty or guaranteed support
+ * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+ * use, misuse, or functionality.
+ */
+
+/*
+    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Cantarell', sans-serif;
+    font-size: small;
+*/
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: small;
+}
+
+h1 {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+}
+
+#ajaxStatus_start {
+    background-color: #004478;
+    color: #ffffff;
+    left: 0;
+    padding: 5px;
+    position: fixed;
+    top: 0;
+}
+
+/*
+	 font-size: 90% !important;
+*/
+.ui-widget, .ui-widget .ui-widget {
+    font-family: 'Cantarell', sans-serif;
+    font-size: small;
+}
+
+/* from http://stackoverflow.com/a/9175319/244191
+.ui-widget {
+    font-size: 90%;
+ }
+.ui-widget .ui-widget {
+    font-size: 100%;
+ }
+ */
