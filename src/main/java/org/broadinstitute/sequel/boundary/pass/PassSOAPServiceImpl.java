@@ -72,10 +72,25 @@ public class PassSOAPServiceImpl implements PassService {
 
     private String getBaseUrl() {
 
-        // I wanted to make SquidConfiguration a @Startup @Singleton bean so I could grab it directly through
-        // a JNDI lookup or have it @EJB injected, but something seems to go very wrong when SquidConfiguration
+        // I wanted to make SquidConfigurationProducer a @Startup @Singleton bean so I could grab it directly through
+        // a JNDI lookup or have it @EJB injected, but something seems to go very wrong when SquidConfigurationProducer
         // is so annotated and the webapp will not deploy.  Unfortunately I can't find any diagnostics in the log
         // to tell me what's going wrong.
+        //
+        // I wanted:
+        //
+        // @EJB
+        // SquidConfigurationProducer squidConfigurationProducer;
+        //
+        //
+        // which would have made the code below look like:
+        //
+        // baseUrl = squidConfigurationProducer.produce().getDeployment();
+
+
+
+
+
 
         if (baseUrl == null) {
 
