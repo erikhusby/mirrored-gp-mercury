@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.test.entity.bsp;
 
 import org.broadinstitute.sequel.boundary.squid.*;
-import org.broadinstitute.sequel.boundary.squid.PriceItem;
 import org.broadinstitute.sequel.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
@@ -11,11 +10,9 @@ import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
-import org.broadinstitute.sequel.entity.vessel.BSPStockSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -68,7 +65,7 @@ public class BSPSampleExportTest {
         aliquotPassSourceMap.put(aliquot2LSID, passSample2);
 
         BSPPlatingReceipt bspPlatingReceipt = buildBSPPlatingReceipt();
-        BasicProjectPlan projectPlan  = (BasicProjectPlan)bspPlatingReceipt.getPlatingRequests().iterator().next().getAliquotParameters().getProjectPlan();
+        BasicProjectPlan projectPlan = (BasicProjectPlan) bspPlatingReceipt.getPlatingRequests().iterator().next().getAliquotParameters().getProjectPlan();
 
         Map<String, BSPStartingSample> aliquotSourceMap = new HashMap<String, BSPStartingSample>();
 
@@ -77,11 +74,14 @@ public class BSPSampleExportTest {
         Assert.assertNotNull(starters);
         Assert.assertEquals(2, starters.size());
         Iterator<Starter> starterIterator = starters.iterator();
-        BSPStartingSample startingSample1 = (BSPStartingSample)starterIterator.next();
-        BSPStartingSample startingSample2 = (BSPStartingSample)starterIterator.next();
-
-        aliquotSourceMap.put(aliquot1LSID, startingSample1);
-        aliquotSourceMap.put(aliquot2LSID, startingSample2);
+        while (starterIterator.hasNext()) {
+            BSPStartingSample startingSample = (BSPStartingSample) starterIterator.next();
+            if (masterSample1.equals(startingSample.getLabel())) {
+                aliquotSourceMap.put(aliquot1LSID, startingSample);
+            } else if (masterSample2.equals(startingSample.getLabel())) {
+                aliquotSourceMap.put(aliquot2LSID, startingSample);
+            }
+        }
 
         BSPSampleFactory bspSampleFactory = new BSPSampleFactory();
         List<Starter> bspAliquots = bspSampleFactory.receiveBSPAliquots(bspPlatingReceipt, aliquotPassSourceMap, aliquotSourceMap, null);
@@ -92,7 +92,7 @@ public class BSPSampleExportTest {
         for (Starter aliquot : bspAliquots) {
             Assert.assertTrue(aliquot.getLabel().contains("Aliquot"));
             //check the source stock sample of each aliquot
-            BSPSampleAuthorityTwoDTube bspAliquot = (BSPSampleAuthorityTwoDTube)aliquot;
+            BSPSampleAuthorityTwoDTube bspAliquot = (BSPSampleAuthorityTwoDTube) aliquot;
             Project project = bspAliquot.getAllProjects().iterator().next();
             Assert.assertEquals("BSPExportTestingProject", project.getProjectName());
             //navigate from aliquot to ----> BSPStartingSample - !!
@@ -118,12 +118,12 @@ public class BSPSampleExportTest {
             LabVessel aliquot = projectPlan.getAliquot(starter);
             Assert.assertNotNull(aliquot);
             Assert.assertEquals(true, aliquot.getLabel().contains("Aliquot"));
-//            if (masterSample1.equals(starter.getLabel()) ) {
-//                Assert.assertEquals(true, projectPlan.getAliquot(starter).getLabel().contains("Aliquot 1"));
-//            }
-//            if (masterSample2.equals(starter.getLabel()) ) {
-//                Assert.assertEquals(true, projectPlan.getAliquot(starter).getLabel().contains("Aliquot 2"));
-//            }
+            if (masterSample1.equals(starter.getLabel())) {
+                Assert.assertEquals(true, projectPlan.getAliquot(starter).getLabel().contains("Aliquot 1"));
+            }
+            if (masterSample2.equals(starter.getLabel())) {
+                Assert.assertEquals(true, projectPlan.getAliquot(starter).getLabel().contains("Aliquot 2"));
+            }
         }
 
     }
@@ -174,10 +174,10 @@ public class BSPSampleExportTest {
     private BSPPlatingReceipt buildBSPPlatingReceipt() {
         // Project and workflow
         Map<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem> billableEvents = new HashMap<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem>();
-        Project project = new BasicProject("BSPExportTestingProject", new JiraTicket(new DummyJiraService(),"TP-0","0"));
+        Project project = new BasicProject("BSPExportTestingProject", new JiraTicket(new DummyJiraService(), "TP-0", "0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("HS", billableEvents,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-        BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test BSP export", workflowDescription);
+        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test BSP export", workflowDescription);
 
         BSPStartingSample startingSample1 = new BSPStartingSample(masterSample1, projectPlan);
         BSPStartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);

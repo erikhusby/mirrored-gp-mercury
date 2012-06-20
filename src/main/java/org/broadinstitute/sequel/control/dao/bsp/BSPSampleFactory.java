@@ -154,13 +154,10 @@ public class BSPSampleFactory {
             ProjectPlan projectPlan = startingSample.getRootProjectPlan();
 
             BSPStartingSample aliquot = new BSPStartingSample(sampleName, projectPlan);
-            //TODO .. How to specify source...aliquot.. again
-            //BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(passSampleSource, aliquot);
             BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(aliquot);
             projectPlan.setAliquot(startingSample, bspAliquot);
 
             bspAliquots.add(bspAliquot);
-            //lookup or search for matching BSPPlatingRequest to get ProjectPlan ??
             AliquotReceiver aliquotReceiver = new AliquotReceiver();
 
             aliquotReceiver.receiveAliquot(startingSample, bspAliquot, bspReceipt);
