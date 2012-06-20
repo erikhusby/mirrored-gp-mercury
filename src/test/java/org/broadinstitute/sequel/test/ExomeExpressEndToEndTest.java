@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.test;
 
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
+import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
@@ -14,7 +15,6 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,16 +26,28 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 public class ExomeExpressEndToEndTest {
 
 
-    @Inject
-    private DirectedPass directedPass;
+    // if this test was running in a container the test data might be injected, though that would really only work well
+    // in the one test per class scenario, or at most one test per PASS type per class...
 
-    // Assuming the jndi-config branch were to be merged:
+    // @Inject
+    // @TestData
+    // private DirectedPass directedPass;
+
+    // Assuming the jndi-config branch were to be merged for a container version of this test:
     //
     // @Inject
     // PassService passService;
 
+    // for non-container test:
+    //
+    // PassService passService = new PassServiceStub();
+
+
+
     @Test(groups = {DATABASE_FREE}, enabled = false)
     public void testAll() {
+
+        DirectedPass directedPass = PassTestDataProducer.instance().produceDirectedPass();
 
         // unconditionally forward all PASSes to Squid for storage
         // passService.storePass(directedPass);
