@@ -7,16 +7,23 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.AbstractJsonJerseyClientService;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldJsonParser;
 import org.broadinstitute.sequel.infrastructure.jira.issue.ChangeStringField;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.sequel.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.comment.AddCommentResponse;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 
 @Default
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
@@ -108,13 +115,21 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     }
 
+
     @Override
-    public void updateField(String key, String fieldName, String value) throws IOException {
-        String urlString = getBaseUrl() + "/issue/" + key;
+    public List<CustomField> getCustomFields(CreateIssueRequest.Fields.Project project, CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+        if (project == null) {
+            throw new NullPointerException("project cannot be null");
+        }
+        if (issueType == null) {
+            throw new NullPointerException("issueType cannot be null");
+        }
 
-        WebResource webResource = getJerseyClient().resource(urlString);
-        ChangeStringField changeField = new ChangeStringField(fieldName,value);
+        String urlString = getBaseUrl() + "/issue/createmeta?projectKeys=" + project.getKey() + "&issueTypeNames=" + issueType.getJiraName() + "&expand=projects.issuetypes.fields";
 
-        put(webResource,changeField);
+        String jsonResponse = getJerseyClient().resource(urlString).get(String.class);
+
+        return CustomFieldJsonParser.parseCustomFields(jsonResponse);
     }
+
 }

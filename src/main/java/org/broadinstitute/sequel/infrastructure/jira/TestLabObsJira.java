@@ -18,6 +18,13 @@ public class TestLabObsJira implements JiraConnectionParameters {
         return "vsquid00.broadinstitute.org";
     }
 
+    /**
+     *
+     *
+     * http://vsquid00.broadinstitute.org:8020/rest/api/2/issue/createmeta?projectKeys=LCSET&issuetypeNames=Whole%20Exome%20%28HybSel%29&expand=projects.issuetypes.fields
+     * @return
+     */
+
     @Override
     public String getUsername() {
         return "squid";

@@ -31,7 +31,7 @@ public class JiraServiceTest {
         try {
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN, "Summary created from SequeL", "Description created from SequeL" );
+                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel, "Summary created from SequeL", "Description created from SequeL" );
 
             final String key = createIssueResponse.getTicketName();
 

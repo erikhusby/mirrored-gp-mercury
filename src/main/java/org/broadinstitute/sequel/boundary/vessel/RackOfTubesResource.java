@@ -44,7 +44,7 @@ public class RackOfTubesResource {
             // todo jmt fix workflow
             projectPlan = new BasicProjectPlan(new BasicProject(rackBean.lcSet,
                     new JiraTicket(new DummyJiraService(), rackBean.lcSet, rackBean.lcSet)), rackBean.lcSet,
-                    new WorkflowDescription("", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN));
+                    new WorkflowDescription("", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         }
 
         List<String> barcodes = new ArrayList<String>();

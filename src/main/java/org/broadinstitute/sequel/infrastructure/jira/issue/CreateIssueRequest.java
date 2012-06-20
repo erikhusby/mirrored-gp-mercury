@@ -27,11 +27,21 @@ public class CreateIssueRequest implements Serializable {
         @JsonSerialize(using = JsonLabopsJiraEnumSerializer.class)
         public enum Issuetype {
 
+            Whole_Exome_HybSel("Whole Exome (HybSel)");
+
+            private final String jiraName;
+
+            private Issuetype(String jiraName) {
+                this.jiraName = jiraName;
+            }
+
+            public String getJiraName() {
+                return jiraName;
+            }
+
             // the convention for enum instances is all-caps, but the JIRA 5 REST examples I've seen have specified
             // this value as mixed case.  In my limited experience with the JIRA 5 REST API it has proven to be
             // very sensitive to case.
-            Bug,
-            Whole_Exome_OPENPARENHybSelCLOSEPAREN,
         }
 
         

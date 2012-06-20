@@ -79,7 +79,7 @@ public class BettalimsMessageResourceTest extends ContainerTest {
         Project project = new BasicProject(testPrefix + "LabEventTesting", new JiraTicket(new DummyJiraService(),
                 "TP-" + testPrefix, testPrefix));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS" + testPrefix, billableEvents,
-                CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN);
+                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {

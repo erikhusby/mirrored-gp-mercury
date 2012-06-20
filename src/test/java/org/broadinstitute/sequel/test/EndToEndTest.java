@@ -68,11 +68,11 @@ public class EndToEndTest  {
         billableEvents.put(LabEventName.ADAPTOR_LIGATION,priceItem);
         final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
                 billableEvents,
-                CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN);
+                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         Project project = new BasicProject("Project1",new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        BasicProjectPlan plan1 = new BasicProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN));
+        BasicProjectPlan plan1 = new BasicProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         Project project2 = new BasicProject("Project2", new JiraTicket(new DummyJiraService(),"TP-1","1"));
-        BasicProjectPlan plan2 = new BasicProjectPlan(project2,"Plan for "  + project2.getProjectName(),new WorkflowDescription("WGS", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN));
+        BasicProjectPlan plan2 = new BasicProjectPlan(project2,"Plan for "  + project2.getProjectName(),new WorkflowDescription("WGS", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
         LabVessel stock1 = createBSPStock(masterSample1,"00001234",plan1);
         LabVessel stock2 = createBSPStock(masterSample2,"00005678",plan2);

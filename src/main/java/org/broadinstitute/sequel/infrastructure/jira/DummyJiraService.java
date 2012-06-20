@@ -2,12 +2,14 @@ package org.broadinstitute.sequel.infrastructure.jira;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Dummy implementation that writes calls
@@ -36,7 +38,7 @@ public class DummyJiraService implements JiraService {
     }
 
     @Override
-    public void updateField(String key, String fieldName, String value) throws IOException {
+    public List<CustomField> getCustomFields(CreateIssueRequest.Fields.Project project, CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
         throw new RuntimeException("I haven't been written yet.");
     }
 }

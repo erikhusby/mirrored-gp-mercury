@@ -54,7 +54,7 @@ public class LabWorkQueueWorkflowTest {
 
         WorkflowDescription workflow = new WorkflowDescription(WorkflowResolver.TEST_WORKFLOW_1,
                                                                           billableEvents,
-                                                                          CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN);
+                                                                          CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         BasicProjectPlan rootPlan = new BasicProjectPlan(rootProject,"The root plan", workflow);
 
         WorkflowParser workflowParser = new WorkflowParser(
