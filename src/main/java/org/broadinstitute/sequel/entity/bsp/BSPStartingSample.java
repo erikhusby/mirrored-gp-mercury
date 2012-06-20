@@ -10,6 +10,8 @@ import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 
 import javax.persistence.Entity;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Transient;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,6 +22,12 @@ import java.util.Set;
  * a service lookup the real data from bsp.
  */
 @Entity
+@NamedQueries({
+        @NamedQuery(
+                name = "BSPStartingSample.fetchBySampleName",
+                query = "select s from BSPStartingSample s where sampleName = :sampleName"
+        )
+})
 public class BSPStartingSample extends StartingSample {
 
     private static Log gLog = LogFactory.getLog(BSPStartingSample.class);
