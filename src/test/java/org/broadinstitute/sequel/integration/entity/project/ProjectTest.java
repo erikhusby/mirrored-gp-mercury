@@ -62,7 +62,7 @@ public class ProjectTest extends Arquillian {
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {
         CreateIssueResponse response = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
-                CreateIssueRequest.Fields.Issuetype.SequeL_Project,
+                CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN,
                 "Test run by " + System.getProperty("user.name") + " on " + new SimpleDateFormat("yyyy/MM/dd").format(new Date(System.currentTimeMillis())),
                 "Do lots of sequencing");
         assertNotNull(response);
@@ -255,7 +255,7 @@ public class ProjectTest extends Arquillian {
 
         try {
             jiraResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
-                    CreateIssueRequest.Fields.Issuetype.SequeL_Project,
+                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN,
                     projectName,
                     "Created by " + getClass().getCanonicalName());
         }
@@ -277,7 +277,7 @@ public class ProjectTest extends Arquillian {
 
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         billableEvents.put(LabEventName.SAGE_UNLOADED,priceItem);
-        WorkflowDescription workflow = new WorkflowDescription("HybridSelection", billableEvents,CreateIssueRequest.Fields.Issuetype.Illumina_Library_Construction_Tracking);
+        WorkflowDescription workflow = new WorkflowDescription("HybridSelection", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN);
         BasicProjectPlan plan = new BasicProjectPlan(project,project.getProjectName() + " Plan",workflow);
         String quoteId = "DNA23";
         plan.setQuote(new Quote(quoteId,

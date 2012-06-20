@@ -1,9 +1,10 @@
 package org.broadinstitute.sequel.infrastructure.jira;
 
 
+import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.Default;
 
-@Default
+@Alternative
 public class EriksDesktopJiraConnectionParameters implements JiraConnectionParameters {
 
     private String username = "sequel";

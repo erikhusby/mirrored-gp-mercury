@@ -24,10 +24,8 @@ import java.util.Set;
 @Entity
 public class JiraTicket {
 
-    public static final String TEST_PROJECT_PREFIX = "TP";
-    
-    public static final String SEQUEL_PROJECT_ISSUE_TYPE = "SequeL Project";
-    
+    public static final String TEST_PROJECT_PREFIX = "LCSET";
+
     private String ticketName;
 
     @Id

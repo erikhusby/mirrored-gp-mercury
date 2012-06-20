@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.infrastructure.jira.issue;
 
 
-import org.broadinstitute.sequel.infrastructure.jira.JsonUnderscoreToBlankEnumSerializer;
+import org.broadinstitute.sequel.infrastructure.jira.JsonLabopsJiraEnumSerializer;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.io.Serializable;
@@ -24,15 +24,14 @@ public class CreateIssueRequest implements Serializable {
         }
 
 
-        @JsonSerialize(using = JsonUnderscoreToBlankEnumSerializer.class)
+        @JsonSerialize(using = JsonLabopsJiraEnumSerializer.class)
         public enum Issuetype {
 
             // the convention for enum instances is all-caps, but the JIRA 5 REST examples I've seen have specified
             // this value as mixed case.  In my limited experience with the JIRA 5 REST API it has proven to be
             // very sensitive to case.
             Bug,
-            SequeL_Project,
-            Illumina_Library_Construction_Tracking
+            Whole_Exome_OPENPARENHybSelCLOSEPAREN,
         }
 
         

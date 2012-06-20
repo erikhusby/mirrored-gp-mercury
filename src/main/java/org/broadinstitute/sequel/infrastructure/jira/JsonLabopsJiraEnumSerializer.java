@@ -15,7 +15,7 @@ import java.io.IOException;
  * Note this class does not perform deserialization, nor is there currently a need for that.
  *
  */
-public class JsonUnderscoreToBlankEnumSerializer extends JsonSerializer<Enum<?>> {
+public class JsonLabopsJiraEnumSerializer extends JsonSerializer<Enum<?>> {
 
 
     @Override
@@ -25,7 +25,7 @@ public class JsonUnderscoreToBlankEnumSerializer extends JsonSerializer<Enum<?>>
     public void serialize(Enum<?> value, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException {
         jgen.writeStartObject();
         jgen.writeFieldName("name");
-        jgen.writeString(value.name().replace('_', ' '));
+        jgen.writeString(value.name().replace('_', ' ').replace("OPENPAREN","(").replace("CLOSEPAREN",")"));
         jgen.writeEndObject();
     }
 

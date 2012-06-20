@@ -9,6 +9,8 @@ public class ZimsCacheControl extends AbstractCacheControl {
 
     boolean wasInvalidated;
 
+    public ZimsCacheControl() {}
+
     @Override
     public void invalidateCache() {
         wasInvalidated = true;

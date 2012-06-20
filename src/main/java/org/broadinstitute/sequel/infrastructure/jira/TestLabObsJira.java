@@ -1,24 +1,30 @@
 package org.broadinstitute.sequel.infrastructure.jira;
 
+import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Default;
+
+@Default
 public class TestLabObsJira implements JiraConnectionParameters {
+
+    public TestLabObsJira() {}
 
     @Override
     public int getPort() {
-        return 8080;
+        return 8020;
     }
 
     @Override
     public String getHostname() {
-        return "labopsjiradev.broadinstitute.org:8080";
+        return "vsquid00.broadinstitute.org";
     }
 
     @Override
     public String getUsername() {
-        throw new RuntimeException("I haven't been written yet.");
+        return "squid";
     }
 
     @Override
     public String getPassword() {
-        throw new RuntimeException("I haven't been written yet.");
+        return "squid";
     }
 }

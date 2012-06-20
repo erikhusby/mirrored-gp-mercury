@@ -54,7 +54,7 @@ public class LabWorkQueueWorkflowTest {
 
         WorkflowDescription workflow = new WorkflowDescription(WorkflowResolver.TEST_WORKFLOW_1,
                                                                           billableEvents,
-                                                                          CreateIssueRequest.Fields.Issuetype.Illumina_Library_Construction_Tracking);
+                                                                          CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN);
         BasicProjectPlan rootPlan = new BasicProjectPlan(rootProject,"The root plan", workflow);
 
         WorkflowParser workflowParser = new WorkflowParser(

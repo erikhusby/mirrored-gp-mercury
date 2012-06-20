@@ -71,6 +71,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
 
         logger.warn("POST request: " + baos.toString());
 
+
         T ret = setJsonMimeTypes(webResource).post(responseGenericType, baos.toString());
 
         logger.debug("POST response: " + ret);

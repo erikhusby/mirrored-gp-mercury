@@ -40,7 +40,7 @@ public class ExomeExpressEndToEndTest {
         BasicProjectPlan projectPlan = new BasicProjectPlan(
                 project,
                 "ExomeExpressPlan1",
-                new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Illumina_Library_Construction_Tracking));
+                new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_OPENPARENHybSelCLOSEPAREN));
         // Auto-create work request in Squid, for designation?
         // JIRA ticket
         new JiraTicket();
