@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.infrastructure.jira.JsonLabopsJiraEnumSerialize
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 
 public class CreateIssueRequest implements Serializable {
 
@@ -62,21 +63,37 @@ public class CreateIssueRequest implements Serializable {
 
         private Issuetype issuetype;
 
+        private String customfield_10020 = "doofus";
+
+        // todo arz fixme
+        private BigInteger customfield_10011 = new BigInteger("9999");
 
         public Project getProject() {
             return project;
         }
 
-        public void setProject(Project project) {
-            this.project = project;
+        public String getCustomfield_10020() {
+            return customfield_10020;
         }
 
-        public String getSummary() {
-            return summary;
+        public void setCustomfield_10020(String customfield_10020) {
+            this.customfield_10020 = customfield_10020;
+        }
+
+        public BigInteger getCustomfield_10011() {
+            return customfield_10011;
+        }
+
+        public void setCustomfield_10011(BigInteger customfield_10011) {
+            this.customfield_10011 = customfield_10011;
         }
 
         public void setSummary(String summary) {
             this.summary = summary;
+        }
+
+        public String getSummary() {
+            return summary;
         }
 
         public String getDescription() {
@@ -120,7 +137,10 @@ public class CreateIssueRequest implements Serializable {
     }
 
 
-    public static CreateIssueRequest create(String key, Fields.Issuetype issuetype, String summary, String description) {
+    public static CreateIssueRequest create(String key,
+                                            Fields.Issuetype issuetype,
+                                            String summary,
+                                            String description) {
         
         CreateIssueRequest ret = new CreateIssueRequest();
         

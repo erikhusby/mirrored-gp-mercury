@@ -52,7 +52,7 @@ public class JiraServiceTest {
 
         try {
 
-            service.addComment("TP-4", "Publicly visible comment added from SequeL");
+            service.addComment("LCSET-1678", "Publicly visible comment added from SequeL");
         }
         catch (IOException iox) {
 
@@ -67,7 +67,7 @@ public class JiraServiceTest {
         
         try {
             
-            service.addComment("TP-5", "Administrator-only comment added from SequeL", Visibility.Type.role, Visibility.Value.Administrators );
+            service.addComment("LCSET-1678", "Administrator-only comment added from SequeL", Visibility.Type.role, Visibility.Value.Administrators );
         }
         catch (IOException iox) {
 
@@ -83,6 +83,7 @@ public class JiraServiceTest {
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;
         for (CustomField customField : customFields) {
+            System.out.println(customField.getName() + " id " + customField.getJiraCustomFieldId());
             if (customField.getName().equals("Lanes Requested")) {
                 foundLanesRequestedField = true;
             }

@@ -80,9 +80,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
 
         return post(webResource, issueRequest, new GenericType<CreateIssueResponse>() {});
-
-
-
     }
 
 
