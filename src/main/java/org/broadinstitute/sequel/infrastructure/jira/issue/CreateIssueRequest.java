@@ -11,7 +11,16 @@ public class CreateIssueRequest implements Serializable {
     public static class Fields implements Serializable {
 
         public static class Project implements Serializable {
-            
+
+            public Project() {}
+
+            public Project(String key) {
+                if (key == null) {
+                    throw new RuntimeException("key cannot be null");
+                }
+                this.key = key;
+            }
+
             private String key;
 
             public String getKey() {

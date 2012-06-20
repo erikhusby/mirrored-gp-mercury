@@ -125,9 +125,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
             throw new NullPointerException("issueType cannot be null");
         }
 
-        String urlString = getBaseUrl() + "/issue/createmeta?projectKeys=" + project.getKey() + "&issueTypeNames=" + issueType.getJiraName() + "&expand=projects.issuetypes.fields";
+        String urlString = getBaseUrl() + "/issue/createmeta";
 
-        String jsonResponse = getJerseyClient().resource(urlString).get(String.class);
+        String jsonResponse = getJerseyClient().resource(urlString)
+                .queryParam("projectKeys",project.getKey())
+                .queryParam("issueTypeNames",issueType.getJiraName())
+                .queryParam("expand","projects.issuetypes.fields")
+                .get(String.class);
 
         return CustomFieldJsonParser.parseCustomFields(jsonResponse);
     }

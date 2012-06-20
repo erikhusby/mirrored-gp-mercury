@@ -1,9 +1,12 @@
 package org.broadinstitute.sequel.integration.jira;
 
 
+import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.infrastructure.jira.EriksDesktopJiraConnectionParameters;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
+import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
@@ -13,6 +16,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -23,7 +27,7 @@ public class JiraServiceTest {
 
     @BeforeMethod
     public void setUp() {
-        service = new JiraServiceImpl(new EriksDesktopJiraConnectionParameters());
+        service = new JiraServiceImpl(new TestLabObsJira());
     }
 
     public void testCreation() {
@@ -71,5 +75,19 @@ public class JiraServiceTest {
 
         }
             
+    }
+
+    public void test_custom_fields() throws IOException {
+        Collection<CustomField> customFields = null;
+        customFields = service.getCustomFields(new CreateIssueRequest.Fields.Project(Project.JIRA_PROJECT_PREFIX),CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        Assert.assertFalse(customFields.isEmpty());
+        boolean foundLanesRequestedField = false;
+        for (CustomField customField : customFields) {
+            if (customField.getName().equals("Lanes Requested")) {
+                foundLanesRequestedField = true;
+            }
+        }
+        Assert.assertTrue(foundLanesRequestedField);
+
     }
 }
