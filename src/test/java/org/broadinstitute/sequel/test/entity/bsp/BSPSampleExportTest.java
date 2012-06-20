@@ -9,6 +9,7 @@ import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.AliquotParameters;
+import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.BSPStockSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
@@ -100,6 +101,10 @@ public class BSPSampleExportTest {
             //BSPStockSample stockSample = (BSPStockSample) aliquot;
             //TODO .. check the source stock sample of each aliquot
             //stockSample.getSampleInstances();
+            BSPSampleAuthorityTwoDTube bspAliquot = (BSPSampleAuthorityTwoDTube)aliquot;
+            Project project = bspAliquot.getAllProjects().iterator().next();
+            Assert.assertEquals("BSPExportTestingProject", project.getProjectName());
+            //navigate from aliquot to ----> BSPStartingSample - !!
         }
 
     }
