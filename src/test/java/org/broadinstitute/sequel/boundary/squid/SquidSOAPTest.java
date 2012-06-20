@@ -14,6 +14,12 @@ import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.URL;
 
+
+/**
+ *
+ * Integration test of a SequeL client consuming a Squid webservice.
+ *
+ */
 public class SquidSOAPTest extends Arquillian {
 
     @Deployment

@@ -14,6 +14,7 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,10 +25,25 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
  */
 public class ExomeExpressEndToEndTest {
 
+
+    @Inject
+    private DirectedPass directedPass;
+
+    // Assuming the jndi-config branch were to be merged:
+    //
+    // @Inject
+    // PassService passService;
+
     @Test(groups = {DATABASE_FREE}, enabled = false)
     public void testAll() {
+
+        // unconditionally forward all PASSes to Squid for storage
+        // passService.storePass(directedPass);
+
+        // if this is an EE pass take it through the SequeL process:
+        if (directedPass.isExomeExpress()) {
         // PASS with quote IDs, price items (need PMBridge 2 for price items)
-        DirectedPass sourcePass = null;
+
         // factory or something to convert from JAX-WS DTOs to entities (or refer to Squid PASS)
         // Check volume and concentration?  Or expose web services to allow PMBridge to check
         // labBatch
@@ -120,5 +136,6 @@ public class ExomeExpressEndToEndTest {
         }
         assertTrue(foundLane);
         */
+        }
     }
 }
