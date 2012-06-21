@@ -1,15 +1,10 @@
 package org.broadinstitute.sequel.integration.jira;
 
-import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
-import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldJsonParser;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.testng.annotations.Test;
 
-import java.text.CollationElementIterator;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 import static org.testng.Assert.*;
 
@@ -21,12 +16,12 @@ public class JiraCustomFieldsTest {
 
     @Test(groups = DATABASE_FREE)
     public void test_canned_json()  throws Exception {
-        final Collection<CustomField> customFields = CustomFieldJsonParser.parseCustomFields(FIELDS_RESPONSE_JSON);
+        final Collection<CustomFieldDefinition> customFields = CustomFieldJsonParser.parseCustomFields(FIELDS_RESPONSE_JSON);
         assertFalse(customFields.isEmpty());
 
         final String WORK_REQUEST_IDS = "Work Request ID(s)";
         boolean foundWorkRequestIds = true;
-        for (CustomField customField : customFields) {
+        for (CustomFieldDefinition customField : customFields) {
             if (WORK_REQUEST_IDS.equals(customField.getName()))  {
                 if (customField.isRequired()) {
                     foundWorkRequestIds = true;

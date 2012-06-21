@@ -2,11 +2,10 @@ package org.broadinstitute.sequel.integration.jira;
 
 
 import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.infrastructure.jira.EriksDesktopJiraConnectionParameters;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
 import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
-import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
@@ -78,11 +77,11 @@ public class JiraServiceTest {
     }
 
     public void test_custom_fields() throws IOException {
-        Collection<CustomField> customFields = null;
+        Collection<CustomFieldDefinition> customFields = null;
         customFields = service.getCustomFields(new CreateIssueRequest.Fields.Project(Project.JIRA_PROJECT_PREFIX),CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;
-        for (CustomField customField : customFields) {
+        for (CustomFieldDefinition customField : customFields) {
             System.out.println(customField.getName() + " id " + customField.getJiraCustomFieldId());
             if (customField.getName().equals("Lanes Requested")) {
                 foundLanesRequestedField = true;

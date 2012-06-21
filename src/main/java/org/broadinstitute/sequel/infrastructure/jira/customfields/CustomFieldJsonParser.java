@@ -30,9 +30,9 @@ public class CustomFieldJsonParser {
      * @return
      * @throws IOException
      */
-    public static List<CustomField> parseCustomFields(String jsonResponse)
+    public static List<CustomFieldDefinition> parseCustomFields(String jsonResponse)
             throws IOException {
-        final List<CustomField> customFields = new ArrayList<CustomField>();
+        final List<CustomFieldDefinition> customFields = new ArrayList<CustomFieldDefinition>();
         final Map root = new ObjectMapper().readValue(jsonResponse,Map.class);
         final List projects  = (List)root.get(PROJECTS);
         final List issueTypes = (List)((Map)projects.iterator().next()).get(ISSUETYPES);
@@ -46,7 +46,7 @@ public class CustomFieldJsonParser {
             Boolean required = (Boolean)fieldProperties.get(REQUIRED);
 
             if (fieldId.startsWith(CUSTOMFIELD)) {
-                customFields.add(new CustomField(fieldId,fieldName,required));
+                customFields.add(new CustomFieldDefinition(fieldId,fieldName,required));
             }
         }
         return customFields;

@@ -7,11 +7,12 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 import java.io.Serializable;
 import java.math.BigInteger;
 
-public class CreateIssueRequest implements Serializable {
+@JsonSerialize
+public class CreateIssueRequest  {
 
-    public static class Fields implements Serializable {
+    public static class Fields {
 
-        public static class Project implements Serializable {
+        public static class Project {
 
             public Project() {}
 
@@ -63,10 +64,12 @@ public class CreateIssueRequest implements Serializable {
 
         private Issuetype issuetype;
 
+        // todo custom json serialization that pays attention to createmeta fetched field
+        // ids.  have to vary this @ runtime because jira custom field ids are not instance portable
         private String customfield_10020 = "doofus";
 
         // todo arz fixme
-        private BigInteger customfield_10011 = new BigInteger("9999");
+        private String customfield_10011 = "9999";
 
         public Project getProject() {
             return project;
@@ -80,11 +83,11 @@ public class CreateIssueRequest implements Serializable {
             this.customfield_10020 = customfield_10020;
         }
 
-        public BigInteger getCustomfield_10011() {
+        public String getCustomfield_10011() {
             return customfield_10011;
         }
 
-        public void setCustomfield_10011(BigInteger customfield_10011) {
+        public void setCustomfield_10011(String customfield_10011) {
             this.customfield_10011 = customfield_10011;
         }
 

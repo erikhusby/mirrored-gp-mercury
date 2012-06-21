@@ -7,23 +7,18 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.AbstractJsonJerseyClientService;
-import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldJsonParser;
-import org.broadinstitute.sequel.infrastructure.jira.issue.ChangeStringField;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.sequel.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.comment.AddCommentResponse;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 @Default
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
@@ -75,6 +70,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         String urlString = getBaseUrl() + "/issue/";
         logger.debug("createIssue URL is " + urlString);
 
+        /**
+         * To debug this, use curl like so:
+         * $ curl  -u squid:squid -X POST -d @curl -H "Content-Type: application/json" http://vsquid00.broadinstitute.org:8020/rest/api/2/issue/
+         *
+         * Where @curl is a file name and contains something like:
+         * {"fields":{"description":"Description created from SequeL","project":{"key":"LCSET"},"customfield_10020":"doofus","customfield_10011":"9999","summary":"Summary created from SequeL","issuetype":{"name":"Whole Exome (HybSel)"}}}
+         */
 
         WebResource webResource = getJerseyClient().resource(urlString);
 
@@ -114,7 +116,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
 
     @Override
-    public List<CustomField> getCustomFields(CreateIssueRequest.Fields.Project project, CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+    public List<CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project, CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
         if (project == null) {
             throw new NullPointerException("project cannot be null");
         }

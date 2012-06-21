@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.infrastructure.jira.customfields;
 
-public class CustomField {
+public class CustomFieldDefinition {
 
     private final String fieldId;
 
@@ -8,7 +8,7 @@ public class CustomField {
 
     private final boolean isRequired;
 
-    public CustomField(String fieldId,String fieldName,boolean isRequired) {
+    public CustomFieldDefinition(String fieldId, String fieldName, boolean isRequired) {
         if (fieldId == null) {
             throw new NullPointerException("fieldId cannot be null");
         }

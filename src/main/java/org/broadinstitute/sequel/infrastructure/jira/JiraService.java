@@ -1,7 +1,7 @@
 package org.broadinstitute.sequel.infrastructure.jira;
 
 
-import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
@@ -54,6 +54,6 @@ public interface JiraService {
      * @param issueType
      * @return
      */
-    public List<CustomField> getCustomFields(CreateIssueRequest.Fields.Project project,CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
+    public List<CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
 
 }
