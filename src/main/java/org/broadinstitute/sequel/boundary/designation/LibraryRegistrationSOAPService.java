@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationJNDIProfileDrivenImpl;
 
+import javax.enterprise.inject.Default;
 import javax.jws.WebParam;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
@@ -16,7 +17,8 @@ import java.net.URL;
  *         Date: 6/20/12
  *         Time: 4:30 PM
  */
-public class LibraryRegistrationSOAPService implements LibraryRegistrationPortType {
+@Default
+public class LibraryRegistrationSOAPService{
 
 
     private SquidConfiguration squidConfiguration = new SquidConfigurationJNDIProfileDrivenImpl();
@@ -48,19 +50,11 @@ public class LibraryRegistrationSOAPService implements LibraryRegistrationPortTy
 
     }
 
-
-
-    @Override
-    public void registerSequeLLibrary(@WebParam(name = "registrationContextIn",
-                                                partName = "registrationContextIn") SequelLibrary registrationContextIn) {
+    public void registerSequeLLibrary(SequelLibrary registrationContextIn) {
         this.squidCall().registerSequeLLibrary(registrationContextIn);
     }
 
-    @Override
-    public void registerForDesignation(@WebParam(name = "libraryName", partName = "libraryName") String libraryName,
-                                       @WebParam(name = "lanes", partName = "lanes") int lanes,
-                                       @WebParam(name = "readLength", partName = "readLength") int readLength, @WebParam(name = "needsControlLane",
-                                                                                                                         partName = "needsControlLane") boolean needsControlLane) {
+    public void registerForDesignation(String libraryName, int lanes, int readLength,  boolean needsControlLane) {
         this.squidCall().registerForDesignation(libraryName, lanes, readLength, needsControlLane);
     }
 }
