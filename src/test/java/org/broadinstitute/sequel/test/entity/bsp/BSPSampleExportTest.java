@@ -224,10 +224,19 @@ public class BSPSampleExportTest {
         return bspRequest;
     }
 
-    //NOT Yet implemented
-    private Map<String, StartingSample> buildAliquotSourceMap(GSSRSampleKitRequest request) {
+    private Map<String, StartingSample> buildAliquotSourceMap(GSSRSampleKitRequest request, ProjectPlan projectPlan) {
 
-        return null;
+        Map<String, StartingSample> aliquotSourceMap = new HashMap<String, StartingSample>();
+        List<GSSRSample> sampleList = request.getRequestSampleSet().iterator().next().getGssrSample();
+        //assumes BSP request contains sampleSource which is the stock
+        for (GSSRSample sample : sampleList) {
+            if (sample.getGssrBarcode() != null && !sample.getGssrBarcode().isEmpty() &&
+                    sample.getSampleSource() != null && !sample.getSampleSource().isEmpty()) {
+                aliquotSourceMap.put(sample.getGssrBarcode(), new BSPStartingSample(sample.getSampleSource(), projectPlan, null));
+            }
+        }
+
+        return aliquotSourceMap;
     }
 
 
