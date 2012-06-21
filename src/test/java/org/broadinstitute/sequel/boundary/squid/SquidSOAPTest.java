@@ -14,6 +14,11 @@ import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.URL;
 
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+
+/**
+ * External integration test to connect to Squid's PASS related webservices
+ */
 public class SquidSOAPTest extends ContainerTest {
 
     @Inject
@@ -22,6 +27,7 @@ public class SquidSOAPTest extends ContainerTest {
 
 
     @Inject
+    @TestInstance
     private PassService passService;
 
 
@@ -42,7 +48,7 @@ public class SquidSOAPTest extends ContainerTest {
     }
 
 
-    @Test
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void smokeTest() throws Exception {
 
         log.info("In the smokeTest!");
@@ -56,6 +62,16 @@ public class SquidSOAPTest extends ContainerTest {
 
         log.info("Leaving the smokeTest");
 
+    }
+
+
+    @Test(groups = {EXTERNAL_INTEGRATION})
+    public void serviceTest() {
+
+        // this is actually the one method we can't do since SequeL does not proxy this
+        // Assert.assertEquals(passService.getGreeting(), "Hello SquidTopic!");
+
+        Assert.assertNotNull(passService.searchPasses());
     }
 
 }

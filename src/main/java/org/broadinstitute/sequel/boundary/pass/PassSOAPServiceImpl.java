@@ -66,7 +66,15 @@ public class PassSOAPServiceImpl implements PassService {
         //
         //
 
-        log.info("PassSOAPServiceImpl constructor invoked!");
+        log.info("PassSOAPServiceImpl() constructor invoked!");
+    }
+
+
+    public PassSOAPServiceImpl(Deployment deployment) {
+
+        final SquidConfiguration squidConfiguration = SquidConfigurationProducer.produce(deployment);
+
+        baseUrl = squidConfiguration.getBaseUrl();
     }
 
 

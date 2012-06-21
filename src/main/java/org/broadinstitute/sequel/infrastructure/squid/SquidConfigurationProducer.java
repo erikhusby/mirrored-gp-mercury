@@ -11,7 +11,7 @@ import java.util.Map;
 
 import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.*;
 
-public class SquidConfigurationProducer implements BaseConfigurationProducer<SquidConfiguration> {
+public class SquidConfigurationProducer implements InstanceSpecificProducer<SquidConfiguration> {
 
 
     @Inject
