@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.boundary.pass;
 
 
+import org.broadinstitute.sequel.TestData;
 import org.broadinstitute.sequel.boundary.*;
 
 import javax.enterprise.inject.Produces;
@@ -8,6 +9,10 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Calendar;
 
+/**
+ * Factory class for test data, might be used to {@link javax.inject.Inject} test data into a test class, though that
+ * may only work well for one-test-per-class tests.
+ */
 public class PassTestDataProducer {
 
 
@@ -144,6 +149,7 @@ public class PassTestDataProducer {
 
 
     @Produces
+    @TestData
     public DirectedPass produceDirectedPass() {
 
         DirectedPass directedPass = new DirectedPass();
@@ -162,6 +168,7 @@ public class PassTestDataProducer {
 
 
     @Produces
+    @TestData
     public WholeGenomePass produceWholeGenomePass() {
 
         WholeGenomePass wholeGenomePass = new WholeGenomePass();
@@ -179,6 +186,7 @@ public class PassTestDataProducer {
 
 
     @Produces
+    @TestData
     public RNASeqPass generateRNASeqPass() {
 
         RNASeqPass rnaseqPass = new RNASeqPass();
