@@ -7,6 +7,7 @@ import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
@@ -57,8 +58,8 @@ public class AliquotReceiver {
     }
 
     //TODO .. aliquot should be Starter rather than BSPSampleAuthorityTwoDTube
-    public BSPPlatingRequest receiveAliquot(BSPStartingSample source,
-                                            BSPSampleAuthorityTwoDTube aliquot,
+    public BSPPlatingRequest receiveAliquot(StartingSample source,
+                                            LabVessel aliquot,
                                             BSPPlatingReceipt receipt) {
         BSPPlatingRequest platingRequest = resolveAliquotToPlatingRequest(source,aliquot,receipt);
 
@@ -131,19 +132,13 @@ public class AliquotReceiver {
     }
 
     /**
-     * At the moment we get one {@link BSPPlatingReceipt receipt} per batch
-     * of aliquots.  In other words, we get a {@link BSPPlatingReceipt receipt} for
-     * each plate, not for each {@link Goop}.  Ideally this will
-     * change so we'll be able to map more reliably between an {@link BaseGoop} and
-     * a {@link BSPPlatingRequest}, and thereby know more accurately
-     * what the {@link org.broadinstitute.sequel.entity.project.Project} the {@link BaseGoop} is for.
      *
-     * In the meantime, we guess a bit with volumes and concentration.
+     * @param source
      * @param aliquot
      * @param platingReceipt
      * @return
      */
-    private BSPPlatingRequest resolveAliquotToPlatingRequest(BSPStartingSample source,
+    private BSPPlatingRequest resolveAliquotToPlatingRequest(StartingSample source,
                                                              Starter aliquot,
                                                              BSPPlatingReceipt platingReceipt) {
         if (aliquot == null) {

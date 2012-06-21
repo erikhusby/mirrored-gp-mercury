@@ -1,21 +1,21 @@
 package org.broadinstitute.sequel.test;
 
+import junit.framework.Assert;
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.project.*;
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
+import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -25,7 +25,7 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 public class ExomeExpressEndToEndTest {
 
     @Test(groups = {DATABASE_FREE}, enabled = false)
-    public void testAll() {
+    public void testAll() throws Exception {
         // PASS with quote IDs, price items (need PMBridge 2 for price items)
         DirectedPass sourcePass = null;
         // factory or something to convert from JAX-WS DTOs to entities (or refer to Squid PASS)
@@ -48,13 +48,31 @@ public class ExomeExpressEndToEndTest {
         // BSP Client mock to get receipt?
         // Plating export from BSP
         new GSSRSampleKitRequest();
+        //Test BSP Plating EXPORT
+        //StartingSamples
+        List<String> startingStockSamples = new ArrayList<String>();
+        startingStockSamples.add(BSPSampleExportTest.masterSample1);
+        startingStockSamples.add(BSPSampleExportTest.masterSample2);
+        BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
+        bspExportEntityBuilder.runTest();
+        //bspPlatingReceipt.getPlatingRequests().iterator().next().
+        Collection<Starter> starters = projectPlan.getStarters();
+        Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
+        for (Starter starter : starters) {
+            LabVessel aliquot = projectPlan.getAliquot(starter);
+            Assert.assertNotNull(aliquot);
+            stockSampleAliquotMap.put(starter.getLabel(), aliquot);
+        }
+
+        //pass this stockSampleAliquotMap to LabEvent !!
+
         // factory to convert to entities
         // Receive plastic through kiosk
         // web service callable from Squid kiosk
         // Hybrid Selection Messaging (both systems?)
-            // deck query for barcodes
-            // (deck query for workflow)
-            // deck sends message, check workflow
+        // deck query for barcodes
+        // (deck query for workflow)
+        // deck sends message, check workflow
         LabEventFactory labEventFactory = new LabEventFactory();
         LabEventHandler labEventHandler = new LabEventHandler();
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
