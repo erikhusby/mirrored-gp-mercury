@@ -62,8 +62,11 @@ will have a creation origin in the SequeL system only to be eventually registere
                     <xsd:element type="topic:SequencingTechnology" name="technology"/>
                     <xsd:element name="bspContextReference" type="xsd:string"/>
                     <xsd:sequence minOccurs="0" maxOccurs="unbounded">
-                        <xsd:element name="molecularIndexes" type="libreg:LibraryMolecularIndexList"/>
+                        <xsd:element name="molecularIndexes" type="libreg:LibraryMolecularIndex"/>
                     </xsd:sequence>
+                    <!--<xsd:sequence>-->
+                        <!--<xsd:element name="molecularIndexes" type="libreg:LibraryMolecularIndexList"/>-->
+                    <!--</xsd:sequence>-->
                 </xsd:sequence>
             </xsd:complexType>
 
@@ -86,9 +89,12 @@ Express project developed in the SequeL System {LIX-116)}.
                 <xsd:sequence>
                     <xsd:element name="libraryName" type="xsd:string"/>
                     <xsd:element name="singleStrandInd" type="xsd:boolean" />
-                    <xsd:sequence>
-                        <xsd:element name="samples" type="libreg:RegistrationSampleList" />
+                    <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+                        <xsd:element type="libreg:RegistrationSample" name="samples" />
                     </xsd:sequence>
+                    <!--<xsd:sequence>-->
+                        <!--<xsd:element name="samples" type="libreg:RegistrationSampleList" />-->
+                    <!--</xsd:sequence>-->
 
                 </xsd:sequence>
 

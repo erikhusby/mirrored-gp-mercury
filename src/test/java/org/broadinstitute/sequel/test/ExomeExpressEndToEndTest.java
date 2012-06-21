@@ -3,6 +3,8 @@ package org.broadinstitute.sequel.test;
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
+import org.broadinstitute.sequel.boundary.squid.IndexPosition;
+import org.broadinstitute.sequel.boundary.squid.LibraryMolecularIndex;
 import org.broadinstitute.sequel.boundary.squid.RegistrationSample;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.boundary.squid.SequencingTechnology;
@@ -13,10 +15,16 @@ import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.reagent.MolecularIndex;
+import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.sequel.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
+import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.seleniumhq.jetty7.util.statistic.SampleStatistic;
@@ -62,6 +70,8 @@ public class ExomeExpressEndToEndTest {
             // Check volume and concentration?  Or expose web services to allow PMBridge to check
             // labBatch
             // Project
+
+            //TODO SGM: change this to PassBackedProjectPlan
             BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
             String runName = "theRun";
             String laneNumber = "3";
@@ -109,9 +119,13 @@ public class ExomeExpressEndToEndTest {
                     libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
-            new LabEventTest.QtpEntityBuilder(projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
+            LabEventTest.QtpEntityBuilder capturedBuilder = new LabEventTest.QtpEntityBuilder(projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
-                    hybridSelectionEntityBuilder.getNormCatchBarcodes(), hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes()).invoke();
+                    hybridSelectionEntityBuilder.getNormCatchBarcodes(), hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes());
+
+            capturedBuilder.invoke();
+
+            RackOfTubes poolingResult = capturedBuilder.getDenatureRack();
 
             // LC metrics - upload page?
             // LabVessel.addMetric?
@@ -119,7 +133,10 @@ public class ExomeExpressEndToEndTest {
             // MockQuoteService.registerNewWork
 
 
-            final TwoDBarcodedTube currEntry = new TwoDBarcodedTube("1234567890");
+            final TwoDBarcodedTube currEntry = poolingResult.getVesselContainer().getVesselAtPosition(VesselPosition.A01);
+
+
+            //TODO SGM:  START Move the following code to a conversion method (include TwoDBarcodedTube and PassBackedProjectPlan
             final SequelLibrary registerLibrary = new SequelLibrary();
             registerLibrary.setLibraryName(currEntry.getLabCentricName());
 
@@ -130,13 +147,56 @@ public class ExomeExpressEndToEndTest {
                 sampleInstance.setBspContextReference(currSample.getStartingSample().getSampleName());
                 sampleInstance.setTechnology(SequencingTechnology.ILLUMINA);
 
-                //TODO SGM: set molecular Index
+                for(Reagent sampleReagent:currSample.getReagents()) {
+                    if(sampleReagent instanceof MolecularIndexReagent) {
+                        for(Map.Entry<MolecularIndexingScheme.PositionHint,MolecularIndex> currScheme:((MolecularIndexReagent) sampleReagent).getMolecularIndexingScheme().getIndexes().entrySet()) {
+                            LibraryMolecularIndex newIndex = new LibraryMolecularIndex();
+                            newIndex.setMolecularBarcode(currScheme.getValue().getSequence());
+                            if(currScheme.getKey() instanceof MolecularIndexingScheme.IlluminaPositionHint) {
+                                switch ((MolecularIndexingScheme.IlluminaPositionHint) currScheme.getKey()) {
+                                    case P5:
+                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_P_5);
+                                        break;
+                                    case P7:
+                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_P_7);
+                                        break;
+                                    case IS1:
+                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_1);
+                                        break;
+                                    case IS2:
+                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_2);
+                                        break;
+                                    case IS3:
+                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_3);
+                                        break;
+                                    case IS4:
+                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_4);
+                                        break;
+                                    case IS5:
+                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_5);
+                                        break;
+                                    case IS6:
+                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_6);
+                                        break;
+                                }
+                            } else {
+                                throw new RuntimeException("Illumina is the only Scheme technology allowed now for Exome");
+                            }
+
+                            sampleInstance.getMolecularIndexes().add(newIndex);
+                        }
+                    }
+                }
+
+
                 strandednessesState.add(currSample.getMolecularState().getStrand());
-                Assert.assertFalse(strandednessesState.size()>1,
+                Assert.assertFalse(strandednessesState.size() > 1,
                                    "There should not be a mix of single and double stranded samples in this library");
 
-                registerLibrary.getSamples().getSample().add(sampleInstance);
+                registerLibrary.getSamples().add(sampleInstance);
             }
+            //TODO SGM:  END Move the following code to a conversion method (include TwoDBarcodedTube and PassBackedProjectPlan
+
 
             registerLibrary.setSingleStrandInd(MolecularState.STRANDEDNESS.SINGLE_STRANDED.equals(
                     strandednessesState.get(0)));
