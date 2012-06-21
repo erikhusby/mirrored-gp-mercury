@@ -1,40 +1,30 @@
 package org.broadinstitute.sequel.test;
 
+import org.broadinstitute.sequel.boundary.AbstractPass;
+import org.broadinstitute.sequel.boundary.BaitSet;
+import org.broadinstitute.sequel.boundary.BaitSetListResult;
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
-import org.broadinstitute.sequel.boundary.squid.IndexPosition;
-import org.broadinstitute.sequel.boundary.squid.LibraryMolecularIndex;
-import org.broadinstitute.sequel.boundary.squid.RegistrationSample;
+import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
-import org.broadinstitute.sequel.boundary.squid.SequencingTechnology;
+import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.WorkflowDescription;
-import org.broadinstitute.sequel.entity.reagent.MolecularIndex;
-import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
-import org.broadinstitute.sequel.entity.reagent.MolecularIndexingScheme;
-import org.broadinstitute.sequel.entity.reagent.Reagent;
-import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.vessel.MolecularState;
+import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
-import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
-import org.seleniumhq.jetty7.util.statistic.SampleStatistic;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
@@ -51,6 +41,12 @@ public class ExomeExpressEndToEndTest {
     @Inject
     LibraryRegistrationSOAPService registrationSOAPService;
 
+    /*
+        Temporarily adding from ProjectPlanFromPassTest to move test case content along.
+     */
+    private final long BAIT_ID = 5;
+    private final String BAIT_DESIGN_NAME = "interesting genes";
+
     // Assuming the jndi-config branch were to be merged:
     //
     // @Inject
@@ -66,7 +62,16 @@ public class ExomeExpressEndToEndTest {
         if (directedPass.isExomeExpress()) {
             // PASS with quote IDs, price items (need PMBridge 2 for price items)
 
+
+
             // factory or something to convert from JAX-WS DTOs to entities (or refer to Squid PASS)
+            /*
+                Temporarily instantiating an empty pass to set up call to create passBackedProjectPlan.  Fill in with
+                the factory call mentioned.
+             */
+            AbstractPass testPass = new AbstractPass();
+
+
             // Check volume and concentration?  Or expose web services to allow PMBridge to check
             // labBatch
             // Project
@@ -74,13 +79,33 @@ public class ExomeExpressEndToEndTest {
             //TODO SGM: change this to PassBackedProjectPlan
             BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
             String runName = "theRun";
-            String laneNumber = "3";
+
+            //SGM:  This "Lane Number" is most likely not needed.  Retrieving Number of lanes from the Project Plan Details
+//            String laneNumber = "3";
+
             // BasicProjectPlan
             HashMap<LabEventName, PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
-            BasicProjectPlan projectPlan = new BasicProjectPlan(
-                    project,
-                    "ExomeExpressPlan1",
-                    new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+
+//            BasicProjectPlan projectPlan = new BasicProjectPlan(
+//                    project,
+//                    "ExomeExpressPlan1",
+//                    new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+
+            /*
+                Temporarily adding from ProjectPlanFromPassTest to move test case content along.
+             */
+
+            BSPSampleDataFetcher bspDataFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
+            BaitSetListResult baitsCache = new BaitSetListResult();
+            BaitSet baitSet = new BaitSet();
+            baitSet.setDesignName(BAIT_DESIGN_NAME);
+            baitSet.setId(BAIT_ID);
+            baitsCache.getBaitSetList().add(baitSet);
+
+            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(testPass,bspDataFetcher,new MockQuoteService(),baitsCache);
+
+
+
             // Auto-create work request in Squid, for designation?
             // JIRA ticket
             new JiraTicket();
@@ -135,75 +160,12 @@ public class ExomeExpressEndToEndTest {
 
             final TwoDBarcodedTube currEntry = poolingResult.getVesselContainer().getVesselAtPosition(VesselPosition.A01);
 
+            final SequelLibrary registerLibrary = RegistrationJaxbConverter.squidify(currEntry);
 
-            //TODO SGM:  START Move the following code to a conversion method (include TwoDBarcodedTube and PassBackedProjectPlan
-            final SequelLibrary registerLibrary = new SequelLibrary();
-            registerLibrary.setLibraryName(currEntry.getLabCentricName());
-
-            List<MolecularState.STRANDEDNESS> strandednessesState = new ArrayList<MolecularState.STRANDEDNESS>();
-
-            for(SampleInstance currSample:currEntry.getSampleInstances()) {
-                final RegistrationSample sampleInstance = new RegistrationSample();
-                sampleInstance.setBspContextReference(currSample.getStartingSample().getSampleName());
-                sampleInstance.setTechnology(SequencingTechnology.ILLUMINA);
-
-                for(Reagent sampleReagent:currSample.getReagents()) {
-                    if(sampleReagent instanceof MolecularIndexReagent) {
-                        for(Map.Entry<MolecularIndexingScheme.PositionHint,MolecularIndex> currScheme:((MolecularIndexReagent) sampleReagent).getMolecularIndexingScheme().getIndexes().entrySet()) {
-                            LibraryMolecularIndex newIndex = new LibraryMolecularIndex();
-                            newIndex.setMolecularBarcode(currScheme.getValue().getSequence());
-                            if(currScheme.getKey() instanceof MolecularIndexingScheme.IlluminaPositionHint) {
-                                switch ((MolecularIndexingScheme.IlluminaPositionHint) currScheme.getKey()) {
-                                    case P5:
-                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_P_5);
-                                        break;
-                                    case P7:
-                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_P_7);
-                                        break;
-                                    case IS1:
-                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_1);
-                                        break;
-                                    case IS2:
-                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_2);
-                                        break;
-                                    case IS3:
-                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_3);
-                                        break;
-                                    case IS4:
-                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_4);
-                                        break;
-                                    case IS5:
-                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_5);
-                                        break;
-                                    case IS6:
-                                        newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_6);
-                                        break;
-                                }
-                            } else {
-                                throw new RuntimeException("Illumina is the only Scheme technology allowed now for Exome");
-                            }
-
-                            sampleInstance.getMolecularIndexes().add(newIndex);
-                        }
-                    }
-                }
-
-
-                strandednessesState.add(currSample.getMolecularState().getStrand());
-                Assert.assertFalse(strandednessesState.size() > 1,
-                                   "There should not be a mix of single and double stranded samples in this library");
-
-                registerLibrary.getSamples().add(sampleInstance);
-            }
-            //TODO SGM:  END Move the following code to a conversion method (include TwoDBarcodedTube and PassBackedProjectPlan
-
-
-            registerLibrary.setSingleStrandInd(MolecularState.STRANDEDNESS.SINGLE_STRANDED.equals(
-                    strandednessesState.get(0)));
 
             registrationSOAPService.registerSequeLLibrary(registerLibrary);
 
-//            registrationSOAPService.registerForDesignation(registerLibrary.getLibraryName(), );
+            registrationSOAPService.registerForDesignation(registerLibrary.getLibraryName(), projectPlan, true);
 
 
 

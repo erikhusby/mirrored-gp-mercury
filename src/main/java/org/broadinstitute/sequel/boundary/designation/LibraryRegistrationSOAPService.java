@@ -1,12 +1,14 @@
 package org.broadinstitute.sequel.boundary.designation;
 
-import org.broadinstitute.sequel.boundary.squid.LibraryRegistrationPortType;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
+import org.broadinstitute.sequel.entity.project.NumberOfLanesCoverage;
+import org.broadinstitute.sequel.entity.project.PairedReadCoverage;
+import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
+import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationJNDIProfileDrivenImpl;
 
 import javax.enterprise.inject.Default;
-import javax.jws.WebParam;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.MalformedURLException;
@@ -54,7 +56,20 @@ public class LibraryRegistrationSOAPService{
         this.squidCall().registerSequeLLibrary(registrationContextIn);
     }
 
-    public void registerForDesignation(String libraryName, int lanes, int readLength,  boolean needsControlLane) {
+    public void registerForDesignation(String libraryName, PassBackedProjectPlan projectPlanIn,
+                                       boolean needsControlLane) {
+
+        int readLength = 0;
+        int lanes = 0;
+
+        for(SequencingPlanDetail projPlanDetail:projectPlanIn.getPlanDetails()) {
+            if(projPlanDetail.getCoverageGoal() instanceof NumberOfLanesCoverage) {
+                lanes = Integer.parseInt(projPlanDetail.getCoverageGoal().coverageGoalToParsableText());
+            } else if(projPlanDetail.getCoverageGoal() instanceof PairedReadCoverage) {
+                readLength = Integer.parseInt(projPlanDetail.getCoverageGoal().coverageGoalToParsableText());
+            }
+        }
+
         this.squidCall().registerForDesignation(libraryName, lanes, readLength, needsControlLane);
     }
 }
