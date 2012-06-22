@@ -26,6 +26,28 @@ public class PercentXFoldCoverage implements CoverageGoal {
 
     @Override
     public String coverageGoalToText() {
-        return percentOfTargets + "% @ " + coverageDepth + "x";
+        return this.percentOfTargets + "% @ " + this.coverageDepth + "x";
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * The order for PercentXFoldCoverage is as follows:
+     *
+     * percentOfTargets
+     * then Comma
+     * then coverageDepth
+     *
+     * @return
+     */
+    @Override
+    public String coverageGoalToParsableText() {
+        final StringBuilder valuesAsString = new StringBuilder();
+
+        valuesAsString.append(this.percentOfTargets);
+        valuesAsString.append(",");
+        valuesAsString.append(this.coverageDepth);
+        
+        return valuesAsString.toString();
     }
 }
