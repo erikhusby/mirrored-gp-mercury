@@ -3,20 +3,18 @@ package org.broadinstitute.sequel.boundary.pass;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.boundary.*;
+import org.broadinstitute.sequel.boundary.squid.SquidTopicPortype;
 import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.infrastructure.deployment.DeploymentConfig;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
+import org.broadinstitute.sequel.infrastructure.squid.AbstractSquidWSConnector;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParametersProducer;
 
 import javax.ejb.EJB;
 import javax.jws.WebParam;
 import javax.jws.WebService;
-import javax.xml.namespace.QName;
-import javax.xml.ws.Service;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import static org.broadinstitute.sequel.boundary.pass.ToSequel.sequelize;
 import static org.broadinstitute.sequel.boundary.pass.ToSquid.squidify;
@@ -38,7 +36,7 @@ import static org.broadinstitute.sequel.boundary.pass.ToSquid.squidify;
         endpointInterface = "org.broadinstitute.sequel.boundary.SquidTopicPortype"
 )
 @Impl
-public class PassSOAPServiceImpl implements PassService {
+public class PassSOAPServiceImpl extends AbstractSquidWSConnector<SquidTopicPortype> implements PassService {
 
     // @Injection does not work on @WebServices, see comments in constructor below
     private static final Log log = LogFactory.getLog(PassSOAPServiceImpl.class);
@@ -49,6 +47,21 @@ public class PassSOAPServiceImpl implements PassService {
     // Using @EJB annotation since @Inject doesn't work on @WebServices, see comments below
     private DeploymentConfig deploymentConfig;
 
+
+    @Override
+    protected String getNameSpace() {
+        return "urn:SquidTopic";
+    }
+
+    @Override
+    protected String getServiceName() {
+        return "SquidTopicService";
+    }
+
+    @Override
+    protected String getWsdlLocation() {
+        return "services/SquidTopicService?WSDL";
+    }
 
 
     public PassSOAPServiceImpl() {
@@ -78,7 +91,8 @@ public class PassSOAPServiceImpl implements PassService {
     }
 
 
-    private String getBaseUrl() {
+    @Override
+    protected String getBaseUrl() {
 
         // I wanted to make SquidConfigurationProducer a @Startup @Singleton bean so I could grab it directly through
         // a JNDI lookup or have it @EJB injected, but something seems to go very wrong when SquidConfigurationProducer
@@ -115,33 +129,6 @@ public class PassSOAPServiceImpl implements PassService {
     }
 
 
-
-    private org.broadinstitute.sequel.boundary.squid.SquidTopicPortype squidServicePort;
-
-
-    private org.broadinstitute.sequel.boundary.squid.SquidTopicPortype squidCall() {
-
-        if (squidServicePort == null) {
-            String namespace = "urn:SquidTopic";
-            QName serviceName = new QName(namespace, "SquidTopicService");
-
-            String wsdlURL = getBaseUrl() + "/services/SquidTopicService?WSDL";
-
-            URL url;
-            try {
-                url = new URL(wsdlURL);
-            }
-            catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-
-            Service service = Service.create(url, serviceName);
-            squidServicePort = service.getPort(serviceName, org.broadinstitute.sequel.boundary.squid.SquidTopicPortype.class);
-        }
-
-        return squidServicePort;
-
-    }
 
 
 
