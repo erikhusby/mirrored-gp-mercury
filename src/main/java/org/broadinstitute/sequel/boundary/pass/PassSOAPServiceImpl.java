@@ -7,8 +7,8 @@ import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.infrastructure.deployment.DeploymentConfig;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationProducer;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParametersProducer;
 
 import javax.ejb.EJB;
 import javax.jws.WebParam;
@@ -72,9 +72,9 @@ public class PassSOAPServiceImpl implements PassService {
 
     public PassSOAPServiceImpl(Deployment deployment) {
 
-        final SquidConfiguration squidConfiguration = SquidConfigurationProducer.produce(deployment);
+        final SquidConnectionParameters squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
 
-        baseUrl = squidConfiguration.getBaseUrl();
+        baseUrl = squidConnectionParameters.getBaseUrl();
     }
 
 
@@ -104,9 +104,9 @@ public class PassSOAPServiceImpl implements PassService {
 
             Deployment deployment = deploymentConfig.getDeployment();
 
-            final SquidConfiguration squidConfiguration = SquidConfigurationProducer.produce(deployment);
+            final SquidConnectionParameters squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
 
-            baseUrl = squidConfiguration.getBaseUrl();
+            baseUrl = squidConnectionParameters.getBaseUrl();
 
         }
 

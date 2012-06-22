@@ -83,10 +83,9 @@ public class PassServiceProducer implements InstanceSpecificProducer<PassService
             log.info("STUBBY deployment, returning stub");
             return stub;
         }
-        else {
-            log.info("Non-STUBBY deployment, returning impl");
-            return impl;
-        }
+
+        log.info("Non-STUBBY deployment, returning impl");
+        return impl;
 
     }
 }

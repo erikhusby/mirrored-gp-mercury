@@ -9,14 +9,14 @@ import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
  * Configuration to look up Squid connection parameters, currently limited to the base URL.
  *
  */
-public class SquidConfiguration extends BaseConfiguration {
+public class SquidConnectionParameters extends BaseConfiguration {
 
 
     private String baseUrl;
 
 
 
-    public SquidConfiguration(Deployment deployment, String baseUrl) {
+    public SquidConnectionParameters(Deployment deployment, String baseUrl) {
 
         super(deployment);
 

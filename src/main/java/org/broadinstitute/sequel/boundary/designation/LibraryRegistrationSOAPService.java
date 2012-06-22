@@ -5,10 +5,10 @@ import org.broadinstitute.sequel.entity.project.NumberOfLanesCoverage;
 import org.broadinstitute.sequel.entity.project.PairedReadCoverage;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationJNDIProfileDrivenImpl;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
 
 import javax.enterprise.inject.Default;
+import javax.inject.Inject;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.MalformedURLException;
@@ -22,8 +22,8 @@ import java.net.URL;
 @Default
 public class LibraryRegistrationSOAPService{
 
-
-    private SquidConfiguration squidConfiguration = new SquidConfigurationJNDIProfileDrivenImpl();
+    @Inject
+    private SquidConnectionParameters squidConnectionParameters;
 
 
     private org.broadinstitute.sequel.boundary.squid.LibraryRegistrationPortType squidServicePort;
@@ -34,7 +34,7 @@ public class LibraryRegistrationSOAPService{
             String namespace = "urn:ExtLibraryRegistration";
             QName serviceName = new QName(namespace, "ExtLibraryRegistrationService");
 
-            String wsdlURL = squidConfiguration.getBaseURL() + "services/ExtLibraryRegistrationService?WSDL";
+            String wsdlURL = squidConnectionParameters.getBaseUrl() + "services/ExtLibraryRegistrationService?WSDL";
 
             URL url;
             try {
