@@ -25,27 +25,40 @@ import java.net.URL;
 public abstract class AbstractSquidWSConnector<T> extends AbstractGenericsClass<T> {
 
     private SquidConfiguration squidConfiguration = new SquidConfigurationJNDIProfileDrivenImpl();
+
     private T squidServicePort;
 
-    private String squidNameSpace;
-    private String squidServiceName;
+    private String nameSpace;
+    private String serviceName;
     private String serviceWsdlLocation;
+
 
     /**
      *
-     * Constructor which exposes to its subclasses a way to set port configuration parameters for initializing the
-     * port specified by {@code T}
-     *
-     * @param squidNameSpaceIn A String representing the Name Space defined in the WSDL associated with port type {@code T}
-     * @param squidServiceNameIn A String representing the Service name associated with the WebService for port type {@code T}
-     * @param serviceWsdlLocationIn A string representing the location, relative to the Squid base URL, of the WSDL for port type {@code T}
+     * @return A String representing the Name Space defined in the WSDL associated with port type {@code T}
      */
-    protected AbstractSquidWSConnector(String squidNameSpaceIn, String squidServiceNameIn,
-                                       String serviceWsdlLocationIn) {
-        squidNameSpace = squidNameSpaceIn;
-        squidServiceName = squidServiceNameIn;
-        serviceWsdlLocation = serviceWsdlLocationIn;
+    protected abstract String getNameSpace();
 
+
+    /**
+     *
+     * @return A String representing the Service name associated with the WebService for port type {@code T}
+     */
+    protected abstract String getServiceName();
+
+
+    /**
+     *
+     * @return A string representing the location, relative to the Squid base URL, of the WSDL for port type {@code T}
+     */
+    protected abstract String getWsdlLocation();
+
+
+
+    protected AbstractSquidWSConnector() {
+        nameSpace = getNameSpace();
+        serviceName = getServiceName();
+        serviceWsdlLocation = getWsdlLocation();
     }
 
     /**
@@ -68,8 +81,8 @@ public abstract class AbstractSquidWSConnector<T> extends AbstractGenericsClass<
      */
     private void initializePort() {
         if (squidServicePort == null) {
-            String namespace = this.squidNameSpace;
-            QName serviceName = new QName(namespace, this.squidServiceName);
+            String namespace = this.nameSpace;
+            QName serviceName = new QName(namespace, this.serviceName);
 
             String wsdlURL = squidConfiguration.getBaseURL() + this.serviceWsdlLocation;
 

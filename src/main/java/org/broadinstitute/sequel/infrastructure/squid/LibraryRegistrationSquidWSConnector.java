@@ -15,10 +15,20 @@ public class LibraryRegistrationSquidWSConnector
         extends AbstractSquidWSConnector<LibraryRegistrationPortType>
         implements Serializable {
 
-    public LibraryRegistrationSquidWSConnector() {
-        super("urn:ExtLibraryRegistration",
-              "ExtLibraryRegistrationService",
-              "services/ExtLibraryRegistrationService?WSDL");
+    @Override
+    protected String getNameSpace() {
+        return "urn:ExtLibraryRegistration";
     }
+
+    @Override
+    protected String getServiceName() {
+        return "ExtLibraryRegistrationService";
+    }
+
+    @Override
+    protected String getWsdlLocation() {
+        return "services/ExtLibraryRegistrationService?WSDL";
+    }
+
 
 }
