@@ -4,7 +4,6 @@ import org.broadinstitute.sequel.boundary.GSSRSample;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.RequestSampleSet;
 import org.broadinstitute.sequel.control.dao.vessel.BSPPlatingReceiptDAO;
-import org.broadinstitute.sequel.control.dao.vessel.BSPStockSampleDAO;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
@@ -24,9 +23,6 @@ import java.util.*;
  */
 public class BSPSampleFactory {
 
-
-    @Inject
-    private BSPStockSampleDAO bspStockSampleDAO;
 
     @Inject
     private BSPStartingSampleDAO bspStartingSampleDAO;
