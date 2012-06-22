@@ -5,10 +5,13 @@ import org.broadinstitute.sequel.entity.project.NumberOfLanesCoverage;
 import org.broadinstitute.sequel.entity.project.PairedReadCoverage;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
+import org.broadinstitute.sequel.infrastructure.squid.LibraryRegistrationSquidWSConnector;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationJNDIProfileDrivenImpl;
 
+import javax.ejb.Stateless;
 import javax.enterprise.inject.Default;
+import javax.inject.Inject;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.MalformedURLException;
@@ -20,40 +23,16 @@ import java.net.URL;
  *         Time: 4:30 PM
  */
 @Default
+@Stateless
 public class LibraryRegistrationSOAPService{
 
+    @Inject
+    LibraryRegistrationSquidWSConnector wsConnector;
 
-    private SquidConfiguration squidConfiguration = new SquidConfigurationJNDIProfileDrivenImpl();
 
-
-    private org.broadinstitute.sequel.boundary.squid.LibraryRegistrationPortType squidServicePort;
-
-    private org.broadinstitute.sequel.boundary.squid.LibraryRegistrationPortType squidCall() {
-
-        if (squidServicePort == null) {
-            String namespace = "urn:ExtLibraryRegistration";
-            QName serviceName = new QName(namespace, "ExtLibraryRegistrationService");
-
-            String wsdlURL = squidConfiguration.getBaseURL() + "services/ExtLibraryRegistrationService?WSDL";
-
-            URL url;
-            try {
-                url = new URL(wsdlURL);
-            }
-            catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-
-            Service service = Service.create(url, serviceName);
-            squidServicePort = service.getPort(serviceName, org.broadinstitute.sequel.boundary.squid.LibraryRegistrationPortType.class);
-        }
-
-        return squidServicePort;
-
-    }
 
     public void registerSequeLLibrary(SequelLibrary registrationContextIn) {
-        this.squidCall().registerSequeLLibrary(registrationContextIn);
+        this.wsConnector.squidCall().registerSequeLLibrary(registrationContextIn);
     }
 
     public void registerForDesignation(String libraryName, PassBackedProjectPlan projectPlanIn,
@@ -70,6 +49,6 @@ public class LibraryRegistrationSOAPService{
             }
         }
 
-        this.squidCall().registerForDesignation(libraryName, lanes, readLength, needsControlLane);
+        this.wsConnector.squidCall().registerForDesignation(libraryName, lanes, readLength, needsControlLane);
     }
 }

@@ -1,9 +1,11 @@
 package org.broadinstitute.sequel.boundary.pass;
 
 import org.broadinstitute.sequel.boundary.*;
+import org.broadinstitute.sequel.infrastructure.squid.PassSquidWSConnector;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationJNDIProfileDrivenImpl;
 
+import javax.inject.Inject;
 import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.namespace.QName;
@@ -32,34 +34,9 @@ public class PassSOAPService implements SquidTopicPortype {
     // @Inject
     // private SquidConfiguration squidConfiguration;
 
-    private SquidConfiguration squidConfiguration = new SquidConfigurationJNDIProfileDrivenImpl();
+    @Inject
+    PassSquidWSConnector wsConnector;
 
-
-    private org.broadinstitute.sequel.boundary.squid.SquidTopicPortype squidServicePort;
-
-    private org.broadinstitute.sequel.boundary.squid.SquidTopicPortype squidCall() {
-
-        if (squidServicePort == null) {
-            String namespace = "urn:SquidTopic";
-            QName serviceName = new QName(namespace, "SquidTopicService");
-
-            String wsdlURL = squidConfiguration.getBaseURL() + "services/SquidTopicService?WSDL";
-
-            URL url;
-            try {
-                url = new URL(wsdlURL);
-            }
-            catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-
-            Service service = Service.create(url, serviceName);
-            squidServicePort = service.getPort(serviceName, org.broadinstitute.sequel.boundary.squid.SquidTopicPortype.class);
-        }
-
-        return squidServicePort;
-
-    }
 
 
     @Override
@@ -71,14 +48,14 @@ public class PassSOAPService implements SquidTopicPortype {
 
     @Override
     public boolean canEditPasses(@WebParam(name = "login", partName = "login") String login) {
-        return squidCall().canEditPasses(login);
+        return this.wsConnector.squidCall().canEditPasses(login);
     }
 
 
 
     @Override
     public String storePass(@WebParam(name = "pass", partName = "pass") AbstractPass pass) {
-        return squidCall().storePass(squidify(pass));
+        return this.wsConnector.squidCall().storePass(squidify(pass));
     }
 
 
@@ -86,7 +63,7 @@ public class PassSOAPService implements SquidTopicPortype {
     @Override
     public PassCritique validatePass(@WebParam(name = "pass", partName = "pass") AbstractPass pass) {
 
-        return sequelize(squidCall().validatePass(squidify(pass)));
+        return sequelize(this.wsConnector.squidCall().validatePass(squidify(pass)));
 
     }
 
@@ -94,7 +71,7 @@ public class PassSOAPService implements SquidTopicPortype {
     @Override
     public void abandonPass(@WebParam(name = "passNumber", partName = "passNumber") String passNumber) {
 
-        squidCall().abandonPass(passNumber);
+        this.wsConnector.squidCall().abandonPass(passNumber);
 
     }
 
@@ -103,7 +80,7 @@ public class PassSOAPService implements SquidTopicPortype {
     @Override
     public SummarizedPassListResult searchPassesByCreator(@WebParam(name = "creator", partName = "creator") String creator) {
 
-        return sequelize(squidCall().searchPassesByCreator(creator));
+        return sequelize(this.wsConnector.squidCall().searchPassesByCreator(creator));
     }
 
 
@@ -111,28 +88,28 @@ public class PassSOAPService implements SquidTopicPortype {
     @Override
     public SummarizedPassListResult searchPassesByResearchProject(@WebParam(name = "researchProject", partName = "researchProject") String researchProject) {
 
-        return sequelize(squidCall().searchPassesByResearchProject(researchProject));
+        return sequelize(this.wsConnector.squidCall().searchPassesByResearchProject(researchProject));
     }
 
 
     @Override
     public SummarizedPassListResult searchPasses() {
 
-        return sequelize(squidCall().searchPasses());
+        return sequelize(this.wsConnector.squidCall().searchPasses());
     }
 
 
     @Override
     public ReferenceSequenceListResult getReferenceSequencesByOrganism(@WebParam(name = "organism", partName = "organism") Organism organism) {
 
-        return sequelize(squidCall().getReferenceSequencesByOrganism(squidify(organism)));
+        return sequelize(this.wsConnector.squidCall().getReferenceSequencesByOrganism(squidify(organism)));
     }
 
 
     @Override
     public ReferenceSequenceListResult getReferenceSequencesByBaitSet(@WebParam(name = "baitSet", partName = "baitSet") BaitSet baitSet) {
 
-        return sequelize(squidCall().getReferenceSequencesByBaitSet(squidify(baitSet)));
+        return sequelize(this.wsConnector.squidCall().getReferenceSequencesByBaitSet(squidify(baitSet)));
     }
 
 
@@ -140,7 +117,7 @@ public class PassSOAPService implements SquidTopicPortype {
     @Override
     public ReferenceSequenceListResult getReferenceSequences() {
 
-        return sequelize(squidCall().getReferenceSequences());
+        return sequelize(this.wsConnector.squidCall().getReferenceSequences());
 
     }
 
@@ -149,14 +126,14 @@ public class PassSOAPService implements SquidTopicPortype {
     @Override
     public BaitSetListResult getBaitSetsByReferenceSequence(@WebParam(name = "referenceSequence", partName = "referenceSequence") ReferenceSequence referenceSequence) {
 
-        return sequelize(squidCall().getBaitSetsByReferenceSequence(squidify(referenceSequence)));
+        return sequelize(this.wsConnector.squidCall().getBaitSetsByReferenceSequence(squidify(referenceSequence)));
     }
 
 
     @Override
     public BaitSetListResult getBaitSets() {
 
-        return sequelize(squidCall().getBaitSets());
+        return sequelize(this.wsConnector.squidCall().getBaitSets());
     }
 
 
@@ -164,7 +141,7 @@ public class PassSOAPService implements SquidTopicPortype {
     @Override
     public OrganismListResult getOrganisms() {
 
-        return sequelize(squidCall().getOrganisms());
+        return sequelize(this.wsConnector.squidCall().getOrganisms());
 
     }
 
@@ -173,7 +150,7 @@ public class PassSOAPService implements SquidTopicPortype {
     @Override
     public AbstractPass loadPassByNumber(@WebParam(name = "passNumber", partName = "passNumber") String passNumber) {
 
-        return sequelize(squidCall().loadPassByNumber(passNumber));
+        return sequelize(this.wsConnector.squidCall().loadPassByNumber(passNumber));
 
     }
 
@@ -182,7 +159,7 @@ public class PassSOAPService implements SquidTopicPortype {
     @Override
     public SquidPersonList getBroadPIList() {
 
-        return sequelize(squidCall().getBroadPIList());
+        return sequelize(this.wsConnector.squidCall().getBroadPIList());
 
     }
 
@@ -190,7 +167,7 @@ public class PassSOAPService implements SquidTopicPortype {
     @Override
     public boolean validatePassNumber(@WebParam(name = "passNumber", partName = "passNumber") String passNumber) {
 
-        return squidCall().validatePassNumber(passNumber);
+        return this.wsConnector.squidCall().validatePassNumber(passNumber);
 
     }
 
