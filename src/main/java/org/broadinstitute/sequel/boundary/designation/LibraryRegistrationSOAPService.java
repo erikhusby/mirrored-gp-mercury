@@ -67,6 +67,6 @@ public class LibraryRegistrationSOAPService extends AbstractSquidWSConnector<Lib
 
     @Override
     protected String getWsdlLocation() {
-        return "services/ExtLibraryRegistrationService?WSDL";
+        return "/services/ExtLibraryRegistrationService?WSDL";
     }
 }

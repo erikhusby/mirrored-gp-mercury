@@ -60,7 +60,7 @@ public class PassSOAPServiceImpl extends AbstractSquidWSConnector<SquidTopicPort
 
     @Override
     protected String getWsdlLocation() {
-        return "services/SquidTopicService?WSDL";
+        return "/services/SquidTopicService?WSDL";
     }
 
 

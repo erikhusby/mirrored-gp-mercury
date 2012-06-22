@@ -1,9 +1,8 @@
 package org.broadinstitute.sequel.infrastructure.squid;
 
-import org.broadinstitute.sequel.infrastructure.common.AbstractGenericsClass;
-
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
+import java.lang.reflect.ParameterizedType;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -22,7 +21,7 @@ import java.net.URL;
  *         Date: 6/22/12
  *         Time: 1:35 PM
  */
-public abstract class AbstractSquidWSConnector<T> extends AbstractGenericsClass<T> {
+public abstract class AbstractSquidWSConnector<T> {
 
     private T squidServicePort;
 
@@ -84,7 +83,10 @@ public abstract class AbstractSquidWSConnector<T> extends AbstractGenericsClass<
             }
 
             Service service = Service.create(url, serviceName);
-            squidServicePort = service.getPort(serviceName, getParameterClass());
+
+            ParameterizedType parameterizedType = (ParameterizedType) getClass().getGenericSuperclass();
+            Class<T> typeArgument = (Class<T>) parameterizedType.getActualTypeArguments()[0];
+            squidServicePort = service.getPort(serviceName, typeArgument);
         }
     }
 
