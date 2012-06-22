@@ -16,17 +16,20 @@ import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
+import org.broadinstitute.sequel.entity.project.Starter;
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
+import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -126,15 +129,36 @@ public class ExomeExpressEndToEndTest {
             // BSP Client mock to get receipt?
             // Plating export from BSP
             new GSSRSampleKitRequest();
+
+            //Test BSP Plating EXPORT
+            //StartingSamples
+            List<String> startingStockSamples = new ArrayList<String>();
+            startingStockSamples.add(BSPSampleExportTest.masterSample1);
+            startingStockSamples.add(BSPSampleExportTest.masterSample2);
+            BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
+            try {
+                bspExportEntityBuilder.runTest();
+            } catch (Exception e) {
+                Assert.fail("Failed in BSP export test " + e.getMessage());
+            }
+            //bspPlatingReceipt.getPlatingRequests().iterator().next().
+            Collection<Starter> starters = projectPlan.getStarters();
+            Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
+            for (Starter starter : starters) {
+                LabVessel aliquot = projectPlan.getAliquot(starter);
+                Assert.assertNotNull(aliquot);
+                stockSampleAliquotMap.put(starter.getLabel(), aliquot);
+            }
+
             // factory to convert to entities
             // Receive plastic through kiosk
             // web service callable from Squid kiosk
             // Hybrid Selection Messaging (both systems?)  UPDATE:  SGM: plan to do Hybrid Selection Messaging to just
-                //SequeL for Exome Express
+            //SequeL for Exome Express
 
-                // deck query for barcodes
-                // (deck query for workflow)
-                // deck sends message, check workflow
+            // deck query for barcodes
+            // (deck query for workflow)
+            // deck sends message, check workflow
             LabEventFactory labEventFactory = new LabEventFactory();
             LabEventHandler labEventHandler = new LabEventHandler();
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
