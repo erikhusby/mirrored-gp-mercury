@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.test;
 import junit.framework.Assert;
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
+import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
@@ -24,10 +25,36 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
  */
 public class ExomeExpressEndToEndTest {
 
+
+    // if this test was running in a container the test data might be injected, though that would really only work well
+    // in the one test per class scenario, or at most one test per PASS type per class...
+
+    // @Inject
+    // @TestData
+    // private DirectedPass directedPass;
+
+    // Assuming the jndi-config branch were to be merged for a container version of this test:
+    //
+    // @Inject
+    // PassService passService;
+
+    // for non-container test:
+    //
+    // PassService passService = new PassServiceStub();
+
+
+
     @Test(groups = {DATABASE_FREE}, enabled = false)
     public void testAll() throws Exception {
+
+        DirectedPass directedPass = new DirectedPass();
+        // unconditionally forward all PASSes to Squid for storage
+        // passService.storePass(directedPass);
+
+        // if this is an EE pass take it through the SequeL process:
+        if (directedPass.isExomeExpress()) {
         // PASS with quote IDs, price items (need PMBridge 2 for price items)
-        DirectedPass sourcePass = null;
+
         // factory or something to convert from JAX-WS DTOs to entities (or refer to Squid PASS)
         // Check volume and concentration?  Or expose web services to allow PMBridge to check
         // labBatch
@@ -138,5 +165,6 @@ public class ExomeExpressEndToEndTest {
         }
         assertTrue(foundLane);
         */
+        }
     }
 }
