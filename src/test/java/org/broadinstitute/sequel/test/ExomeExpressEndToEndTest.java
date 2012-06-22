@@ -1,15 +1,17 @@
 package org.broadinstitute.sequel.test;
 
-import org.broadinstitute.sequel.boundary.AbstractPass;
 import org.broadinstitute.sequel.boundary.BaitSet;
 import org.broadinstitute.sequel.boundary.BaitSetListResult;
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
+import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
+import org.broadinstitute.sequel.boundary.pmbridge.PMBridgeService;
+import org.broadinstitute.sequel.boundary.pmbridge.PMBridgeServiceStub;
+import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProject;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
-import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
@@ -42,15 +44,6 @@ public class ExomeExpressEndToEndTest {
     // if this test was running in a container the test data might be injected, though that would really only work well
     // in the one test per class scenario, or at most one test per PASS type per class...
 
-    @Inject
-    LibraryRegistrationSOAPService registrationSOAPService;
-
-    /*
-        Temporarily adding from ProjectPlanFromPassTest to move test case content along.
-     */
-    private final long BAIT_ID = 5;
-    private final String BAIT_DESIGN_NAME = "interesting genes";
-
     // @Inject
     // @TestData
     // private DirectedPass directedPass;
@@ -63,6 +56,20 @@ public class ExomeExpressEndToEndTest {
     // for non-container test:
     //
     // PassService passService = new PassServiceStub();
+
+
+    @Inject
+    LibraryRegistrationSOAPService registrationSOAPService;
+
+    // @Inject
+    private PMBridgeService pmBridgeService = new PMBridgeServiceStub();
+
+    /*
+        Temporarily adding from ProjectPlanFromPassTest to move test case content along.
+     */
+    private final long BAIT_ID = 5;
+    private final String BAIT_DESIGN_NAME = "interesting genes";
+
 
 
 
@@ -81,18 +88,18 @@ public class ExomeExpressEndToEndTest {
 
 
             // factory or something to convert from JAX-WS DTOs to entities (or refer to Squid PASS)
-            /*
-                Temporarily instantiating an empty pass to set up call to create passBackedProjectPlan.  Fill in with
-                the factory call mentioned.
-             */
-            AbstractPass testPass = new AbstractPass();
-
-
             // Check volume and concentration?  Or expose web services to allow PMBridge to check
             // labBatch
             // Project
 
+            ResearchProject researchProject = null;
+            if ( directedPass.getResearchProject() != null )
+                researchProject = pmBridgeService.getResearchProjectByID(directedPass.getResearchProject());
+
+
+
             //TODO SGM: change this to PassBackedProjectPlan
+            //TODO MLC: tie in ResearchProject above
             BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
             String runName = "theRun";
 
@@ -118,7 +125,7 @@ public class ExomeExpressEndToEndTest {
             baitSet.setId(BAIT_ID);
             baitsCache.getBaitSetList().add(baitSet);
 
-            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(testPass,bspDataFetcher,new MockQuoteService(),baitsCache);
+            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new MockQuoteService(),baitsCache);
 
 
 
