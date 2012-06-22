@@ -18,11 +18,16 @@ public class XFoldCoverage implements CoverageGoal {
     }
     
     public int getCoverageDepth() {
-        return coverageDepth;
+        return this.coverageDepth;
     }
 
     @Override
     public String coverageGoalToText() {
-        return coverageDepth + "x";
+        return this.coverageDepth + "x";
+    }
+
+    @Override
+    public String coverageGoalToParsableText() {
+        return String.valueOf(this.coverageDepth);
     }
 }
