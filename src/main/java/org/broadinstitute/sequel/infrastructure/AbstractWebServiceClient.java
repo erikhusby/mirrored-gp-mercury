@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.infrastructure.squid;
+package org.broadinstitute.sequel.infrastructure;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
@@ -21,9 +21,9 @@ import java.net.URL;
  *         Date: 6/22/12
  *         Time: 1:35 PM
  */
-public abstract class AbstractSquidWSConnector<T> {
+public abstract class AbstractWebServiceClient<T> {
 
-    private T squidServicePort;
+    private T servicePort;
 
 
     protected abstract String getBaseUrl();
@@ -56,10 +56,10 @@ public abstract class AbstractSquidWSConnector<T> {
      *
      * @return An instance of port type {@code T}.
      */
-    public T squidCall() {
+    public T wsCall() {
 
         initializePort();
-        return squidServicePort;
+        return servicePort;
     }
 
     /**
@@ -68,7 +68,7 @@ public abstract class AbstractSquidWSConnector<T> {
      * connection parameters defined by the concrete implementation
      */
     private void initializePort() {
-        if (squidServicePort == null) {
+        if (servicePort == null) {
             String namespace = getNameSpace();
             QName serviceName = new QName(namespace, getServiceName());
 
@@ -86,7 +86,7 @@ public abstract class AbstractSquidWSConnector<T> {
 
             ParameterizedType parameterizedType = (ParameterizedType) getClass().getGenericSuperclass();
             Class<T> typeArgument = (Class<T>) parameterizedType.getActualTypeArguments()[0];
-            squidServicePort = service.getPort(serviceName, typeArgument);
+            servicePort = service.getPort(serviceName, typeArgument);
         }
     }
 

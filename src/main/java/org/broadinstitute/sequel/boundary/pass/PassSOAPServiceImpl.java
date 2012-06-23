@@ -8,9 +8,9 @@ import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.infrastructure.deployment.DeploymentConfig;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
-import org.broadinstitute.sequel.infrastructure.squid.AbstractSquidWSConnector;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParametersProducer;
+import org.broadinstitute.sequel.infrastructure.squid.SquidWebServiceClient;
 
 import javax.ejb.EJB;
 import javax.jws.WebParam;
@@ -36,16 +36,17 @@ import static org.broadinstitute.sequel.boundary.pass.ToSquid.squidify;
         endpointInterface = "org.broadinstitute.sequel.boundary.SquidTopicPortype"
 )
 @Impl
-public class PassSOAPServiceImpl extends AbstractSquidWSConnector<SquidTopicPortype> implements PassService {
+public class PassSOAPServiceImpl extends SquidWebServiceClient<SquidTopicPortype> implements PassService {
 
     // @Injection does not work on @WebServices, see comments in constructor below
     private static final Log log = LogFactory.getLog(PassSOAPServiceImpl.class);
 
-    private String baseUrl;
-
     @EJB
     // Using @EJB annotation since @Inject doesn't work on @WebServices, see comments below
     private DeploymentConfig deploymentConfig;
+
+
+    private SquidConnectionParameters squidConnectionParameters;
 
 
     @Override
@@ -64,6 +65,35 @@ public class PassSOAPServiceImpl extends AbstractSquidWSConnector<SquidTopicPort
     }
 
 
+    @Override
+    protected SquidConnectionParameters getSquidConnectionParameters() {
+
+        // I wanted to make SquidConnectionParametersProducer a @Startup @Singleton bean so I could grab it directly
+        // through
+        // a JNDI lookup or have it @EJB injected, but something seems to go very wrong when
+        // SquidConnectionParametersProducer
+        // is so annotated and the webapp will not deploy.  Unfortunately I can't find any diagnostics in the log
+        // to tell me what's going wrong.
+        //
+        // I wanted:
+        //
+        // @EJB
+        // SquidConnectionParametersProducer squidConfigurationProducer;
+
+        if ( squidConnectionParameters == null ) {
+
+            final Deployment deployment = deploymentConfig.getDeployment();
+            squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
+        }
+
+
+        return squidConnectionParameters;
+    }
+
+
+    /**
+     * The container actually wants this no-arg constructor despite what IntelliJ says about it not being used
+     */
     public PassSOAPServiceImpl() {
 
         // @Inject currently not working in Glassfish @WebServices, either a hole in the spec or a bug in Glassfish.
@@ -83,51 +113,16 @@ public class PassSOAPServiceImpl extends AbstractSquidWSConnector<SquidTopicPort
     }
 
 
+    /**
+     * Deployment-specific constructor, not driven by SEQUEL_DEPLOYMENT
+     *
+     * @param deployment
+     */
     public PassSOAPServiceImpl(Deployment deployment) {
 
-        final SquidConnectionParameters squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
-
-        baseUrl = squidConnectionParameters.getBaseUrl();
-    }
-
-
-    @Override
-    protected String getBaseUrl() {
-
-        // I wanted to make SquidConfigurationProducer a @Startup @Singleton bean so I could grab it directly through
-        // a JNDI lookup or have it @EJB injected, but something seems to go very wrong when SquidConfigurationProducer
-        // is so annotated and the webapp will not deploy.  Unfortunately I can't find any diagnostics in the log
-        // to tell me what's going wrong.
-        //
-        // I wanted:
-        //
-        // @EJB
-        // SquidConfigurationProducer squidConfigurationProducer;
-        //
-        //
-        // which would have made the code below look like:
-        //
-        // baseUrl = squidConfigurationProducer.produce().getDeployment();
-
-
-
-
-
-
-        if (baseUrl == null) {
-
-            Deployment deployment = deploymentConfig.getDeployment();
-
-            final SquidConnectionParameters squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
-
-            baseUrl = squidConnectionParameters.getBaseUrl();
-
-        }
-
-        return baseUrl;
+        squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
 
     }
-
 
 
 

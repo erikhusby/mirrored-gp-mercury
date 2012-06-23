@@ -58,7 +58,7 @@ public class SquidConnectionParametersProducer
     }
 
 
-
+    @Override
     @Produces
     @DevInstance
     public SquidConnectionParameters devInstance() {
@@ -68,6 +68,7 @@ public class SquidConnectionParametersProducer
 
 
 
+    @Override
     @Produces
     @TestInstance
     public SquidConnectionParameters testInstance() {
@@ -77,7 +78,7 @@ public class SquidConnectionParametersProducer
 
 
 
-
+    @Override
     @Produces
     @QAInstance
     public SquidConnectionParameters qaInstance() {
@@ -87,6 +88,7 @@ public class SquidConnectionParametersProducer
 
 
 
+    @Override
     @Produces
     @ProdInstance
     public SquidConnectionParameters prodInstance() {
@@ -96,6 +98,7 @@ public class SquidConnectionParametersProducer
 
 
 
+    @Override
     @Produces
     @StubInstance
     public SquidConnectionParameters stubInstance() {
@@ -103,7 +106,7 @@ public class SquidConnectionParametersProducer
     }
 
 
-
+    @Override
     @Produces
     @Default
     public SquidConnectionParameters produce() {

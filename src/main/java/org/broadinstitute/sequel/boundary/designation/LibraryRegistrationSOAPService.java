@@ -6,8 +6,8 @@ import org.broadinstitute.sequel.entity.project.NumberOfLanesCoverage;
 import org.broadinstitute.sequel.entity.project.PairedReadCoverage;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
-import org.broadinstitute.sequel.infrastructure.squid.AbstractSquidWSConnector;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
+import org.broadinstitute.sequel.infrastructure.squid.SquidWebServiceClient;
 
 import javax.ejb.Stateless;
 import javax.enterprise.inject.Default;
@@ -22,7 +22,7 @@ import javax.inject.Inject;
 
 @Default
 @Stateless
-public class LibraryRegistrationSOAPService extends AbstractSquidWSConnector<LibraryRegistrationPortType> {
+public class LibraryRegistrationSOAPService extends SquidWebServiceClient<LibraryRegistrationPortType> {
 
 
     @Inject
@@ -51,8 +51,8 @@ public class LibraryRegistrationSOAPService extends AbstractSquidWSConnector<Lib
     }
 
     @Override
-    protected String getBaseUrl() {
-        return squidConnectionParameters.getBaseUrl();
+    protected SquidConnectionParameters getSquidConnectionParameters() {
+        return squidConnectionParameters;
     }
 
     @Override
