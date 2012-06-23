@@ -6,7 +6,7 @@ import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.boundary.squid.SquidTopicPortype;
 import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
-import org.broadinstitute.sequel.infrastructure.deployment.DeploymentConfig;
+import org.broadinstitute.sequel.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParametersProducer;
@@ -43,7 +43,7 @@ public class PassSOAPServiceImpl extends SquidWebServiceClient<SquidTopicPortype
 
     @EJB
     // Using @EJB annotation since @Inject doesn't work on @WebServices, see comments below
-    private DeploymentConfig deploymentConfig;
+    private DeploymentProducer deploymentProducer;
 
 
     private SquidConnectionParameters squidConnectionParameters;
@@ -82,7 +82,7 @@ public class PassSOAPServiceImpl extends SquidWebServiceClient<SquidTopicPortype
 
         if ( squidConnectionParameters == null ) {
 
-            final Deployment deployment = deploymentConfig.getDeployment();
+            final Deployment deployment = deploymentProducer.produce();
             squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
         }
 
@@ -92,7 +92,7 @@ public class PassSOAPServiceImpl extends SquidWebServiceClient<SquidTopicPortype
 
 
     /**
-     * The container actually wants this no-arg constructor despite what IntelliJ says about it not being used
+     * JEE actually wants this no-arg constructor despite what IntelliJ says about it not being used
      */
     public PassSOAPServiceImpl() {
 

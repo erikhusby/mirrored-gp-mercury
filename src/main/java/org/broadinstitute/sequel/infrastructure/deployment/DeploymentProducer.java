@@ -22,11 +22,8 @@ import javax.naming.NamingException;
  * {@link Startup} and {@link Singleton}, so it will do this JNDI lookup on artifact deployment.  Failure to resolve
  * SEQUEL_DEPLOYMENT or have the value match one of DEV, TEST, QA, PROD, or STUBBY is a fatal error that will halt
  * deployment.
- *
- * I originally named this class just 'Config' but there was a clash on startup with Brian's
- * conversation-related Config class.
  */
-public class DeploymentConfig {
+public class DeploymentProducer implements BasicProducer<Deployment> {
 
 
     @Inject
@@ -62,7 +59,7 @@ public class DeploymentConfig {
         catch (NamingException e) {
 
             // This represents a failure to find the property in JNDI at all.  Per 2012-06-13 Exome Express meeting
-            // we are treating this as a Big Deal and aborting the deployment by throwing a RuntimeException here.
+            // we are treating this as a Big Deal and aborting the deployment by throwing a RuntimeException.
             log.error("JNDI lookup of SEQUEL_DEPLOYMENT property failed! " + e);
             throw new RuntimeException(e);
         }
@@ -82,8 +79,9 @@ public class DeploymentConfig {
     }
 
 
+    @Override
     @Produces
-    public Deployment getDeployment() {
+    public Deployment produce() {
         return deployment;
     }
 }
