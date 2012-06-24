@@ -125,6 +125,12 @@ public class PassSOAPServiceImpl extends SquidWebServiceClient<SquidTopicPortype
     }
 
 
+    public PassSOAPServiceImpl(SquidConnectionParameters squidConnectionParameters) {
+
+        this.squidConnectionParameters = squidConnectionParameters;
+    }
+
+
 
 
     @Override

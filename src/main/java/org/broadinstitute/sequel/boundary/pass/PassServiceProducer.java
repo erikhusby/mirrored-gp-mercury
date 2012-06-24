@@ -3,6 +3,8 @@ package org.broadinstitute.sequel.boundary.pass;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.infrastructure.deployment.*;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParametersProducer;
 
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
@@ -87,5 +89,17 @@ public class PassServiceProducer implements InstanceSpecificProducer<PassService
         log.info("Non-STUBBY deployment, returning impl");
         return impl;
 
+    }
+
+
+    public static PassService produce(Deployment deployment) {
+
+        if (deployment == STUBBY)
+            return new PassServiceStub();
+
+        final SquidConnectionParameters squidConnectionParameters =
+                SquidConnectionParametersProducer.produce(deployment);
+
+        return new PassSOAPServiceImpl(squidConnectionParameters);
     }
 }
