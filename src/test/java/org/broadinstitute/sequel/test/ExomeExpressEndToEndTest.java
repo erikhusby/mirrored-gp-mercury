@@ -146,6 +146,9 @@ public class ExomeExpressEndToEndTest {
                         "Pass " + projectPlan.getPass().getProjectInformation().getPassNumber());
                 Assert.assertNotNull(createResponse);
                 Assert.assertNotNull(createResponse.getTicketName());
+
+                //add jira issue to Project
+                projectPlan.addJiraTicket(labBatch.getJiraTicket());
             }
 
             // how do we wire up the lab batch and/or jira ticket to the plating request?
@@ -167,6 +170,7 @@ public class ExomeExpressEndToEndTest {
             try {
                 bspExportEntityBuilder.runTest();
             } catch (Exception e) {
+                e.printStackTrace();
                 Assert.fail("Failed in BSP export test " + e.getMessage());
             }
             //bspPlatingReceipt.getPlatingRequests().iterator().next().

@@ -164,7 +164,7 @@ public class PassTestDataProducer {
     public DirectedPass produceDirectedPass() {
 
         DirectedPass directedPass = new DirectedPass();
-        fleshOutAbstractPass(directedPass);
+        directedPass = (DirectedPass)fleshOutAbstractPass(directedPass);
 
         directedPass.setBaitSetID(5L);
 
@@ -173,9 +173,9 @@ public class PassTestDataProducer {
         ProgramPseudoDepthCoverageModel programPseudoDepthCoverageModel = new ProgramPseudoDepthCoverageModel();
         programPseudoDepthCoverageModel.setCoverageDesired(BigInteger.valueOf(32));
         coverageAndAnalysisInfo.setProgramPseudoDepthCoverageModel(programPseudoDepthCoverageModel);
-        directedPass.setExomeExpress(true);
 
         directedPass.setExomeExpress(true);
+
         return directedPass;
     }
 
