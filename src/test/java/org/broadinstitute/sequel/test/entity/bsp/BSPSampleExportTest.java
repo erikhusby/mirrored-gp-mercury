@@ -42,6 +42,10 @@ public class BSPSampleExportTest {
                 project,
                 "ExomeExpressPlan1",
                 new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+        for (String stock : startingStockSamples) {
+            StartingSample startingSample = new BSPStartingSample(stock, projectPlan);
+            projectPlan.getStarters().add(startingSample);
+        }
 
         BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
         bspExportEntityBuilder.runTest();
@@ -78,12 +82,15 @@ public class BSPSampleExportTest {
             }
 
             //Iterator<String> stockItr = stocksAndAliquots.keySet().iterator();
-            Iterator<String> stockItr = startingStockSamples.iterator();
+            //Iterator<String> stockItr = startingStockSamples.iterator();
+
+            Iterator<Starter> stockItr = projectPlan.getStarters().iterator();
+
             String startingStock = null;
             while (stockItr.hasNext()) {
-                startingStock = stockItr.next();
-                StartingSample startingSample = new BSPStartingSample(startingStock, projectPlan);
-                projectPlan.getStarters().add(startingSample);
+                startingStock = stockItr.next().getLabel();
+                //StartingSample startingSample = new BSPStartingSample(startingStock, projectPlan);
+                //projectPlan.getStarters().add(startingSample);
 
                 //TODO .. BSPAliquotWorkQueue & SampleSheet to be deprecated/deleted
                 // request an aliquot from bsp
@@ -97,7 +104,7 @@ public class BSPSampleExportTest {
 
             Collection<Starter> starters = projectPlan.getStarters();
             Assert.assertNotNull(starters);
-            Assert.assertEquals(2, starters.size());
+            Assert.assertEquals(starters.size() , 2, "Project Plan should have 2 starters");
             //TODO :- use IssueBSPPlatingRequest mock to get some aliquots
             //for now hardcode
             Map<String, StartingSample> aliquotSourceMap = new HashMap<String, StartingSample>();
@@ -133,7 +140,7 @@ public class BSPSampleExportTest {
 
             //now iterate through these aliquots, do some asserts and see if we can navigate back to requests.
             Assert.assertNotNull(bspAliquots);
-            Assert.assertEquals(bspAliquots.size(), 2);
+            Assert.assertEquals(bspAliquots.size(), starters.size() , "BSP Aliquot size should match Staters size");
             for (Starter aliquot : bspAliquots) {
                 Assert.assertTrue(aliquot.getLabel().contains("Aliquot"));
                 //check the source stock sample of each aliquot

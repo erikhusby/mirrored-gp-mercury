@@ -150,8 +150,9 @@ public class PassTestDataProducer {
         sampleList.getSample().add(sample);
 
         Sample sample2 = new Sample();
-        sample.setBspSampleID(masterSample2);
-        sample.setNote("this is a note on the sample");
+        sample2.setBspSampleID(masterSample2);
+        sample2.setNote("this is a note on the sample2");
+        sampleList.getSample().add(sample2);
 
         return pass;
 

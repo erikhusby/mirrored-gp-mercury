@@ -134,7 +134,7 @@ public class ExomeExpressEndToEndTest {
 
 
             // create batches for the pass.  todo add more samples to the pass.
-            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,1,"TESTBatch");
+            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,2,"TESTBatch");
             Assert.assertFalse(labBatches.isEmpty());
             Assert.assertEquals(labBatches.size(),1);
 
