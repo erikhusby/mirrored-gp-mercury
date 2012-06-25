@@ -21,14 +21,14 @@ import java.io.IOException;
  * Note this class does not perform deserialization, nor is there currently a need for that.
  *
  */
-public class JsonLabopsJiraEnumSerializer extends JsonSerializer<CreateIssueRequest.Fields.Issuetype> {
+public class JsonLabopsJiraIssueTypeSerializer extends JsonSerializer<CreateIssueRequest.Fields.Issuetype> {
 
 
     @Override
     /**
      * Replace all underscores in the value with a blank
      */
-    public void serialize(CreateIssueRequest.Fields.Issuetype issueType, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException {
+    public void serialize(CreateIssueRequest.Fields.Issuetype issueType, JsonGenerator jgen, SerializerProvider provider) throws IOException {
         jgen.writeStartObject();
         jgen.writeFieldName("name");
         jgen.writeString(issueType.getJiraName());

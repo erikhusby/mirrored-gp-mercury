@@ -1,20 +1,23 @@
 package org.broadinstitute.sequel.infrastructure.jira.issue;
 
 
-import org.broadinstitute.sequel.infrastructure.jira.JsonLabopsJiraEnumSerializer;
+import org.broadinstitute.sequel.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import java.io.Serializable;
-import java.math.BigInteger;
 
-@JsonSerialize
 public class CreateIssueRequest  {
 
+    @JsonSerialize(using = CreateJiraIssueFieldsSerializer.class)
     public static class Fields {
 
         public static class Project {
 
-            public Project() {}
+            public Project() {
+
+            }
 
             public Project(String key) {
                 if (key == null) {
@@ -35,8 +38,8 @@ public class CreateIssueRequest  {
         }
 
 
-        @JsonSerialize(using = JsonLabopsJiraEnumSerializer.class)
-        public enum Issuetype {
+        @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
+        public enum Issuetype  {
 
             Whole_Exome_HybSel("Whole Exome (HybSel)");
 
@@ -64,32 +67,33 @@ public class CreateIssueRequest  {
 
         private Issuetype issuetype;
 
+
+
         // todo custom json serialization that pays attention to createmeta fetched field
         // ids.  have to vary this @ runtime because jira custom field ids are not instance portable
-        private String customfield_10020 = "doofus";
 
-        // todo arz fixme
-        private String customfield_10011 = "9999";
+        //
+
+        private CustomField protocol = new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol");
+
+         // todo arz fixme
+        private CustomField workRequestId = new CustomField(new CustomFieldDefinition("customfield_10011","Protocol",true),"test protocol");
+
+
+        public CustomField getProtocol() {
+            return protocol;
+        }
+
 
         public Project getProject() {
             return project;
         }
 
-        public String getCustomfield_10020() {
-            return customfield_10020;
+
+        public CustomField getWorkRequestId() {
+            return workRequestId;
         }
 
-        public void setCustomfield_10020(String customfield_10020) {
-            this.customfield_10020 = customfield_10020;
-        }
-
-        public String getCustomfield_10011() {
-            return customfield_10011;
-        }
-
-        public void setCustomfield_10011(String customfield_10011) {
-            this.customfield_10011 = customfield_10011;
-        }
 
         public void setSummary(String summary) {
             this.summary = summary;

@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.infrastructure.jira.customfields;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 public class CustomFieldDefinition {
 
     private final String fieldId;
@@ -20,6 +22,7 @@ public class CustomFieldDefinition {
         this.isRequired = isRequired;
     }
 
+    @JsonIgnore
     public String getName() {
         return fieldName;
     }

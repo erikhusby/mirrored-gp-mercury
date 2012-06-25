@@ -1,8 +1,12 @@
 package org.broadinstitute.sequel.infrastructure.jira.issue;
 
+import org.broadinstitute.sequel.infrastructure.jira.JsonLabopsJiraVisibilitySerializer;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
 import java.io.Serializable;
 
 
+@JsonSerialize(using = JsonLabopsJiraVisibilitySerializer.class)
 public class Visibility implements Serializable {
 
 
@@ -11,10 +15,23 @@ public class Visibility implements Serializable {
     }
 
     public enum Value {
-        Administrators
+
+        Administrators("Administrators"),QA_Jira_Users("qa-jira-users");
+
+        private final String name;
+
+        private Value(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
     }
 
     private Type type;
+
     private Value value;
 
     public Visibility() {}
