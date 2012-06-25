@@ -30,11 +30,6 @@ public class BSPSampleExportTest {
     @Test(groups = {DATABASE_FREE})
     public void testExport() throws Exception {
 
-        //StartingSamples
-        List<String> startingStockSamples = new ArrayList<String>();
-        startingStockSamples.add(masterSample1);
-        startingStockSamples.add(masterSample2);
-
         BasicProject project = new BasicProject("BSPExportTestingProject", new JiraTicket());
         // BasicProjectPlan
         HashMap<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem> billableEvents = new HashMap<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem>();
@@ -42,12 +37,15 @@ public class BSPSampleExportTest {
                 project,
                 "ExomeExpressPlan1",
                 new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
-        for (String stock : startingStockSamples) {
-            StartingSample startingSample = new BSPStartingSample(stock, projectPlan);
-            projectPlan.getStarters().add(startingSample);
-        }
 
-        BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
+
+        StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
+        projectPlan.getStarters().add(startingSample);
+
+        StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
+        projectPlan.getStarters().add(startingSample2);
+
+        BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPPlatingExportEntityBuilder(projectPlan);
         bspExportEntityBuilder.runTest();
 
     }
@@ -57,18 +55,12 @@ public class BSPSampleExportTest {
 
         private static final String ALIQUOT_LSID_PATTERN = "broadinstitute.org:bsp.prod.sample:Test Aliquot ";
         private ProjectPlan projectPlan = null;
-        List<String> startingStockSamples = null;
-        //List<LabVessel> bspAliquots = null;
 
-        public BSPPlatingExportEntityBuilder(ProjectPlan projectPlan, List<String> startingSamples) {
+        public BSPPlatingExportEntityBuilder(ProjectPlan projectPlan) {
             if (projectPlan == null) {
                 throw new IllegalArgumentException("Invalid Project Plan");
             }
-            if (startingSamples == null || startingSamples.isEmpty()) {
-                throw new IllegalArgumentException("Invalid Starting Samples");
-            }
             this.projectPlan = projectPlan;
-            this.startingStockSamples = startingSamples;
         }
 
         public void runTest() throws Exception {
@@ -77,20 +69,11 @@ public class BSPSampleExportTest {
                 throw new IllegalArgumentException("Invalid Project plan ");
             }
 
-            if (startingStockSamples == null || startingStockSamples.isEmpty()) {
-                throw new IllegalArgumentException("Invalid Starting stocks and Aliquots ");
-            }
-
-            //Iterator<String> stockItr = stocksAndAliquots.keySet().iterator();
-            //Iterator<String> stockItr = startingStockSamples.iterator();
-
             Iterator<Starter> stockItr = projectPlan.getStarters().iterator();
 
             String startingStock = null;
             while (stockItr.hasNext()) {
                 startingStock = stockItr.next().getLabel();
-                //StartingSample startingSample = new BSPStartingSample(startingStock, projectPlan);
-                //projectPlan.getStarters().add(startingSample);
 
                 //TODO .. BSPAliquotWorkQueue & SampleSheet to be deprecated/deleted
                 // request an aliquot from bsp

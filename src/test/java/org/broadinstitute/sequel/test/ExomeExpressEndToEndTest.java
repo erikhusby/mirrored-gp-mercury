@@ -159,14 +159,7 @@ public class ExomeExpressEndToEndTest {
             new GSSRSampleKitRequest();
 
             //Test BSP Plating EXPORT
-            //StartingSamples
-            List<String> startingStockSamples = new ArrayList<String>();
-            List<Sample> passSamples = directedPass.getSampleDetailsInformation().getSample();
-            for (Sample passSample : passSamples) {
-                startingStockSamples.add(passSample.getBspSampleID());
-            }
-
-            BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
+            BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan);
 
             bspExportEntityBuilder.runTest();
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
