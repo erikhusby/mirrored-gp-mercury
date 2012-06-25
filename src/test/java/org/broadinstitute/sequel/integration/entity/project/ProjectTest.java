@@ -62,7 +62,7 @@ public class ProjectTest extends Arquillian {
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {
         CreateIssueResponse response = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
-                CreateIssueRequest.Fields.Issuetype.SequeL_Project,
+                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                 "Test run by " + System.getProperty("user.name") + " on " + new SimpleDateFormat("yyyy/MM/dd").format(new Date(System.currentTimeMillis())),
                 "Do lots of sequencing");
         assertNotNull(response);
@@ -255,7 +255,7 @@ public class ProjectTest extends Arquillian {
 
         try {
             jiraResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
-                    CreateIssueRequest.Fields.Issuetype.SequeL_Project,
+                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                     projectName,
                     "Created by " + getClass().getCanonicalName());
         }

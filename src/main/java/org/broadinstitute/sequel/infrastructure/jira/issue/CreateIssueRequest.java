@@ -1,17 +1,38 @@
 package org.broadinstitute.sequel.infrastructure.jira.issue;
 
 
-import org.broadinstitute.sequel.infrastructure.jira.JsonUnderscoreToBlankEnumSerializer;
+import org.broadinstitute.sequel.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import java.io.Serializable;
 
-public class CreateIssueRequest implements Serializable {
+public class CreateIssueRequest  {
 
-    public static class Fields implements Serializable {
+    /**
+     * We use a custom serializer here because custom fields are not
+     * instance portable.  In other words, the custom field names in a cloned
+     * dev instance of jira arent't the same as they are in production,
+     * so there's a bit more work here to make sure that tickets
+     * which have custom fields can be properly created in dev and prod.
+     */
+    @JsonSerialize(using = CreateJiraIssueFieldsSerializer.class)
+    public static class Fields {
 
-        public static class Project implements Serializable {
-            
+        public static class Project {
+
+            public Project() {
+
+            }
+
+            public Project(String key) {
+                if (key == null) {
+                    throw new RuntimeException("key cannot be null");
+                }
+                this.key = key;
+            }
+
             private String key;
 
             public String getKey() {
@@ -24,16 +45,24 @@ public class CreateIssueRequest implements Serializable {
         }
 
 
-        @JsonSerialize(using = JsonUnderscoreToBlankEnumSerializer.class)
-        public enum Issuetype {
+        @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
+        public enum Issuetype  {
+
+            Whole_Exome_HybSel("Whole Exome (HybSel)");
+
+            private final String jiraName;
+
+            private Issuetype(String jiraName) {
+                this.jiraName = jiraName;
+            }
+
+            public String getJiraName() {
+                return jiraName;
+            }
 
             // the convention for enum instances is all-caps, but the JIRA 5 REST examples I've seen have specified
             // this value as mixed case.  In my limited experience with the JIRA 5 REST API it has proven to be
             // very sensitive to case.
-            Bug,
-            SequeL_Project,
-            Whole_Exome_HybSel,
-            Whole_Genome_Shotgun
         }
 
         
@@ -46,20 +75,33 @@ public class CreateIssueRequest implements Serializable {
         private Issuetype issuetype;
 
 
+        // todo arz make these client accessible
+        private CustomField protocol = new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol");
+
+        private CustomField workRequestId = new CustomField(new CustomFieldDefinition("customfield_10011","Protocol",true),"test protocol");
+
+
+        public CustomField getProtocol() {
+            return protocol;
+        }
+
+
         public Project getProject() {
             return project;
         }
 
-        public void setProject(Project project) {
-            this.project = project;
+
+        public CustomField getWorkRequestId() {
+            return workRequestId;
+        }
+
+
+        public void setSummary(String summary) {
+            this.summary = summary;
         }
 
         public String getSummary() {
             return summary;
-        }
-
-        public void setSummary(String summary) {
-            this.summary = summary;
         }
 
         public String getDescription() {
@@ -103,7 +145,10 @@ public class CreateIssueRequest implements Serializable {
     }
 
 
-    public static CreateIssueRequest create(String key, Fields.Issuetype issuetype, String summary, String description) {
+    public static CreateIssueRequest create(String key,
+                                            Fields.Issuetype issuetype,
+                                            String summary,
+                                            String description) {
         
         CreateIssueRequest ret = new CreateIssueRequest();
         

@@ -1,11 +1,13 @@
 package org.broadinstitute.sequel.infrastructure.jira;
 
 
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 
 import java.io.IOException;
+import java.util.List;
 
 
 public interface JiraService {
@@ -45,5 +47,13 @@ public interface JiraService {
      * @throws IOException
      */
     void addComment(String key, String body, Visibility.Type visibilityType, Visibility.Value visibilityValue) throws IOException;
+
+    /**
+     * Finds all the custom fields for the given project and issue type
+     * @param project
+     * @param issueType
+     * @return
+     */
+    public List<CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
 
 }

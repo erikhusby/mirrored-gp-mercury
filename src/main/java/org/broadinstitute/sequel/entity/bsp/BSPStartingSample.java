@@ -35,7 +35,7 @@ public class BSPStartingSample extends StartingSample {
     @Transient
     private BSPSampleDTO bspDTO;
 
-    protected BSPStartingSample() {}
+    public BSPStartingSample() {}
 
     /**
      * Is there a distinction in BSP between

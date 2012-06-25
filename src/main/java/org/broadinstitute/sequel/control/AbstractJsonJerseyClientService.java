@@ -71,12 +71,30 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
 
         logger.warn("POST request: " + baos.toString());
 
+
         T ret = setJsonMimeTypes(webResource).post(responseGenericType, baos.toString());
 
         logger.debug("POST response: " + ret);
 
         return ret;
 
+    }
+
+    /**
+     * PUT a JSON representation of the requestPojo to the specified {@link WebResource} and return a POJO
+     * representation of the response.
+     *
+     * @param webResource
+     * @param requestPojo
+     * @param responseGenericType
+     * @param <T>
+     * @return
+     * @throws IOException
+     */
+    protected void put(WebResource webResource, Object requestPojo) throws IOException {
+        final ByteArrayOutputStream baos = writeValue(requestPojo);
+        logger.warn("PUT request: " + baos.toString());
+        setJsonMimeTypes(webResource).put(baos.toString());
     }
 
 

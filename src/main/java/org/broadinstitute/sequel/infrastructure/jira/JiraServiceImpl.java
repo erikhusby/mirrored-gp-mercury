@@ -7,6 +7,8 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.AbstractJsonJerseyClientService;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldJsonParser;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
@@ -16,6 +18,7 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.comment.AddCommentRes
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.List;
 
 @Default
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
@@ -67,14 +70,18 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         String urlString = getBaseUrl() + "/issue/";
         logger.debug("createIssue URL is " + urlString);
 
+        /**
+         * To debug this, use curl like so:
+         * $ curl  -u squid:squid -X POST -d @curl -H "Content-Type: application/json" http://vsquid00.broadinstitute.org:8020/rest/api/2/issue/
+         *
+         * Where @curl is a file name and contains something like:
+         * {"fields":{"description":"Description created from SequeL","project":{"key":"LCSET"},"customfield_10020":"doofus","customfield_10011":"9999","summary":"Summary created from SequeL","issuetype":{"name":"Whole Exome (HybSel)"}}}
+         */
 
         WebResource webResource = getJerseyClient().resource(urlString);
 
 
         return post(webResource, issueRequest, new GenericType<CreateIssueResponse>() {});
-
-
-
     }
 
 
@@ -104,7 +111,28 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         // don't really care about the response, not sure why JIRA sends us back so much stuff...
         post(webResource, addCommentRequest, new GenericType<AddCommentResponse>() {
         });
-                
 
     }
+
+
+    @Override
+    public List<CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project, CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+        if (project == null) {
+            throw new NullPointerException("project cannot be null");
+        }
+        if (issueType == null) {
+            throw new NullPointerException("issueType cannot be null");
+        }
+
+        String urlString = getBaseUrl() + "/issue/createmeta";
+
+        String jsonResponse = getJerseyClient().resource(urlString)
+                .queryParam("projectKeys",project.getKey())
+                .queryParam("issueTypeNames",issueType.getJiraName())
+                .queryParam("expand","projects.issuetypes.fields")
+                .get(String.class);
+
+        return CustomFieldJsonParser.parseCustomFields(jsonResponse);
+    }
+
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.boundary.*;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingTechnology;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -19,6 +20,7 @@ import java.util.*;
  */
 public class PassBackedProjectPlan implements ProjectPlan {
 
+    private Set<BSPPlatingRequest> pendingPlatingRequests = new HashSet<BSPPlatingRequest>();
 
     private Map<Starter,LabVessel> aliquotForStarter = new HashMap<Starter, LabVessel>();
     private AbstractPass pass;
@@ -214,5 +216,15 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
     public AbstractPass getPass() {
         return pass;
+    }
+
+    @Override
+    public void addPlatingRequest(BSPPlatingRequest platingRequest) {
+        pendingPlatingRequests.add(platingRequest);
+    }
+
+    @Override
+    public Collection<BSPPlatingRequest> getPendingPlatingRequests() {
+        return pendingPlatingRequests;
     }
 }

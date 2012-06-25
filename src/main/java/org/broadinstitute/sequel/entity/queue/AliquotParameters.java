@@ -2,16 +2,17 @@ package org.broadinstitute.sequel.entity.queue;
 
 
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 
 public class AliquotParameters implements LabWorkQueueParameters {
 
-    private BasicProjectPlan projectPlan;
+    private ProjectPlan projectPlan;
 
     private float volume;
 
     private float concentration;
 
-    public AliquotParameters(BasicProjectPlan projectPlan,float volume,float concentration) {
+    public AliquotParameters(ProjectPlan projectPlan,float volume,float concentration) {
         if (projectPlan == null) {
              throw new IllegalArgumentException("project must be non-null in AliquotParameters.AliquotParameters");
         }
@@ -32,7 +33,7 @@ public class AliquotParameters implements LabWorkQueueParameters {
         throw new RuntimeException("Method not yet implemented.");
     }
 
-    public BasicProjectPlan getProjectPlan() {
+    public ProjectPlan getProjectPlan() {
         return projectPlan;
     }
     

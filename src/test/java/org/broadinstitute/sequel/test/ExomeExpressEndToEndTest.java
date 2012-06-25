@@ -1,9 +1,6 @@
 package org.broadinstitute.sequel.test;
 
-import org.broadinstitute.sequel.boundary.BaitSet;
-import org.broadinstitute.sequel.boundary.BaitSetListResult;
-import org.broadinstitute.sequel.boundary.DirectedPass;
-import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
+import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
 import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
@@ -14,16 +11,21 @@ import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
+import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.sequel.entity.project.Starter;
+import org.broadinstitute.sequel.entity.project.*;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
+import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
@@ -63,6 +65,9 @@ public class ExomeExpressEndToEndTest {
 
     // @Inject
     private PMBridgeService pmBridgeService = new PMBridgeServiceStub();
+
+    // @Inject
+    private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
@@ -128,10 +133,23 @@ public class ExomeExpressEndToEndTest {
             PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new MockQuoteService(),baitsCache);
 
 
+            // create batches for the pass.  todo add more samples to the pass.
+            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,1,"TESTBatch");
+            Assert.assertFalse(labBatches.isEmpty());
+            Assert.assertEquals(labBatches.size(),1);
 
-            // Auto-create work request in Squid, for designation?
-            // JIRA ticket
-            new JiraTicket();
+            // create the jira ticket for each batch.
+            for (LabBatch labBatch : labBatches) {
+                CreateIssueResponse createResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
+                        CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
+                        labBatch.getBatchName(),
+                        "Pass " + projectPlan.getPass().getProjectInformation().getPassNumber());
+                Assert.assertNotNull(createResponse);
+                Assert.assertNotNull(createResponse.getTicketName());
+            }
+
+            // how do we wire up the lab batch and/or jira ticket to the plating request?
+
             // Plating request to BSP
             // BSP Client mock to get receipt?
             // Plating export from BSP
@@ -140,8 +158,11 @@ public class ExomeExpressEndToEndTest {
             //Test BSP Plating EXPORT
             //StartingSamples
             List<String> startingStockSamples = new ArrayList<String>();
-            startingStockSamples.add(BSPSampleExportTest.masterSample1);
-            startingStockSamples.add(BSPSampleExportTest.masterSample2);
+            List<Sample> passSamples = directedPass.getSampleDetailsInformation().getSample();
+            for (Sample passSample : passSamples) {
+                startingStockSamples.add(passSample.getBspSampleID());
+            }
+
             BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
             try {
                 bspExportEntityBuilder.runTest();
@@ -206,6 +227,16 @@ public class ExomeExpressEndToEndTest {
 
             final SequelLibrary registerLibrary = RegistrationJaxbConverter.squidify(currEntry);
 
+            final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
+
+            int numStartersFromSampleInstances = 0;
+            for (SampleInstance sampleInstance : currEntry.getSampleInstances()) {
+                Assert.assertTrue(startersFromProjectPlan.contains(sampleInstance.getStartingSample()));
+                numStartersFromSampleInstances++;
+                Assert.assertEquals(projectPlan,sampleInstance.getSingleProjectPlan());
+            }
+
+            Assert.assertEquals(startersFromProjectPlan.size(),numStartersFromSampleInstances);
 
             registrationSOAPService.registerSequeLLibrary(registerLibrary);
 

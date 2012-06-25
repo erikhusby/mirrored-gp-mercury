@@ -1,11 +1,16 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.quote.Quote;
 
 import java.util.Collection;
 
 public interface ProjectPlan {
+
+    public void addPlatingRequest(BSPPlatingRequest platingRequest);
+
+    public Collection<BSPPlatingRequest> getPendingPlatingRequests();
 
     public Project getProject();
 
