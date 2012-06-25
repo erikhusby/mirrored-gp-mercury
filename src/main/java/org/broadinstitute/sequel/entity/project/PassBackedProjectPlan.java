@@ -22,6 +22,8 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
     private Set<BSPPlatingRequest> pendingPlatingRequests = new HashSet<BSPPlatingRequest>();
 
+    private Set<JiraTicket> jiraTickets = new HashSet<JiraTicket>();
+
     private Map<Starter,LabVessel> aliquotForStarter = new HashMap<Starter, LabVessel>();
     private AbstractPass pass;
 
@@ -168,7 +170,7 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
     @Override
     public Collection<JiraTicket> getJiraTickets() {
-        throw new RuntimeException("I haven't been written yet.");
+        return jiraTickets;
     }
 
     @Override
@@ -198,7 +200,7 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
     @Override
     public void addJiraTicket(JiraTicket jiraTicket) {
-        throw new RuntimeException("I haven't been written yet.");
+        jiraTickets.add(jiraTicket);
     }
 
     @Override
@@ -206,7 +208,7 @@ public class PassBackedProjectPlan implements ProjectPlan {
         if (!getStarters().contains(starter)) {
             throw new RuntimeException(starter.getLabel() + " is not a starter for this project plan");
         }
-        aliquotForStarter.put(starter,aliquot);
+        aliquotForStarter.put(starter, aliquot);
     }
 
     @Override

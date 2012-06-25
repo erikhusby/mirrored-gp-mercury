@@ -134,7 +134,7 @@ public class ExomeExpressEndToEndTest {
 
 
             // create batches for the pass.  todo add more samples to the pass.
-            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,1,"TESTBatch");
+            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,2,"TESTBatch");
             Assert.assertFalse(labBatches.isEmpty());
             Assert.assertEquals(labBatches.size(),1);
 
@@ -146,6 +146,9 @@ public class ExomeExpressEndToEndTest {
                         "Pass " + projectPlan.getPass().getProjectInformation().getPassNumber());
                 Assert.assertNotNull(createResponse);
                 Assert.assertNotNull(createResponse.getTicketName());
+
+                //add jira issue to Project
+                projectPlan.addJiraTicket(labBatch.getJiraTicket());
             }
 
             // how do we wire up the lab batch and/or jira ticket to the plating request?
@@ -156,19 +159,9 @@ public class ExomeExpressEndToEndTest {
             new GSSRSampleKitRequest();
 
             //Test BSP Plating EXPORT
-            //StartingSamples
-            List<String> startingStockSamples = new ArrayList<String>();
-            List<Sample> passSamples = directedPass.getSampleDetailsInformation().getSample();
-            for (Sample passSample : passSamples) {
-                startingStockSamples.add(passSample.getBspSampleID());
-            }
+            BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan);
 
-            BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
-            try {
-                bspExportEntityBuilder.runTest();
-            } catch (Exception e) {
-                Assert.fail("Failed in BSP export test " + e.getMessage());
-            }
+            bspExportEntityBuilder.runTest();
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
             Collection<Starter> starters = projectPlan.getStarters();
             Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();

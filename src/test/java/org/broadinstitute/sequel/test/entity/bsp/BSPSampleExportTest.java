@@ -30,11 +30,6 @@ public class BSPSampleExportTest {
     @Test(groups = {DATABASE_FREE})
     public void testExport() throws Exception {
 
-        //StartingSamples
-        List<String> startingStockSamples = new ArrayList<String>();
-        startingStockSamples.add(masterSample1);
-        startingStockSamples.add(masterSample2);
-
         BasicProject project = new BasicProject("BSPExportTestingProject", new JiraTicket());
         // BasicProjectPlan
         HashMap<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem> billableEvents = new HashMap<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem>();
@@ -43,7 +38,14 @@ public class BSPSampleExportTest {
                 "ExomeExpressPlan1",
                 new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
-        BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
+
+        StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
+        projectPlan.getStarters().add(startingSample);
+
+        StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
+        projectPlan.getStarters().add(startingSample2);
+
+        BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPPlatingExportEntityBuilder(projectPlan);
         bspExportEntityBuilder.runTest();
 
     }
@@ -53,18 +55,12 @@ public class BSPSampleExportTest {
 
         private static final String ALIQUOT_LSID_PATTERN = "broadinstitute.org:bsp.prod.sample:Test Aliquot ";
         private ProjectPlan projectPlan = null;
-        List<String> startingStockSamples = null;
-        //List<LabVessel> bspAliquots = null;
 
-        public BSPPlatingExportEntityBuilder(ProjectPlan projectPlan, List<String> startingSamples) {
+        public BSPPlatingExportEntityBuilder(ProjectPlan projectPlan) {
             if (projectPlan == null) {
                 throw new IllegalArgumentException("Invalid Project Plan");
             }
-            if (startingSamples == null || startingSamples.isEmpty()) {
-                throw new IllegalArgumentException("Invalid Starting Samples");
-            }
             this.projectPlan = projectPlan;
-            this.startingStockSamples = startingSamples;
         }
 
         public void runTest() throws Exception {
@@ -73,17 +69,11 @@ public class BSPSampleExportTest {
                 throw new IllegalArgumentException("Invalid Project plan ");
             }
 
-            if (startingStockSamples == null || startingStockSamples.isEmpty()) {
-                throw new IllegalArgumentException("Invalid Starting stocks and Aliquots ");
-            }
+            Iterator<Starter> stockItr = projectPlan.getStarters().iterator();
 
-            //Iterator<String> stockItr = stocksAndAliquots.keySet().iterator();
-            Iterator<String> stockItr = startingStockSamples.iterator();
             String startingStock = null;
             while (stockItr.hasNext()) {
-                startingStock = stockItr.next();
-                StartingSample startingSample = new BSPStartingSample(startingStock, projectPlan);
-                projectPlan.getStarters().add(startingSample);
+                startingStock = stockItr.next().getLabel();
 
                 //TODO .. BSPAliquotWorkQueue & SampleSheet to be deprecated/deleted
                 // request an aliquot from bsp
@@ -97,7 +87,7 @@ public class BSPSampleExportTest {
 
             Collection<Starter> starters = projectPlan.getStarters();
             Assert.assertNotNull(starters);
-            Assert.assertEquals(2, starters.size());
+            Assert.assertEquals(starters.size() , 2, "Project Plan should have 2 starters");
             //TODO :- use IssueBSPPlatingRequest mock to get some aliquots
             //for now hardcode
             Map<String, StartingSample> aliquotSourceMap = new HashMap<String, StartingSample>();
@@ -133,7 +123,7 @@ public class BSPSampleExportTest {
 
             //now iterate through these aliquots, do some asserts and see if we can navigate back to requests.
             Assert.assertNotNull(bspAliquots);
-            Assert.assertEquals(bspAliquots.size(), 2);
+            Assert.assertEquals(bspAliquots.size(), starters.size() , "BSP Aliquot size should match Staters size");
             for (Starter aliquot : bspAliquots) {
                 Assert.assertTrue(aliquot.getLabel().contains("Aliquot"));
                 //check the source stock sample of each aliquot

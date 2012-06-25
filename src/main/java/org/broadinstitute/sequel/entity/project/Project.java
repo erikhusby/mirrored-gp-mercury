@@ -337,7 +337,6 @@ public abstract class Project {
         }
         else {
             // todo figure out tool for logging and alerting.
-            throw new RuntimeException("There is no jira ticket for " + projectName);
         }
     }
 
