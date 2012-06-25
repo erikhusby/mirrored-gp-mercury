@@ -1,9 +1,6 @@
 package org.broadinstitute.sequel.test;
 
-import org.broadinstitute.sequel.boundary.BaitSet;
-import org.broadinstitute.sequel.boundary.BaitSetListResult;
-import org.broadinstitute.sequel.boundary.DirectedPass;
-import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
+import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
 import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
@@ -161,8 +158,11 @@ public class ExomeExpressEndToEndTest {
             //Test BSP Plating EXPORT
             //StartingSamples
             List<String> startingStockSamples = new ArrayList<String>();
-            startingStockSamples.add(BSPSampleExportTest.masterSample1);
-            startingStockSamples.add(BSPSampleExportTest.masterSample2);
+            List<Sample> passSamples = directedPass.getSampleDetailsInformation().getSample();
+            for (Sample passSample : passSamples) {
+                startingStockSamples.add(passSample.getBspSampleID());
+            }
+
             BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
             try {
                 bspExportEntityBuilder.runTest();
