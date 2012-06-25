@@ -74,7 +74,7 @@ public abstract class StartingSample implements Starter {
         return projectPlan;
     }
 
-    public void setRootProjectPlan(BasicProjectPlan rootProjectPlan) {
+    public void setRootProjectPlan(ProjectPlan rootProjectPlan) {
         this.projectPlan = rootProjectPlan;
     }
 

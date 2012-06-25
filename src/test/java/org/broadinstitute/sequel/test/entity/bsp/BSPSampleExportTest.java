@@ -52,7 +52,7 @@ public class BSPSampleExportTest {
     public static class BSPPlatingExportEntityBuilder {
 
         private static final String ALIQUOT_LSID_PATTERN = "broadinstitute.org:bsp.prod.sample:Test Aliquot ";
-        private BasicProjectPlan projectPlan = null;
+        private ProjectPlan projectPlan = null;
         List<String> startingStockSamples = null;
         //List<LabVessel> bspAliquots = null;
 
@@ -63,7 +63,7 @@ public class BSPSampleExportTest {
             if (startingSamples == null || startingSamples.isEmpty()) {
                 throw new IllegalArgumentException("Invalid Starting Samples");
             }
-            this.projectPlan = (BasicProjectPlan) projectPlan;
+            this.projectPlan = projectPlan;
             this.startingStockSamples = startingSamples;
         }
 
