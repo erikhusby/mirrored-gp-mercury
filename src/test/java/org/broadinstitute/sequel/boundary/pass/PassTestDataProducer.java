@@ -119,6 +119,10 @@ public class PassTestDataProducer {
         coverageAndAnalysisInfo.setSamplesPooled(true);
         coverageAndAnalysisInfo.setPlex(BigDecimal.valueOf(88.1));
         coverageAndAnalysisInfo.setKeepFastQs(true);
+        TargetCoverageModel targetCoverageModel = new TargetCoverageModel();
+        targetCoverageModel.setCoveragePercentage(new BigInteger("80"));
+        targetCoverageModel.setDepth(new BigInteger("20"));
+        coverageAndAnalysisInfo.setTargetCoverageModel(targetCoverageModel);
 
 
         FundingInformation fundingInfo = new FundingInformation();
@@ -155,13 +159,14 @@ public class PassTestDataProducer {
         DirectedPass directedPass = new DirectedPass();
         fleshOutAbstractPass(directedPass);
 
-        directedPass.setBaitSetID(1L);
+        directedPass.setBaitSetID(5L);
 
         CoverageAndAnalysisInformation coverageAndAnalysisInfo = directedPass.getCoverageAndAnalysisInformation();
 
         ProgramPseudoDepthCoverageModel programPseudoDepthCoverageModel = new ProgramPseudoDepthCoverageModel();
         programPseudoDepthCoverageModel.setCoverageDesired(BigInteger.valueOf(32));
         coverageAndAnalysisInfo.setProgramPseudoDepthCoverageModel(programPseudoDepthCoverageModel);
+        directedPass.setExomeExpress(true);
 
         return directedPass;
     }

@@ -14,16 +14,20 @@ import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
+import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.project.BasicProject;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.sequel.entity.project.Starter;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
+import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
@@ -64,6 +68,9 @@ public class ExomeExpressEndToEndTest {
     // @Inject
     private PMBridgeService pmBridgeService = new PMBridgeServiceStub();
 
+    // @Inject
+    private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
+
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
      */
@@ -73,7 +80,7 @@ public class ExomeExpressEndToEndTest {
 
 
 
-    @Test(groups = {DATABASE_FREE}, enabled = false)
+    @Test(groups = {DATABASE_FREE}, enabled = true)
     public void testAll() throws Exception {
 
         DirectedPass directedPass = PassTestDataProducer.instance().produceDirectedPass();
@@ -131,6 +138,20 @@ public class ExomeExpressEndToEndTest {
 
             // Auto-create work request in Squid, for designation?
             // JIRA ticket
+            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,1,"TESTBatch");
+            Assert.assertFalse(labBatches.isEmpty());
+            Assert.assertEquals(labBatches.size(),1);
+
+            for (LabBatch labBatch : labBatches) {
+                CreateIssueResponse createResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
+                        CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
+                        labBatch.getBatchName(),
+                        "Pass " + projectPlan.getPass().getProjectInformation().getPassNumber());
+                Assert.assertNotNull(createResponse);
+                Assert.assertNotNull(createResponse.getTicketName());
+            }
+
+
             new JiraTicket();
             // Plating request to BSP
             // BSP Client mock to get receipt?
