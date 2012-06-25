@@ -18,7 +18,7 @@ import java.util.*;
  * A {@link ProjectPlan} that is backed by a
  * {@link AbstractPass}
  */
-public class PassBackedProjectPlan implements ProjectPlan {
+public class PassBackedProjectPlan extends ProjectPlan {
 
     private Set<BSPPlatingRequest> pendingPlatingRequests = new HashSet<BSPPlatingRequest>();
 
@@ -42,8 +42,6 @@ public class PassBackedProjectPlan implements ProjectPlan {
     private WorkflowDescription workflowDescription;
 
     private PercentXFoldCoverage percentXFoldCoverage;
-
-    private Set<SequencingPlanDetail> sequencingPlans = new HashSet<SequencingPlanDetail>();
 
     public PassBackedProjectPlan() {}
 
@@ -81,7 +79,7 @@ public class PassBackedProjectPlan implements ProjectPlan {
         BigInteger percentCoverage = targetCoverage.getCoveragePercentage();
         BigInteger depth = targetCoverage.getDepth();
         percentXFoldCoverage = new PercentXFoldCoverage(percentCoverage.intValue(),depth.intValue());
-        sequencingPlans.add(new SequencingPlanDetail(new IlluminaSequencingTechnology(),percentXFoldCoverage,this));
+        planDetails.add(new SequencingPlanDetail(new IlluminaSequencingTechnology(), percentXFoldCoverage, this));
 
     }
 
@@ -162,11 +160,6 @@ public class PassBackedProjectPlan implements ProjectPlan {
     }
 
     @Override
-    public Collection<SequencingPlanDetail> getPlanDetails() {
-        return sequencingPlans;
-    }
-
-    @Override
     public Collection<JiraTicket> getJiraTickets() {
         throw new RuntimeException("I haven't been written yet.");
     }
@@ -193,7 +186,7 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
     @Override
     public void addSequencingDetail(SequencingPlanDetail sequencingDetail) {
-        sequencingPlans.add(sequencingDetail);
+        planDetails.add(sequencingDetail);
     }
 
     @Override
