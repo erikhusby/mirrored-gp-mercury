@@ -167,12 +167,8 @@ public class ExomeExpressEndToEndTest {
             }
 
             BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
-            try {
-                bspExportEntityBuilder.runTest();
-            } catch (Exception e) {
-                e.printStackTrace();
-                Assert.fail("Failed in BSP export test " + e.getMessage());
-            }
+
+            bspExportEntityBuilder.runTest();
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
             Collection<Starter> starters = projectPlan.getStarters();
             Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
