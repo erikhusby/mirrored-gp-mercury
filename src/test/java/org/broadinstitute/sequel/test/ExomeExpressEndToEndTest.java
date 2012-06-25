@@ -78,7 +78,7 @@ public class ExomeExpressEndToEndTest {
 
 
 
-    @Test(groups = {DATABASE_FREE}, enabled = false)
+    @Test(groups = {DATABASE_FREE}, enabled = true)
     public void testAll() throws Exception {
 
         DirectedPass directedPass = PassTestDataProducer.instance().produceDirectedPass();
