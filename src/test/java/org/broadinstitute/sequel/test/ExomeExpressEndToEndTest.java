@@ -135,13 +135,12 @@ public class ExomeExpressEndToEndTest {
             PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new MockQuoteService(),baitsCache);
 
 
-
-            // Auto-create work request in Squid, for designation?
-            // JIRA ticket
+            // create batches for the pass.  todo add more samples to the pass.
             Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,1,"TESTBatch");
             Assert.assertFalse(labBatches.isEmpty());
             Assert.assertEquals(labBatches.size(),1);
 
+            // create the jira ticket for each batch.
             for (LabBatch labBatch : labBatches) {
                 CreateIssueResponse createResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
                         CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
@@ -151,8 +150,8 @@ public class ExomeExpressEndToEndTest {
                 Assert.assertNotNull(createResponse.getTicketName());
             }
 
+            // how do we wire up the lab batch and/or jira ticket to the plating request?
 
-            new JiraTicket();
             // Plating request to BSP
             // BSP Client mock to get receipt?
             // Plating export from BSP
