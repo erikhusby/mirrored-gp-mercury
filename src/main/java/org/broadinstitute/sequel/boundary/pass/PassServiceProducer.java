@@ -102,4 +102,9 @@ public class PassServiceProducer implements InstanceSpecificProducer<PassService
 
         return new PassSOAPServiceImpl(squidConnectionParameters);
     }
+
+
+    public static PassService testDeployment() {
+        return produce(TEST);
+    }
 }
