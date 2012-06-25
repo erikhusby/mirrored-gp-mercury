@@ -1,9 +1,6 @@
 package org.broadinstitute.sequel.test;
 
-import org.broadinstitute.sequel.boundary.BaitSet;
-import org.broadinstitute.sequel.boundary.BaitSetListResult;
-import org.broadinstitute.sequel.boundary.DirectedPass;
-import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
+import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
 import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
@@ -149,6 +146,9 @@ public class ExomeExpressEndToEndTest {
                         "Pass " + projectPlan.getPass().getProjectInformation().getPassNumber());
                 Assert.assertNotNull(createResponse);
                 Assert.assertNotNull(createResponse.getTicketName());
+
+                //add jira issue to Project
+                projectPlan.addJiraTicket(labBatch.getJiraTicket());
             }
 
             // how do we wire up the lab batch and/or jira ticket to the plating request?
@@ -161,14 +161,14 @@ public class ExomeExpressEndToEndTest {
             //Test BSP Plating EXPORT
             //StartingSamples
             List<String> startingStockSamples = new ArrayList<String>();
-            startingStockSamples.add(BSPSampleExportTest.masterSample1);
-            startingStockSamples.add(BSPSampleExportTest.masterSample2);
-            BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
-            try {
-                bspExportEntityBuilder.runTest();
-            } catch (Exception e) {
-                Assert.fail("Failed in BSP export test " + e.getMessage());
+            List<Sample> passSamples = directedPass.getSampleDetailsInformation().getSample();
+            for (Sample passSample : passSamples) {
+                startingStockSamples.add(passSample.getBspSampleID());
             }
+
+            BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
+
+            bspExportEntityBuilder.runTest();
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
             Collection<Starter> starters = projectPlan.getStarters();
             Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();

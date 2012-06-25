@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.test.entity.bsp;
 
-import org.broadinstitute.sequel.boundary.squid.*;
+import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
