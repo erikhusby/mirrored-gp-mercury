@@ -15,6 +15,9 @@ import java.util.Calendar;
  */
 public class PassTestDataProducer {
 
+    //Test StartingSamples
+    public static final String masterSample1 = "SM-1111";
+    public static final String masterSample2 = "SM-2222";
 
     private static PassTestDataProducer instance;
 
@@ -137,10 +140,14 @@ public class PassTestDataProducer {
         SampleList sampleList = new SampleList();
         pass.setSampleDetailsInformation(sampleList);
         Sample sample = new Sample();
-        sample.setBspSampleID("SM-18CJ5");
+        //sample.setBspSampleID("SM-18CJ5");
+        sample.setBspSampleID(masterSample1);
         sample.setNote("this is a note on the sample");
-
         sampleList.getSample().add(sample);
+
+        Sample sample2 = new Sample();
+        sample.setBspSampleID(masterSample2);
+        sample.setNote("this is a note on the sample");
 
         return pass;
 
@@ -163,6 +170,7 @@ public class PassTestDataProducer {
         programPseudoDepthCoverageModel.setCoverageDesired(BigInteger.valueOf(32));
         coverageAndAnalysisInfo.setProgramPseudoDepthCoverageModel(programPseudoDepthCoverageModel);
 
+        directedPass.setExomeExpress(true);
         return directedPass;
     }
 
