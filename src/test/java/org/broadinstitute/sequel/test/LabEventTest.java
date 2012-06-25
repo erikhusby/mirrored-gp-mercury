@@ -1363,6 +1363,8 @@ public class LabEventTest {
         private final List<String> normCatchBarcodes;
         private final Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes;
 
+        private RackOfTubes denatureRack;
+
         public QtpEntityBuilder(WorkflowDescription workflowDescription, BettaLimsMessageFactory bettaLimsMessageFactory,
                 LabEventFactory labEventFactory, LabEventHandler labEventHandler, RackOfTubes normCatchRack,
                 String normCatchRackBarcode, List<String> normCatchBarcodes, Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes) {
@@ -1418,7 +1420,7 @@ public class LabEventTest {
             );
             labEventHandler.processEvent(denatureEntity, null);
             // asserts
-            final RackOfTubes denatureRack = (RackOfTubes) denatureEntity.getTargetLabVessels().iterator().next();
+            denatureRack = (RackOfTubes) denatureEntity.getTargetLabVessels().iterator().next();
             Set<SampleInstance> denaturedSampleInstances = denatureRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(denaturedSampleInstances.size(), NUM_POSITIONS_IN_RACK, "Wrong number of denatured samples");
 
@@ -1449,6 +1451,10 @@ public class LabEventTest {
             IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(illuminaFlowcell.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.LANE1).size(), NUM_POSITIONS_IN_RACK,
                     "Wrong number of samples in flowcell lane");
+        }
+
+        public RackOfTubes getDenatureRack() {
+            return denatureRack;
         }
     }
 

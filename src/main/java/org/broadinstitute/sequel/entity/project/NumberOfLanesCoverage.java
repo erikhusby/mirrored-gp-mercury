@@ -16,6 +16,11 @@ public class NumberOfLanesCoverage implements CoverageGoal {
 
     @Override
     public String coverageGoalToText() {
-        return numberOfLanes + " lanes";
+        return this.numberOfLanes + " lanes";
+    }
+
+    @Override
+    public String coverageGoalToParsableText() {
+        return String.valueOf(this.numberOfLanes);
     }
 }
