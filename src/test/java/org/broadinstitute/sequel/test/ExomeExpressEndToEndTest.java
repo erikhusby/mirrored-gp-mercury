@@ -17,6 +17,7 @@ import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.*;
+import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
@@ -226,6 +227,16 @@ public class ExomeExpressEndToEndTest {
 
             final SequelLibrary registerLibrary = RegistrationJaxbConverter.squidify(currEntry);
 
+            final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
+
+            int numStartersFromSampleInstances = 0;
+            for (SampleInstance sampleInstance : currEntry.getSampleInstances()) {
+                Assert.assertTrue(startersFromProjectPlan.contains(sampleInstance.getStartingSample()));
+                numStartersFromSampleInstances++;
+                Assert.assertEquals(projectPlan,sampleInstance.getSingleProjectPlan());
+            }
+
+            Assert.assertEquals(startersFromProjectPlan.size(),numStartersFromSampleInstances);
 
             registrationSOAPService.registerSequeLLibrary(registerLibrary);
 
