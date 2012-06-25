@@ -10,6 +10,13 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 public class CreateIssueRequest  {
 
+    /**
+     * We use a custom serializer here because custom fields are not
+     * instance portable.  In other words, the custom field names in a cloned
+     * dev instance of jira arent't the same as they are in production,
+     * so there's a bit more work here to make sure that tickets
+     * which have custom fields can be properly created in dev and prod.
+     */
     @JsonSerialize(using = CreateJiraIssueFieldsSerializer.class)
     public static class Fields {
 
@@ -68,15 +75,9 @@ public class CreateIssueRequest  {
         private Issuetype issuetype;
 
 
-
-        // todo custom json serialization that pays attention to createmeta fetched field
-        // ids.  have to vary this @ runtime because jira custom field ids are not instance portable
-
-        //
-
+        // todo arz make these client accessible
         private CustomField protocol = new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol");
 
-         // todo arz fixme
         private CustomField workRequestId = new CustomField(new CustomFieldDefinition("customfield_10011","Protocol",true),"test protocol");
 
 
