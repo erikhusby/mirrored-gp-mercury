@@ -102,12 +102,14 @@ public class WorkflowDescription {
         List<WorkflowTransition> workflowTransitions = this.mapNameToTransitionList.get(nextEventTypeName);
         Set<String> validPredecessorEventNames = new HashSet<String>();
         boolean start = false;
-        for (WorkflowTransition workflowTransition : workflowTransitions) {
-            if(workflowTransition.getFromState().getState().equals("Start Event")) {
-                start = true;
-            }
-            for (WorkflowTransition predecessor : workflowTransition.getFromState().getEntries()) {
-                validPredecessorEventNames.add(predecessor.getEventTypeName());
+        if (workflowTransitions != null) {
+            for (WorkflowTransition workflowTransition : workflowTransitions) {
+                if(workflowTransition.getFromState().getState().equals("Start Event")) {
+                    start = true;
+                }
+                for (WorkflowTransition predecessor : workflowTransition.getFromState().getEntries()) {
+                    validPredecessorEventNames.add(predecessor.getEventTypeName());
+                }
             }
         }
 

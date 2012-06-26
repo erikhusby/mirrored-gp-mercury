@@ -9,6 +9,7 @@ import org.broadinstitute.sequel.boundary.pmbridge.PMBridgeServiceStub;
 import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProject;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
+import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.pass.PassBatchUtil;
@@ -21,6 +22,7 @@ import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
 import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
@@ -67,7 +69,7 @@ public class ExomeExpressEndToEndTest {
     private PMBridgeService pmBridgeService = new PMBridgeServiceStub();
 
     // @Inject
-    private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
+    private JiraService jiraService = new DummyJiraService();
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
@@ -78,7 +80,7 @@ public class ExomeExpressEndToEndTest {
 
 
 
-    @Test(groups = {DATABASE_FREE}, enabled = false)
+    @Test(groups = {DATABASE_FREE}, enabled = true)
     public void testAll() throws Exception {
 
         DirectedPass directedPass = PassTestDataProducer.instance().produceDirectedPass();
@@ -181,6 +183,7 @@ public class ExomeExpressEndToEndTest {
             // (deck query for workflow)
             // deck sends message, check workflow
             LabEventFactory labEventFactory = new LabEventFactory();
+            labEventFactory.setPersonDAO(new PersonDAO());
             LabEventHandler labEventHandler = new LabEventHandler();
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();

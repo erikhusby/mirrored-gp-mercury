@@ -11,6 +11,11 @@ public class CreateIssueResponse implements Serializable {
     
     private String self;
 
+    public CreateIssueResponse(String id,String key) {
+        this.id = id;
+        this.key = key;
+    }
+
 
     public String getId() {
         return id;
