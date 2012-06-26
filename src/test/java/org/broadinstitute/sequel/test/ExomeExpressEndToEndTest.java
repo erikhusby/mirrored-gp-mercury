@@ -40,6 +40,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
@@ -237,8 +238,15 @@ public class ExomeExpressEndToEndTest {
             final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
 
             int numStartersFromSampleInstances = 0;
+            final Collection<String> aliquotsFromProjectPlan = new HashSet<String>();
+            for (Starter starter : projectPlan.getStarters()) {
+                final LabVessel aliquot = projectPlan.getAliquot(starter);
+                for (SampleInstance sampleInstance : aliquot.getSampleInstances()) {
+                    aliquotsFromProjectPlan.add(sampleInstance.getStartingSample().getLabel());
+                }
+            }
             for (SampleInstance sampleInstance : currEntry.getSampleInstances()) {
-                Assert.assertTrue(startersFromProjectPlan.contains(sampleInstance.getStartingSample()));
+                Assert.assertTrue(aliquotsFromProjectPlan.contains(sampleInstance.getStartingSample().getLabel()));
                 numStartersFromSampleInstances++;
                 Assert.assertEquals(projectPlan,sampleInstance.getSingleProjectPlan());
             }
