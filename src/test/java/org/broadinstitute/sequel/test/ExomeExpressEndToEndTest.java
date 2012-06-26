@@ -187,6 +187,11 @@ public class ExomeExpressEndToEndTest {
             LabEventHandler labEventHandler = new LabEventHandler();
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
+
+            for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
+                mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(),(TwoDBarcodedTube)stockToAliquotEntry.getValue());
+            }
+
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
                     projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     mapBarcodeToTube);//.invoke();
