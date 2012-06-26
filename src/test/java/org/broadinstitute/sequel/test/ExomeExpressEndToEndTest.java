@@ -86,7 +86,7 @@ public class ExomeExpressEndToEndTest {
 
 
 
-    @Test(groups = {DATABASE_FREE}, enabled = false)
+    @Test(groups = {DATABASE_FREE}, enabled = true)
     public void testAll() throws Exception {
 
         DirectedPass directedPass = PassTestDataProducer.instance().produceDirectedPass();
@@ -253,9 +253,9 @@ public class ExomeExpressEndToEndTest {
 
             Assert.assertEquals(startersFromProjectPlan.size(),numStartersFromSampleInstances);
 
-            registrationSOAPService.registerSequeLLibrary(registerLibrary);
+            //registrationSOAPService.registerSequeLLibrary(registerLibrary);
 
-            registrationSOAPService.registerForDesignation(registerLibrary.getLibraryName(), projectPlan, true);
+            //registrationSOAPService.registerForDesignation(registerLibrary.getLibraryName(), projectPlan, true);
 
 
 
