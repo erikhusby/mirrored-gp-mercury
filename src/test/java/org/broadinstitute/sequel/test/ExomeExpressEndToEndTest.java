@@ -1,6 +1,9 @@
 package org.broadinstitute.sequel.test;
 
-import org.broadinstitute.sequel.boundary.*;
+import org.broadinstitute.sequel.boundary.BaitSet;
+import org.broadinstitute.sequel.boundary.BaitSetListResult;
+import org.broadinstitute.sequel.boundary.DirectedPass;
+import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
 import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
@@ -14,7 +17,9 @@ import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.project.*;
+import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
@@ -22,9 +27,8 @@ import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
-import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
-import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
@@ -34,7 +38,9 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -68,7 +74,7 @@ public class ExomeExpressEndToEndTest {
     private PMBridgeService pmBridgeService = new PMBridgeServiceStub();
 
     // @Inject
-    private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
+    private JiraService jiraService = new DummyJiraService();
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
@@ -134,6 +140,7 @@ public class ExomeExpressEndToEndTest {
             PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new MockQuoteService(),baitsCache);
             projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.bpmn");
 
+
             // create batches for the pass.  todo add more samples to the pass.
             Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,2,"TESTBatch");
             Assert.assertFalse(labBatches.isEmpty());
@@ -166,12 +173,10 @@ public class ExomeExpressEndToEndTest {
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
             Collection<Starter> starters = projectPlan.getStarters();
             Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
             for (Starter starter : starters) {
                 LabVessel aliquot = projectPlan.getAliquot(starter);
                 Assert.assertNotNull(aliquot);
                 stockSampleAliquotMap.put(starter.getLabel(), aliquot);
-                mapBarcodeToTube.put(aliquot.getLabel(), (TwoDBarcodedTube) aliquot);
             }
 
             // factory to convert to entities
@@ -187,6 +192,12 @@ public class ExomeExpressEndToEndTest {
             labEventFactory.setPersonDAO(new PersonDAO());
             LabEventHandler labEventHandler = new LabEventHandler();
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
+
+            for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
+                mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(),(TwoDBarcodedTube)stockToAliquotEntry.getValue());
+            }
+
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
                     projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     mapBarcodeToTube);//.invoke();

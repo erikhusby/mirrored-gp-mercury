@@ -9,6 +9,7 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,7 +25,7 @@ public class DummyJiraService implements JiraService {
 
     @Override
     public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description) throws IOException {
-        throw new RuntimeException("I haven't been written yet.");
+        return new CreateIssueResponse("123",projectPrefix + "123");
     }
 
     @Override
@@ -39,6 +40,6 @@ public class DummyJiraService implements JiraService {
 
     @Override
     public List<CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project, CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
-        throw new RuntimeException("I haven't been written yet.");
+        return Collections.<CustomFieldDefinition>emptyList();
     }
 }
