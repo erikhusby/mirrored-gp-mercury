@@ -9,6 +9,7 @@ import org.broadinstitute.sequel.boundary.pmbridge.PMBridgeServiceStub;
 import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProject;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
+import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.pass.PassBatchUtil;
@@ -105,7 +106,7 @@ public class ExomeExpressEndToEndTest {
 
             //TODO SGM: change this to PassBackedProjectPlan
             //TODO MLC: tie in ResearchProject above
-            BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
+//            BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
             String runName = "theRun";
 
             //SGM:  This "Lane Number" is most likely not needed.  Retrieving Number of lanes from the Project Plan Details
@@ -131,7 +132,7 @@ public class ExomeExpressEndToEndTest {
             baitsCache.getBaitSetList().add(baitSet);
 
             PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new MockQuoteService(),baitsCache);
-
+            projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.bpmn");
 
             // create batches for the pass.  todo add more samples to the pass.
             Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,2,"TESTBatch");
@@ -165,10 +166,12 @@ public class ExomeExpressEndToEndTest {
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
             Collection<Starter> starters = projectPlan.getStarters();
             Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
+            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
             for (Starter starter : starters) {
                 LabVessel aliquot = projectPlan.getAliquot(starter);
                 Assert.assertNotNull(aliquot);
                 stockSampleAliquotMap.put(starter.getLabel(), aliquot);
+                mapBarcodeToTube.put(aliquot.getLabel(), (TwoDBarcodedTube) aliquot);
             }
 
             // factory to convert to entities
@@ -181,9 +184,9 @@ public class ExomeExpressEndToEndTest {
             // (deck query for workflow)
             // deck sends message, check workflow
             LabEventFactory labEventFactory = new LabEventFactory();
+            labEventFactory.setPersonDAO(new PersonDAO());
             LabEventHandler labEventHandler = new LabEventHandler();
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
                     projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     mapBarcodeToTube);//.invoke();
@@ -195,7 +198,7 @@ public class ExomeExpressEndToEndTest {
             LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LabEventTest.LibraryConstructionEntityBuilder(
                     projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                    shearingEntityBuilder.getShearingPlate()).invoke();
+                    shearingEntityBuilder.getShearingPlate(), mapBarcodeToTube.size()).invoke();
 
             LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new LabEventTest.HybridSelectionEntityBuilder(
                     projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,

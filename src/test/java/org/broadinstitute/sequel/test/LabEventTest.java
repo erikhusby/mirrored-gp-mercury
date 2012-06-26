@@ -13,14 +13,16 @@ import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
-import org.broadinstitute.sequel.control.workflow.WorkflowParser;
 import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.project.*;
+import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
 import org.broadinstitute.sequel.entity.reagent.GenericReagent;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndex;
@@ -28,7 +30,16 @@ import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.sequel.entity.run.IlluminaFlowcell;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
-import org.broadinstitute.sequel.entity.vessel.*;
+import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.vessel.PlateWell;
+import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
+import org.broadinstitute.sequel.entity.vessel.SBSSection;
+import org.broadinstitute.sequel.entity.vessel.StaticPlate;
+import org.broadinstitute.sequel.entity.vessel.StripTube;
+import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.sequel.entity.vessel.VesselContainer;
+import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
@@ -36,7 +47,15 @@ import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -84,12 +103,8 @@ public class LabEventTest {
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("HS", billableEvents,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        workflowDescription.initFromFile("HybridSelectionV2.bpmn");
         BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
-
-        WorkflowParser workflowParser = new WorkflowParser(
-                Thread.currentThread().getContextClassLoader().getResourceAsStream("HybridSelectionV2.bpmn"));
-        workflowDescription.setStartState(workflowParser.getStartState());
-        workflowDescription.setMapNameToTransitionList(workflowParser.getMapNameToTransitionList());
 
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
@@ -116,7 +131,7 @@ public class LabEventTest {
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
                 workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
                 shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                shearingEntityBuilder.getShearingPlate()).invoke();
+                shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
 
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new HybridSelectionEntityBuilder(
                 workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
@@ -151,12 +166,8 @@ public class LabEventTest {
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        workflowDescription.initFromFile("WholeGenomeShotgun.bpmn");
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
-
-        WorkflowParser workflowParser = new WorkflowParser(
-                Thread.currentThread().getContextClassLoader().getResourceAsStream("WholeGenomeShotgun.bpmn"));
-        workflowDescription.setStartState(workflowParser.getStartState());
-        workflowDescription.setMapNameToTransitionList(workflowParser.getMapNameToTransitionList());
 
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
@@ -185,7 +196,7 @@ public class LabEventTest {
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
                 workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
                 shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                shearingEntityBuilder.getShearingPlate()).invoke();
+                shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
 
         List<String> sageUnloadTubeBarcodes = new ArrayList<String>();
         for(int i = 1; i <= NUM_POSITIONS_IN_RACK; i++) {
@@ -634,7 +645,7 @@ public class LabEventTest {
             // asserts
             shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(shearingPlate.getSampleInstances().size(),
-                    NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
+                    mapBarcodeToTube.size(), "Wrong number of sample instances");
 
             // PostShearingTransferCleanup
             validateWorkflow(workflowDescription, "PostShearingTransferCleanup", shearingPlate);
@@ -644,10 +655,11 @@ public class LabEventTest {
             // asserts
             shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(shearingCleanupPlate.getSampleInstances().size(),
-                    NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
-            Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A08);
+                    mapBarcodeToTube.size(), "Wrong number of sample instances");
+            Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
-            Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(), "SM-8.aliquot", "Wrong sample");
+            Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(),
+                    mapBarcodeToTube.values().iterator().next().getSampleInstances().iterator().next().getStartingSample().getSampleName(), "Wrong sample");
 
             // ShearingQC
             validateWorkflow(workflowDescription, "ShearingQC", shearingCleanupPlate);
@@ -747,10 +759,11 @@ public class LabEventTest {
         private String pondRegRackBarcode;
         private List<String> pondRegTubeBarcodes;
         private RackOfTubes pondRegRack;
+        private int numSamples;
 
         public LibraryConstructionEntityBuilder(WorkflowDescription workflowDescription, BettaLimsMessageFactory bettaLimsMessageFactory,
                 LabEventFactory labEventFactory, LabEventHandler labEventHandler, StaticPlate shearingCleanupPlate,
-                String shearCleanPlateBarcode, StaticPlate shearingPlate) {
+                String shearCleanPlateBarcode, StaticPlate shearingPlate, int numSamples) {
             this.workflowDescription = workflowDescription;
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
             this.labEventFactory = labEventFactory;
@@ -758,6 +771,7 @@ public class LabEventTest {
             this.shearingCleanupPlate = shearingCleanupPlate;
             this.shearCleanPlateBarcode = shearCleanPlateBarcode;
             this.shearingPlate = shearingPlate;
+            this.numSamples = numSamples;
         }
 
         public List<String> getPondRegTubeBarcodes() {
@@ -774,7 +788,7 @@ public class LabEventTest {
 
         public LibraryConstructionEntityBuilder invoke() {
             LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LibraryConstructionJaxbBuilder(bettaLimsMessageFactory, "",
-                    shearCleanPlateBarcode, "IndexPlate").invoke();
+                    shearCleanPlateBarcode, "IndexPlate", numSamples).invoke();
             pondRegRackBarcode = libraryConstructionJaxbBuilder.getPondRegRackBarcode();
             pondRegTubeBarcodes = libraryConstructionJaxbBuilder.getPondRegTubeBarcodes();
 
@@ -845,10 +859,11 @@ public class LabEventTest {
             // asserts
             pondRegRack = (RackOfTubes) pondRegistrationEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(pondRegRack.getSampleInstances().size(),
-                    NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
-            Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A08);
+                    shearingPlate.getSampleInstances().size(), "Wrong number of sample instances");
+            Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
-            Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(), "SM-8.aliquot", "Wrong sample");
+            Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(),
+                    shearingPlate.getSampleInstances().iterator().next().getStartingSample().getSampleName(), "Wrong sample");
             return this;
         }
     }
@@ -908,13 +923,15 @@ public class LabEventTest {
         private PlateTransferEventType pondCleanupJaxb;
         private PlateTransferEventType pondRegistrationJaxb;
         private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+        private int numSamples;
 
         public LibraryConstructionJaxbBuilder(BettaLimsMessageFactory bettaLimsMessageFactory, String testPrefix,
-                String shearCleanPlateBarcode, String indexPlateBarcode) {
+                String shearCleanPlateBarcode, String indexPlateBarcode, int numSamples) {
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
             this.testPrefix = testPrefix;
             this.shearCleanPlateBarcode = shearCleanPlateBarcode;
             this.indexPlateBarcode = indexPlateBarcode;
+            this.numSamples = numSamples;
         }
 
         public PlateEventType getEndRepairJaxb() {
@@ -1018,7 +1035,7 @@ public class LabEventTest {
 
             pondRegRackBarcode = "PondReg" + testPrefix;
             pondRegTubeBarcodes = new ArrayList<String>();
-            for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
+            for(int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
                 pondRegTubeBarcodes.add("PondReg" + testPrefix + rackPosition);
             }
             pondRegistrationJaxb = bettaLimsMessageFactory.buildPlateToRack(
@@ -1093,8 +1110,8 @@ public class LabEventTest {
             labEventHandler.processEvent(preSelPoolEntity2, null);
             //asserts
             Assert.assertEquals(preSelPoolRack.getSampleInstances().size(),
-                    NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
-            Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A08);
+                    pondRegRack.getSampleInstances().size(), "Wrong number of sample instances");
+            Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInPreSelPoolWell.size(), 2, "Wrong number of sample instances in position");
 
             // Hybridization
@@ -1336,7 +1353,7 @@ public class LabEventTest {
             messageList.add(bettaLIMSMessage10);
 
             normCatchBarcodes = new ArrayList<String>();
-            for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK / 2; rackPosition++) {
+            for(int rackPosition = 1; rackPosition <= pondRegTubeBarcodes.size() / 2; rackPosition++) {
                 normCatchBarcodes.add("NormCatch" + testPrefix + rackPosition);
             }
             normCatchRackBarcode = "NormCatchRack";
@@ -1404,7 +1421,7 @@ public class LabEventTest {
             // asserts
             final RackOfTubes poolingRack = (RackOfTubes) poolingEntity.getTargetLabVessels().iterator().next();
             Set<SampleInstance> pooledSampleInstances = poolingRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
-            Assert.assertEquals(pooledSampleInstances.size(), NUM_POSITIONS_IN_RACK, "Wrong number of pooled samples");
+            Assert.assertEquals(pooledSampleInstances.size(), normCatchBarcodes.size() * 2, "Wrong number of pooled samples");
 
             // DenatureTransfer
             validateWorkflow(workflowDescription, "DenatureTransfer", poolingRack);
@@ -1422,7 +1439,7 @@ public class LabEventTest {
             // asserts
             denatureRack = (RackOfTubes) denatureEntity.getTargetLabVessels().iterator().next();
             Set<SampleInstance> denaturedSampleInstances = denatureRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
-            Assert.assertEquals(denaturedSampleInstances.size(), NUM_POSITIONS_IN_RACK, "Wrong number of denatured samples");
+            Assert.assertEquals(denaturedSampleInstances.size(), normCatchBarcodes.size() * 2, "Wrong number of denatured samples");
 
             // StripTubeBTransfer
             validateWorkflow(workflowDescription, "StripTubeBTransfer", denatureRack);
@@ -1440,8 +1457,8 @@ public class LabEventTest {
             labEventHandler.processEvent(stripTubeTransferEntity, null);
             // asserts
             StripTube stripTube = (StripTube) stripTubeTransferEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(stripTube.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.TUBE1).size(), NUM_POSITIONS_IN_RACK,
-                    "Wrong number of samples in strip tube well");
+            Assert.assertEquals(stripTube.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.TUBE1).size(),
+                    normCatchBarcodes.size() * 2, "Wrong number of samples in strip tube well");
 
             // FlowcellTransfer
             validateWorkflow(workflowDescription, "FlowcellTransfer", stripTube);
@@ -1449,8 +1466,8 @@ public class LabEventTest {
             labEventHandler.processEvent(flowcellTransferEntity, null);
             //asserts
             IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(illuminaFlowcell.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.LANE1).size(), NUM_POSITIONS_IN_RACK,
-                    "Wrong number of samples in flowcell lane");
+            Assert.assertEquals(illuminaFlowcell.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.LANE1).size(),
+                    normCatchBarcodes.size() * 2, "Wrong number of samples in flowcell lane");
         }
 
         public RackOfTubes getDenatureRack() {

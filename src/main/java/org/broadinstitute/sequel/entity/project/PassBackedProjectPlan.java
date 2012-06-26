@@ -3,12 +3,12 @@ package org.broadinstitute.sequel.entity.project;
 import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
+import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingTechnology;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.quote.Quote;
-import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
+import org.broadinstitute.sequel.infrastructure.quote.*;
 
 import javax.inject.Inject;
 import java.math.BigInteger;
@@ -90,7 +90,8 @@ public class PassBackedProjectPlan implements ProjectPlan {
     private void initWorkflow() {
         if (pass instanceof  DirectedPass) {
             DirectedPass hsPass = (DirectedPass)pass;
-            workflowDescription =  new WorkflowDescription("Hybrid Selection",null,null);
+            workflowDescription =  new WorkflowDescription("Hybrid Selection",
+                    new HashMap<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem>(), null);
         }
     }
 

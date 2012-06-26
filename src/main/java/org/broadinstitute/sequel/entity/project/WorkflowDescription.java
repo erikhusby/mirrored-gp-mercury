@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.control.workflow.WorkflowParser;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -42,6 +43,7 @@ public class WorkflowDescription {
     // todo jmt fix this
     @Transient
     private Map<String, List<WorkflowTransition>> mapNameToTransitionList = new HashMap<String, List<WorkflowTransition>>();
+
     // todo jmt fix this
     @Transient
     private WorkflowState startState;
@@ -100,6 +102,9 @@ public class WorkflowDescription {
     public List<String> validate(List<LabVessel> labVessels, String nextEventTypeName) {
         List<String> errors = new ArrayList<String>();
         List<WorkflowTransition> workflowTransitions = this.mapNameToTransitionList.get(nextEventTypeName);
+        if(workflowTransitions == null) {
+            throw new RuntimeException("Failed to find transitions for event " + nextEventTypeName);
+        }
         Set<String> validPredecessorEventNames = new HashSet<String>();
         boolean start = false;
         for (WorkflowTransition workflowTransition : workflowTransitions) {
@@ -173,5 +178,12 @@ public class WorkflowDescription {
     @Override
     public int hashCode() {
         return workflowName != null ? workflowName.hashCode() : 0;
+    }
+
+    public void initFromFile(String filename) {
+        WorkflowParser workflowParser = new WorkflowParser(
+                Thread.currentThread().getContextClassLoader().getResourceAsStream(filename));
+        this.startState = workflowParser.getStartState();
+        this.mapNameToTransitionList = workflowParser.getMapNameToTransitionList();
     }
 }

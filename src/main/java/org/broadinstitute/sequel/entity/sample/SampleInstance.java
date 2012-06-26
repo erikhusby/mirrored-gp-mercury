@@ -112,7 +112,7 @@ public class SampleInstance  {
 
     private Collection<ReadBucket> readBuckets = new HashSet<ReadBucket>();
 
-    private MolecularState molecularState = new MolecularState();
+    private MolecularState molecularState;
 
     private List<Reagent> reagents = new ArrayList<Reagent>();
 
@@ -208,6 +208,10 @@ public class SampleInstance  {
      */
     public MolecularState getMolecularState() {
         return molecularState;
+    }
+
+    public void setMolecularState(MolecularState molecularState) {
+        this.molecularState = molecularState;
     }
 
     /**

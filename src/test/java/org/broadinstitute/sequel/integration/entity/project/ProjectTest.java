@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
@@ -120,7 +121,7 @@ public class ProjectTest extends Arquillian {
         assertEquals(ReagentDesign.REAGENT_TYPE.BAIT,fetchedDesign.getReagentType());
         assertEquals(bait.getDesignName(),fetchedDesign.getDesignName());
 
-        Collection<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        Collection<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
 
         for (Starter vessel : project.getAllStarters()) {
             sampleInstances.addAll(vessel.getSampleInstances());

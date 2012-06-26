@@ -14,8 +14,10 @@ import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -34,7 +36,7 @@ public class RegistrationJaxbConverter {
         final SequelLibrary registerLibrary = new SequelLibrary();
         registerLibrary.setLibraryName(tubeIn.getLabCentricName());
 
-        List<MolecularState.STRANDEDNESS> strandednessesState = new ArrayList<MolecularState.STRANDEDNESS>();
+        Set<MolecularState.STRANDEDNESS> strandednessesState = new HashSet<MolecularState.STRANDEDNESS>();
 
         for(SampleInstance currSample:tubeIn.getSampleInstances()) {
             final RegistrationSample sampleInstance = new RegistrationSample();
@@ -93,7 +95,7 @@ public class RegistrationJaxbConverter {
         }
 
         registerLibrary.setSingleStrandInd(MolecularState.STRANDEDNESS.SINGLE_STRANDED.equals(
-                strandednessesState.get(0)));
+                strandednessesState.iterator().next()));
 
         return registerLibrary;
     }

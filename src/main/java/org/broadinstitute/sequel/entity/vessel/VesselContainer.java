@@ -4,7 +4,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.labevent.CherryPickTransfer;
+import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -23,6 +25,8 @@ import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,7 +49,8 @@ public class VesselContainer<T extends LabVessel> {
     @JoinTable(name = "lv_map_position_to_vessel")
     @MapKeyEnumerated(EnumType.STRING)
     @MapKeyColumn(name = "mapkey")
-    private final Map<VesselPosition, T> mapPositionToVessel = new HashMap<VesselPosition, T>();
+    // todo jmt get Hibernate to sort this
+    private final Map<VesselPosition, T> mapPositionToVessel = new LinkedHashMap<VesselPosition, T>();
 
     @OneToMany(mappedBy = "sourceVessel")
     private Set<SectionTransfer> sectionTransfersFrom = new HashSet<SectionTransfer>();
@@ -153,9 +158,15 @@ public class VesselContainer<T extends LabVessel> {
 
     static class SampleInstanceCriteria implements TransferTraverserCriteria {
 
-        private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        private Set<Reagent> reagents = new HashSet<Reagent>();
+        /** Sample instances encountered during this traversal */
+        private Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
+        /** Reagents encountered during this traversal */
+        private Set<Reagent> reagents = new LinkedHashSet<Reagent>();
+        /** Ensure that reagents are applied only once */
         private boolean reagentsApplied = false;
+        /** The first lab event encountered */
+        private LabEvent labEvent;
+
         @Override
         public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             // todo jmt this class shouldn't have to worry about plate wells that have no informatics contents
@@ -170,6 +181,9 @@ public class VesselContainer<T extends LabVessel> {
                     applyProjectPlanOverrideIfPresent(labEvent, sampleInstances);
                 }
             }
+            if(labEvent != null && this.labEvent == null) {
+                this.labEvent = labEvent;
+            }
             return TraversalControl.ContinueTraversing;
         }
 
@@ -179,6 +193,16 @@ public class VesselContainer<T extends LabVessel> {
                 for (Reagent reagent : reagents) {
                     for (SampleInstance sampleInstance : sampleInstances) {
                         sampleInstance.addReagent(reagent);
+                    }
+                }
+                if (labEvent != null) {
+                    for (SampleInstance sampleInstance : sampleInstances) {
+                        MolecularState molecularState = sampleInstance.getMolecularState();
+                        if(molecularState == null) {
+                            LabEventType labEventType = ((GenericLabEvent) labEvent).getLabEventType();
+                            molecularState = new MolecularState(labEventType.getNucleicAcidType(), labEventType.getTargetStrand());
+                        }
+                        sampleInstance.setMolecularState(molecularState);
                     }
                 }
             }
@@ -293,7 +317,7 @@ public class VesselContainer<T extends LabVessel> {
 
     @Transient
     public Set<SampleInstance> getSampleInstances() {
-        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
         for (VesselPosition position : this.mapPositionToVessel.keySet()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position));
         }
