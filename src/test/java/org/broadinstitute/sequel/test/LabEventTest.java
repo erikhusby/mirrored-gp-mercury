@@ -1421,7 +1421,7 @@ public class LabEventTest {
             // asserts
             final RackOfTubes poolingRack = (RackOfTubes) poolingEntity.getTargetLabVessels().iterator().next();
             Set<SampleInstance> pooledSampleInstances = poolingRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
-            Assert.assertEquals(pooledSampleInstances.size(), normCatchBarcodes.size() * 2, "Wrong number of pooled samples");
+            Assert.assertEquals(pooledSampleInstances.size(), normCatchRack.getSampleInstances().size(), "Wrong number of pooled samples");
 
             // DenatureTransfer
             validateWorkflow(workflowDescription, "DenatureTransfer", poolingRack);
@@ -1439,7 +1439,7 @@ public class LabEventTest {
             // asserts
             denatureRack = (RackOfTubes) denatureEntity.getTargetLabVessels().iterator().next();
             Set<SampleInstance> denaturedSampleInstances = denatureRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
-            Assert.assertEquals(denaturedSampleInstances.size(), normCatchBarcodes.size() * 2, "Wrong number of denatured samples");
+            Assert.assertEquals(denaturedSampleInstances.size(), normCatchRack.getSampleInstances().size(), "Wrong number of denatured samples");
 
             // StripTubeBTransfer
             validateWorkflow(workflowDescription, "StripTubeBTransfer", denatureRack);
@@ -1458,7 +1458,7 @@ public class LabEventTest {
             // asserts
             StripTube stripTube = (StripTube) stripTubeTransferEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(stripTube.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.TUBE1).size(),
-                    normCatchBarcodes.size() * 2, "Wrong number of samples in strip tube well");
+                    normCatchRack.getSampleInstances().size(), "Wrong number of samples in strip tube well");
 
             // FlowcellTransfer
             validateWorkflow(workflowDescription, "FlowcellTransfer", stripTube);
@@ -1467,7 +1467,7 @@ public class LabEventTest {
             //asserts
             IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(illuminaFlowcell.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.LANE1).size(),
-                    normCatchBarcodes.size() * 2, "Wrong number of samples in flowcell lane");
+                    normCatchRack.getSampleInstances().size(), "Wrong number of samples in flowcell lane");
         }
 
         public RackOfTubes getDenatureRack() {

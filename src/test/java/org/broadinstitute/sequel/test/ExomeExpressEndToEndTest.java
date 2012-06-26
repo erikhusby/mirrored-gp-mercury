@@ -205,13 +205,13 @@ public class ExomeExpressEndToEndTest {
                     libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
-            LabEventTest.QtpEntityBuilder capturedBuilder = new LabEventTest.QtpEntityBuilder(projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
+            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(projectPlan.getWorkflowDescription(),
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(), hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes());
+            qtpEntityBuilder.invoke();
 
-            capturedBuilder.invoke();
-
-            RackOfTubes poolingResult = capturedBuilder.getDenatureRack();
+            RackOfTubes poolingResult = qtpEntityBuilder.getDenatureRack();
 
             // LC metrics - upload page?
             // LabVessel.addMetric?
