@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.boundary.BaitSetListResult;
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
+import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPServiceStub;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
 import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
 import org.broadinstitute.sequel.boundary.pmbridge.PMBridgeService;
@@ -37,7 +38,6 @@ import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,8 +68,8 @@ public class ExomeExpressEndToEndTest {
     // PassService passService = new PassServiceStub();
 
 
-    @Inject
-    LibraryRegistrationSOAPService registrationSOAPService;
+//    @Inject
+    LibraryRegistrationSOAPService registrationSOAPService = new LibraryRegistrationSOAPServiceStub();
 
     // @Inject
     private PMBridgeService pmBridgeService = new PMBridgeServiceStub();
@@ -251,11 +251,11 @@ public class ExomeExpressEndToEndTest {
                 Assert.assertEquals(projectPlan,sampleInstance.getSingleProjectPlan());
             }
 
-            Assert.assertEquals(startersFromProjectPlan.size(),numStartersFromSampleInstances);
+            Assert.assertEquals(startersFromProjectPlan.size(), numStartersFromSampleInstances);
 
-            //registrationSOAPService.registerSequeLLibrary(registerLibrary);
+            registrationSOAPService.registerSequeLLibrary(registerLibrary);
 
-            //registrationSOAPService.registerForDesignation(registerLibrary.getLibraryName(), projectPlan, true);
+            registrationSOAPService.registerForDesignation(registerLibrary.getLibraryName(), projectPlan, true);
 
 
 
