@@ -1,11 +1,11 @@
 package org.broadinstitute.sequel.boundary.squid;
 
 
-import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
-import org.broadinstitute.sequel.integration.DeploymentBuilder;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.apache.commons.logging.Log;
+import org.broadinstitute.sequel.control.pass.PassService;
+import org.broadinstitute.sequel.infrastructure.deployment.TestInstance;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -14,27 +14,32 @@ import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.URL;
 
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
- *
- * Integration test of a SequeL client consuming a Squid webservice.
- *
+ * External integration test to connect to Squid's PASS related webservices
  */
-public class SquidSOAPTest extends Arquillian {
-
-    @Deployment
-    public static WebArchive buildSequelWar() {
-        return DeploymentBuilder.buildSequelWar();
-    }
+public class SquidSOAPTest extends ContainerTest {
 
     @Inject
-    private SquidConfiguration squidConfiguration;
+    @TestInstance
+    private SquidConnectionParameters squidConnectionParameters;
+
+
+    @Inject
+    @TestInstance
+    private PassService passService;
+
+
+    @Inject
+    private Log log;
+
 
     private SquidTopicPortype getPMBridgeServicePort() throws Exception {
         String namespace = "urn:SquidTopic";
         QName serviceName = new QName(namespace, "SquidTopicService");
 
-        String wsdlURL = squidConfiguration.getBaseURL() + "services/SquidTopicService?WSDL";
+        String wsdlURL = squidConnectionParameters.getBaseUrl() + "/services/SquidTopicService?WSDL";
         URL url = new URL(wsdlURL);
 
         Service service = Service.create(url, serviceName);
@@ -43,13 +48,30 @@ public class SquidSOAPTest extends Arquillian {
     }
 
 
-    @Test
+    @Test(groups = {EXTERNAL_INTEGRATION})
     public void smokeTest() throws Exception {
+
+        log.info("In the smokeTest!");
 
         final SquidTopicPortype pmBridgeServicePort = getPMBridgeServicePort();
         String ret = pmBridgeServicePort.getGreeting();
-        Assert.assertEquals("Hello SquidTopic!", ret);
 
+        log.info("ret is " + ret);
+
+        Assert.assertEquals(ret, "Hello SquidTopic!");
+
+        log.info("Leaving the smokeTest");
+
+    }
+
+
+    @Test(groups = {EXTERNAL_INTEGRATION})
+    public void serviceTest() {
+
+        // this is actually the one method we can't do since SequeL does not proxy this
+        // Assert.assertEquals(passService.getGreeting(), "Hello SquidTopic!");
+
+        Assert.assertNotNull(passService.searchPasses());
     }
 
 }

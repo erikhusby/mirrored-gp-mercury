@@ -16,6 +16,7 @@ import javax.persistence.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 @Entity
 @NamedQueries({
@@ -108,9 +109,13 @@ public class TwoDBarcodedTube extends LabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
 
-        if (startingSample != null) {
+        if (startingSample == null) {
+            for (VesselContainer<?> vesselContainer : this.getContainers()) {
+                sampleInstances.addAll(vesselContainer.getSampleInstancesAtPosition(vesselContainer.getPositionOfVessel(this)));
+            }
+        } else {
             sampleInstances = startingSample.getSampleInstances();
         }
         return sampleInstances;

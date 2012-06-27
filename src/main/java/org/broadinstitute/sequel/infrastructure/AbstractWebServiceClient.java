@@ -1,9 +1,8 @@
-package org.broadinstitute.sequel.infrastructure.squid;
-
-import org.broadinstitute.sequel.infrastructure.common.AbstractGenericsClass;
+package org.broadinstitute.sequel.infrastructure;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
+import java.lang.reflect.ParameterizedType;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -22,15 +21,12 @@ import java.net.URL;
  *         Date: 6/22/12
  *         Time: 1:35 PM
  */
-public abstract class AbstractSquidWSConnector<T> extends AbstractGenericsClass<T> {
+public abstract class AbstractWebServiceClient<T> {
 
-    private SquidConfiguration squidConfiguration = new SquidConfigurationJNDIProfileDrivenImpl();
+    private T servicePort;
 
-    private T squidServicePort;
 
-    private String nameSpace;
-    private String serviceName;
-    private String serviceWsdlLocation;
+    protected abstract String getBaseUrl();
 
 
     /**
@@ -53,14 +49,6 @@ public abstract class AbstractSquidWSConnector<T> extends AbstractGenericsClass<
      */
     protected abstract String getWsdlLocation();
 
-
-
-    protected AbstractSquidWSConnector() {
-        nameSpace = getNameSpace();
-        serviceName = getServiceName();
-        serviceWsdlLocation = getWsdlLocation();
-    }
-
     /**
      *
      * squidCall gives a client access to a Port type instance {@code T} defined by the Concrete class of
@@ -68,10 +56,10 @@ public abstract class AbstractSquidWSConnector<T> extends AbstractGenericsClass<
      *
      * @return An instance of port type {@code T}.
      */
-    public T squidCall() {
+    public T wsCall() {
 
         initializePort();
-        return squidServicePort;
+        return servicePort;
     }
 
     /**
@@ -80,11 +68,11 @@ public abstract class AbstractSquidWSConnector<T> extends AbstractGenericsClass<
      * connection parameters defined by the concrete implementation
      */
     private void initializePort() {
-        if (squidServicePort == null) {
-            String namespace = this.nameSpace;
-            QName serviceName = new QName(namespace, this.serviceName);
+        if (servicePort == null) {
+            String namespace = getNameSpace();
+            QName serviceName = new QName(namespace, getServiceName());
 
-            String wsdlURL = squidConfiguration.getBaseURL() + this.serviceWsdlLocation;
+            String wsdlURL = getBaseUrl() + getWsdlLocation();
 
             URL url;
             try {
@@ -95,7 +83,10 @@ public abstract class AbstractSquidWSConnector<T> extends AbstractGenericsClass<
             }
 
             Service service = Service.create(url, serviceName);
-            squidServicePort = service.getPort(serviceName, getParameterClass());
+
+            ParameterizedType parameterizedType = (ParameterizedType) getClass().getGenericSuperclass();
+            Class<T> typeArgument = (Class<T>) parameterizedType.getActualTypeArguments()[0];
+            servicePort = service.getPort(serviceName, typeArgument);
         }
     }
 

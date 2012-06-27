@@ -1,38 +1,36 @@
 package org.broadinstitute.sequel.boundary.designation;
 
+import org.broadinstitute.sequel.boundary.squid.LibraryRegistrationPortType;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.entity.project.NumberOfLanesCoverage;
 import org.broadinstitute.sequel.entity.project.PairedReadCoverage;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
-import org.broadinstitute.sequel.infrastructure.squid.LibraryRegistrationSquidWSConnector;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConfiguration;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConfigurationJNDIProfileDrivenImpl;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
+import org.broadinstitute.sequel.infrastructure.squid.SquidWebServiceClient;
 
 import javax.ejb.Stateless;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
-import javax.xml.namespace.QName;
-import javax.xml.ws.Service;
-import java.net.MalformedURLException;
-import java.net.URL;
+
 
 /**
  * @author Scott Matthews
  *         Date: 6/20/12
  *         Time: 4:30 PM
  */
+
 @Default
 @Stateless
-public class LibraryRegistrationSOAPService{
+public class LibraryRegistrationSOAPService extends SquidWebServiceClient<LibraryRegistrationPortType> {
+
 
     @Inject
-    LibraryRegistrationSquidWSConnector wsConnector;
-
+    private SquidConnectionParameters squidConnectionParameters;
 
 
     public void registerSequeLLibrary(SequelLibrary registrationContextIn) {
-        this.wsConnector.squidCall().registerSequeLLibrary(registrationContextIn);
+        squidCall().registerSequeLLibrary(registrationContextIn);
     }
 
     public void registerForDesignation(String libraryName, PassBackedProjectPlan projectPlanIn,
@@ -49,6 +47,26 @@ public class LibraryRegistrationSOAPService{
             }
         }
 
-        this.wsConnector.squidCall().registerForDesignation(libraryName, lanes, readLength, needsControlLane);
+        squidCall().registerForDesignation(libraryName, lanes, readLength, needsControlLane);
+    }
+
+    @Override
+    protected SquidConnectionParameters getSquidConnectionParameters() {
+        return squidConnectionParameters;
+    }
+
+    @Override
+    protected String getNameSpace() {
+        return "urn:ExtLibraryRegistration";
+    }
+
+    @Override
+    protected String getServiceName() {
+        return "ExtLibraryRegistrationService";
+    }
+
+    @Override
+    protected String getWsdlLocation() {
+        return "/services/ExtLibraryRegistrationService?WSDL";
     }
 }

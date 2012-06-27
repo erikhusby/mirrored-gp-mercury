@@ -7,7 +7,10 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.ClientFilter;
 import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProject;
 import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProjectsResult;
+import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
+import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 import org.broadinstitute.sequel.infrastructure.pmbridge.PMBridgeConnectionParameters;
+import org.broadinstitute.sequel.infrastructure.pmbridge.PMBridgeConnectionParametersProducer;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -15,12 +18,33 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
 import java.util.List;
 
+@Impl
 public class PMBridgeServiceImpl implements PMBridgeService {
 
     @Inject
     private PMBridgeConnectionParameters connectionParameters;
 
+
     private Client client;
+
+    /**
+     * Managed beans must have a no-arg constructor or a constructor annotated as @Initializer
+     */
+    public PMBridgeServiceImpl() {}
+
+
+    /**
+     * This constructor is called from the instance-specific producer methods via new(), so connectionParameters
+     * will not be injected above
+     *
+     * @param deployment Deployment for which to create instance
+     */
+    public PMBridgeServiceImpl(Deployment deployment) {
+
+        connectionParameters = PMBridgeConnectionParametersProducer.produce(deployment);
+
+    }
+
 
     private Client getClient() {
 
@@ -48,6 +72,8 @@ public class PMBridgeServiceImpl implements PMBridgeService {
     }
 
 
+
+
     @Override
     public ResearchProject getResearchProjectByID(String id) {
         if (id == null)
@@ -57,7 +83,7 @@ public class PMBridgeServiceImpl implements PMBridgeService {
 
             Client client = getClient();
 
-            WebResource resource = client.resource(connectionParameters.getUrl() + "/ResearchProjectsDataServlet");
+            WebResource resource = client.resource(connectionParameters.getBaseUrl() + "/ResearchProjectsDataServlet");
 
             ResearchProjectsResult result = resource.accept(MediaType.APPLICATION_XML).get(ResearchProjectsResult.class);
 
@@ -68,7 +94,7 @@ public class PMBridgeServiceImpl implements PMBridgeService {
                 throw new ResearchProjectNotFoundException("No results!");
 
             for (ResearchProject rp : result.getResearchProjects())
-                if (id.equals(rp.getId()))
+                if (id.equals("" + rp.getId()))
                     return rp;
 
         } catch (UniformInterfaceException e) {

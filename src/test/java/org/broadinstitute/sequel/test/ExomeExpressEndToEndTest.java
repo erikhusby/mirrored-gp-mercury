@@ -1,6 +1,9 @@
 package org.broadinstitute.sequel.test;
 
-import org.broadinstitute.sequel.boundary.*;
+import org.broadinstitute.sequel.boundary.BaitSet;
+import org.broadinstitute.sequel.boundary.BaitSetListResult;
+import org.broadinstitute.sequel.boundary.DirectedPass;
+import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
 import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
@@ -9,11 +12,14 @@ import org.broadinstitute.sequel.boundary.pmbridge.PMBridgeServiceStub;
 import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProject;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
+import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.project.*;
+import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
@@ -21,9 +27,8 @@ import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
-import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
-import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
@@ -33,7 +38,10 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -67,7 +75,7 @@ public class ExomeExpressEndToEndTest {
     private PMBridgeService pmBridgeService = new PMBridgeServiceStub();
 
     // @Inject
-    private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
+    private JiraService jiraService = new DummyJiraService();
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
@@ -78,7 +86,7 @@ public class ExomeExpressEndToEndTest {
 
 
 
-    @Test(groups = {DATABASE_FREE}, enabled = false)
+    @Test(groups = {DATABASE_FREE}, enabled = true)
     public void testAll() throws Exception {
 
         DirectedPass directedPass = PassTestDataProducer.instance().produceDirectedPass();
@@ -105,7 +113,7 @@ public class ExomeExpressEndToEndTest {
 
             //TODO SGM: change this to PassBackedProjectPlan
             //TODO MLC: tie in ResearchProject above
-            BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
+//            BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
             String runName = "theRun";
 
             //SGM:  This "Lane Number" is most likely not needed.  Retrieving Number of lanes from the Project Plan Details
@@ -131,10 +139,11 @@ public class ExomeExpressEndToEndTest {
             baitsCache.getBaitSetList().add(baitSet);
 
             PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new MockQuoteService(),baitsCache);
+            projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.bpmn");
 
 
             // create batches for the pass.  todo add more samples to the pass.
-            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,1,"TESTBatch");
+            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,2,"TESTBatch");
             Assert.assertFalse(labBatches.isEmpty());
             Assert.assertEquals(labBatches.size(),1);
 
@@ -159,14 +168,7 @@ public class ExomeExpressEndToEndTest {
             new GSSRSampleKitRequest();
 
             //Test BSP Plating EXPORT
-            //StartingSamples
-            List<String> startingStockSamples = new ArrayList<String>();
-            List<Sample> passSamples = directedPass.getSampleDetailsInformation().getSample();
-            for (Sample passSample : passSamples) {
-                startingStockSamples.add(passSample.getBspSampleID());
-            }
-
-            BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan, startingStockSamples);
+            BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan);
 
             bspExportEntityBuilder.runTest();
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
@@ -188,9 +190,15 @@ public class ExomeExpressEndToEndTest {
             // (deck query for workflow)
             // deck sends message, check workflow
             LabEventFactory labEventFactory = new LabEventFactory();
+            labEventFactory.setPersonDAO(new PersonDAO());
             LabEventHandler labEventHandler = new LabEventHandler();
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
+
+            for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
+                mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(),(TwoDBarcodedTube)stockToAliquotEntry.getValue());
+            }
+
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
                     projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     mapBarcodeToTube);//.invoke();
@@ -202,20 +210,20 @@ public class ExomeExpressEndToEndTest {
             LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LabEventTest.LibraryConstructionEntityBuilder(
                     projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                    shearingEntityBuilder.getShearingPlate()).invoke();
+                    shearingEntityBuilder.getShearingPlate(), mapBarcodeToTube.size()).invoke();
 
             LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new LabEventTest.HybridSelectionEntityBuilder(
                     projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
-            LabEventTest.QtpEntityBuilder capturedBuilder = new LabEventTest.QtpEntityBuilder(projectPlan.getWorkflowDescription(), bettaLimsMessageFactory, labEventFactory, labEventHandler,
+            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(projectPlan.getWorkflowDescription(),
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(), hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes());
+            qtpEntityBuilder.invoke();
 
-            capturedBuilder.invoke();
-
-            RackOfTubes poolingResult = capturedBuilder.getDenatureRack();
+            RackOfTubes poolingResult = qtpEntityBuilder.getDenatureRack();
 
             // LC metrics - upload page?
             // LabVessel.addMetric?
@@ -230,17 +238,24 @@ public class ExomeExpressEndToEndTest {
             final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
 
             int numStartersFromSampleInstances = 0;
+            final Collection<String> aliquotsFromProjectPlan = new HashSet<String>();
+            for (Starter starter : projectPlan.getStarters()) {
+                final LabVessel aliquot = projectPlan.getAliquot(starter);
+                for (SampleInstance sampleInstance : aliquot.getSampleInstances()) {
+                    aliquotsFromProjectPlan.add(sampleInstance.getStartingSample().getLabel());
+                }
+            }
             for (SampleInstance sampleInstance : currEntry.getSampleInstances()) {
-                Assert.assertTrue(startersFromProjectPlan.contains(sampleInstance.getStartingSample()));
+                Assert.assertTrue(aliquotsFromProjectPlan.contains(sampleInstance.getStartingSample().getLabel()));
                 numStartersFromSampleInstances++;
                 Assert.assertEquals(projectPlan,sampleInstance.getSingleProjectPlan());
             }
 
             Assert.assertEquals(startersFromProjectPlan.size(),numStartersFromSampleInstances);
 
-            registrationSOAPService.registerSequeLLibrary(registerLibrary);
+            //registrationSOAPService.registerSequeLLibrary(registerLibrary);
 
-            registrationSOAPService.registerForDesignation(registerLibrary.getLibraryName(), projectPlan, true);
+            //registrationSOAPService.registerForDesignation(registerLibrary.getLibraryName(), projectPlan, true);
 
 
 

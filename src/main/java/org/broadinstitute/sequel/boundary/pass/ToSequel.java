@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.boundary.pass;
 
 import org.broadinstitute.sequel.boundary.*;
 
+
 /**
  * Utility class to map from Squid JAXB DTOs (classes in {@link org.broadinstitute.sequel.boundary.squid}) to their
  * SequeL equivalents (classes in {@link org.broadinstitute.sequel.boundary}).

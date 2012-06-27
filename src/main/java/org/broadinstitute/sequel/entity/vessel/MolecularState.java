@@ -69,6 +69,11 @@ public class MolecularState implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private MolecularStateTemplate molecularStateTemplate = new MolecularStateTemplate();
 
+    public MolecularState(DNA_OR_RNA nucleicAcidState, STRANDEDNESS strand) {
+        this.nucleicAcidState = nucleicAcidState;
+        this.strand = strand;
+    }
+
     /**
      * The molecular envelope that contains
      * the sample.  This is the "outer" most
