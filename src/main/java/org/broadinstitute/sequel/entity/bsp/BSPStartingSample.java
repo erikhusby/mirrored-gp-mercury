@@ -14,6 +14,7 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Transient;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -106,7 +107,7 @@ public class BSPStartingSample extends StartingSample {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        final Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        final Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
         ProjectPlan rootPlan = getRootProjectPlan();
         WorkflowDescription workflow = null;
         if (rootPlan != null) {

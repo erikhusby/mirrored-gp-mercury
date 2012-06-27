@@ -122,7 +122,8 @@ public class BettalimsMessageResourceTest extends ContainerTest {
             staticPlateDAO.clear();
         }
         LabEventTest.LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LabEventTest.LibraryConstructionJaxbBuilder(
-                bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(), indexPlate.getLabel()).invoke();
+                bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(), indexPlate.getLabel(),
+                LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
             bettalimsMessageResource.processMessage(bettaLIMSMessage);

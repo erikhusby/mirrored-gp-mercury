@@ -114,13 +114,13 @@ public enum LabEventType {
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     DENATURE_TRANSFER ("DenatureTransfer", false, true,
-            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+            MolecularState.STRANDEDNESS.SINGLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     STRIP_TUBE_B_TRANSFER ("StripTubeBTransfer", true, false,
-            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+            MolecularState.STRANDEDNESS.SINGLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     FLOWCELL_TRANSFER ("FlowcellTransfer", true, false,
-            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+            MolecularState.STRANDEDNESS.SINGLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     SAGE_LOADING ("SageLoading", true, false,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
