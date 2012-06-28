@@ -66,6 +66,8 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 public class LabEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
+    public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
+
     /**
      * Used in test verification, accumulates the events in a chain of transfers
      */
@@ -1036,7 +1038,7 @@ public class LabEventTest {
             pondRegRackBarcode = "PondReg" + testPrefix;
             pondRegTubeBarcodes = new ArrayList<String>();
             for(int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
-                pondRegTubeBarcodes.add("PondReg" + testPrefix + rackPosition);
+                pondRegTubeBarcodes.add(POND_REGISTRATION_TUBE_PREFIX + testPrefix + rackPosition);
             }
             pondRegistrationJaxb = bettaLimsMessageFactory.buildPlateToRack(
                     "PondRegistration", pondCleanupBarcode, pondRegRackBarcode, pondRegTubeBarcodes);
@@ -1114,6 +1116,17 @@ public class LabEventTest {
             Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInPreSelPoolWell.size(), 2, "Wrong number of sample instances in position");
 
+            /* todo arz talk to jmt about this
+            for (SampleInstance pondRegSampleInstance : pondRegRack.getSampleInstances()) {
+                boolean foundIt = false;
+                for (SampleInstance preSelWellSampleInstance : sampleInstancesInPreSelPoolWell) {
+                    if (pondRegSampleInstance.getStartingSample().equals(preSelWellSampleInstance.getStartingSample())) {
+                        foundIt = true;
+                    }
+                }
+                Assert.assertTrue(foundIt,"Starting sample " + pondRegSampleInstance.getStartingSample().getLabel() + " does not appear in pre selection pool well");
+            }
+            */
             // Hybridization
             validateWorkflow(workflowDescription, "Hybridization", preSelPoolRack);
             LabEvent hybridizationEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(hybridSelectionJaxbBuilder.getHybridizationJaxb(), preSelPoolRack, null);

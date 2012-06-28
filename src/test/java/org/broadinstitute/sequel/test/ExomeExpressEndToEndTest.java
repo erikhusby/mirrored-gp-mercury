@@ -21,11 +21,13 @@ import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
+import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
@@ -139,8 +141,13 @@ public class ExomeExpressEndToEndTest {
             baitsCache.getBaitSetList().add(baitSet);
 
             PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new MockQuoteService(),baitsCache);
-            projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.bpmn");
+            //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
+            projectPlan.getWorkflowDescription().initFromFile("HybridSelectionVisualParadigm.xml");
 
+            Collection<WorkflowAnnotation> workflowAnnotations = projectPlan.getWorkflowDescription().getAnnotations("PondRegistration");
+
+            Assert.assertTrue(workflowAnnotations.contains(WorkflowAnnotation.IS_SINGLE_SAMPLE_LIBRARY));
+            Assert.assertEquals(workflowAnnotations.size(),1);
 
             // create batches for the pass.  todo add more samples to the pass.
             Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,2,"TESTBatch");
@@ -217,6 +224,41 @@ public class ExomeExpressEndToEndTest {
                     libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
+            RackOfTubes pondRack = libraryConstructionEntityBuilder.getPondRegRack();
+            Assert.assertEquals(pondRack.getSampleInstances().size(),2);
+
+            // make sure that the pond sample instances contain the starters from the project plan.
+            for (Starter starter : projectPlan.getStarters()) {
+                LabVessel aliquot = projectPlan.getAliquot(starter);
+                for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
+                    boolean foundIt = false;
+                    for (SampleInstance pondSampleInstance : pondRack.getSampleInstances()) {
+                        if (aliquotSampleInstance.getStartingSample().equals(pondSampleInstance.getStartingSample())) {
+                            foundIt = true;
+                            System.out.println("Pond has " + pondSampleInstance.getStartingSample().getLabel());
+                        }
+                    }
+                    Assert.assertTrue(foundIt);
+                }
+            }
+
+            // make sure that the pond sample instances contain the starters from the project plan.
+            for (Starter starter : projectPlan.getStarters()) {
+                LabVessel aliquot = projectPlan.getAliquot(starter);
+                for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
+                    boolean foundIt = false;
+                    for (SampleInstance pondSampleInstance : hybridSelectionEntityBuilder.getNormCatchRack().getSampleInstances()) {
+                        if (aliquotSampleInstance.getStartingSample().equals(pondSampleInstance.getStartingSample())) {
+                            foundIt = true;
+                            System.out.println("Norm has " + pondSampleInstance.getStartingSample().getLabel());
+                        }
+                    }
+                    // todo arz talk to jmt about this
+                    // Assert.assertTrue(foundIt);
+                }
+
+            }
+
             LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(projectPlan.getWorkflowDescription(),
                     bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
@@ -252,6 +294,13 @@ public class ExomeExpressEndToEndTest {
             }
 
             Assert.assertEquals(startersFromProjectPlan.size(),numStartersFromSampleInstances);
+
+            // todo arz fix semantics: is it "single sample ancestor" or "sequencing library"?
+            Map<StartingSample,Collection<LabVessel>> singleSampleAncestors = poolingResult.getVesselContainer().getSingleSampleAncestors(VesselPosition.A01);
+
+            // todo arz talk to jmt about this
+            //Assert.assertEquals(singleSampleAncestors.size(),2);
+
 
             //registrationSOAPService.registerSequeLLibrary(registerLibrary);
 

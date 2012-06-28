@@ -143,7 +143,7 @@ public class LabEventHandler {
 
         // todo arz fix this by using LabBatch instead.  maybe strip out this denormalization entirely,
         // and leave the override processing for on-the-fly work in VesselContainer
-        processProjectPlanOverrides(labEvent, workflow);
+        //processProjectPlanOverrides(labEvent, workflow);
 
         JiraCommentUtil.postUpdate(labEvent.getEventName().toString() + " Event Applied",
                 labEvent.getEventName().toString() + " has been applied to the following samples:",labEvent.getAllLabVessels());
