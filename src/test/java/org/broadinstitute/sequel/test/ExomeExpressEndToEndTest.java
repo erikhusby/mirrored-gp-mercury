@@ -7,9 +7,10 @@ import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPServiceStub;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
+import org.broadinstitute.sequel.boundary.pass.PassServiceProducer;
 import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
 import org.broadinstitute.sequel.boundary.pmbridge.PMBridgeService;
-import org.broadinstitute.sequel.boundary.pmbridge.PMBridgeServiceStub;
+import org.broadinstitute.sequel.boundary.pmbridge.PMBridgeServiceProducer;
 import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProject;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
@@ -17,6 +18,7 @@ import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.pass.PassBatchUtil;
+import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.Project;
@@ -51,28 +53,13 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 public class ExomeExpressEndToEndTest {
 
 
-    // if this test was running in a container the test data might be injected, though that would really only work well
-    // in the one test per class scenario, or at most one test per PASS type per class...
-
-    // @Inject
-    // @TestData
-    // private DirectedPass directedPass;
-
-    // Assuming the jndi-config branch were to be merged for a container version of this test:
-    //
-    // @Inject
-    // PassService passService;
-
-    // for non-container test:
-    //
-    // PassService passService = new PassServiceStub();
-
-
 //    @Inject
     LibraryRegistrationSOAPService registrationSOAPService = new LibraryRegistrationSOAPServiceStub();
 
-    // @Inject
-    private PMBridgeService pmBridgeService = new PMBridgeServiceStub();
+
+    private PMBridgeService pmBridgeService = PMBridgeServiceProducer.produceStub();
+
+    private PassService passService = PassServiceProducer.produceStub();
 
     // @Inject
     private JiraService jiraService = new DummyJiraService();
@@ -89,10 +76,10 @@ public class ExomeExpressEndToEndTest {
     @Test(groups = {DATABASE_FREE}, enabled = true)
     public void testAll() throws Exception {
 
-        DirectedPass directedPass = PassTestDataProducer.instance().produceDirectedPass();
+        DirectedPass directedPass = PassTestDataProducer.produceDirectedPass();
 
         // unconditionally forward all PASSes to Squid for storage
-        // passService.storePass(directedPass);
+        passService.storePass(directedPass);
 
         // if this is an EE pass take it through the SequeL process:
         if (directedPass.isExomeExpress()) {

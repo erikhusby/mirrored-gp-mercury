@@ -61,7 +61,12 @@ public class PMBridgeServiceProducer implements InstanceSpecificProducer<PMBridg
     @Produces
     @StubInstance
     public PMBridgeService stubInstance() {
-        return stub;
+        return new PMBridgeServiceStub();
+    }
+
+
+    public static PMBridgeService produceStub() {
+        return new PMBridgeServiceProducer().stubInstance();
     }
 
 
