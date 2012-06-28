@@ -35,7 +35,7 @@ import java.util.*;
  *
  */
 @Entity
-public class BasicProjectPlan implements ProjectPlan {
+public class BasicProjectPlan extends ProjectPlan {
 
     @Transient // todo arz fix me
     private Map<Starter,LabVessel> aliquotForStarter = new HashMap<Starter, LabVessel>();
@@ -47,10 +47,6 @@ public class BasicProjectPlan implements ProjectPlan {
 
     @Transient
     private Collection<Starter> starters = new HashSet<Starter>();
-
-    // todo jmt fix this
-    @Transient
-    private Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     protected WorkflowDescription workflowDescription;
@@ -170,11 +166,6 @@ public class BasicProjectPlan implements ProjectPlan {
              throw new NullPointerException("detail cannot be null.");
         }
         planDetails.add(detail);
-    }
-
-    @Override
-    public Collection<SequencingPlanDetail> getPlanDetails() {
-        return planDetails;
     }
 
     public void addPlatingRequest(BSPPlatingRequest platingRequest) {

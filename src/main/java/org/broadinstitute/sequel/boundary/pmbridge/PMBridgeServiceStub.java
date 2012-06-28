@@ -2,10 +2,12 @@ package org.broadinstitute.sequel.boundary.pmbridge;
 
 
 import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProject;
+import org.broadinstitute.sequel.infrastructure.deployment.Stub;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Stub
 public class PMBridgeServiceStub implements PMBridgeService {
 
     private Map<Long, ResearchProject> researchProjects =

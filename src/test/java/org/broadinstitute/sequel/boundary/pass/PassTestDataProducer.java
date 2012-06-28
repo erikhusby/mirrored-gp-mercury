@@ -1,10 +1,8 @@
 package org.broadinstitute.sequel.boundary.pass;
 
 
-import org.broadinstitute.sequel.TestData;
 import org.broadinstitute.sequel.boundary.*;
 
-import javax.enterprise.inject.Produces;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Calendar;
@@ -18,15 +16,6 @@ public class PassTestDataProducer {
     //Test StartingSamples
     public static final String masterSample1 = "SM-1111";
     public static final String masterSample2 = "SM-2222";
-
-    private static PassTestDataProducer instance;
-
-
-    public static PassTestDataProducer instance() {
-        if (instance == null)
-            instance = new PassTestDataProducer();
-        return instance;
-    }
 
 
     enum PlatformPM {
@@ -61,7 +50,7 @@ public class PassTestDataProducer {
     }
 
 
-    private AbstractPass fleshOutAbstractPass(AbstractPass pass) {
+    private static AbstractPass fleshOutAbstractPass(AbstractPass pass) {
 
         pass.setStatus(PassStatus.NEW);
         pass.setCreator("QADude");
@@ -160,9 +149,8 @@ public class PassTestDataProducer {
 
 
 
-    @Produces
-    @TestData
-    public DirectedPass produceDirectedPass() {
+
+    public static DirectedPass produceDirectedPass() {
 
         DirectedPass directedPass = new DirectedPass();
         directedPass = (DirectedPass)fleshOutAbstractPass(directedPass);
@@ -181,9 +169,7 @@ public class PassTestDataProducer {
     }
 
 
-    @Produces
-    @TestData
-    public WholeGenomePass produceWholeGenomePass() {
+    public static WholeGenomePass produceWholeGenomePass() {
 
         WholeGenomePass wholeGenomePass = new WholeGenomePass();
         fleshOutAbstractPass(wholeGenomePass);
@@ -199,9 +185,7 @@ public class PassTestDataProducer {
     }
 
 
-    @Produces
-    @TestData
-    public RNASeqPass generateRNASeqPass() {
+    public static RNASeqPass generateRNASeqPass() {
 
         RNASeqPass rnaseqPass = new RNASeqPass();
         fleshOutAbstractPass(rnaseqPass);
