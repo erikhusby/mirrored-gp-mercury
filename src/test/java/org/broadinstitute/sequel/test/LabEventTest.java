@@ -52,6 +52,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -1125,20 +1126,17 @@ public class LabEventTest {
                     mapBarcodeToPreSelSource2Tube, preSelPoolRack);
             labEventHandler.processEvent(preSelPoolEntity2, null);
             //asserts
-            Assert.assertEquals(preSelPoolRack.getSampleInstances().size(),
+            Set<SampleInstance> preSelPoolSampleInstances = preSelPoolRack.getSampleInstances();
+            Assert.assertEquals(preSelPoolSampleInstances.size(),
                     pondRegRack.getSampleInstances().size(), "Wrong number of sample instances");
+            Set<String> sampleNames = new HashSet<String>();
+            for (SampleInstance preSelPoolSampleInstance : preSelPoolSampleInstances) {
+                if(!sampleNames.add(preSelPoolSampleInstance.getStartingSample().getSampleName())) {
+                    Assert.fail("Duplicate sample " + preSelPoolSampleInstance.getStartingSample().getSampleName());
+                }
+            }
             Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInPreSelPoolWell.size(), 2, "Wrong number of sample instances in position");
-
-            for (SampleInstance pondRegSampleInstance : pondRegRack.getSampleInstances()) {
-                boolean foundIt = false;
-                for (SampleInstance preSelWellSampleInstance : sampleInstancesInPreSelPoolWell) {
-                    if (pondRegSampleInstance.getStartingSample().equals(preSelWellSampleInstance.getStartingSample())) {
-                        foundIt = true;
-                    }
-                }
-                Assert.assertTrue(foundIt,"Starting sample " + pondRegSampleInstance.getStartingSample().getLabel() + " does not appear in pre selection pool well");
-            }
 
             // Hybridization
             validateWorkflow(workflowDescription, "Hybridization", preSelPoolRack);
