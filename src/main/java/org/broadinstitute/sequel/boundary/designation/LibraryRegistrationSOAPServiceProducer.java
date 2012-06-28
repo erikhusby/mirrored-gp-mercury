@@ -21,10 +21,10 @@ import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.*;
 
 
 /**
- * Class to produce instances of {@link org.broadinstitute.sequel.control.pass.PassService} appropriate to the current {@link org.broadinstitute.sequel.infrastructure.deployment.Deployment}.  Arquillian
+ * Class to produce instances of {@link LibraryRegistrationSOAPService} appropriate to the current {@link org.broadinstitute.sequel.infrastructure.deployment.Deployment}.  Arquillian
  * micro-deployments should be running in a {@link org.broadinstitute.sequel.infrastructure.deployment.Deployment#STUBBY} deployment which will yield a
- * {@link org.broadinstitute.sequel.boundary.pass.PassServiceStub} implementation, while non-STUBBY deployments will get
- * {@link org.broadinstitute.sequel.boundary.pass.PassSOAPServiceImpl} implementations configured to point to the correct underlying Squid instance.
+ * {@link LibraryRegistrationSOAPServiceStub} implementation, while non-STUBBY deployments will get
+ * {@link LibraryRegistrationSOAPServiceImpl} implementations configured to point to the correct underlying Squid instance.
  */
 public class LibraryRegistrationSOAPServiceProducer implements InstanceSpecificProducer<LibraryRegistrationSOAPService> {
 
