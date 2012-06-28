@@ -33,12 +33,12 @@ import static org.testng.Assert.*;
 
 public class LabWorkQueueWorkflowTest {
 
-    @Test
+    @Test(enabled =  false)
     public void test_root_plan() {
         doIt(false);
     }
 
-    @Test
+    @Test(enabled = false)
     public void test_plan_override() {
         doIt(true);
     }
