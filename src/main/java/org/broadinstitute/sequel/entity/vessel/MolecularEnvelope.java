@@ -38,8 +38,6 @@ import javax.persistence.SequenceGenerator;
  * be used to determine whether the expected molecular
  * envelope for an event matches the molecular
  * envelope of (typically) the source in a transfer.
- * Take a look at {@link org.broadinstitute.sequel.entity.labevent.AdaptorLigationEvent#validateSourceMolecularState() an example
- * use}
  */
 
 @Entity

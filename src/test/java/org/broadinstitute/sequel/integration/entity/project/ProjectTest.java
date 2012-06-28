@@ -20,6 +20,8 @@ import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
+import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.quote.Funding;
@@ -47,18 +49,11 @@ import java.util.Map;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
 
-public class ProjectTest extends Arquillian {
+public class ProjectTest  {
 
-    @Inject
-    private JiraService jiraService;
+    private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
 
-    @Inject
-    private BSPSampleDataFetcher bspFetcher;
-
-    @Deployment
-    public static WebArchive buildSequeLWar() {
-        return DeploymentBuilder.buildSequelWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class);
-    }
+    private BSPSampleDataFetcher bspFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {

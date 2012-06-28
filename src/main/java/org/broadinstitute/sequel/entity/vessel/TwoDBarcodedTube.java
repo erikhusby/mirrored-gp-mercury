@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.vessel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.labevent.Failure;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;

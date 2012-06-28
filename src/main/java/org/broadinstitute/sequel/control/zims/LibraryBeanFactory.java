@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.sequel.entity.run.RunCartridge;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.StripTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
@@ -29,16 +30,16 @@ public class LibraryBeanFactory {
         RunCartridge runCartridge = illuminaSequencingRun.getSampleCartridge().iterator().next();
         StripTube stripTube = (StripTube) runCartridge.getTransfersTo().iterator().next().getSourceLabVessels().iterator().next();
         Set<SampleInstance> sampleInstances = stripTube.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.TUBE1);
-        Map<SampleInstance,Collection<LabVessel>> singleSampleLibrariesForInstance = stripTube.getVesselContainer().getSingleSampleAncestors(VesselPosition.TUBE1);
+        Map<StartingSample,Collection<LabVessel>> singleSampleLibrariesForInstance = stripTube.getVesselContainer().getSingleSampleAncestors(VesselPosition.TUBE1);
 
-        for (Map.Entry<SampleInstance, Collection<LabVessel>> entry : singleSampleLibrariesForInstance.entrySet()) {
-            SampleInstance sampleInstance = entry.getKey();
+        for (Map.Entry<StartingSample, Collection<LabVessel>> entry : singleSampleLibrariesForInstance.entrySet()) {
+            StartingSample startingSample = entry.getKey();
             Collection<LabVessel> singleSampleLibraries = entry.getValue();
             if (singleSampleLibraries.isEmpty()) {
-                throw new RuntimeException("Could not find single sample libraries for " + entry.getKey().getStartingSample().getSampleName());
+                throw new RuntimeException("Could not find single sample libraries for " + entry.getKey().getSampleName());
             }
             else if (singleSampleLibraries.size() > 1) {
-                throw new RuntimeException("There are " + singleSampleLibraries.size() + " possible single sample libraries for " + entry.getKey().getStartingSample().getSampleName());
+                throw new RuntimeException("There are " + singleSampleLibraries.size() + " possible single sample libraries for " + entry.getKey().getSampleName());
             }
 
             LabVessel singleSampleLibrary = singleSampleLibraries.iterator().next();

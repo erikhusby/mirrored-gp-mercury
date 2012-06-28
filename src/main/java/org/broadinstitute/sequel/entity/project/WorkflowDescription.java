@@ -17,6 +17,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -93,8 +94,10 @@ public class WorkflowDescription {
 
     public Collection<WorkflowAnnotation> getAnnotations(String eventTypeName) {
         final Collection<WorkflowAnnotation> workflowAnnotations = new ArrayList<WorkflowAnnotation>();
-        for (WorkflowTransition workflowTransition : mapNameToTransitionList.get(eventTypeName)) {
-            workflowAnnotations.addAll(workflowTransition.getWorkflowAnnotations());
+        if (mapNameToTransitionList.get(eventTypeName) != null) {
+            for (WorkflowTransition workflowTransition : mapNameToTransitionList.get(eventTypeName)) {
+                workflowAnnotations.addAll(workflowTransition.getWorkflowAnnotations());
+            }
         }
         return workflowAnnotations;
     }
@@ -183,8 +186,11 @@ public class WorkflowDescription {
     }
 
     public void initFromFile(String filename) {
-        WorkflowParser workflowParser = new WorkflowParser(
-                Thread.currentThread().getContextClassLoader().getResourceAsStream(filename));
+        InputStream bpmnStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
+        if (bpmnStream == null) {
+            throw new NullPointerException(filename + " could not be loaded");
+        }
+        WorkflowParser workflowParser = new WorkflowParser(bpmnStream);
         this.startState = workflowParser.getStartState();
         this.mapNameToTransitionList = workflowParser.getMapNameToTransitionList();
     }

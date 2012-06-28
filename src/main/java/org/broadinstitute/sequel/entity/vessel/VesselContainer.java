@@ -8,8 +8,10 @@ import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
+import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
 
@@ -122,22 +124,25 @@ public class VesselContainer<T extends LabVessel> {
      * Traverses transfers to find the single sample libraries.
      */
     static class SingleSampleLibraryCriteria implements TransferTraverserCriteria {
-        private final Map<SampleInstance,Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<SampleInstance, Collection<LabVessel>>();
+        private final Map<StartingSample,Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<StartingSample, Collection<LabVessel>>();
 
         @Override
         public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-            for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
-                if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
-                    if (!singleSampleLibrariesForInstance.containsKey(sampleInstance)) {
-                        singleSampleLibrariesForInstance.put(sampleInstance,new HashSet<LabVessel>());
+            if (labVessel != null) {
+                for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
+                    StartingSample startingSample = sampleInstance.getStartingSample();
+                    if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
+                        if (!singleSampleLibrariesForInstance.containsKey(startingSample)) {
+                            singleSampleLibrariesForInstance.put(startingSample,new HashSet<LabVessel>());
+                        }
+                        singleSampleLibrariesForInstance.get(startingSample).add(labVessel);
                     }
-                    singleSampleLibrariesForInstance.get(sampleInstance).add(labVessel);
                 }
             }
             return TraversalControl.ContinueTraversing;
         }
 
-        public Map<SampleInstance,Collection<LabVessel>> getSingleSampleLibraries() {
+        public Map<StartingSample,Collection<LabVessel>> getSingleSampleLibraries() {
             return singleSampleLibrariesForInstance;
         }
     }
@@ -149,7 +154,7 @@ public class VesselContainer<T extends LabVessel> {
      * @param position
      * @return
      */
-    public Map<SampleInstance,Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
+    public Map<StartingSample,Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
         SingleSampleLibraryCriteria singleSampleLibraryCriteria = new SingleSampleLibraryCriteria();
 
         evaluateCriteria(position, singleSampleLibraryCriteria, TraversalDirection.Ancestors, null, 0);
