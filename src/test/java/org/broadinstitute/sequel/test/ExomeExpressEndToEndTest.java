@@ -233,7 +233,7 @@ public class ExomeExpressEndToEndTest {
 
             final TwoDBarcodedTube currEntry = poolingResult.getVesselContainer().getVesselAtPosition(VesselPosition.A01);
 
-            final SequelLibrary registerLibrary = RegistrationJaxbConverter.squidify(currEntry);
+            final SequelLibrary registerLibrary = RegistrationJaxbConverter.squidify(currEntry, projectPlan);
 
             final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
 

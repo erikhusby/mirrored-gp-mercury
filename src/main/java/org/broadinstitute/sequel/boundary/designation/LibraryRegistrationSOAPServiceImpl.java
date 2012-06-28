@@ -72,13 +72,8 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
         int readLength = 0;
         int lanes = 0;
 
-        for(SequencingPlanDetail projPlanDetail:projectPlanIn.getPlanDetails()) {
-            if(projPlanDetail.getCoverageGoal() instanceof NumberOfLanesCoverage) {
-                lanes = Integer.parseInt(projPlanDetail.getCoverageGoal().coverageGoalToParsableText());
-            } else if(projPlanDetail.getCoverageGoal() instanceof PairedReadCoverage) {
-                readLength = Integer.parseInt(projPlanDetail.getCoverageGoal().coverageGoalToParsableText());
-            }
-        }
+        lanes = projectPlanIn.getLaneCoverage();
+        readLength = projectPlanIn.getReadLength();
 
         squidCall().registerForDesignation(libraryName, lanes, readLength, needsControlLane);
     }
