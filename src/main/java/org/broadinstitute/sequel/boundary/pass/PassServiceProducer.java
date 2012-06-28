@@ -73,7 +73,7 @@ public class PassServiceProducer implements InstanceSpecificProducer<PassService
     @Produces
     @StubInstance
     public PassService stubInstance() {
-        return stub;
+        return new PassServiceStub();
     }
 
 
@@ -101,6 +101,11 @@ public class PassServiceProducer implements InstanceSpecificProducer<PassService
                 SquidConnectionParametersProducer.produce(deployment);
 
         return new PassSOAPServiceImpl(squidConnectionParameters);
+    }
+
+
+    public static PassService produceStub() {
+        return PassServiceProducer.produce(STUBBY);
     }
 
 
