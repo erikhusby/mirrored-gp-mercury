@@ -545,7 +545,7 @@ public class LabEventFactory {
      * @param mapBarcodeToTargetTubes each entry may be null, if it isn't in the database
      * @return entity
      */
-    // todo jmt combine following two methods?
+    // todo jmt combine following four methods?
     public LabEvent buildFromBettaLimsRackToRackDbFree(
             PlateTransferEventType plateTransferEvent,
             RackOfTubes sourceRack,
@@ -557,6 +557,53 @@ public class LabEventFactory {
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourceRack.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
+                targetRackOfTubes.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
+        return labEvent;
+    }
+
+    /**
+     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
+     * lab event entity for transfer from rack to rack
+     * @param plateTransferEvent JAXB
+     * @param mapBarcodeToSourceTubes each entry may be null, if it isn't in the database
+     * @param mapBarcodeToTargetTubes each entry may be null, if it isn't in the database
+     * @return entity
+     */
+    public LabEvent buildFromBettaLimsRackToRackDbFree(
+            PlateTransferEventType plateTransferEvent,
+            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
+            Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes) {
+        LabEvent labEvent = constructReferenceData(plateTransferEvent);
+        RackOfTubes sourceRackOfTubes = buildRack(mapBarcodeToSourceTubes, plateTransferEvent.getSourcePlate(),
+                plateTransferEvent.getSourcePositionMap());
+
+        RackOfTubes targetRackOfTubes = buildRack(mapBarcodeToTargetTubes, plateTransferEvent.getPlate(),
+                plateTransferEvent.getPositionMap());
+
+        labEvent.getSectionTransfers().add(new SectionTransfer(
+                sourceRackOfTubes.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
+                targetRackOfTubes.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
+        return labEvent;
+    }
+
+    /**
+     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
+     * lab event entity for transfer from rack to rack
+     * @param plateTransferEvent JAXB
+     * @param mapBarcodeToSourceTubes each entry may be null, if it isn't in the database
+     * @param targetRackOfTubes from database
+     * @return entity
+     */
+    public LabEvent buildFromBettaLimsRackToRackDbFree(
+            PlateTransferEventType plateTransferEvent,
+            Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
+            RackOfTubes targetRackOfTubes) {
+        LabEvent labEvent = constructReferenceData(plateTransferEvent);
+        RackOfTubes sourceRackOfTubes = buildRack(mapBarcodeToSourceTubes, plateTransferEvent.getSourcePlate(),
+                plateTransferEvent.getSourcePositionMap());
+
+        labEvent.getSectionTransfers().add(new SectionTransfer(
+                sourceRackOfTubes.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
                 targetRackOfTubes.getVesselContainer(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
         return labEvent;
     }
