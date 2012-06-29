@@ -18,6 +18,15 @@ public class ChangeEvent {
         this.person = person;
     }
 
+
+    public Date getDate() {
+        return date;
+    }
+
+    public Person getPerson() {
+        return person;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

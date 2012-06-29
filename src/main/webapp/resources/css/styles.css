@@ -50,3 +50,13 @@ h1 {
     font-size: 100%;
  }
  */
+
+.pmb-label {
+
+    font-style: italic;
+    padding-right: 10px;
+}
+
+.pmb-data {
+
+}

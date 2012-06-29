@@ -13,10 +13,14 @@ public class Id {
     public final String value;
 
     public Id(String value) {
-        if ((value == null ) || StringUtils.isBlank(value)) {
+        if ((value == null) || StringUtils.isBlank(value)) {
             throw new IllegalArgumentException("Id is invalid. Must be non-null and non-empty.");
         }
         this.value = value;
+    }
+
+    public String getValue() {
+        return value;
     }
 
     @Override

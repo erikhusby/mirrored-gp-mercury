@@ -18,7 +18,7 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
 
 
     private final ExperimentRequestSummary experimentRequestSummary;
-//    private Set<Person> platformProjectManagers;
+    //    private Set<Person> platformProjectManagers;
     private Set<BSPSample> samples;
 
     protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary) {
@@ -40,9 +40,9 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
         return experimentRequestSummary;
     }
 
-    public abstract Set<Person> getPlatformProjectManagers() ;
+    public abstract Set<Person> getPlatformProjectManagers();
 
-    public abstract Set<Person> getProgramProjectManagers() ;
+    public abstract Set<Person> getProgramProjectManagers();
 
     public Set<BSPSample> getSamples() {
         return samples;
@@ -52,18 +52,15 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
         return getExperimentRequestSummary().getTitle();
     }
 
-    public abstract void setTitle(final Name title ) ;
+    public abstract void setTitle(final Name title);
 
-    public LocalId getLocalId() {
-        return this.experimentRequestSummary.getLocalId();
+
+    public ExperimentId getRemoteId() {
+        return this.experimentRequestSummary.getExperimentId();
     }
 
-    public RemoteId getRemoteId() {
-        return this.experimentRequestSummary.getRemoteId();
-    }
-
-    public void setRemoteId(RemoteId remoteId) {
-        this.experimentRequestSummary.setRemoteId( remoteId );
+    public void setRemoteId(ExperimentId remoteId) {
+        this.experimentRequestSummary.setExperimentId(remoteId);
     }
 
     public Name getExperimentStatus() {
@@ -74,7 +71,7 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
         this.samples = samples;
     }
 
-    public abstract void setProgramProjectManagers(final Set<Person> programProjectManagers) ;
+    public abstract void setProgramProjectManagers(final Set<Person> programProjectManagers);
 
     @Override
     public boolean equals(final Object o) {

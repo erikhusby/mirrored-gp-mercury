@@ -11,7 +11,7 @@ import java.util.Collection;
  * Interface for experiment requests in PMBridge outlining
  * some of the expected functionality that the concrete class
  * are expected to support.
- *
+ * <p/>
  * Created by IntelliJ IDEA.
  * User: mccrory
  * Date: 4/2/12
@@ -28,36 +28,38 @@ public interface ExperimentRequest {
 
     Collection<BSPSample> getSamples();
 
-    LocalId getLocalId();
+    ExperimentId getRemoteId();
 
-    RemoteId getRemoteId();
-
-    void setRemoteId(RemoteId remoteId);
+    void setRemoteId(ExperimentId remoteId);
 
     /**
      * Method to save a local copy of the experiment request
      * without officially submitting it to the platform.
+     *
      * @return
      */
     ExperimentRequest cloneRequest();
 
     /**
      * Method to generate a excel copy of the experiment request
+     *
      * @return
      */
     ExperimentRequest exportToExcel();
 
     /**
      * Method to return the Status of the experiment request.
+     *
      * @return
      */
-    Name getExperimentStatus ();
+    Name getExperimentStatus();
 
     /**
      * Method to associated the experiment request
      * with a research project.
+     *
      * @param researchProject
      */
-    void associateWithResearchProject( ResearchProject researchProject);
+    void associateWithResearchProject(ResearchProject researchProject);
 
 }

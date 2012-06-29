@@ -8,8 +8,8 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.pmbridge.control.AbstractJerseyClientService;
 import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
 import org.broadinstitute.pmbridge.entity.common.Name;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentId;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
-import org.broadinstitute.pmbridge.entity.experiments.RemoteId;
 import org.broadinstitute.pmbridge.entity.experiments.gap.GapExperimentRequest;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
@@ -39,12 +39,14 @@ import java.util.regex.Pattern;
  * Time: 12:27 PM
  */
 @Alternative
-public class GenotypingServiceImpl  extends AbstractJerseyClientService implements GenotypingService {
+public class GenotypingServiceImpl extends AbstractJerseyClientService implements GenotypingService {
 
     private org.apache.commons.logging.Log logger = LogFactory.getLog(GenotypingServiceImpl.class);
-    @Inject private GapConnectionParameters gapConnectionParameters;
+    @Inject
+    private GapConnectionParameters gapConnectionParameters;
 
-    @Inject private QuoteService quoteService;
+    @Inject
+    private QuoteService quoteService;
 
     @Inject
     public GenotypingServiceImpl(GapConnectionParameters gapConnectionParameters) {
@@ -55,34 +57,34 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
                                                QuoteService quoteService) {
         ExperimentPlan experimentPlan = gapExperimentRequest.getExperimentPlanDTO();
 
-        if ( experimentPlan.getBspQuoteId() != null ) {
+        if (experimentPlan.getBspQuoteId() != null) {
             Quote quoteBsp = lookupQuoteById(quoteService, experimentPlan.getBspQuoteId());
             gapExperimentRequest.setBspQuote(quoteBsp);
         }
-        if ( experimentPlan.getGapQuoteId() != null ) {
+        if (experimentPlan.getGapQuoteId() != null) {
             Quote quoteGap = lookupQuoteById(quoteService, experimentPlan.getGapQuoteId());
             gapExperimentRequest.setGapQuote(quoteGap);
         }
-        return  gapExperimentRequest;
+        return gapExperimentRequest;
     }
 
     public GapExperimentRequest populateGapProduct(GapExperimentRequest gapExperimentRequest) {
         ExperimentPlan experimentPlan = gapExperimentRequest.getExperimentPlanDTO();
 
-        if (  experimentPlan.getProductId() != null ) {
-            Product product=null;
+        if (experimentPlan.getProductId() != null) {
+            Product product = null;
             Integer gapProductId = experimentPlan.getProductId();
             try {
                 product = lookupTechnologyProductById(gapProductId);
             } catch (ProductNotFoundException e) {
                 // Nothing to do here made an effort to translate the productId
                 product = new Product("Unknown", "" + gapProductId);
-                LogFactory.getLog(GapExperimentRequest.class).error("GAP productId " + gapProductId + " not found.", e );
+                LogFactory.getLog(GapExperimentRequest.class).error("GAP productId " + gapProductId + " not found.", e);
             }
             gapExperimentRequest.setTechnologyProduct(product);
         }
 
-        return  gapExperimentRequest;
+        return gapExperimentRequest;
     }
 
 
@@ -91,8 +93,8 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
         String numericRegex = "[\\d]+";
         boolean quoteIsNumeric = Pattern.matches(numericRegex, quoteStr);
         try {
-            if ( quoteIsNumeric ) {
-                quote = quoteService.getQuoteByNumericId( quoteStr );
+            if (quoteIsNumeric) {
+                quote = quoteService.getQuoteByNumericId(quoteStr);
             } else {
                 quote = quoteService.getQuoteByAlphaId(quoteStr);
             }
@@ -118,8 +120,8 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
     }
 
     @Override
-    public GapExperimentRequest getPlatformRequest(final  ExperimentRequestSummary experimentRequestSummary) {
-        String expId = experimentRequestSummary.getRemoteId().value;
+    public GapExperimentRequest getPlatformRequest(final ExperimentRequestSummary experimentRequestSummary) {
+        String expId = experimentRequestSummary.getExperimentId().value;
         GapExperimentRequest gapExperimentRequest = null;
         Response response = null;
 
@@ -137,7 +139,7 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
                 }
 
                 ExperimentPlan experimentPlan = response.getExperimentPlans().get(0);
-                gapExperimentRequest = new GapExperimentRequest(experimentRequestSummary, experimentPlan );
+                gapExperimentRequest = new GapExperimentRequest(experimentRequestSummary, experimentPlan);
 
                 gapExperimentRequest = populateQuotes(gapExperimentRequest, quoteService);
 
@@ -153,13 +155,14 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
 
         return gapExperimentRequest;
     }
+
     @Override
     public GapExperimentRequest saveExperimentRequest(final Person programMgr, final GapExperimentRequest gapExperimentRequest) throws ValidationException, SubmissionException {
-        if (( programMgr == null ) || (StringUtils.isBlank(programMgr.getUsername())) ) {
+        if ((programMgr == null) || (StringUtils.isBlank(programMgr.getUsername()))) {
             throw new IllegalArgumentException("Username was blank. Need a non-null username to save an experiment request.");
         }
-        if (( gapExperimentRequest == null ) || ( gapExperimentRequest.getExperimentRequestSummary() == null ) ||
-                (StringUtils.isBlank( gapExperimentRequest.getExperimentRequestSummary().getTitle().name)) ) {
+        if ((gapExperimentRequest == null) || (gapExperimentRequest.getExperimentRequestSummary() == null) ||
+                (StringUtils.isBlank(gapExperimentRequest.getExperimentRequestSummary().getTitle().name))) {
             throw new IllegalArgumentException("Title was blank. Need a non-null title to save an experiment request.");
         }
 
@@ -169,11 +172,11 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
     @Override
     public GapExperimentRequest submitExperimentRequest(final Person programMgr, final GapExperimentRequest gapExperimentRequest) throws ValidationException, SubmissionException {
 
-        if (( programMgr == null ) || (StringUtils.isBlank(programMgr.getUsername())) ) {
+        if ((programMgr == null) || (StringUtils.isBlank(programMgr.getUsername()))) {
             throw new IllegalArgumentException("Username was blank. Need a non-null username to submit an experiment request to GAP.");
         }
-        if (( gapExperimentRequest == null ) || ( gapExperimentRequest.getExperimentRequestSummary() == null ) ||
-                (StringUtils.isBlank( gapExperimentRequest.getExperimentRequestSummary().getTitle().name)) ) {
+        if ((gapExperimentRequest == null) || (gapExperimentRequest.getExperimentRequestSummary() == null) ||
+                (StringUtils.isBlank(gapExperimentRequest.getExperimentRequestSummary().getTitle().name))) {
             throw new IllegalArgumentException("Title was blank. Need a non-null title to submit an experiment request to GAP.");
         }
 
@@ -183,7 +186,7 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
 
     private GapExperimentRequest submitExperimentRequestToPlatform(final Person programMgr,
                                                                    final GapExperimentRequest gapExperimentRequest,
-                                                                   final String status ) {
+                                                                   final String status) {
         GapExperimentRequest submittedExperimentRequest = null;
         Response response = null;
 
@@ -194,14 +197,13 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
 
         try {
             String planXmlStr = ObjectMarshaller.marshall(experimentPlan);
-            String baseUrl =  gapConnectionParameters.getUrl( GapConnectionParameters.GAP_CREATE_EXPERIMENT_URL );
-            String fullUrl = baseUrl +  "?plan_data=" + encode( planXmlStr );
+            String baseUrl = gapConnectionParameters.getUrl(GapConnectionParameters.GAP_CREATE_EXPERIMENT_URL);
+            String fullUrl = baseUrl + "?plan_data=" + encode(planXmlStr);
             logger.info(String.format("url string is '%s'", fullUrl));
 
             WebResource webResource = getJerseyClient().resource(fullUrl);
 
-            try
-            {
+            try {
                 MultivaluedMap formData = new MultivaluedMapImpl();
                 formData.add("plan_data", planXmlStr);
                 ClientResponse clientResponse = webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, formData);
@@ -212,48 +214,44 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
                     boolean submissionSuccessful = (response.getExperimentPlans().size() == 1);
                     String expId = null;
 
-                    if ( submissionSuccessful ) {
+                    if (submissionSuccessful) {
                         ExperimentPlan receivedExperimentPlan = response.getExperimentPlans().get(0);
                         expId = (receivedExperimentPlan != null) ? receivedExperimentPlan.getId() : "null";
 
                         ExperimentRequestSummary experimentRequestSummary = gapExperimentRequest.getExperimentRequestSummary();
-                        experimentRequestSummary.setRemoteId( new RemoteId( expId ) );
-                        experimentRequestSummary.setCreation( new ChangeEvent(receivedExperimentPlan.getDateCreated(),
-                                new Person(receivedExperimentPlan.getCreatedBy(), RoleType.PROGRAM_PM)) );
-                        experimentRequestSummary.setModification(new ChangeEvent( new Date(), programMgr));
-                        experimentRequestSummary.setStatus( new Name(receivedExperimentPlan.getPlanningStatus()) );
+                        experimentRequestSummary.setExperimentId(new ExperimentId(expId));
+                        experimentRequestSummary.setCreation(new ChangeEvent(receivedExperimentPlan.getDateCreated(),
+                                new Person(receivedExperimentPlan.getCreatedBy(), RoleType.PROGRAM_PM)));
+                        experimentRequestSummary.setModification(new ChangeEvent(new Date(), programMgr));
+                        experimentRequestSummary.setStatus(new Name(receivedExperimentPlan.getPlanningStatus()));
 
-                        submittedExperimentRequest = new GapExperimentRequest(experimentRequestSummary, receivedExperimentPlan );
+                        submittedExperimentRequest = new GapExperimentRequest(experimentRequestSummary, receivedExperimentPlan);
                         submittedExperimentRequest = populateQuotes(submittedExperimentRequest, quoteService);
                         submittedExperimentRequest = populateGapProduct(submittedExperimentRequest);
 
                     } else {
                         logger.error("Expected 1 but received " + response.getExperimentPlans().size() +
                                 " GAP experiment requests for experimen titled : " +
-                                gapExperimentRequest.getExperimentRequestSummary().getTitle() );
-                        String gapErrMsg = generateSummaryFromResponse( response.getMessages(), submissionSuccessful );
+                                gapExperimentRequest.getExperimentRequestSummary().getTitle());
+                        String gapErrMsg = generateSummaryFromResponse(response.getMessages(), submissionSuccessful);
                         logger.error(gapErrMsg);
                         throw new RuntimeException(gapErrMsg);
                     }
                 }
-            }
-            catch(UniformInterfaceException e)
-            {
+            } catch (UniformInterfaceException e) {
                 String errMsg = "Could not submit GAP experiment titled <" + gapExperimentRequest.getExperimentRequestSummary().getTitle() + "> for user " +
                         programMgr.getUsername();
-                logger.error( errMsg + " at " + fullUrl );
-                throw new RuntimeException( errMsg );
-            }
-            catch(ClientHandlerException e)
-            {
+                logger.error(errMsg + " at " + fullUrl);
+                throw new RuntimeException(errMsg);
+            } catch (ClientHandlerException e) {
                 String errMsg = "Could not communicate with GAP server to submit experiment request titled <" +
                         gapExperimentRequest.getExperimentRequestSummary().getTitle() + "> for user " +
                         programMgr.getUsername();
-                logger.error( errMsg + " at " + fullUrl );
-                throw new RuntimeException( errMsg );
+                logger.error(errMsg + " at " + fullUrl);
+                throw new RuntimeException(errMsg);
             }
         } catch (Exception exp) {
-            if (exp.getMessage().contains("Exception occurred for user " + programMgr.getUsername() )) {
+            if (exp.getMessage().contains("Exception occurred for user " + programMgr.getUsername())) {
                 // Can ignore this exception as the user does not exist in in GAP.
                 logger.info("User " + programMgr.getUsername() + " not found in GAP. " + exp.getMessage());
             } else {
@@ -277,19 +275,19 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
         if (response != null) {
             for (ExperimentPlan expPlan : response.getExperimentPlans()) {
                 if (expPlan != null) {
-                    ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary (
+                    ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(
                             user, expPlan.getDateCreated(),
                             PlatformType.GAP);
-                    experimentRequestSummary.setRemoteId( new RemoteId(expPlan.getId()) );
-                    experimentRequestSummary.setCreation( new ChangeEvent( expPlan.getDateCreated(),
-                            new Person( expPlan.getCreatedBy(), RoleType.PROGRAM_PM ) ) );
+                    experimentRequestSummary.setExperimentId(new ExperimentId(expPlan.getId()));
+                    experimentRequestSummary.setCreation(new ChangeEvent(expPlan.getDateCreated(),
+                            new Person(expPlan.getCreatedBy(), RoleType.PROGRAM_PM)));
                     experimentRequestSummary.setModification(new ChangeEvent(expPlan.getProjectStartDate(),
-                            new Person(expPlan.getUpdatedBy(), RoleType.PROGRAM_PM ) ) );
+                            new Person(expPlan.getUpdatedBy(), RoleType.PROGRAM_PM)));
 
                     String status = expPlan.getPlanningStatus();
                     experimentRequestSummary.setStatus(new Name(status));
 
-                    experimentRequestSummary.setResearchProjectId(new Long( expPlan.getResearchProjectId()));
+                    experimentRequestSummary.setResearchProjectId(new Long(expPlan.getResearchProjectId()));
                     experimentRequestSummary.setTitle(new Name(expPlan.getExperimentName()));
                     experimentRequestSummaries.add(experimentRequestSummary);
                 }
@@ -303,27 +301,22 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
         try {
 
             String planXmlStr = ObjectMarshaller.marshall(requiredExperimentPlan);
-            String baseUrl =  gapConnectionParameters.getUrl( GapConnectionParameters.GAP_EXPERIMENTS_URL );
-            String fullUrl = baseUrl +  "?plan_data=" + encode( planXmlStr );
+            String baseUrl = gapConnectionParameters.getUrl(GapConnectionParameters.GAP_EXPERIMENTS_URL);
+            String fullUrl = baseUrl + "?plan_data=" + encode(planXmlStr);
             logger.info(String.format("url string is '%s'", fullUrl));
 
             WebResource resource = getJerseyClient().resource(fullUrl);
 
-            try
-            {
+            try {
                 response = resource.accept(MediaType.APPLICATION_XML).get(Response.class);
-            }
-            catch(UniformInterfaceException e)
-            {
+            } catch (UniformInterfaceException e) {
                 String errMsg = "Could not find GAP experiments for user " + user.getUsername();
-                logger.error( errMsg + " at " + baseUrl );
-                throw new RuntimeException( errMsg );
-            }
-            catch(ClientHandlerException e)
-            {
+                logger.error(errMsg + " at " + baseUrl);
+                throw new RuntimeException(errMsg);
+            } catch (ClientHandlerException e) {
                 String errMsg = "Could not communicate with GAP server for user " + user.getUsername();
-                logger.error( errMsg + " at " + baseUrl );
-                throw new RuntimeException( errMsg );
+                logger.error(errMsg + " at " + baseUrl);
+                throw new RuntimeException(errMsg);
             }
 
         } catch (Exception exp) {
@@ -344,27 +337,22 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
         try {
 
             String planXmlStr = ObjectMarshaller.marshall(requiredExperimentPlan);
-            String baseUrl =  gapConnectionParameters.getUrl( GapConnectionParameters.GAP_EXPERIMENTS_URL );
-            String fullUrl = baseUrl +  "?plan_data=" + encode( planXmlStr );
+            String baseUrl = gapConnectionParameters.getUrl(GapConnectionParameters.GAP_EXPERIMENTS_URL);
+            String fullUrl = baseUrl + "?plan_data=" + encode(planXmlStr);
             logger.info(String.format("url string is '%s'", fullUrl));
 
             WebResource resource = getJerseyClient().resource(fullUrl);
 
-            try
-            {
+            try {
                 response = resource.accept(MediaType.APPLICATION_XML).get(Response.class);
-            }
-            catch(UniformInterfaceException e)
-            {
+            } catch (UniformInterfaceException e) {
                 String errMsg = "Could not find GAP experiments for " + name;
-                logger.error( errMsg + " at " + baseUrl );
-                throw new RuntimeException( errMsg , e);
-            }
-            catch(ClientHandlerException e)
-            {
+                logger.error(errMsg + " at " + baseUrl);
+                throw new RuntimeException(errMsg, e);
+            } catch (ClientHandlerException e) {
                 String errMsg = "Could not communicate with GAP server for " + name;
-                logger.error( errMsg + " at " + baseUrl );
-                throw new RuntimeException( errMsg , e );
+                logger.error(errMsg + " at " + baseUrl);
+                throw new RuntimeException(errMsg, e);
             }
 
         } catch (Exception exp) {
@@ -380,34 +368,34 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
         final Product result;
         Platforms platforms = null;
 
-        String url =  gapConnectionParameters.getUrl( GapConnectionParameters.GAP_TECHNOLOGIES_URL );
+        String url = gapConnectionParameters.getUrl(GapConnectionParameters.GAP_TECHNOLOGIES_URL);
         logger.info(String.format("url string is '%s'", url));
 
         try {
             WebResource resource = getJerseyClient().resource(url);
             platforms = resource.accept(MediaType.APPLICATION_XML).get(Platforms.class);
-        } catch(UniformInterfaceException e) {
+        } catch (UniformInterfaceException e) {
             String errMsg = "Could not find GAP technologies for product id : " + productId.intValue();
-            logger.error( errMsg + " at " + url );
-            throw new RuntimeException( errMsg , e);
-        } catch(ClientHandlerException e) {
+            logger.error(errMsg + " at " + url);
+            throw new RuntimeException(errMsg, e);
+        } catch (ClientHandlerException e) {
             String errMsg = "Could not communicate with GAP server for technology chip product id " + productId.intValue();
-            logger.error( errMsg + " at " + url );
-            throw new RuntimeException( errMsg , e );
+            logger.error(errMsg + " at " + url);
+            throw new RuntimeException(errMsg, e);
         } catch (Exception exp) {
             String errMsg = "Exception occurred trying to retrieve GAP technology for product id : " + productId.intValue();
-            logger.error(errMsg + " at " + url , exp);
-            throw new RuntimeException( errMsg , exp);
+            logger.error(errMsg + " at " + url, exp);
+            throw new RuntimeException(errMsg, exp);
         }
 
         // Traverse the platform tree of products to find a match.
         // The lists of platforms and products are pretty small lists.
-        if ((platforms != null) && (platforms.getPlatforms() != null) && platforms.getPlatforms().size() > 0 ) {
-            for ( Platform platform : platforms.getPlatforms() ) {
-                if (( platform != null ) && (platform.getProducts() != null )
-                        && (platform.getProducts().getProducts() != null) &&  (platform.getProducts().getProducts().size() >0) ) {
-                    for ( Product product : platform.getProducts().getProducts() ) {
-                        if (( product != null ) && (product.getId() != null) && product.getId().trim().equals("" + productId.intValue()) ) {
+        if ((platforms != null) && (platforms.getPlatforms() != null) && platforms.getPlatforms().size() > 0) {
+            for (Platform platform : platforms.getPlatforms()) {
+                if ((platform != null) && (platform.getProducts() != null)
+                        && (platform.getProducts().getProducts() != null) && (platform.getProducts().getProducts().size() > 0)) {
+                    for (Product product : platform.getProducts().getProducts()) {
+                        if ((product != null) && (product.getId() != null) && product.getId().trim().equals("" + productId.intValue())) {
                             result = product;
                             return result;
                         }
@@ -417,8 +405,8 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
         }
 
         String errMsg = "Could not find GAP technologies for product id : " + productId.intValue();
-        logger.error( errMsg + " at " + url );
-        throw new ProductNotFoundException( errMsg );
+        logger.error(errMsg + " at " + url);
+        throw new ProductNotFoundException(errMsg);
     }
 
     private String encode(String valueStr) throws UnsupportedEncodingException {
@@ -428,7 +416,6 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
             return null;
         }
     }
-
 
 
     private String generateSummaryFromResponse(Messages messages, boolean experimentSubmitted) {
@@ -497,8 +484,6 @@ public class GenotypingServiceImpl  extends AbstractJerseyClientService implemen
         }
         return resultBuffer.toString();
     }
-
-
 
 
 }

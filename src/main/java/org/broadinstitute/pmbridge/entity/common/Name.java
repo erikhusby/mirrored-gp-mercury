@@ -14,12 +14,15 @@ public class Name {
     public final static String UNSPECIFIED = "Unspecified";
 
     public Name(String name) {
-        if ((name == null ) || StringUtils.isBlank(name)) {
+        if ((name == null) || StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Value for name is invalid. Must be non-null and non-empty. Name supplied was : " + name);
         }
         this.name = name;
     }
 
+    public String getName() {
+        return name;
+    }
 
     @Override
     public boolean equals(final Object o) {

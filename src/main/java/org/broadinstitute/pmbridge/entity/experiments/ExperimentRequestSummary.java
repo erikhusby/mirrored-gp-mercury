@@ -1,5 +1,6 @@
 package org.broadinstitute.pmbridge.entity.experiments;
 
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.person.Person;
@@ -18,21 +19,23 @@ import java.util.Date;
 public class ExperimentRequestSummary {
 
     private ChangeEvent creation;
-    private final LocalId localId;
     private final PlatformType platformType;
-//    private final ExperimentRequest experimentRequest;
     private Name title;
     private ChangeEvent modification;
-    private RemoteId remoteId;
+    private ExperimentId experimentId;
     private Long researchProjectId = ResearchProject.UNSPECIFIED_ID;
     public static Name DRAFT_STATUS = new Name("DRAFT");
+    public static IllegalArgumentException BLANK_CREATOR_EXCEPTION = new IllegalArgumentException("Creator username must not be blank.");
     private Name status = DRAFT_STATUS;
 
 
     public ExperimentRequestSummary(Person creator, Date createdDate, PlatformType platformType) {
-        this.creation = new ChangeEvent( createdDate, creator );
+        if (creator == null || StringUtils.isBlank(creator.getUsername())) {
+            throw BLANK_CREATOR_EXCEPTION;
+        }
+        this.creation = new ChangeEvent(createdDate, creator);
         this.platformType = platformType;
-        this.localId = new LocalId( "" + this.creation.date.getTime());
+        this.experimentId = new ExperimentId("DRAFT_" + this.creation.date.getTime());
         this.modification = new ChangeEvent(new Date(this.creation.date.getTime()), creator);
     }
 
@@ -45,12 +48,8 @@ public class ExperimentRequestSummary {
         return creation;
     }
 
-    public RemoteId getRemoteId() {
-        return remoteId;
-    }
-
-    public LocalId getLocalId() {
-        return localId;
+    public ExperimentId getExperimentId() {
+        return experimentId;
     }
 
     public ChangeEvent getModification() {
@@ -74,8 +73,8 @@ public class ExperimentRequestSummary {
         this.title = title;
     }
 
-    public void setRemoteId(final RemoteId remoteId) {
-        this.remoteId = remoteId;
+    public void setExperimentId(final ExperimentId experimentId) {
+        this.experimentId = experimentId;
     }
 
     public void setModification(final ChangeEvent modification) {

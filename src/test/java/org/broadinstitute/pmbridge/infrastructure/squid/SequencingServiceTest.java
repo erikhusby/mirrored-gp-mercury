@@ -2,8 +2,8 @@ package org.broadinstitute.pmbridge.infrastructure.squid;
 
 import org.apache.commons.lang.StringUtils;
 import org.broad.squid.services.TopicService.*;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentId;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
-import org.broadinstitute.pmbridge.entity.experiments.RemoteId;
 import org.broadinstitute.pmbridge.entity.experiments.seq.*;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
@@ -32,7 +32,8 @@ import static org.testng.Assert.*;
 @Test(groups = UNIT)
 public class SequencingServiceTest {
 
-    private SquidTopicPortype mockSquidTopicPortype =null;
+    public static final String SHOULD_HAVE_THROWN_EXCEPTION = "Should have thrown exception ";
+    private SquidTopicPortype mockSquidTopicPortype = null;
     private SequencingServiceImpl sequencingService = null;
 
     @BeforeMethod
@@ -77,10 +78,10 @@ public class SequencingServiceTest {
         List<Person> people = sequencingService.getPlatformPeople();
         Assert.assertNotNull(people);
         Assert.assertEquals(people.size(), 1);
-        Assert.assertEquals( people.get(0).getUsername(), "tester");
-        Assert.assertEquals( people.get(0).getLastName(), "Tester");
+        Assert.assertEquals(people.get(0).getUsername(), "tester");
+        Assert.assertEquals(people.get(0).getLastName(), "Tester");
         Assert.assertEquals(people.get(0).getPersonId().compareTo("100"), 0);
-        Assert.assertEquals( people.get(0).getRoleType(), RoleType.BROAD_SCIENTIST );
+        Assert.assertEquals(people.get(0).getRoleType(), RoleType.BROAD_SCIENTIST);
 
     }
 
@@ -88,8 +89,8 @@ public class SequencingServiceTest {
     public void testGetOrganisms() throws Exception {
 
         List<OrganismName> organismNames = null;
-        OrganismListResult organismListResult =  new OrganismListResult();
-        List<Organism> organismList =  organismListResult.getOrganismList();
+        OrganismListResult organismListResult = new OrganismListResult();
+        List<Organism> organismList = organismListResult.getOrganismList();
         Organism organism = new Organism();
         organism.setCommonName("velociraptor");
         organism.setSpecies("XLR8");
@@ -107,8 +108,8 @@ public class SequencingServiceTest {
         organismNames = sequencingService.getOrganisms();
         Assert.assertNotNull(organismNames);
         Assert.assertEquals(organismNames.size(), 1);
-        Assert.assertEquals( organismNames.get(0).getCommonName(), "velociraptor");
-        Assert.assertEquals( organismNames.get(0).getId(), 48L);
+        Assert.assertEquals(organismNames.get(0).getCommonName(), "velociraptor");
+        Assert.assertEquals(organismNames.get(0).getId(), 48L);
 
     }
 
@@ -116,8 +117,8 @@ public class SequencingServiceTest {
     public void testGetBaitSets() throws Exception {
 
         List<BaitSetName> baitSetNames = null;
-        BaitSetListResult baitSetListResult =  new BaitSetListResult();
-        List<BaitSet> baitSetList =  baitSetListResult.getBaitSetList();
+        BaitSetListResult baitSetListResult = new BaitSetListResult();
+        List<BaitSet> baitSetList = baitSetListResult.getBaitSetList();
         BaitSet baitSet = new BaitSet();
         baitSet.setDesignName("aBaitSet");
         baitSet.setId(12L);
@@ -135,8 +136,8 @@ public class SequencingServiceTest {
         baitSetNames = sequencingService.getBaitSets();
         Assert.assertNotNull(baitSetNames);
         Assert.assertEquals(baitSetNames.size(), 1);
-        Assert.assertEquals( baitSetNames.get(0).name, "aBaitSet");
-        Assert.assertEquals( baitSetNames.get(0).getId(), 12L);
+        Assert.assertEquals(baitSetNames.get(0).name, "aBaitSet");
+        Assert.assertEquals(baitSetNames.get(0).getId(), 12L);
 
     }
 
@@ -144,8 +145,8 @@ public class SequencingServiceTest {
     public void testGetReferenceSequences() throws Exception {
 
         List<ReferenceSequenceName> referenceSequenceNames = null;
-        ReferenceSequenceListResult referenceSequenceListResult =  new ReferenceSequenceListResult();
-        List<ReferenceSequence> referenceSequenceList =  referenceSequenceListResult.getReferenceSequenceList();
+        ReferenceSequenceListResult referenceSequenceListResult = new ReferenceSequenceListResult();
+        List<ReferenceSequence> referenceSequenceList = referenceSequenceListResult.getReferenceSequenceList();
 
         ReferenceSequence referenceSequence = new ReferenceSequence();
         referenceSequence.setAlias("aReferenceSequence");
@@ -169,8 +170,8 @@ public class SequencingServiceTest {
         referenceSequenceNames = sequencingService.getReferenceSequences();
         Assert.assertNotNull(referenceSequenceNames);
         Assert.assertEquals(referenceSequenceNames.size(), 1);
-        Assert.assertEquals( referenceSequenceNames.get(0).name, "aReferenceSequence");
-        Assert.assertEquals( referenceSequenceNames.get(0).getId(), 99L);
+        Assert.assertEquals(referenceSequenceNames.get(0).name, "aReferenceSequence");
+        Assert.assertEquals(referenceSequenceNames.get(0).getId(), 99L);
 
     }
 
@@ -184,18 +185,18 @@ public class SequencingServiceTest {
         try {
             aList0 = sequencingService.getRequestSummariesByCreator(null);
             fail("should have thrown exception.");
-        } catch ( Exception exp ) {
-            assertTrue( exp instanceof IllegalArgumentException );
-            assertTrue( exp.getMessage().contains("without a valid username"));
+        } catch (Exception exp) {
+            assertTrue(exp instanceof IllegalArgumentException);
+            assertTrue(exp.getMessage().contains("without a valid username"));
         }
         assertNull(aList0);
         // Call the getRequestSummariesByCreator with a user with no username
         try {
             aList0 = sequencingService.getRequestSummariesByCreator(new Person("", RoleType.PROGRAM_PM));
             fail("should have thrown exception.");
-        } catch ( Exception exp ) {
-            assertTrue( exp instanceof IllegalArgumentException );
-            assertTrue( exp.getMessage().contains("without a valid username"));
+        } catch (Exception exp) {
+            assertTrue(exp instanceof IllegalArgumentException);
+            assertTrue(exp.getMessage().contains("without a valid username"));
         }
         assertNull(aList0);
 
@@ -210,7 +211,7 @@ public class SequencingServiceTest {
             summarizedPass.setCreatedDate(today);
             summarizedPass.setPassNumber("Pass-0101");
             summarizedPass.setResearchProject("101");
-            summarizedPass.setStatus( PassStatus.NEW);
+            summarizedPass.setStatus(PassStatus.NEW);
             summarizedPass.setType(PassType.WG);
             summarizedPass.setTitle("WGS");
             summarizedPass.setVersion(1);
@@ -221,7 +222,7 @@ public class SequencingServiceTest {
             summarizedPass.setCreatedDate(today);
             summarizedPass.setPassNumber("Pass-0202");
             summarizedPass.setResearchProject("101");
-            summarizedPass.setStatus( PassStatus.APPROVED);
+            summarizedPass.setStatus(PassStatus.APPROVED);
             summarizedPass.setType(PassType.DIRECTED);
             summarizedPass.setTitle("HybridSelection");
             summarizedPass.setVersion(2);
@@ -232,7 +233,7 @@ public class SequencingServiceTest {
             summarizedPass.setCreatedDate(today);
             summarizedPass.setPassNumber("Pass-0303");
             summarizedPass.setResearchProject("101");
-            summarizedPass.setStatus( PassStatus.NEW);
+            summarizedPass.setStatus(PassStatus.NEW);
             summarizedPass.setType(PassType.RNASEQ);
             summarizedPass.setTitle("RNASEQ");
             summarizedPass.setVersion(1);
@@ -245,24 +246,24 @@ public class SequencingServiceTest {
             summarizedPassList.add(summarizedPass);
             summarizedPass.setPassNumber("Pass-0606");
             summarizedPass.setTitle("Abandoned Pass");
-            summarizedPass.setStatus( PassStatus.ABANDONED);
+            summarizedPass.setStatus(PassStatus.ABANDONED);
         }
 
         //Configure the mock to respond as needed
-        EasyMock.expect(mockSquidTopicPortype.searchPassesByCreator( (String) EasyMock.anyObject() )).andReturn(summarizedPassListResult).once();
+        EasyMock.expect(mockSquidTopicPortype.searchPassesByCreator((String) EasyMock.anyObject())).andReturn(summarizedPassListResult).once();
         EasyMock.replay(mockSquidTopicPortype);
 
         List<ExperimentRequestSummary> aList = sequencingService.getRequestSummariesByCreator(new Person("pmbridge", RoleType.PROGRAM_PM));
 
         assertNotNull(aList);
         Assert.assertEquals(aList.size(), 4);
-        for ( ExperimentRequestSummary experimentRequestSummary : aList ) {
+        for (ExperimentRequestSummary experimentRequestSummary : aList) {
             assertNotNull(experimentRequestSummary);
             Assert.assertEquals(experimentRequestSummary.getCreation().date, today.getTime());
             assertNotNull(experimentRequestSummary.getStatus());
             assertNotNull(experimentRequestSummary.getResearchProjectId());
             assertNotNull(experimentRequestSummary.getTitle());
-            assertNotNull(experimentRequestSummary.getRemoteId());
+            assertNotNull(experimentRequestSummary.getExperimentId());
             assertEquals(experimentRequestSummary.getPlatformType(), PlatformType.GSP);
         }
     }
@@ -277,19 +278,19 @@ public class SequencingServiceTest {
         try {
             seqExperimentRequest = sequencingService.getPlatformRequest(null);
             fail("should have thrown exception.");
-        } catch ( Exception exp ) {
-            assertTrue( exp instanceof IllegalArgumentException );
-            assertTrue( exp.getMessage().contains("without a remote sequencing experiment Id"));
+        } catch (Exception exp) {
+            assertTrue(exp instanceof IllegalArgumentException);
+            assertTrue(exp.getMessage().contains("without a remote sequencing experiment Id"));
         }
         assertNull(seqExperimentRequest);
 
         // Call the getPlatformRequest without a exp req Id
         try {
             seqExperimentRequest = sequencingService.getPlatformRequest(new ExperimentRequestSummary(null, new Date(), null));
-            fail("should have thrown exception.");
-        } catch ( Exception exp ) {
-            assertTrue( exp instanceof IllegalArgumentException );
-            assertTrue( exp.getMessage().contains("without a remote sequencing experiment Id"));
+            fail(SHOULD_HAVE_THROWN_EXCEPTION + IllegalArgumentException.class.getSimpleName());
+        } catch (Exception exp) {
+            assertTrue(exp instanceof IllegalArgumentException);
+            assertTrue(exp.getMessage().equals(ExperimentRequestSummary.BLANK_CREATOR_EXCEPTION.getMessage()));
         }
         assertNull(seqExperimentRequest);
 
@@ -318,15 +319,15 @@ public class SequencingServiceTest {
         aPass.setProjectInformation(projectInformation);
 
         //Configure the mock to respond as needed
-        EasyMock.expect(mockSquidTopicPortype.loadPassByNumber( (String) EasyMock.anyObject() )).andReturn(aPass).once();
+        EasyMock.expect(mockSquidTopicPortype.loadPassByNumber((String) EasyMock.anyObject())).andReturn(aPass).once();
         EasyMock.replay(mockSquidTopicPortype);
 
         ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(new Person("pmbridge", RoleType.PROGRAM_PM),
                 new Date(), PlatformType.GSP);
-        experimentRequestSummary.setRemoteId( new RemoteId(projectInformation.getPassNumber()));
+        experimentRequestSummary.setExperimentId(new ExperimentId(projectInformation.getPassNumber()));
 
 
-        seqExperimentRequest = sequencingService.getPlatformRequest ( experimentRequestSummary  );
+        seqExperimentRequest = sequencingService.getPlatformRequest(experimentRequestSummary);
         Assert.assertNotNull(seqExperimentRequest);
         Assert.assertTrue(seqExperimentRequest instanceof WholeGenomeExperiment);
         WholeGenomeExperiment wholeGenomeExperiment = (WholeGenomeExperiment) seqExperimentRequest;
@@ -335,9 +336,9 @@ public class SequencingServiceTest {
 //
 //        }
 
-        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains( new Person("Bashful", RoleType.PROGRAM_PM)) );
-        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains( new Person("Sneezey", RoleType.PROGRAM_PM)) );
-        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains( new Person("Happy", RoleType.PROGRAM_PM)) );
+        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains(new Person("Bashful", RoleType.PROGRAM_PM)));
+        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains(new Person("Sneezey", RoleType.PROGRAM_PM)));
+        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains(new Person("Happy", RoleType.PROGRAM_PM)));
 
     }
 //
@@ -352,19 +353,19 @@ public class SequencingServiceTest {
 //    }
 
 
-    private SquidPersonList extractSquidPeopleFromUsernameList(final String peopleStr ) {
+    private SquidPersonList extractSquidPeopleFromUsernameList(final String peopleStr) {
         SquidPersonList squidPersonList = new SquidPersonList();
-        List<SquidPerson> personList  = squidPersonList.getSquidPerson();
-        if ( StringUtils.isNotBlank(peopleStr)) {
-            String [] userNames = peopleStr.split(",");
+        List<SquidPerson> personList = squidPersonList.getSquidPerson();
+        if (StringUtils.isNotBlank(peopleStr)) {
+            String[] userNames = peopleStr.split(",");
             List<String> nameList = Arrays.asList(userNames);
             int idCounter = 0;
-            for ( String name : nameList ) {
-                if ( StringUtils.isNotBlank( name ) ) {
+            for (String name : nameList) {
+                if (StringUtils.isNotBlank(name)) {
                     idCounter++;
                     SquidPerson person = new SquidPerson();
                     person.setLogin(name);
-                    person.setPersonID( new BigInteger("" + idCounter));
+                    person.setPersonID(new BigInteger("" + idCounter));
                     personList.add(person);
                 }
             }

@@ -84,10 +84,10 @@ public class SequencingServiceExternalTest extends Arquillian {
         List<ExperimentRequestSummary> aList = sequencingService.getRequestSummariesByCreator(new Person("pmbridge", RoleType.PROGRAM_PM));
         assertNotNull(aList);
         // If there was any data on SQUID for the pmbridge user then check it.
-        if ( aList.size() > 0 ) {
+        if (aList.size() > 0) {
             ExperimentRequestSummary experimentRequestSummary = aList.get(0);
             assertNotNull(experimentRequestSummary.getTitle());
-            assertNotNull(experimentRequestSummary.getRemoteId().value);
+            assertNotNull(experimentRequestSummary.getExperimentId().value);
             assertNotNull(experimentRequestSummary.getStatus().name);
         }
 

@@ -4,18 +4,18 @@ package org.broadinstitute.pmbridge.entity.person;
  * Let's make a very simple person model
  * which basically delgates everything
  * to LDAP.
- *
+ * <p/>
  * Some people login to squid (users).
- *
+ * <p/>
  * Some people are collaborators, or names
  * of people that we need to track as
  * program program project managers,
  * scientists, principal investigators (PI).
- *
+ * <p/>
  * Sometimes users have all these roles,
  * but let's not make a gigantic hierarchical
  * model.
- *
+ * <p/>
  * If there is an entry for someone in LDAP,
  * they can login to squid.  If not, they
  * can't.  But they can be referenced
@@ -25,18 +25,18 @@ package org.broadinstitute.pmbridge.entity.person;
 public class Person {
 
     private String username;
-    
+
     private String firstName;
-    
+
     private String lastName;
 
     private String personId;
 
     private RoleType roleType = RoleType.UNSPECIFIED;
-    
+
 
     public Person(String username,
-                      RoleType roleType) {
+                  RoleType roleType) {
         this.username = username;
         this.roleType = roleType;
     }
@@ -52,7 +52,7 @@ public class Person {
         this.lastName = lastName;
         this.personId = personId;
     }
-    
+
     public String getFirstName() {
         return firstName;
     }
@@ -73,14 +73,6 @@ public class Person {
         return roleType;
     }
 
-    /**
-     * LDAP user name
-     * @return
-     */
-    public String getLogin() {
-        throw new RuntimeException("Method not yet implemented.");
-    }
-
     public boolean canLogin() {
         throw new RuntimeException("Method not yet implemented.");
     }
@@ -89,6 +81,7 @@ public class Person {
      * If this person can login to our
      * app, what parts of the app
      * can the access?
+     *
      * @return
      */
     public Iterable<PageAccess> getPageAccess() {

@@ -5,15 +5,15 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         >
 <body>
-<ui:composition>
+<ui:composition template="/layout.xhtml">
+    <ui:define name="title">PMBridge</ui:define>
+    <ui:define name="body">
 
-    <!--<h:link outcome="/index">Home</h:link>-->
-    <!--<ul>-->
-    <!--<li><h:link outcome="/summary/summary">Experiment Requests</h:link></li>-->
-    <!--</ul>-->
+        Thanks for using PMBridge.
+
+    </ui:define>
 </ui:composition>
 </body>
 </html>

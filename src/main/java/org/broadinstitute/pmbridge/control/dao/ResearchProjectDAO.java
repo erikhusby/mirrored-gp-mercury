@@ -30,6 +30,7 @@ public class ResearchProjectDAO {
         saveProject(this.findById(111L));
         saveProject(this.findById(222L));
         saveProject(this.findById(333L));
+        saveProject(this.findById(381L));
         saveProject(this.findById(444L));
 
     }
@@ -37,12 +38,12 @@ public class ResearchProjectDAO {
     // TODO Temp method just to save an rp.
     public void saveProject(ResearchProject researchProject) {
         String researchProjectTitle = researchProject.getTitle().name;
-        if ((researchProject!=null) && StringUtils.isBlank(researchProjectTitle)) {
+        if ((researchProject != null) && StringUtils.isBlank(researchProjectTitle)) {
             throw new IllegalArgumentException("ResearchProject title must non be blank.");
         }
         if (researchProjectsMap.containsKey(researchProjectTitle)) {
             throw new IllegalArgumentException("Research Project title must be unique. Research project title " +
-                    researchProjectTitle  + " already exists.");
+                    researchProjectTitle + " already exists.");
         }
         researchProjectsMap.put(researchProjectTitle, researchProject);
     }
@@ -51,20 +52,20 @@ public class ResearchProjectDAO {
         ArrayList<ResearchProject> result = new ArrayList<ResearchProject>();
 
         //TODO hmc - hook up with the actual DB. Just return some dummy data. Always returns project 222
-        result.add(this.findById( 222L ));
+        result.add(this.findById(222L));
 
         return result;
     }
 
 
-    public ResearchProject findById( Long researchProjectId ) {
+    public ResearchProject findById(Long researchProjectId) {
 
         //TODO hmc - hook up with the actual DB.
         // create a dummy research project with rpid appended to title.
-        Person programMgr = new Person("shefler@broad", "Erica", "Shefler", "1", RoleType.PROGRAM_PM );
+        Person programMgr = new Person("shefler@broad", "Erica", "Shefler", "1", RoleType.PROGRAM_PM);
         ResearchProject myResearchProject = new ResearchProject(programMgr,
-                new Name("FakeResearchProject" + researchProjectId ), "Research Stuff");
-        myResearchProject.setId( researchProjectId );
+                new Name("FakeResearchProject" + researchProjectId), "Research Stuff");
+        myResearchProject.setId(researchProjectId);
 
         return myResearchProject;
     }
@@ -77,8 +78,5 @@ public class ResearchProjectDAO {
         return result;
 
     }
-
-
-
 
 }

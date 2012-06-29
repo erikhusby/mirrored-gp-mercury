@@ -27,11 +27,11 @@ public class ExperimentRequestSummaryTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        experimentRequestSummary = new ExperimentRequestSummary  (
-                 new Person("pmbridge", RoleType.PROGRAM_PM),
-                 new Date(),
-                 PlatformType.GSP
-         );
+        experimentRequestSummary = new ExperimentRequestSummary(
+                new Person("pmbridge", RoleType.PROGRAM_PM),
+                new Date(),
+                PlatformType.GSP
+        );
     }
 
     @AfterMethod
@@ -40,49 +40,50 @@ public class ExperimentRequestSummaryTest {
 
     @Test
     public void testGetTitle() throws Exception {
-        Assert.assertNull( experimentRequestSummary.getTitle() );
-        experimentRequestSummary.setTitle( new Name("ExpTitle"));
+        Assert.assertNull(experimentRequestSummary.getTitle());
+        experimentRequestSummary.setTitle(new Name("ExpTitle"));
         Assert.assertEquals(experimentRequestSummary.getTitle().name, "ExpTitle");
     }
 
     @Test
     public void testCreation() throws Exception {
-        Assert.assertNotNull( experimentRequestSummary.getCreation() );
+        Assert.assertNotNull(experimentRequestSummary.getCreation());
         Assert.assertNotNull(experimentRequestSummary.getCreation().date);
         Assert.assertEquals(experimentRequestSummary.getCreation().person.getUsername(), "pmbridge");
     }
 
     @Test
     public void testGetRemoteId() throws Exception {
-        Assert.assertNull( experimentRequestSummary.getRemoteId() );
+        Assert.assertNotNull(experimentRequestSummary.getExperimentId());
+        Assert.assertTrue(experimentRequestSummary.getExperimentId().value.startsWith("DRAFT_"));
     }
 
-    @Test
-    public void testGetLocalId() throws Exception {
-        Assert.assertNotNull(experimentRequestSummary.getLocalId() );
-    }
+//    @Test
+//    public void testGetLocalId() throws Exception {
+//        Assert.assertNotNull(experimentRequestSummary.getLocalId() );
+//    }
 
     @Test
     public void testGetModification() throws Exception {
-        Assert.assertNotNull( experimentRequestSummary.getModification());
-        Assert.assertNotNull( experimentRequestSummary.getModification().date);
-        Assert.assertNotNull( experimentRequestSummary.getModification().person);
+        Assert.assertNotNull(experimentRequestSummary.getModification());
+        Assert.assertNotNull(experimentRequestSummary.getModification().date);
+        Assert.assertNotNull(experimentRequestSummary.getModification().person);
     }
 
     @Test
     public void testGetPlatformType() throws Exception {
-        Assert.assertEquals( experimentRequestSummary.getPlatformType(), PlatformType.GSP);
+        Assert.assertEquals(experimentRequestSummary.getPlatformType(), PlatformType.GSP);
 
     }
 
     @Test
     public void testGetStatus() throws Exception {
-        Assert.assertEquals( experimentRequestSummary.getStatus(), ExperimentRequestSummary.DRAFT_STATUS );
+        Assert.assertEquals(experimentRequestSummary.getStatus(), ExperimentRequestSummary.DRAFT_STATUS);
     }
 
     @Test
     public void testGetResearchProjectId() throws Exception {
-        Assert.assertEquals( experimentRequestSummary.getResearchProjectId(), ResearchProject.UNSPECIFIED_ID);
+        Assert.assertEquals(experimentRequestSummary.getResearchProjectId(), ResearchProject.UNSPECIFIED_ID);
     }
 
     @Test

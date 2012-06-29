@@ -8,9 +8,9 @@ import org.broadinstitute.pmbridge.entity.common.EntityUtils;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.common.QuoteId;
 import org.broadinstitute.pmbridge.entity.experiments.AbstractExperimentRequest;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentId;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequest;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
-import org.broadinstitute.pmbridge.entity.experiments.RemoteId;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
@@ -40,7 +40,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     private ReferenceSequenceName referenceSequenceName;
 
 
-    public SeqExperimentRequest(ExperimentRequestSummary experimentRequestSummary, PassType passType ) {
+    public SeqExperimentRequest(ExperimentRequestSummary experimentRequestSummary, PassType passType) {
         super(experimentRequestSummary);
         this.passType = passType;
         // TODO set any defaults for other pass members ??
@@ -48,9 +48,9 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
     protected CoverageAndAnalysisInformation getOrCreateCoverageAndAnalysisInformation() {
         CoverageAndAnalysisInformation coverageAndAnalysisInformation;
-        if( (null == getConcretePass().getCoverageAndAnalysisInformation()) ) {
+        if ((null == getConcretePass().getCoverageAndAnalysisInformation())) {
             // Create default coverage model
-            coverageAndAnalysisInformation =  createDefaultCoverageModel();
+            coverageAndAnalysisInformation = createDefaultCoverageModel();
             getConcretePass().setCoverageAndAnalysisInformation(coverageAndAnalysisInformation);
         } else {
             coverageAndAnalysisInformation = getConcretePass().getCoverageAndAnalysisInformation();
@@ -64,6 +64,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
     /**
      * Implementing subclasses should always return a non-null concrete AbstractPass
+     *
      * @return
      */
 
@@ -72,7 +73,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
     public abstract Set<CoverageModelType> getCoverageModelTypes();
 
-    protected abstract void  setSeqCoverageModel(final SeqCoverageModel seqCoverageModel);
+    protected abstract void setSeqCoverageModel(final SeqCoverageModel seqCoverageModel);
 
 
     protected abstract CoverageAndAnalysisInformation createDefaultCoverageModel();
@@ -80,7 +81,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
     protected ProjectInformation getOrCreateProjectInformation() {
         ProjectInformation projectInformation;
-        if( (null == getConcretePass().getProjectInformation()) ) {
+        if ((null == getConcretePass().getProjectInformation())) {
             projectInformation = new ProjectInformation();
             getConcretePass().setProjectInformation(projectInformation);
         } else {
@@ -91,7 +92,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
     protected FundingInformation getOrCreateFundingInformation() {
         FundingInformation fundingInformation;
-        if( (null == getConcretePass().getFundingInformation()) ) {
+        if ((null == getConcretePass().getFundingInformation())) {
             fundingInformation = new FundingInformation();
             getConcretePass().setFundingInformation(fundingInformation);
         } else {
@@ -101,11 +102,11 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
     public SeqTechnology getSeqTechnology() {
-        SeqTechnology seqTechnology=null;
+        SeqTechnology seqTechnology = null;
 
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         SequencingTechnology sequencingTechnology = projectInformation.getSequencingTechnology();
-        if ( null != sequencingTechnology ) {
+        if (null != sequencingTechnology) {
             // Convert one external enum type to local enum type by the common value
             seqTechnology = SeqTechnology.fromValue(sequencingTechnology.value());
         }
@@ -122,22 +123,22 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
     @Override
-    public void setTitle(final Name title ) {
+    public void setTitle(final Name title) {
         ProjectInformation projectInformation = getOrCreateProjectInformation();
-        projectInformation.setTitle( getExperimentRequestSummary().getTitle().name );
+        projectInformation.setTitle(getExperimentRequestSummary().getTitle().name);
         getConcretePass().setProjectInformation(projectInformation);
     }
 
     protected Set<Person> getOrCreatePersonsFromPass(SquidPersonList squidPersonList, RoleType roleType) {
         Set<Person> people = new HashSet<Person>();
-        for (SquidPerson squidPerson : squidPersonList.getSquidPerson() ) {
-            if ((squidPerson != null) && (squidPerson.getPersonID() != null) ) {
+        for (SquidPerson squidPerson : squidPersonList.getSquidPerson()) {
+            if ((squidPerson != null) && (squidPerson.getPersonID() != null)) {
                 Person person = new Person(
                         squidPerson.getLogin(),
                         squidPerson.getFirstName(),
                         squidPerson.getLastName(),
                         squidPerson.getPersonID().toString(),
-                        roleType );
+                        roleType);
                 people.add(person);
             }
         }
@@ -146,7 +147,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
 
     public Set<Person> getSponsoringScientists() {
-        return getOrCreatePersonsFromPass( getOrCreateSponsoringScientists(), RoleType.BROAD_SCIENTIST );
+        return getOrCreatePersonsFromPass(getOrCreateSponsoringScientists(), RoleType.BROAD_SCIENTIST);
     }
 
     /*
@@ -158,24 +159,24 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         ProjectInformation projectInformation = getOrCreateProjectInformation();
 
         SquidPersonList squidPersonList = getOrCreateSponsoringScientists();
-        List<SquidPerson> squidPersons  = squidPersonList.getSquidPerson();
-        for (Person sponsoringScientist : sponsoringScientists ) {
+        List<SquidPerson> squidPersons = squidPersonList.getSquidPerson();
+        for (Person sponsoringScientist : sponsoringScientists) {
             SquidPerson squidPerson = new SquidPerson();
-            squidPerson.setFirstName( sponsoringScientist.getFirstName() );
-            squidPerson.setLastName( sponsoringScientist.getLastName() );
-            squidPerson.setLogin( sponsoringScientist.getUsername() );
-            squidPersons.add( squidPerson );
+            squidPerson.setFirstName(sponsoringScientist.getFirstName());
+            squidPerson.setLastName(sponsoringScientist.getLastName());
+            squidPerson.setLogin(sponsoringScientist.getUsername());
+            squidPersons.add(squidPerson);
         }
-        projectInformation.setSponsoringScientists( squidPersonList );
+        projectInformation.setSponsoringScientists(squidPersonList);
     }
 
     private SquidPersonList getOrCreateSponsoringScientists() {
         SquidPersonList result = null;
         ProjectInformation projectInformation = getOrCreateProjectInformation();
-        if ( null == projectInformation.getSponsoringScientists() ) {
+        if (null == projectInformation.getSponsoringScientists()) {
             SquidPersonList squidPersonList = new SquidPersonList();
             List<SquidPerson> squidPersons = squidPersonList.getSquidPerson();  //this call ensures list is initialized.
-            projectInformation.setSponsoringScientists( squidPersonList );
+            projectInformation.setSponsoringScientists(squidPersonList);
         }
         result = projectInformation.getSponsoringScientists();
         return result;
@@ -184,7 +185,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     private SquidPersonList getOrCreatePlatformProjectManagers() {
         SquidPersonList result = null;
         ProjectInformation projectInformation = getOrCreateProjectInformation();
-        if ( null == projectInformation.getPlatformProjectManagers() ) {
+        if (null == projectInformation.getPlatformProjectManagers()) {
             SquidPersonList squidPersonList = new SquidPersonList();
             List<SquidPerson> squidPersons = squidPersonList.getSquidPerson();  //this call ensures list is initialized.
             projectInformation.setPlatformProjectManagers(squidPersonList);
@@ -195,21 +196,22 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
 
     @Override
-    public void setRemoteId(final RemoteId remoteId) {
+    public void setRemoteId(final ExperimentId remoteId) {
 
-        RemoteId currentRemoteId = super.getExperimentRequestSummary().getRemoteId();
-        //Check against changing the remote Id of an experiment request with a new and different remoteId
-        if ( (currentRemoteId != null) &&
-                StringUtils.isNotBlank( currentRemoteId.value ) &&
-                (! currentRemoteId.value.equals(remoteId.value)) ) {
-            throw new IllegalStateException("Cannot overwrite the current remote Id <"+ currentRemoteId.value +
-                    "> with another different remote id <" + remoteId.value + ">." );
-        }
-        getExperimentRequestSummary().setRemoteId( remoteId );
+//        RemoteId currentRemoteId = super.getExperimentRequestSummary().getExperimentId();
+//        //Check against changing the remote Id of an experiment request with a new and different remoteId
+//        if ( (currentRemoteId != null) &&
+//                StringUtils.isNotBlank( currentRemoteId.value ) &&
+//                (! currentRemoteId.value.equals(remoteId.value)) ) {
+//            throw new IllegalStateException("Cannot overwrite the current remote Id <"+ currentRemoteId.value +
+//                    "> with another different remote id <" + remoteId.value + ">." );
+//        }
+//        getExperimentRequestSummary().setExperimentId(remoteId);
+        super.setRemoteId(remoteId);
 
         //Also ensure the remote id on the pass is up to date.
-        if ( StringUtils.isBlank( getOrCreateProjectInformation().getPassNumber() ) ) {
-            getOrCreateProjectInformation().setPassNumber( remoteId.value );
+        if (StringUtils.isBlank(getOrCreateProjectInformation().getPassNumber())) {
+            getOrCreateProjectInformation().setPassNumber(remoteId.value);
         }
     }
 
@@ -221,7 +223,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     @Override
     public Set<Person> getPlatformProjectManagers() {
         // get the platform project managers list from the abstract pass the was received from squid.
-        return getOrCreatePersonsFromPass( getOrCreatePlatformProjectManagers(), RoleType.PLATFORM_PM );
+        return getOrCreatePersonsFromPass(getOrCreatePlatformProjectManagers(), RoleType.PLATFORM_PM);
     }
 
     @Override
@@ -229,7 +231,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         Set<Person> result = new HashSet<Person>();
         ProjectInformation projectInformation = getOrCreateProjectInformation();
         String programPms = projectInformation.getProgramProjectManagers();
-        if ( StringUtils.isNotBlank(programPms) ) {
+        if (StringUtils.isNotBlank(programPms)) {
             result = EntityUtils.extractPeopleFromUsernameList(programPms, RoleType.PROGRAM_PM);
             //TODO - Do we need to lookup these usernames in a cache to get further info ??
         }
@@ -238,22 +240,22 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
     @Override
     public void setProgramProjectManagers(final Set<Person> programPmPeople) {
-        if ( programPmPeople != null ) {
+        if (programPmPeople != null) {
             StringBuilder stringBuilder = new StringBuilder("");
             int i = 0;
-            for ( Person pmPerson : programPmPeople) {
-                if ( (pmPerson != null) && StringUtils.isNotBlank(pmPerson.getUsername()) ) {
-                    if ( i > 0 ) {
+            for (Person pmPerson : programPmPeople) {
+                if ((pmPerson != null) && StringUtils.isNotBlank(pmPerson.getUsername())) {
+                    if (i > 0) {
                         stringBuilder.append(", ");
                     }
                     stringBuilder.append(pmPerson.getUsername());
                     i++;
                 } else {
-                    String msg = ( pmPerson != null ? pmPerson.getFirstName() + " " + pmPerson.getLastName() : "Null ProgramPM");
-                    logger.error("Program PM has no username : " + msg );
+                    String msg = (pmPerson != null ? pmPerson.getFirstName() + " " + pmPerson.getLastName() : "Null ProgramPM");
+                    logger.error("Program PM has no username : " + msg);
                 }
             }
-            getOrCreateProjectInformation().setProgramProjectManagers( stringBuilder.toString() );
+            getOrCreateProjectInformation().setProgramProjectManagers(stringBuilder.toString());
         }
     }
 
@@ -269,6 +271,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     public String getDiseaseName() {
         return getOrCreateProjectInformation().getDiseaseName();
     }
+
     public void setDiseaseName(final String diseaseName) {
         getOrCreateProjectInformation().setDiseaseName(diseaseName);
     }
@@ -276,6 +279,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     public String getDiseaseCommonName() {
         return getOrCreateProjectInformation().getCommonName();
     }
+
     public void setDiseaseCommonName(final String diseaseCommonName) {
         getOrCreateProjectInformation().setCommonName(diseaseCommonName);
     }
@@ -284,6 +288,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     public QuoteId getSeqQuoteId() {
         return new QuoteId(getOrCreateFundingInformation().getSequencingQuoteID());
     }
+
     public void setSeqQuoteId(final QuoteId seqQuoteId) {
         getOrCreateFundingInformation().setSequencingQuoteID(seqQuoteId.value);
     }
@@ -291,20 +296,21 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     public QuoteId getBspQuoteId() {
         return new QuoteId(getOrCreateFundingInformation().getBspPlatingQuoteID());
     }
+
     public void setBspQuoteId(final QuoteId bspQuoteId) {
         getOrCreateFundingInformation().setBspPlatingQuoteID(bspQuoteId.value);
     }
 
 
     public OrganismName getOrganism() {
-        if ( organism != null ) {
+        if (organism != null) {
             return organism;
         }
         long organismId = getOrCreateProjectInformation().getOrganismID();
-        if ( organismId > 0L ) {
+        if (organismId > 0L) {
             //TODO hmc lookup organism full name in cache given by the Id
             organism = new OrganismName("Unknown", "Unknown", organismId);
-            throw new IllegalStateException( "Not completed yet.");
+            throw new IllegalStateException("Not completed yet.");
         }
         return organism;
     }
@@ -317,14 +323,14 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
 
     public ReferenceSequenceName getReferenceSequenceName() {
-        if ( referenceSequenceName != null) {
+        if (referenceSequenceName != null) {
             return referenceSequenceName;
         }
         long refSeqId = getOrCreateCoverageAndAnalysisInformation().getReferenceSequenceId();
-        if ( refSeqId > 0L ) {
+        if (refSeqId > 0L) {
             //TODO hmc lookup reference sequence full name in cache given by the Id ?
             referenceSequenceName = new ReferenceSequenceName("Unknown", refSeqId);
-            throw new IllegalStateException( "Not completed yet.");
+            throw new IllegalStateException("Not completed yet.");
         }
         return referenceSequenceName;
     }
@@ -332,12 +338,13 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     public void setReferenceSequenceName(final ReferenceSequenceName referenceSequenceName) {
         this.referenceSequenceName = referenceSequenceName;
         long refSeqId = referenceSequenceName.getId();
-        getOrCreateCoverageAndAnalysisInformation().setReferenceSequenceId( refSeqId );
+        getOrCreateCoverageAndAnalysisInformation().setReferenceSequenceId(refSeqId);
     }
 
     public AnalysisPipelineType getAnalysisPipelineType() {
         return getOrCreateCoverageAndAnalysisInformation().getAnalysisPipeline();
     }
+
     public void setAnalysisPipelineType(final AnalysisPipelineType analysisPipelineType) {
         getOrCreateCoverageAndAnalysisInformation().setAnalysisPipeline(analysisPipelineType);
     }
@@ -347,14 +354,10 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     public abstract void setAlignerType(final AlignerType alignerType);
 
 
-
-
-
-
     @Override
     public void associateWithResearchProject(final ResearchProject researchProject) {
 
-        if ( researchProject != null ) {
+        if (researchProject != null) {
             // Add this experiment to the list referred to by the research Project
             researchProject.addExperimentRequest(this);
 
@@ -380,44 +383,41 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
 
-
     public List<String> validate(final SquidTopicPortype squidServicePort) throws ValidationException {
-        List<String>  errorMessages = new ArrayList<String>();
+        List<String> errorMessages = new ArrayList<String>();
 
-        String identifier = (getRemoteId() != null) ? getRemoteId().value : getLocalId().value;
+        String identifier = (getRemoteId() != null) ? getRemoteId().value : "null";
 
         // Check for zero samples
         if (getConcretePass().getSampleDetailsInformation().getSample().isEmpty()) {
-            throw new ValidationException("No Samples found in experiment request " +  identifier);
+            throw new ValidationException("No Samples found in experiment request " + identifier);
         }
 
         //TODO hmc Add any other validation logic for submitting a pass ??
 
-        PassCritique passCritique  = squidServicePort.validatePass( getConcretePass() );
+        PassCritique passCritique = squidServicePort.validatePass(getConcretePass());
         errorMessages = passCritique.getErrors();
 
         return errorMessages;
 
     }
 
-    public String submit( final SquidTopicPortype squidServicePort) throws SubmissionException {
-        List<String>  errorMessages = new ArrayList<String>();
+    public String submit(final SquidTopicPortype squidServicePort) throws SubmissionException {
+        List<String> errorMessages = new ArrayList<String>();
 
-        String identifier = (getRemoteId() != null) ? getRemoteId().value : getLocalId().value;
+        String identifier = (getRemoteId() != null) ? getRemoteId().value : "null";
 
-        String passNumber = squidServicePort.storePass( getConcretePass() );
+        String passNumber = squidServicePort.storePass(getConcretePass());
 
-        if ( StringUtils.isBlank(passNumber ) ) {
+        if (StringUtils.isBlank(passNumber)) {
             throw new SubmissionException("No Pass number receive back from SQUID after submission of " + identifier);
         }
 
-        setRemoteId( new RemoteId( passNumber ) );
+        setRemoteId(new ExperimentId(passNumber));
 
         return passNumber;
 
     }
-
-
 
 
 //    protected abstract AbstractPass getOrCreateAbstractPass() {
@@ -499,13 +499,16 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
     protected void throwInvalidCoverageRuntimeException(CoverageModelType illegalCoverageModelType) {
-        String invalidVal = ( illegalCoverageModelType != null ) ? illegalCoverageModelType.name() : "null";
-        StringBuilder msg = new StringBuilder( "Invalid coverage type " + invalidVal + ". " +
-                "Valid coverage models are :" );
-        int i=0;
-        for ( CoverageModelType coverageModelType : getCoverageModelTypes() ) {
-            if (i>0) { msg.append(","); };
-            msg.append(" ").append( coverageModelType.getFullName() );
+        String invalidVal = (illegalCoverageModelType != null) ? illegalCoverageModelType.name() : "null";
+        StringBuilder msg = new StringBuilder("Invalid coverage type " + invalidVal + ". " +
+                "Valid coverage models are :");
+        int i = 0;
+        for (CoverageModelType coverageModelType : getCoverageModelTypes()) {
+            if (i > 0) {
+                msg.append(",");
+            }
+            ;
+            msg.append(" ").append(coverageModelType.getFullName());
             i++;
         }
         throw new IllegalArgumentException(msg.toString());

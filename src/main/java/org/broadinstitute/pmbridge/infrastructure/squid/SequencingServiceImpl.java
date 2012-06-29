@@ -5,8 +5,8 @@ import org.apache.commons.logging.LogFactory;
 import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
 import org.broadinstitute.pmbridge.entity.common.Name;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentId;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
-import org.broadinstitute.pmbridge.entity.experiments.RemoteId;
 import org.broadinstitute.pmbridge.entity.experiments.seq.*;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
@@ -34,6 +34,12 @@ import java.util.regex.Pattern;
 @Alternative
 public class SequencingServiceImpl implements SequencingService {
 
+    public static final IllegalArgumentException ILLEGAL_EXPERIMENTID_ARG_EXCEPTION =
+            new IllegalArgumentException("Cannot get sequencing experiment request without a remote sequencing experiment Id");
+    public static final IllegalArgumentException ILLEGAL_USER_ARG_EXCEPTION =
+            new IllegalArgumentException("Cannot get experiment request summaries without a valid username.");
+    public static final IllegalArgumentException ILLEGAL_EXPREQ_ARG_EXCEPTION = new IllegalArgumentException("Experiment request is null.");
+
     private org.apache.commons.logging.Log logger = LogFactory.getLog(SequencingServiceImpl.class);
     private SquidTopicPortype squidServicePort;
     private boolean initialized = false;
@@ -60,7 +66,7 @@ public class SequencingServiceImpl implements SequencingService {
 
         try {
             // Try to initialize.
-            if ( ! initialized ) {
+            if (!initialized) {
                 init(seqConnectionParameters);
             }
 
@@ -68,12 +74,12 @@ public class SequencingServiceImpl implements SequencingService {
             String greeting = squidServicePort.getGreeting();
             logger.debug("Greeting from SQUID is : " + greeting);
 
-        }  catch (Exception e ) {
+        } catch (Exception e) {
             initialized = false;
-            String squidRoot = ( seqConnectionParameters != null ? seqConnectionParameters.getSquidRoot() : "Null SeqConnectionParameters.");
-            String errMsg =  "Could not connect to Sequencing platform. Squidroot : " + squidRoot;
-            logger.error( errMsg );
-            throw new RuntimeException( errMsg, e );
+            String squidRoot = (seqConnectionParameters != null ? seqConnectionParameters.getSquidRoot() : "Null SeqConnectionParameters.");
+            String errMsg = "Could not connect to Sequencing platform. Squidroot : " + squidRoot;
+            logger.error(errMsg);
+            throw new RuntimeException(errMsg, e);
         }
         return squidServicePort;
     }
@@ -85,17 +91,17 @@ public class SequencingServiceImpl implements SequencingService {
         List<SquidPerson> squidPeople = null;
         try {
             squidPeople = getSquidServicePort().getBroadPIList().getSquidPerson();
-        } catch ( Exception exp ) {
+        } catch (Exception exp) {
             String errMsg = "Exception occurred retrieving the sequencing platform related personnel. ";
-            logger.error( errMsg + exp.getMessage() );
+            logger.error(errMsg + exp.getMessage());
             throw new RuntimeException(errMsg, exp);
         }
 
-        for (SquidPerson squidPerson : squidPeople ) {
-            if ( (squidPerson != null) && (squidPerson.getPersonID() != null) ) {
+        for (SquidPerson squidPerson : squidPeople) {
+            if ((squidPerson != null) && (squidPerson.getPersonID() != null)) {
                 Person person = new Person(squidPerson.getLogin(), squidPerson.getFirstName(), squidPerson.getLastName(),
                         "" + squidPerson.getPersonID().intValue(),
-                        RoleType.BROAD_SCIENTIST );
+                        RoleType.BROAD_SCIENTIST);
                 persons.add(person);
             }
         }
@@ -109,15 +115,15 @@ public class SequencingServiceImpl implements SequencingService {
         List<Organism> organismList = null;
         try {
             organismList = getSquidServicePort().getOrganisms().getOrganismList();
-        } catch ( Exception exp ) {
+        } catch (Exception exp) {
             String errMsg = "Exception occurred retrieving the sequencing platform organisms. ";
-            logger.error( errMsg + exp.getMessage() );
+            logger.error(errMsg + exp.getMessage());
             throw new RuntimeException(errMsg, exp);
         }
 
         for (Organism organism : organismList) {
-            if ( (organism != null) && (organism.getId() > 0 ) ) {
-                OrganismName organismName = new OrganismName(organism.getGenus() + " " + organism.getSpecies() ,
+            if ((organism != null) && (organism.getId() > 0)) {
+                OrganismName organismName = new OrganismName(organism.getGenus() + " " + organism.getSpecies(),
                         organism.getCommonName(),
                         organism.getId());
                 organismNames.add(organismName);
@@ -133,14 +139,14 @@ public class SequencingServiceImpl implements SequencingService {
         List<BaitSet> baitSetList = null;
         try {
             baitSetList = getSquidServicePort().getBaitSets().getBaitSetList();
-        } catch ( Exception exp ) {
+        } catch (Exception exp) {
             String errMsg = "Exception occurred retrieving the sequencing platform baitsets. ";
-            logger.error( errMsg + exp.getMessage() );
+            logger.error(errMsg + exp.getMessage());
             throw new RuntimeException(errMsg, exp);
         }
 
         for (BaitSet baitSet : baitSetList) {
-            if ((baitSet != null) && (baitSet.getId() > 0 ) ) {
+            if ((baitSet != null) && (baitSet.getId() > 0)) {
                 BaitSetName baitSetName = new BaitSetName(baitSet.getDesignName(), baitSet.getId());
                 baitSetNames.add(baitSetName);
             }
@@ -155,14 +161,14 @@ public class SequencingServiceImpl implements SequencingService {
         List<ReferenceSequence> referenceSequenceList = null;
         try {
             referenceSequenceList = getSquidServicePort().getReferenceSequences().getReferenceSequenceList();
-        } catch ( Exception exp ) {
+        } catch (Exception exp) {
             String errMsg = "Exception occurred retrieving the sequencing platform reference sequences. ";
-            logger.error( errMsg + exp.getMessage() );
+            logger.error(errMsg + exp.getMessage());
             throw new RuntimeException(errMsg, exp);
         }
 
         for (ReferenceSequence referenceSequence : referenceSequenceList) {
-            if ( (referenceSequence != null) && (referenceSequence.getId() > 0 )  && referenceSequence.isActive() ) {
+            if ((referenceSequence != null) && (referenceSequence.getId() > 0) && referenceSequence.isActive()) {
                 ReferenceSequenceName referenceSequenceName = new ReferenceSequenceName(referenceSequence.getAlias(),
                         referenceSequence.getId());
                 referenceSequenceNames.add(referenceSequenceName);
@@ -177,41 +183,41 @@ public class SequencingServiceImpl implements SequencingService {
 
 
         // Sanity checks.
-        if ( (creator == null)  ||
-             (creator.getUsername() == null) ||
-             StringUtils.isBlank(creator.getUsername())) {
-            throw new IllegalArgumentException("Cannot get experiment request summaries without a valid username.");
+        if ((creator == null) ||
+                (creator.getUsername() == null) ||
+                StringUtils.isBlank(creator.getUsername())) {
+            throw ILLEGAL_USER_ARG_EXCEPTION;
         }
         String userName = creator.getUsername();
 
         List<SummarizedPass> summarizedPassList = null;
         try {
             summarizedPassList = getSquidServicePort().searchPassesByCreator(userName).getSummarizedPassList();
-        } catch ( Exception exp ) {
+        } catch (Exception exp) {
             String errMsg = "Exception occurred retrieving the sequencing experiment summaries for user : " + userName;
-            logger.error( errMsg + exp.getMessage() );
+            logger.error(errMsg + exp.getMessage());
             throw new RuntimeException(errMsg, exp);
         }
 
         List<ExperimentRequestSummary> requestSummaries = new ArrayList<ExperimentRequestSummary>();
 
-        for (SummarizedPass summary : summarizedPassList ) {
-            if ( summary != null ) {
-                Date updatedDate =null;
-                if ( summary.getCreatedDate() != null ) {
+        for (SummarizedPass summary : summarizedPassList) {
+            if (summary != null) {
+                Date updatedDate = null;
+                if (summary.getCreatedDate() != null) {
                     updatedDate = summary.getCreatedDate().getTime();
                 }
                 ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(
                         creator, updatedDate,
                         PlatformType.GSP
                 );
-                experimentRequestSummary.setRemoteId(new RemoteId(summary.getPassNumber()));
+                experimentRequestSummary.setExperimentId(new ExperimentId(summary.getPassNumber()));
                 experimentRequestSummary.setTitle(new Name(summary.getTitle()));
                 experimentRequestSummary.setModification(new ChangeEvent(updatedDate, new Person(summary.getUpdatedBy(), RoleType.PROGRAM_PM)));
-                experimentRequestSummary.setStatus( new Name( summary.getStatus().name() ) );
+                experimentRequestSummary.setStatus(new Name(summary.getStatus().name()));
 
-                if ( StringUtils.isNotBlank( summary.getResearchProject())  && Pattern.matches("[\\d]+", summary.getResearchProject().trim() ) ) {
-                    experimentRequestSummary.setResearchProjectId( new Long( summary.getResearchProject().trim() ) );
+                if (StringUtils.isNotBlank(summary.getResearchProject()) && Pattern.matches("[\\d]+", summary.getResearchProject().trim())) {
+                    experimentRequestSummary.setResearchProjectId(new Long(summary.getResearchProject().trim()));
                 }
                 requestSummaries.add(experimentRequestSummary);
             }
@@ -224,19 +230,19 @@ public class SequencingServiceImpl implements SequencingService {
         SeqExperimentRequest seqExperimentRequest;
 
         // Sanity checks.
-        if ( (experimentRequestSummary == null)  ||
-             (experimentRequestSummary.getRemoteId() == null) ||
-             StringUtils.isBlank(experimentRequestSummary.getRemoteId().value)) {
-            throw new IllegalArgumentException("Cannot get sequencing experiment request without a remote sequencing experiment Id");
+        if ((experimentRequestSummary == null) ||
+                (experimentRequestSummary.getExperimentId() == null) ||
+                StringUtils.isBlank(experimentRequestSummary.getExperimentId().value)) {
+            throw ILLEGAL_EXPERIMENTID_ARG_EXCEPTION;
         }
-        String passId = experimentRequestSummary.getRemoteId().value;
+        String passId = experimentRequestSummary.getExperimentId().value;
 
         AbstractPass pass = null;
         try {
             pass = getSquidServicePort().loadPassByNumber(passId);
-        } catch ( Exception exp ) {
-            logger.error( "Exception occurred during loading of pass " + passId + " - " + exp.getMessage() );
-            if ((exp != null) && exp.getMessage().contains( "Unrecognized pass number") ) {
+        } catch (Exception exp) {
+            logger.error("Exception occurred during loading of pass " + passId + " - " + exp.getMessage());
+            if ((exp != null) && exp.getMessage().contains("Unrecognized pass number")) {
                 throw new RuntimeException("Experiment Request with Id " + passId + " not recognized by Sequencing platform.", exp);
             } else {
                 throw new RuntimeException(exp);
@@ -245,12 +251,12 @@ public class SequencingServiceImpl implements SequencingService {
 
         if (pass instanceof WholeGenomePass) {
             seqExperimentRequest = new WholeGenomeExperiment(experimentRequestSummary, (WholeGenomePass) pass);
-        } else if ( pass instanceof DirectedPass) {
+        } else if (pass instanceof DirectedPass) {
             seqExperimentRequest = new HybridSelectionExperiment(experimentRequestSummary, (DirectedPass) pass);
-        } else if (pass instanceof RNASeqPass ){
+        } else if (pass instanceof RNASeqPass) {
             seqExperimentRequest = new RNASeqExperiment(experimentRequestSummary, (RNASeqPass) pass);
         } else {
-            throw new IllegalArgumentException("Unsupported type of PASS. Title  : " + pass.getClass().getName() );
+            throw new IllegalArgumentException("Unsupported type of PASS. Title  : " + pass.getClass().getName());
         }
 
 
@@ -263,28 +269,28 @@ public class SequencingServiceImpl implements SequencingService {
 
         // Check for null exp request
         if (seqExperimentRequest == null) {
-            throw new ValidationException("Experiment request is null." );
+            throw ILLEGAL_EXPREQ_ARG_EXCEPTION;
         }
 
         //Retrieve an identifier
         String identifier = (seqExperimentRequest.getRemoteId() != null) ? seqExperimentRequest.getRemoteId().value :
-                seqExperimentRequest.getLocalId().value;
+                "null";
 
         // Apply other PMBridge server side Validations. Start
 
         // Apply other PMBridge server side Validations. End
 
-        List<String>  errorMessages = seqExperimentRequest.validate ( getSquidServicePort() );
+        List<String> errorMessages = seqExperimentRequest.validate(getSquidServicePort());
 
         logger.debug("Validated experiment request: " + identifier + " with " + errorMessages.size() + " messages.");
 
         // Handle the error messages returned here and propagate upwards to clients in an exception.
-        if ( errorMessages.size() > 0 ) {
+        if (errorMessages.size() > 0) {
             StringBuilder messages = new StringBuilder("Failed Sequencing Platform validation :");
-            for ( String msg : errorMessages ) {
+            for (String msg : errorMessages) {
                 messages.append(" ").append(msg);
             }
-            throw new ValidationException( messages.toString() );
+            throw new ValidationException(messages.toString());
         }
 
     }
@@ -296,12 +302,12 @@ public class SequencingServiceImpl implements SequencingService {
         validatePlatformRequest(seqExperimentRequest);
 
         // Set the update information.
-        ChangeEvent updateEvent = new ChangeEvent(new  Date(),  programMgr );
-        seqExperimentRequest.getExperimentRequestSummary().setModification( updateEvent );
+        ChangeEvent updateEvent = new ChangeEvent(new Date(), programMgr);
+        seqExperimentRequest.getExperimentRequestSummary().setModification(updateEvent);
 
         seqExperimentRequest.submit(getSquidServicePort());
 
-        return  seqExperimentRequest;
+        return seqExperimentRequest;
     }
 
 

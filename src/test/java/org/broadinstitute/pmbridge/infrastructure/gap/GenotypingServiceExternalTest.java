@@ -47,14 +47,13 @@ public class GenotypingServiceExternalTest extends Arquillian {
     public void testLookupTechnologyProductById() throws Exception {
 
         // <product name="HumanCytoSNP-12v1-0_D" display-name="Cyto 12" id="153"/>
-        Product product = genotypingService.lookupTechnologyProductById( new Integer( 236 ));
-        Assert.assertNotNull( product );
-        Assert.assertNotNull( product.getId() );
+        Product product = genotypingService.lookupTechnologyProductById(new Integer(236));
+        Assert.assertNotNull(product);
+        Assert.assertNotNull(product.getId());
         Assert.assertEquals(product.getId(), "236");
         Assert.assertEquals(product.getDisplayName(), "HumanOmni2.5-8v1_A");
         Assert.assertEquals(product.getName(), "HumanOmni2.5-8v1_A");
     }
-
 
 
 //    @Test(groups = {EXTERNAL_INTEGRATION})
@@ -66,13 +65,13 @@ public class GenotypingServiceExternalTest extends Arquillian {
 //                PlatformType.GAP,
 //                ""
 //        );
-//        experimentRequestSummary.setRemoteId( new RemoteId( "GXP-10601"));
+//        experimentRequestSummary.setExperimentId( new ExperimentId( "GXP-10601"));
 //
 //        GapExperimentRequest gapExperimentRequest = genotypingService.getPlatformRequest(experimentRequestSummary);
 //
 //        Assert.assertNotNull(gapExperimentRequest);
-//        Assert.assertNotNull(gapExperimentRequest.getRemoteId());
-//        Assert.assertEquals( gapExperimentRequest.getRemoteId().value, "GXP-10601" );
+//        Assert.assertNotNull(gapExperimentRequest.getExperimentId());
+//        Assert.assertEquals( gapExperimentRequest.getExperimentId().value, "GXP-10601" );
 //
 //
 //    }
@@ -118,8 +117,8 @@ public class GenotypingServiceExternalTest extends Arquillian {
 //        Assert.assertTrue(savedExperimentRequest.getTitle().name.startsWith("FunctionalTest_ExpRequest_"));
 //        Assert.assertEquals(savedExperimentRequest.getExperimentRequestSummary().getCreation().person.getUsername(), "pmbridge");
 //
-//        Assert.assertNotNull(savedExperimentRequest.getRemoteId());
-//        Assert.assertNotNull(savedExperimentRequest.getRemoteId().value.startsWith("GXP-"));
+//        Assert.assertNotNull(savedExperimentRequest.getExperimentId());
+//        Assert.assertNotNull(savedExperimentRequest.getExperimentId().value.startsWith("GXP-"));
 //
 //        Assert.assertEquals( savedExperimentRequest.getBspQuote().getAlphanumericId(), quoteBsp.getAlphanumericId() );
 //        Assert.assertEquals( savedExperimentRequest.getGapQuote().getAlphanumericId(), quoteGap.getAlphanumericId() );
