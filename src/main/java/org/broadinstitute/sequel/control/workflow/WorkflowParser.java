@@ -9,7 +9,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -274,7 +273,7 @@ public class WorkflowParser {
             if (seqLibNodeList.getLength() > 0) {
                 final String value = seqLibNodeList.item(0).getAttributes().getNamedItem("Value").getTextContent();
                 if (Boolean.parseBoolean(value)) {
-                    workflowAnnotations.add(WorkflowAnnotation.IS_SINGLE_SAMPLE_LIBRARY);
+                    workflowAnnotations.add(WorkflowAnnotation.SINGLE_SAMPLE_LIBRARY);
                 }
             }
         }

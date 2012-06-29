@@ -13,7 +13,6 @@ import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StateChange;
-import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -464,7 +463,7 @@ public abstract class LabVessel implements Starter {
 
     /**
      * In the context of the given {@link WorkflowDescription}, are there any
-     * events for this vessel which are annotated as {@link WorkflowAnnotation#IS_SINGLE_SAMPLE_LIBRARY}?
+     * events for this vessel which are annotated as {@link WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY}?
      * @param workflowDescription
      * @return
      */
@@ -491,7 +490,7 @@ public abstract class LabVessel implements Starter {
         for (LabEvent event: allEvents) {
             GenericLabEvent labEvent = OrmUtil.proxySafeCast(event, GenericLabEvent.class);
             Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations(labEvent.getLabEventType().getName());
-            if (workflowAnnotations.contains(WorkflowAnnotation.IS_SINGLE_SAMPLE_LIBRARY)) {
+            if (workflowAnnotations.contains(WorkflowAnnotation.SINGLE_SAMPLE_LIBRARY)) {
                 isSingleSample = true;
                 break;
             }

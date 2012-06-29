@@ -130,7 +130,7 @@ public class ExomeExpressEndToEndTest {
 
             Collection<WorkflowAnnotation> workflowAnnotations = projectPlan.getWorkflowDescription().getAnnotations("PondRegistration");
 
-            Assert.assertTrue(workflowAnnotations.contains(WorkflowAnnotation.IS_SINGLE_SAMPLE_LIBRARY));
+            Assert.assertTrue(workflowAnnotations.contains(WorkflowAnnotation.SINGLE_SAMPLE_LIBRARY));
             Assert.assertEquals(workflowAnnotations.size(),1);
 
             // create batches for the pass.  todo add more samples to the pass.

@@ -49,7 +49,7 @@ public class WorkflowParserTest {
 
             Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations("PreflightNormalization");
             Assert.assertFalse(workflowAnnotations.isEmpty());
-            Assert.assertTrue(workflowAnnotations.contains(WorkflowAnnotation.IS_SINGLE_SAMPLE_LIBRARY));
+            Assert.assertTrue(workflowAnnotations.contains(WorkflowAnnotation.SINGLE_SAMPLE_LIBRARY));
             Assert.assertEquals(workflowAnnotations.size(),1);
 
             Assert.assertTrue(workflowDescription.getAnnotations("PreflightPicoSetup").isEmpty());
