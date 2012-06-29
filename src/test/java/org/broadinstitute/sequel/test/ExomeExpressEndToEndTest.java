@@ -46,6 +46,7 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
+import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
@@ -60,7 +61,8 @@ public class ExomeExpressEndToEndTest {
     private PassService passService = PassServiceProducer.produceStub();
 
     // if this bombs because of a jira refresh, just switch it to new DummyJiraService().
-    private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
+    // for integration test fun where we post things back to a real jira, try new JiraServiceImpl(new TestLabObsJira());
+    private JiraService jiraService = new DummyJiraService();
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
@@ -71,7 +73,7 @@ public class ExomeExpressEndToEndTest {
 
 
 
-    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = true)
+    @Test(groups = {DATABASE_FREE}, enabled = true)
     public void testAll() throws Exception {
 
         DirectedPass directedPass = PassTestDataProducer.produceDirectedPass();
