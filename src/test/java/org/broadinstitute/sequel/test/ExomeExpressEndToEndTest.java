@@ -42,10 +42,7 @@ import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -240,8 +237,7 @@ public class ExomeExpressEndToEndTest {
                             System.out.println("Norm has " + pondSampleInstance.getStartingSample().getLabel());
                         }
                     }
-                    // todo arz talk to jmt about this
-                    // Assert.assertTrue(foundIt);
+                    Assert.assertTrue(foundIt);
                 }
 
             }
@@ -285,9 +281,20 @@ public class ExomeExpressEndToEndTest {
             // todo arz fix semantics: is it "single sample ancestor" or "sequencing library"?
             Map<StartingSample,Collection<LabVessel>> singleSampleAncestors = poolingResult.getVesselContainer().getSingleSampleAncestors(VesselPosition.A01);
 
-            // todo arz talk to jmt about this
-            //Assert.assertEquals(singleSampleAncestors.size(),2);
+            for (Starter starter : projectPlan.getStarters()) {
+                LabVessel aliquot = projectPlan.getAliquot(starter);
+                Assert.assertNotNull(aliquot);
 
+                Assert.assertEquals(aliquot.getSampleInstances().size(),1);
+
+                for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
+                    StartingSample aliquotStartingSample = aliquotSampleInstance.getStartingSample();
+                    Collection<LabVessel> sequencingLibs = singleSampleAncestors.get(aliquotStartingSample);
+                    Assert.assertEquals(sequencingLibs.size(),1);
+                    Assert.assertTrue(sequencingLibs.iterator().next().getLabel().startsWith(LabEventTest.POND_REGISTRATION_TUBE_PREFIX));
+                }
+            }
+            Assert.assertEquals(singleSampleAncestors.size(),2);
 
             registrationSOAPService.registerSequeLLibrary(registerLibrary);
 
