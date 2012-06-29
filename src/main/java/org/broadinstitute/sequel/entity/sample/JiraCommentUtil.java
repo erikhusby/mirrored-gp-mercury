@@ -2,17 +2,19 @@ package org.broadinstitute.sequel.entity.sample;
 
 
 
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.vessel.VesselContainer;
+import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
+import org.broadinstitute.sequel.entity.vessel.VesselPosition;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Utility methods for sending human readable updates
@@ -40,44 +42,37 @@ public class JiraCommentUtil {
                                   Collection<LabVessel> vessels) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
-        final Map<Project,Collection<String>> samplesByProject = new HashMap<Project,Collection<String>>();
-        final Collection<StartingSample> allStarters = new HashSet<StartingSample>();
-        
+
+        final Set<JiraTicket> tickets = new HashSet<JiraTicket>();
         for (LabVessel vessel : vessels) {
-            for (SampleInstance samInstance: vessel.getSampleInstances()) {
-                for (ProjectPlan projectPlan : samInstance.getAllProjectPlans()) {
-                    Project p = projectPlan.getProject();
-                    if (!samplesByProject.containsKey(p)) {
-                        samplesByProject.put(p,new HashSet<String>());
+            // todo arz talk to jmt about this.  I don't think I'm doing it right.
+            if (OrmUtil.proxySafeIsInstance(vessel, VesselContainerEmbedder.class)) {
+                VesselContainerEmbedder<? extends LabVessel> embedder = OrmUtil.proxySafeCast(vessel,VesselContainerEmbedder.class);
+                for (VesselPosition position: embedder.getVesselContainer().getPositions()) {
+                    Collection<LabBatch> batches = embedder.getVesselContainer().getNearestLabBatches(position);
+                    if (batches != null) {
+                        for (LabBatch batch : batches) {
+                            if (batch.getJiraTicket() != null) {
+                                tickets.add(batch.getJiraTicket());
+                            }
+                        }
                     }
-                    samplesByProject.get(p).add(samInstance.getStartingSample().getSampleName());
-                    allStarters.add(samInstance.getStartingSample());
+                }
+            }
+            else {
+                for (LabBatch labBatch : vessel.getLabBatches()) {
+                    JiraTicket jiraTicket = labBatch.getJiraTicket();
+                    tickets.add(jiraTicket);
                 }
             }
         }
-        
-        for (Map.Entry<Project,Collection<String>> entry: samplesByProject.entrySet()) {
+        for (JiraTicket ticket : tickets) {
             StringBuilder messageBuilder = new StringBuilder("{panel:title=" + title + "}");
-            messageBuilder.append(message);
-            messageBuilder.append("\n");
-            
-            int sampleCount = 0;
-            for (String sampleName: entry.getValue()) {
-                String sampleURL = "[" + sampleName + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + sampleName+ "]";
-                messageBuilder.append("|").append(sampleURL);
-                sampleCount++;
-                if (sampleCount % 6 == 0) {
-                    messageBuilder.append("|").append("\n");
-                }
+            if (message != null) {
+                messageBuilder.append(message);
+                messageBuilder.append("\n");
             }
-            if (!messageBuilder.toString().trim().endsWith("|")) {
-                messageBuilder.append("|");
-            }
-            messageBuilder.append("\n");
-            messageBuilder.append("h6.").append("There are " + (samplesByProject.keySet().size()) + " projects in this batch, representing " + allStarters.size() + " total samples.");
-            messageBuilder.append("{panel}");
-            // todo include total sample count from other projects, total sample count in batch.
-            entry.getKey().addJiraComment(messageBuilder.toString());
+            ticket.addComment(messageBuilder.toString());
         }
 
     }

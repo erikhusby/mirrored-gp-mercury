@@ -132,6 +132,7 @@ public class VesselContainer<T extends LabVessel> {
         public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labVessel != null) {
                 Collection<LabBatch> labBatches = labVessel.getLabBatches();
+
                 if (!labBatches.isEmpty()) {
                     if (!labBatchesAtHopCount.containsKey(hopCount)) {
                         labBatchesAtHopCount.put(hopCount,new HashSet<LabBatch>());
