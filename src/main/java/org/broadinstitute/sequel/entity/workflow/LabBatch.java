@@ -45,6 +45,7 @@ public class LabBatch {
 
     public void addStarter(Starter starter) {
         starters.add(starter);
+        starter.addLabBatch(this);
     }
 
     public boolean getActive() {
@@ -61,6 +62,10 @@ public class LabBatch {
 
     public Set<Starter> getStarters() {
         return starters;
+    }
+
+    public void setJiraTicket(JiraTicket jiraTicket) {
+        this.jiraTicket = jiraTicket;
     }
 
     public JiraTicket getJiraTicket() {

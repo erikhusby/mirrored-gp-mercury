@@ -13,6 +13,7 @@ import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StateChange;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -70,16 +71,13 @@ public abstract class LabVessel implements Starter {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel projectAuthority;
 
-    // todo jmt fix this
     @Transient
-    private ReadBucket readBucket;
+    // todo arz hibernate-ify
+    private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel readBucketAuthority;
 
-    // todo jmt fix this
-    @Transient
-    private final Collection<Stalker> stalkers = new HashSet<Stalker>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
@@ -498,5 +496,12 @@ public abstract class LabVessel implements Starter {
         return isSingleSample;
     }
 
+    public void addLabBatch(LabBatch labBatch) {
+        labBatches.add(labBatch);
+    }
 
+    @Override
+    public Set<LabBatch> getLabBatches() {
+        return labBatches;
+    }
 }

@@ -20,6 +20,7 @@ import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.Starter;
@@ -34,6 +35,8 @@ import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
+import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
@@ -51,17 +54,13 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
  */
 public class ExomeExpressEndToEndTest {
 
-
-//    @Inject
     LibraryRegistrationSOAPService registrationSOAPService = new LibraryRegistrationSOAPServiceStub();
-
 
     private PMBridgeService pmBridgeService = PMBridgeServiceProducer.produceStub();
 
     private PassService passService = PassServiceProducer.produceStub();
 
-    // @Inject
-    private JiraService jiraService = new DummyJiraService();
+    private JiraService jiraService = new DummyJiraService(); // fun to play with this instead, and look @ jira in your web browser: new JiraServiceImpl(new TestLabObsJira());
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
@@ -139,6 +138,7 @@ public class ExomeExpressEndToEndTest {
             Assert.assertEquals(labBatches.size(),1);
 
             // create the jira ticket for each batch.
+            JiraTicket jiraTicket = null;
             for (LabBatch labBatch : labBatches) {
                 CreateIssueResponse createResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
                         CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
@@ -146,9 +146,8 @@ public class ExomeExpressEndToEndTest {
                         "Pass " + projectPlan.getPass().getProjectInformation().getPassNumber());
                 Assert.assertNotNull(createResponse);
                 Assert.assertNotNull(createResponse.getTicketName());
-
-                //add jira issue to Project
-                projectPlan.addJiraTicket(labBatch.getJiraTicket());
+                jiraTicket = new JiraTicket(jiraService,createResponse.getTicketName(),createResponse.getId());
+                labBatch.setJiraTicket(jiraTicket);
             }
 
             // how do we wire up the lab batch and/or jira ticket to the plating request?
@@ -295,6 +294,12 @@ public class ExomeExpressEndToEndTest {
                 }
             }
             Assert.assertEquals(singleSampleAncestors.size(),2);
+
+            Collection<LabBatch> nearestBatches = poolingResult.getVesselContainer().getNearestLabBatches(VesselPosition.A01);
+            Assert.assertEquals(nearestBatches.size(),1);
+            LabBatch labBatch = nearestBatches.iterator().next();
+
+            Assert.assertEquals(labBatch.getJiraTicket(),jiraTicket);
 
             registrationSOAPService.registerSequeLLibrary(registerLibrary);
 
