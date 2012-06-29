@@ -60,7 +60,8 @@ public class ExomeExpressEndToEndTest {
 
     private PassService passService = PassServiceProducer.produceStub();
 
-    private JiraService jiraService = new DummyJiraService(); // fun to play with this instead, and look @ jira in your web browser: new JiraServiceImpl(new TestLabObsJira());
+    // fun to play with this instead, and look @ jira in your web browser:
+    private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.

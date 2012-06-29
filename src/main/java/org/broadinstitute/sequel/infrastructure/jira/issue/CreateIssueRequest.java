@@ -7,6 +7,9 @@ import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 
 public class CreateIssueRequest  {
 
@@ -74,27 +77,15 @@ public class CreateIssueRequest  {
 
         private Issuetype issuetype;
 
+        private final Collection<CustomField> customFields = new HashSet<CustomField>();
 
-        // todo arz make these client accessible
-        private CustomField protocol = new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol");
-
-        private CustomField workRequestId = new CustomField(new CustomFieldDefinition("customfield_10011","Protocol",true),"test protocol");
-
-
-        public CustomField getProtocol() {
-            return protocol;
+        public Collection<CustomField> getCustomFields() {
+            return customFields;
         }
-
 
         public Project getProject() {
             return project;
         }
-
-
-        public CustomField getWorkRequestId() {
-            return workRequestId;
-        }
-
 
         public void setSummary(String summary) {
             this.summary = summary;
@@ -142,6 +133,9 @@ public class CreateIssueRequest  {
 
     public CreateIssueRequest() {
         this.fields = new Fields();
+        // todo arz move these out to JiraService params
+        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
+        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
     }
 
 
