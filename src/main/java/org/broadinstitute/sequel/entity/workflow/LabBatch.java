@@ -15,6 +15,8 @@ import java.util.Set;
  */
 public class LabBatch {
 
+    public static final String LCSET_PROJECT_PREFIX = "LCSET";
+
     private Set<Starter> starters = new HashSet<Starter>();
 
     private boolean isActive = true;

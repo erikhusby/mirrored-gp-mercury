@@ -33,10 +33,9 @@ import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
-import org.broadinstitute.sequel.infrastructure.jira.JiraService;
-import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
-import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
+import org.broadinstitute.sequel.infrastructure.jira.*;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
@@ -47,7 +46,7 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
-import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * A container free test of Exome Express
@@ -60,7 +59,7 @@ public class ExomeExpressEndToEndTest {
 
     private PassService passService = PassServiceProducer.produceStub();
 
-    // fun to play with this instead, and look @ jira in your web browser:
+    // if this bombs because of a jira refresh, just switch it to new DummyJiraService().
     private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
 
     /*
@@ -72,7 +71,7 @@ public class ExomeExpressEndToEndTest {
 
 
 
-    @Test(groups = {DATABASE_FREE}, enabled = true)
+    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = true)
     public void testAll() throws Exception {
 
         DirectedPass directedPass = PassTestDataProducer.produceDirectedPass();
@@ -140,11 +139,32 @@ public class ExomeExpressEndToEndTest {
 
             // create the jira ticket for each batch.
             JiraTicket jiraTicket = null;
+
+            // grab the jira custom field definitions
+            final Map<String,CustomFieldDefinition> requiredFieldsMap = JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraService);
+            Assert.assertFalse(requiredFieldsMap.isEmpty());
+            Assert.assertEquals(requiredFieldsMap.size(),3);
+
+
+            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS),"Work Request One Billion!");
+            // kludge: expect stock samples to have a different field name (like "BSP STOCKS") when this goes live.  until then, we'll call it GSSR.
+            final StringBuilder stockSamplesBuilder = new StringBuilder();
+            for (Starter starter : projectPlan.getStarters()) {
+                stockSamplesBuilder.append(" ").append(starter.getLabel());
+            }
+            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.GSSR_IDS),stockSamplesBuilder.toString());
+            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.PROTOCOL),"Protocol to take over the world");
+
+            final Collection<CustomField> allCustomFields = new HashSet<CustomField>();
+            allCustomFields.add(workRequestCustomField);
+            allCustomFields.add(stockSamplesCustomField);
+            allCustomFields.add(protocolCustomField);
+
             for (LabBatch labBatch : labBatches) {
                 CreateIssueResponse createResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
                         CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                         labBatch.getBatchName(),
-                        "Pass " + projectPlan.getPass().getProjectInformation().getPassNumber());
+                        "Pass " + projectPlan.getPass().getProjectInformation().getPassNumber(), allCustomFields);
                 Assert.assertNotNull(createResponse);
                 Assert.assertNotNull(createResponse.getTicketName());
                 jiraTicket = new JiraTicket(jiraService,createResponse.getTicketName(),createResponse.getId());

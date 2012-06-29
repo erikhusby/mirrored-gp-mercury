@@ -30,13 +30,8 @@ import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.sequel.infrastructure.quote.Quotes;
 import org.broadinstitute.sequel.infrastructure.quote.QuotesCache;
-import org.broadinstitute.sequel.integration.DeploymentBuilder;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -60,7 +55,7 @@ public class ProjectTest  {
         CreateIssueResponse response = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                 "Test run by " + System.getProperty("user.name") + " on " + new SimpleDateFormat("yyyy/MM/dd").format(new Date(System.currentTimeMillis())),
-                "Do lots of sequencing");
+                "Do lots of sequencing", null);
         assertNotNull(response);
         JiraTicket ticket = new JiraTicket(jiraService,response.getTicketName(),response.getId());
         Project project = new BasicProject(ticket.getTicketName(),ticket);
@@ -253,7 +248,7 @@ public class ProjectTest  {
             jiraResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
                     CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                     projectName,
-                    "Created by " + getClass().getCanonicalName());
+                    "Created by " + getClass().getCanonicalName(), null);
         }
         catch(IOException e ) {
             throw new RuntimeException("Cannot create jira ticket",e);

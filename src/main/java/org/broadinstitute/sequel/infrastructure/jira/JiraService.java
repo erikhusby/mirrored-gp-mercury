@@ -1,12 +1,14 @@
 package org.broadinstitute.sequel.infrastructure.jira;
 
 
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 
@@ -17,14 +19,16 @@ public interface JiraService {
      * Create an issue with a project prefix specified by projectPrefix; i.e. for this method projectPrefix would be 'TP' and not 'TP-5' for
      * the JIRA project TestProject having prefix TP.
      *
+     *
      * @param projectPrefix
      * @param issuetype
      * @param summary
      * @param description
+     * @param customFields
      * @return
      * @throws IOException
      */
-    CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description) throws IOException;
+    CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException;
 
 
     /**

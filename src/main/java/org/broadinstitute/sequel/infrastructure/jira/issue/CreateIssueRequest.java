@@ -138,13 +138,23 @@ public class CreateIssueRequest  {
         this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
     }
 
+    public CreateIssueRequest(Collection<CustomField> customFields) {
+        this();
+        if (customFields != null) {
+            for (CustomField customField : customFields) {
+                this.fields.customFields.add(customField);
+            }
+        }
+    }
+
 
     public static CreateIssueRequest create(String key,
                                             Fields.Issuetype issuetype,
                                             String summary,
-                                            String description) {
+                                            String description,
+                                            Collection<CustomField> customFields) {
         
-        CreateIssueRequest ret = new CreateIssueRequest();
+        CreateIssueRequest ret = new CreateIssueRequest(customFields);
         
         Fields fields = ret.getFields();
 
