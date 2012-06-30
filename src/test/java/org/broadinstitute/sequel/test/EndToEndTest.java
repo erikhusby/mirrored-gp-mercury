@@ -3,7 +3,7 @@ package org.broadinstitute.sequel.test;
 
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.infrastructure.bsp.AliquotReceiver;
-import org.broadinstitute.sequel.infrastructure.bsp.MockBSPConnector;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPConnectorStub;
 import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
 import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -77,7 +77,7 @@ public class EndToEndTest  {
         LabVessel stock1 = createBSPStock(masterSample1,"00001234",plan1);
         LabVessel stock2 = createBSPStock(masterSample2,"00005678",plan2);
 
-        BSPAliquotWorkQueue aliquotWorkQueue = new BSPAliquotWorkQueue(new MockBSPConnector());
+        BSPAliquotWorkQueue aliquotWorkQueue = new BSPAliquotWorkQueue(new BSPConnectorStub());
 
         Assert.assertTrue(project.getAllStarters().isEmpty());
         Assert.assertTrue(project2.getAllStarters().isEmpty());

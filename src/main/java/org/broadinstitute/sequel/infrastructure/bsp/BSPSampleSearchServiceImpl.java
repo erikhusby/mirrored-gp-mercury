@@ -9,29 +9,30 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.AbstractJerseyClientService;
+import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 
-import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-@Alternative
+@Impl
 public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
 
 
-    private static Log _logger = LogFactory
-            .getLog(BSPSampleSearchServiceImpl.class);
+    private static final Log log = LogFactory.getLog(BSPSampleSearchServiceImpl.class);
 
 
+    private BSPConfig bspConfig;
 
-    private BSPConnectionParameters connParams;
 
     @Inject
-    public BSPSampleSearchServiceImpl(BSPConnectionParameters connParams) {
-        this.connParams = connParams;
+    public BSPSampleSearchServiceImpl(BSPConfig bspConfig) {
+        this.bspConfig = bspConfig;
     }
 
     @Override
@@ -42,7 +43,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
     @Override
     protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, connParams);
+        specifyHttpAuthCredentials(client, bspConfig);
     }
 
 
@@ -62,9 +63,9 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
         
 
         String urlString = "http://%s:%d/ws/bsp/search/runSampleSearch";
-        urlString = String.format(urlString, connParams.getHostname(), connParams.getPort());
+        urlString = String.format(urlString, bspConfig.getHost(), bspConfig.getPort());
         
-        _logger.info(String.format("url string is '%s'", urlString));
+        log.info(String.format("url string is '%s'", urlString));
         
         WebResource webResource = getJerseyClient().resource(urlString);
 
@@ -84,7 +85,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             if (queryParameters.size() > 0)
                 queryString = StringUtils.join(queryParameters, "&");
 
-            _logger.info("query string to be POSTed is '" + queryString + "'");
+            log.info("query string to be POSTed is '" + queryString + "'");
             
             ClientResponse clientResponse =
                     webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, queryString);
@@ -93,7 +94,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             BufferedReader rdr = new BufferedReader(new InputStreamReader(is));     
             
             if (clientResponse.getStatus() / 100 != 2) {
-                _logger.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+                log.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
                 return ret;
                 // throw new RuntimeException("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
             }

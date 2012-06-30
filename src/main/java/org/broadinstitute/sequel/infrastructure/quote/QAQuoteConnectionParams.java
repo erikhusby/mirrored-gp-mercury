@@ -21,7 +21,7 @@ public class QAQuoteConnectionParams implements QuoteConnectionParameters {
     }
 
 
-    public String getUsername() {
+    public String getLogin() {
         return username;
     }
 

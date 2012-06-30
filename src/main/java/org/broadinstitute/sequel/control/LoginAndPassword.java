@@ -1,9 +1,9 @@
 package org.broadinstitute.sequel.control;
 
 
-public interface UsernameAndPassword {
+public interface LoginAndPassword {
     
-    String getUsername();
+    String getLogin();
     
     String getPassword();
 }

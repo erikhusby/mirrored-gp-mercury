@@ -39,10 +39,10 @@ public abstract class AbstractJerseyClientService {
      *
      * @param client
      *
-     * @param usernameAndPassword
+     * @param loginAndPassword
      */
-    protected void specifyHttpAuthCredentials(Client client, UsernameAndPassword usernameAndPassword) {
-        client.addFilter(new HTTPBasicAuthFilter(usernameAndPassword.getUsername(), usernameAndPassword.getPassword()));
+    protected void specifyHttpAuthCredentials(Client client, LoginAndPassword loginAndPassword) {
+        client.addFilter(new HTTPBasicAuthFilter(loginAndPassword.getLogin(), loginAndPassword.getPassword()));
     }
 
 

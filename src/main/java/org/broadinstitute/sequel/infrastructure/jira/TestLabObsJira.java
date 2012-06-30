@@ -26,7 +26,7 @@ public class TestLabObsJira implements JiraConnectionParameters {
      */
 
     @Override
-    public String getUsername() {
+    public String getLogin() {
         return "squid";
     }
 
