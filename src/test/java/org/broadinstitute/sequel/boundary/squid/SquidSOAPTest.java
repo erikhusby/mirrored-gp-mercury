@@ -4,7 +4,7 @@ package org.broadinstitute.sequel.boundary.squid;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.infrastructure.deployment.TestInstance;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConfig;
 import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -23,7 +23,7 @@ public class SquidSOAPTest extends ContainerTest {
 
     @Inject
     @TestInstance
-    private SquidConnectionParameters squidConnectionParameters;
+    private SquidConfig squidConfig;
 
 
     @Inject
@@ -39,7 +39,7 @@ public class SquidSOAPTest extends ContainerTest {
         String namespace = "urn:SquidTopic";
         QName serviceName = new QName(namespace, "SquidTopicService");
 
-        String wsdlURL = squidConnectionParameters.getBaseUrl() + "/services/SquidTopicService?WSDL";
+        String wsdlURL = squidConfig.getBaseUrl() + "/services/SquidTopicService?WSDL";
         URL url = new URL(wsdlURL);
 
         Service service = Service.create(url, serviceName);

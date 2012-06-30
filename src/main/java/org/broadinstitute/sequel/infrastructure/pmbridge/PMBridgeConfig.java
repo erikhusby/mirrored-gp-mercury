@@ -1,13 +1,13 @@
 package org.broadinstitute.sequel.infrastructure.pmbridge;
 
 
-public class PMBridgeConnectionParameters {
+public class PMBridgeConfig {
 
 
     private String baseUrl;
 
 
-    public PMBridgeConnectionParameters(String baseUrl) {
+    public PMBridgeConfig(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 

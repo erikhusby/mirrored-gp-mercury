@@ -10,7 +10,7 @@ import javax.inject.Inject;
 
 import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
 
-public class PMBridgeConnectionParametersProducer  {
+public class PMBridgeConfigProducer {
 
 
 
@@ -29,7 +29,7 @@ public class PMBridgeConnectionParametersProducer  {
 
     @Produces
     @TestInstance
-    public PMBridgeConnectionParameters testInstance() {
+    public PMBridgeConfig testInstance() {
         return produce( TEST );
     }
 
@@ -37,13 +37,13 @@ public class PMBridgeConnectionParametersProducer  {
 
     @Produces
     @Default
-    public PMBridgeConnectionParameters produce() {
+    public PMBridgeConfig produce() {
         return  produce( deployment );
     }
 
 
 
-    public static PMBridgeConnectionParameters produce(Deployment deployment) {
+    public static PMBridgeConfig produce(Deployment deployment) {
 
 
         switch ( deployment ) {
@@ -52,11 +52,11 @@ public class PMBridgeConnectionParametersProducer  {
             case TEST:
             case QA:
 
-                return new PMBridgeConnectionParameters( DEV_URL );
+                return new PMBridgeConfig( DEV_URL );
 
             case PROD:
 
-                return new PMBridgeConnectionParameters( PROD_URL );
+                return new PMBridgeConfig( PROD_URL );
 
             default:
 

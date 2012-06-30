@@ -8,8 +8,8 @@ import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParametersProducer;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConfig;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConfigProducer;
 import org.broadinstitute.sequel.infrastructure.squid.SquidWebServiceClient;
 
 import javax.ejb.EJB;
@@ -36,17 +36,17 @@ import static org.broadinstitute.sequel.boundary.pass.ToSquid.squidify;
         endpointInterface = "org.broadinstitute.sequel.boundary.SquidTopicPortype"
 )
 @Impl
-public class PassSOAPServiceImpl extends SquidWebServiceClient<SquidTopicPortype> implements PassService {
+public class PassServiceImpl extends SquidWebServiceClient<SquidTopicPortype> implements PassService {
 
     // @Injection does not work on @WebServices, see comments in constructor below
-    private static final Log log = LogFactory.getLog(PassSOAPServiceImpl.class);
+    private static final Log log = LogFactory.getLog(PassServiceImpl.class);
 
     @EJB
     // Using @EJB annotation since @Inject doesn't work on @WebServices, see comments below
     private DeploymentProducer deploymentProducer;
 
 
-    private SquidConnectionParameters squidConnectionParameters;
+    private SquidConfig squidConfig;
 
 
     @Override
@@ -66,7 +66,7 @@ public class PassSOAPServiceImpl extends SquidWebServiceClient<SquidTopicPortype
 
 
     @Override
-    protected SquidConnectionParameters getSquidConnectionParameters() {
+    protected SquidConfig getSquidConfig() {
 
         // I wanted to make SquidConnectionParametersProducer a @Startup @Singleton bean so I could grab it directly
         // through
@@ -80,21 +80,21 @@ public class PassSOAPServiceImpl extends SquidWebServiceClient<SquidTopicPortype
         // @EJB
         // SquidConnectionParametersProducer squidConfigurationProducer;
 
-        if ( squidConnectionParameters == null ) {
+        if ( squidConfig == null ) {
 
             final Deployment deployment = deploymentProducer.produce();
-            squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
+            squidConfig = SquidConfigProducer.produce(deployment);
         }
 
 
-        return squidConnectionParameters;
+        return squidConfig;
     }
 
 
     /**
      * JEE actually wants this no-arg constructor despite what IntelliJ says about it not being used
      */
-    public PassSOAPServiceImpl() {
+    public PassServiceImpl() {
 
         // @Inject currently not working in Glassfish @WebServices, either a hole in the spec or a bug in Glassfish.
         // See
@@ -118,16 +118,16 @@ public class PassSOAPServiceImpl extends SquidWebServiceClient<SquidTopicPortype
      *
      * @param deployment
      */
-    public PassSOAPServiceImpl(Deployment deployment) {
+    public PassServiceImpl(Deployment deployment) {
 
-        squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
+        squidConfig = SquidConfigProducer.produce(deployment);
 
     }
 
 
-    public PassSOAPServiceImpl(SquidConnectionParameters squidConnectionParameters) {
+    public PassServiceImpl(SquidConfig squidConfig) {
 
-        this.squidConnectionParameters = squidConnectionParameters;
+        this.squidConfig = squidConfig;
     }
 
 
