@@ -2,8 +2,8 @@ package org.broadinstitute.sequel.boundary.designation;
 
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.infrastructure.deployment.TestInstance;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParametersProducer;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConfig;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConfigProducer;
 
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
@@ -49,10 +49,10 @@ public class LibraryRegistrationSOAPServiceProducer {
         if (deployment == STUBBY)
             return new LibraryRegistrationSOAPServiceStub();
 
-        final SquidConnectionParameters squidConnectionParameters =
-                SquidConnectionParametersProducer.produce(deployment);
+        final SquidConfig squidConfig =
+                SquidConfigProducer.produce(deployment);
 
-        return new LibraryRegistrationSOAPServiceImpl(squidConnectionParameters);
+        return new LibraryRegistrationSOAPServiceImpl(squidConfig);
     }
 
 

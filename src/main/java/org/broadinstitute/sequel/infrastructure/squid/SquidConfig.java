@@ -5,14 +5,14 @@ package org.broadinstitute.sequel.infrastructure.squid;
  * Configuration to look up Squid connection parameters, currently limited to the base URL.
  *
  */
-public class SquidConnectionParameters {
+public class SquidConfig {
 
 
     private String baseUrl;
 
 
 
-    public SquidConnectionParameters(String baseUrl) {
+    public SquidConfig(String baseUrl) {
 
         this.baseUrl = baseUrl;
 

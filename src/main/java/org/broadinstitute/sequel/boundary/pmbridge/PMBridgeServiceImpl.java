@@ -9,8 +9,8 @@ import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProject;
 import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProjectsResult;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
-import org.broadinstitute.sequel.infrastructure.pmbridge.PMBridgeConnectionParameters;
-import org.broadinstitute.sequel.infrastructure.pmbridge.PMBridgeConnectionParametersProducer;
+import org.broadinstitute.sequel.infrastructure.pmbridge.PMBridgeConfig;
+import org.broadinstitute.sequel.infrastructure.pmbridge.PMBridgeConfigProducer;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -22,7 +22,7 @@ import java.util.List;
 public class PMBridgeServiceImpl implements PMBridgeService {
 
     @Inject
-    private PMBridgeConnectionParameters connectionParameters;
+    private PMBridgeConfig config;
 
 
     private Client client;
@@ -41,7 +41,7 @@ public class PMBridgeServiceImpl implements PMBridgeService {
      */
     public PMBridgeServiceImpl(Deployment deployment) {
 
-        connectionParameters = PMBridgeConnectionParametersProducer.produce(deployment);
+        config = PMBridgeConfigProducer.produce(deployment);
 
     }
 
@@ -83,7 +83,7 @@ public class PMBridgeServiceImpl implements PMBridgeService {
 
             Client client = getClient();
 
-            WebResource resource = client.resource(connectionParameters.getBaseUrl() + "/ResearchProjectsDataServlet");
+            WebResource resource = client.resource(config.getBaseUrl() + "/ResearchProjectsDataServlet");
 
             ResearchProjectsResult result = resource.accept(MediaType.APPLICATION_XML).get(ResearchProjectsResult.class);
 
