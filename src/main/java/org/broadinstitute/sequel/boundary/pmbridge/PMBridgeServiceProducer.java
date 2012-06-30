@@ -1,67 +1,34 @@
 package org.broadinstitute.sequel.boundary.pmbridge;
 
 
-import org.apache.commons.logging.Log;
-import org.broadinstitute.sequel.infrastructure.deployment.*;
+import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
+import org.broadinstitute.sequel.infrastructure.deployment.StubInstance;
+import org.broadinstitute.sequel.infrastructure.deployment.TestInstance;
 
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.*;
+import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.STUBBY;
+import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
 
-public class PMBridgeServiceProducer implements InstanceSpecificProducer<PMBridgeService> {
-
-    @Inject
-    private Log log;
+public class PMBridgeServiceProducer {
 
     @Inject
     private Deployment deployment;
 
-    @Inject
-    @Impl
-    private PMBridgeService impl;
 
-    @Inject
-    @Stub
-    private PMBridgeService stub;
-
-
-
-
-    @Override
-    @Produces
-    @DevInstance
-    public PMBridgeService devInstance() {
-        return new PMBridgeServiceImpl(DEV);
-    }
-
-    @Override
     @Produces
     @TestInstance
     public PMBridgeService testInstance() {
-        return new PMBridgeServiceImpl(TEST);
+        return produce( TEST );
     }
 
-    @Override
-    @Produces
-    @QAInstance
-    public PMBridgeService qaInstance() {
-        return new PMBridgeServiceImpl(QA);
-    }
 
-    @Override
-    @Produces
-    @ProdInstance
-    public PMBridgeService prodInstance() {
-        return new PMBridgeServiceImpl(PROD);
-    }
-
-    @Override
     @Produces
     @StubInstance
     public PMBridgeService stubInstance() {
-        return new PMBridgeServiceStub();
+        return produce( STUBBY );
     }
 
 
@@ -70,16 +37,22 @@ public class PMBridgeServiceProducer implements InstanceSpecificProducer<PMBridg
     }
 
 
-
-    @Override
     @Produces
     @Default
     public PMBridgeService produce() {
 
-        if (deployment == STUBBY)
-            return stub;
-
-        return impl;
+        return produce( deployment );
 
     }
+
+
+    public static PMBridgeService produce( Deployment deployment ) {
+
+        if ( deployment == STUBBY )
+            return new PMBridgeServiceStub();
+
+        return new PMBridgeServiceImpl( deployment );
+    }
+
+
 }

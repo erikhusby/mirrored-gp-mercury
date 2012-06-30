@@ -2,10 +2,7 @@ package org.broadinstitute.sequel.boundary.designation;
 
 import org.broadinstitute.sequel.boundary.squid.LibraryRegistrationPortType;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
-import org.broadinstitute.sequel.entity.project.NumberOfLanesCoverage;
-import org.broadinstitute.sequel.entity.project.PairedReadCoverage;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
@@ -14,7 +11,6 @@ import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParametersP
 import org.broadinstitute.sequel.infrastructure.squid.SquidWebServiceClient;
 
 import javax.ejb.Stateless;
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 
 
@@ -24,7 +20,7 @@ import javax.inject.Inject;
  *         Time: 4:30 PM
  */
 
-@Default
+
 @Stateless
 @Impl
 public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<LibraryRegistrationPortType>
@@ -37,7 +33,9 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
 
     private SquidConnectionParameters squidConnectionParameters;
 
-
+    /**
+     * Managed Bean classes must have no-arg constructor or constructor annotiated @Initializer
+     */
     public LibraryRegistrationSOAPServiceImpl() {
     }
 

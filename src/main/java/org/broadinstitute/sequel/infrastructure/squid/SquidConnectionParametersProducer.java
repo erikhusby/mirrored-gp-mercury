@@ -1,117 +1,34 @@
 package org.broadinstitute.sequel.infrastructure.squid;
 
 
-import org.broadinstitute.sequel.infrastructure.deployment.*;
+import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
+import org.broadinstitute.sequel.infrastructure.deployment.TestInstance;
 
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
-import java.util.HashMap;
-import java.util.Map;
+import javax.inject.Inject;
 
-import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.*;
-
-public class SquidConnectionParametersProducer
-        extends AbstractProducer implements InstanceSpecificProducer<SquidConnectionParameters> {
+import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
 
 
-    private Map<Deployment, SquidConnectionParameters> connectionParametersMap;
+public class SquidConnectionParametersProducer {
+
+    @Inject
+    private Deployment deployment;
 
 
-    public SquidConnectionParametersProducer() {
-
-        SquidConnectionParameters[] connectionParameterses = new SquidConnectionParameters[] {
-
-                new SquidConnectionParameters(
-                        DEV,
-                        "http://localhost:8080/squid"
-                ),
-
-                new SquidConnectionParameters(
-                        TEST,
-                        "http://prodinfobuild.broadinstitute.org:8020/squid"
-                ),
-
-                new SquidConnectionParameters(
-                        QA,
-                        "http://vsquidrc.broadinstitute.org:8000/squid"
-                ),
-
-                new SquidConnectionParameters(
-                        PROD,
-                        "http://squid-ui.broadinstitute.org:8000/squid"
-                ),
-
-                new SquidConnectionParameters(
-                        STUBBY,
-                        null
-                )
-
-        };
-
-        connectionParametersMap = new HashMap<Deployment, SquidConnectionParameters>();
-
-
-        for (SquidConnectionParameters connectionParameters : connectionParameterses)
-            connectionParametersMap.put(connectionParameters.getDeployment(), connectionParameters);
-
-
-    }
-
-
-    @Override
-    @Produces
-    @DevInstance
-    public SquidConnectionParameters devInstance() {
-        log.info("explicitly asked for DEV instance");
-        return connectionParametersMap.get(DEV);
-    }
-
-
-
-    @Override
     @Produces
     @TestInstance
     public SquidConnectionParameters testInstance() {
-        log.info("explicitly asked for TEST instance");
-        return connectionParametersMap.get(TEST);
+        return produce( TEST );
     }
 
 
 
-    @Override
-    @Produces
-    @QAInstance
-    public SquidConnectionParameters qaInstance() {
-        log.info("explicitly asked for QA instance");
-        return connectionParametersMap.get(QA);
-    }
-
-
-
-    @Override
-    @Produces
-    @ProdInstance
-    public SquidConnectionParameters prodInstance() {
-        log.info("explicitly asked for PROD instance");
-        return connectionParametersMap.get(PROD);
-    }
-
-
-
-    @Override
-    @Produces
-    @StubInstance
-    public SquidConnectionParameters stubInstance() {
-        throw new RuntimeException("explicitly asked for STUBBY instance of SquidConfiguration, should not happen!");
-    }
-
-
-    @Override
     @Produces
     @Default
     public SquidConnectionParameters produce() {
-        log.info("Returning SquidConfiguration for deployment " + getDeployment());
-        return connectionParametersMap.get(getDeployment());
+        return produce( deployment );
 
     }
 
@@ -126,7 +43,51 @@ public class SquidConnectionParametersProducer
      * @return
      */
     public static SquidConnectionParameters produce(Deployment deployment) {
-        return new SquidConnectionParametersProducer().connectionParametersMap.get(deployment);
+
+        switch ( deployment ) {
+
+            case DEV :
+
+                return new SquidConnectionParameters(
+
+                    "http://localhost:8080/squid"
+
+                );
+
+            case TEST:
+
+                return new SquidConnectionParameters(
+
+                    "http://prodinfobuild.broadinstitute.org:8020/squid"
+
+                );
+
+
+            case QA:
+
+                return new SquidConnectionParameters(
+
+                    "http://vsquidrc.broadinstitute.org:8000/squid"
+
+                );
+
+
+            case PROD:
+
+                return new SquidConnectionParameters(
+
+                    "http://squid-ui.broadinstitute.org:8000/squid"
+
+                );
+
+
+            default:
+
+                throw new RuntimeException("Asked to make SquidConnectionParameters for deployment " + deployment);
+
+        }
+
+
     }
 
 

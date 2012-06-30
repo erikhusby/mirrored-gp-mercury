@@ -1,17 +1,13 @@
 package org.broadinstitute.sequel.infrastructure.pmbridge;
 
 
-import org.broadinstitute.sequel.infrastructure.deployment.BaseConfiguration;
-import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
-
-public class PMBridgeConnectionParameters extends BaseConfiguration {
+public class PMBridgeConnectionParameters {
 
 
     private String baseUrl;
 
 
-    public PMBridgeConnectionParameters(Deployment deployment, String baseUrl) {
-        super(deployment);
+    public PMBridgeConnectionParameters(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 

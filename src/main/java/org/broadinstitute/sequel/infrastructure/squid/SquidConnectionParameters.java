@@ -1,24 +1,18 @@
 package org.broadinstitute.sequel.infrastructure.squid;
 
 
-import org.broadinstitute.sequel.infrastructure.deployment.BaseConfiguration;
-import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
-
-
 /**
  * Configuration to look up Squid connection parameters, currently limited to the base URL.
  *
  */
-public class SquidConnectionParameters extends BaseConfiguration {
+public class SquidConnectionParameters {
 
 
     private String baseUrl;
 
 
 
-    public SquidConnectionParameters(Deployment deployment, String baseUrl) {
-
-        super(deployment);
+    public SquidConnectionParameters(String baseUrl) {
 
         this.baseUrl = baseUrl;
 
