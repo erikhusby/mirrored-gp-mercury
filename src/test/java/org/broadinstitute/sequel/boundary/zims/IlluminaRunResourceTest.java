@@ -6,13 +6,9 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.entity.zims.*;
-
-import static org.testng.Assert.*;
-
 import org.broadinstitute.sequel.infrastructure.thrift.MockThriftService;
-import org.broadinstitute.sequel.infrastructure.thrift.QAThriftConfiguration;
-import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfiguration;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftFileAccessor;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.broadinstitute.sequel.integration.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -22,25 +18,22 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
-
-import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
-
 import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 
-public class IlluminaRunResourceTest extends Arquillian  {
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+import static org.testng.Assert.*;
+
+public class IlluminaRunResourceTest extends ContainerTest {
 
     @Inject
     IlluminaRunResource runLaneResource;
 
     private TZamboniRun zamboniRun;
-    
-    final ThriftConfiguration thriftConfig = new QAThriftConfiguration();
-    
+
     public static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
 
     private final String CHAMBER = "2";
