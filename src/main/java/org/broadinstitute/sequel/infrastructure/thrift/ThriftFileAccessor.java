@@ -11,6 +11,8 @@ import org.apache.thrift.transport.TTransport;
 import java.io.*;
 import java.util.Arrays;
 
+import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.QA;
+
 public class ThriftFileAccessor {
 
     private static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX";
@@ -25,14 +27,14 @@ public class ThriftFileAccessor {
      * @throws Exception
      */
     private static void writeRunFile() throws Exception {
-        ThriftConfiguration qaThrift = new QAThriftConfiguration();
+        ThriftConfig qaThrift = ThriftConfigProducer.produce( QA );
         TZamboniRun runFetchedFromService = fetchRun(qaThrift);
         serializeRun(runFetchedFromService,RUN_FILE);
     }
 
-    private static TZamboniRun fetchRun(ThriftConfiguration thriftConfiguration) throws TZIMSException, TException {
+    private static TZamboniRun fetchRun(ThriftConfig thriftConfig) throws TZIMSException, TException {
 
-        TTransport transport = new TSocket(thriftConfiguration.getHost(), thriftConfiguration.getPort());
+        TTransport transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
         TProtocol protocol = new TBinaryProtocol(transport);
         LIMQueries.Client client = new LIMQueries.Client(protocol);
         transport.open();
