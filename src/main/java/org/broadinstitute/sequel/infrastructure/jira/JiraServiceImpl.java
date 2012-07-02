@@ -137,4 +137,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         return CustomFieldJsonParser.parseCustomFields(jsonResponse);
     }
 
+    @Override
+    public String createTicketUrl(String jiraTicketName) {
+        return connectionParameters.getHostname() + ":" + connectionParameters.getPort() + "/browser/" + jiraTicketName;
+    }
 }

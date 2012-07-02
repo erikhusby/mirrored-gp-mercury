@@ -37,7 +37,7 @@ public class PassBatchUtil {
             samplesInBatch.add(stockSample);
             numSamplesInCurrentBatch++;
             if (numSamplesInCurrentBatch == numSamplesPerBatch) {
-                LabBatch labBatch = new LabBatch(batchPrefix + "-" + batchNumber,samplesInBatch);
+                LabBatch labBatch = new LabBatch(passPlan,batchPrefix + "-" + batchNumber,samplesInBatch);
                 numSamplesInCurrentBatch = 0;
                 samplesInBatch.clear();
                 batchNumber++;

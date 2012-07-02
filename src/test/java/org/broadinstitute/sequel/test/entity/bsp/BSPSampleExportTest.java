@@ -32,11 +32,10 @@ public class BSPSampleExportTest {
 
         BasicProject project = new BasicProject("BSPExportTestingProject", new JiraTicket());
         // BasicProjectPlan
-        HashMap<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem> billableEvents = new HashMap<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem>();
         BasicProjectPlan projectPlan = new BasicProjectPlan(
                 project,
                 "ExomeExpressPlan1",
-                new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+                new WorkflowDescription("HybridSelection", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);

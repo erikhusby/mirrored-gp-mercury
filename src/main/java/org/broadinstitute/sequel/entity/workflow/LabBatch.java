@@ -25,24 +25,37 @@ public class LabBatch {
 
     private JiraTicket jiraTicket;
 
+    private ProjectPlan projectPlan;
+
     /**
      * Create a new batch with the given name
      * and set of {@link Starter starting materials}
      * @param batchId
      * @param starters
      */
-    public LabBatch(String batchId,
+    public LabBatch(ProjectPlan projectPlan,
+                    String batchId,
                     Set<Starter> starters) {
+        if (projectPlan == null) {
+            throw new NullPointerException("ProjectPlan cannot be null.");
+        }
         if (batchId == null) {
             throw new NullPointerException("BatchId cannot be null");
         }
         if (starters == null) {
             throw new NullPointerException("starters cannot be null");
         }
+        this.projectPlan = projectPlan;
         this.batchName = batchId;
         for (Starter starter : starters) {
             addStarter(starter);
         }
+    }
+
+    public ProjectPlan getProjectPlan() {
+        // todo could have different project plans per
+        // starter, make this a map accessible by Starter.
+        return projectPlan;
     }
 
     public void addStarter(Starter starter) {

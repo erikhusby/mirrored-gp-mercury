@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
 
+
 import java.io.Serializable;
 
 public class ThriftConfig implements Serializable {

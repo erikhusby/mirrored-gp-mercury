@@ -49,4 +49,9 @@ public class DummyJiraService implements JiraService {
         }
         return customFields;
     }
+
+    @Override
+    public String createTicketUrl(String jiraTicketName) {
+        return "http://dummy-jira-service.blah/" + jiraTicketName;
+    }
 }

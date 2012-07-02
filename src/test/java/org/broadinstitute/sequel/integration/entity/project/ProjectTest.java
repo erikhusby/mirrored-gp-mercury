@@ -3,7 +3,6 @@ package org.broadinstitute.sequel.integration.entity.project;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
-import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
@@ -36,10 +35,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
@@ -266,9 +263,7 @@ public class ProjectTest  {
     private BasicProjectPlan projectManagerAddsProjectPlan(Project project) {
         PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
 
-        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
-        billableEvents.put(LabEventName.SAGE_UNLOADED,priceItem);
-        WorkflowDescription workflow = new WorkflowDescription("HybridSelection", billableEvents,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        WorkflowDescription workflow = new WorkflowDescription("HybridSelection", null,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         BasicProjectPlan plan = new BasicProjectPlan(project,project.getProjectName() + " Plan",workflow);
         String quoteId = "DNA23";
         plan.setQuote(new Quote(quoteId,
