@@ -1,14 +1,13 @@
 package org.broadinstitute.sequel.infrastructure.quote;
 
-import javax.enterprise.inject.Default;
-import javax.xml.bind.JAXBException;
+import org.broadinstitute.sequel.infrastructure.deployment.Stub;
 
-@Default
-public class MockQuoteService implements QuoteService {
+@Stub
+public class QuoteServiceStub implements QuoteService {
 
     private static int workItemId = 1;
 
-    public MockQuoteService() {
+    public QuoteServiceStub() {
 
     }
 

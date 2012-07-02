@@ -36,7 +36,7 @@ import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
 import org.testng.Assert;
@@ -122,7 +122,7 @@ public class ExomeExpressEndToEndTest {
             baitSet.setId(BAIT_ID);
             baitsCache.getBaitSetList().add(baitSet);
 
-            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new MockQuoteService(),baitsCache);
+            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new QuoteServiceStub(),baitsCache);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
             projectPlan.getWorkflowDescription().initFromFile("HybridSelectionVisualParadigm.xml");
 
