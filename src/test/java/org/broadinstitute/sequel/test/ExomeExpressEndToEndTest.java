@@ -31,9 +31,9 @@ import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -61,9 +61,9 @@ public class ExomeExpressEndToEndTest {
 
     private PassService passService = PassServiceProducer.stubInstance();
 
-    // if this bombs because of a jira refresh, just switch it to new DummyJiraService().
-    // for integration test fun where we post things back to a real jira, try new JiraServiceImpl(new TestLabObsJira());
-    private JiraService jiraService = new DummyJiraService();
+    // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
+    // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
+    private JiraService jiraService = JiraServiceProducer.stubInstance();
 
     private QuoteService quoteService = QuoteServiceProducer.stubInstance();
 

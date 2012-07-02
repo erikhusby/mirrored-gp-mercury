@@ -2,17 +2,16 @@ package org.broadinstitute.sequel.infrastructure.jira;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.sequel.infrastructure.deployment.Stub;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 
-import javax.enterprise.inject.Alternative;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,10 +20,10 @@ import java.util.List;
  * {@link #addComment(String, String, org.broadinstitute.sequel.infrastructure.jira.issue.Visibility.Type, org.broadinstitute.sequel.infrastructure.jira.issue.Visibility.Value)}
  * to a logger.
  */
-@Alternative
-public class DummyJiraService implements JiraService {
+@Stub
+public class JiraServiceStub implements JiraService {
 
-    private Log logger = LogFactory.getLog(DummyJiraService.class);
+    private Log logger = LogFactory.getLog(JiraServiceStub.class);
 
     @Override
     public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException {

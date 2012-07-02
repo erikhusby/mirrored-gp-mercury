@@ -7,6 +7,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.AbstractJsonJerseyClientService;
+import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldJsonParser;
@@ -16,24 +17,36 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.sequel.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.comment.AddCommentResponse;
 
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-@Default
+@Impl
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
 
-    private Log logger = LogFactory.getLog(JiraServiceImpl.class);
 
-    private JiraConnectionParameters connectionParameters;
+    @Inject
+    private JiraConfig jiraConfig;
+
+    @Inject
+    private Log log;
+
 
     private String baseUrl;
 
-    @Inject
-    public JiraServiceImpl(JiraConnectionParameters connectionParameters) {
-        this.connectionParameters = connectionParameters;
+
+    public JiraServiceImpl() {}
+
+
+    /**
+     * Non-CDI constructor
+     *
+     * @param jiraConfig
+     */
+    public JiraServiceImpl(JiraConfig jiraConfig) {
+        this.jiraConfig = jiraConfig;
+        this.log = LogFactory.getLog(JiraServiceImpl.class);
     }
 
     @Override
@@ -43,7 +56,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     @Override
     protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, connectionParameters);
+        specifyHttpAuthCredentials(client, jiraConfig);
     }
 
 
@@ -53,7 +66,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         if (baseUrl == null) {
 
             String urlString = "http://%s:%d/rest/api/2";
-            baseUrl = String.format(urlString, connectionParameters.getHostname(), connectionParameters.getPort());
+            baseUrl = String.format(urlString, jiraConfig.getHost(), jiraConfig.getPort());
 
         }
 
@@ -70,7 +83,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         CreateIssueRequest issueRequest = CreateIssueRequest.create(projectPrefix, issueType, summary, description,customFields);
 
         String urlString = getBaseUrl() + "/issue/";
-        logger.debug("createIssue URL is " + urlString);
+        log.debug("createIssue URL is " + urlString);
 
         /**
          * To debug this, use curl like so:
@@ -106,7 +119,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String urlString = getBaseUrl() + "/issue/" + key + "/comment";
 
-        logger.debug("addComment URL is " + urlString);
+        log.debug("addComment URL is " + urlString);
         
         WebResource webResource = getJerseyClient().resource(urlString);
 
@@ -139,6 +152,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     @Override
     public String createTicketUrl(String jiraTicketName) {
-        return connectionParameters.getHostname() + ":" + connectionParameters.getPort() + "/browser/" + jiraTicketName;
+        return jiraConfig.getHost() + ":" + jiraConfig.getPort() + "/browser/" + jiraTicketName;
     }
 }
