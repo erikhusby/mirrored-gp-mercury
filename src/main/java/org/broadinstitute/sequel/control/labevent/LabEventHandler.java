@@ -5,7 +5,6 @@ import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
 import org.broadinstitute.sequel.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.entity.OrmUtil;
-import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.labevent.*;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
