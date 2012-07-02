@@ -23,13 +23,6 @@ public class LiveThriftService implements ThriftService {
     private transient TTransport transport;
 
 
-    /**
-     * No arg constructor for CDI
-     */
-    public LiveThriftService() {
-    }
-
-
     private void open() {
         close();
         transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());

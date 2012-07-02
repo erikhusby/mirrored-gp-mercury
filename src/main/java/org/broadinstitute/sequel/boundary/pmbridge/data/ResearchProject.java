@@ -3,9 +3,10 @@ package org.broadinstitute.sequel.boundary.pmbridge.data;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 
 @XmlRootElement(name = "project")
-public class ResearchProject {
+public class ResearchProject implements Serializable {
 
     private Long id;
 

@@ -3,7 +3,9 @@ package org.broadinstitute.sequel.boundary.pmbridge;
 
 import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProject;
 
-public interface PMBridgeService {
+import java.io.Serializable;
+
+public interface PMBridgeService extends Serializable {
 
 
     public ResearchProject getResearchProjectByID(String id);

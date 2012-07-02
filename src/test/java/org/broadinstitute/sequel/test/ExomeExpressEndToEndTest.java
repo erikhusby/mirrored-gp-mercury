@@ -55,9 +55,9 @@ public class ExomeExpressEndToEndTest {
 
     LibraryRegistrationSOAPService registrationSOAPService = new LibraryRegistrationSOAPServiceStub();
 
-    private PMBridgeService pmBridgeService = PMBridgeServiceProducer.produceStub();
+    private PMBridgeService pmBridgeService = PMBridgeServiceProducer.stubInstance();
 
-    private PassService passService = PassServiceProducer.produceStub();
+    private PassService passService = PassServiceProducer.stubInstance();
 
     // if this bombs because of a jira refresh, just switch it to new DummyJiraService().
     // for integration test fun where we post things back to a real jira, try new JiraServiceImpl(new TestLabObsJira());

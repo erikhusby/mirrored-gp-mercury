@@ -38,7 +38,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     }
 
     /**
-     * Container free constructor, need to initialize dependencies explicitly
+     * Container free constructor, need to initialize all dependencies explicitly
      *
      * @param bspConfig
      */

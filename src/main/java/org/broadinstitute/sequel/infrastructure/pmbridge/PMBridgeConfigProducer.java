@@ -2,16 +2,12 @@ package org.broadinstitute.sequel.infrastructure.pmbridge;
 
 
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
-import org.broadinstitute.sequel.infrastructure.deployment.TestInstance;
 
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
-
 public class PMBridgeConfigProducer {
-
 
 
     @Inject
@@ -26,25 +22,15 @@ public class PMBridgeConfigProducer {
 
 
 
-
-    @Produces
-    @TestInstance
-    public PMBridgeConfig testInstance() {
-        return produce( TEST );
-    }
-
-
-
     @Produces
     @Default
     public PMBridgeConfig produce() {
-        return  produce( deployment );
+        return produce( deployment );
     }
 
 
 
     public static PMBridgeConfig produce(Deployment deployment) {
-
 
         switch ( deployment ) {
 
