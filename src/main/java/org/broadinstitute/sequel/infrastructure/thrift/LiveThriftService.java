@@ -15,15 +15,20 @@ import javax.inject.Inject;
 @Impl
 public class LiveThriftService implements ThriftService {
 
+
+    @Inject
     private ThriftConfig thriftConfig;
 
     // stateful: created by open()
-    private TTransport transport;
+    private transient TTransport transport;
 
-    @Inject
-    public LiveThriftService(ThriftConfig thriftConfig) {
-        this.thriftConfig = thriftConfig;
+
+    /**
+     * No arg constructor for CDI
+     */
+    public LiveThriftService() {
     }
+
 
     private void open() {
         close();

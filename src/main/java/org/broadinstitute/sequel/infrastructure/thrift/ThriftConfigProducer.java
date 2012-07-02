@@ -25,8 +25,8 @@ public class ThriftConfigProducer {
 
         switch ( deployment ) {
             // not sure if DEV and TEST should use the QA system?
-            // case DEV:
-            // case TEST:
+            case DEV:
+            case TEST:
             case QA:
                 return new ThriftConfig(
                     "seqtest04", 9090

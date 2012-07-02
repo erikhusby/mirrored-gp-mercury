@@ -14,14 +14,15 @@ import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import javax.net.ssl.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import java.io.Serializable;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractJerseyClientService {
+public abstract class AbstractJerseyClientService implements Serializable {
 
-    private Client jerseyClient;
+    private transient Client jerseyClient;
 
     public AbstractJerseyClientService() {}
     

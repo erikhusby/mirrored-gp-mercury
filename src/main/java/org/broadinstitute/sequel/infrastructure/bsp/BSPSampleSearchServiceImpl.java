@@ -23,17 +23,30 @@ import java.util.List;
 @Impl
 public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
 
-
-    private static final Log log = LogFactory.getLog(BSPSampleSearchServiceImpl.class);
-
-
-    private BSPConfig bspConfig;
+    @Inject
+    private Log log;
 
 
     @Inject
+    private BSPConfig bspConfig;
+
+
+    /**
+     * No arg constructor for CDI
+     */
+    public BSPSampleSearchServiceImpl() {
+    }
+
+    /**
+     * Container free constructor, need to initialize dependencies explicitly
+     *
+     * @param bspConfig
+     */
     public BSPSampleSearchServiceImpl(BSPConfig bspConfig) {
         this.bspConfig = bspConfig;
+        log = LogFactory.getLog(BSPSampleSearchServiceImpl.class);
     }
+
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {

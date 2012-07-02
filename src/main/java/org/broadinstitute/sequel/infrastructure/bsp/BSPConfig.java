@@ -2,7 +2,9 @@ package org.broadinstitute.sequel.infrastructure.bsp;
 
 import org.broadinstitute.sequel.control.LoginAndPassword;
 
-public class BSPConfig implements LoginAndPassword {
+import java.io.Serializable;
+
+public class BSPConfig implements LoginAndPassword, Serializable {
 
 
     private String login;

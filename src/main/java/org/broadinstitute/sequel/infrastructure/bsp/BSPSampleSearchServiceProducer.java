@@ -3,9 +3,14 @@ package org.broadinstitute.sequel.infrastructure.bsp;
 
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Default;
+import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+
+import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.QA;
+import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.STUBBY;
 
 public class BSPSampleSearchServiceProducer {
 
@@ -15,18 +20,19 @@ public class BSPSampleSearchServiceProducer {
 
     @Produces
     @Default
-    public BSPSampleSearchService produce() {
-        return produce( deployment );
+    @SessionScoped
+    public BSPSampleSearchService produce(@New BSPSampleSearchServiceStub stub, @New BSPSampleSearchServiceImpl impl) {
+
+        if ( deployment == STUBBY )
+            return stub;
+
+        return impl;
     }
 
 
-    public static BSPSampleSearchService produce ( Deployment deployment ) {
+    public static BSPSampleSearchService qaInstance() {
 
-        if ( deployment == Deployment.STUBBY )
-            return null;
-
-
-        BSPConfig bspConfig = BSPConfigProducer.produce( deployment );
+        BSPConfig bspConfig = BSPConfigProducer.produce(QA);
 
         return new BSPSampleSearchServiceImpl( bspConfig );
 
