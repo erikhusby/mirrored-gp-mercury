@@ -42,6 +42,8 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
     @Inject
     private LabEventHandler labEventHandler;
 
+    @Inject QuoteService quoteService;
+
     /**
      * Add expectations to {@link QuoteService#registerNewWork(org.broadinstitute.sequel.infrastructure.quote.Quote, org.broadinstitute.sequel.infrastructure.quote.PriceItem, double, String, String, String)}
      * to the given mock
@@ -141,7 +143,7 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
      * against the other quote for the other batch of 12.
      */
     @Test(groups = {EXTERNAL_INTEGRATION})
-    public void test_billing() {
+    public void test_billing() throws Exception {
         String expectedBatchId = "QuoteWorkItemBatchId123";
         BasicProjectPlan plan1 = createProjectPlan("Project1","Plan1","DNA33");
         BasicProjectPlan plan2 = createProjectPlan("Project2","Plan2","DNA35");
@@ -149,18 +151,18 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
         int totalSampleCount = 24; // keep it even; we're just splitting across two quotes
         LabEvent labEvent = buildLabEvent(plan1,plan2,totalSampleCount);
 
-        Billable billable = PerSampleBillableFactory.createBillable(labEvent);
+        Billable billable = PerSampleBillableFactory.createBillable(labEvent,quoteService);
 
         QuoteService service = EasyMock.createMock(QuoteService.class);
         int numSamplesBilledPerQuote = totalSampleCount/2;
         addExpectedQuoteInteraction(service,
-                                    plan1.getQuoteDTO(),
+                                    plan1.getQuoteDTO(service),
                                     plan1.getWorkflowDescription().getPriceItem(),
                                     numSamplesBilledPerQuote,
                                     expectedBatchId,
                                     1);
         addExpectedQuoteInteraction(service,
-                plan2.getQuoteDTO(),
+                plan2.getQuoteDTO(service),
                 plan2.getWorkflowDescription().getPriceItem(),
                 numSamplesBilledPerQuote,
                 expectedBatchId,

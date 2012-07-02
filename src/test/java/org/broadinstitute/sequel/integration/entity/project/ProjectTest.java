@@ -23,12 +23,7 @@ import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
 import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.infrastructure.quote.Funding;
-import org.broadinstitute.sequel.infrastructure.quote.FundingLevel;
-import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
-import org.broadinstitute.sequel.infrastructure.quote.QuoteFunding;
-import org.broadinstitute.sequel.infrastructure.quote.Quotes;
-import org.broadinstitute.sequel.infrastructure.quote.QuotesCache;
+import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -47,6 +42,8 @@ public class ProjectTest  {
 
     private BSPSampleDataFetcher bspFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
 
+    private QuoteService quoteService = new QuoteServiceImpl(new QAQuoteConnectionParams());
+
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {
         CreateIssueResponse response = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
@@ -63,7 +60,7 @@ public class ProjectTest  {
     }
     
     @Test(groups = {EXTERNAL_INTEGRATION})
-    public void test_simple_project() {
+    public void test_simple_project() throws Exception {
         Project project = projectManagerCreatesProject(jiraService);
         projectManagerAddsFundingSourceToProject(project,"NHGRI");
         BasicProjectPlan plan = projectManagerAddsProjectPlan(project);
@@ -212,7 +209,7 @@ public class ProjectTest  {
     
     private void postSomethingFunToJira(JiraTicket jiraTicket,
                                         Collection<LabVessel> vessels,
-                                        Project project) {
+                                        Project project) throws QuoteNotFoundException, QuoteServerException {
         StringBuilder projectJiraMessage = new StringBuilder(jiraTicket.getTicketName() + " has been created for the following samples:\n");
         for (LabVessel vessel : vessels) {
             for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
@@ -221,7 +218,7 @@ public class ProjectTest  {
                     projectPlan.addJiraTicket(jiraTicket);
                 }
                 String sampleURL = "[" + startingSample.getSampleName() + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + startingSample.getSampleName() + "]";
-                projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n").append("** Paid for by ").append(sampleInstance.getSingleProjectPlan().getQuoteDTO().getQuoteFunding().getFundingLevel().getFunding().getGrantDescription()).append("\n");
+                projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n").append("** Paid for by ").append(sampleInstance.getSingleProjectPlan().getQuoteDTO(quoteService).getQuoteFunding().getFundingLevel().getFunding().getGrantDescription()).append("\n");
             }
         }
         project.addJiraComment(projectJiraMessage.toString());

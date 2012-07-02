@@ -10,7 +10,6 @@ import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
 import org.testng.annotations.Test;
 
@@ -43,6 +42,12 @@ public class ProjectPlanFromPassTest {
             sample.setBspSampleID(sampleName);
             sampleList.getSample().add(sample);
         }
+        FundingInformation fundingInfo = new FundingInformation();
+        PriceItem priceItem = new PriceItem();
+        fundingInfo.setGspPriceItem(priceItem);
+        priceItem.setCategoryName("Nacho");
+        priceItem.setName("Cheese");
+        hsPass.setFundingInformation(fundingInfo);
         hsPass.setSampleDetailsInformation(sampleList);
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
         TargetCoverageModel targetCoverageModel = new TargetCoverageModel();

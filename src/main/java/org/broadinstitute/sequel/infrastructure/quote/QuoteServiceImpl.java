@@ -105,6 +105,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     @Override
     protected void customizeClient(Client client) {
+        client.setFollowRedirects(true);
         specifyHttpAuthCredentials(client, connectionParameters);
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }
@@ -129,7 +130,9 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
 
         String url = connectionParameters.getUrl(QuoteConnectionParameters.GET_SINGLE_QUOTE_URL);
-        WebResource resource = getJerseyClient().resource(url + id);
+        Client client = getJerseyClient();
+        client.setFollowRedirects(true);
+        WebResource resource = client.resource(url + id);
 
         try
         {
@@ -146,7 +149,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
         catch(UniformInterfaceException e)
         {
-           throw new QuoteNotFoundException("Could not find quote " + id);
+           throw new QuoteNotFoundException("Could not find quote " + id,e);
         }
         catch(ClientHandlerException e)
         {

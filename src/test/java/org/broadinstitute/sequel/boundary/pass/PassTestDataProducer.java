@@ -120,7 +120,15 @@ public class PassTestDataProducer {
         FundingInformation fundingInfo = new FundingInformation();
         pass.setFundingInformation(fundingInfo);
         fundingInfo.setBspPlatingQuoteID("BSP-QUOTE-1");
-        fundingInfo.setSequencingQuoteID("SEQ-QUOTE-2");
+        fundingInfo.setSequencingQuoteID("DNA4JD");
+        PriceItem priceItem = new PriceItem();
+        priceItem.setCategoryName("Illumina Sequencing");
+        priceItem.setId("1");
+        priceItem.setName("Illumina HiSeq Run 44 Base");
+        priceItem.setPlatform("DNA Sequencing");
+        priceItem.setPrice("15");
+        priceItem.setUnits("Bananas");
+        fundingInfo.setGspPriceItem(priceItem);
         fundingInfo.setFundingAgencies("some agency");
 
         SubmissionsInformation submissionsInfo = new SubmissionsInformation();

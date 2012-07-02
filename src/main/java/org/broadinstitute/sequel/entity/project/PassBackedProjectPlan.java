@@ -10,6 +10,7 @@ import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraConnectionParameters;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 
@@ -39,9 +40,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
     // todo arz pull out injected services and have constructors
     // take in pre-fetched DTOs (Quote, BSPStartingSample)
 
-    @Inject
-    private QuoteService quoteService;
-
     @Inject BSPSampleDataFetcher bspDataFetcher;
 
     private WorkflowDescription workflowDescription;
@@ -62,7 +60,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
         if (!(pass instanceof DirectedPass)) {
             throw new RuntimeException("SequeL can only deal with HS passes");
         }
-        this.quoteService = quoteService;
         this.bspDataFetcher = bspDataFetcher;
         this.pass = pass;
 
@@ -91,7 +88,14 @@ public class PassBackedProjectPlan extends ProjectPlan {
     private void initWorkflow() {
         if (pass instanceof  DirectedPass) {
             DirectedPass hsPass = (DirectedPass)pass;
-            workflowDescription =  new WorkflowDescription("Hybrid Selection",null, null);
+            org.broadinstitute.sequel.boundary.PriceItem passPriceItem = pass.getFundingInformation().getGspPriceItem();
+            PriceItem sequelPriceItem = new PriceItem(passPriceItem.getCategoryName(),
+                    passPriceItem.getId(),
+                    passPriceItem.getName(),
+                    passPriceItem.getPrice(),
+                    passPriceItem.getUnits(),
+                    passPriceItem.getPlatform());
+            workflowDescription =  new WorkflowDescription("Hybrid Selection",sequelPriceItem, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         }
     }
 
@@ -148,7 +152,7 @@ public class PassBackedProjectPlan extends ProjectPlan {
     }
 
     @Override
-    public Quote getQuoteDTO() {
+    public Quote getQuoteDTO(QuoteService quoteService) {
         Quote quote = null;
         try {
             quote = quoteService.getQuoteFromQuoteServer(pass.getFundingInformation().getSequencingQuoteID());
@@ -227,9 +231,9 @@ public class PassBackedProjectPlan extends ProjectPlan {
     }
 
     @Override
-    public void doBilling(Starter starter,LabBatch labBatch) {
+    public void doBilling(Starter starter,LabBatch labBatch,QuoteService quoteService) {
         // todo arz when database enabled, make double billing impossible
-        Quote quote = getQuoteDTO();
+        Quote quote = getQuoteDTO(quoteService);
         PriceItem priceItem = getWorkflowDescription().getPriceItem();
         String jiraUrl = labBatch.getJiraTicket().getBrowserUrl();
         quoteService.registerNewWork(quote,priceItem,1.0d,jiraUrl,null,null);

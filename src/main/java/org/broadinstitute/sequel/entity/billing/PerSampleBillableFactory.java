@@ -37,7 +37,7 @@ public class PerSampleBillableFactory {
      * @param event
      * @return
      */
-    public static Billable createBillable(final LabEvent event) {
+    public static Billable createBillable(final LabEvent event,final QuoteService quoteService) {
         final Map<QuotePriceItem,Double> workItemsPerQuote = new HashMap<QuotePriceItem, Double>();
         final Collection<StartingSample> samplesBilledAlready = new HashSet<StartingSample>();
         for (LabVessel source : event.getSourceLabVessels()) {
@@ -46,7 +46,16 @@ public class PerSampleBillableFactory {
                 StartingSample sample = sampleInstance.getStartingSample();
                 
                 PriceItem priceItem = projectPlan.getWorkflowDescription().getPriceItem();
-                org.broadinstitute.sequel.infrastructure.quote.Quote quote = projectPlan.getQuoteDTO();
+                org.broadinstitute.sequel.infrastructure.quote.Quote quote = null;
+                try {
+                    quote = projectPlan.getQuoteDTO(quoteService);
+                }
+                catch(QuoteServerException e) {
+                    throw new RuntimeException("Could not connect to quote service",e);
+                }
+                catch(QuoteNotFoundException e) {
+                    throw new RuntimeException("Could not connect to quote service",e);
+                }
                 if (quote != null) {
                     /** do we use true sample (aliquot) here, or {@link org.broadinstitute.sequel.entity.project.SampleAnalysisBuddies}? */
 

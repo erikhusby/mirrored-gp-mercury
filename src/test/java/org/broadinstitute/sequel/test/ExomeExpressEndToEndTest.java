@@ -38,6 +38,8 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
+import org.broadinstitute.sequel.infrastructure.quote.Quote;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -60,6 +62,8 @@ public class ExomeExpressEndToEndTest {
     // if this bombs because of a jira refresh, just switch it to new DummyJiraService().
     // for integration test fun where we post things back to a real jira, try new JiraServiceImpl(new TestLabObsJira());
     private JiraService jiraService = new DummyJiraService();
+
+    private QuoteService quoteService = new MockQuoteService();
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
@@ -328,13 +332,20 @@ public class ExomeExpressEndToEndTest {
 
             Assert.assertEquals(labBatch.getJiraTicket(),jiraTicket);
 
+            Quote quoteDTO = projectPlan.getQuoteDTO(quoteService);
+
+            Assert.assertNotNull(quoteDTO);
+
+            Assert.assertEquals(projectPlan.getWorkflowDescription().getPriceItem().getName(),directedPass.getFundingInformation().getGspPriceItem().getName());
+
             for (Starter starter : labBatch.getStarters()) {
                 ProjectPlan batchPlan = labBatch.getProjectPlan();
                 Assert.assertEquals(projectPlan,batchPlan);
-                batchPlan.doBilling(starter,labBatch);
+                batchPlan.doBilling(starter,labBatch,quoteService);
             }
 
-            // todo add quote
+            // todo add call to quote server to get all work done during the time period and verify
+            // that our work was included: https://iwww.broadinstitute.org/blogs/quote/?page_id=210
 
 
             registrationSOAPService.registerSequeLLibrary(registerLibrary);

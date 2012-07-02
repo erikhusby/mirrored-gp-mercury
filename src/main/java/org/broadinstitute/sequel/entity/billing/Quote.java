@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.billing;
 
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -35,6 +36,10 @@ public class Quote {
     }
 
     protected Quote() {
+    }
+
+    public String getAlphanumericId() {
+        return alphanumericId;
     }
 
     public org.broadinstitute.sequel.infrastructure.quote.Quote getQuote() {
