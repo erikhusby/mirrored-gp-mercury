@@ -24,6 +24,11 @@ public class LibraryRegistrationSOAPServiceProducer {
     private Deployment deployment;
 
 
+    public static LibraryRegistrationSOAPService stubInstance() {
+        return new LibraryRegistrationSOAPServiceStub();
+    }
+
+
 
     @Produces
     @Default

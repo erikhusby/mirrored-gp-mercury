@@ -42,7 +42,7 @@ public class ProjectTest  {
 
     private BSPSampleDataFetcher bspFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
 
-    private QuoteService quoteService = new QuoteServiceImpl(new QAQuoteConnectionParams());
+    private QuoteService quoteService = QuoteServiceProducer.qaInstance();
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {

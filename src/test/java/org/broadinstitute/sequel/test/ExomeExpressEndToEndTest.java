@@ -5,7 +5,7 @@ import org.broadinstitute.sequel.boundary.BaitSetListResult;
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
-import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPServiceStub;
+import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPServiceProducer;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
 import org.broadinstitute.sequel.boundary.pass.PassServiceProducer;
 import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
@@ -31,20 +31,22 @@ import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.jira.*;
+import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraCustomFieldsUtil;
+import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
-import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
-import org.broadinstitute.sequel.infrastructure.quote.Quote;
-import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
+import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -53,7 +55,7 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
  */
 public class ExomeExpressEndToEndTest {
 
-    LibraryRegistrationSOAPService registrationSOAPService = new LibraryRegistrationSOAPServiceStub();
+    LibraryRegistrationSOAPService registrationSOAPService = LibraryRegistrationSOAPServiceProducer.stubInstance();
 
     private PMBridgeService pmBridgeService = PMBridgeServiceProducer.stubInstance();
 
@@ -63,7 +65,7 @@ public class ExomeExpressEndToEndTest {
     // for integration test fun where we post things back to a real jira, try new JiraServiceImpl(new TestLabObsJira());
     private JiraService jiraService = new DummyJiraService();
 
-    private QuoteService quoteService = new MockQuoteService();
+    private QuoteService quoteService = QuoteServiceProducer.stubInstance();
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
@@ -126,7 +128,7 @@ public class ExomeExpressEndToEndTest {
             baitSet.setId(BAIT_ID);
             baitsCache.getBaitSetList().add(baitSet);
 
-            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new MockQuoteService(),baitsCache);
+            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new QuoteServiceStub(),baitsCache);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
             projectPlan.getWorkflowDescription().initFromFile("HybridSelectionVisualParadigm.xml");
 
