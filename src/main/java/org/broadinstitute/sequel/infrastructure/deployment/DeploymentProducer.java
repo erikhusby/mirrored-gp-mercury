@@ -9,6 +9,7 @@ import javax.ejb.Startup;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.naming.NamingException;
+import java.io.Serializable;
 
 
 @Startup
@@ -24,7 +25,7 @@ import javax.naming.NamingException;
  * deployment.
  *
  */
-public class DeploymentProducer  {
+public class DeploymentProducer implements Serializable {
 
 
     @Inject

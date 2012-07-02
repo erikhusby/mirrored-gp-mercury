@@ -10,7 +10,6 @@ import org.broadinstitute.sequel.infrastructure.squid.SquidConfig;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfigProducer;
 import org.broadinstitute.sequel.infrastructure.squid.SquidWebServiceClient;
 
-import javax.ejb.Stateless;
 import javax.inject.Inject;
 
 
@@ -21,7 +20,6 @@ import javax.inject.Inject;
  */
 
 
-@Stateless
 @Impl
 public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<LibraryRegistrationPortType>
         implements LibraryRegistrationSOAPService {

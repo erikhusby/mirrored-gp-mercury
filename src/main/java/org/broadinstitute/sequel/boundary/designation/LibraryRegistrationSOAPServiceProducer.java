@@ -1,16 +1,14 @@
 package org.broadinstitute.sequel.boundary.designation;
 
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
-import org.broadinstitute.sequel.infrastructure.deployment.TestInstance;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConfig;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConfigProducer;
 
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Default;
+import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.STUBBY;
-import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
 
 
 /**
@@ -26,33 +24,18 @@ public class LibraryRegistrationSOAPServiceProducer {
     private Deployment deployment;
 
 
-    @Produces
-    @TestInstance
-    public LibraryRegistrationSOAPService testInstance() {
-
-        return produce( TEST );
-
-    }
-
 
     @Produces
     @Default
-    public LibraryRegistrationSOAPService produce() {
+    @SessionScoped
+    public LibraryRegistrationSOAPService produce(
+            @New LibraryRegistrationSOAPServiceStub stub, @New LibraryRegistrationSOAPServiceImpl impl) {
 
-        return produce( deployment );
+        if ( deployment == STUBBY )
+            return stub;
 
-    }
+        return impl;
 
-
-    public static LibraryRegistrationSOAPService produce(Deployment deployment) {
-
-        if (deployment == STUBBY)
-            return new LibraryRegistrationSOAPServiceStub();
-
-        final SquidConfig squidConfig =
-                SquidConfigProducer.produce(deployment);
-
-        return new LibraryRegistrationSOAPServiceImpl(squidConfig);
     }
 
 

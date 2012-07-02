@@ -1,7 +1,9 @@
 package org.broadinstitute.sequel.infrastructure.pmbridge;
 
 
-public class PMBridgeConfig {
+import java.io.Serializable;
+
+public class PMBridgeConfig implements Serializable {
 
 
     private String baseUrl;

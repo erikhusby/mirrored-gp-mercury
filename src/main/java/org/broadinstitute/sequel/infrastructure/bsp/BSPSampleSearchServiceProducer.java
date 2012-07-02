@@ -30,6 +30,12 @@ public class BSPSampleSearchServiceProducer {
     }
 
 
+    /**
+     * Creates a BSPSampleSearchServiceImpl with plain old new operator for container-free testing,
+     * not a managed bean!
+     *
+     * @return
+     */
     public static BSPSampleSearchService qaInstance() {
 
         BSPConfig bspConfig = BSPConfigProducer.produce(QA);

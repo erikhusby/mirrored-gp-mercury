@@ -6,7 +6,9 @@ import org.broadinstitute.sequel.infrastructure.deployment.TestInstance;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfig;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfigProducer;
 
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Default;
+import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
@@ -29,21 +31,26 @@ public class PassServiceProducer {
 
     @Produces
     @TestInstance
-    /**
-     * This is currently the only explicitly qualified producer required for this service, if others are needed for
-     * DEV, QA, PROD, or STUBBY they can be added similarly
-     */
     public PassService testInstance() {
-        return new PassServiceImpl(TEST);
+        return new PassServiceImpl( TEST );
     }
+
+
+    public static PassService stubInstance() {
+        return new PassServiceStub();
+    }
+
 
 
     @Produces
     @Default
-    public PassService produce() {
+    @SessionScoped
+    public PassService produce(@New PassServiceStub stub, @New PassServiceImpl impl) {
 
-        return produce( deployment );
+        if ( deployment == STUBBY )
+            return stub;
 
+        return impl;
     }
 
 
@@ -58,10 +65,6 @@ public class PassServiceProducer {
         return new PassServiceImpl(squidConfig);
     }
 
-
-    public static PassService produceStub() {
-        return produce(STUBBY);
-    }
 
 
 }

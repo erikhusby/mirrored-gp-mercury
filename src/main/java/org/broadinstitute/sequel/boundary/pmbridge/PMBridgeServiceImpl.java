@@ -25,7 +25,7 @@ public class PMBridgeServiceImpl implements PMBridgeService {
     private PMBridgeConfig config;
 
 
-    private Client client;
+    private transient Client client;
 
     /**
      * Managed beans must have a no-arg constructor or a constructor annotated as @Initializer
@@ -97,9 +97,11 @@ public class PMBridgeServiceImpl implements PMBridgeService {
                 if (id.equals("" + rp.getId()))
                     return rp;
 
-        } catch (UniformInterfaceException e) {
+        }
+        catch (UniformInterfaceException e) {
             throw new ResearchProjectNotFoundException("Could not find ResearchProject for RPID " + id, e);
-        } catch (ClientHandlerException e) {
+        }
+        catch (ClientHandlerException e) {
             throw new PMBridgeException(e);
         }
 

@@ -2,15 +2,14 @@ package org.broadinstitute.sequel.boundary.pmbridge;
 
 
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
-import org.broadinstitute.sequel.infrastructure.deployment.StubInstance;
-import org.broadinstitute.sequel.infrastructure.deployment.TestInstance;
 
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Default;
+import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.STUBBY;
-import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
 
 public class PMBridgeServiceProducer {
 
@@ -18,40 +17,23 @@ public class PMBridgeServiceProducer {
     private Deployment deployment;
 
 
-    @Produces
-    @TestInstance
-    public PMBridgeService testInstance() {
-        return produce( TEST );
+
+    public static PMBridgeService stubInstance() {
+        return new PMBridgeServiceStub();
     }
 
-
-    @Produces
-    @StubInstance
-    public PMBridgeService stubInstance() {
-        return produce( STUBBY );
-    }
-
-
-    public static PMBridgeService produceStub() {
-        return new PMBridgeServiceProducer().stubInstance();
-    }
 
 
     @Produces
     @Default
-    public PMBridgeService produce() {
-
-        return produce( deployment );
-
-    }
-
-
-    public static PMBridgeService produce( Deployment deployment ) {
+    @SessionScoped
+    public PMBridgeService produce(@New PMBridgeServiceStub stub, @New PMBridgeServiceImpl impl) {
 
         if ( deployment == STUBBY )
-            return new PMBridgeServiceStub();
+            return stub;
 
-        return new PMBridgeServiceImpl( deployment );
+        return impl;
+
     }
 
 
