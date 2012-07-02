@@ -17,7 +17,8 @@ import java.util.*;
 import javax.inject.Inject;
 
 
-public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService, BSPPlatingRequestServiceFullySpecified {
+public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
+        // , BSPPlatingRequestServiceFullySpecified {
 
     // not sure these are really going to be constants; they should be true
     // for 96 tube Matrix racks but different size plates are certainly 
@@ -64,14 +65,11 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService, B
         );
     }
 
-
     @Override
-    public BSPPlatingRequestResult updatePlatingRequest(String bspPlatingBarcode,
-                                                        BSPPlatingRequestOptions options, String login, List<SeqWorkRequestAliquot> aliquot, List<ControlWell> controlWells) {
-
-        return doPlatingRequest(bspPlatingBarcode, options, login, null, null, aliquot, controlWells, null, null, null);
+    public BSPPlatingRequestResult updatePlatingRequest(String platingRequestReceipt, BSPPlatingRequestOptions options,
+                                                        String login, List<SeqWorkRequestAliquot> aliquots, List<ControlWell> controlWells) {
+        return doPlatingRequest(platingRequestReceipt, options, login, null, null, aliquots, controlWells, null, null, null);
     }
-
 
     /**
      * Submit the plating WR if it has no errors
@@ -391,26 +389,6 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService, B
 
         return id;
 
-        /*
-        BspUser bspUser;
-        bspUser = bspUserManager.get(login);
-        
-        if (bspUser == null || bspUser.getUsername() == null) {
-            // this is not as big of a deal as a missing GSP PM since the GSP PM is the Plating WR owner
-            _logger.warn("Could not find BSP User for PI login '" + login + "'");
-            return id;
-        }
-        
-        
-        // we currently need to search the list of PIs to make sure this person is a PI
-        List<BspUser> primaryInvestigators = bspUserManager.getPrimaryInvestigators();
-        
-        for (BspUser pi : primaryInvestigators)
-            if (pi.getUserId().equals(bspUser.getUserId()))
-                return pi.getUserId();
-                
-        return id;
-        */
     }
 
 
@@ -433,15 +411,6 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService, B
         return createPlatingRequest(defaultPlatingRequestOptions, login, platingRequestName, squidWorkRequestName, aliquots,
                 controlWells, comments, seqTechnology, humanReadableBarcode);
     }
-
-    @Override
-    public BSPPlatingRequestResult updatePlatingRequest(
-            String bspPlatingBarcode, String login,
-            List<SeqWorkRequestAliquot> aliquots, List<ControlWell> controls) {
-
-        return updatePlatingRequest(bspPlatingBarcode, defaultPlatingRequestOptions, login, aliquots, controls);
-    }
-
 
     private void checkWorkRequestResponse(WorkRequestResponse workRequestResponse) {
         if (workRequestResponse == null)

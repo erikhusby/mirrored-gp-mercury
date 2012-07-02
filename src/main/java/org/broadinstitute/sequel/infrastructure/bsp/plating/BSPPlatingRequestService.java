@@ -78,6 +78,7 @@ public interface BSPPlatingRequestService {
      */
     BSPPlatingRequestResult updatePlatingRequest(
             String platingRequestReceipt,
+            BSPPlatingRequestOptions options,
             String login,
             List<SeqWorkRequestAliquot> aliquots,
             List<ControlWell> controlWells);
