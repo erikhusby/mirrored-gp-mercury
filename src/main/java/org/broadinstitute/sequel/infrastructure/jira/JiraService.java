@@ -60,4 +60,5 @@ public interface JiraService {
      */
     public List<CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
 
+    public String createTicketUrl(String jiraTicketName);
 }

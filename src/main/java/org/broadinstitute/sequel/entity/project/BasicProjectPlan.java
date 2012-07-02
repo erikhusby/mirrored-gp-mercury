@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -276,5 +277,10 @@ public class BasicProjectPlan extends ProjectPlan {
     @Override
     public LabVessel getAliquot(Starter starter) {
         return aliquotForStarter.get(starter);
+    }
+
+    @Override
+    public void doBilling(Starter starter, LabBatch labBatch) {
+        throw new RuntimeException("I haven't been written yet.");
     }
 }

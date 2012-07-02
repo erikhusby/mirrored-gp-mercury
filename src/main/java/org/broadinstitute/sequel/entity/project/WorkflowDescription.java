@@ -37,7 +37,7 @@ public class WorkflowDescription {
 
     // todo jmt fix this
     @Transient
-    private Map<LabEventName,PriceItem> priceItemForEvent = new HashMap<LabEventName, PriceItem>();
+    private PriceItem priceItem;
 
     private CreateIssueRequest.Fields.Issuetype issueType;
 
@@ -52,7 +52,7 @@ public class WorkflowDescription {
     /**
      *
      * @param workflowName
-     * @param billableEvents
+     * @param priceItem
      * @param issueType the <i>first</i> type of issue
  *                  created when this stuff hits
  *                  the lab.  Subsequent ticket
@@ -60,13 +60,13 @@ public class WorkflowDescription {
  *                  or {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}.
      */
     public WorkflowDescription(String workflowName,
-                               Map<LabEventName, PriceItem> billableEvents,
+                               PriceItem priceItem,
                                CreateIssueRequest.Fields.Issuetype issueType) {
         if (workflowName == null) {
              throw new IllegalArgumentException("workflowName must be non-null in WorkflowDescription.WorkflowDescription");
         }
         this.workflowName = workflowName;
-        this.priceItemForEvent = billableEvents;
+        this.priceItem = priceItem;
         this.issueType = issueType;
     }
 
@@ -77,11 +77,8 @@ public class WorkflowDescription {
         return workflowName;
     }
 
-    public PriceItem getPriceItem(LabEventName eventName) {
-        if (eventName == null) {
-            throw new NullPointerException("eventName cannot be null");
-        }
-        return priceItemForEvent.get(eventName);
+    public PriceItem getPriceItem() {
+        return priceItem;
     }
 
     public String getJiraProjectPrefix() {

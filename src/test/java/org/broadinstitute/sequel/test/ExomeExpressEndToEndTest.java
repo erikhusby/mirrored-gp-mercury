@@ -20,10 +20,7 @@ import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.project.Starter;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -31,6 +28,7 @@ import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
+import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.*;
@@ -47,7 +45,6 @@ import org.testng.annotations.Test;
 import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * A container free test of Exome Express
@@ -131,7 +128,14 @@ public class ExomeExpressEndToEndTest {
 
             Collection<WorkflowAnnotation> workflowAnnotations = projectPlan.getWorkflowDescription().getAnnotations("PondRegistration");
 
-            Assert.assertTrue(workflowAnnotations.contains(WorkflowAnnotation.SINGLE_SAMPLE_LIBRARY));
+            boolean hasSeqLibAnnotation = false;
+            for (WorkflowAnnotation workflowAnnotation : workflowAnnotations) {
+                if (workflowAnnotation instanceof SequencingLibraryAnnotation) {
+                    hasSeqLibAnnotation = true;
+                }
+            }
+            Assert.assertTrue(hasSeqLibAnnotation);
+
             Assert.assertEquals(workflowAnnotations.size(),1);
 
             // create batches for the pass.  todo add more samples to the pass.
@@ -323,6 +327,15 @@ public class ExomeExpressEndToEndTest {
             LabBatch labBatch = nearestBatches.iterator().next();
 
             Assert.assertEquals(labBatch.getJiraTicket(),jiraTicket);
+
+            for (Starter starter : labBatch.getStarters()) {
+                ProjectPlan batchPlan = labBatch.getProjectPlan();
+                Assert.assertEquals(projectPlan,batchPlan);
+                batchPlan.doBilling(starter,labBatch);
+            }
+
+            // todo add quote
+
 
             registrationSOAPService.registerSequeLLibrary(registerLibrary);
 
