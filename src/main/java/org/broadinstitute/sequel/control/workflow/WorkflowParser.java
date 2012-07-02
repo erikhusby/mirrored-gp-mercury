@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.control.workflow;
 
+import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowState;
 import org.broadinstitute.sequel.entity.workflow.WorkflowTransition;
@@ -262,6 +263,7 @@ public class WorkflowParser {
 
     }
 
+    // todo arz add price item annotation for BillingAnnotation
     private Collection<WorkflowAnnotation> parseWorkflowAnnotations(NamedNodeMap attributes,XPath xpath,Document doc) throws XPathExpressionException {
         final Collection<WorkflowAnnotation> workflowAnnotations = new HashSet<WorkflowAnnotation>();
         final String flowId = attributes.getNamedItem("id").getNodeValue();
@@ -273,7 +275,7 @@ public class WorkflowParser {
             if (seqLibNodeList.getLength() > 0) {
                 final String value = seqLibNodeList.item(0).getAttributes().getNamedItem("Value").getTextContent();
                 if (Boolean.parseBoolean(value)) {
-                    workflowAnnotations.add(WorkflowAnnotation.SINGLE_SAMPLE_LIBRARY);
+                    workflowAnnotations.add(new SequencingLibraryAnnotation());
                 }
             }
         }

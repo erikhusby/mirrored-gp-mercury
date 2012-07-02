@@ -10,6 +10,7 @@ import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
 import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
 import org.testng.annotations.Test;
 

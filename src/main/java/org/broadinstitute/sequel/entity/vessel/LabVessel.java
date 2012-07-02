@@ -14,6 +14,7 @@ import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
+import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -488,9 +489,12 @@ public abstract class LabVessel implements Starter {
         for (LabEvent event: allEvents) {
             GenericLabEvent labEvent = OrmUtil.proxySafeCast(event, GenericLabEvent.class);
             Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations(labEvent.getLabEventType().getName());
-            if (workflowAnnotations.contains(WorkflowAnnotation.SINGLE_SAMPLE_LIBRARY)) {
-                isSingleSample = true;
-                break;
+
+            for (WorkflowAnnotation workflowAnnotation : workflowAnnotations) {
+                if (workflowAnnotation instanceof SequencingLibraryAnnotation) {
+                    isSingleSample = true;
+                    break;
+                }
             }
         }
         return isSingleSample;
