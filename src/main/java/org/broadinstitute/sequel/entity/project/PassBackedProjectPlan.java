@@ -6,9 +6,12 @@ import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingTechnology;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.jira.JiraConnectionParameters;
 import org.broadinstitute.sequel.infrastructure.quote.*;
+import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 
 import javax.inject.Inject;
 import java.math.BigInteger;
@@ -18,7 +21,7 @@ import java.util.*;
  * A {@link ProjectPlan} that is backed by a
  * {@link AbstractPass}
  */
-public class PassBackedProjectPlan implements ProjectPlan {
+public class PassBackedProjectPlan extends ProjectPlan {
 
     private Set<BSPPlatingRequest> pendingPlatingRequests = new HashSet<BSPPlatingRequest>();
 
@@ -45,8 +48,6 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
     private PercentXFoldCoverage percentXFoldCoverage;
 
-    private Set<SequencingPlanDetail> sequencingPlans = new HashSet<SequencingPlanDetail>();
-
     public PassBackedProjectPlan() {}
 
     /**
@@ -67,7 +68,7 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
         initSamples();
         initProject();
-        initBaits((DirectedPass)pass,baitsCache);
+        initBaits((DirectedPass) pass, baitsCache);
         initWorkflow();
         initSequencePlanDetails();
 
@@ -83,15 +84,14 @@ public class PassBackedProjectPlan implements ProjectPlan {
         BigInteger percentCoverage = targetCoverage.getCoveragePercentage();
         BigInteger depth = targetCoverage.getDepth();
         percentXFoldCoverage = new PercentXFoldCoverage(percentCoverage.intValue(),depth.intValue());
-        sequencingPlans.add(new SequencingPlanDetail(new IlluminaSequencingTechnology(),percentXFoldCoverage,this));
+        planDetails.add(new SequencingPlanDetail(new IlluminaSequencingTechnology(), percentXFoldCoverage, this));
 
     }
 
     private void initWorkflow() {
         if (pass instanceof  DirectedPass) {
             DirectedPass hsPass = (DirectedPass)pass;
-            workflowDescription =  new WorkflowDescription("Hybrid Selection",
-                    new HashMap<LabEventName, org.broadinstitute.sequel.infrastructure.quote.PriceItem>(), null);
+            workflowDescription =  new WorkflowDescription("Hybrid Selection",null, null);
         }
     }
 
@@ -165,11 +165,6 @@ public class PassBackedProjectPlan implements ProjectPlan {
     }
 
     @Override
-    public Collection<SequencingPlanDetail> getPlanDetails() {
-        return sequencingPlans;
-    }
-
-    @Override
     public Collection<JiraTicket> getJiraTickets() {
         return jiraTickets;
     }
@@ -196,7 +191,7 @@ public class PassBackedProjectPlan implements ProjectPlan {
 
     @Override
     public void addSequencingDetail(SequencingPlanDetail sequencingDetail) {
-        sequencingPlans.add(sequencingDetail);
+        planDetails.add(sequencingDetail);
     }
 
     @Override
@@ -229,5 +224,14 @@ public class PassBackedProjectPlan implements ProjectPlan {
     @Override
     public Collection<BSPPlatingRequest> getPendingPlatingRequests() {
         return pendingPlatingRequests;
+    }
+
+    @Override
+    public void doBilling(Starter starter,LabBatch labBatch) {
+        // todo arz when database enabled, make double billing impossible
+        Quote quote = getQuoteDTO();
+        PriceItem priceItem = getWorkflowDescription().getPriceItem();
+        String jiraUrl = labBatch.getJiraTicket().getBrowserUrl();
+        quoteService.registerNewWork(quote,priceItem,1.0d,jiraUrl,null,null);
     }
 }

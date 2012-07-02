@@ -8,8 +8,11 @@ import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventType;
 import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
 
@@ -118,28 +121,83 @@ public class VesselContainer<T extends LabVessel> {
         TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount);
     }
 
-    /**
-     * Traverses transfers to find the single sample libraries.
-     */
-    static class SingleSampleLibraryCriteria implements TransferTraverserCriteria {
-        private final Map<SampleInstance,Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<SampleInstance, Collection<LabVessel>>();
+    static class NearestLabBatchFinder implements TransferTraverserCriteria {
+
+        // index -1 is for batches for sampleInstance's starter (think BSP stock)
+        private static final int STARTER_INDEX = -1;
+
+        private final Map<Integer,Collection<LabBatch>> labBatchesAtHopCount = new HashMap<Integer, Collection<LabBatch>>();
 
         @Override
         public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-            for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
-                if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
-                    if (!singleSampleLibrariesForInstance.containsKey(sampleInstance)) {
-                        singleSampleLibrariesForInstance.put(sampleInstance,new HashSet<LabVessel>());
+            if (labVessel != null) {
+                Collection<LabBatch> labBatches = labVessel.getLabBatches();
+
+                if (!labBatches.isEmpty()) {
+                    if (!labBatchesAtHopCount.containsKey(hopCount)) {
+                        labBatchesAtHopCount.put(hopCount,new HashSet<LabBatch>());
                     }
-                    singleSampleLibrariesForInstance.get(sampleInstance).add(labVessel);
+                    labBatchesAtHopCount.get(hopCount).addAll(labBatches);
+                }
+                for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
+                    for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+                        for (Starter starter : projectPlan.getStarters()) {
+                            Collection<LabBatch> labBatchesForStarter = starter.getLabBatches();
+                            if (!labBatchesForStarter.isEmpty()) {
+                                if (!labBatchesAtHopCount.containsKey(STARTER_INDEX)) {
+                                    labBatchesAtHopCount.put(STARTER_INDEX,new HashSet<LabBatch>());
+                                }
+                                labBatchesAtHopCount.get(STARTER_INDEX).addAll(labBatchesForStarter);
+                            }
+                        }
+                    }
                 }
             }
             return TraversalControl.ContinueTraversing;
         }
 
-        public Map<SampleInstance,Collection<LabVessel>> getSingleSampleLibraries() {
+        public Collection<LabBatch> getNearestLabBatches() {
+            int nearest = Integer.MAX_VALUE;
+            for (Map.Entry<Integer, Collection<LabBatch>> labBatchesForHopCount : labBatchesAtHopCount.entrySet()) {
+                if (labBatchesForHopCount.getKey() < nearest) {
+                    nearest = labBatchesForHopCount.getKey();
+                }
+            }
+            return labBatchesAtHopCount.get(nearest);
+        }
+    }
+
+    /**
+     * Traverses transfers to find the single sample libraries.
+     */
+    static class SingleSampleLibraryCriteria implements TransferTraverserCriteria {
+        private final Map<StartingSample,Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<StartingSample, Collection<LabVessel>>();
+
+        @Override
+        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+            if (labVessel != null) {
+                for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
+                    StartingSample startingSample = sampleInstance.getStartingSample();
+                    if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
+                        if (!singleSampleLibrariesForInstance.containsKey(startingSample)) {
+                            singleSampleLibrariesForInstance.put(startingSample,new HashSet<LabVessel>());
+                        }
+                        singleSampleLibrariesForInstance.get(startingSample).add(labVessel);
+                    }
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        public Map<StartingSample,Collection<LabVessel>> getSingleSampleLibraries() {
             return singleSampleLibrariesForInstance;
         }
+    }
+
+    public Collection<LabBatch> getNearestLabBatches(VesselPosition position) {
+        NearestLabBatchFinder batchCriteria = new NearestLabBatchFinder();
+        evaluateCriteria(position,batchCriteria,TraversalDirection.Ancestors,null,0);
+        return batchCriteria.getNearestLabBatches();
     }
 
     /**
@@ -149,7 +207,7 @@ public class VesselContainer<T extends LabVessel> {
      * @param position
      * @return
      */
-    public Map<SampleInstance,Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
+    public Map<StartingSample,Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
         SingleSampleLibraryCriteria singleSampleLibraryCriteria = new SingleSampleLibraryCriteria();
 
         evaluateCriteria(position, singleSampleLibraryCriteria, TraversalDirection.Ancestors, null, 0);

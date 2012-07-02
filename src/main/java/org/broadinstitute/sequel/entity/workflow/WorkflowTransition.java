@@ -45,6 +45,6 @@ public class WorkflowTransition {
      * @return
      */
     public Collection<WorkflowAnnotation> getWorkflowAnnotations() {
-        return Collections.unmodifiableCollection(workflowAnnotations);
+        return workflowAnnotations;
     }
 }

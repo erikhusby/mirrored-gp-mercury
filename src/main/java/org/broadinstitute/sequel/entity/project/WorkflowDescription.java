@@ -17,6 +17,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -36,7 +37,7 @@ public class WorkflowDescription {
 
     // todo jmt fix this
     @Transient
-    private Map<LabEventName,PriceItem> priceItemForEvent = new HashMap<LabEventName, PriceItem>();
+    private PriceItem priceItem;
 
     private CreateIssueRequest.Fields.Issuetype issueType;
 
@@ -51,7 +52,7 @@ public class WorkflowDescription {
     /**
      *
      * @param workflowName
-     * @param billableEvents
+     * @param priceItem
      * @param issueType the <i>first</i> type of issue
  *                  created when this stuff hits
  *                  the lab.  Subsequent ticket
@@ -59,13 +60,13 @@ public class WorkflowDescription {
  *                  or {@link org.broadinstitute.sequel.entity.queue.LabWorkQueue}.
      */
     public WorkflowDescription(String workflowName,
-                               Map<LabEventName, PriceItem> billableEvents,
+                               PriceItem priceItem,
                                CreateIssueRequest.Fields.Issuetype issueType) {
         if (workflowName == null) {
              throw new IllegalArgumentException("workflowName must be non-null in WorkflowDescription.WorkflowDescription");
         }
         this.workflowName = workflowName;
-        this.priceItemForEvent = billableEvents;
+        this.priceItem = priceItem;
         this.issueType = issueType;
     }
 
@@ -76,11 +77,8 @@ public class WorkflowDescription {
         return workflowName;
     }
 
-    public PriceItem getPriceItem(LabEventName eventName) {
-        if (eventName == null) {
-            throw new NullPointerException("eventName cannot be null");
-        }
-        return priceItemForEvent.get(eventName);
+    public PriceItem getPriceItem() {
+        return priceItem;
     }
 
     public String getJiraProjectPrefix() {
@@ -93,8 +91,10 @@ public class WorkflowDescription {
 
     public Collection<WorkflowAnnotation> getAnnotations(String eventTypeName) {
         final Collection<WorkflowAnnotation> workflowAnnotations = new ArrayList<WorkflowAnnotation>();
-        for (WorkflowTransition workflowTransition : mapNameToTransitionList.get(eventTypeName)) {
-            workflowAnnotations.addAll(workflowTransition.getWorkflowAnnotations());
+        if (mapNameToTransitionList.get(eventTypeName) != null) {
+            for (WorkflowTransition workflowTransition : mapNameToTransitionList.get(eventTypeName)) {
+                workflowAnnotations.addAll(workflowTransition.getWorkflowAnnotations());
+            }
         }
         return workflowAnnotations;
     }
@@ -183,8 +183,11 @@ public class WorkflowDescription {
     }
 
     public void initFromFile(String filename) {
-        WorkflowParser workflowParser = new WorkflowParser(
-                Thread.currentThread().getContextClassLoader().getResourceAsStream(filename));
+        InputStream bpmnStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
+        if (bpmnStream == null) {
+            throw new NullPointerException(filename + " could not be loaded");
+        }
+        WorkflowParser workflowParser = new WorkflowParser(bpmnStream);
         this.startState = workflowParser.getStartState();
         this.mapNameToTransitionList = workflowParser.getMapNameToTransitionList();
     }

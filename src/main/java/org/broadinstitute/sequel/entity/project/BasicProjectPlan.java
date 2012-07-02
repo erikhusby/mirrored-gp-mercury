@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -35,7 +36,7 @@ import java.util.*;
  *
  */
 @Entity
-public class BasicProjectPlan implements ProjectPlan {
+public class BasicProjectPlan extends ProjectPlan {
 
     @Transient // todo arz fix me
     private Map<Starter,LabVessel> aliquotForStarter = new HashMap<Starter, LabVessel>();
@@ -47,10 +48,6 @@ public class BasicProjectPlan implements ProjectPlan {
 
     @Transient
     private Collection<Starter> starters = new HashSet<Starter>();
-
-    // todo jmt fix this
-    @Transient
-    private Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     protected WorkflowDescription workflowDescription;
@@ -172,11 +169,6 @@ public class BasicProjectPlan implements ProjectPlan {
         planDetails.add(detail);
     }
 
-    @Override
-    public Collection<SequencingPlanDetail> getPlanDetails() {
-        return planDetails;
-    }
-
     public void addPlatingRequest(BSPPlatingRequest platingRequest) {
         if (platingRequest == null) {
             throw new IllegalArgumentException("platingRequest must be non-null in BasicProjectPlan.addPlatingRequest");
@@ -285,5 +277,10 @@ public class BasicProjectPlan implements ProjectPlan {
     @Override
     public LabVessel getAliquot(Starter starter) {
         return aliquotForStarter.get(starter);
+    }
+
+    @Override
+    public void doBilling(Starter starter, LabBatch labBatch) {
+        throw new RuntimeException("I haven't been written yet.");
     }
 }

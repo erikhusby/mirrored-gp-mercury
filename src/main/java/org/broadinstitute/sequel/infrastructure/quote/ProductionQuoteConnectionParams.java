@@ -25,7 +25,7 @@ public class ProductionQuoteConnectionParams implements QuoteConnectionParameter
     }
 
 
-    public String getUsername() {
+    public String getLogin() {
         return username;
     }
 

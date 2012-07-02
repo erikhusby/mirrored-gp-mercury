@@ -7,6 +7,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.control.AbstractJsonJerseyClientService;
+import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldJsonParser;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -18,6 +19,7 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.comment.AddCommentRes
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 @Default
@@ -63,9 +65,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
 
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issueType, String summary, String description) throws IOException {
+    public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issueType, String summary, String description, Collection<CustomField> customFields) throws IOException {
 
-        CreateIssueRequest issueRequest = CreateIssueRequest.create(projectPrefix, issueType, summary, description);
+        CreateIssueRequest issueRequest = CreateIssueRequest.create(projectPrefix, issueType, summary, description,customFields);
 
         String urlString = getBaseUrl() + "/issue/";
         logger.debug("createIssue URL is " + urlString);
@@ -135,4 +137,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         return CustomFieldJsonParser.parseCustomFields(jsonResponse);
     }
 
+    @Override
+    public String createTicketUrl(String jiraTicketName) {
+        return connectionParameters.getHostname() + ":" + connectionParameters.getPort() + "/browser/" + jiraTicketName;
+    }
 }

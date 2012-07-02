@@ -64,15 +64,26 @@ will have a creation origin in the SequeL system only to be eventually registere
                     <xsd:sequence minOccurs="0" maxOccurs="unbounded">
                         <xsd:element name="molecularIndexes" type="libreg:LibraryMolecularIndex"/>
                     </xsd:sequence>
-                    <!--<xsd:sequence>-->
-                        <!--<xsd:element name="molecularIndexes" type="libreg:LibraryMolecularIndexList"/>-->
-                    <!--</xsd:sequence>-->
+
                 </xsd:sequence>
             </xsd:complexType>
 
             <xsd:complexType name="RegistrationSampleList">
                 <xsd:sequence minOccurs="0" maxOccurs="unbounded">
                     <xsd:element type="libreg:RegistrationSample" name="sample" />
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="SequencingPlanDetails">
+                <xsd:annotation>
+                    <xsd:documentation>
+SequencingPlanDetails defines the necessary information for building a plan to sequence a library.  These details will,
+in the Squid world, provide the system with enough information
+                    </xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="numberOfLanes" type="xsd:int" />
+                    <xsd:element name="readLength" type="xsd:int" />
                 </xsd:sequence>
             </xsd:complexType>
 
@@ -88,13 +99,12 @@ Express project developed in the SequeL System {LIX-116)}.
 
                 <xsd:sequence>
                     <xsd:element name="libraryName" type="xsd:string"/>
+                    <xsd:element name="receptacleBarcode" type="xsd:string" />
                     <xsd:element name="singleStrandInd" type="xsd:boolean" />
+                    <xsd:element name="planDetails" type="libreg:SequencingPlanDetails" />
                     <xsd:sequence minOccurs="0" maxOccurs="unbounded">
                         <xsd:element type="libreg:RegistrationSample" name="samples" />
                     </xsd:sequence>
-                    <!--<xsd:sequence>-->
-                        <!--<xsd:element name="samples" type="libreg:RegistrationSampleList" />-->
-                    <!--</xsd:sequence>-->
 
                 </xsd:sequence>
 

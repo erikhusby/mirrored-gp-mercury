@@ -97,7 +97,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> extends FullAcce
             jiraTicketCreationResponse = jiraService.createIssue(workflowDescription.getJiraProjectPrefix(),
                     workflowDescription.getJiraIssueType(),
                     ticketTitle,
-                    ticketDetails.toString());
+                    ticketDetails.toString(), null);
             // todo use #lcSetParameters to add more details to the ticket
 
         }

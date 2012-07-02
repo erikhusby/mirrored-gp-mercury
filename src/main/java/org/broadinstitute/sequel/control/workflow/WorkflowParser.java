@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.control.workflow;
 
+import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
+import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowState;
 import org.broadinstitute.sequel.entity.workflow.WorkflowTransition;
 import org.w3c.dom.Document;
@@ -8,7 +10,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -19,11 +20,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Parses a workflow defined in Business Process Model and Notation (BPMN) 2.0
@@ -85,32 +82,17 @@ public class WorkflowParser {
     private void parse(InputStream xml) {
         try {
             DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
-            domFactory.setNamespaceAware(true);
+            domFactory.setNamespaceAware(false);
             DocumentBuilder builder = domFactory.newDocumentBuilder();
             Document doc = builder.parse(xml);
 
             XPathFactory factory = XPathFactory.newInstance();
             XPath xpath = factory.newXPath();
             // Define a prefix m for the default namespace (the Yaoqiang editor doesn't use a prefix, but xpath requires one).
-            xpath.setNamespaceContext(new NamespaceContext() {
-                @Override
-                public String getNamespaceURI(String prefix) {
-                    return prefix.equals("m") ? "http://www.omg.org/spec/BPMN/20100524/MODEL" : null;
-                }
 
-                @Override
-                public String getPrefix(String namespaceURI) {
-                    return null;
-                }
-
-                @Override
-                public Iterator getPrefixes(String namespaceURI) {
-                    return null;
-                }
-            });
             Map<String, WorkflowState> mapIdToWorkflowState = new HashMap<String, WorkflowState>();
 
-            XPathExpression processProperty = xpath.compile("//m:process");
+            XPathExpression processProperty = xpath.compile("//process");
             Node processNode = (Node)processProperty.evaluate(doc, XPathConstants.NODE);
             if (processNode != null) {
                 NamedNodeMap processNodeAttributes = processNode.getAttributes();
@@ -123,7 +105,7 @@ public class WorkflowParser {
             }
 
             // Get the top level start event
-            XPathExpression startEventExpr = xpath.compile("//m:process/m:startEvent");
+            XPathExpression startEventExpr = xpath.compile("//process/startEvent");
             NodeList startNodes = (NodeList) startEventExpr.evaluate(doc, XPathConstants.NODESET);
             if(startNodes.getLength() < 1) {
                 throw new RuntimeException("Failed to find startEvent");
@@ -137,7 +119,7 @@ public class WorkflowParser {
             mapIdToWorkflowState.put(startStateId, this.startState);
 
             // Get the top level end event
-            XPathExpression endEventExpr = xpath.compile("//m:process/m:endEvent");
+            XPathExpression endEventExpr = xpath.compile("//process/endEvent");
             NodeList endNodes = (NodeList) endEventExpr.evaluate(doc, XPathConstants.NODESET);
             if(endNodes.getLength() < 1) {
                 throw new RuntimeException("Failed to find endEvent");
@@ -151,7 +133,7 @@ public class WorkflowParser {
             mapIdToWorkflowState.put(endStateId, endWorkflowState);
 
             // Get the tasks
-            XPathExpression taskExpr = xpath.compile("//m:task");
+            XPathExpression taskExpr = xpath.compile("//task");
             NodeList taskNodes = (NodeList) taskExpr.evaluate(doc, XPathConstants.NODESET);
             for (int i = 0; i < taskNodes.getLength(); i++) {
                 NamedNodeMap attributes = taskNodes.item(i).getAttributes();
@@ -164,9 +146,9 @@ public class WorkflowParser {
             Map<String, SubProcess> mapEndEventIdToSubProcess = new HashMap<String, SubProcess>();
 
             // Get the sub processes
-            XPathExpression subProcessStartEventExpr = xpath.compile("./m:startEvent");
-            XPathExpression subProcessEndEventExpr = xpath.compile("./m:endEvent");
-            XPathExpression subProcessExpr = xpath.compile("//m:subProcess");
+            XPathExpression subProcessStartEventExpr = xpath.compile("./startEvent");
+            XPathExpression subProcessEndEventExpr = xpath.compile("./endEvent");
+            XPathExpression subProcessExpr = xpath.compile("//subProcess");
             NodeList subProcessNodes = (NodeList) subProcessExpr.evaluate(doc, XPathConstants.NODESET);
             for (int i = 0; i < subProcessNodes.getLength(); i++) {
                 Node subProcessNode = subProcessNodes.item(i);
@@ -187,11 +169,12 @@ public class WorkflowParser {
                 }
             }
 
+
             // Get the lines between tasks
-            XPathExpression flowExpr = xpath.compile("//m:sequenceFlow");
+            XPathExpression flowExpr = xpath.compile("//sequenceFlow");
             NodeList flowNodes = (NodeList) flowExpr.evaluate(doc, XPathConstants.NODESET);
 
-            // In the first pass, handle flows between sub processes
+                // In the first pass, handle flows between sub processes
             for (int i = 0; i < flowNodes.getLength(); i++) {
                 NamedNodeMap attributes = flowNodes.item(i).getAttributes();
                 String sourceRef = attributes.getNamedItem("sourceRef").getNodeValue();
@@ -222,11 +205,11 @@ public class WorkflowParser {
                 } else if(subProcessForSourceStartEvent != null && targetState != null) {
                     // the line sourceref is a subProcess startEvent and the targetref is a task so associate it with the subProcess' predecessor tasksAtEnd
                     if(subProcessForSourceStartEvent.isPredecessorTopLevelStartEvent()) {
-                        buildTransition(attributes, this.startState, targetState);
+                        buildTransition(attributes, this.startState, targetState,xpath,doc);
                     } else {
                         for (SubProcess subProcess : subProcessForSourceStartEvent.getPredecessorSubProcesses()) {
                             for (WorkflowState workflowState : subProcess.getTasksAtEnd()) {
-                                buildTransition(attributes, workflowState, targetState);
+                                buildTransition(attributes, workflowState, targetState,xpath,doc);
                             }
                         }
                     }
@@ -235,7 +218,7 @@ public class WorkflowParser {
                     subProcessForTargetEndEvent.getTasksAtEnd().add(sourceState);
                 } else if(sourceState != null && targetState != null) {
                     // the line sourceRef is a task and the targetRef is a task so associate the transition with the states
-                    buildTransition(attributes, sourceState, targetState);
+                    buildTransition(attributes, sourceState, targetState,xpath,doc);
                 } else if(sourceRef.equals(startStateId) && targetSubProcess != null) {
                     // the line sourceRef is the top level startEvent, and the targetRef is a subProcess, this is handled above
                 } else if(sourceSubProcess != null && targetRef.equals(endStateId)) {
@@ -256,7 +239,7 @@ public class WorkflowParser {
         }
     }
 
-    private void buildTransition(NamedNodeMap attributes, WorkflowState sourceState, WorkflowState targetState) {
+    private void buildTransition(NamedNodeMap attributes, WorkflowState sourceState, WorkflowState targetState,XPath xpath,Document doc) throws XPathExpressionException {
         String transitionName = attributes.getNamedItem("name").getNodeValue();
         WorkflowTransition workflowTransition = new WorkflowTransition(transitionName,
                 sourceState, targetState);
@@ -267,7 +250,36 @@ public class WorkflowParser {
             workflowTransitions = new ArrayList<WorkflowTransition>();
             this.mapNameToTransitionList.put(transitionName, workflowTransitions);
         }
+        Collection<WorkflowAnnotation> workflowAnnotations = parseWorkflowAnnotations(attributes,xpath,doc);
+        if (!workflowAnnotations.isEmpty()) {
+            for (WorkflowAnnotation workflowAnnotation : workflowAnnotations) {
+                workflowTransition.addWorkflowAnnotation(workflowAnnotation);
+            }
+        }
+
         workflowTransitions.add(workflowTransition);
+
+
+
+    }
+
+    // todo arz add price item annotation for BillingAnnotation
+    private Collection<WorkflowAnnotation> parseWorkflowAnnotations(NamedNodeMap attributes,XPath xpath,Document doc) throws XPathExpressionException {
+        final Collection<WorkflowAnnotation> workflowAnnotations = new HashSet<WorkflowAnnotation>();
+        final String flowId = attributes.getNamedItem("id").getNodeValue();
+        final String query = "//sequenceFlow[@id=" + "'" + flowId+ "'" + "]/extensionElements/Extensions/ModelExtension/ModelProperties/ModelProperty/Model/Children/Model[@name='Sequencing Library']/ModelProperties/TextModelProperty[@Name='value']";
+        final XPathExpression seqLibParamExpr = xpath.compile(query);
+        final NodeList seqLibNodeList = (NodeList)seqLibParamExpr.evaluate(doc,XPathConstants.NODESET);
+        final Node flowNodeAttributes = attributes.getNamedItem("name");
+        if (flowNodeAttributes != null) {
+            if (seqLibNodeList.getLength() > 0) {
+                final String value = seqLibNodeList.item(0).getAttributes().getNamedItem("Value").getTextContent();
+                if (Boolean.parseBoolean(value)) {
+                    workflowAnnotations.add(new SequencingLibraryAnnotation());
+                }
+            }
+        }
+        return workflowAnnotations;
     }
 
     public String getWorkflowName() {

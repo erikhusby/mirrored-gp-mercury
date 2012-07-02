@@ -2,46 +2,105 @@ package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.quote.Quote;
 
+import javax.persistence.Transient;
 import java.util.Collection;
+import java.util.HashSet;
 
-public interface ProjectPlan {
+public abstract class ProjectPlan {
 
-    public void addPlatingRequest(BSPPlatingRequest platingRequest);
+    // todo jmt fix this
+    @Transient
+    protected Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
 
-    public Collection<BSPPlatingRequest> getPendingPlatingRequests();
 
-    public Project getProject();
+    public abstract void addPlatingRequest(BSPPlatingRequest platingRequest);
 
-    public WorkflowDescription getWorkflowDescription();
+    public abstract Collection<BSPPlatingRequest> getPendingPlatingRequests();
 
-    public Collection<ReagentDesign> getReagentDesigns();
+    public abstract Project getProject();
 
-    public Collection<PoolGroup> getPoolGroups();
+    public abstract WorkflowDescription getWorkflowDescription();
 
-    public Quote getQuoteDTO();
+    public abstract Collection<ReagentDesign> getReagentDesigns();
 
-    public Collection<Starter> getStarters();
+    public abstract Collection<PoolGroup> getPoolGroups();
 
-    public Collection<SequencingPlanDetail> getPlanDetails();
+    public abstract Quote getQuoteDTO();
 
-    public Collection<JiraTicket> getJiraTickets();
+    public abstract Collection<Starter> getStarters();
 
-    public String getName();
+    public Collection<SequencingPlanDetail> getPlanDetails() {
+        return planDetails;
+    }
 
-    public String getNotes();
+    public abstract Collection<JiraTicket> getJiraTickets();
 
-    public boolean isComplete(LabVessel startingVessel);
+    public abstract String getName();
 
-    public void setComplete(boolean isComplete);
+    public abstract String getNotes();
 
-    public void addSequencingDetail(SequencingPlanDetail sequencingDetail);
+    public abstract boolean isComplete(LabVessel startingVessel);
 
-    public void addJiraTicket(JiraTicket jiraTicket);
+    public abstract void setComplete(boolean isComplete);
 
-    public void setAliquot(Starter starter,LabVessel aliquot);
+    public abstract void addSequencingDetail(SequencingPlanDetail sequencingDetail);
 
-    public LabVessel getAliquot(Starter starter);
+    public abstract void addJiraTicket(JiraTicket jiraTicket);
+
+    public abstract void setAliquot(Starter starter,LabVessel aliquot);
+
+    public abstract LabVessel getAliquot(Starter starter);
+
+    /**
+     * Do the billing for the given {@link Starter}.  {@link LabBatch} is a temporary
+     * stub so that we can have something to link back to from the quote server.
+     * See {@link org.broadinstitute.sequel.infrastructure.quote.QuoteService#registerNewWork(org.broadinstitute.sequel.infrastructure.quote.Quote, org.broadinstitute.sequel.infrastructure.quote.PriceItem, double, String, String, String)}, especially the callback
+     * url.  Eventually the callback will be the SequeL UI, but for the moment,
+     * we'll just redirect to jira so we can demo this to sheila.
+     * @param starter
+     * @param labBatch
+     */
+    public abstract void doBilling(Starter starter,LabBatch labBatch);
+
+    /**
+     * getLaneCoverage is a helper method which allows a user to find the specified lane coverage (If any) in the
+     * coverage goals defined in the collection of Sequencing Plans.
+     * @return an integer that represents the number of lanes specified for sequencing material associated with a
+     * specific project plan
+     */
+    @Transient
+    public int getLaneCoverage() {
+
+        int numberOfLanes = 0;
+        for(SequencingPlanDetail projPlanDetail:this.getPlanDetails()) {
+            if(projPlanDetail.getCoverageGoal() instanceof NumberOfLanesCoverage) {
+                numberOfLanes = Integer.parseInt(projPlanDetail.getCoverageGoal().coverageGoalToParsableText());
+                break;
+            }
+        }
+        return numberOfLanes;
+    }
+
+    /**
+     * getReadLength is a helper method which allows a user to find the specified Read Length (If any) in the
+     * coverage goals defined in the collection of Sequencing Plans.
+     * @return an integer that represents the Read Length specified for sequencing material associated with a
+     * specific project plan
+     */
+    @Transient
+    public int getReadLength() {
+
+        int readLength = 0;
+        for(SequencingPlanDetail projPlanDetail:this.getPlanDetails()) {
+            if(projPlanDetail.getCoverageGoal() instanceof PairedReadCoverage) {
+                readLength = Integer.parseInt(projPlanDetail.getCoverageGoal().coverageGoalToParsableText());
+                break;
+            }
+        }
+        return readLength;
+    }
 }
 

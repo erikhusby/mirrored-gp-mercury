@@ -31,15 +31,9 @@ public class CreateJiraIssueFieldsSerializer extends JsonSerializer<Fields> {
     }
 
     private void writeCustomFields(Fields fields,JsonGenerator jsonGenerator) throws IOException {
-        CustomField protocol = fields.getProtocol();
-        if (protocol != null) {
-            String protocolFieldName = protocol.getFieldDefinition().getJiraCustomFieldId();
-            jsonGenerator.writeObjectField(protocolFieldName,protocol.getValue());
-        }
-        CustomField workRequestId = fields.getWorkRequestId();
-        if (workRequestId != null) {
-            String workRequestFieldName = workRequestId.getFieldDefinition().getJiraCustomFieldId();
-            jsonGenerator.writeObjectField(workRequestFieldName,workRequestId.getValue());
+        for (CustomField customField : fields.getCustomFields()) {
+            String jiraFieldName = customField.getFieldDefinition().getJiraCustomFieldId();
+            jsonGenerator.writeObjectField(jiraFieldName,customField.getValue());
         }
     }
 

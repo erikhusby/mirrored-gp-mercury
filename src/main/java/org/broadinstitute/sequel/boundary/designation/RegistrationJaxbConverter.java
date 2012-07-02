@@ -4,7 +4,9 @@ import org.broadinstitute.sequel.boundary.squid.IndexPosition;
 import org.broadinstitute.sequel.boundary.squid.LibraryMolecularIndex;
 import org.broadinstitute.sequel.boundary.squid.RegistrationSample;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
+import org.broadinstitute.sequel.boundary.squid.SequencingPlanDetails;
 import org.broadinstitute.sequel.boundary.squid.SequencingTechnology;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndex;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexingScheme;
@@ -31,10 +33,11 @@ import java.util.Set;
 public class RegistrationJaxbConverter {
 
 
-    public static SequelLibrary squidify(TwoDBarcodedTube tubeIn) {
+    public static SequelLibrary squidify(TwoDBarcodedTube tubeIn, ProjectPlan planIn) {
 
         final SequelLibrary registerLibrary = new SequelLibrary();
         registerLibrary.setLibraryName(tubeIn.getLabCentricName());
+        registerLibrary.setReceptacleBarcode(tubeIn.getLabel());
 
         Set<MolecularState.STRANDEDNESS> strandednessesState = new HashSet<MolecularState.STRANDEDNESS>();
 
@@ -96,6 +99,13 @@ public class RegistrationJaxbConverter {
 
         registerLibrary.setSingleStrandInd(MolecularState.STRANDEDNESS.SINGLE_STRANDED.equals(
                 strandednessesState.iterator().next()));
+
+        SequencingPlanDetails details = new SequencingPlanDetails();
+
+        details.setNumberOfLanes(planIn.getLaneCoverage());
+        details.setReadLength(planIn.getReadLength());
+
+        registerLibrary.setPlanDetails(details);
 
         return registerLibrary;
     }

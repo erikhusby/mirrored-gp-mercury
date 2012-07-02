@@ -33,12 +33,12 @@ import static org.testng.Assert.*;
 
 public class LabWorkQueueWorkflowTest {
 
-    @Test
+    @Test(enabled =  false)
     public void test_root_plan() {
         doIt(false);
     }
 
-    @Test
+    @Test(enabled = false)
     public void test_plan_override() {
         doIt(true);
     }
@@ -53,7 +53,7 @@ public class LabWorkQueueWorkflowTest {
         Project overrideProject = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-1","1"));
 
         WorkflowDescription workflow = new WorkflowDescription(WorkflowResolver.TEST_WORKFLOW_1,
-                                                                          billableEvents,
+                                                                          null,
                                                                           CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         BasicProjectPlan rootPlan = new BasicProjectPlan(rootProject,"The root plan", workflow);
 

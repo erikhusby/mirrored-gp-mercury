@@ -1,10 +1,11 @@
 package org.broadinstitute.sequel.infrastructure.bsp;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
 
-public interface BSPSampleSearchService {
+public interface BSPSampleSearchService extends Serializable {
 
 
     /**

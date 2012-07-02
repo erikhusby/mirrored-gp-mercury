@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.vessel;
 import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.labevent.Failure;
+import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.Stalker;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
@@ -13,6 +14,7 @@ import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StateChange;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
+import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
@@ -70,16 +72,13 @@ public abstract class LabVessel implements Starter {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel projectAuthority;
 
-    // todo jmt fix this
     @Transient
-    private ReadBucket readBucket;
+    // todo arz hibernate-ify
+    private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel readBucketAuthority;
 
-    // todo jmt fix this
-    @Transient
-    private final Collection<Stalker> stalkers = new HashSet<Stalker>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
@@ -460,9 +459,10 @@ public abstract class LabVessel implements Starter {
     public boolean isAliquotExpected() {
         return false;
     }
-       /**
+
+    /**
      * In the context of the given {@link WorkflowDescription}, are there any
-     * events for this vessel which are annotated as {@link WorkflowAnnotation#IS_SINGLE_SAMPLE_LIBRARY}?
+     * events for this vessel which are annotated as {@link WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY}?
      * @param workflowDescription
      * @return
      */
@@ -473,18 +473,39 @@ public abstract class LabVessel implements Starter {
         boolean isSingleSample = false;
 
         final Set<LabEvent> allEvents = new HashSet<LabEvent>();
+
+        Set<VesselContainer<?>> containers = getContainers();
+
+        if (containers != null) {
+            for (VesselContainer<? extends LabVessel> container : containers) {
+                // todo arz is confused about containers, embedders, and vessels.
+                allEvents.addAll(container.getEmbedder().getTransfersTo());
+                allEvents.addAll(container.getEmbedder().getInPlaceEvents());
+            }
+        }
         allEvents.addAll(getInPlaceEvents());
         allEvents.addAll(getTransfersTo());
 
         for (LabEvent event: allEvents) {
-            Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations(event.getEventName().name());
-            if (workflowAnnotations.contains(WorkflowAnnotation.IS_SINGLE_SAMPLE_LIBRARY)) {
-                isSingleSample = true;
-                break;
+            GenericLabEvent labEvent = OrmUtil.proxySafeCast(event, GenericLabEvent.class);
+            Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations(labEvent.getLabEventType().getName());
+
+            for (WorkflowAnnotation workflowAnnotation : workflowAnnotations) {
+                if (workflowAnnotation instanceof SequencingLibraryAnnotation) {
+                    isSingleSample = true;
+                    break;
+                }
             }
         }
         return isSingleSample;
     }
 
+    public void addLabBatch(LabBatch labBatch) {
+        labBatches.add(labBatch);
+    }
 
+    @Override
+    public Set<LabBatch> getLabBatches() {
+        return labBatches;
+    }
 }

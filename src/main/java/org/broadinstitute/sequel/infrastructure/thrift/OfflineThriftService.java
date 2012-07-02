@@ -1,19 +1,9 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
-import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
-import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import edu.mit.broad.prodinfo.thrift.lims.TZReadType;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.thrift.TException;
-import org.broadinstitute.sequel.boundary.zims.OfflineIlluminaRunService;
 import org.broadinstitute.sequel.infrastructure.Offline;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

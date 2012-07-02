@@ -40,6 +40,8 @@ public class JiraTicket {
     @Transient // todo arz make real hibernate relationship
     private JiraService jiraService;
 
+    private String browserUrl;
+
     public JiraTicket() {}
     
     public JiraTicket(JiraService jiraService,
@@ -57,6 +59,16 @@ public class JiraTicket {
         this.ticketName = ticketName;
         this.ticketId = ticketId;
         this.jiraService = jiraService;
+        this.browserUrl = jiraService.createTicketUrl(ticketName);
+    }
+
+    /**
+     * Returns the URL to this ticket, to be used
+     * in a browser (not the rest url)
+     * @return
+     */
+    public String getBrowserUrl() {
+        return browserUrl;
     }
 
     public String getTicketName() {

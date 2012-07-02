@@ -11,7 +11,7 @@ public class BSPSampleTest {
 
     @Test(groups = {DATABASE_FREE})
     public void test_patient_id_integration() {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(new MockBSPService());
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(new BSPSampleSearchServiceStub());
         String sampleName = "SM-12CO4";
         BSPStartingSample bspSample = new BSPStartingSample(sampleName,
                 null,

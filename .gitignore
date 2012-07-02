@@ -5,3 +5,5 @@ target
 SequeL.iml
 out
 .DS_Store
+.surefire-*
+atlassian-ide-plugin.xml

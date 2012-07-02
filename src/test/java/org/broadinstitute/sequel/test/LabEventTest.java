@@ -52,6 +52,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +66,8 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "OverlyCoupledMethod", "OverlyLongMethod"})
 public class LabEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
+
+    public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
 
     /**
      * Used in test verification, accumulates the events in a chain of transfers
@@ -99,9 +102,8 @@ public class LabEventTest {
 //        Controller.startCPURecording(true);
 
         // Project and workflow
-        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("HS", billableEvents,
+        WorkflowDescription workflowDescription = new WorkflowDescription("HS", null,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         workflowDescription.initFromFile("HybridSelectionV2.bpmn");
         BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
@@ -165,7 +167,7 @@ public class LabEventTest {
 
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         workflowDescription.initFromFile("WholeGenomeShotgun.bpmn");
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
@@ -269,9 +271,8 @@ public class LabEventTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void testFluidigm() {
-        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack
@@ -1036,7 +1037,7 @@ public class LabEventTest {
             pondRegRackBarcode = "PondReg" + testPrefix;
             pondRegTubeBarcodes = new ArrayList<String>();
             for(int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
-                pondRegTubeBarcodes.add("PondReg" + testPrefix + rackPosition);
+                pondRegTubeBarcodes.add(POND_REGISTRATION_TUBE_PREFIX + testPrefix + rackPosition);
             }
             pondRegistrationJaxb = bettaLimsMessageFactory.buildPlateToRack(
                     "PondRegistration", pondCleanupBarcode, pondRegRackBarcode, pondRegTubeBarcodes);
@@ -1098,19 +1099,40 @@ public class LabEventTest {
             normCatchRackBarcode = hybridSelectionJaxbBuilder.getNormCatchRackBarcode();
             normCatchBarcodes = hybridSelectionJaxbBuilder.getNormCatchBarcodes();
 
-            // PreSelectionPool
+            // PreSelectionPool - rearray left half of pond rack into left half of a new rack,
+            // rearray right half of pond rack into left half of a new rack, then transfer these
+            // two racks into a third rack, making a 2-plex pool.
             validateWorkflow(workflowDescription, "PreSelectionPool", pondRegRack); //todo jmt should be mapBarcodeToPondRegTube.values());
             Map<String, TwoDBarcodedTube> mapBarcodeToPreSelPoolTube = new HashMap<String, TwoDBarcodedTube>();
+            Map<String, TwoDBarcodedTube> mapBarcodeToPondTube = new HashMap<String, TwoDBarcodedTube>();
+            for (TwoDBarcodedTube twoDBarcodedTube : pondRegRack.getVesselContainer().getContainedVessels()) {
+                mapBarcodeToPondTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+            }
+            Map<String, TwoDBarcodedTube> mapBarcodeToPreSelSource1Tube = new HashMap<String, TwoDBarcodedTube>();
+            for (ReceptacleType receptacleType : hybridSelectionJaxbBuilder.getPreSelPoolJaxb().getSourcePositionMap().getReceptacle()) {
+                mapBarcodeToPreSelSource1Tube.put(receptacleType.getBarcode(), mapBarcodeToPondTube.get(receptacleType.getBarcode()));
+            }
+            Map<String, TwoDBarcodedTube> mapBarcodeToPreSelSource2Tube = new HashMap<String, TwoDBarcodedTube>();
+            for (ReceptacleType receptacleType : hybridSelectionJaxbBuilder.getPreSelPoolJaxb2().getSourcePositionMap().getReceptacle()) {
+                mapBarcodeToPreSelSource2Tube.put(receptacleType.getBarcode(), mapBarcodeToPondTube.get(receptacleType.getBarcode()));
+            }
             LabEvent preSelPoolEntity = labEventFactory.buildFromBettaLimsRackToRackDbFree(hybridSelectionJaxbBuilder.getPreSelPoolJaxb(),
-                    pondRegRack, mapBarcodeToPreSelPoolTube);
+                    mapBarcodeToPreSelSource1Tube, mapBarcodeToPreSelPoolTube);
             labEventHandler.processEvent(preSelPoolEntity, null);
             RackOfTubes preSelPoolRack = (RackOfTubes) preSelPoolEntity.getTargetLabVessels().iterator().next();
             LabEvent preSelPoolEntity2 = labEventFactory.buildFromBettaLimsRackToRackDbFree(hybridSelectionJaxbBuilder.getPreSelPoolJaxb2(),
-                    pondRegRack, preSelPoolRack);
+                    mapBarcodeToPreSelSource2Tube, preSelPoolRack);
             labEventHandler.processEvent(preSelPoolEntity2, null);
             //asserts
-            Assert.assertEquals(preSelPoolRack.getSampleInstances().size(),
+            Set<SampleInstance> preSelPoolSampleInstances = preSelPoolRack.getSampleInstances();
+            Assert.assertEquals(preSelPoolSampleInstances.size(),
                     pondRegRack.getSampleInstances().size(), "Wrong number of sample instances");
+            Set<String> sampleNames = new HashSet<String>();
+            for (SampleInstance preSelPoolSampleInstance : preSelPoolSampleInstances) {
+                if(!sampleNames.add(preSelPoolSampleInstance.getStartingSample().getSampleName())) {
+                    Assert.fail("Duplicate sample " + preSelPoolSampleInstance.getStartingSample().getSampleName());
+                }
+            }
             Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInPreSelPoolWell.size(), 2, "Wrong number of sample instances in position");
 

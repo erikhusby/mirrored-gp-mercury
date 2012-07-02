@@ -1,9 +1,9 @@
 package org.broadinstitute.sequel.infrastructure.jira;
 
-import org.broadinstitute.sequel.control.UsernameAndPassword;
+import org.broadinstitute.sequel.control.LoginAndPassword;
 
 
-public interface JiraConnectionParameters extends UsernameAndPassword {
+public interface JiraConnectionParameters extends LoginAndPassword {
     
     int getPort();
     

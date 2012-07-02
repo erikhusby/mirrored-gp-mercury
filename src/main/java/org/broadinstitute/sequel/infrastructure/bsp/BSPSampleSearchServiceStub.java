@@ -1,14 +1,15 @@
 package org.broadinstitute.sequel.infrastructure.bsp;
 
-import javax.enterprise.inject.Default;
+import org.broadinstitute.sequel.infrastructure.deployment.Stub;
+
 import java.util.*;
 
-@Default
-public class MockBSPService implements BSPSampleSearchService {
+@Stub
+public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
 
     private final Map<String,String[]> samples = new HashMap<String,String[]>();
 
-    public MockBSPService() {
+    public BSPSampleSearchServiceStub() {
         addToMap("SM-12CO4",new String[] {
                 "PT-2LK3",  // patient
                 "ROOT", // root
