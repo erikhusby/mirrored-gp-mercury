@@ -17,10 +17,10 @@ import java.util.*;
 
 
 
-@Stub
 /**
  * Stub implementation for Arquillian non-integration container tests or other non-integration tests.
  */
+@Stub
 public class PassServiceStub implements PassService {
 
     @Inject

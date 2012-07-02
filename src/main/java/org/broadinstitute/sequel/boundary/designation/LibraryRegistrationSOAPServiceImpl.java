@@ -2,19 +2,14 @@ package org.broadinstitute.sequel.boundary.designation;
 
 import org.broadinstitute.sequel.boundary.squid.LibraryRegistrationPortType;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
-import org.broadinstitute.sequel.entity.project.NumberOfLanesCoverage;
-import org.broadinstitute.sequel.entity.project.PairedReadCoverage;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.sequel.entity.project.SequencingPlanDetail;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParameters;
-import org.broadinstitute.sequel.infrastructure.squid.SquidConnectionParametersProducer;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConfig;
+import org.broadinstitute.sequel.infrastructure.squid.SquidConfigProducer;
 import org.broadinstitute.sequel.infrastructure.squid.SquidWebServiceClient;
 
-import javax.ejb.Stateless;
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 
 
@@ -24,8 +19,7 @@ import javax.inject.Inject;
  *         Time: 4:30 PM
  */
 
-@Default
-@Stateless
+
 @Impl
 public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<LibraryRegistrationPortType>
         implements LibraryRegistrationSOAPService {
@@ -35,9 +29,11 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
     private DeploymentProducer deploymentProducer;
 
 
-    private SquidConnectionParameters squidConnectionParameters;
+    private SquidConfig squidConfig;
 
-
+    /**
+     * Managed Bean classes must have no-arg constructor or constructor annotiated @Initializer
+     */
     public LibraryRegistrationSOAPServiceImpl() {
     }
 
@@ -48,14 +44,14 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
      */
     public LibraryRegistrationSOAPServiceImpl(Deployment deployment) {
 
-        squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
+        squidConfig = SquidConfigProducer.produce(deployment);
 
     }
 
 
-    public LibraryRegistrationSOAPServiceImpl(SquidConnectionParameters squidConnectionParameters) {
+    public LibraryRegistrationSOAPServiceImpl(SquidConfig squidConfig) {
 
-        this.squidConnectionParameters = squidConnectionParameters;
+        this.squidConfig = squidConfig;
     }
 
 
@@ -79,15 +75,15 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
     }
 
     @Override
-    protected SquidConnectionParameters getSquidConnectionParameters() {
-        if ( squidConnectionParameters == null ) {
+    protected SquidConfig getSquidConfig() {
+        if ( squidConfig == null ) {
 
             final Deployment deployment = deploymentProducer.produce();
-            squidConnectionParameters = SquidConnectionParametersProducer.produce(deployment);
+            squidConfig = SquidConfigProducer.produce(deployment);
         }
 
 
-        return squidConnectionParameters;
+        return squidConfig;
     }
 
     @Override

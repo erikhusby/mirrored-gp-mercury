@@ -19,7 +19,7 @@ import java.net.URL;
  * <b>INTERNAL</b> integration test to connect to the PASS webservice in SequeL.  The test method calls the one
  * method in SequeL's PASS webservices that does not proxy the equivalent service in Squid.
  */
-public class PassSOAPServiceImplTest extends ContainerTest {
+public class PassServiceImplTest extends ContainerTest {
 
     @Inject
     private Log log;

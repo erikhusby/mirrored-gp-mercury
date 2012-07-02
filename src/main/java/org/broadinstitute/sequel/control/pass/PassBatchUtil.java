@@ -2,10 +2,8 @@ package org.broadinstitute.sequel.control.pass;
 
 import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.boundary.AbstractPass;
-import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
-import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -39,7 +37,7 @@ public class PassBatchUtil {
             samplesInBatch.add(stockSample);
             numSamplesInCurrentBatch++;
             if (numSamplesInCurrentBatch == numSamplesPerBatch) {
-                LabBatch labBatch = new LabBatch(batchPrefix + "-" + batchNumber,samplesInBatch);
+                LabBatch labBatch = new LabBatch(passPlan,batchPrefix + "-" + batchNumber,samplesInBatch);
                 numSamplesInCurrentBatch = 0;
                 samplesInBatch.clear();
                 batchNumber++;
@@ -66,7 +64,7 @@ public class PassBatchUtil {
                                    String description) {
         CreateIssueResponse createResponse = null;
         try {
-            createResponse = jiraService.createIssue(projectPrefix,issuetype,summary,description);
+            createResponse = jiraService.createIssue(projectPrefix,issuetype,summary,description, null);
         }
         catch(IOException e) {
             throw new RuntimeException("Failed to create jira ticket",e);

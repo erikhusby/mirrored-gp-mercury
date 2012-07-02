@@ -1,23 +1,16 @@
 package org.broadinstitute.sequel.infrastructure.deployment;
 
-
-import javax.inject.Qualifier;
+import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Stereotype;
 import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Qualifier
-@Retention(RetentionPolicy.RUNTIME)
-@Target({METHOD, FIELD, PARAMETER, TYPE})
-/**
- * Qualifier used to annotate the stub version of a service or to specify the injection of
- * that stub version.  See {@link org.broadinstitute.sequel.boundary.pass.PassServiceStub} for an example of
- * a stub service implementation annotated with {@link Stub}, and
- * {@link org.broadinstitute.sequel.boundary.pass.PassServiceProducer#stub} for an injection point that specifies the
- * {@link Stub}-annotated version of the service.
- */
 
-public @interface Stub {
-}
+@Alternative
+@Stereotype
+@Target(TYPE)
+@Retention(RUNTIME)
+public @interface Stub {}

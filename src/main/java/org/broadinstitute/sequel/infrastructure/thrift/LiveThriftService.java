@@ -5,27 +5,23 @@ import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 
-import javax.enterprise.inject.Alternative;
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 
-@Default
-public class LiveThriftService implements  ThriftService {
+@Impl
+public class LiveThriftService implements ThriftService {
 
-    private ThriftConfiguration thriftConfig;
-
-    // stateful: created by open()
-    private TTransport transport;
 
     @Inject
-    public LiveThriftService(ThriftConfiguration thriftConfiguration) {
-        this.thriftConfig = thriftConfiguration;
-    }
+    private ThriftConfig thriftConfig;
+
+    // stateful: created by open()
+    private transient TTransport transport;
+
 
     private void open() {
         close();

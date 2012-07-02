@@ -1,18 +1,18 @@
 package org.broadinstitute.sequel.infrastructure.bsp;
 
-import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingResponse;
+import org.broadinstitute.sequel.infrastructure.deployment.Stub;
 
-import javax.enterprise.inject.Default;
 import java.util.Collection;
 
-@Default // used in fast unit tests, non-integration.
-public class MockBSPConnector implements BSPConnector {
+@Stub // used in fast unit tests, non-integration.
+public class BSPConnectorStub implements BSPConnector {
 
-    private static Log gLog = LogFactory.getLog(MockBSPConnector.class);
+    private static Log gLog = LogFactory.getLog(BSPConnectorStub.class);
 
 
     @Override

@@ -6,9 +6,12 @@ import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 
 import javax.persistence.*;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Read-only sample metadata at the finest granularity necessary
@@ -36,6 +39,10 @@ public abstract class StartingSample implements Starter {
     // todo arz: I'm undoing a lot of persistence stuff here, we should come back to this soon.
     @Transient
     private ProjectPlan projectPlan;
+
+    // todo arz hibernate-ify
+    @Transient
+    private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
     protected StartingSample(String sampleName, ProjectPlan projectPlan) {
         this.sampleName = sampleName;
@@ -86,5 +93,13 @@ public abstract class StartingSample implements Starter {
         throw new RuntimeException("not implemented");
     }
 
+    @Override
+    public Set<LabBatch> getLabBatches() {
+        return labBatches;
+    }
 
+    @Override
+    public void addLabBatch(LabBatch labBatch) {
+        labBatches.add(labBatch);
+    }
 }

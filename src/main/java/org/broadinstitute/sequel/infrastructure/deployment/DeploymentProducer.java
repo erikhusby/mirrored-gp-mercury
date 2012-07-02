@@ -9,6 +9,7 @@ import javax.ejb.Startup;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.naming.NamingException;
+import java.io.Serializable;
 
 
 @Startup
@@ -23,12 +24,8 @@ import javax.naming.NamingException;
  * SEQUEL_DEPLOYMENT or have the value match one of DEV, TEST, QA, PROD, or STUBBY is a fatal error that will halt
  * deployment.
  *
- *
- * Having DeploymentProducer implement the BasicProducer&lt;Deployment&gt; interface makes artifact deployment fail with
- * no helpful diagnostics.  I have no idea why.
- *
  */
-public class DeploymentProducer /* implements BasicProducer<Deployment> */ {
+public class DeploymentProducer implements Serializable {
 
 
     @Inject

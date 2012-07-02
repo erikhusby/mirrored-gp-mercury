@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.control.workflow;
 
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowState;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -49,7 +50,13 @@ public class WorkflowParserTest {
 
             Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations("PreflightNormalization");
             Assert.assertFalse(workflowAnnotations.isEmpty());
-            Assert.assertTrue(workflowAnnotations.contains(WorkflowAnnotation.IS_SINGLE_SAMPLE_LIBRARY));
+            boolean hasSeqLibAnnotation = false;
+            for (WorkflowAnnotation workflowAnnotation : workflowAnnotations) {
+                if (workflowAnnotation instanceof SequencingLibraryAnnotation) {
+                    hasSeqLibAnnotation = true;
+                }
+            }
+            Assert.assertTrue(hasSeqLibAnnotation);
             Assert.assertEquals(workflowAnnotations.size(),1);
 
             Assert.assertTrue(workflowDescription.getAnnotations("PreflightPicoSetup").isEmpty());

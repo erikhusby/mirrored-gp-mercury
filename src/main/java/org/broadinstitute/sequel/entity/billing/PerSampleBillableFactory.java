@@ -45,7 +45,7 @@ public class PerSampleBillableFactory {
                 ProjectPlan projectPlan = sampleInstance.getSingleProjectPlan();
                 StartingSample sample = sampleInstance.getStartingSample();
                 
-                PriceItem priceItem = projectPlan.getWorkflowDescription().getPriceItem(event.getEventName());
+                PriceItem priceItem = projectPlan.getWorkflowDescription().getPriceItem();
                 org.broadinstitute.sequel.infrastructure.quote.Quote quote = projectPlan.getQuoteDTO();
                 if (quote != null) {
                     /** do we use true sample (aliquot) here, or {@link org.broadinstitute.sequel.entity.project.SampleAnalysisBuddies}? */

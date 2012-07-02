@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.quote.Quote;
 
 import javax.persistence.Transient;
@@ -52,6 +53,17 @@ public abstract class ProjectPlan {
     public abstract void setAliquot(Starter starter,LabVessel aliquot);
 
     public abstract LabVessel getAliquot(Starter starter);
+
+    /**
+     * Do the billing for the given {@link Starter}.  {@link LabBatch} is a temporary
+     * stub so that we can have something to link back to from the quote server.
+     * See {@link org.broadinstitute.sequel.infrastructure.quote.QuoteService#registerNewWork(org.broadinstitute.sequel.infrastructure.quote.Quote, org.broadinstitute.sequel.infrastructure.quote.PriceItem, double, String, String, String)}, especially the callback
+     * url.  Eventually the callback will be the SequeL UI, but for the moment,
+     * we'll just redirect to jira so we can demo this to sheila.
+     * @param starter
+     * @param labBatch
+     */
+    public abstract void doBilling(Starter starter,LabBatch labBatch);
 
     /**
      * getLaneCoverage is a helper method which allows a user to find the specified lane coverage (If any) in the

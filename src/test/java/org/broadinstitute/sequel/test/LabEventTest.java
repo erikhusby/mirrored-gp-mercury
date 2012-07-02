@@ -102,9 +102,8 @@ public class LabEventTest {
 //        Controller.startCPURecording(true);
 
         // Project and workflow
-        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("HS", billableEvents,
+        WorkflowDescription workflowDescription = new WorkflowDescription("HS", null,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         workflowDescription.initFromFile("HybridSelectionV2.bpmn");
         BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
@@ -168,7 +167,7 @@ public class LabEventTest {
 
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         workflowDescription.initFromFile("WholeGenomeShotgun.bpmn");
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
@@ -272,9 +271,8 @@ public class LabEventTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void testFluidigm() {
-        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack

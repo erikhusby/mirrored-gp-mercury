@@ -110,11 +110,10 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
 
     private BasicProjectPlan createProjectPlan(String projectName,
                                           String projectPlanName,
-                                          String quoteAlphanumericId,
-                                          Map<LabEventName,PriceItem> billableEvents) {
+                                          String quoteAlphanumericId) {
         BasicProjectPlan plan = new BasicProjectPlan(new BasicProject(projectName,new JiraTicket()),
                 projectPlanName,
-                new WorkflowDescription("ChocolateChipCookies", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+                new WorkflowDescription("ChocolateChipCookies", new PriceItem("Illumina LC","5","Standard LC","3.5",PriceItem.SAMPLE_UNITS,PriceItem.GSP_PLATFORM_NAME), CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         Quote quote = new org.broadinstitute.sequel.entity.billing.Quote(quoteAlphanumericId,
                 new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteAlphanumericId,new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
         plan.setQuote(quote);   
@@ -143,14 +142,12 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
      */
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_billing() {
-        Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
         String expectedBatchId = "QuoteWorkItemBatchId123";
-        BasicProjectPlan plan1 = createProjectPlan("Project1","Plan1","DNA33",billableEvents);
-        BasicProjectPlan plan2 = createProjectPlan("Project2","Plan2","DNA35",billableEvents);
+        BasicProjectPlan plan1 = createProjectPlan("Project1","Plan1","DNA33");
+        BasicProjectPlan plan2 = createProjectPlan("Project2","Plan2","DNA35");
 
         int totalSampleCount = 24; // keep it even; we're just splitting across two quotes
         LabEvent labEvent = buildLabEvent(plan1,plan2,totalSampleCount);
-        billableEvents.put(labEvent.getEventName(), new PriceItem("Illumina LC","5","Standard LC","3.5",PriceItem.SAMPLE_UNITS,PriceItem.GSP_PLATFORM_NAME));
 
         Billable billable = PerSampleBillableFactory.createBillable(labEvent);
 
@@ -158,13 +155,13 @@ public class PerSampleBillableFactoryTest extends ContainerTest {
         int numSamplesBilledPerQuote = totalSampleCount/2;
         addExpectedQuoteInteraction(service,
                                     plan1.getQuoteDTO(),
-                                    plan1.getWorkflowDescription().getPriceItem(labEvent.getEventName()),
+                                    plan1.getWorkflowDescription().getPriceItem(),
                                     numSamplesBilledPerQuote,
                                     expectedBatchId,
                                     1);
         addExpectedQuoteInteraction(service,
                 plan2.getQuoteDTO(),
-                plan2.getWorkflowDescription().getPriceItem(labEvent.getEventName()),
+                plan2.getWorkflowDescription().getPriceItem(),
                 numSamplesBilledPerQuote,
                 expectedBatchId,
                 1);
