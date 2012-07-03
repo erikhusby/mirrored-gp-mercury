@@ -69,7 +69,12 @@ public class ToSequel {
             sequelSummarizedPass.setResearchProject(summarizedPass.getResearchProject());
             sequelSummarizedPass.setStatus(PassStatus.fromValue(summarizedPass.getStatus().value()));
             sequelSummarizedPass.setTitle(summarizedPass.getTitle());
-            sequelSummarizedPass.setType(PassType.fromValue(summarizedPass.getType().value()));
+
+            /* R3_725 we get RNASeq back from test Squid, but that's not in the R3_724 XSD so null check needed */
+            if ( summarizedPass.getType() != null )
+
+                sequelSummarizedPass.setType(PassType.fromValue(summarizedPass.getType().value()));
+
             sequelSummarizedPass.setUpdatedBy(summarizedPass.getUpdatedBy());
             sequelSummarizedPass.setVersion(summarizedPass.getVersion());
 
