@@ -59,7 +59,8 @@ public class ToSequel {
         for (org.broadinstitute.sequel.boundary.squid.SummarizedPass summarizedPass : squidList.getSummarizedPassList()) {
 
             SummarizedPass sequelSummarizedPass = new SummarizedPass();
-            sequelSummarizedPass.setCreatedDate(summarizedPass.getCreatedDate());
+// R3_725
+//            sequelSummarizedPass.setCreatedDate(summarizedPass.getCreatedDate());
             sequelSummarizedPass.setCreator(summarizedPass.getCreator());
             sequelSummarizedPass.setLastAcceptedVersion(summarizedPass.getLastAcceptedVersion());
             sequelSummarizedPass.setLastModified(summarizedPass.getLastModified());
@@ -141,7 +142,8 @@ public class ToSequel {
             ret = directedRet;
 
             directedRet.setBaitSetID(squidDirectedPass.getBaitSetID());
-            directedRet.setExomeExpress(squidDirectedPass.isExomeExpress());
+// R3_725
+//            directedRet.setExomeExpress(squidDirectedPass.isExomeExpress());
         }
         else if (squidPass instanceof org.broadinstitute.sequel.boundary.squid.RNASeqPass) {
 
@@ -237,8 +239,9 @@ public class ToSequel {
         fundingInformation.setBspPlatingQuoteID(squidPass.getFundingInformation().getBspPlatingQuoteID());
         fundingInformation.setFundingAgencies(squidPass.getFundingInformation().getFundingAgencies());
         fundingInformation.setSequencingQuoteID(squidPass.getFundingInformation().getSequencingQuoteID());
-        fundingInformation.setBspPriceItem(sequelize(squidPass.getFundingInformation().getBspPriceItem()));
-        fundingInformation.setGspPriceItem(sequelize(squidPass.getFundingInformation().getGspPriceItem()));
+// R3_725
+//        fundingInformation.setBspPriceItem(sequelize(squidPass.getFundingInformation().getBspPriceItem()));
+//        fundingInformation.setGspPriceItem(sequelize(squidPass.getFundingInformation().getGspPriceItem()));
 
         ProjectInformation projectInformation = new ProjectInformation();
         ret.setProjectInformation(projectInformation);
@@ -328,6 +331,8 @@ public class ToSequel {
     }
 
 
+/*  R3_725
+
     private static PriceItem sequelize(org.broadinstitute.sequel.boundary.squid.PriceItem priceItem) {
 
         if (priceItem == null)
@@ -342,7 +347,7 @@ public class ToSequel {
         ret.setUnits(priceItem.getUnits());
 
         return ret;
-    }
+    }*/
 
 
 

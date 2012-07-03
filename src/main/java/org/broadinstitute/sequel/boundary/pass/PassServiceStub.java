@@ -82,6 +82,7 @@ public class PassServiceStub implements PassService {
     }
 
 
+    /* R3_725
     @Override
     public void abandonPass(@WebParam(name = "passNumber", partName = "passNumber") String passNumber) {
 
@@ -92,6 +93,7 @@ public class PassServiceStub implements PassService {
         abstractPass.setStatus(PassStatus.ABANDONED);
 
     }
+    */
 
 
     private SummarizedPassListResult summarize(Collection<AbstractPass> passes) {
@@ -103,7 +105,8 @@ public class PassServiceStub implements PassService {
             SummarizedPass summarizedPass = new SummarizedPass();
             summarizedPass.setUpdatedBy(pass.getUpdatedBy());
             summarizedPass.setVersion(pass.getProjectInformation().getVersion());
-            summarizedPass.setCreatedDate(pass.getProjectInformation().getDateCreated());
+//            R3_725
+//            summarizedPass.setCreatedDate(pass.getProjectInformation().getDateCreated());
             summarizedPass.setCreator(pass.getCreator());
             summarizedPass.setLastAcceptedVersion(pass.getProjectInformation().getLastAcceptedVersion());
             summarizedPass.setLastModified(pass.getProjectInformation().getLastModified());
@@ -119,8 +122,9 @@ public class PassServiceStub implements PassService {
             else if ( pass instanceof WholeGenomePass )
                 summarizedPass.setType(PassType.WG);
 
-            else if ( pass instanceof RNASeqPass )
-                summarizedPass.setType(PassType.RNASEQ);
+//                    R3_725
+//            else if ( pass instanceof RNASeqPass )
+//                summarizedPass.setType(PassType.RNASEQ);
 
             else
                 throw new RuntimeException( "Unrecognized PASS type: " + pass.getClass() );

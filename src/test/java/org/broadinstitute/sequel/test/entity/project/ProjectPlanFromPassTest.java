@@ -43,10 +43,12 @@ public class ProjectPlanFromPassTest {
             sampleList.getSample().add(sample);
         }
         FundingInformation fundingInfo = new FundingInformation();
+/* R3_725
         PriceItem priceItem = new PriceItem();
         fundingInfo.setGspPriceItem(priceItem);
         priceItem.setCategoryName("Nacho");
         priceItem.setName("Cheese");
+*/
         hsPass.setFundingInformation(fundingInfo);
         hsPass.setSampleDetailsInformation(sampleList);
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();

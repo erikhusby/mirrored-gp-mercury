@@ -86,6 +86,9 @@ public class PassBackedProjectPlan extends ProjectPlan {
     private void initWorkflow() {
         if (pass instanceof  DirectedPass) {
             DirectedPass hsPass = (DirectedPass)pass;
+
+            // MLC removing price items until they become available in Squid R3_725
+            /*
             org.broadinstitute.sequel.boundary.PriceItem passPriceItem = pass.getFundingInformation().getGspPriceItem();
             PriceItem sequelPriceItem = new PriceItem(passPriceItem.getCategoryName(),
                     passPriceItem.getId(),
@@ -93,7 +96,8 @@ public class PassBackedProjectPlan extends ProjectPlan {
                     passPriceItem.getPrice(),
                     passPriceItem.getUnits(),
                     passPriceItem.getPlatform());
-            workflowDescription =  new WorkflowDescription("Hybrid Selection",sequelPriceItem, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+                    */
+            workflowDescription =  new WorkflowDescription("Hybrid Selection",null /* passPriceItem*/, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         }
     }
 

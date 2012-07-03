@@ -121,6 +121,7 @@ public class PassTestDataProducer {
         pass.setFundingInformation(fundingInfo);
         fundingInfo.setBspPlatingQuoteID("BSP-QUOTE-1");
         fundingInfo.setSequencingQuoteID("DNA4JD");
+/* R3_725
         PriceItem priceItem = new PriceItem();
         priceItem.setCategoryName("Illumina Sequencing");
         priceItem.setId("1");
@@ -129,6 +130,7 @@ public class PassTestDataProducer {
         priceItem.setPrice("15");
         priceItem.setUnits("Bananas");
         fundingInfo.setGspPriceItem(priceItem);
+*/
         fundingInfo.setFundingAgencies("some agency");
 
         SubmissionsInformation submissionsInfo = new SubmissionsInformation();
@@ -171,7 +173,8 @@ public class PassTestDataProducer {
         programPseudoDepthCoverageModel.setCoverageDesired(BigInteger.valueOf(32));
         coverageAndAnalysisInfo.setProgramPseudoDepthCoverageModel(programPseudoDepthCoverageModel);
 
-        directedPass.setExomeExpress(true);
+//        R3_725
+//        directedPass.setExomeExpress(true);
 
         return directedPass;
     }
