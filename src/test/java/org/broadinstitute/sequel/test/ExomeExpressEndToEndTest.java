@@ -36,10 +36,7 @@ import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
-import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
-import org.broadinstitute.sequel.infrastructure.quote.Quote;
-import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
+import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -63,7 +60,7 @@ public class ExomeExpressEndToEndTest {
     // for integration test fun where we post things back to a real jira, try new JiraServiceImpl(new TestLabObsJira());
     private JiraService jiraService = new DummyJiraService();
 
-    private QuoteService quoteService = new MockQuoteService();
+    private QuoteService quoteService = new MockQuoteService();//new QuoteServiceImpl(new QAQuoteConnectionParams());
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.

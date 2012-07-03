@@ -105,7 +105,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     @Override
     protected void customizeClient(Client client) {
-        client.setFollowRedirects(true);
         specifyHttpAuthCredentials(client, connectionParameters);
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }
@@ -149,7 +148,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
         catch(UniformInterfaceException e)
         {
-           throw new QuoteNotFoundException("Could not find quote " + id,e);
+           throw new QuoteNotFoundException("Could not find quote " + id + ".  If you see a 302 redirect issue, the quote server url may have changed.  Don't follow the redirect unless you check with someone like Greg in the quote server team.",e);
         }
         catch(ClientHandlerException e)
         {
