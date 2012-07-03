@@ -1,12 +1,14 @@
 package org.broadinstitute.sequel.infrastructure.quote;
 
 
+import java.io.Serializable;
+
 /**
  *
  * Service to talk to the quote server.
  */
 
-public interface QuoteService {
+public interface QuoteService extends Serializable {
 
     // todo extract and marshall current quote server xml
 

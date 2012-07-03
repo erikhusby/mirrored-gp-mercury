@@ -8,7 +8,6 @@ import org.testng.annotations.Test;
 import java.util.Collection;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
 public class QuotesCacheTest {
 
@@ -64,7 +63,7 @@ public class QuotesCacheTest {
 
     @Test(groups = DATABASE_FREE)
     public void test_known_good_funding_sources() throws Exception {
-        QuotesCache cache = new QuotesCache(new MockQuoteService().getAllSequencingPlatformQuotes());
+        QuotesCache cache = new QuotesCache(new QuoteServiceStub().getAllSequencingPlatformQuotes());
         Funding nhgriGrant = new Funding(Funding.FUNDS_RESERVATION,"NHGRI_NIH_LANDER");
         Collection<Quote> foundQuotes = cache.getQuotesForGrantDescription(nhgriGrant.getGrantDescription());
 

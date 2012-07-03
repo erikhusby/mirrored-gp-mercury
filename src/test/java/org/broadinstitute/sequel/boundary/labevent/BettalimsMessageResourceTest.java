@@ -4,6 +4,7 @@ package org.broadinstitute.sequel.boundary.labevent;
 import com.sun.jersey.api.client.Client;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.test.LabEventTest;
 import org.broadinstitute.sequel.TestGroups;
@@ -18,7 +19,6 @@ import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.integration.ContainerTest;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -72,7 +72,7 @@ public class BettalimsMessageResourceTest extends ContainerTest {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
-        Project project = new BasicProject(testPrefix + "LabEventTesting", new JiraTicket(new DummyJiraService(),
+        Project project = new BasicProject(testPrefix + "LabEventTesting", new JiraTicket(new JiraServiceStub(),
                 "TP-" + testPrefix, testPrefix));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS" + testPrefix,null,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);

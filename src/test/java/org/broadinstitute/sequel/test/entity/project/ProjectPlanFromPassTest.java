@@ -10,7 +10,7 @@ import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteServiceStub;
 import org.testng.annotations.Test;
 
 import java.math.BigInteger;
@@ -69,7 +69,7 @@ public class ProjectPlanFromPassTest {
         baitSet.setId(BAIT_ID);
         baitsCache.getBaitSetList().add(baitSet);
 
-        PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(pass,bspDataFetcher,new MockQuoteService(),baitsCache);
+        PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(pass,bspDataFetcher,new QuoteServiceStub(),baitsCache);
 
         assertEquals(projectPlan.getStarters().size(),pass.getSampleDetailsInformation().getSample().size());
         assertEquals(projectPlan.getProject().getProjectName(),pass.getResearchProject());

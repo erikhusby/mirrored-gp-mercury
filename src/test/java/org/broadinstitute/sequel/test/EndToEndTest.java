@@ -5,7 +5,7 @@ import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.infrastructure.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConnectorStub;
 import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
-import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
@@ -64,9 +64,9 @@ public class EndToEndTest  {
         final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
                 null,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-        Project project = new BasicProject("Project1",new JiraTicket(new DummyJiraService(),"TP-0","0"));
+        Project project = new BasicProject("Project1",new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         BasicProjectPlan plan1 = new BasicProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS", null,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
-        Project project2 = new BasicProject("Project2", new JiraTicket(new DummyJiraService(),"TP-1","1"));
+        Project project2 = new BasicProject("Project2", new JiraTicket(new JiraServiceStub(),"TP-1","1"));
         BasicProjectPlan plan2 = new BasicProjectPlan(project2,"Plan for "  + project2.getProjectName(),new WorkflowDescription("WGS", null,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
         LabVessel stock1 = createBSPStock(masterSample1,"00001234",plan1);

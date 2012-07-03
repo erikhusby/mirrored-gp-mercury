@@ -5,12 +5,7 @@ import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.*;
-import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
-import org.broadinstitute.sequel.entity.queue.JiraLabWorkQueueResponse;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueueParameters;
-import org.broadinstitute.sequel.entity.queue.LcSetParameters;
+import org.broadinstitute.sequel.entity.queue.*;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -19,8 +14,7 @@ import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
-import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
-import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.quote.*;
@@ -38,11 +32,11 @@ import static org.testng.Assert.*;
 
 public class ProjectTest  {
 
-    private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
+    private JiraService jiraService = JiraServiceProducer.testInstance();
 
     private BSPSampleDataFetcher bspFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
 
-    private QuoteService quoteService = new QuoteServiceImpl(new QAQuoteConnectionParams());
+    private QuoteService quoteService = QuoteServiceProducer.qaInstance();
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {
