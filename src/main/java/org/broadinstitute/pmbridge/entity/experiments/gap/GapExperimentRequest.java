@@ -17,7 +17,6 @@ import org.broadinstitute.pmbridge.infrastructure.quote.Quote;
 
 import java.util.Date;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Under Construction !!!!
@@ -112,11 +111,7 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
     public void setTechnologyProduct(final Product technologyProduct) {
         this.technologyProduct = technologyProduct;
         if (technologyProduct != null) {
-            boolean isNumeric = Pattern.matches("[\\d]+", technologyProduct.getId());
-            if (isNumeric) {
-                int id = Integer.parseInt(technologyProduct.getId());
-                getExperimentPlanDTO().setProductId(id);
-            }
+            getExperimentPlanDTO().setProductName(technologyProduct.getName());
         }
     }
 

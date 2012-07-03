@@ -185,7 +185,8 @@ public class EndToEndTest extends Arquillian {
         gapExperimentRequest.setBspQuote(quoteBsp);
 
 
-        gapExperimentRequest.setTechnologyProduct(new Product("SeqChip", "T1000 Chip", "226"));
+        // Could get the product list from the server to initialize this field.
+        gapExperimentRequest.setTechnologyProduct(new Product("Omni1M"));
         gapExperimentRequest.setGapGroupName("GapGroup");
         gapExperimentRequest.setGapProjectName("GapProject");
         Quote quoteGap = new Quote("MMM3W7", new QuoteFunding(fundLevel), ApprovalStatus.APPROVED);
@@ -229,7 +230,7 @@ public class EndToEndTest extends Arquillian {
 
         Assert.assertEquals(savedExperimentRequest.getGapGroupName(), gapExperimentRequest.getGapGroupName());
         Assert.assertEquals(savedExperimentRequest.getGapProjectName(), gapExperimentRequest.getGapProjectName());
-        Assert.assertEquals(savedExperimentRequest.getTechnologyProduct().getId(), gapExperimentRequest.getTechnologyProduct().getId());
+        Assert.assertEquals(savedExperimentRequest.getTechnologyProduct().getName(), gapExperimentRequest.getTechnologyProduct().getName());
 
     }
 

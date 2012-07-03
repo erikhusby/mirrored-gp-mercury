@@ -23,7 +23,7 @@ public class ExperimentPlan {
     private String platformPm;
     private String researchProjectId;
     private Integer numberSamples;
-    private Integer productId;
+    private String productName;
     private String notes;
     private String projectName;
     private String groupName;
@@ -119,13 +119,13 @@ public class ExperimentPlan {
         this.numberSamples = numberSamples;
     }
 
-    @XmlElement(name = "productId")
-    public Integer getProductId() {
-        return productId;
+    @XmlElement(name = "productName")
+    public String getProductName() {
+        return productName;
     }
 
-    public void setProductId(Integer productId) {
-        this.productId = productId;
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 
     @XmlElement(name = "notes")

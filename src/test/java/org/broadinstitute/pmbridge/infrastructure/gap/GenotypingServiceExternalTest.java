@@ -46,13 +46,17 @@ public class GenotypingServiceExternalTest extends Arquillian {
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void testLookupTechnologyProductById() throws Exception {
 
-        // <product name="HumanCytoSNP-12v1-0_D" display-name="Cyto 12" id="153"/>
-        Product product = genotypingService.lookupTechnologyProductById(new Integer(236));
-        Assert.assertNotNull(product);
-        Assert.assertNotNull(product.getId());
-        Assert.assertEquals(product.getId(), "236");
-        Assert.assertEquals(product.getDisplayName(), "HumanOmni2.5-8v1_A");
-        Assert.assertEquals(product.getName(), "HumanOmni2.5-8v1_A");
+        // <product name="Omni1M"/>
+        Platforms platforms = genotypingService.getPlatforms();
+        Assert.assertNotNull(platforms);
+        Assert.assertFalse(platforms.getPlatforms().isEmpty());
+        Products products = platforms.getPlatforms().get(0).getProducts();
+        Assert.assertNotNull(products);
+        Assert.assertFalse(products.getProducts().isEmpty());
+        Product product = products.getProducts().get(0);
+        // We could test for a specific product name, but that would make the test fragile as the product
+        // names' order isn't fixed.
+        Assert.assertNotNull(product.getName());
     }
 
 
@@ -99,7 +103,7 @@ public class GenotypingServiceExternalTest extends Arquillian {
 //        gapExperimentRequest.setBspQuote(quoteBsp);
 //
 //
-//        gapExperimentRequest.setTechnologyProduct(new Product("SeqChip", "T1000 Chip", "226"));
+//        gapExperimentRequest.setTechnologyProduct(new Product("Omni1M"));
 //        gapExperimentRequest.setGapGroupName("GapGroup");
 //        gapExperimentRequest.setGapProjectName("GapProject");
 //        Quote quoteGap = new Quote("MMM3W7", new QuoteFunding(fundLevel), ApprovalStatus.APPROVED );
