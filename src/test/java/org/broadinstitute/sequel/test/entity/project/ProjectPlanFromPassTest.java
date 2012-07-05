@@ -71,7 +71,7 @@ public class ProjectPlanFromPassTest {
         baitSet.setId(BAIT_ID);
         baitsCache.getBaitSetList().add(baitSet);
 
-        PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(pass,bspDataFetcher,new QuoteServiceStub(),baitsCache,null);
+        PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(pass,bspDataFetcher,baitsCache,null);
 
         assertEquals(projectPlan.getStarters().size(),pass.getSampleDetailsInformation().getSample().size());
         assertEquals(projectPlan.getProject().getProjectName(),pass.getResearchProject());

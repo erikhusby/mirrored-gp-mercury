@@ -53,7 +53,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
      */
     public PassBackedProjectPlan(AbstractPass pass,
                                 BSPSampleDataFetcher bspDataFetcher,
-                                QuoteService quoteService,
                                 BaitSetListResult baitsCache,
                                 PriceItem priceItem) {
         if (!(pass instanceof DirectedPass)) {
