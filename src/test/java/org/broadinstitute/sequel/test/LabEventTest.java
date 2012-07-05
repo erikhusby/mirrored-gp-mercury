@@ -9,10 +9,12 @@ import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.bettalims.jaxb.ReceptacleType;
+import org.broadinstitute.sequel.boundary.run.SolexaRunBean;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
+import org.broadinstitute.sequel.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
@@ -29,6 +31,7 @@ import org.broadinstitute.sequel.entity.reagent.MolecularIndex;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.sequel.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.sequel.entity.run.IlluminaFlowcell;
+import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
@@ -47,10 +50,13 @@ import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -140,10 +146,21 @@ public class LabEventTest {
                 libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                 libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
-        new QtpEntityBuilder(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+        QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
                 hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes()).invoke();
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes());
+        qtpEntityBuilder.invoke();
+
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();
+        IlluminaSequencingRun illuminaSequencingRun;
+        try {
+            illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(
+                    new SolexaRunBean(qtpEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
+                            File.createTempFile("RunDir", ".txt").getAbsolutePath(), null), qtpEntityBuilder.getIlluminaFlowcell());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -154,6 +171,9 @@ public class LabEventTest {
                 transferTraverserCriteria, VesselContainer.TraversalDirection.Descendants, null, 0);
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
         Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
+
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(), qtpEntityBuilder.getIlluminaFlowcell(),
+                "Wrong flowcell");
 
 //        Controller.stopCPURecording();
     }
@@ -1403,6 +1423,7 @@ public class LabEventTest {
         private final Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes;
 
         private RackOfTubes denatureRack;
+        private IlluminaFlowcell illuminaFlowcell;
 
         public QtpEntityBuilder(WorkflowDescription workflowDescription, BettaLimsMessageFactory bettaLimsMessageFactory,
                 LabEventFactory labEventFactory, LabEventHandler labEventHandler, RackOfTubes normCatchRack,
@@ -1487,13 +1508,17 @@ public class LabEventTest {
             LabEvent flowcellTransferEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(flowcellTransferJaxb, stripTube, null);
             labEventHandler.processEvent(flowcellTransferEntity, null);
             //asserts
-            IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
+            illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(illuminaFlowcell.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.LANE1).size(),
                     normCatchRack.getSampleInstances().size(), "Wrong number of samples in flowcell lane");
         }
 
         public RackOfTubes getDenatureRack() {
             return denatureRack;
+        }
+
+        public IlluminaFlowcell getIlluminaFlowcell() {
+            return illuminaFlowcell;
         }
     }
 

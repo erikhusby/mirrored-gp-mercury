@@ -1,26 +1,29 @@
 package org.broadinstitute.sequel.boundary.labevent;
 
 //import com.jprofiler.api.agent.Controller;
+
 import com.sun.jersey.api.client.Client;
-import org.broadinstitute.sequel.entity.project.*;
-import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
-import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
-import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
-import org.broadinstitute.sequel.test.LabEventTest;
 import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
-import org.broadinstitute.sequel.control.dao.run.IlluminaSequencingRunDao;
-import org.broadinstitute.sequel.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.sequel.boundary.run.SolexaRunBean;
+import org.broadinstitute.sequel.boundary.run.SolexaRunResource;
 import org.broadinstitute.sequel.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
+import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
-import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.WorkflowDescription;
+import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.integration.ContainerTest;
+import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
+import org.broadinstitute.sequel.test.LabEventTest;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -29,6 +32,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -51,23 +55,20 @@ public class BettalimsMessageResourceTest extends ContainerTest {
     private BettalimsMessageResource bettalimsMessageResource;
 
     @Inject
+    private SolexaRunResource solexaRunResource;
+
+    @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
     @Inject
     private StaticPlateDAO staticPlateDAO;
 
     @Inject
-    private IlluminaFlowcellDao illuminaFlowcellDao;
-
-    @Inject
-    private IlluminaSequencingRunDao illuminaSequencingRunDao;
-
-    @Inject
     private IndexedPlateFactory indexedPlateFactory;
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testProcessMessage() {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
@@ -149,10 +150,12 @@ public class BettalimsMessageResourceTest extends ContainerTest {
 //        Controller.stopCPURecording();
 
         String runName = "TestRun" + testPrefix;
-        IlluminaSequencingRun illuminaSequencingRun = new IlluminaSequencingRun(
-                illuminaFlowcellDao.findByBarcode(qtpJaxbBuilder.getFlowcellBarcode()), runName, runName, "SL-HAL", null, false);
-        illuminaSequencingRunDao.persist(illuminaSequencingRun);
-        illuminaSequencingRunDao.flush();
+        try {
+            solexaRunResource.createRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(), runName, new Date(), "SL-HAL",
+                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         System.out.println("Test run name " + runName);
     }
 
