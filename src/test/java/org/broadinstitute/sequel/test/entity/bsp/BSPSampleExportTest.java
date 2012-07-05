@@ -43,8 +43,8 @@ public class BSPSampleExportTest extends ContainerTest {
     @Inject
     BSPConfig bspConfig;
 
-    @Inject
-    private Log log;
+    //@Inject
+    //private Log log;
 
     @Test(groups = {DATABASE_FREE})
     public void testExport() throws Exception {
@@ -76,8 +76,6 @@ public class BSPSampleExportTest extends ContainerTest {
     @Test(groups = {EXTERNAL_INTEGRATION} , enabled = true)
     //@Test
     public void testIssueBSPPlating() throws Exception {
-
-        log.info("running IssueBSPPlating test");
 
         //BSPPlatingRequestService platingService = BSPPlatingRequestServiceProducer.qaInstance();
         BSPPlatingRequestServiceProducer producer = new BSPPlatingRequestServiceProducer();
