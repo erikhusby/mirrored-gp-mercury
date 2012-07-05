@@ -77,12 +77,14 @@
                         </f:facet>
                         <h:outputText value="#{pass.title}"/>
                     </p:column>
+<!-- R3_725
                     <p:column sortBy="#{pass.createdDate}" sortFunction="#{passDashboard.sortByCalendar}">
                         <f:facet name="header">
                             <h:outputText value="Created" />
                         </f:facet>
                         <h:outputText value="#{passDashboard.format(pass.createdDate)}" />
                     </p:column>
+-->
                     <p:column sortBy="#{pass.lastModified}" sortFunction="#{passDashboard.sortByCalendar}">
                         <f:facet name="header">
                             <h:outputText value="Updated" />

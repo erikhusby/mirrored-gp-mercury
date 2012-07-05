@@ -135,7 +135,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
 
             jerseyClient = Client.create(clientConfig);
             customizeClient(jerseyClient);
-
         }
         return jerseyClient;
     }

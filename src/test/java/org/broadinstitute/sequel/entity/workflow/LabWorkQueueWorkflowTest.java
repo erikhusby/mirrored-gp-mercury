@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.workflow;
 
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
@@ -20,7 +21,6 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.easymock.EasyMock;
@@ -49,8 +49,8 @@ public class LabWorkQueueWorkflowTest {
         int numSamples = 10;
 
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
-        Project rootProject = new BasicProject("Testing Root", new JiraTicket(new DummyJiraService(),"TP-0","0"));
-        Project overrideProject = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-1","1"));
+        Project rootProject = new BasicProject("Testing Root", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
+        Project overrideProject = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-1","1"));
 
         WorkflowDescription workflow = new WorkflowDescription(WorkflowResolver.TEST_WORKFLOW_1,
                                                                           null,
@@ -76,7 +76,7 @@ public class LabWorkQueueWorkflowTest {
         }
 
         // add the samples to the queue, no project plan override
-        final FIFOLabWorkQueue<LcSetParameters> labWorkQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,new DummyJiraService());
+        final FIFOLabWorkQueue<LcSetParameters> labWorkQueue = new FIFOLabWorkQueue<LcSetParameters>(LabWorkQueueName.LC,new JiraServiceStub());
         LcSetParameters originalParameters = new LcSetParameters();
 
         assertTrue(labWorkQueue.isEmpty());

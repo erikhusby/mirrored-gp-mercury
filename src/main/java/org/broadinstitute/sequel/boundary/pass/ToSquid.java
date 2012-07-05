@@ -66,7 +66,8 @@ public class ToSquid {
             ret = directedPass;
 
             directedPass.setBaitSetID(sequelDirectedPass.getBaitSetID());
-            directedPass.setExomeExpress(sequelDirectedPass.isExomeExpress());
+// R3_725
+//            directedPass.setExomeExpress(sequelDirectedPass.isExomeExpress());
         }
         else if (sequelPass instanceof org.broadinstitute.sequel.boundary.RNASeqPass) {
 
@@ -166,8 +167,9 @@ public class ToSquid {
         fundingInformation.setBspPlatingQuoteID(sequelPass.getFundingInformation().getBspPlatingQuoteID());
         fundingInformation.setFundingAgencies(sequelPass.getFundingInformation().getFundingAgencies());
         fundingInformation.setSequencingQuoteID(sequelPass.getFundingInformation().getSequencingQuoteID());
-        fundingInformation.setBspPriceItem(squidify(sequelPass.getFundingInformation().getBspPriceItem()));
-        fundingInformation.setGspPriceItem(squidify(sequelPass.getFundingInformation().getGspPriceItem()));
+// R3_725
+//        fundingInformation.setBspPriceItem(squidify(sequelPass.getFundingInformation().getBspPriceItem()));
+//        fundingInformation.setGspPriceItem(squidify(sequelPass.getFundingInformation().getGspPriceItem()));
 
 
         ProjectInformation projectInformation = new ProjectInformation();
@@ -293,7 +295,7 @@ public class ToSquid {
     }
 
 
-
+    /* R3_725
     private static PriceItem squidify(org.broadinstitute.sequel.boundary.PriceItem sequelPriceItem) {
 
         if (sequelPriceItem == null)
@@ -309,4 +311,5 @@ public class ToSquid {
 
         return priceItem;
     }
+    */
 }

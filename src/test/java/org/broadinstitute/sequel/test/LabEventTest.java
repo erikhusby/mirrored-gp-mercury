@@ -40,7 +40,7 @@ import org.broadinstitute.sequel.entity.vessel.StripTube;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
-import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.easymock.EasyMock;
@@ -102,7 +102,7 @@ public class LabEventTest {
 //        Controller.startCPURecording(true);
 
         // Project and workflow
-        Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
+        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("HS", null,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         workflowDescription.initFromFile("HybridSelectionV2.bpmn");
@@ -166,7 +166,7 @@ public class LabEventTest {
 //        Controller.startCPURecording(true);
 
         Map<LabEventName,PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
-        Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
+        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         workflowDescription.initFromFile("WholeGenomeShotgun.bpmn");
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
@@ -271,7 +271,7 @@ public class LabEventTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void testFluidigm() {
-        Project project = new BasicProject("LabEventTesting", new JiraTicket(new DummyJiraService(),"TP-0","0"));
+        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 

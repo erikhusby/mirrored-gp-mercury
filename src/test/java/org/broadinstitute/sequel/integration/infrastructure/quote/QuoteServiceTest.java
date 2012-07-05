@@ -21,7 +21,7 @@ public class QuoteServiceTest {
 
     @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
     public void test_register_work() throws Exception {
-        QuoteServiceImpl service = new QuoteServiceImpl(new QAQuoteConnectionParams());
+        QuoteService service = QuoteServiceProducer.qaInstance();
         Quote fetchedQuote = service.getQuoteFromQuoteServer(quote.getAlphanumericId());
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId = service.registerNewWork(quote,priceItem,0.0001,"http://www.SequeLTesting","paramName","paramValue");

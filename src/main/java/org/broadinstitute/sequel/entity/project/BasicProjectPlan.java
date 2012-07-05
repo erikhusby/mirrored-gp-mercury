@@ -5,6 +5,9 @@ import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -137,10 +140,15 @@ public class BasicProjectPlan extends ProjectPlan {
     }
     
     @Override
-    public org.broadinstitute.sequel.infrastructure.quote.Quote getQuoteDTO() {
+    public org.broadinstitute.sequel.infrastructure.quote.Quote getQuoteDTO(QuoteService quoteService) throws QuoteServerException, QuoteNotFoundException {
         org.broadinstitute.sequel.infrastructure.quote.Quote quoteDTO = null;
         if (quote != null) {
             quoteDTO = quote.getQuote();
+        }
+        else {
+            if (quoteService != null) {
+                quoteDTO = quoteService.getQuoteFromQuoteServer(quote.getAlphanumericId());
+            }
         }
         return quoteDTO;
     }
@@ -280,7 +288,7 @@ public class BasicProjectPlan extends ProjectPlan {
     }
 
     @Override
-    public void doBilling(Starter starter, LabBatch labBatch) {
+    public void doBilling(Starter starter, LabBatch labBatch,QuoteService quoteService) {
         throw new RuntimeException("I haven't been written yet.");
     }
 }

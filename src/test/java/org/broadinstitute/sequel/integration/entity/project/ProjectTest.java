@@ -5,12 +5,7 @@ import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.*;
-import org.broadinstitute.sequel.entity.queue.FIFOLabWorkQueue;
-import org.broadinstitute.sequel.entity.queue.JiraLabWorkQueueResponse;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueueName;
-import org.broadinstitute.sequel.entity.queue.LabWorkQueueParameters;
-import org.broadinstitute.sequel.entity.queue.LcSetParameters;
+import org.broadinstitute.sequel.entity.queue.*;
 import org.broadinstitute.sequel.entity.run.IonSequencingTechnology;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -19,16 +14,10 @@ import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
-import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
-import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.infrastructure.quote.Funding;
-import org.broadinstitute.sequel.infrastructure.quote.FundingLevel;
-import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
-import org.broadinstitute.sequel.infrastructure.quote.QuoteFunding;
-import org.broadinstitute.sequel.infrastructure.quote.Quotes;
-import org.broadinstitute.sequel.infrastructure.quote.QuotesCache;
+import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -43,9 +32,11 @@ import static org.testng.Assert.*;
 
 public class ProjectTest  {
 
-    private JiraService jiraService = new JiraServiceImpl(new TestLabObsJira());
+    private JiraService jiraService = JiraServiceProducer.testInstance();
 
     private BSPSampleDataFetcher bspFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
+
+    private QuoteService quoteService = QuoteServiceProducer.qaInstance();
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {
@@ -63,7 +54,7 @@ public class ProjectTest  {
     }
     
     @Test(groups = {EXTERNAL_INTEGRATION})
-    public void test_simple_project() {
+    public void test_simple_project() throws Exception {
         Project project = projectManagerCreatesProject(jiraService);
         projectManagerAddsFundingSourceToProject(project,"NHGRI");
         BasicProjectPlan plan = projectManagerAddsProjectPlan(project);
@@ -212,7 +203,7 @@ public class ProjectTest  {
     
     private void postSomethingFunToJira(JiraTicket jiraTicket,
                                         Collection<LabVessel> vessels,
-                                        Project project) {
+                                        Project project) throws QuoteNotFoundException, QuoteServerException {
         StringBuilder projectJiraMessage = new StringBuilder(jiraTicket.getTicketName() + " has been created for the following samples:\n");
         for (LabVessel vessel : vessels) {
             for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
@@ -221,7 +212,7 @@ public class ProjectTest  {
                     projectPlan.addJiraTicket(jiraTicket);
                 }
                 String sampleURL = "[" + startingSample.getSampleName() + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + startingSample.getSampleName() + "]";
-                projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n").append("** Paid for by ").append(sampleInstance.getSingleProjectPlan().getQuoteDTO().getQuoteFunding().getFundingLevel().getFunding().getGrantDescription()).append("\n");
+                projectJiraMessage.append("* ").append(sampleURL).append(" (Patient ").append(startingSample.getPatientId()).append(")\n").append("** Paid for by ").append(sampleInstance.getSingleProjectPlan().getQuoteDTO(quoteService).getQuoteFunding().getFundingLevel().getFunding().getGrantDescription()).append("\n");
             }
         }
         project.addJiraComment(projectJiraMessage.toString());

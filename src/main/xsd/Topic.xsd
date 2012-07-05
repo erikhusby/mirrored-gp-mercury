@@ -200,34 +200,7 @@
         <xsd:attribute name="bspPlatingQuoteID"  type="xsd:string" use="required" />
     </xsd:attributeGroup>
 
-
-    <xsd:attributeGroup name="priceItemAttributeGroup">
-        <xsd:annotation>
-            <xsd:documentation>
-                Copied from SequeL's JAX-RS annotated POJO, which actually uses all of these fields in its #equals and #hashCode.
-                I'm guessing there's really no natural key here, we actually need to store everything?
-            </xsd:documentation>
-        </xsd:annotation>
-        <xsd:attribute name="platform"     type="xsd:string" use="required"/>
-        <xsd:attribute name="categoryName" type="xsd:string" use="required" />
-        <xsd:attribute name="id"           type="xsd:string" use="required" />
-        <xsd:attribute name="name"         type="xsd:string" use="required" />
-        <xsd:attribute name="price"        type="xsd:string" use="required" />
-        <xsd:attribute name="units"        type="xsd:string" use="required" />
-    </xsd:attributeGroup>
-
-
-
-    <xsd:complexType name="PriceItem">
-        <xsd:attributeGroup ref="topic:priceItemAttributeGroup" />
-    </xsd:complexType>
-
-
     <xsd:complexType name="FundingInformation">
-        <xsd:sequence>
-            <xsd:element name="bspPriceItem" type="topic:PriceItem" minOccurs="0" maxOccurs="1"/>
-            <xsd:element name="gspPriceItem" type="topic:PriceItem" minOccurs="0" maxOccurs="1"/>
-        </xsd:sequence>
         <xsd:attributeGroup ref="topic:fundingInformationAttributeGroup" />
     </xsd:complexType>
 
@@ -600,7 +573,6 @@
         <xsd:restriction base="xsd:string">
             <xsd:enumeration value="BWA" />
             <xsd:enumeration value="MAQ" />
-            <xsd:enumeration value="TOPHAT" />
         </xsd:restriction>
     </xsd:simpleType>
 
@@ -629,7 +601,6 @@
         <xsd:restriction base="xsd:string">
             <xsd:enumeration value="WG" />
             <xsd:enumeration value="DIRECTED" />
-            <xsd:enumeration value="RNASEQ" />
         </xsd:restriction>
     </xsd:simpleType>
 
@@ -645,7 +616,6 @@
         </xsd:attribute>
         <xsd:attribute name="lastAcceptedVersion" type="xsd:long"          use="optional" />
         <xsd:attribute name="type"                type="topic:PassType"    use="required" />
-        <xsd:attribute name="createdDate"         type="xsd:dateTime"      use="optional" />
         <xsd:attribute name="lastModified"        type="xsd:dateTime"      use="required" />
         <xsd:attribute name="title"               type="xsd:string"        use="required" />
         <xsd:attribute name="status"              type="topic:PassStatus"  use="required" />
@@ -707,7 +677,6 @@
 
     <xsd:attributeGroup name="directedPassAttributeGroup">
         <xsd:attribute name="baitSetID" type="xsd:long" />
-        <xsd:attribute name="exomeExpress" type="xsd:boolean" use="optional" />
     </xsd:attributeGroup>
 
     <xsd:complexType name="DirectedPass">

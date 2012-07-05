@@ -8,11 +8,12 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
 
-public interface JiraService {
+public interface JiraService extends Serializable {
 
 
     /**

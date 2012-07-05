@@ -189,13 +189,7 @@
     </wsdl:message>
 
 
-    <wsdl:message name="RequestAbandonPassMessage">
-        <wsdl:part name="passNumber" type="xsd:string" />
-    </wsdl:message>
-    <wsdl:message name="ResponseAbandonPassMessage" />
 
-    
-    
     <wsdl:portType name="SquidTopicPortype">
         <wsdl:operation name="getGreeting">
             <wsdl:input name="getGreetingRequest" message="sqtopic:RequestGreetingMessage"/>
@@ -212,10 +206,6 @@
         <wsdl:operation name="validatePass">
             <wsdl:input name="validatePassRequest" message="sqtopic:RequestValidatePassMessage" />
             <wsdl:output name="validatePassResponse" message="sqtopic:ResponseValidatePassMessage" />
-        </wsdl:operation>
-        <wsdl:operation name="abandonPass">
-            <wsdl:input name="abandonPassRequest" message="sqtopic:RequestAbandonPassMessage" />
-            <wsdl:output name="abandonPassResponse" message="sqtopic:ResponseAbandonPassMessage" />
         </wsdl:operation>
         <wsdl:operation name="searchPassesByCreator">
           <wsdl:input name="searchPassesByCreatorRequest" message="sqtopic:RequestSearchPassesByCreatorMessage" />
@@ -334,15 +324,6 @@
         </wsdl:operation>
 
 
-        <wsdl:operation name="abandonPass">
-            <wsdl:input name="abandonPassRequest">
-                <wsdlsoap:body namespace="urn:Topic" use="literal" />
-            </wsdl:input>
-            <wsdl:output name="abandonPassResponse">
-                <wsdlsoap:body namespace="urn:Topic" use="literal" />
-            </wsdl:output>
-        </wsdl:operation>
-        
         <wsdl:operation name="searchPassesByCreator">
           <wsdl:input name="searchPassesByCreatorRequest">
             <wsdlsoap:body namespace="urn:Topic" use="literal" />

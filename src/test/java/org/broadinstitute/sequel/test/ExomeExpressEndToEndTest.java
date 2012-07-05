@@ -5,7 +5,7 @@ import org.broadinstitute.sequel.boundary.BaitSetListResult;
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
-import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPServiceStub;
+import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPServiceProducer;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
 import org.broadinstitute.sequel.boundary.pass.PassServiceProducer;
 import org.broadinstitute.sequel.boundary.pass.PassTestDataProducer;
@@ -31,18 +31,22 @@ import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.jira.*;
+import org.broadinstitute.sequel.infrastructure.jira.JiraCustomFieldsUtil;
+import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.sequel.infrastructure.quote.MockQuoteService;
-import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
+import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.test.entity.bsp.BSPSampleExportTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -51,15 +55,17 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
  */
 public class ExomeExpressEndToEndTest {
 
-    LibraryRegistrationSOAPService registrationSOAPService = new LibraryRegistrationSOAPServiceStub();
+    LibraryRegistrationSOAPService registrationSOAPService = LibraryRegistrationSOAPServiceProducer.stubInstance();
 
     private PMBridgeService pmBridgeService = PMBridgeServiceProducer.stubInstance();
 
     private PassService passService = PassServiceProducer.stubInstance();
 
-    // if this bombs because of a jira refresh, just switch it to new DummyJiraService().
-    // for integration test fun where we post things back to a real jira, try new JiraServiceImpl(new TestLabObsJira());
-    private JiraService jiraService = new DummyJiraService();
+    // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
+    // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
+    private JiraService jiraService = JiraServiceProducer.stubInstance();
+
+    private QuoteService quoteService = QuoteServiceProducer.stubInstance();
 
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
@@ -79,7 +85,7 @@ public class ExomeExpressEndToEndTest {
         passService.storePass(directedPass);
 
         // if this is an EE pass take it through the SequeL process:
-        if (directedPass.isExomeExpress()) {
+        if ( true /* R3_725 directedPass.isExomeExpress() */ ) {
             // PASS with quote IDs, price items (need PMBridge 2 for price items)
 
 
@@ -122,7 +128,10 @@ public class ExomeExpressEndToEndTest {
             baitSet.setId(BAIT_ID);
             baitsCache.getBaitSetList().add(baitSet);
 
-            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new MockQuoteService(),baitsCache);
+            // todo when R3_725 comes out, revert to looking this up via the pass
+            PriceItem priceItem = new PriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","Bananas","DNA Sequencing");
+
+            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,baitsCache,priceItem);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
             projectPlan.getWorkflowDescription().initFromFile("HybridSelectionVisualParadigm.xml");
 
@@ -328,13 +337,21 @@ public class ExomeExpressEndToEndTest {
 
             Assert.assertEquals(labBatch.getJiraTicket(),jiraTicket);
 
+            Quote quoteDTO = projectPlan.getQuoteDTO(quoteService);
+
+            Assert.assertNotNull(quoteDTO);
+
+//            R3_725
+//            Assert.assertEquals(projectPlan.getWorkflowDescription().getPriceItem().getName(),directedPass.getFundingInformation().getGspPriceItem().getName());
+
             for (Starter starter : labBatch.getStarters()) {
                 ProjectPlan batchPlan = labBatch.getProjectPlan();
                 Assert.assertEquals(projectPlan,batchPlan);
-                batchPlan.doBilling(starter,labBatch);
+                batchPlan.doBilling(starter,labBatch,quoteService);
             }
 
-            // todo add quote
+            // todo add call to quote server to get all work done during the time period and verify
+            // that our work was included: https://iwww.broadinstitute.org/blogs/quote/?page_id=210
 
 
             registrationSOAPService.registerSequeLLibrary(registerLibrary);
