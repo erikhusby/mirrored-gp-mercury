@@ -43,12 +43,12 @@ public class PlatingArrayElement implements Plateable {
     }
 
     @Override
-    public Double getVolume() {
+    public Float getVolume() {
         return plateable.getVolume();
     }
 
     @Override
-    public Double getConcentration() {
+    public Float getConcentration() {
         return plateable.getConcentration();
     }
 }

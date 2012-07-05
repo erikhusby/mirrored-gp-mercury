@@ -1,7 +1,9 @@
 package org.broadinstitute.sequel.test.entity.bsp;
 
+import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.control.dao.bsp.BSPSampleFactory;
+import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
@@ -11,21 +13,38 @@ import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestService;
+import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestServiceImpl;
+import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestServiceProducer;
+import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.sequel.infrastructure.quote.Funding;
+import org.broadinstitute.sequel.infrastructure.quote.FundingLevel;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
-public class BSPSampleExportTest {
+public class BSPSampleExportTest extends ContainerTest {
 
     public static final String masterSample1 = "SM-1111";
     public static final String masterSample2 = "SM-2222";
 
     //private String aliquot1LSID = "broadinstitute.org:bsp.prod.sample:Test Aliquot 1111";
     //private String aliquot2LSID = "broadinstitute.org:bsp.prod.sample:Test Aliquot 2222";
+
+    @Inject
+    BSPConfig bspConfig;
+
+    @Inject
+    private Log log;
 
     @Test(groups = {DATABASE_FREE})
     public void testExport() throws Exception {
@@ -38,6 +57,11 @@ public class BSPSampleExportTest {
                 new WorkflowDescription("HybridSelection", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
 
+        String quoteString = "DNA385";
+        Quote billingQuote = new org.broadinstitute.sequel.entity.billing.Quote(quoteString,
+                new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteString,new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
+        projectPlan.setQuote(billingQuote);
+
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
         projectPlan.getStarters().add(startingSample);
 
@@ -49,6 +73,50 @@ public class BSPSampleExportTest {
 
     }
 
+    @Test(groups = {EXTERNAL_INTEGRATION} , enabled = true)
+    //@Test
+    public void testIssueBSPPlating() throws Exception {
+
+        log.info("running IssueBSPPlating test");
+
+        //BSPPlatingRequestService platingService = BSPPlatingRequestServiceProducer.qaInstance();
+        BSPPlatingRequestServiceProducer producer = new BSPPlatingRequestServiceProducer();
+        BSPPlatingRequestService platingService = producer.produce(new BSPPlatingRequestServiceStub(), new BSPPlatingRequestServiceImpl(bspConfig));
+
+        //BSPPlatingRequestService platingService =
+
+        BasicProject project = new BasicProject("BSPPlatingTestingProject", new JiraTicket());
+        // BasicProjectPlan
+        BasicProjectPlan projectPlan = new BasicProjectPlan(
+                project,
+                "ExomeExpressPlan1",
+                new WorkflowDescription("HybridSelection", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+
+        String quoteString = "DNA385";
+        Quote billingQuote = new Quote(quoteString,
+                new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteString,new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
+        projectPlan.setQuote(billingQuote);
+
+        StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
+        projectPlan.getStarters().add(startingSample);
+
+        StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
+        projectPlan.getStarters().add(startingSample2);
+
+        //System.out.println("Quote :" + projectPlan.getQuoteDTO().getId());
+        //System.out.println("Quote Alpha :" + projectPlan.getQuoteDTO().getAlphanumericId());
+        Map<StartingSample, AliquotParameters> starterMap = new HashMap<StartingSample, AliquotParameters>();
+        for (Starter starter : projectPlan.getStarters()) {
+            starterMap.put((StartingSample)starter, new AliquotParameters(projectPlan, 1.9f, 1.6f));
+        }
+
+        BSPSampleFactory bspSampleFactory = new BSPSampleFactory();
+        bspSampleFactory.issueBSPPlatingRequest(starterMap, null, 0, null, null, null, "BSP Plating Test", "Illumina"
+        , "sampath" , "ExomeExpress-LCSET-JIRA-111" , "BSP Plating from Exome Express");
+
+        //BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPPlatingExportEntityBuilder(projectPlan);
+        //bspExportEntityBuilder.runTest();
+    }
 
     public static class BSPPlatingExportEntityBuilder {
 
@@ -76,7 +144,7 @@ public class BSPSampleExportTest {
 
                 //TODO .. BSPAliquotWorkQueue & SampleSheet to be deprecated/deleted
                 // request an aliquot from bsp
-                AliquotParameters aliquotParameters = new AliquotParameters(projectPlan, 0.9f, 0.6f);
+                AliquotParameters aliquotParameters = new AliquotParameters(projectPlan, 1.9f, 1.6f);
 
                 //generate BSPPlatingRequests
                 BSPPlatingRequest bspPlatingRequest = new BSPPlatingRequest(startingStock, aliquotParameters);

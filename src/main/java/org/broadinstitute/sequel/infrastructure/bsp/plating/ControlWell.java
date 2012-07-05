@@ -1,71 +1,71 @@
 package org.broadinstitute.sequel.infrastructure.bsp.plating;
 
 public class ControlWell implements Plateable {
-    
+
     private Well well;
-    
+
     private Control control;
-    
-    private Double volume;
-    
-    private Double concentration;
-    
+
+    private Float volume;
+
+    private Float concentration;
+
     private String quoteID;
-    
-    
-    public ControlWell(Well well, Control.Positive control, Double volume, Double concentration, String quoteID) {
-        
+
+
+    public ControlWell(Well well, Control.Positive control, Float volume, Float concentration, String quoteID) {
+
         if (well == null)
             throw new RuntimeException("Well can not be null");
-        
+
         if (control == null)
             throw new RuntimeException("Control can not be null");
-        
+
         if (volume == null)
             throw new RuntimeException("Volume can not be null for a positive control well");
         if (volume < 1)
             throw new RuntimeException("Volume must be >= 1 uL");
-        
+
         if (concentration == null)
             throw new RuntimeException("Concentration can not be null for a positive control well");
         if (concentration <= 0)
             throw new RuntimeException("Concentration must be positive for a positive control well");
-        
+
         if (quoteID == null)
             throw new RuntimeException("Positive controls require a quote!");
-        
+
         this.well = well;
         this.control = control;
         this.volume = volume;
         this.concentration = concentration;
         this.setQuoteID(quoteID);
     }
-    
-    
+
+
     public ControlWell(Well well, Control.Negative control) {
-        
+
         if (well == null)
-            throw new RuntimeException("Well can not be null");        
-        
+            throw new RuntimeException("Well can not be null");
+
         if (control == null)
             throw new RuntimeException("Control can not be null");
-        
+
         this.well = well;
         this.control = control;
     }
 
-    
+
     /**
      * For "extra" positive or negative controls that BSP will plate to
      * unspecified wells.
-     * 
+     *
      * @param control
      */
     public ControlWell(Control control) {
-        
+
         if (control == null)
             throw new RuntimeException("Control can not be null");
-        
+
         this.control = control;
     }
 
@@ -90,22 +90,22 @@ public class ControlWell implements Plateable {
     }
 
 
-    public Double getVolume() {
+    public Float getVolume() {
         return volume;
     }
 
 
-    public void setVolume(Double volume) {
+    public void setVolume(Float volume) {
         this.volume = volume;
     }
 
 
-    public Double getConcentration() {
+    public Float getConcentration() {
         return concentration;
     }
 
 
-    public void setConcentration(Double concentration) {
+    public void setConcentration(Float concentration) {
         this.concentration = concentration;
     }
 

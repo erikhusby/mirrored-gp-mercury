@@ -26,12 +26,12 @@ public class Empty implements Plateable {
     }
 
     @Override
-    public Double getVolume() {
+    public Float getVolume() {
         return null;
     }
 
     @Override
-    public Double getConcentration() {
+    public Float getConcentration() {
         return null;
     }
 

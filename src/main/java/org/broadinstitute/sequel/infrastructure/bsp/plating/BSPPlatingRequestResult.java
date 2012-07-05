@@ -34,7 +34,7 @@ public class BSPPlatingRequestResult {
      */
     private List<String> infos;
 
-    
+
     public String getPlatingRequestReceipt() {
         return this.platingRequestReceipt;
     }

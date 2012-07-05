@@ -8,7 +8,7 @@ import java.util.NoSuchElementException;
 
 public class PlatingArray implements Iterable<PlatingArrayElement> {
 
-    private Plateable [] array = new Plateable[96];
+    private Plateable[] array = new Plateable[96];
 
     private Plateable.Order order;
 
@@ -29,7 +29,6 @@ public class PlatingArray implements Iterable<PlatingArrayElement> {
             if (plateable != null) count++;
         return count;
     }
-
 
 
     public PlatingArray(List<? extends Plateable> samples, List<? extends Plateable> controls, Plateable.Order order) {
@@ -98,11 +97,10 @@ public class PlatingArray implements Iterable<PlatingArrayElement> {
     }
 
 
-
     private class BSPPlatingWellIterator implements Iterator<PlatingArrayElement> {
 
         private Plateable[] plateables;
-        
+
         private Plateable.Order order;
 
         private int current = 0;

@@ -11,9 +11,9 @@ public interface Plateable {
 
     public String getPlatingQuote();
 
-    public Double getVolume();
+    public Float getVolume();
 
-    public Double getConcentration();
+    public Float getConcentration();
 
     public enum Order {
         ROW,
@@ -25,9 +25,9 @@ public interface Plateable {
 
         WELLS_96(8, 12),
         WELLS_384(16, 24);
-        
+
         private int rowCount;
-        
+
         private int columnCount;
 
         Size(int rowCount, int columnCount) {

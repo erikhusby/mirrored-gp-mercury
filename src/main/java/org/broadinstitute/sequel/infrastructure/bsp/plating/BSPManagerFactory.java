@@ -7,9 +7,9 @@ import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 public interface BSPManagerFactory {
 
     public WorkRequestManager createWorkRequestManager();
-    
+
     public ContainerManager createContainerManager();
-    
+
     public UserManager createUserManager();
-    
+
 }

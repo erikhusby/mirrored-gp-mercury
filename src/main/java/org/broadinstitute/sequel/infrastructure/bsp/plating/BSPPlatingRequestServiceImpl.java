@@ -9,16 +9,17 @@ import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.*;
 import org.broadinstitute.sequel.control.dao.project.JiraTicketDao;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPConnectionParameters;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.sequel.infrastructure.common.GroupingIterable;
+import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 
+import javax.inject.Inject;
 import java.text.DateFormat;
 import java.util.*;
-import javax.inject.Inject;
 
-
+@Impl
 public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
-        // , BSPPlatingRequestServiceFullySpecified {
+    // , BSPPlatingRequestServiceFullySpecified {
 
     // not sure these are really going to be constants; they should be true
     // for 96 tube Matrix racks but different size plates are certainly 
@@ -38,7 +39,10 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
     private BSPManagerFactory bspManagerFactory;
 
     @Inject
-    private BSPConnectionParameters bspconnPlatingRequestService;
+    private BSPConfig bspConfig;
+
+    @Inject
+    private Log log;
 
     @Inject
     private JiraTicketDao jiraTicketDao;
@@ -53,14 +57,19 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
             BSPPlatingRequestOptions.CancerProject.NO);
 
 
+    public BSPPlatingRequestServiceImpl(BSPConfig bspConfig) {
+        this.bspConfig = bspConfig;
+        log = LogFactory.getLog(BSPPlatingRequestServiceImpl.class);
+    }
+
     @Override
     public BSPPlatingRequestResult createPlatingRequest(BSPPlatingRequestOptions options, String platformPMLogin,
-                                                        String platingRequestName, String squidWorkRequestId,
+                                                        String platingRequestName,
                                                         List<SeqWorkRequestAliquot> seqAliquots,
                                                         List<ControlWell> controlWells, String comments,
                                                         String seqTechnology, String humanReadableBarcode
     ) {
-        return doPlatingRequest(null, options, platformPMLogin, platingRequestName, squidWorkRequestId, seqAliquots,
+        return doPlatingRequest(null, options, platformPMLogin, platingRequestName, seqAliquots,
                 controlWells, comments, seqTechnology, humanReadableBarcode
         );
     }
@@ -68,7 +77,7 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
     @Override
     public BSPPlatingRequestResult updatePlatingRequest(String platingRequestReceipt, BSPPlatingRequestOptions options,
                                                         String login, List<SeqWorkRequestAliquot> aliquots, List<ControlWell> controlWells) {
-        return doPlatingRequest(platingRequestReceipt, options, login, null, null, aliquots, controlWells, null, null, null);
+        return doPlatingRequest(platingRequestReceipt, options, login, null, aliquots, controlWells, null, null, null);
     }
 
     /**
@@ -153,7 +162,7 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
 
 
     private BSPPlatingRequestResult doPlatingRequest(String bspPlatingBarcode, BSPPlatingRequestOptions options,
-                                                     String login, String platingRequestName, String squidWorkRequestId,
+                                                     String login, String platingRequestName,
                                                      List<SeqWorkRequestAliquot> seqAliquots, List<ControlWell> controlWells,
                                                      String comments, String seqTechnology, String humanReadableBarcode) {
 
@@ -241,10 +250,8 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
         }
         workRequest.setWorkRequestName(workRequestName);
 
-        if (squidWorkRequestId != null) {
-            workRequest.setExternalProjectId(squidWorkRequestId);
-        }
-
+        //TODO .. set something into this ??
+        //workRequest.setExternalProjectId(squidWorkRequestId);
 
         // Trying to leave PI null for now. Per 2011-08-17 meeting PIs can be
         // "various" for the samples.
@@ -295,8 +302,8 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
                         // in space before controls at the end of a plate also require specified
                         // positions.
                         plateable.getSpecifiedWell() == null ? null : plateable.getSpecifiedWell().toString(),
-                        plateable.getVolume(),
-                        plateable.getConcentration());
+                        plateable.getVolume().doubleValue(),
+                        plateable.getConcentration().doubleValue());
 
 
                 platingInfo.add(samplePlateInfo);
@@ -402,16 +409,6 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
         return bspGSPPM.getUsername();
     }
 
-
-    @Override
-    public BSPPlatingRequestResult createPlatingRequest(String login, String platingRequestName, String squidWorkRequestName,
-                                                        List<SeqWorkRequestAliquot> aliquots,
-                                                        List<ControlWell> controlWells, String comments,
-                                                        String seqTechnology, String humanReadableBarcode) {
-        return createPlatingRequest(defaultPlatingRequestOptions, login, platingRequestName, squidWorkRequestName, aliquots,
-                controlWells, comments, seqTechnology, humanReadableBarcode);
-    }
-
     private void checkWorkRequestResponse(WorkRequestResponse workRequestResponse) {
         if (workRequestResponse == null)
             throw new RuntimeException("Null BSP Plating work request response!");
@@ -474,8 +471,8 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
     @Override
     public String generateLinkToBSPPlatingRequestPage(String platingRequestBarcode) {
         return String.format("http://%s:%d/BSP/collection/find.action?barcode=%s",
-                bspconnPlatingRequestService.getHostname(),
-                bspconnPlatingRequestService.getPort(),
+                bspConfig.getHost(),
+                bspConfig.getPort(),
                 platingRequestBarcode);
     }
 

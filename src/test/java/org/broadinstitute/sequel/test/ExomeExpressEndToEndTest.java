@@ -67,7 +67,7 @@ public class ExomeExpressEndToEndTest {
     private final long BAIT_ID = 5;
     private final String BAIT_DESIGN_NAME = "interesting genes";
 
-
+    private final String BILLING_QUOTE = "DNA375";
 
 
     @Test(groups = {DATABASE_FREE}, enabled = true)

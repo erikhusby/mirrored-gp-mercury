@@ -18,29 +18,8 @@ public interface BSPPlatingRequestService {
     /**
      * Create a brand new BSP Plating Request and attempt to submit it.
      *
-     * @param login                login for the Platform PM issuing the plating request
-     * @param platingRequestName   unique name to set into BSP plating request .
-     * @param aliquots             List of aliquots desired, stored wherever BSP thinks best on
-     *                             the output plate
-     * @param controlWells         List of controls and the Wells they should inhabit on
-     *                             the output plate
-     * @param comments
-     * @param seqTechnology
-     * @param humanReadableBarcode
-     * @return plating result
-     */
-    BSPPlatingRequestResult createPlatingRequest(
-            String login,
-            String platingRequestName,
-            String squidWorkRequestName,
-            List<SeqWorkRequestAliquot> aliquots,
-            List<ControlWell> controlWells, String comments, String seqTechnology, String humanReadableBarcode);
-
-    /**
-     * Create a brand new BSP Plating Request and attempt to submit it.
-     *
-     * @param options            Options to the plating service (user-selectable and/or
-     *                           programmatically driven)
+     * @param options              Options to the plating service (user-selectable and/or
+     *                             programmatically driven)
      * @param login                login for the Platform PM issuing the plating request
      * @param platingRequestName   unique name to set into BSP plating request .
      * @param aliquots             List of aliquots desired, stored wherever BSP thinks best on
@@ -56,7 +35,6 @@ public interface BSPPlatingRequestService {
             BSPPlatingRequestOptions options,
             String login,
             String platingRequestName,
-            String squidWorkRequestName,
             List<SeqWorkRequestAliquot> aliquots,
             List<ControlWell> controlWells, String comments, String seqTechnology, String humanReadableBarcode);
 

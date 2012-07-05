@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class Well {
-    
+
     private char row;
     private int col;
     private Plateable.Size size;
@@ -26,10 +26,9 @@ public class Well {
         if (order == Plateable.Order.ROW) {
             row = (char) ('A' + index / size.getColumnCount());
             col = 1 + (index % size.getColumnCount());
-        }
-        else {
+        } else {
             row = (char) ('A' + index % size.getRowCount());
-            col =  1 + index / size.getRowCount();
+            col = 1 + index / size.getRowCount();
 
         }
 
@@ -71,12 +70,11 @@ public class Well {
     public int getIndex(Plateable.Order order) {
 
         int ret;
-        
+
         if (order == Plateable.Order.ROW) {
             ret = (row - 'A') * size.getColumnCount();
             ret += col - 1;
-        }
-        else {
+        } else {
             ret = (col - 1) * size.getRowCount();
             ret += row - 'A';
         }
