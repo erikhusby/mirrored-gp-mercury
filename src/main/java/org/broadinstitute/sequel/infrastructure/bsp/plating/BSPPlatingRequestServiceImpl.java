@@ -19,6 +19,7 @@ import java.util.*;
 
 @Impl
 public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
+
     // , BSPPlatingRequestServiceFullySpecified {
 
     // not sure these are really going to be constants; they should be true
@@ -29,9 +30,6 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
     private final static int PLATE_COL_COUNT = 12;
 
     private final static int PLATE_WELL_COUNT = PLATE_ROW_COUNT * PLATE_COL_COUNT;
-
-
-    private static final Log _logger = LogFactory.getLog(BSPPlatingRequestServiceImpl.class);
 
     private static final String TECHNOLOGY_SOLEXA = "Solexa";
 
@@ -113,7 +111,7 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
                     bspWorkRequest.getWorkRequestName(),
                     bspWorkRequest.getErrors().toString());
 
-            _logger.warn(message);
+            log.warn(message);
 
             return result;
         }
@@ -123,7 +121,7 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
                 wrBarcode,
                 bspWorkRequest.getWorkRequestName());
 
-        _logger.info(message);
+        log.info(message);
 
         // if no errors, proceed with submission
         WorkRequestResponse submissionResponse = bspWorkRequestManager.submit(result.getPlatingRequestReceipt());
@@ -136,11 +134,11 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
 
             final String msg = String.format("Error submitting BSP Plating Work Request '%s'", wrBarcode);
 
-            _logger.error(msg);
+            log.error(msg);
             throw new RuntimeException(msg);
         }
 
-        // _logger.warn("Skipping submission response check due to bogus BSP errors!");
+        // log.warn("Skipping submission response check due to bogus BSP errors!");
 
         if (!submissionResponse.isSuccess()) {
 
@@ -149,12 +147,12 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
                     wrBarcode,
                     submissionResponse.getErrors().toString());
 
-            _logger.error(msg);
+            log.error(msg);
             throw new RuntimeException(submissionResponse.getErrors().toString());
         }
 
         // success!
-        _logger.info("Submission successful!");
+        log.info("Submission successful!");
 
         result.setPlatingRequestSubmitted(true);
         return result;
@@ -333,13 +331,13 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
 
         if (response == null) {
             message = "null response from PlatingRequestManager trying to create/update plating work request " + workRequestName;
-            _logger.error(message);
+            log.error(message);
             throw new RuntimeException(message);
         }
 
         if (!response.isSuccess()) {
             message = String.format("Errors trying to create/update plating work request %s: %s", workRequestName, response.getErrors().toString());
-            _logger.error(message);
+            log.error(message);
             throw new RuntimeException(message);
         }
 
@@ -366,7 +364,7 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
 
         if (bspUser == null || bspUser.getUsername() == null) {
             // this is not as big of a deal as a missing GSP PM since the GSP PM is the Plating WR owner
-            _logger.warn("Could not find BSP User for GSP PM login '" + login + "'");
+            log.warn("Could not find BSP User for GSP PM login '" + login + "'");
             return id;
         }
 

@@ -4,9 +4,12 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueueResponse;
 
+import javax.inject.Inject;
+
 public class BSPPlatingResponse implements LabWorkQueueResponse {
 
-    private static Log gLog = LogFactory.getLog(BSPPlatingResponse.class);
+    //@Inject
+    //private Log log;
 
     private boolean wasRejected;
     

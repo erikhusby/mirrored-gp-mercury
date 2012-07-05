@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.control.dao.bsp;
 
+import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.boundary.GSSRSample;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
 import org.broadinstitute.sequel.boundary.RequestSampleSet;
@@ -34,6 +35,9 @@ public class BSPSampleFactory {
 
     @Inject
     private BSPPlatingRequestService bspPlatingRequestService;
+
+    //@Inject
+    //private Log log;
 
     private static final Float WATER_CONTROL_CONCENTARTION = 0F;
 
@@ -164,8 +168,8 @@ public class BSPSampleFactory {
                                        String posControlQuote, String negControlQuote,
                                        String platingRequestName, String technology, String login, String label, String comments) {
 
-        System.out.println("--In Issue BSP PR test ");
-        System.out.println("--sample count :  " + starterMap.keySet().size());
+        //log.info("--In Issue BSP PR test ");
+        //log.info("--sample count :  " + starterMap.keySet().size());
         //custom name
         //label value
         List<SeqWorkRequestAliquot> bspStocks = new ArrayList<SeqWorkRequestAliquot>();
@@ -239,6 +243,6 @@ public class BSPSampleFactory {
         BSPPlatingRequestResult platingResult = bspPlatingRequestService.createPlatingRequest(defaultOptions, login, platingRequestName, bspStocks, controls,
                 comments, technology, label);
 
-        System.out.println("--BSP PR result :  " + platingResult.getErrors().size());
+        //log.info("--BSP PR result :  " + platingResult.getErrors().size());
     }
 }
