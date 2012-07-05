@@ -27,7 +27,7 @@ public class QuoteConfigProducer {
                 return new QuoteConfig(
                         RICH_LOGIN,
                         RICH_PASSWORD,
-                        "https://broadinstitute.org"
+                        "http://quoteqa:8080"
                 );
 
 
@@ -36,7 +36,7 @@ public class QuoteConfigProducer {
                 return new QuoteConfig(
                         RICH_LOGIN,
                         RICH_PASSWORD,
-                        "http://quoteqa:8080"
+                        "https://broadinstitute.org"
                 );
 
             default:

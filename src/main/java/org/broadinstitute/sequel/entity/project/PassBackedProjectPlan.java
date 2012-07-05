@@ -238,6 +238,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
         Quote quote = getQuoteDTO(quoteService);
         PriceItem priceItem = getWorkflowDescription().getPriceItem();
         String jiraUrl = labBatch.getJiraTicket().getBrowserUrl();
-        String workItemId = quoteService.registerNewWork(quote,priceItem,1.01d,jiraUrl,null,null);
+        String workItemId = quoteService.registerNewWork(quote,priceItem,1.0d,jiraUrl,null,null);
     }
 }
