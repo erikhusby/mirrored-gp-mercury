@@ -162,12 +162,16 @@ public class PassServiceImpl extends SquidWebServiceClient<SquidTopicPortype> im
     }
 
 
+
+/* R3_725
+
     @Override
     public void abandonPass(@WebParam(name = "passNumber", partName = "passNumber") String passNumber) {
 
         squidCall().abandonPass(passNumber);
 
     }
+*/
 
 
 

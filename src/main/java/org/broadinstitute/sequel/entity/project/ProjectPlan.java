@@ -4,6 +4,9 @@ import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.quote.Quote;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
 import javax.persistence.Transient;
 import java.util.Collection;
@@ -28,7 +31,7 @@ public abstract class ProjectPlan {
 
     public abstract Collection<PoolGroup> getPoolGroups();
 
-    public abstract Quote getQuoteDTO();
+    public abstract Quote getQuoteDTO(QuoteService quoteService) throws QuoteServerException, QuoteNotFoundException;
 
     public abstract Collection<Starter> getStarters();
 
@@ -63,7 +66,7 @@ public abstract class ProjectPlan {
      * @param starter
      * @param labBatch
      */
-    public abstract void doBilling(Starter starter,LabBatch labBatch);
+    public abstract void doBilling(Starter starter,LabBatch labBatch,QuoteService quoteService);
 
     /**
      * getLaneCoverage is a helper method which allows a user to find the specified lane coverage (If any) in the

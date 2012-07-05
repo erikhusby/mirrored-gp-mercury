@@ -5,7 +5,6 @@ import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
 import org.broadinstitute.sequel.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.entity.OrmUtil;
-import org.broadinstitute.sequel.entity.billing.PerSampleBillableFactory;
 import org.broadinstitute.sequel.entity.labevent.*;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
@@ -23,6 +22,7 @@ import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.quote.Billable;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -48,6 +48,9 @@ public class LabEventHandler {
 
     @Inject
     private LabEventDao labEventDao;
+
+    @Inject
+    QuoteService quoteService;
 
     public LabEventHandler() {}
 
@@ -154,13 +157,6 @@ public class LabEventHandler {
             // and the billing transaction isolated properly: http://docs.jboss.org/weld/reference/1.1.0.Final/en-US/html/events.html#d0e4075
             // only bill if the persistence succeeds on the sequel side.
 
-            //Billable billable = labEvent.getBillable();
-            Billable billable = PerSampleBillableFactory.createBillable(labEvent);
-            if (billable != null) {
-                if (billableEvents != null) {
-                    billableEvents.fire(billable);
-                }
-            }
 
         }
         catch(InvalidMolecularStateException e) {

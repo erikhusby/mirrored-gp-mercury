@@ -1,16 +1,14 @@
 package org.broadinstitute.sequel.integration.jira;
 
 
-import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
-import org.broadinstitute.sequel.infrastructure.jira.JiraServiceImpl;
-import org.broadinstitute.sequel.infrastructure.jira.TestLabObsJira;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.sequel.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.sequel.infrastructure.jira.issue.Visibility;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -27,7 +25,7 @@ public class JiraServiceTest {
 
     @BeforeMethod
     public void setUp() {
-        service = new JiraServiceImpl(new TestLabObsJira());
+        service = JiraServiceProducer.testInstance();
     }
 
     public void testCreation() {

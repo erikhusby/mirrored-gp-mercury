@@ -26,15 +26,15 @@ public class QuoteServiceTest {
 
     /**
      * If this test fails because the quote has been used up, 
-     * visit the website {@link QAQuoteConnectionParams#QA_HOST},
-     * login with the credentials, run the {@link QuoteConnectionParameters#GET_ALL_SEQUENCING_QUOTES_URL},
+     * visit the QA quote server,
+     * login with the credentials, run the ALL_SEQUENCING_QUOTES URL,
      * find a quote that doesn't expire for a while, and change {@link #quote} in
      * @{link #setupLargeQuoteAndPriceItem}.
      * @throws Exception
      */
     @Test(groups = {DATABASE_FREE})
     public void test_get_all_price_items() throws Exception {
-        QuoteService service = new MockQuoteService();
+        QuoteService service = new QuoteServiceStub();
         PriceList priceList = service.getAllPriceItems();
         Assert.assertFalse(priceList.getPriceList().isEmpty());
 
@@ -126,7 +126,7 @@ public class QuoteServiceTest {
 
     @Test(groups = {DATABASE_FREE})
     public void test_get_a_quote() throws Exception {
-        QuoteService service = new MockQuoteService();
+        QuoteService service = new QuoteServiceStub();
         Quote quote = service.getQuoteFromQuoteServer("DNA4AA");
         Assert.assertNotNull(quote);
         Assert.assertEquals("Regev Zebrafish RNASeq 2-6-12", quote.getName());
@@ -147,7 +147,7 @@ public class QuoteServiceTest {
 
         boolean caught = false;
 
-        QuoteService service = new MockQuoteService();
+        QuoteService service = new QuoteServiceStub();
         Quotes quotes = service.getAllSequencingPlatformQuotes();
         Assert.assertNotNull(quotes);
         Assert.assertFalse(quotes.getQuotes().isEmpty());

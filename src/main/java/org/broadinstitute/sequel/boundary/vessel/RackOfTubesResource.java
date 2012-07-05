@@ -11,7 +11,7 @@ import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
-import org.broadinstitute.sequel.infrastructure.jira.DummyJiraService;
+import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 
 import javax.ejb.Stateless;
@@ -43,7 +43,7 @@ public class RackOfTubesResource {
         if (rackBean.lcSet != null) {
             // todo jmt fix workflow
             projectPlan = new BasicProjectPlan(new BasicProject(rackBean.lcSet,
-                    new JiraTicket(new DummyJiraService(), rackBean.lcSet, rackBean.lcSet)), rackBean.lcSet,
+                    new JiraTicket(new JiraServiceStub(), rackBean.lcSet, rackBean.lcSet)), rackBean.lcSet,
                     new WorkflowDescription("", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         }
 

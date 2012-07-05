@@ -3,13 +3,12 @@ package org.broadinstitute.sequel.entity.project;
 import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
-import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingTechnology;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.jira.JiraConnectionParameters;
+import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 
@@ -39,9 +38,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
     // todo arz pull out injected services and have constructors
     // take in pre-fetched DTOs (Quote, BSPStartingSample)
 
-    @Inject
-    private QuoteService quoteService;
-
     @Inject BSPSampleDataFetcher bspDataFetcher;
 
     private WorkflowDescription workflowDescription;
@@ -57,19 +53,18 @@ public class PassBackedProjectPlan extends ProjectPlan {
      */
     public PassBackedProjectPlan(AbstractPass pass,
                                 BSPSampleDataFetcher bspDataFetcher,
-                                QuoteService quoteService,
-                                BaitSetListResult baitsCache) {
+                                BaitSetListResult baitsCache,
+                                PriceItem priceItem) {
         if (!(pass instanceof DirectedPass)) {
             throw new RuntimeException("SequeL can only deal with HS passes");
         }
-        this.quoteService = quoteService;
         this.bspDataFetcher = bspDataFetcher;
         this.pass = pass;
 
         initSamples();
         initProject();
         initBaits((DirectedPass) pass, baitsCache);
-        initWorkflow();
+        initWorkflow(priceItem);
         initSequencePlanDetails();
 
         this.project.addProjectPlan(this);
@@ -88,10 +83,22 @@ public class PassBackedProjectPlan extends ProjectPlan {
 
     }
 
-    private void initWorkflow() {
+    private void initWorkflow(PriceItem priceItem) {
         if (pass instanceof  DirectedPass) {
             DirectedPass hsPass = (DirectedPass)pass;
-            workflowDescription =  new WorkflowDescription("Hybrid Selection",null, null);
+
+            // MLC removing price items until they become available in Squid R3_725.
+            // when that happens, we don't pass in a PriceItem from the constructor, we just grab it from the pass
+            /*
+            org.broadinstitute.sequel.boundary.PriceItem passPriceItem = pass.getFundingInformation().getGspPriceItem();
+            PriceItem sequelPriceItem = new PriceItem(passPriceItem.getCategoryName(),
+                    passPriceItem.getId(),
+                    passPriceItem.getName(),
+                    passPriceItem.getPrice(),
+                    passPriceItem.getUnits(),
+                    passPriceItem.getPlatform());
+                    */
+            workflowDescription =  new WorkflowDescription("Hybrid Selection",priceItem, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         }
     }
 
@@ -148,7 +155,7 @@ public class PassBackedProjectPlan extends ProjectPlan {
     }
 
     @Override
-    public Quote getQuoteDTO() {
+    public Quote getQuoteDTO(QuoteService quoteService) {
         Quote quote = null;
         try {
             quote = quoteService.getQuoteFromQuoteServer(pass.getFundingInformation().getSequencingQuoteID());
@@ -227,11 +234,13 @@ public class PassBackedProjectPlan extends ProjectPlan {
     }
 
     @Override
-    public void doBilling(Starter starter,LabBatch labBatch) {
+    public void doBilling(Starter starter,LabBatch labBatch,QuoteService quoteService) {
         // todo arz when database enabled, make double billing impossible
-        Quote quote = getQuoteDTO();
+        Quote quote = getQuoteDTO(quoteService);
         PriceItem priceItem = getWorkflowDescription().getPriceItem();
         String jiraUrl = labBatch.getJiraTicket().getBrowserUrl();
-        quoteService.registerNewWork(quote,priceItem,1.0d,jiraUrl,null,null);
+        // todo instead of linking back to jira, link back to sequel app that shows relationship
+        // between the price item and the sample.
+        String workItemId = quoteService.registerNewWork(quote,priceItem,1.0d,jiraUrl,null,null);
     }
 }
