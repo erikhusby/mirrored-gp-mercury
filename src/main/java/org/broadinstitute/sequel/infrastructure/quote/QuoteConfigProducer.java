@@ -21,7 +21,17 @@ public class QuoteConfigProducer {
         switch ( deployment ) {
 
             case DEV:
+                return new QuoteConfig(
+                        RICH_LOGIN,
+                        RICH_PASSWORD,
+                        "http://quoteqa:8080"
+                );
             case TEST:
+                return new QuoteConfig(
+                        RICH_LOGIN,
+                        RICH_PASSWORD,
+                        "http://quoteqa:8080"
+                );
             case QA:
 
                 return new QuoteConfig(
@@ -32,12 +42,7 @@ public class QuoteConfigProducer {
 
 
             case PROD:
-
-                return new QuoteConfig(
-                        RICH_LOGIN,
-                        RICH_PASSWORD,
-                        "https://broadinstitute.org"
-                );
+                throw new RuntimeException("We're not ready for production");
 
             default:
 

@@ -54,7 +54,8 @@ public class PassBackedProjectPlan extends ProjectPlan {
     public PassBackedProjectPlan(AbstractPass pass,
                                 BSPSampleDataFetcher bspDataFetcher,
                                 QuoteService quoteService,
-                                BaitSetListResult baitsCache) {
+                                BaitSetListResult baitsCache,
+                                PriceItem priceItem) {
         if (!(pass instanceof DirectedPass)) {
             throw new RuntimeException("SequeL can only deal with HS passes");
         }
@@ -64,7 +65,7 @@ public class PassBackedProjectPlan extends ProjectPlan {
         initSamples();
         initProject();
         initBaits((DirectedPass) pass, baitsCache);
-        initWorkflow();
+        initWorkflow(priceItem);
         initSequencePlanDetails();
 
         this.project.addProjectPlan(this);
@@ -83,11 +84,12 @@ public class PassBackedProjectPlan extends ProjectPlan {
 
     }
 
-    private void initWorkflow() {
+    private void initWorkflow(PriceItem priceItem) {
         if (pass instanceof  DirectedPass) {
             DirectedPass hsPass = (DirectedPass)pass;
 
-            // MLC removing price items until they become available in Squid R3_725
+            // MLC removing price items until they become available in Squid R3_725.
+            // when that happens, we don't pass in a PriceItem from the constructor, we just grab it from the pass
             /*
             org.broadinstitute.sequel.boundary.PriceItem passPriceItem = pass.getFundingInformation().getGspPriceItem();
             PriceItem sequelPriceItem = new PriceItem(passPriceItem.getCategoryName(),
@@ -97,7 +99,7 @@ public class PassBackedProjectPlan extends ProjectPlan {
                     passPriceItem.getUnits(),
                     passPriceItem.getPlatform());
                     */
-            workflowDescription =  new WorkflowDescription("Hybrid Selection",null /* passPriceItem*/, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+            workflowDescription =  new WorkflowDescription("Hybrid Selection",priceItem, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         }
     }
 
@@ -238,6 +240,8 @@ public class PassBackedProjectPlan extends ProjectPlan {
         Quote quote = getQuoteDTO(quoteService);
         PriceItem priceItem = getWorkflowDescription().getPriceItem();
         String jiraUrl = labBatch.getJiraTicket().getBrowserUrl();
+        // todo instead of linking back to jira, link back to sequel app that shows relationship
+        // between the price item and the sample.
         String workItemId = quoteService.registerNewWork(quote,priceItem,1.0d,jiraUrl,null,null);
     }
 }

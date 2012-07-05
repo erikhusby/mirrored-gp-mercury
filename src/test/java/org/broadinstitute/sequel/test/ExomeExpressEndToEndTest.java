@@ -128,7 +128,10 @@ public class ExomeExpressEndToEndTest {
             baitSet.setId(BAIT_ID);
             baitsCache.getBaitSetList().add(baitSet);
 
-            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new QuoteServiceStub(),baitsCache);
+            // todo when R3_725 comes out, revert to looking this up via the pass
+            PriceItem priceItem = new PriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","Bananas","DNA Sequencing");
+
+            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,new QuoteServiceStub(),baitsCache,priceItem);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
             projectPlan.getWorkflowDescription().initFromFile("HybridSelectionVisualParadigm.xml");
 

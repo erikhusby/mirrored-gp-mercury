@@ -19,16 +19,28 @@ public class JiraConfigProducer {
         switch ( deployment ) {
 
             case DEV:
-            case TEST:
-            case QA:
-            case PROD:
-
                 return new JiraConfig(
                         "vsquid00.broadinstitute.org",
                         8020,
                         "squid",
                         "squid"
                 );
+            case TEST:
+                return new JiraConfig(
+                        "vsquid00.broadinstitute.org",
+                        8020,
+                        "squid",
+                        "squid"
+                );
+            case QA:
+                return new JiraConfig(
+                        "vsquid00.broadinstitute.org",
+                        8020,
+                        "squid",
+                        "squid"
+                );
+            case PROD:
+                throw new RuntimeException("We're not ready for production");
 
 
             default:

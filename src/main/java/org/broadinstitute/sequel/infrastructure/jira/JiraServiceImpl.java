@@ -152,6 +152,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     @Override
     public String createTicketUrl(String jiraTicketName) {
-        return jiraConfig.getHost() + ":" + jiraConfig.getPort() + "/browser/" + jiraTicketName;
+        return "http://" + jiraConfig.getHost() + ":" + jiraConfig.getPort() + "/browse/" + jiraTicketName;
     }
 }
