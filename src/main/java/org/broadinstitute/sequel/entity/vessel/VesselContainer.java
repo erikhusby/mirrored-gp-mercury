@@ -53,7 +53,8 @@ public class VesselContainer<T extends LabVessel> {
     @MapKeyEnumerated(EnumType.STRING)
     @MapKeyColumn(name = "mapkey")
     // todo jmt get Hibernate to sort this
-    private final Map<VesselPosition, T> mapPositionToVessel = new LinkedHashMap<VesselPosition, T>();
+    // the map value has to be LabVessel, not T, because JPAMetaModelEntityProcessor can't handle type parameters
+    private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<VesselPosition, LabVessel>();
 
     @OneToMany(mappedBy = "sourceVessel")
     private Set<SectionTransfer> sectionTransfersFrom = new HashSet<SectionTransfer>();
@@ -79,7 +80,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public T getVesselAtPosition(VesselPosition position) {
-        return this.mapPositionToVessel.get(position);
+        return (T) this.mapPositionToVessel.get(position);
     }
 
     private static void applyProjectPlanOverrideIfPresent(LabEvent event,
@@ -365,7 +366,7 @@ public class VesselContainer<T extends LabVessel> {
 
     public VesselPosition getPositionOfVessel(LabVessel vesselAtPosition) {
         // todo jmt map in both directions
-        for (Map.Entry<VesselPosition, T> stringTEntry : mapPositionToVessel.entrySet()) {
+        for (Map.Entry<VesselPosition, LabVessel> stringTEntry : mapPositionToVessel.entrySet()) {
             if(stringTEntry.getValue().equals(vesselAtPosition)) {
                 return stringTEntry.getKey();
             }
@@ -404,7 +405,7 @@ public class VesselContainer<T extends LabVessel> {
      */
     @Transient
     public Collection<T> getContainedVessels() {
-        return this.mapPositionToVessel.values();
+        return (Collection<T>) this.mapPositionToVessel.values();
     }
 
     public void addContainedVessel(T child, VesselPosition position) {
@@ -418,7 +419,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     Map<VesselPosition, T> getMapPositionToVessel() {
-        return mapPositionToVessel;
+        return (Map<VesselPosition, T>) mapPositionToVessel;
     }
 
     @Transient
