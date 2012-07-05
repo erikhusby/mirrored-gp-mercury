@@ -364,18 +364,18 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
         try {
             WebResource resource = getJerseyClient().resource(url);
             platforms = resource.accept(MediaType.APPLICATION_XML).get(Platforms.class);
-        } catch(UniformInterfaceException e) {
+        } catch (UniformInterfaceException e) {
             String errMsg = "Could not find any GAP Platforms";
-            logger.error( errMsg + " at " + url );
-            throw new RuntimeException( errMsg , e);
-        } catch(ClientHandlerException e) {
+            logger.error(errMsg + " at " + url );
+            throw new RuntimeException(errMsg , e);
+        } catch (ClientHandlerException e) {
             String errMsg = "Could not communicate with GAP server to retrieve GAP Platforms";
-            logger.error( errMsg + " at " + url );
-            throw new RuntimeException( errMsg , e );
+            logger.error(errMsg + " at " + url);
+            throw new RuntimeException(errMsg , e);
         } catch (Exception exp) {
             String errMsg = "Exception occurred trying to retrieve to retrieve GAP Platforms";
             logger.error(errMsg + " at " + url , exp);
-            throw new RuntimeException( errMsg , exp);
+            throw new RuntimeException(errMsg , exp);
         }
 
         return platforms;
