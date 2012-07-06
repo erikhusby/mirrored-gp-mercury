@@ -35,9 +35,7 @@ public abstract class StartingSample implements Starter {
 
     private  String sampleName;
 
-    //@ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    // todo arz: I'm undoing a lot of persistence stuff here, we should come back to this soon.
-    @Transient
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private ProjectPlan projectPlan;
 
     // todo arz hibernate-ify
