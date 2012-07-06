@@ -18,6 +18,7 @@ import org.broadinstitute.sequel.infrastructure.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.bsp.plating.*;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
 import javax.inject.Inject;
 import java.util.*;
@@ -35,6 +36,9 @@ public class BSPSampleFactory {
 
     @Inject
     private BSPPlatingRequestService bspPlatingRequestService;
+
+    @Inject
+    private QuoteService quoteService;
 
     //@Inject
     //private Log log;
@@ -166,7 +170,9 @@ public class BSPSampleFactory {
     public void issueBSPPlatingRequest(Map<StartingSample, AliquotParameters> starterMap,
                                        Map<String, AliquotParameters> posControlMap, int negcontrolCount, Float negControlVolume,
                                        String posControlQuote, String negControlQuote,
-                                       String platingRequestName, String technology, String login, String label, String comments) {
+                                       String platingRequestName, String technology, String login, String label, String comments)
+    throws Exception {
+
 
         //log.info("--In Issue BSP PR test ");
         //log.info("--sample count :  " + starterMap.keySet().size());
@@ -185,7 +191,7 @@ public class BSPSampleFactory {
             StartingSample starter = starterIterator.next();
             AliquotParameters parameters = starterMap.get(starter);
             SeqWorkRequestAliquot aliquot = new SeqWorkRequestAliquot(starter.getSampleName(), parameters.getTargetVolume(),
-                    parameters.getTargetConcentration(), parameters.getProjectPlan().getQuoteDTO().getAlphanumericId());
+                    parameters.getTargetConcentration(), parameters.getProjectPlan().getQuoteDTO(quoteService).getAlphanumericId());
             bspStocks.add(aliquot);
             platingRequest = new BSPPlatingRequest(starter.getSampleName(), parameters);
             bspPlatingRequests.add(platingRequest);

@@ -10,7 +10,7 @@ import org.broadinstitute.bsp.client.workrequest.*;
 import org.broadinstitute.sequel.control.dao.project.JiraTicketDao;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.sequel.infrastructure.common.GroupingIterable;
+//import org.broadinstitute.sequel.infrastructure.common.GroupingIterable;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 
 import javax.inject.Inject;
@@ -39,12 +39,13 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
     @Inject
     private BSPConfig bspConfig;
 
-    @Inject
-    private Log log;
+    //@Inject
+    //private Log log;
 
     @Inject
     private JiraTicketDao jiraTicketDao;
 
+    private static Log log = LogFactory.getLog(BSPPlatingRequestServiceImpl.class);
 
     private BSPPlatingRequestOptions defaultPlatingRequestOptions = new BSPPlatingRequestOptions(
             BSPPlatingRequestOptions.HighConcentrationOption.VOLUME_FIRST,
@@ -57,7 +58,7 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
 
     public BSPPlatingRequestServiceImpl(BSPConfig bspConfig) {
         this.bspConfig = bspConfig;
-        log = LogFactory.getLog(BSPPlatingRequestServiceImpl.class);
+        //log = LogFactory.getLog(BSPPlatingRequestServiceImpl.class);
     }
 
     @Override
@@ -67,6 +68,16 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
                                                         List<ControlWell> controlWells, String comments,
                                                         String seqTechnology, String humanReadableBarcode
     ) {
+        if (seqAliquots == null) {
+            throw new IllegalArgumentException("No Stocks passed for plating");
+        }
+
+        int totalStockCount = seqAliquots.size() + (controlWells == null ? 0 : controlWells.size());
+
+        if (totalStockCount >  96) {
+            throw new IllegalArgumentException("Total Stocks & controls cannot be greater than 96 for plating ");
+        }
+
         return doPlatingRequest(null, options, platformPMLogin, platingRequestName, seqAliquots,
                 controlWells, comments, seqTechnology, humanReadableBarcode
         );
@@ -164,11 +175,11 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
                                                      List<SeqWorkRequestAliquot> seqAliquots, List<ControlWell> controlWells,
                                                      String comments, String seqTechnology, String humanReadableBarcode) {
 
+
         final int SAMPLES_PER_PLATE = PLATE_WELL_COUNT - (controlWells == null ? 0 : controlWells.size());
 
-        GroupingIterable<SeqWorkRequestAliquot> platesWorthGroupingsOfAliquots =
-                new GroupingIterable<SeqWorkRequestAliquot>(SAMPLES_PER_PLATE, seqAliquots);
-
+        //GroupingIterable<SeqWorkRequestAliquot> platesWorthGroupingsOfAliquots =
+        //        new GroupingIterable<SeqWorkRequestAliquot>(SAMPLES_PER_PLATE, seqAliquots);
 
         WorkRequestManager bspWorkRequestManager = bspManagerFactory.createWorkRequestManager();
 
@@ -203,7 +214,8 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
         workRequest.setAllowLowConcentration(false);
 
         // the number of plates will be equal to the number of plate's worth groupings
-        workRequest.setExpectedPlateCount((long) platesWorthGroupingsOfAliquots.size());
+        //workRequest.setExpectedPlateCount((long) platesWorthGroupingsOfAliquots.size());
+        workRequest.setExpectedPlateCount(1L);
 
         String template = "Issued automatically from Squid by %s on %s";
         DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.MEDIUM);
@@ -276,7 +288,8 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
         workRequest.setRequiredConcentration(33.0D);
         workRequest.setRequiredVolume(44.0D);
 
-        for (List<SeqWorkRequestAliquot> platesWorthOfAliquots : platesWorthGroupingsOfAliquots) {
+        //for (SeqWorkRequestAliquot stock : seqAliquots) {
+        //for (List<SeqWorkRequestAliquot> platesWorthOfAliquots : platesWorthGroupingsOfAliquots) {
 
             // for the current Tripod use case, there will only be one plate per cart and therefore only one plate
             // per plating request
@@ -287,10 +300,11 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
                 platingOrder = Plateable.Order.ROW;
             }
 
-            PlatingArray platingArray = new PlatingArray(platesWorthOfAliquots, controlWells, platingOrder);
+            PlatingArray platingArray = new PlatingArray(seqAliquots, controlWells, platingOrder);
 
-            for (Plateable plateable : platingArray) {
+            for (Object plateable1 : platingArray) {
 
+                Plateable plateable = (Plateable)plateable1;
                 SamplePlateInfo samplePlateInfo = new SamplePlateInfo(
                         plateable.getSampleId(),
                         plateNumber,
@@ -314,7 +328,7 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
 
             plateNumber++;
 
-        }
+        //}
 
 
         /*

@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.infrastructure.common;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -14,8 +15,9 @@ import java.util.NoSuchElementException;
  *
  * @param <T> The type of the element in the input List and generated Lists.
  */
-public class GroupingIterable<T> implements IterableWithSize<List<T>> {
+public class GroupingIterable<T>  {//IterableWithSize<List<T>> {
     
+/*
     private int maxGroupSize;
     
     private List<T> inputList;
@@ -40,6 +42,21 @@ public class GroupingIterable<T> implements IterableWithSize<List<T>> {
     }
 
     @Override
+    public T next() {
+        if (!hasNext())
+            throw new NoSuchElementException();
+
+        currentGroup++;
+
+        int fromIndex = currentGroup * maxGroupSize;
+        int toIndex = Math.min(((currentGroup + 1) * maxGroupSize), inputList.size());
+
+        return (T) inputList.subList(fromIndex, toIndex);
+    }
+
+*/
+/*
+    @Override
     public List<T> next() {
         
         if (!hasNext())
@@ -53,6 +70,8 @@ public class GroupingIterable<T> implements IterableWithSize<List<T>> {
         return inputList.subList(fromIndex, toIndex);
                 
     }
+*//*
+
 
     @Override
     public void remove() {
@@ -64,10 +83,11 @@ public class GroupingIterable<T> implements IterableWithSize<List<T>> {
         return this;
     }
 
-    @Override
+    //@Override
     public int size() {
         return (inputList.size() + maxGroupSize - 1) / maxGroupSize;
     }
 
+*/
 
 }
