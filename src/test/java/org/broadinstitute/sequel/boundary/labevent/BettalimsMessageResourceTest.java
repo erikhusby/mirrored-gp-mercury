@@ -151,7 +151,7 @@ public class BettalimsMessageResourceTest extends ContainerTest {
 
         String runName = "TestRun" + testPrefix;
         try {
-            solexaRunResource.createRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(), runName, new Date(), "SL-HAL",
+            solexaRunResource.registerRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(), runName, new Date(), "SL-HAL",
                     File.createTempFile("RunDir", ".txt").getAbsolutePath(), null));
         } catch (IOException e) {
             throw new RuntimeException(e);

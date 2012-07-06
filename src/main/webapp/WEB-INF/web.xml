@@ -83,7 +83,8 @@
         <param-value>
             org.broadinstitute.sequel.boundary.zims.IlluminaRunResource,
             org.broadinstitute.sequel.boundary.vessel.RackOfTubesResource,
-            org.broadinstitute.sequel.boundary.labevent.BettalimsMessageResource
+            org.broadinstitute.sequel.boundary.labevent.BettalimsMessageResource,
+            org.broadinstitute.sequel.boundary.run.SolexaRunResource
         </param-value>
     </context-param>
 
