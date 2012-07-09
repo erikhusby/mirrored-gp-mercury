@@ -41,7 +41,7 @@ public class PMBridgeServiceImpl implements PMBridgeService {
      */
     public PMBridgeServiceImpl(Deployment deployment) {
 
-        config = PMBridgeConfigProducer.produce(deployment);
+        config = PMBridgeConfigProducer.getConfig(deployment);
 
     }
 
@@ -83,7 +83,7 @@ public class PMBridgeServiceImpl implements PMBridgeService {
 
             Client client = getClient();
 
-            WebResource resource = client.resource(config.getBaseUrl() + "/ResearchProjectsDataServlet");
+            WebResource resource = client.resource(config.getUrl() + "/ResearchProjectsDataServlet");
 
             ResearchProjectsResult result = resource.accept(MediaType.APPLICATION_XML).get(ResearchProjectsResult.class);
 

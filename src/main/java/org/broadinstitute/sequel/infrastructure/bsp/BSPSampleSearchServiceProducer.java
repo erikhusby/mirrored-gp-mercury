@@ -38,7 +38,7 @@ public class BSPSampleSearchServiceProducer {
      */
     public static BSPSampleSearchService qaInstance() {
 
-        BSPConfig bspConfig = BSPConfigProducer.produce(QA);
+        BSPConfig bspConfig = BSPConfigProducer.getConfig(QA);
 
         return new BSPSampleSearchServiceImpl( bspConfig );
 

@@ -44,7 +44,7 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
      */
     public LibraryRegistrationSOAPServiceImpl(Deployment deployment) {
 
-        squidConfig = SquidConfigProducer.produce(deployment);
+        squidConfig = SquidConfigProducer.getConfig(deployment);
 
     }
 
@@ -79,7 +79,7 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
         if ( squidConfig == null ) {
 
             final Deployment deployment = deploymentProducer.produce();
-            squidConfig = SquidConfigProducer.produce(deployment);
+            squidConfig = SquidConfigProducer.getConfig(deployment);
         }
 
 

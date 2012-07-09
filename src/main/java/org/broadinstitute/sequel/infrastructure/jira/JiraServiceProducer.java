@@ -18,7 +18,7 @@ public class JiraServiceProducer {
 
     public static JiraService testInstance() {
 
-        JiraConfig jiraConfig = JiraConfigProducer.produce( Deployment.TEST );
+        JiraConfig jiraConfig = JiraConfigProducer.getConfig( Deployment.TEST );
 
         return new JiraServiceImpl( jiraConfig );
 

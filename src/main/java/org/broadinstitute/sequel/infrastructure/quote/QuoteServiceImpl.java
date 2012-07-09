@@ -53,7 +53,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     private String url( Endpoint endpoint ) {
 
-        return quoteConfig.getBaseUrl() + endpoint.getSuffixUrl();
+        return quoteConfig.getUrl() + endpoint.getSuffixUrl();
     }
 
 

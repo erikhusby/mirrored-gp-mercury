@@ -27,7 +27,7 @@ public class ThriftFileAccessor {
      * @throws Exception
      */
     private static void writeRunFile() throws Exception {
-        ThriftConfig qaThrift = ThriftConfigProducer.produce( QA );
+        ThriftConfig qaThrift = ThriftConfigProducer.getConfig( QA );
         TZamboniRun runFetchedFromService = fetchRun(qaThrift);
         serializeRun(runFetchedFromService,RUN_FILE);
     }

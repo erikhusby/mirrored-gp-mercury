@@ -19,7 +19,7 @@ public class QuoteServiceProducer {
 
     public static QuoteService qaInstance() {
 
-        QuoteConfig quoteConfig = QuoteConfigProducer.produce( QA );
+        QuoteConfig quoteConfig = QuoteConfigProducer.getConfig( QA );
 
         return new QuoteServiceImpl( quoteConfig );
     }

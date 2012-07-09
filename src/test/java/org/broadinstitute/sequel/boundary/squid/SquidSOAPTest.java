@@ -39,7 +39,7 @@ public class SquidSOAPTest extends ContainerTest {
         String namespace = "urn:SquidTopic";
         QName serviceName = new QName(namespace, "SquidTopicService");
 
-        String wsdlURL = squidConfig.getBaseUrl() + "/services/SquidTopicService?WSDL";
+        String wsdlURL = squidConfig.getUrl() + "/services/SquidTopicService?WSDL";
         URL url = new URL(wsdlURL);
 
         Service service = Service.create(url, serviceName);
