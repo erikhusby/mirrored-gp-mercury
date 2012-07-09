@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.person.Person;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import java.util.Date;
 import java.util.HashSet;
 
 @NamedQueries({
@@ -21,8 +22,9 @@ public class IlluminaSequencingRun extends SequencingRun {
                                  String runBarcode,
                                  String machineName,
                                  Person operator,
-                                 boolean isTestRun) {
-        super(runName, runBarcode, machineName, operator, isTestRun, new HashSet<RunCartridge>(){{add(flowcell);}});
+                                 boolean isTestRun,
+                                 Date runDate) {
+        super(runName, runBarcode, machineName, operator, isTestRun, runDate, new HashSet<RunCartridge>(){{add(flowcell);}});
     }
 
     protected IlluminaSequencingRun() {

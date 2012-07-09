@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.boundary.BaitSet;
 import org.broadinstitute.sequel.boundary.BaitSetListResult;
 import org.broadinstitute.sequel.boundary.DirectedPass;
 import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
+import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPServiceProducer;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
@@ -21,6 +22,7 @@ import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.sequel.control.zims.LibraryBeanFactory;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.Project;
@@ -36,6 +38,9 @@ import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
+import org.broadinstitute.sequel.entity.zims.LibraryBean;
+import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
+import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
@@ -386,38 +391,40 @@ public class ExomeExpressEndToEndTest {
             Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge().iterator().next(), "No registered flowcell");
 
             // ZIMS
-            /*
-            IlluminaRunResource illuminaRunResource = new IlluminaRunResource();
+            LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
+            ZimsIlluminaRun zimsRun = libraryBeanFactory.buildLibraries(illuminaSequencingRun);
 
-            ZimsIlluminaRun zimsRun = illuminaRunResource.getRun(runName);
+            // how to populate BSPSampleDTO?  Ease of use from EL suggests an entity that can load itself, but this
+            // would require injecting a service, or using a singleton
 
-            assertNotNull(zimsRun);
+            Assert.assertNotNull(zimsRun);
             boolean foundLane = false;
             boolean foundSample = false;
             for (ZimsIlluminaChamber zimsLane : zimsRun.getLanes()) {
-                if (laneNumber.equals(zimsLane)) {
+                if ("1".equals(zimsLane.getName())) {
                     foundLane = true;
                     Collection<LibraryBean> libraries = zimsLane.getLibraries();
-                    assertFalse(libraries.isEmpty());
+                    Assert.assertFalse(libraries.isEmpty());
                     for (LibraryBean library : libraries) {
-                        assertEquals(library.getProject(),sourcePass.getResearchProject());
+                        Assert.assertEquals(library.getProject(),directedPass.getResearchProject());
                         // todo how to get from pass bait set id to bait name?
-                        assertEquals(library.getBaitSetName(),sourcePass.getBaitSetID());
+//                        Assert.assertEquals(library.getBaitSetName(),directedPass.getBaitSetID());
                         // todo how to get from pass organism id to organism name?
-                        assertEquals(library.getOrganism(), sourcePass.getProjectInformation().getOrganismID());
-                        for (Sample sample : sourcePass.getSampleDetailsInformation().getSample()) {
+//                        Assert.assertEquals(library.getOrganism(), directedPass.getProjectInformation().getOrganismID());
+/*
+                        for (Sample sample : directedPass.getSampleDetailsInformation().getSample()) {
                             // todo probably wrong, not sure whether the sample id is lsid or stock id
-                            if (library.getLsid().equals(sample)) {
+                            if (library.getLsid().equals(sample.getBspSampleID())) {
                                 foundSample = true;
                             }
                         }
-                        assertTrue(foundSample);
+                        Assert.assertTrue(foundSample);
+*/
                         // todo single sample ancestor comparison
                     }
                 }
             }
-            assertTrue(foundLane);
-            */
+            Assert.assertTrue(foundLane);
         }
     }
 }
