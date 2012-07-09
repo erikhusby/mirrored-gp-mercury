@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<arquillian xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns="http://jboss.org/schema/arquillian"
+            xsi:schemaLocation="http://jboss.org/schema/arquillian
+    http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+    <!--
+	 Arguillian configuration for the BUILD profile which is used in the Bamboo build server when using the
+	 Arquillian-Glassfish-Remote profile.
+    -->
+    <!--
+        <container qualifier="remote-glassfish" default="true">
+            <configuration>
+                <property name="adminHost">${glassfish.host}</property>
+                <property name="adminHttps">${glassfish.adminHttps}</property>
+                <property name="adminUser">${glassfish.adminUser}</property>
+                <property name="adminPassword">${glassfish.adminPassword}</property>
+            </configuration>
+        </container>
+    -->
+    <!--  Uncomment to have test archives exported to the file system for inspection  -->
+    <!--
+    <engine>
+        <property name="deploymentExportPath">target/</property>
+    </engine>
+    -->
+
+    <!--
+        for Arquillian-Glassfish (managed) for use with the BUILD profile and the Arquillian-Glassfish-Managed which
+        is what is used in the Bamboo build.
+    -->
+    <container qualifier="glassfish" default="true">
+        <configuration>
+            <property name="glassFishHome">${glassfish.home}</property>
+            <property name="adminHost">${glassfish.host}</property>
+            <property name="adminPort">8008</property>
+            <property name="adminUser">admin</property>
+            <property name="adminPassword"/>
+            <property name="domain">ArquillianDomain</property>
+            <!--            <property name="outputToConsole">true</property> -->
+        </configuration>
+    </container>
+
+    <!-- for Arquillian-JBossAS7-Managed to download and manage its own AS instance
+        <container qualifier="jbossas-7-managed" default="true">
+            <configuration>
+                <property name="jbossHome">target/jboss-as-7.0.2.Final</property>
+            </configuration>
+        </container>
+    -->
+
+    <!-- for Arquillian-JBossAS7-Managed to download and manage its own AS instance
+        <container qualifier="dev" default="true">
+            <configuration>
+                <property name="jbossHome">target/jboss-as-${jboss.version:7.1.0.Final}</property>
+            </configuration>
+        </container>
+    -->
+
+</arquillian>
