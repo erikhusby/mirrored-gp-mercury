@@ -33,7 +33,7 @@
         <configuration>
             <property name="glassFishHome">${glassfish.home}</property>
             <property name="adminHost">${glassfish.host}</property>
-            <property name="adminPort">8008</property>
+            <property name="adminPort">4858</property>
             <property name="adminUser">admin</property>
             <property name="adminPassword"/>
             <property name="domain">ArquillianDomainPMB</property>
