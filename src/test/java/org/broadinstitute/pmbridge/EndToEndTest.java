@@ -8,11 +8,11 @@ import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.common.QuoteId;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequest;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentType;
 import org.broadinstitute.pmbridge.entity.experiments.gap.GapExperimentRequest;
 import org.broadinstitute.pmbridge.entity.experiments.seq.SeqExperimentRequest;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
-import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchService;
@@ -170,7 +170,7 @@ public class EndToEndTest extends Arquillian {
         ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(
                 new Person("mccrory", RoleType.PROGRAM_PM),
                 new Date(),
-                PlatformType.GAP
+                ExperimentType.Genotyping
         );
 
         experimentRequestSummary.setStatus(new Name("DRAFT"));

@@ -62,4 +62,11 @@ public interface ExperimentRequest {
      */
     void associateWithResearchProject(ResearchProject researchProject);
 
+
+    /**
+     * Indication of the Type of the Experiment
+     *
+     * @return
+     */
+    ExperimentType getExperimentType();
 }

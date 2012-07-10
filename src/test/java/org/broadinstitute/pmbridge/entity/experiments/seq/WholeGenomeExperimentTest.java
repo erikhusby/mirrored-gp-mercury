@@ -5,9 +5,9 @@ import org.broad.squid.services.TopicService.AlignerType;
 import org.broad.squid.services.TopicService.CoverageAndAnalysisInformation;
 import org.broad.squid.services.TopicService.WholeGenomePass;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentType;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
-import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -32,10 +32,10 @@ public class WholeGenomeExperimentTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        experimentRequestSummary = new ExperimentRequestSummary  (
+        experimentRequestSummary = new ExperimentRequestSummary(
                 new Person("pmbridge", RoleType.PROGRAM_PM),
                 new Date(),
-                PlatformType.GSP
+                ExperimentType.WholeGenomeSequencing
         );
         wholeGenomeExperiment = new WholeGenomeExperiment(experimentRequestSummary);
     }
@@ -49,34 +49,34 @@ public class WholeGenomeExperimentTest {
 
         Set<CoverageModelType> coverageModelTypeSet = wholeGenomeExperiment.getCoverageModelTypes();
         Assert.assertNotNull(coverageModelTypeSet);
-        Assert.assertEquals( coverageModelTypeSet.size(), 2 );
+        Assert.assertEquals(coverageModelTypeSet.size(), 2);
         Assert.assertTrue(coverageModelTypeSet.contains(CoverageModelType.LANES));
         Assert.assertTrue(coverageModelTypeSet.contains(CoverageModelType.DEPTH));
         {
             try {
                 SeqCoverageModel seqCoverageModel = new PFReadsCoverageModel();
-                wholeGenomeExperiment.setSeqCoverageModel( seqCoverageModel );
+                wholeGenomeExperiment.setSeqCoverageModel(seqCoverageModel);
                 fail("Should be invalid coverage type");
-            } catch (Exception exp ) {
+            } catch (Exception exp) {
                 //Should throw exception
             }
         }
         {
             try {
                 SeqCoverageModel seqCoverageModel = new MeanTargetCoverageModel();
-                wholeGenomeExperiment.setSeqCoverageModel( seqCoverageModel );
+                wholeGenomeExperiment.setSeqCoverageModel(seqCoverageModel);
                 fail("Should be invalid coverage type");
-            } catch (Exception exp ) {
-               //Should throw exception
+            } catch (Exception exp) {
+                //Should throw exception
             }
         }
         {
             try {
                 SeqCoverageModel seqCoverageModel = new TargetCoverageModel();
-                wholeGenomeExperiment.setSeqCoverageModel( seqCoverageModel );
+                wholeGenomeExperiment.setSeqCoverageModel(seqCoverageModel);
                 fail("Should be invalid coverage type");
-            } catch (Exception exp ) {
-               //Should throw exception
+            } catch (Exception exp) {
+                //Should throw exception
             }
         }
     }
@@ -86,12 +86,12 @@ public class WholeGenomeExperimentTest {
 
         //Should default to BWA
         AlignerType alignerType = wholeGenomeExperiment.getAlignerType();
-        Assert.assertEquals( alignerType, AlignerType.BWA );
+        Assert.assertEquals(alignerType, AlignerType.BWA);
 
         //Can no longer set to MAQ directly
-        try{
+        try {
             wholeGenomeExperiment.setAlignerType(AlignerType.MAQ);
-        } catch ( IllegalArgumentException iae ) {
+        } catch (IllegalArgumentException iae) {
             // should throw exception,  MAQ no longer allowed to be set directly
         }
 
@@ -101,8 +101,8 @@ public class WholeGenomeExperimentTest {
         //Test can still init an experiment (via a pass) with MAQ though.
         WholeGenomePass wholeGenomePass1 = new WholeGenomePass();
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
-        coverageAndAnalysisInformation.setAligner( AlignerType.MAQ );
-        wholeGenomePass1.setCoverageAndAnalysisInformation( coverageAndAnalysisInformation );
+        coverageAndAnalysisInformation.setAligner(AlignerType.MAQ);
+        wholeGenomePass1.setCoverageAndAnalysisInformation(coverageAndAnalysisInformation);
 
         WholeGenomeExperiment wholeGenomeExperiment1 = new WholeGenomeExperiment(experimentRequestSummary, wholeGenomePass1);
         Assert.assertEquals(wholeGenomeExperiment1.getAlignerType(), AlignerType.MAQ);
@@ -112,11 +112,11 @@ public class WholeGenomeExperimentTest {
     @Test
     public void testEquals() throws Exception {
 
-        WholeGenomeExperiment wholeGenomeExperiment2 = new WholeGenomeExperiment( experimentRequestSummary );
-        Assert.assertEquals( wholeGenomeExperiment , wholeGenomeExperiment );
-        Assert.assertEquals( wholeGenomeExperiment , wholeGenomeExperiment2 );
+        WholeGenomeExperiment wholeGenomeExperiment2 = new WholeGenomeExperiment(experimentRequestSummary);
+        Assert.assertEquals(wholeGenomeExperiment, wholeGenomeExperiment);
+        Assert.assertEquals(wholeGenomeExperiment, wholeGenomeExperiment2);
 
-        Assert.assertEquals( wholeGenomeExperiment , wholeGenomeExperiment2 );
+        Assert.assertEquals(wholeGenomeExperiment, wholeGenomeExperiment2);
 
         Assert.assertFalse(wholeGenomeExperiment2.equals(""));
 
@@ -128,10 +128,10 @@ public class WholeGenomeExperimentTest {
     @Test
     public void testHashCode() throws Exception {
 
-        WholeGenomeExperiment wholeGenomeExperimenta = new WholeGenomeExperiment( experimentRequestSummary );
+        WholeGenomeExperiment wholeGenomeExperimenta = new WholeGenomeExperiment(experimentRequestSummary);
 
-        WholeGenomeExperiment wholeGenomeExperimentb = new WholeGenomeExperiment( experimentRequestSummary );
-        Assert.assertEquals( wholeGenomeExperimenta.hashCode() , wholeGenomeExperimentb.hashCode() );
+        WholeGenomeExperiment wholeGenomeExperimentb = new WholeGenomeExperiment(experimentRequestSummary);
+        Assert.assertEquals(wholeGenomeExperimenta.hashCode(), wholeGenomeExperimentb.hashCode());
 
         wholeGenomeExperimentb.setDiseaseName("BlueFlu");
         Assert.assertEquals(wholeGenomeExperimenta.hashCode(), wholeGenomeExperimentb.hashCode());
@@ -140,9 +140,9 @@ public class WholeGenomeExperimentTest {
 
     @Test
     public void testToString() throws Exception {
-        WholeGenomeExperiment wholeGenomeExperiment2 = new WholeGenomeExperiment( experimentRequestSummary );
-        Assert.assertEquals( "SeqExperimentRequest{passType=WG, seqCoverageModel=null, organism=null, referenceSequenceName=null}",
-                wholeGenomeExperiment2.toString() );
+        WholeGenomeExperiment wholeGenomeExperiment2 = new WholeGenomeExperiment(experimentRequestSummary);
+        Assert.assertEquals("SeqExperimentRequest{seqCoverageModel=null, organism=null, referenceSequenceName=null, experimentRequestSummary=null, samples=[], experimentType=WholeGenomeSequencing}",
+                wholeGenomeExperiment2.toString());
     }
 
 

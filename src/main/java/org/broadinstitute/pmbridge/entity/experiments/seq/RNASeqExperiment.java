@@ -2,6 +2,7 @@ package org.broadinstitute.pmbridge.entity.experiments.seq;
 
 import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -24,7 +25,7 @@ public class RNASeqExperiment extends SeqExperimentRequest {
     private static Set<CoverageModelType> coverageModelTypes =
             EnumSet.of(CoverageModelType.LANES, CoverageModelType.PFREADS);
 
-    public RNASeqExperiment(final ExperimentRequestSummary experimentRequestSummary ) {
+    public RNASeqExperiment(final ExperimentRequestSummary experimentRequestSummary) {
         this(experimentRequestSummary, new RNASeqPass());
         // Set defaults
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
@@ -35,7 +36,7 @@ public class RNASeqExperiment extends SeqExperimentRequest {
     }
 
     public RNASeqExperiment(final ExperimentRequestSummary experimentRequestSummary, final RNASeqPass rnaSeqPass) {
-        super(experimentRequestSummary, PassType.RNASEQ );
+        super(experimentRequestSummary, ExperimentType.RNASeq);
         this.rnaSeqPass = rnaSeqPass;
     }
 
@@ -56,40 +57,37 @@ public class RNASeqExperiment extends SeqExperimentRequest {
 
     @Override
     public void setAlignerType(final AlignerType alignerType) {
-        if (! AlignerType.TOPHAT.equals(alignerType) ) {
+        if (!AlignerType.TOPHAT.equals(alignerType)) {
             throw new IllegalArgumentException(alignerType.toString() + " aligner type no longer supported. Please use TopHat.");
         }
-        getOrCreateCoverageAndAnalysisInformation().setAligner( alignerType );
+        getOrCreateCoverageAndAnalysisInformation().setAligner(alignerType);
     }
 
     /**
      * Gets the value of the transcriptomeReferenceSequenceID property.
-     * @return
-     *     possible object is
-     *     {@link Long }
      *
+     * @return possible object is
+     *         {@link Long }
      */
-    public Long  getTranscriptomeReferenceSequenceID() {
+    public Long getTranscriptomeReferenceSequenceID() {
         return rnaSeqPass.getTranscriptomeReferenceSequenceID();
     }
 
     /**
      * Sets the value of the transcriptomeReferenceSequenceID property.
      *
-     * @param value
-     *     allowed object is
-     *     {@link Long }
-     *
+     * @param value allowed object is
+     *              {@link Long }
      */
     public void setTranscriptomeReferenceSequenceID(Long value) {
-        rnaSeqPass.setTranscriptomeReferenceSequenceID( value );
+        rnaSeqPass.setTranscriptomeReferenceSequenceID(value);
     }
 
 
     public String getRNAProtocol() {
         String rnaSeqProtocol = null;
         RNASeqProtocolType rnaSeqProtocolType = rnaSeqPass.getProtocol();
-        if ( null != rnaSeqProtocolType) {
+        if (null != rnaSeqProtocolType) {
             rnaSeqProtocol = rnaSeqProtocolType.value();
         }
         return rnaSeqProtocol;
@@ -97,10 +95,10 @@ public class RNASeqExperiment extends SeqExperimentRequest {
 
     public void setRNAProtocol(final String rnaProtocol) {
         RNASeqProtocolType rnaSeqProtocolType = convertToRNASeqProtocolEnumElseNull(rnaProtocol);
-        if ( rnaSeqProtocolType == null ) {
+        if (rnaSeqProtocolType == null) {
             throw new IllegalArgumentException("Unrecognized RNA protocol type.");
         }
-        rnaSeqPass.setProtocol(rnaSeqProtocolType );
+        rnaSeqPass.setProtocol(rnaSeqProtocolType);
     }
 
     public static RNASeqProtocolType convertToRNASeqProtocolEnumElseNull(String str) {
@@ -115,32 +113,32 @@ public class RNASeqExperiment extends SeqExperimentRequest {
     protected CoverageAndAnalysisInformation createDefaultCoverageModel() {
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
 
-        if (  DEFAULT_COVERAGE_MODEL.equals(CoverageModelType.LANES)) {
+        if (DEFAULT_COVERAGE_MODEL.equals(CoverageModelType.LANES)) {
             AttemptedLanesCoverageModel attemptedLanesCoverageModel = new AttemptedLanesCoverageModel();
             LanesCoverageModel lanesCoverageModel = new LanesCoverageModel(attemptedLanesCoverageModel);
-            attemptedLanesCoverageModel.setAttemptedLanes( lanesCoverageModel.getLanesCoverage() );
+            attemptedLanesCoverageModel.setAttemptedLanes(lanesCoverageModel.getLanesCoverage());
             coverageAndAnalysisInformation.setAttemptedLanesCoverageModel(attemptedLanesCoverageModel);
-            setSeqCoverageModel( lanesCoverageModel );
+            setSeqCoverageModel(lanesCoverageModel);
         } else {
             org.broad.squid.services.TopicService.PFReadsCoverageModel squidPFReadsCoverageModel =
                     new org.broad.squid.services.TopicService.PFReadsCoverageModel();
             org.broadinstitute.pmbridge.entity.experiments.seq.PFReadsCoverageModel seqPFReadsCoverageModel =
                     new org.broadinstitute.pmbridge.entity.experiments.seq.PFReadsCoverageModel();
-            squidPFReadsCoverageModel.setReadsDesired( seqPFReadsCoverageModel.getReadsDesired() );
-            setSeqCoverageModel( seqPFReadsCoverageModel );
+            squidPFReadsCoverageModel.setReadsDesired(seqPFReadsCoverageModel.getReadsDesired());
+            setSeqCoverageModel(seqPFReadsCoverageModel);
         }
 
         //Set default analysis pipeline
-        coverageAndAnalysisInformation.setAnalysisPipeline( AnalysisPipelineType.MPG  );
+        coverageAndAnalysisInformation.setAnalysisPipeline(AnalysisPipelineType.MPG);
 
         //Set default Aligner for RNASeq
-        coverageAndAnalysisInformation.setAligner( AlignerType.TOPHAT );
+        coverageAndAnalysisInformation.setAligner(AlignerType.TOPHAT);
 
         //Set remaining defaults
         coverageAndAnalysisInformation.setSamplesPooled(Boolean.FALSE);
         coverageAndAnalysisInformation.setPlex(BigDecimal.ZERO);
         coverageAndAnalysisInformation.setKeepFastQs(Boolean.FALSE);
-        coverageAndAnalysisInformation.setReferenceSequenceId( -1 );
+        coverageAndAnalysisInformation.setReferenceSequenceId(-1);
 
         return coverageAndAnalysisInformation;
     }
@@ -148,23 +146,23 @@ public class RNASeqExperiment extends SeqExperimentRequest {
     @Override
     protected void setSeqCoverageModel(final SeqCoverageModel seqCoverageModel) {
 
-        if ( (seqCoverageModel == null) || (seqCoverageModel.getConcreteModelType() == null) ) {
-            throwInvalidCoverageRuntimeException( null );
+        if ((seqCoverageModel == null) || (seqCoverageModel.getConcreteModelType() == null)) {
+            throwInvalidCoverageRuntimeException(null);
         }
 
-        if ( getCoverageModelTypes().contains( seqCoverageModel.getConcreteModelType()) ) {
+        if (getCoverageModelTypes().contains(seqCoverageModel.getConcreteModelType())) {
 
             // Explicit check for depth value for WholeGenomeExperiment
-            if (CoverageModelType.PFREADS.equals( seqCoverageModel.getConcreteModelType()) ) {
+            if (CoverageModelType.PFREADS.equals(seqCoverageModel.getConcreteModelType())) {
                 PFReadsCoverageModel pfReadsCoverageModel = (PFReadsCoverageModel) seqCoverageModel;
 
                 // If MINIMUM_RNA_PFREADS is numerically greater than the non-null reads arg then throw an exception.
-                if ( pfReadsCoverageModel.getReadsDesired() != null  &&
-                        ((MINIMUM_RNA_PFREADS.compareTo(pfReadsCoverageModel.getReadsDesired()) > 0 ) ) ) {
-                    String invalidVal = ( pfReadsCoverageModel.getReadsDesired() != null ) ? "" +
+                if (pfReadsCoverageModel.getReadsDesired() != null &&
+                        ((MINIMUM_RNA_PFREADS.compareTo(pfReadsCoverageModel.getReadsDesired()) > 0))) {
+                    String invalidVal = (pfReadsCoverageModel.getReadsDesired() != null) ? "" +
                             pfReadsCoverageModel.getReadsDesired().intValue() : "null";
                     throw new IllegalArgumentException("Invalid value " + invalidVal + " - " +
-                                    "Valid pfread values is any integer greater or equal to " + MINIMUM_RNA_PFREADS.intValue());
+                            "Valid pfread values is any integer greater or equal to " + MINIMUM_RNA_PFREADS.intValue());
                 }
             }
             this.seqCoverageModel = seqCoverageModel;
@@ -172,7 +170,6 @@ public class RNASeqExperiment extends SeqExperimentRequest {
             throwInvalidCoverageRuntimeException(seqCoverageModel.getConcreteModelType());
         }
     }
-
 
     @Override
     public boolean equals(final Object o) {
@@ -182,11 +179,13 @@ public class RNASeqExperiment extends SeqExperimentRequest {
 
         final RNASeqExperiment that = (RNASeqExperiment) o;
 
-        if (getRNAProtocol() != null ? !getRNAProtocol().equals(that.getRNAProtocol()) : that.getRNAProtocol() != null) return false;
+        if (getRNAProtocol() != null ? !getRNAProtocol().equals(that.getRNAProtocol()) : that.getRNAProtocol() != null)
+            return false;
         if (getTranscriptomeReferenceSequenceID() != null
                 ? !getTranscriptomeReferenceSequenceID().equals(that.getTranscriptomeReferenceSequenceID())
                 : that.getTranscriptomeReferenceSequenceID() != null) return false;
-        if (getAlignerType() != null ? !getAlignerType().equals(that.getAlignerType()) : that.getAlignerType() != null) return false;
+        if (getAlignerType() != null ? !getAlignerType().equals(that.getAlignerType()) : that.getAlignerType() != null)
+            return false;
 
         return true;
     }

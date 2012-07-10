@@ -10,6 +10,7 @@ import org.broadinstitute.pmbridge.entity.person.RoleType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -39,6 +40,13 @@ public class SequencingServiceExternalTest extends Arquillian {
         );
         return war;
     }
+
+
+    @BeforeSuite(alwaysRun = true)
+    public void setupSuite() {
+        int i = 0;
+    }
+
 
     @Test
     public void testGetPlatformPeople() throws Exception {

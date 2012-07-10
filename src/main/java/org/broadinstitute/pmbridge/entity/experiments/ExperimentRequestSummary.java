@@ -4,7 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.person.Person;
-import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 
 import java.util.Date;
@@ -19,7 +18,6 @@ import java.util.Date;
 public class ExperimentRequestSummary {
 
     private ChangeEvent creation;
-    private final PlatformType platformType;
     private Name title;
     private ChangeEvent modification;
     private ExperimentId experimentId;
@@ -27,16 +25,19 @@ public class ExperimentRequestSummary {
     public static Name DRAFT_STATUS = new Name("DRAFT");
     public static IllegalArgumentException BLANK_CREATOR_EXCEPTION = new IllegalArgumentException("Creator username must not be blank.");
     private Name status = DRAFT_STATUS;
+    private ExperimentType experimentType;
 
 
-    public ExperimentRequestSummary(Person creator, Date createdDate, PlatformType platformType) {
+    public ExperimentRequestSummary(Person creator, Date createdDate, ExperimentType experimentType) {
         if (creator == null || StringUtils.isBlank(creator.getUsername())) {
             throw BLANK_CREATOR_EXCEPTION;
         }
         this.creation = new ChangeEvent(createdDate, creator);
-        this.platformType = platformType;
         this.experimentId = new ExperimentId("DRAFT_" + this.creation.date.getTime());
         this.modification = new ChangeEvent(new Date(this.creation.date.getTime()), creator);
+        this.experimentType = experimentType;
+
+
     }
 
     //GETTERS
@@ -56,8 +57,8 @@ public class ExperimentRequestSummary {
         return modification;
     }
 
-    public PlatformType getPlatformType() {
-        return platformType;
+    public ExperimentType getExperimentType() {
+        return experimentType;
     }
 
     public Name getStatus() {
@@ -92,5 +93,26 @@ public class ExperimentRequestSummary {
 
     public void setResearchProjectId(final Long researchProjectId) {
         this.researchProjectId = researchProjectId;
+    }
+
+    public void setExperimentType(final ExperimentType experimentType) {
+        this.experimentType = experimentType;
+    }
+
+    public Date getModificationDate() {
+        return (modification == null ? null : modification.date);
+    }
+
+    @Override
+    public String toString() {
+        return "ExperimentRequestSummary{" +
+                "creation=" + creation +
+                ", title=" + title +
+                ", modification=" + modification +
+                ", experimentId=" + experimentId +
+                ", researchProjectId=" + researchProjectId +
+                ", status=" + status +
+                ", experimentType=" + experimentType +
+                '}';
     }
 }

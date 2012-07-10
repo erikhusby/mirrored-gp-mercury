@@ -36,7 +36,7 @@
             <property name="adminPort">8008</property>
             <property name="adminUser">admin</property>
             <property name="adminPassword"/>
-            <property name="domain">ArquillianDomain</property>
+            <property name="domain">ArquillianDomainPMB</property>
             <!--            <property name="outputToConsole">true</property> -->
         </configuration>
     </container>

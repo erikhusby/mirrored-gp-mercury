@@ -4,14 +4,14 @@
             xsi:schemaLocation="http://jboss.org/schema/arquillian
     http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
 
-    <!--<container qualifier="remote-glassfish" default="true">-->
-    <!--<configuration>-->
-    <!--<property name="adminHost">localhost</property>-->
-    <!--&lt;!&ndash;<property name="adminHttps">true</property>&ndash;&gt;-->
-    <!--&lt;!&ndash;<property name="adminUser">admin</property>&ndash;&gt;-->
-    <!--&lt;!&ndash;<property name="adminPassword">admin</property>&ndash;&gt;-->
-    <!--</configuration>-->
-    <!--</container>-->
+    <container qualifier="remote-glassfish" default="true">
+        <configuration>
+            <property name="adminHost">localhost</property>
+            <!--<property name="adminHttps">true</property>-->
+            <!--<property name="adminUser">admin</property>-->
+            <!--<property name="adminPassword">admin</property>-->
+        </configuration>
+    </container>
 
     <!--  Uncomment to have test archives exported to the file system for inspection  -->
     <!--
@@ -21,14 +21,15 @@
     -->
 
     <!-- for Arquillian-Glassfish (managed), if GLASSFISH_HOME is not set -->
-    <container qualifier="glassfish" default="true">
-        <configuration>
-            <property name="glassFishHome">/Users/mccrory/glassfish3</property>
-            <property name="adminHost">localhost</property>
-            <property name="adminPort">4848</property>
-            <property name="outputToConsole">true</property>
-        </configuration>
-    </container>
+    <!--<container qualifier="glassfish" default="true">-->
+    <!--<configuration>-->
+    <!--<property name="glassFishHome">/Users/mccrory/glassfish3</property>-->
+    <!--<property name="adminHost">localhost</property>-->
+    <!--<property name="adminPort">4848</property>-->
+    <!--<property name="domain">localhost</property>-->
+    <!--<property name="outputToConsole">true</property>-->
+    <!--</configuration>-->
+    <!--</container>-->
 
 
     <!-- for Arquillian-JBossAS7-Managed to download and manage its own AS instance

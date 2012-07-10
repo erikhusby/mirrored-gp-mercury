@@ -9,10 +9,14 @@ import org.broadinstitute.pmbridge.entity.person.RoleType;
 import org.broadinstitute.pmbridge.infrastructure.squid.SequencingService;
 import org.broadinstitute.pmbridge.presentation.AbstractJsfBean;
 import org.primefaces.event.SelectEvent;
+import org.primefaces.event.TabChangeEvent;
 import org.primefaces.event.UnselectEvent;
 
+import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
 import javax.faces.model.ListDataModel;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
@@ -40,19 +44,89 @@ public class SummaryTableBean extends AbstractJsfBean {
     private ExpReqSummaryList expReqSummaryList = new ExpReqSummaryList();
     private ExperimentRequestSummary selectedExperimentRequestSummary = null;
     private ExperimentRequest selectedExperimentRequest;
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MMM dd yyyy 'at' hh:mm aa");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy 'at' hh:mm aa");
     ListDataModel<BSPSample> sampleListDataModel;
 
+    private boolean rebuild = true;
+
+    //TODO this needs to be removed !!
+    private String username = "mccrory";
+
+    private int tabIndex = 1;
+    //TODO - remove this.
+    private final int PASS_NUMBER_OFFSET = 5;
+
+    Boolean experimentSelected = false;
 
     public ExpReqSummaryList getExpReqSummaryList() {
 
-        List<ExperimentRequestSummary> summaryList = sequencingService.getRequestSummariesByCreator(new Person("namrata", RoleType.PROGRAM_PM));
+        if (rebuild && (getUsername() != null)) {
 
-        expReqSummaryList.setWrappedData(summaryList);
+            List<ExperimentRequestSummary> summaryList = sequencingService.getRequestSummariesByCreator(
+                    new Person(getUsername(), RoleType.PROGRAM_PM));
+
+            expReqSummaryList.setWrappedData(summaryList);
+            setRebuild(false);
+
+        } else {
+            System.out.println("Not updated.");
+        }
 
         return expReqSummaryList;
     }
 
+//    public Person getUser() {
+//        return user;
+//    }
+//
+//    public void setUser(final Person user) {
+//        this.user = user;
+//        setRebuild(true);
+//    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(final String username) {
+        this.username = username;
+        setRebuild(true);
+        onRowUnselect(null);
+    }
+
+    public int getTabIndex() {
+        return tabIndex;
+    }
+
+    public void setTabIndex(final int tabIndex) {
+        this.tabIndex = tabIndex;
+    }
+
+
+    private void setRebuild(final boolean rebuild) {
+        this.rebuild = rebuild;
+    }
+
+
+//    public void processValueChange(ValueChangeEvent event)
+//            throws AbortProcessingException {
+//        if (null != event.getNewValue()) {
+//            FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("user", event.getNewValue());
+//        }
+//    }
+
+    public boolean handleTabChange() {
+        ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+        String index = externalContext.getRequestParameterMap().get("tabIndex");
+        setTabIndex(Integer.parseInt(index));
+        return true;
+    }
+
+    public void onTabChange(TabChangeEvent event) {
+        FacesMessage msg = new FacesMessage("Tab Changed", "Active Tab: " + event.getTab().getTitle());
+
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
 
     public ExperimentRequestSummary getSelectedExperimentRequestSummary() {
         return selectedExperimentRequestSummary;
@@ -71,12 +145,21 @@ public class SummaryTableBean extends AbstractJsfBean {
     }
 
     public int sortByLong(Object id1, Object id2) {
-        return ((Long) id1).compareTo((Long) id2);
+        Long longId1 = (Long) id1;
+        Long longId2 = (Long) id2;
+
+        //TODO
+        if ((longId1 == null) || (longId2 == null)) {
+            throw new RuntimeException("An ID was null");
+        }
+
+        return (longId1).compareTo(longId2);
     }
 
     public String format(Date date) {
         return dateFormat.format(date);
     }
+
 
     public int sortByExperimentId(Object experimentId1, Object experimentId2) {
 
@@ -105,6 +188,7 @@ public class SummaryTableBean extends AbstractJsfBean {
 
     public void onRowUnselect(UnselectEvent event) {
         this.selectedExperimentRequestSummary = null;
+        this.selectedExperimentRequest = null;
     }
 
     public ListDataModel<BSPSample> getSampleListDataModel() {
@@ -115,5 +199,11 @@ public class SummaryTableBean extends AbstractJsfBean {
         this.sampleListDataModel = sampleListDataModel;
     }
 
+    public ExperimentRequest getSelectedExperimentRequest() {
+        return selectedExperimentRequest;
+    }
 
+    public Boolean getExperimentSelected() {
+        return (this.selectedExperimentRequest != null);
+    }
 }

@@ -34,7 +34,7 @@ public class LanesCoverageModel extends SeqCoverageModel {
     }
 
     public void setLanesCoverage(final BigDecimal lanesCoverage) {
-        this.attemptedLanesCoverageModel.setAttemptedLanes( lanesCoverage );
+        this.attemptedLanesCoverageModel.setAttemptedLanes(lanesCoverage);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class LanesCoverageModel extends SeqCoverageModel {
 
         // Need to use BigDecimal.compareTo
         if ((getLanesCoverage() != null)
-                ? ! (getLanesCoverage().compareTo(that.getLanesCoverage()) == 0 )
+                ? !(getLanesCoverage().compareTo(that.getLanesCoverage()) == 0)
                 : that.getLanesCoverage() != null) return false;
 
         return true;
@@ -60,5 +60,13 @@ public class LanesCoverageModel extends SeqCoverageModel {
     @Override
     public int hashCode() {
         return attemptedLanesCoverageModel != null ? attemptedLanesCoverageModel.getAttemptedLanes().hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "LanesCoverageModel{" +
+                "attemptedLanesCoverageModel=" +
+                ((attemptedLanesCoverageModel == null) ? "null" : attemptedLanesCoverageModel.getAttemptedLanes().toString()) +
+                '}';
     }
 }
