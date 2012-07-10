@@ -9,11 +9,15 @@ import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Transient;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -82,6 +86,7 @@ public class BSPStartingSample extends StartingSample {
      * BSP DTO.
      */
     public String getContainerId() {
+        initDto();
         return bspDTO.getContainerId();
     }
 
@@ -92,7 +97,34 @@ public class BSPStartingSample extends StartingSample {
      * BSP DTO.
      */
     public String getPatientId() {
+        initDto();
         return bspDTO.getPatientId();
+    }
+
+    /**
+     * Initialize the BSP DTO by calling the BSP web service
+     */
+    private void initDto() {
+        // todo jmt an entity calling a service is ugly, find a better way
+        if(bspDTO == null) {
+            // todo jmt refactor CDI stuff into a utility
+            try {
+                InitialContext initialContext = new InitialContext();
+                try {
+                    BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
+                    Bean bean = beanManager.getBeans(BSPSampleDataFetcher.class).iterator().next();
+                    CreationalContext ctx = beanManager.createCreationalContext(bean);
+                    BSPSampleDataFetcher bspSampleSearchService =
+                            (BSPSampleDataFetcher) beanManager.getReference(bean, bean.getClass(), ctx);
+                    bspDTO = bspSampleSearchService.fetchSingleSampleFromBSP(this.getSampleName());
+                } finally {
+                    initialContext.close();
+                }
+            } catch (NamingException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
     }
 
     @Override
@@ -102,6 +134,7 @@ public class BSPStartingSample extends StartingSample {
      * underlying BSP DTO.
      */
     public String getOrganism() {
+        initDto();
         return bspDTO.getOrganism();
     }
 
