@@ -56,4 +56,12 @@ public class MeanTargetCoverageModel extends SeqCoverageModel {
     public int hashCode() {
         return meanTargetCoverageModel != null ? meanTargetCoverageModel.hashCode() : 0;
     }
+
+    @Override
+    public String toString() {
+        return "MeanTargetCoverageModel{" +
+                "meanTargetCoverageModel=" +
+                ((meanTargetCoverageModel == null) ? "null" : meanTargetCoverageModel.getCoverageDesired().toString()) +
+                '}';
+    }
 }

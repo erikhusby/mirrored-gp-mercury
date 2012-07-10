@@ -4,10 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.pmbridge.entity.common.EntityUtils;
 import org.broadinstitute.pmbridge.entity.common.Name;
-import org.broadinstitute.pmbridge.entity.experiments.AbstractExperimentRequest;
-import org.broadinstitute.pmbridge.entity.experiments.ExperimentId;
-import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequest;
-import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.*;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
@@ -34,7 +31,7 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
     private Product technologyProduct;
 
     public GapExperimentRequest(ExperimentRequestSummary experimentRequestSummary) {
-        super(experimentRequestSummary);
+        super(experimentRequestSummary, ExperimentType.Genotyping);
         setExperimentPlanDTO(new ExperimentPlan());
         getExperimentPlanDTO().setExperimentName(experimentRequestSummary.getTitle().name);
         getExperimentPlanDTO().setPlanningStatus(experimentRequestSummary.getStatus().name);
@@ -46,7 +43,7 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
     }
 
     public GapExperimentRequest(ExperimentRequestSummary experimentRequestSummary, ExperimentPlan experimentPlan) {
-        super(experimentRequestSummary);
+        super(experimentRequestSummary, ExperimentType.Genotyping);
         setExperimentPlanDTO(experimentPlan);
         // if the remoteId is not yet set on the Summary ( in the case of initial submission ) then set it.
         if ((experimentRequestSummary.getExperimentId() == null) && (experimentPlan.getId() != null)) {

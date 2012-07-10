@@ -4,10 +4,10 @@ import org.apache.commons.lang.StringUtils;
 import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentId;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentType;
 import org.broadinstitute.pmbridge.entity.experiments.seq.*;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
-import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -15,10 +15,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static org.broadinstitute.pmbridge.TestGroups.UNIT;
 import static org.testng.Assert.*;
@@ -257,6 +254,12 @@ public class SequencingServiceTest {
 
         assertNotNull(aList);
         Assert.assertEquals(aList.size(), 4);
+        List<ExperimentType> expectedExperimentTypes = new ArrayList<ExperimentType>();
+        expectedExperimentTypes.add(ExperimentType.WholeGenomeSequencing);
+        expectedExperimentTypes.add(ExperimentType.HybridSelection);
+        expectedExperimentTypes.add(ExperimentType.RNASeq);
+
+
         for (ExperimentRequestSummary experimentRequestSummary : aList) {
             assertNotNull(experimentRequestSummary);
             Assert.assertEquals(experimentRequestSummary.getCreation().date, today.getTime());
@@ -264,7 +267,7 @@ public class SequencingServiceTest {
             assertNotNull(experimentRequestSummary.getResearchProjectId());
             assertNotNull(experimentRequestSummary.getTitle());
             assertNotNull(experimentRequestSummary.getExperimentId());
-            assertEquals(experimentRequestSummary.getPlatformType(), PlatformType.GSP);
+            assertTrue(expectedExperimentTypes.contains(experimentRequestSummary.getExperimentType()));
         }
     }
 
@@ -323,7 +326,7 @@ public class SequencingServiceTest {
         EasyMock.replay(mockSquidTopicPortype);
 
         ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(new Person("pmbridge", RoleType.PROGRAM_PM),
-                new Date(), PlatformType.GSP);
+                new Date(), ExperimentType.WholeGenomeSequencing);
         experimentRequestSummary.setExperimentId(new ExperimentId(projectInformation.getPassNumber()));
 
 

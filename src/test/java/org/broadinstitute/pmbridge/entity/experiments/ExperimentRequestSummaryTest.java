@@ -4,7 +4,6 @@ import junit.framework.Assert;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
-import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -30,7 +29,7 @@ public class ExperimentRequestSummaryTest {
         experimentRequestSummary = new ExperimentRequestSummary(
                 new Person("pmbridge", RoleType.PROGRAM_PM),
                 new Date(),
-                PlatformType.GSP
+                ExperimentType.WholeGenomeSequencing
         );
     }
 
@@ -71,8 +70,8 @@ public class ExperimentRequestSummaryTest {
     }
 
     @Test
-    public void testGetPlatformType() throws Exception {
-        Assert.assertEquals(experimentRequestSummary.getPlatformType(), PlatformType.GSP);
+    public void testGetExperimentType() throws Exception {
+        Assert.assertEquals(experimentRequestSummary.getExperimentType(), ExperimentType.WholeGenomeSequencing);
 
     }
 

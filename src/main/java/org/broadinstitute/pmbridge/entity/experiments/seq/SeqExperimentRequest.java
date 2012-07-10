@@ -7,10 +7,7 @@ import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.common.EntityUtils;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.common.QuoteId;
-import org.broadinstitute.pmbridge.entity.experiments.AbstractExperimentRequest;
-import org.broadinstitute.pmbridge.entity.experiments.ExperimentId;
-import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequest;
-import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.*;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
@@ -32,7 +29,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
     private Log logger = LogFactory.getLog(SeqExperimentRequest.class);
 
-    protected PassType passType;
+    //    protected PassType passType;
     protected SeqCoverageModel seqCoverageModel;
 
     // Need the following to store lookup data since the pass only stores the integer id.
@@ -40,9 +37,9 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     private ReferenceSequenceName referenceSequenceName;
 
 
-    public SeqExperimentRequest(ExperimentRequestSummary experimentRequestSummary, PassType passType) {
-        super(experimentRequestSummary);
-        this.passType = passType;
+    public SeqExperimentRequest(ExperimentRequestSummary experimentRequestSummary, ExperimentType experimentType) {
+        super(experimentRequestSummary, experimentType);
+//        this.passType = passType;
         // TODO set any defaults for other pass members ??
     }
 
@@ -378,9 +375,9 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         //return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    public PassType getPassType() {
-        return passType;
-    }
+//    public PassType getPassType() {
+//        return passType;
+//    }
 
 
     public List<String> validate(final SquidTopicPortype squidServicePort) throws ValidationException {
@@ -469,7 +466,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
         final SeqExperimentRequest that = (SeqExperimentRequest) o;
 
         if (organism != null ? !organism.equals(that.organism) : that.organism != null) return false;
-        if (passType != that.passType) return false;
+//        if (passType != that.passType) return false;
         if (referenceSequenceName != null ? !referenceSequenceName.equals(that.referenceSequenceName) : that.referenceSequenceName != null)
             return false;
         if (seqCoverageModel != null ? !seqCoverageModel.equals(that.seqCoverageModel) : that.seqCoverageModel != null)
@@ -481,20 +478,21 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + passType.hashCode();
+//        result = 31 * result + passType.hashCode();
         result = 31 * result + (seqCoverageModel != null ? seqCoverageModel.hashCode() : 0);
         result = 31 * result + (organism != null ? organism.hashCode() : 0);
         result = 31 * result + (referenceSequenceName != null ? referenceSequenceName.hashCode() : 0);
         return result;
     }
 
+
     @Override
     public String toString() {
         return "SeqExperimentRequest{" +
-                "passType=" + passType +
-                ", seqCoverageModel=" + seqCoverageModel +
-                ", organism=" + organism +
-                ", referenceSequenceName=" + referenceSequenceName +
+                "seqCoverageModel=" + ((seqCoverageModel == null) ? "null" : seqCoverageModel.toString()) +
+                ", organism=" + ((organism == null) ? "null" : organism.toString()) +
+                ", referenceSequenceName=" + (referenceSequenceName == null ? "null" : referenceSequenceName.toString()) +
+                ", " + super.toString() +
                 '}';
     }
 

@@ -8,7 +8,7 @@ import java.math.BigInteger;
  * Date: 5/18/12
  * Time: 12:14 PM
  */
-public class PFReadsCoverageModel extends SeqCoverageModel{
+public class PFReadsCoverageModel extends SeqCoverageModel {
 
     private final org.broad.squid.services.TopicService.PFReadsCoverageModel pfReadsCoverageModel;
     public final static BigInteger DEFAULT_READS = BigInteger.ONE;
@@ -34,11 +34,11 @@ public class PFReadsCoverageModel extends SeqCoverageModel{
     public void setReadsDesired(final BigInteger readsDesired) {
 
         // If MINIMUM_READS is numerically greater than the non-null reads arg then throw an exception.
-        if ( readsDesired != null  &&
-                ((MINIMUM_READS.compareTo(readsDesired) > 0 ) ) ) {
-            String invalidVal = ( readsDesired != null ) ? "" + readsDesired.intValue() : "null";
+        if (readsDesired != null &&
+                ((MINIMUM_READS.compareTo(readsDesired) > 0))) {
+            String invalidVal = (readsDesired != null) ? "" + readsDesired.intValue() : "null";
             throw new IllegalArgumentException("Invalid pfread value " + invalidVal + " " +
-                            "Valid values are any integer greater or equal to " + MINIMUM_READS.intValue() );
+                    "Valid values are any integer greater or equal to " + MINIMUM_READS.intValue());
         }
         this.pfReadsCoverageModel.setReadsDesired(readsDesired);
     }
@@ -64,5 +64,13 @@ public class PFReadsCoverageModel extends SeqCoverageModel{
     @Override
     public int hashCode() {
         return pfReadsCoverageModel != null ? pfReadsCoverageModel.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "PFReadsCoverageModel{" +
+                "pfReadsCoverageModel=" +
+                ((pfReadsCoverageModel == null) ? "null" : pfReadsCoverageModel.getReadsDesired().toString()) +
+                '}';
     }
 }

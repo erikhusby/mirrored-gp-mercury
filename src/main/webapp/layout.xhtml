@@ -43,40 +43,50 @@
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 5px;">
             <tr>
                 <td>
-                    <h:graphicImage value="/images/bridge.jpeg" align="left" alt="PMBridge" height="100" width="100"/>
+                    <h:link outcome="/summary/summary">
+                        <h:graphicImage value="/images/bridge.jpeg" align="left" alt="PMBridge" height="80" width="80"/>
+                    </h:link>
+                </td>
+                <td>
+                    <h:form id="menuform">
+                        <p:growl id="messages"/>
+
+                        <p></p>
+                        <p:menubar autoDisplay="false">
+                            <p:menuitem value="Research Projects" url="/researchProjects.xhtml" icon="ui-icon-contact"/>
+
+                            <p:submenu label="Experiments" icon="ui-icon-gear">
+                                <p:menuitem value="Summary" url="/summary/summary.xhtml" icon="ui-icon-contact"/>
+                                <p:submenu label="New Experiment" icon="ui-icon-folder-open">
+                                    <p:submenu label="Sequencing" icon="ui-icon-document">
+                                        <p:menuitem value="Whole Genome" url="#"/>
+                                        <p:menuitem value="Hybrid Selection" url="#"/>
+                                        <p:menuitem value="RNA Seq" url="#"/>
+                                        <p:menuitem value="Exome Express" url="/experiments/experiment.xhtml"/>
+                                    </p:submenu>
+                                    <p:separator/>
+                                    <p:menuitem value="Genotyping" icon="ui-icon-document" url="#"/>
+                                </p:submenu>
+                            </p:submenu>
+
+                            <p:submenu label="Help" icon="ui-icon-help">
+                                <p:menuitem value="Help Documents." url="/help.xhtml"/>
+                                <p:menuitem value="Release Notes." url="/releaseNotes.xhtml"/>
+                            </p:submenu>
+
+                            <p:menuitem value="Quit" url="/logout.xhtml" icon="ui-icon-close" style=""/>
+                        </p:menubar>
+
+                    </h:form>
+
                 </td>
                 <td align="right">
                     <h:graphicImage value="/images/broad_logo.png" alt="Broad Institute"/>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <!--<h:form  id="menuform">-->
-                    <p:growl id="messages"/>
+            <!--<tr>-->
 
-                    <p></p>
-                    <p:menubar autoDisplay="false">
-                        <p:menuitem value="Home" url="/summary/summary.xhtml" icon="ui-icon-home"/>
-
-                        <p:submenu label="Actions" icon="ui-icon-gear">
-                            <p:submenu label="New" icon="ui-icon-contact">
-                                <p:menuitem value="Sequencing" url="#"/>
-                                <p:menuitem value="Genotyping" url="#"/>
-                            </p:submenu>
-                            <p:separator/>
-                        </p:submenu>
-
-                        <p:submenu label="Help" icon="ui-icon-help">
-                            <p:menuitem value="Help Documents." url="/help.xhtml"/>
-                            <p:menuitem value="Release Notes." url="/releaseNotes.xhtml"/>
-                        </p:submenu>
-
-                        <p:menuitem value="Quit" url="/logout.xhtml" icon="ui-icon-close"/>
-                    </p:menubar>
-                    <!--</h:form>-->
-
-                </td>
-            </tr>
+            <!--</tr>-->
         </table>
 
         <table width="100%">

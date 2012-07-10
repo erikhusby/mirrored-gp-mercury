@@ -20,56 +20,81 @@ http://www.w3.org/1999/xhtml">
         <ui:define name="body">
             <p/>
             <h:form id="form">
-                <h:inputText id="username" label="user : " size="50"
-                             value="#{menuBean.value}" required="true"
-                             requiredMessage="true">
-                </h:inputText>
 
-                <p/>
-                <!-- Datatable seems to require containment in a form, probably for AJAX reasons.
-                     Without a form there is silent failure. -->
+
+                <!--<h:inputText id="pmuser" label="user : " size="50"-->
+                <!--value="#{summaryTableBean.username}" required="true"-->
+                <!--requiredMessage="true">-->
+                <!--</h:inputText>-->
+                <h:panelGrid columns="3" cellpadding="10">
+                    <h:outputText value="Program PM :"/>
+                    <h:selectOneMenu id="pmChoice" value="#{summaryTableBean.username}">
+                        <!-- TODO - this is just the list of Seq platform people, we need the list of Program PMS from Crowd. -->
+                        <f:selectItems value="#{peopleBean.seqPlatformPeople}"/>
+                        <f:selectItem itemValue="mccrory" itemLabel="McCrory, Hugh"/>
+                        <!--<f:valueChangeListener type="summaryTableBean.processValueChange" />-->
+                        <f:ajax execute="pmChoice" render="dataTable :tabbedForm"/>
+                    </h:selectOneMenu>
+
+                    <!--<h:commandButton value="Print" type="button" icon="ui-icon-print">-->
+                    <!--<p:printer target="form" />-->
+                    <!--</h:commandButton>-->
+
+                    <!--<p:messages/>-->
+
+                </h:panelGrid>
+
+
+                <!--<p:dataTable var="summary" value="#{summaryTableBean.expReqSummaryList}" scrollable="true" scrollHeight="150"  scrollWidth="800" resizableColumns="true" id="dataTable">-->
+
                 <p:dataTable id="dataTable" value="#{summaryTableBean.expReqSummaryList}" var="summary"
                              widgetVar="dataTable"
-                             emptyMessage="No PASSes found containing search text"
+                             emptyMessage="No Experiment Requests found."
                              selection="#{summaryTableBean.selectedExperimentRequestSummary}" selectionMode="single"
-                             paginator="true" rows="10"
+                             sortBy="#{summary.modification.date}" sortOrder="descending"
+                             sortFunction="#{summaryTableBean.sortByDate}"
+                             paginator="true" rows="5" pageLinks="4"
                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                             rowsPerPageTemplate="5,10,15,25">
+                             rowsPerPageTemplate="5,10">
 
-                    <p:ajax event="rowSelect" listener="#{summaryTableBean.onRowSelect}" update=":form:display"
-                            oncomplete="experimentDialog.show()"/>
+                    <!--sortBy="#{summary.modification.date}" sortOrder="descending"-->
+                    <!--scrollable="true" scrollRows="5" liveScroll="false" resizableColumns="true">-->
+
+                    <!--<p:ajax event="rowSelect" listener="#{summaryTableBean.onRowSelect}" update=":form:display"-->
+                    <!--oncomplete="experimentDialog.show()"/>-->
+                    <p:ajax event="rowSelect" listener="#{summaryTableBean.onRowSelect}" update=":tabbedForm:tabView"
+                            />
                     <p:ajax event="rowUnselect" listener="#{summaryTableBean.onRowUnselect}"/>
 
-                    <f:facet name="header">
-                        <p:outputPanel>
-                            <h:outputText value="Search experiment number + title:"/>
-                            <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
-                        </p:outputPanel>
-                    </f:facet>
+                    <!--<f:facet name="header">-->
+                    <!--<p:outputPanel>-->
+                    <!--<h:outputText value="Search experiment number + title:"/>-->
+                    <!--<p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>-->
+                    <!--</p:outputPanel>-->
+                    <!--</f:facet>-->
 
                     <p:column sortBy="#{summary.researchProjectId}" sortFunction="#{summaryTableBean.sortByLong}"
                               filterBy="#{summary.researchProjectId}" filterMatchMode="contains">
                         <f:facet name="header">
-                            <h:outputText value="Research Project Id"/>
+                            <h:outputText value="Research Project"/>
                         </f:facet>
                         <h:outputText value="#{summary.researchProjectId}"/>
+                    </p:column>
+                    <p:column sortBy="#{summary.title.name}" filterBy="#{summary.title.name}"
+                              filterMatchMode="contains">
+                        <f:facet name="header">
+                            <h:outputText value="Experiment Title"/>
+                        </f:facet>
+                        <h:outputText value="#{summary.title.name}"/>
                     </p:column>
                     <p:column sortBy="#{summary.experimentId.value}"
                               sortFunction="#{summaryTableBean.sortByExperimentId}"
                               filterBy="#{summary.experimentId.value}" filterMatchMode="contains">
                         <f:facet name="header">
-                            <h:outputText value="Experiment Id"/>
+                            <h:outputText value="Id"/>
                         </f:facet>
                         <h:outputText value="#{summary.experimentId.value}"/>
                     </p:column>
-                    <p:column sortBy="#{summary.title.name}" filterBy="#{summary.title.name}"
-                              filterMatchMode="contains">
-                        <f:facet name="header">
-                            <h:outputText value="Title"/>
-                        </f:facet>
-                        <h:outputText value="#{summary.title.name}"/>
-                    </p:column>
-
                     <p:column sortBy="#{summary.status.name}" filterBy="#{summary.status.name}"
                               filterMatchMode="contains">
                         <f:facet name="header">
@@ -92,93 +117,63 @@ http://www.w3.org/1999/xhtml">
                     </p:column>
                 </p:dataTable>
 
-                <p:dialog id="experimentDialog" header="Experiment Detail" widgetVar="experimentDialog" resizable="true"
-                          hideEffect="fade" modal="true">
+            </h:form>
 
-                    <p:panelGrid id="display" cellpadding="4">
+            <p/>
 
-                        <f:facet name="header">
-                            <p:row>
-                                <p:column colspan="3">
-                                    <h:outputText
-                                            value="#{summaryTableBean.selectedExperimentRequestSummary.title.name}"/>
-                                </p:column>
-                            </p:row>
-                        </f:facet>
+            <h:form id="tabbedForm">
 
-                        <p:row>
-                            <p:column>
-                                <span class="pmb-label">Experiment Id:</span>
-                                <span class="pmb-data">#{summaryTableBean.selectedExperimentRequestSummary.experimentId.value}</span>
-                            </p:column>
-                            <p:column>
-                                <span class="pmb-label">Type:</span>
-                                <span class="pmb-data">#{summaryTableBean.selectedExperimentRequestSummary.platformType.shortName}</span>
-                            </p:column>
-                        </p:row>
+                <!--<p:growl id="growl" showDetail="true" />-->
 
-                        <p:row>
-                            <p:column colspan="3">
-                                <span class="pmb-label">Research Project:</span>
-                                <span class="pmb-data">#{summaryTableBean.selectedExperimentRequestSummary.researchProjectId}</span>
-                            </p:column>
-                        </p:row>
+                <p:tabView id="tabView" dynamic="true">
+                    <p:ajax event="tabChange" listener="#{summaryTableBean.onTabChange}" update=":tabbedForm"/>
 
-                        <p:row>
-                            <p:column>
-                                <span class="pmb-label">Creator:</span>
-                                <span class="pmb-data">#{summaryTableBean.selectedExperimentRequestSummary.creation.person.username}</span>
-                            </p:column>
-                            <p:column>
-                                <span class="pmb-label">Date Created:</span>
-                                <span class="pmb-data">#{summaryTableBean.selectedExperimentRequestSummary.creation.date}</span>
-                            </p:column>
-                            <p:column>
-                                <span class="pmb-label">Last Modified:</span>
-                                <span class="pmb-data">#{summaryTableBean.selectedExperimentRequestSummary.modification.person.username}</span>
-                            </p:column>
-                        </p:row>
+                    <p:tab title="Sequencing" id="Sequencing">
+                        <h:panelGrid columns="2" cellpadding="10">
+                            <h:outputText value="Title: "/>
+                            <h:outputText id="expTitle"
+                                          value="#{summaryTableBean.selectedExperimentRequestSummary.title.name}"/>
+                            <h:outputText value="Experiment Id : "/>
+                            <h:outputText id="experimentId"
+                                          value="#{summaryTableBean.selectedExperimentRequest.remoteId.value}"/>
+                            <h:outputText value="Project Type : "/>
+                            <h:outputText id="projectType"
+                                          value="#{summaryTableBean.selectedExperimentRequest.experimentType}"/>
+                            <h:outputText value="Status : "/>
+                            <h:outputText id="status"
+                                          value="#{summaryTableBean.selectedExperimentRequest.experimentStatus.name}"/>
+                        </h:panelGrid>
+                    </p:tab>
 
+                    <p:tab title="Funding" id="funding">
 
-                        <!--<p:row >-->
-                        <!--<p:column colspan="3">-->
-                        <!--<p:dataTable id="sampleTable" value="#{summaryTableBean.passSampleDataModel}" var="passSample" widgetVar="sampleTable"-->
-                        <!--emptyMessage="No samples found with IDs matching search criteria"-->
-                        <!--paginator="true" rows="15"-->
-                        <!--paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"-->
-                        <!--rowsPerPageTemplate="10, 15">-->
+                        <h:panelGrid columns="2" cellpadding="10">
+                            <h:outputText value="Seq Quote : "/>
+                            <h:outputText value="BSP Quote : "/>
+                        </h:panelGrid>
 
-                        <!--<f:facet name="header">-->
-                        <!--<p:outputPanel>-->
-                        <!--<h:outputText value="Search sample ID:" />-->
-                        <!--<p:inputText id="globalFilter" onkeyup="sampleTable.filter()" style="width:150px" />-->
-                        <!--</p:outputPanel>-->
-                        <!--</f:facet>-->
+                    </p:tab>
 
-                        <!--<p:column sortBy="#{passSample.sampleId}" filterBy="#{passSample.sampleId}" filterMatchMode="contains">-->
-                        <!--<f:facet name="header">-->
-                        <!--Sample ID-->
-                        <!--</f:facet>-->
-                        <!--<h:outputText value="#{passSample.sampleId}"/>-->
-                        <!--</p:column>-->
-                        <!--<p:column sortBy="#{passSample.volume}"-->
-                        <!--sortFunction="#{summaryTableBean.sortFloatingPoint}">-->
-                        <!--<f:facet name="header">-->
-                        <!--Volume-->
-                        <!--</f:facet>-->
-                        <!--<h:outputText value="#{passSample.volume}"/>-->
-                        <!--</p:column>-->
+                    <p:tab title="Samples" id="samples">
+                        <h:panelGrid columns="2" cellpadding="10">
+                            <h:outputText value="Sample Data."/>
+                        </h:panelGrid>
+                    </p:tab>
+                    <p:tab title="Data Submission" id="dataSubmission">
+                        <h:panelGrid columns="2" cellpadding="10">
+                            <h:outputText value="Submission tab"/>
+                        </h:panelGrid>
+                    </p:tab>
+                    <p:tab title="Additional Info." id="additionalInfo">
+                        <h:panelGrid columns="2" cellpadding="10">
+                            <h:outputText value="Additional Info."/>
+                        </h:panelGrid>
+                    </p:tab>
 
-                        <!--</p:dataTable>-->
-                        <!--</p:column>-->
-                        <!--</p:row>-->
-
-                    </p:panelGrid>
-
-                </p:dialog>
-
+                </p:tabView>
 
             </h:form>
+
         </ui:define>
     </ui:composition>
 

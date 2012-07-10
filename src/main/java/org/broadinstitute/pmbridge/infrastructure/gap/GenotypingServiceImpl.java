@@ -10,10 +10,10 @@ import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentId;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentType;
 import org.broadinstitute.pmbridge.entity.experiments.gap.GapExperimentRequest;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
-import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.broadinstitute.pmbridge.infrastructure.SubmissionException;
 import org.broadinstitute.pmbridge.infrastructure.ValidationException;
 import org.broadinstitute.pmbridge.infrastructure.quote.Quote;
@@ -71,7 +71,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
     public GapExperimentRequest populateGapProduct(GapExperimentRequest gapExperimentRequest) {
         ExperimentPlan experimentPlan = gapExperimentRequest.getExperimentPlanDTO();
 
-        if (  experimentPlan.getProductName() != null ) {
+        if (experimentPlan.getProductName() != null) {
             gapExperimentRequest.setTechnologyProduct(new Product(experimentPlan.getProductName()));
         }
 
@@ -264,7 +264,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
                 if (expPlan != null) {
                     ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(
                             user, expPlan.getDateCreated(),
-                            PlatformType.GAP);
+                            ExperimentType.Genotyping);
                     experimentRequestSummary.setExperimentId(new ExperimentId(expPlan.getId()));
                     experimentRequestSummary.setCreation(new ChangeEvent(expPlan.getDateCreated(),
                             new Person(expPlan.getCreatedBy(), RoleType.PROGRAM_PM)));
@@ -362,16 +362,16 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
             platforms = resource.accept(MediaType.APPLICATION_XML).get(Platforms.class);
         } catch (UniformInterfaceException e) {
             String errMsg = "Could not find any GAP Platforms";
-            logger.error(errMsg + " at " + url );
-            throw new RuntimeException(errMsg , e);
+            logger.error(errMsg + " at " + url);
+            throw new RuntimeException(errMsg, e);
         } catch (ClientHandlerException e) {
             String errMsg = "Could not communicate with GAP server to retrieve GAP Platforms";
             logger.error(errMsg + " at " + url);
-            throw new RuntimeException(errMsg , e);
+            throw new RuntimeException(errMsg, e);
         } catch (Exception exp) {
             String errMsg = "Exception occurred trying to retrieve to retrieve GAP Platforms";
-            logger.error(errMsg + " at " + url , exp);
-            throw new RuntimeException(errMsg , exp);
+            logger.error(errMsg + " at " + url, exp);
+            throw new RuntimeException(errMsg, exp);
         }
 
         return platforms;

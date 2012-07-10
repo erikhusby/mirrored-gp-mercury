@@ -7,10 +7,10 @@ import org.broadinstitute.pmbridge.entity.common.ChangeEvent;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentId;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentType;
 import org.broadinstitute.pmbridge.entity.experiments.seq.*;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.person.RoleType;
-import org.broadinstitute.pmbridge.entity.project.PlatformType;
 import org.broadinstitute.pmbridge.infrastructure.SubmissionException;
 import org.broadinstitute.pmbridge.infrastructure.ValidationException;
 
@@ -41,6 +41,7 @@ public class SequencingServiceImpl implements SequencingService {
     public static final IllegalArgumentException ILLEGAL_EXPREQ_ARG_EXCEPTION = new IllegalArgumentException("Experiment request is null.");
 
     private org.apache.commons.logging.Log logger = LogFactory.getLog(SequencingServiceImpl.class);
+
     private SquidTopicPortype squidServicePort;
     private boolean initialized = false;
     private SeqConnectionParameters seqConnectionParameters;
@@ -209,7 +210,7 @@ public class SequencingServiceImpl implements SequencingService {
                 }
                 ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(
                         creator, updatedDate,
-                        PlatformType.GSP
+                        ExperimentType.WholeGenomeSequencing
                 );
                 experimentRequestSummary.setExperimentId(new ExperimentId(summary.getPassNumber()));
                 experimentRequestSummary.setTitle(new Name(summary.getTitle()));

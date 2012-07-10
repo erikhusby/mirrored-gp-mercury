@@ -2,6 +2,7 @@ package org.broadinstitute.pmbridge.entity.experiments.seq;
 
 import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -21,15 +22,15 @@ public class WholeGenomeExperiment extends SeqExperimentRequest {
     public static final BigInteger MINIMUM_WGS_DEPTH = BigInteger.ZERO;
 
     private static Set<CoverageModelType> coverageModelTypes =
-            EnumSet.of(CoverageModelType.LANES, CoverageModelType.DEPTH );
+            EnumSet.of(CoverageModelType.LANES, CoverageModelType.DEPTH);
 
 
-    public WholeGenomeExperiment(final ExperimentRequestSummary experimentRequestSummary ) {
+    public WholeGenomeExperiment(final ExperimentRequestSummary experimentRequestSummary) {
         this(experimentRequestSummary, new WholeGenomePass());
     }
 
     public WholeGenomeExperiment(final ExperimentRequestSummary experimentRequestSummary, final WholeGenomePass wholeGenomePass) {
-        super(experimentRequestSummary, PassType.WG);
+        super(experimentRequestSummary, ExperimentType.WholeGenomeSequencing);
         this.wholeGenomePass = wholeGenomePass;
 
     }
@@ -48,11 +49,11 @@ public class WholeGenomeExperiment extends SeqExperimentRequest {
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
 
 //        if (  DEFAULT_COVERAGE_MODEL.equals(CoverageModelType.LANES)) {
-            AttemptedLanesCoverageModel attemptedLanesCoverageModel = new AttemptedLanesCoverageModel();
-            LanesCoverageModel lanesCoverageModel = new LanesCoverageModel(attemptedLanesCoverageModel);
-            attemptedLanesCoverageModel.setAttemptedLanes( lanesCoverageModel.getLanesCoverage() );
-            coverageAndAnalysisInformation.setAttemptedLanesCoverageModel(attemptedLanesCoverageModel);
-            setSeqCoverageModel( lanesCoverageModel );
+        AttemptedLanesCoverageModel attemptedLanesCoverageModel = new AttemptedLanesCoverageModel();
+        LanesCoverageModel lanesCoverageModel = new LanesCoverageModel(attemptedLanesCoverageModel);
+        attemptedLanesCoverageModel.setAttemptedLanes(lanesCoverageModel.getLanesCoverage());
+        coverageAndAnalysisInformation.setAttemptedLanesCoverageModel(attemptedLanesCoverageModel);
+        setSeqCoverageModel(lanesCoverageModel);
 //        } else {
 //            ProgramPseudoDepthCoverageModel programPseudoDepthCoverageModel = new ProgramPseudoDepthCoverageModel();
 //            DepthCoverageModel depthCoverageModel = new DepthCoverageModel();
@@ -62,16 +63,16 @@ public class WholeGenomeExperiment extends SeqExperimentRequest {
 //        }
 
         //Set default analysis pipeline
-        coverageAndAnalysisInformation.setAnalysisPipeline( AnalysisPipelineType.MPG  );
+        coverageAndAnalysisInformation.setAnalysisPipeline(AnalysisPipelineType.MPG);
 
         //Set default Aligner
-        coverageAndAnalysisInformation.setAligner( AlignerType.BWA );
+        coverageAndAnalysisInformation.setAligner(AlignerType.BWA);
 
         //Set remaining defaults
         coverageAndAnalysisInformation.setSamplesPooled(Boolean.FALSE);
         coverageAndAnalysisInformation.setPlex(BigDecimal.ZERO);
         coverageAndAnalysisInformation.setKeepFastQs(Boolean.FALSE);
-        coverageAndAnalysisInformation.setReferenceSequenceId( -1 );
+        coverageAndAnalysisInformation.setReferenceSequenceId(-1);
 
         return coverageAndAnalysisInformation;
     }
@@ -86,28 +87,27 @@ public class WholeGenomeExperiment extends SeqExperimentRequest {
     public void setAlignerType(final AlignerType alignerType) {
 
         if (AlignerType.MAQ.equals(alignerType)) {
-            throw new IllegalArgumentException( AlignerType.MAQ.toString() + " aligner type no longer supported. Please use BWA.");
+            throw new IllegalArgumentException(AlignerType.MAQ.toString() + " aligner type no longer supported. Please use BWA.");
         }
-        getOrCreateCoverageAndAnalysisInformation().setAligner( alignerType );
+        getOrCreateCoverageAndAnalysisInformation().setAligner(alignerType);
     }
-
 
     @Override
     protected void setSeqCoverageModel(final SeqCoverageModel seqCoverageModel) {
 
-        if ( (seqCoverageModel != null) && getCoverageModelTypes().contains( seqCoverageModel.getConcreteModelType()) ) {
+        if ((seqCoverageModel != null) && getCoverageModelTypes().contains(seqCoverageModel.getConcreteModelType())) {
 
             // Explicit check for depth value for WholeGenomeExperiment
-            if (CoverageModelType.DEPTH.equals( seqCoverageModel.getConcreteModelType()) ) {
+            if (CoverageModelType.DEPTH.equals(seqCoverageModel.getConcreteModelType())) {
                 DepthCoverageModel depthCoverageModel = (DepthCoverageModel) seqCoverageModel;
 
                 // If MINIMUM_WGS_DEPTH is numerically greater than the non-null depth arg then throw an exception.
-                if ( depthCoverageModel.getCoverageDesired() != null  &&
-                        ((MINIMUM_WGS_DEPTH.compareTo(depthCoverageModel.getCoverageDesired()) > 0 ) ) ) {
-                    String invalidVal = ( depthCoverageModel.getCoverageDesired() != null ) ? "" +
+                if (depthCoverageModel.getCoverageDesired() != null &&
+                        ((MINIMUM_WGS_DEPTH.compareTo(depthCoverageModel.getCoverageDesired()) > 0))) {
+                    String invalidVal = (depthCoverageModel.getCoverageDesired() != null) ? "" +
                             depthCoverageModel.getCoverageDesired().intValue() : "null";
                     throw new IllegalArgumentException("Invalid value " + invalidVal + " - " +
-                                    "Valid depth is any integer greater or equal to " + MINIMUM_WGS_DEPTH.intValue());
+                            "Valid depth is any integer greater or equal to " + MINIMUM_WGS_DEPTH.intValue());
                 }
             }
             this.seqCoverageModel = seqCoverageModel;
@@ -130,12 +130,13 @@ public class WholeGenomeExperiment extends SeqExperimentRequest {
     }
 
     @Override
-      public int hashCode() {
+    public int hashCode() {
         return super.hashCode();
     }
 
     @Override
     public String toString() {
-        return  super.toString() ;
+        return super.toString();
     }
+
 }

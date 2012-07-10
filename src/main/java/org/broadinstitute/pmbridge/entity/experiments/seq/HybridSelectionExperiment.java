@@ -3,6 +3,7 @@ package org.broadinstitute.pmbridge.entity.experiments.seq;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -27,21 +28,22 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
             EnumSet.of(CoverageModelType.LANES, CoverageModelType.TARGETCOVERAGE, CoverageModelType.MEANTARGETCOVERAGE);
 
     private static final HashSet<BigInteger> supportedDepths = new HashSet<BigInteger>();
+
     static {
-        supportedDepths.add( new BigInteger("2") );
-        supportedDepths.add( BigInteger.TEN );
-        supportedDepths.add( new BigInteger("20") );
-        supportedDepths.add( new BigInteger("30") );
+        supportedDepths.add(new BigInteger("2"));
+        supportedDepths.add(BigInteger.TEN);
+        supportedDepths.add(new BigInteger("20"));
+        supportedDepths.add(new BigInteger("30"));
     }
 
-    public HybridSelectionExperiment(final ExperimentRequestSummary experimentRequestSummary ) {
+    public HybridSelectionExperiment(final ExperimentRequestSummary experimentRequestSummary) {
         this(experimentRequestSummary, new DirectedPass());
         // Set defaults
-        this.directedPass.setBaitSetID( DEFAULT_BAIT_SET_ID );
+        this.directedPass.setBaitSetID(DEFAULT_BAIT_SET_ID);
     }
 
     public HybridSelectionExperiment(final ExperimentRequestSummary experimentRequestSummary, final DirectedPass directedPass) {
-        super(experimentRequestSummary, PassType.DIRECTED);
+        super(experimentRequestSummary, ExperimentType.HybridSelection);
         this.directedPass = directedPass;
     }
 
@@ -56,11 +58,11 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
     }
 
     public Long getBaitSetID() {
-        return  directedPass.getBaitSetID();
+        return directedPass.getBaitSetID();
     }
 
     public void setBaitSetID(final Long baitSetID) {
-        this.directedPass.setBaitSetID( baitSetID );
+        this.directedPass.setBaitSetID(baitSetID);
     }
 
     @Override
@@ -73,20 +75,20 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
         if (AlignerType.MAQ.equals(alignerType)) {
             throw new IllegalArgumentException(AlignerType.MAQ.toString() + " aligner type no longer supported. Please use BWA.");
         }
-        getOrCreateCoverageAndAnalysisInformation().setAligner( alignerType );
+        getOrCreateCoverageAndAnalysisInformation().setAligner(alignerType);
     }
 
     @Override
     protected CoverageAndAnalysisInformation createDefaultCoverageModel() {
         CoverageAndAnalysisInformation coverageAndAnalysisInformation = new CoverageAndAnalysisInformation();
 
-        if (  DEFAULT_COVERAGE_MODEL.equals(CoverageModelType.LANES)) {
+        if (DEFAULT_COVERAGE_MODEL.equals(CoverageModelType.LANES)) {
             AttemptedLanesCoverageModel attemptedLanesCoverageModel = new AttemptedLanesCoverageModel();
-            attemptedLanesCoverageModel.setAttemptedLanes( LanesCoverageModel.DEFAULT_LANES );
+            attemptedLanesCoverageModel.setAttemptedLanes(LanesCoverageModel.DEFAULT_LANES);
 //            attemptedLanesCoverageModel.setAttemptedLanes( lanesCoverageModel.getLanesCoverage() );
             LanesCoverageModel lanesCoverageModel = new LanesCoverageModel(attemptedLanesCoverageModel);
             coverageAndAnalysisInformation.setAttemptedLanesCoverageModel(attemptedLanesCoverageModel);
-            setSeqCoverageModel( lanesCoverageModel );
+            setSeqCoverageModel(lanesCoverageModel);
         } else {
             org.broadinstitute.pmbridge.entity.experiments.seq.TargetCoverageModel seqTargetCoverageModel =
                     new org.broadinstitute.pmbridge.entity.experiments.seq.TargetCoverageModel();
@@ -97,20 +99,20 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
             squidTargetCoverageModel.setDepth(seqTargetCoverageModel.getDepth());
             coverageAndAnalysisInformation.setTargetCoverageModel(squidTargetCoverageModel);
 
-            setSeqCoverageModel( seqTargetCoverageModel );
+            setSeqCoverageModel(seqTargetCoverageModel);
         }
 
         //Set default analysis pipeline
-        coverageAndAnalysisInformation.setAnalysisPipeline( AnalysisPipelineType.MPG  );
+        coverageAndAnalysisInformation.setAnalysisPipeline(AnalysisPipelineType.MPG);
 
         //Set default Aligner
-        coverageAndAnalysisInformation.setAligner( AlignerType.BWA );
+        coverageAndAnalysisInformation.setAligner(AlignerType.BWA);
 
         //Set remaining defaults
         coverageAndAnalysisInformation.setSamplesPooled(Boolean.FALSE);
         coverageAndAnalysisInformation.setPlex(BigDecimal.ZERO);
         coverageAndAnalysisInformation.setKeepFastQs(Boolean.FALSE);
-        coverageAndAnalysisInformation.setReferenceSequenceId( -1 );
+        coverageAndAnalysisInformation.setReferenceSequenceId(-1);
 
         return coverageAndAnalysisInformation;
     }
@@ -119,13 +121,13 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
     @Override
     protected void setSeqCoverageModel(final SeqCoverageModel seqCoverageModel) {
 
-        if ( (seqCoverageModel != null) && getCoverageModelTypes().contains( seqCoverageModel.getConcreteModelType()) ) {
+        if ((seqCoverageModel != null) && getCoverageModelTypes().contains(seqCoverageModel.getConcreteModelType())) {
 
             // Explicit check for depths values specific to HybridSelection
-            if ( CoverageModelType.DEPTH.equals( seqCoverageModel.getConcreteModelType()) ) {
+            if (CoverageModelType.DEPTH.equals(seqCoverageModel.getConcreteModelType())) {
                 TargetCoverageModel targetCoverageModel = (TargetCoverageModel) seqCoverageModel;
-                if (! supportedDepths.contains( targetCoverageModel.getDepth()) ) {
-                    throwInvalidDepthException( targetCoverageModel.getDepth() );
+                if (!supportedDepths.contains(targetCoverageModel.getDepth())) {
+                    throwInvalidDepthException(targetCoverageModel.getDepth());
                 }
             }
             this.seqCoverageModel = seqCoverageModel;
@@ -135,14 +137,12 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
     }
 
 
-
-
     private void throwInvalidDepthException(BigInteger depth) {
-        String invalidVal = ( depth != null ) ? "" + depth.intValue() : "null";
-        StringBuilder msg = new StringBuilder( "Invalid depth " + invalidVal + " - " +
-                "Valid depths for HybridSelection are :" );
-        for ( BigInteger supportedDepth : supportedDepths ) {
-            msg.append(" ").append( supportedDepth.intValue() );
+        String invalidVal = (depth != null) ? "" + depth.intValue() : "null";
+        StringBuilder msg = new StringBuilder("Invalid depth " + invalidVal + " - " +
+                "Valid depths for HybridSelection are :");
+        for (BigInteger supportedDepth : supportedDepths) {
+            msg.append(" ").append(supportedDepth.intValue());
         }
         throw new IllegalArgumentException(msg.toString());
     }
@@ -155,8 +155,10 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
 
         final HybridSelectionExperiment that = (HybridSelectionExperiment) o;
 
-        if (getBaitSetID() != null ? !getBaitSetID().equals(that.getBaitSetID()) : that.getBaitSetID() != null) return false;
-        if (getAlignerType() != null ? !getAlignerType().equals(that.getAlignerType()) : that.getAlignerType() != null) return false;
+        if (getBaitSetID() != null ? !getBaitSetID().equals(that.getBaitSetID()) : that.getBaitSetID() != null)
+            return false;
+        if (getAlignerType() != null ? !getAlignerType().equals(that.getAlignerType()) : that.getAlignerType() != null)
+            return false;
 
         return true;
     }

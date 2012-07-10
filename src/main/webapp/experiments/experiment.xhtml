@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/jsf/html
+http://www.w3.org/1999/xhtml">
+<h:head>
+    <title>Experiment Request.</title>
+</h:head>
+
+<h:body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">Experiment Request</ui:define>
+        <ui:define name="body">
+
+            <h:form rendered="#{not empty bean.list}">
+                <h:dataTable value="#{bean.list}" var="item">
+                    <h:column><f:facet name="header">ID</f:facet>#{item.id}</h:column>
+                    <h:column><f:facet name="header">Value</f:facet>#{item.value}</h:column>
+                    <h:column><h:commandButton value="edit" action="#{bean.edit(item)}"/></h:column>
+                    <h:column><h:commandButton value="delete" action="#{bean.delete(item)}"/></h:column>
+                </h:dataTable>
+            </h:form>
+            <h:panelGroup rendered="#{empty bean.list}">
+                <p>Table is empty! Please add new items.</p>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{!bean.edit}">
+                <h3>Add item</h3>
+                <h:form>
+                    <p>Value: <h:inputText value="#{bean.item.value}"/></p>
+
+                    <p><h:commandButton value="add" action="#{bean.add}"/></p>
+                </h:form>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{bean.edit}">
+                <h3>Edit item #{bean.item.id}</h3>
+                <h:form>
+                    <p>Value: <h:inputText value="#{bean.item.value}"/></p>
+
+                    <p><h:commandButton value="save" action="#{bean.save}"/></p>
+                </h:form>
+            </h:panelGroup>
+
+
+        </ui:define>
+    </ui:composition>
+
+
+</h:body>
+
+</html>

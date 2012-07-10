@@ -17,8 +17,8 @@ public class ExpReqSummaryList extends ListDataModel<ExperimentRequestSummary> i
 
 
     @Override
-    public Object getRowKey(ExperimentRequestSummary rowPass) {
-        return rowPass.getExperimentId().value;
+    public Object getRowKey(ExperimentRequestSummary requestSummary) {
+        return requestSummary.getExperimentId().value;
 
     }
 

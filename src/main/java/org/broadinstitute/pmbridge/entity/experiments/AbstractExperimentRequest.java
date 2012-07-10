@@ -21,10 +21,14 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
     //    private Set<Person> platformProjectManagers;
     private Set<BSPSample> samples;
 
-    protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary) {
+
+    private ExperimentType experimentType;
+
+    protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary, ExperimentType experimentType) {
         this.experimentRequestSummary = experimentRequestSummary;
 //        this.platformProjectManagers = new HashSet<Person>();
         this.samples = new HashSet<BSPSample>();
+        this.experimentType = experimentType;
     }
 
 //    protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary,
@@ -51,6 +55,12 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
     public Name getTitle() {
         return getExperimentRequestSummary().getTitle();
     }
+
+    @Override
+    public ExperimentType getExperimentType() {
+        return experimentType;
+    }
+
 
     public abstract void setTitle(final Name title);
 
@@ -82,6 +92,7 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
 
         if (!experimentRequestSummary.equals(that.experimentRequestSummary)) return false;
         if (!samples.equals(that.samples)) return false;
+        if (!experimentType.equals(that.experimentType)) return false;
 
         return true;
     }
@@ -90,14 +101,14 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
     public int hashCode() {
         int result = experimentRequestSummary.hashCode();
         result = 31 * result + samples.hashCode();
+        result = 31 * result + experimentType.hashCode();
         return result;
     }
 
     @Override
     public String toString() {
-        return "AbstractExperimentRequest{" +
-                "experimentRequestSummary=" + experimentRequestSummary +
-                ", samples=" + samples +
-                '}';
+        return "experimentRequestSummary=" + ((experimentRequestSummary == null) ? "null" : experimentRequestSummary.getTitle()) +
+                ", samples=" + ((samples == null) ? "null" : samples.toString()) +
+                ", experimentType=" + ((experimentType == null) ? "null" : experimentType.name());
     }
 }

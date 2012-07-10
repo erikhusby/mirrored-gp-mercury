@@ -34,13 +34,13 @@ public class DepthCoverageModel extends SeqCoverageModel {
     }
 
     public void setCoverageDesired(final BigInteger coverageDesired) {
-        this.programPseudoDepthCoverageModel.setCoverageDesired( coverageDesired );
+        this.programPseudoDepthCoverageModel.setCoverageDesired(coverageDesired);
     }
 
     @Override
     protected CoverageModelType getConcreteModelType() {
         return CoverageModelType.DEPTH;
-     }
+    }
 
     @Override
     public boolean equals(final Object o) {
@@ -58,5 +58,13 @@ public class DepthCoverageModel extends SeqCoverageModel {
     @Override
     public int hashCode() {
         return programPseudoDepthCoverageModel != null ? programPseudoDepthCoverageModel.hashCode() : 0;
+    }
+
+    @Override
+    public String toString() {
+        return "DepthCoverageModel{" +
+                "programPseudoDepthCoverageModel=" +
+                ((programPseudoDepthCoverageModel == null) ? "null" : programPseudoDepthCoverageModel.getCoverageDesired().toString()) +
+                '}';
     }
 }
