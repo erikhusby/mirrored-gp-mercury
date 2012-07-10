@@ -173,7 +173,6 @@ public class BSPSampleFactory {
                                        String platingRequestName, String technology, String login, String label, String comments)
     throws Exception {
 
-
         //log.info("--In Issue BSP PR test ");
         //log.info("--sample count :  " + starterMap.keySet().size());
         //custom name

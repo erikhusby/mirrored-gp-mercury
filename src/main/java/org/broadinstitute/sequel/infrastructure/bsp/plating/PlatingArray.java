@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 
-public class PlatingArray implements Iterable {
-    //public class PlatingArray implements Iterable<PlatingArrayElement> {
+//public class PlatingArray implements Iterable {
+public class PlatingArray implements Iterable<PlatingArrayElement> {
 
     private Plateable[] array = new Plateable[96];
 

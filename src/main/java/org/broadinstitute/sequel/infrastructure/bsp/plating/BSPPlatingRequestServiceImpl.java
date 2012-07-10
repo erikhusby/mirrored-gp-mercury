@@ -1,16 +1,20 @@
 package org.broadinstitute.sequel.infrastructure.bsp.plating;
 
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.container.ContainerManager;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.*;
+import org.broadinstitute.sequel.control.AbstractJerseyClientService;
 import org.broadinstitute.sequel.control.dao.project.JiraTicketDao;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
 //import org.broadinstitute.sequel.infrastructure.common.GroupingIterable;
+import org.broadinstitute.sequel.infrastructure.common.GroupingIterable;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 
 import javax.inject.Inject;
@@ -18,12 +22,12 @@ import java.text.DateFormat;
 import java.util.*;
 
 @Impl
-public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
+public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService implements BSPPlatingRequestService {
 
     // , BSPPlatingRequestServiceFullySpecified {
 
     // not sure these are really going to be constants; they should be true
-    // for 96 tube Matrix racks but different size plates are certainly 
+    // for 96 tube Matrix racks but different size plates are certainly
     // possible
     private final static int PLATE_ROW_COUNT = 8;
 
@@ -55,6 +59,9 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
             BSPPlatingRequestOptions.AllowLessThanOne.NO,
             BSPPlatingRequestOptions.CancerProject.NO);
 
+
+    public BSPPlatingRequestServiceImpl() {
+    }
 
     public BSPPlatingRequestServiceImpl(BSPConfig bspConfig) {
         this.bspConfig = bspConfig;
@@ -178,8 +185,8 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
 
         final int SAMPLES_PER_PLATE = PLATE_WELL_COUNT - (controlWells == null ? 0 : controlWells.size());
 
-        //GroupingIterable<SeqWorkRequestAliquot> platesWorthGroupingsOfAliquots =
-        //        new GroupingIterable<SeqWorkRequestAliquot>(SAMPLES_PER_PLATE, seqAliquots);
+        GroupingIterable<SeqWorkRequestAliquot> platesWorthGroupingsOfAliquots =
+                new GroupingIterable<SeqWorkRequestAliquot>(SAMPLES_PER_PLATE, seqAliquots);
 
         WorkRequestManager bspWorkRequestManager = bspManagerFactory.createWorkRequestManager();
 
@@ -195,7 +202,7 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
         */
         SeqPlatingWorkRequest workRequest;
 
-        // Always make a new plating WR, even on updates!  We don't want any baggage from our 
+        // Always make a new plating WR, even on updates!  We don't want any baggage from our
         // older attempts with this plating request receipt
         workRequest = new SeqPlatingWorkRequest();
 
@@ -289,7 +296,7 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
         workRequest.setRequiredVolume(44.0D);
 
         //for (SeqWorkRequestAliquot stock : seqAliquots) {
-        //for (List<SeqWorkRequestAliquot> platesWorthOfAliquots : platesWorthGroupingsOfAliquots) {
+        for (List<SeqWorkRequestAliquot> platesWorthOfAliquots : platesWorthGroupingsOfAliquots) {
 
             // for the current Tripod use case, there will only be one plate per cart and therefore only one plate
             // per plating request
@@ -302,9 +309,8 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
 
             PlatingArray platingArray = new PlatingArray(seqAliquots, controlWells, platingOrder);
 
-            for (Object plateable1 : platingArray) {
+            for (Plateable plateable : platingArray) {
 
-                Plateable plateable = (Plateable)plateable1;
                 SamplePlateInfo samplePlateInfo = new SamplePlateInfo(
                         plateable.getSampleId(),
                         plateNumber,
@@ -328,7 +334,7 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
 
             plateNumber++;
 
-        //}
+        }
 
 
         /*
@@ -501,5 +507,13 @@ public class BSPPlatingRequestServiceImpl implements BSPPlatingRequestService {
     }
 
 
+    @Override
+    protected void customizeConfig(ClientConfig clientConfig) {
+
+    }
+
+    @Override
+    protected void customizeClient(Client client) {
+        specifyHttpAuthCredentials(client, bspConfig);
+    }
 }
- 

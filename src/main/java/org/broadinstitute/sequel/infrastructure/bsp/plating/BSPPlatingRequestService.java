@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.infrastructure.bsp.plating;
 
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 
+import java.io.Serializable;
 import java.util.List;
 
 
@@ -13,7 +14,7 @@ import java.util.List;
  *
  * @author mcovarr
  */
-public interface BSPPlatingRequestService {
+public interface BSPPlatingRequestService extends Serializable {
 
     /**
      * Create a brand new BSP Plating Request and attempt to submit it.

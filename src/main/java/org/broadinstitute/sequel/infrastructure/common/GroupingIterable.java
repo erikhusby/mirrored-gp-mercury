@@ -15,9 +15,8 @@ import java.util.NoSuchElementException;
  *
  * @param <T> The type of the element in the input List and generated Lists.
  */
-public class GroupingIterable<T>  {//IterableWithSize<List<T>> {
+public class GroupingIterable<T>  implements IterableWithSize<List<T>> {
     
-/*
     private int maxGroupSize;
     
     private List<T> inputList;
@@ -42,21 +41,6 @@ public class GroupingIterable<T>  {//IterableWithSize<List<T>> {
     }
 
     @Override
-    public T next() {
-        if (!hasNext())
-            throw new NoSuchElementException();
-
-        currentGroup++;
-
-        int fromIndex = currentGroup * maxGroupSize;
-        int toIndex = Math.min(((currentGroup + 1) * maxGroupSize), inputList.size());
-
-        return (T) inputList.subList(fromIndex, toIndex);
-    }
-
-*/
-/*
-    @Override
     public List<T> next() {
         
         if (!hasNext())
@@ -70,8 +54,6 @@ public class GroupingIterable<T>  {//IterableWithSize<List<T>> {
         return inputList.subList(fromIndex, toIndex);
                 
     }
-*//*
-
 
     @Override
     public void remove() {
@@ -88,6 +70,5 @@ public class GroupingIterable<T>  {//IterableWithSize<List<T>> {
         return (inputList.size() + maxGroupSize - 1) / maxGroupSize;
     }
 
-*/
 
 }
