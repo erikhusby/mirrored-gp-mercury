@@ -71,17 +71,8 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
     public GapExperimentRequest populateGapProduct(GapExperimentRequest gapExperimentRequest) {
         ExperimentPlan experimentPlan = gapExperimentRequest.getExperimentPlanDTO();
 
-        if (experimentPlan.getProductId() != null) {
-            Product product = null;
-            Integer gapProductId = experimentPlan.getProductId();
-            try {
-                product = lookupTechnologyProductById(gapProductId);
-            } catch (ProductNotFoundException e) {
-                // Nothing to do here made an effort to translate the productId
-                product = new Product("Unknown", "" + gapProductId);
-                LogFactory.getLog(GapExperimentRequest.class).error("GAP productId " + gapProductId + " not found.", e);
-            }
-            gapExperimentRequest.setTechnologyProduct(product);
+        if (  experimentPlan.getProductName() != null ) {
+            gapExperimentRequest.setTechnologyProduct(new Product(experimentPlan.getProductName()));
         }
 
         return gapExperimentRequest;
@@ -364,9 +355,8 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 
 
     @Override
-    public Product lookupTechnologyProductById(final Integer productId) throws ProductNotFoundException {
-        final Product result;
-        Platforms platforms = null;
+    public Platforms getPlatforms() {
+        Platforms platforms;
 
         String url = gapConnectionParameters.getUrl(GapConnectionParameters.GAP_TECHNOLOGIES_URL);
         logger.info(String.format("url string is '%s'", url));
@@ -374,39 +364,21 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
         try {
             WebResource resource = getJerseyClient().resource(url);
             platforms = resource.accept(MediaType.APPLICATION_XML).get(Platforms.class);
-        } catch (UniformInterfaceException e) {
-            String errMsg = "Could not find GAP technologies for product id : " + productId.intValue();
-            logger.error(errMsg + " at " + url);
-            throw new RuntimeException(errMsg, e);
-        } catch (ClientHandlerException e) {
-            String errMsg = "Could not communicate with GAP server for technology chip product id " + productId.intValue();
-            logger.error(errMsg + " at " + url);
-            throw new RuntimeException(errMsg, e);
+        } catch(UniformInterfaceException e) {
+            String errMsg = "Could not find any GAP Platforms";
+            logger.error( errMsg + " at " + url );
+            throw new RuntimeException( errMsg , e);
+        } catch(ClientHandlerException e) {
+            String errMsg = "Could not communicate with GAP server to retrieve GAP Platforms";
+            logger.error( errMsg + " at " + url );
+            throw new RuntimeException( errMsg , e );
         } catch (Exception exp) {
-            String errMsg = "Exception occurred trying to retrieve GAP technology for product id : " + productId.intValue();
-            logger.error(errMsg + " at " + url, exp);
-            throw new RuntimeException(errMsg, exp);
+            String errMsg = "Exception occurred trying to retrieve to retrieve GAP Platforms";
+            logger.error(errMsg + " at " + url , exp);
+            throw new RuntimeException( errMsg , exp);
         }
 
-        // Traverse the platform tree of products to find a match.
-        // The lists of platforms and products are pretty small lists.
-        if ((platforms != null) && (platforms.getPlatforms() != null) && platforms.getPlatforms().size() > 0) {
-            for (Platform platform : platforms.getPlatforms()) {
-                if ((platform != null) && (platform.getProducts() != null)
-                        && (platform.getProducts().getProducts() != null) && (platform.getProducts().getProducts().size() > 0)) {
-                    for (Product product : platform.getProducts().getProducts()) {
-                        if ((product != null) && (product.getId() != null) && product.getId().trim().equals("" + productId.intValue())) {
-                            result = product;
-                            return result;
-                        }
-                    }
-                }
-            }
-        }
-
-        String errMsg = "Could not find GAP technologies for product id : " + productId.intValue();
-        logger.error(errMsg + " at " + url);
-        throw new ProductNotFoundException(errMsg);
+        return platforms;
     }
 
     private String encode(String valueStr) throws UnsupportedEncodingException {

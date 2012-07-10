@@ -10,9 +10,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.Response;
 
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -67,7 +65,7 @@ public class ResearchProjectResourceTest extends Arquillian {
         ResearchProjects researchProjects = researchProjectResource.findAllResearchProjects("");
         Assert.assertNotNull(researchProjects);
         Assert.assertNotNull(researchProjects.getProjects());
-        Assert.assertEquals(4, researchProjects.getProjects().size());
+        Assert.assertEquals(5, researchProjects.getProjects().size());
 //        Assert.assertEquals(researchProjects.getProjects().get(0).getTitle().name + " " +
 //                researchProjects.getProjects().get(0).getId().longValue()
 //                , "FakeResearchProject 111" );

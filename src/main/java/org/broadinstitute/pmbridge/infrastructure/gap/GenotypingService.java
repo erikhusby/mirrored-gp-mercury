@@ -30,7 +30,7 @@ public interface GenotypingService {
     // Get a list of experiment request summaries
     public List<ExperimentRequestSummary> getRequestSummariesByCreator(final Person creator);
 
-    // Lookup the product given an Id
-    public Product lookupTechnologyProductById(final Integer productId) throws ProductNotFoundException;
+    // Get all supported platforms and products
+    public Platforms getPlatforms();
 
 }

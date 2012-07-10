@@ -53,13 +53,14 @@ public class GenotypingServiceTest {
     @Test
     public void testLookupTechnologyProductById() throws Exception {
 
-        // <product name="HumanCytoSNP-12v1-0_D" display-name="Cyto 12" id="153"/>
-        Product product = genotypingService.lookupTechnologyProductById( new Integer( 153 ));
-        Assert.assertNotNull(product);
-        Assert.assertNotNull( product.getId() );
-        Assert.assertEquals(product.getId(), "007");
-        Assert.assertEquals(product.getDisplayName(), "Super Chip");
-        Assert.assertEquals(product.getName(), "SuperChipCytoSNP-12v1-0_D");
-
+        // <product name="Omni1M"/>
+        Platforms platforms = genotypingService.getPlatforms();
+        Assert.assertNotNull(platforms);
+        Assert.assertFalse(platforms.getPlatforms().isEmpty());
+        Products products = platforms.getPlatforms().get(0).getProducts();
+        Assert.assertNotNull(products);
+        Assert.assertFalse(products.getProducts().isEmpty());
+        Product product = products.getProducts().get(0);
+        Assert.assertEquals(product.getName(), "Omni1M");
     }
 }
