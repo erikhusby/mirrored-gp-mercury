@@ -80,7 +80,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 
 
     private static Quote lookupQuoteById(final QuoteService quoteService, final String quoteStr) {
-        Quote quote = null;
+        Quote quote;
         String numericRegex = "[\\d]+";
         boolean quoteIsNumeric = Pattern.matches(numericRegex, quoteStr);
         try {
@@ -114,11 +114,10 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
     public GapExperimentRequest getPlatformRequest(final ExperimentRequestSummary experimentRequestSummary) {
         String expId = experimentRequestSummary.getExperimentId().value;
         GapExperimentRequest gapExperimentRequest = null;
-        Response response = null;
 
         ExperimentPlan requiredExperimentPlan = new ExperimentPlan();
         requiredExperimentPlan.setId(expId);
-        response = retrieveExperimentByGXPId(expId, requiredExperimentPlan);
+        Response response = retrieveExperimentByGXPId(expId, requiredExperimentPlan);
 
         // Try to transform the GAP ExperimentPlan object into the GapExperimentRequest object
         if ((response != null) && (response.getExperimentPlans() != null)) {
@@ -179,7 +178,6 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
                                                                    final GapExperimentRequest gapExperimentRequest,
                                                                    final String status) {
         GapExperimentRequest submittedExperimentRequest = null;
-        Response response = null;
 
         ExperimentPlan experimentPlan = gapExperimentRequest.getExperimentPlanDTO();
         experimentPlan.setPlanningStatus(status);
@@ -195,19 +193,18 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
             WebResource webResource = getJerseyClient().resource(fullUrl);
 
             try {
-                MultivaluedMap formData = new MultivaluedMapImpl();
+                MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
                 formData.add("plan_data", planXmlStr);
                 ClientResponse clientResponse = webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, formData);
-                response = clientResponse.getEntity(Response.class);
+                Response response = clientResponse.getEntity(Response.class);
 
                 // Try to transform the GAP ExperimentPlan object into the GapExperimentRequest object
                 if ((response != null) && (response.getExperimentPlans() != null)) {
                     boolean submissionSuccessful = (response.getExperimentPlans().size() == 1);
-                    String expId = null;
 
                     if (submissionSuccessful) {
                         ExperimentPlan receivedExperimentPlan = response.getExperimentPlans().get(0);
-                        expId = (receivedExperimentPlan != null) ? receivedExperimentPlan.getId() : "null";
+                        String expId = (receivedExperimentPlan != null) ? receivedExperimentPlan.getId() : "null";
 
                         ExperimentRequestSummary experimentRequestSummary = gapExperimentRequest.getExperimentRequestSummary();
                         experimentRequestSummary.setExperimentId(new ExperimentId(expId));
@@ -222,7 +219,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 
                     } else {
                         logger.error("Expected 1 but received " + response.getExperimentPlans().size() +
-                                " GAP experiment requests for experimen titled : " +
+                                " GAP experiment requests for experiment titled : " +
                                 gapExperimentRequest.getExperimentRequestSummary().getTitle());
                         String gapErrMsg = generateSummaryFromResponse(response.getMessages(), submissionSuccessful);
                         logger.error(gapErrMsg);
@@ -257,11 +254,10 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
     public List<ExperimentRequestSummary> getRequestSummariesByCreator(final Person user) {
 
         List<ExperimentRequestSummary> experimentRequestSummaries = new ArrayList<ExperimentRequestSummary>();
-        Response response = null;
 
         ExperimentPlan requiredExperimentPlan = new ExperimentPlan();
         requiredExperimentPlan.setProgramPm(user.getUsername());
-        response = retrieveExperimentByUser(user, requiredExperimentPlan);
+        Response response = retrieveExperimentByUser(user, requiredExperimentPlan);
 
         if (response != null) {
             for (ExperimentPlan expPlan : response.getExperimentPlans()) {
@@ -435,7 +431,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
     private boolean anyMessagesOfType(MessageType messageType, List<Message> messages) {
         boolean result = false;
         for (Message msg : messages) {
-            if (msg.getType().equals(messageType)) {
+            if (msg.getType() == messageType) {
                 result = true;
                 break;
             }
@@ -444,14 +440,14 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
     }
 
     private String getMessagesOfType(MessageType messageType, List<Message> messages) {
-        StringBuffer resultBuffer = new StringBuffer();
+        StringBuilder resultBuffer = new StringBuilder();
         for (Message msg : messages) {
-            if (msg.getType().equals(messageType)) {
+            if (msg.getType() == messageType) {
                 String prefix = msg.getField();
                 if (org.apache.commons.lang.StringUtils.isNotBlank(prefix)) {
                     resultBuffer.append(prefix).append(" - ");
                 }
-                resultBuffer.append(msg.getMessage() + "\n");
+                resultBuffer.append(msg.getMessage()).append("\n");
             }
         }
         return resultBuffer.toString();
