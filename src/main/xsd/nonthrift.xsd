@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <xsd:element name="response">
+        <xsd:complexType>
+            <xsd:choice>
+                <xsd:element name="booleanValue" type="xsd:boolean"/>
+                <xsd:element name="doubleValue" type="xsd:double"/>
+                <xsd:element name="stringValue" type="xsd:string"/>
+                <xsd:element name="flowcellDesignation" type="flowcellDesignationType"/>
+            </xsd:choice>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:complexType name="flowcellDesignationType">
+        <xsd:sequence>
+            <xsd:element name="lanes" type="laneType" maxOccurs="unbounded"/>
+            <xsd:element name="designationName" type="xsd:string"/>
+            <xsd:element name="readLength" type="xsd:int"/>
+            <xsd:element name="pairedEndRun" type="xsd:boolean"/>
+            <xsd:element name="indexedRun" type="xsd:boolean"/>
+            <xsd:element name="controlLane" type="xsd:int"/>
+            <xsd:element name="keepIntensityFiles" type="xsd:boolean"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="laneType">
+        <xsd:sequence>
+            <xsd:element name="laneName" type="xsd:string"/>
+            <xsd:element name="libraryData" type="libraryDataType" maxOccurs="unbounded"/>
+            <xsd:element name="loadingConcentration" type="xsd:double"/>
+            <xsd:element name="derivedLibraryData" type="libraryDataType" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="libraryDataType">
+        <xsd:sequence>
+            <xsd:element name="wasFound" type="xsd:boolean"/>
+            <xsd:element name="libraryName" type="xsd:string"/>
+            <xsd:element name="libraryType" type="xsd:string"/>
+            <xsd:element name="tubeBarcode" type="xsd:string"/>
+            <xsd:element name="sampleDetails" type="sampleInfoType" maxOccurs="unbounded"/>
+            <xsd:element name="dateCreated" type="xsd:dateTime"/>
+            <xsd:element name="discarded" type="xsd:boolean"/>
+            <xsd:element name="destroyed" type="xsd:boolean"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="sampleInfoType">
+        <xsd:sequence>
+            <xsd:element name="sampleName" type="xsd:string"/>
+            <xsd:element name="sampleType" type="xsd:string"/>
+            <xsd:element name="indexLength" type="xsd:int"/>
+            <xsd:element name="indexSequence" type="xsd:string"/>
+            <xsd:element name="referenceSequence" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+</xsd:schema>

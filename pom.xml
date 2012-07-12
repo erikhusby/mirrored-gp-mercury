@@ -736,6 +736,14 @@
             <version>6.1.1</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+        	<groupId>org.hamcrest</groupId>
+        	<artifactId>hamcrest-all</artifactId>
+        	<version>1.1</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- uncomment this to enable squid integration -->
         <!--
         <dependency>
@@ -1240,21 +1248,36 @@ todo jmt enable this
                 <artifactId>maven-jaxb-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>bettalims</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
+                        <configuration>
+                            <schemaDirectory>src/main/xsd</schemaDirectory>
+                            <includeSchemas>
+                                <includeSchema>bettalims.xsd</includeSchema>
+                            </includeSchemas>
+                            <generatePackage>org.broadinstitute.sequel.bettalims.jaxb</generatePackage>
+                            <includeBindings>
+                                <includeBinding>*.xjb</includeBinding>
+                            </includeBindings>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>nonthrift</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <schemaDirectory>src/main/xsd</schemaDirectory>
+                            <includeSchemas>
+                                <includeSchema>nonthrift.xsd</includeSchema>
+                            </includeSchemas>
+                            <generatePackage>org.broadinstitute.sequel.nonthrift.jaxb</generatePackage>
+                            <generateDirectory>${project.build.directory}/generated-sources/nonthrift-jaxb</generateDirectory>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <schemaDirectory>src/main/xsd</schemaDirectory>
-                    <includeSchemas>
-                        <includeSchema>bettalims.xsd</includeSchema>
-                    </includeSchemas>
-                    <generatePackage>org.broadinstitute.sequel.bettalims.jaxb</generatePackage>
-                    <includeBindings>
-                        <includeBinding>*.xjb</includeBinding>
-                    </includeBindings>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
