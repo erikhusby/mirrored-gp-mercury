@@ -125,12 +125,22 @@ public class LibraryBean {
     
     public LibraryBean() {}
 
-    public LibraryBean(String library, String project, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize, String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId, String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType, String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine, String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl, String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment, TZDevExperimentData devExperimentData,String gssrBarcode,Collection<String> gssrBarcodes,String gssrSampleType,Short targetLaneCoverage,Boolean doAggregation) {
+    public LibraryBean(String library, String project, String initiative, Long workRequest,
+            MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
+            String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId,
+            String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType,
+            String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine,
+            String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
+            String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment,
+            TZDevExperimentData devExperimentData, String gssrBarcode, Collection<String> gssrBarcodes,
+            String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation) {
         this.library = library;
         this.project = project;
         this.initiative = initiative;
         this.workRequest = workRequest;
-        this.indexingScheme = new MolecularIndexingSchemeBean(indexingScheme);
+        if (indexingScheme != null) {
+            this.indexingScheme = new MolecularIndexingSchemeBean(indexingScheme);
+        }
         this.hasIndexingRead = hasIndexingRead;
         this.expectedInsertSize = expectedInsertSize;
         this.analysisType = analysisType;
@@ -155,7 +165,9 @@ public class LibraryBean {
         isNegativeControl = negativeControl;
         this.weirdness = weirdness;
         this.preCircularizationDnaSize = ThriftConversionUtil.zeroAsNull(preCircularizationDnaSize);
-        this.devExperimentData = new DevExperimentDataBean(devExperimentData);
+        if (devExperimentData != null) {
+            this.devExperimentData = new DevExperimentDataBean(devExperimentData);
+        }
         this.gssrBarcodes = gssrBarcodes;
         this.gssrSampleType = gssrSampleType;
         this.targetLaneCoverage = targetLaneCoverage;

@@ -18,7 +18,9 @@ import java.util.*;
  * for more details.
  */
 public class ZimsIlluminaRun {
-    
+
+    public static final String DATE_FORMAT = "MM/dd/yyyy HH:mm";
+
     @JsonProperty("name")
     private String runName;
     
@@ -47,7 +49,7 @@ public class ZimsIlluminaRun {
     private Integer lastCycle;
 
     @JsonIgnore
-    private final SimpleDateFormat dateFormat =  new SimpleDateFormat("MM/dd/yyyy HH:mm");
+    private final SimpleDateFormat dateFormat =  new SimpleDateFormat(DATE_FORMAT);
 
     @JsonProperty("lanes")
     private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();

@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.boundary.labevent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
+import org.broadinstitute.sequel.boundary.ResourceException;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.labevent.MessageStore;
@@ -19,7 +20,6 @@ import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBContext;
@@ -43,12 +43,6 @@ public class BettalimsMessageResource {
 
     @Inject
     private LabEventHandler labEventHandler;
-
-    public static class BettaLIMSException extends WebApplicationException {
-        public BettaLIMSException(String message, int status) {
-            super(Response.status(status).entity(message).type(MediaType.TEXT_PLAIN_TYPE).build());
-        }
-    }
 
     /**
      * Accepts a message from (typically) a liquid handling deck
@@ -87,10 +81,10 @@ public class BettalimsMessageResource {
 /*
 todo jmt fix this
             if(e.getMessage().contains(LabWorkflowBatchException.MESSAGE)) {
-                throw new BettaLIMSException(e.getMessage(), 201);
+                throw new ResourceException(e.getMessage(), 201);
             } else {
 */
-                throw new BettaLIMSException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
 /*
             }
 */

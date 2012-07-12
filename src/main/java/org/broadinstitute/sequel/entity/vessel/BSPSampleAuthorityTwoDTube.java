@@ -1,18 +1,21 @@
 package org.broadinstitute.sequel.entity.vessel;
 
-import org.broadinstitute.sequel.boundary.Sample;
-import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 
-import java.util.Collection;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
 import java.util.Set;
 
 /**
  * An aliquot made on behalf of a particular starter.
  */
+@Entity
 public class BSPSampleAuthorityTwoDTube extends TwoDBarcodedTube {
 
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private StartingSample aliquot;
 
 
@@ -25,6 +28,9 @@ public class BSPSampleAuthorityTwoDTube extends TwoDBarcodedTube {
     public BSPSampleAuthorityTwoDTube(StartingSample aliquot) {
         super(aliquot.getLabel());
         this.aliquot = aliquot;
+    }
+
+    protected BSPSampleAuthorityTwoDTube() {
     }
 
     @Override

@@ -11,6 +11,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,16 +34,19 @@ public class SequencingRun {
 
     private Boolean testRun;
 
+    private Date runDate;
+
     @OneToMany(cascade = CascadeType.PERSIST)
     private Set<RunCartridge> runCartridges = new HashSet<RunCartridge>();
 
     public SequencingRun(String runName, String runBarcode, String machineName, Person operator, Boolean testRun,
-            Set<RunCartridge> runCartridges) {
+            Date runDate, Set<RunCartridge> runCartridges) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.machineName = machineName;
         this.operator = operator;
         this.testRun = testRun;
+        this.runDate = runDate;
         this.runCartridges = runCartridges;
     }
 
@@ -98,5 +102,13 @@ public class SequencingRun {
      */
     public Iterable<RunCartridge> getSampleCartridge() {
         return runCartridges;
+    }
+
+    public Date getRunDate() {
+        return runDate;
+    }
+
+    public void setRunDate(Date runDate) {
+        this.runDate = runDate;
     }
 }

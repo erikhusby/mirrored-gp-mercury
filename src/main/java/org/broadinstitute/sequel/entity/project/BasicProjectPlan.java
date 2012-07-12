@@ -44,11 +44,6 @@ public class BasicProjectPlan extends ProjectPlan {
     @Transient // todo arz fix me
     private Map<Starter,LabVessel> aliquotForStarter = new HashMap<Starter, LabVessel>();
 
-    @Id
-    @SequenceGenerator(name = "SEQ_PROJECT_PLAN", sequenceName = "SEQ_PROJECT_PLAN")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PROJECT_PLAN")
-    private Long projectPlanId;
-
     @Transient
     private Collection<Starter> starters = new HashSet<Starter>();
 
