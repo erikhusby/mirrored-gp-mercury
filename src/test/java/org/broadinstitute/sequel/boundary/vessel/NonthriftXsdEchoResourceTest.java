@@ -98,6 +98,16 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
         assertThat(result, equalTo(xmlForValue("test")));
     }
 
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testGetFlowcellDesignationAsJson(@ArquillianResource URL baseUrl) {
+        String url = baseUrl + basePath + "/getFlowcellDesignation";
+
+        String result = Client.create(clientConfig).resource(url).accept(MediaType.APPLICATION_JSON).get(String.class);
+        System.out.println(result);
+        assertThat(result, equalTo(NonthriftXsdEchoResource.FLOWCELL_DESIGNATION_JSON));
+    }
+
     private String jsonForValue(boolean value) {
         return "{\"booleanValue\":" + value +",\"doubleValue\":null,\"stringValue\":null,\"flowcellDesignation\":null}";
     }

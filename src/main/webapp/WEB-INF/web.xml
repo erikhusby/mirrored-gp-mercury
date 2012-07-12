@@ -87,6 +87,10 @@
             org.broadinstitute.sequel.boundary.labevent.BettalimsMessageResource
         </param-value>
     </context-param>
+    <context-param>
+        <param-name>resteasy.providers</param-name>
+        <param-value>org.broadinstitute.sequel.infrastructure.jaxrs.JacksonConfigurator</param-value>
+    </context-param>
 
     <!-- for JBoss AS 7 -->
 <!--
