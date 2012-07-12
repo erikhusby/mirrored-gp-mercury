@@ -3,8 +3,6 @@ package org.broadinstitute.sequel.infrastructure.bsp.plating;
 
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConfigProducer;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestService;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestServiceImpl;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 
 import javax.enterprise.context.SessionScoped;
@@ -21,13 +19,12 @@ public class BSPPlatingRequestServiceProducer {
     @Inject
     private Deployment deployment;
 
-
     @Produces
     @Default
     @SessionScoped
     public BSPPlatingRequestService produce(@New BSPPlatingRequestServiceStub stub, @New BSPPlatingRequestServiceImpl impl) {
 
-        if ( deployment == STUBBY )
+        if (deployment == STUBBY)
             return stub;
 
         return impl;
@@ -44,7 +41,7 @@ public class BSPPlatingRequestServiceProducer {
 
         BSPConfig bspConfig = BSPConfigProducer.produce(QA);
 
-        return new BSPPlatingRequestServiceImpl( bspConfig );
+        return new BSPPlatingRequestServiceImpl(bspConfig);
 
     }
 }

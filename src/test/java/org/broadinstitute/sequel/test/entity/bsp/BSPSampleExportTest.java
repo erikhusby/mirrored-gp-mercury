@@ -1,28 +1,22 @@
 package org.broadinstitute.sequel.test.entity.bsp;
 
 import org.apache.commons.logging.Log;
-import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.sequel.entity.billing.Quote;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
-import org.broadinstitute.sequel.entity.labevent.LabEventName;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestService;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestServiceImpl;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestServiceProducer;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
+import org.broadinstitute.sequel.infrastructure.bsp.plating.*;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.Funding;
 import org.broadinstitute.sequel.infrastructure.quote.FundingLevel;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteFunding;
-import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -30,9 +24,8 @@ import javax.inject.Inject;
 import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
-public class BSPSampleExportTest extends ContainerTest {
+public class BSPSampleExportTest {
 
     public static final String masterSample1 = "SM-1111";
     public static final String masterSample2 = "SM-2222";
@@ -43,8 +36,8 @@ public class BSPSampleExportTest extends ContainerTest {
     @Inject
     BSPConfig bspConfig;
 
-    //@Inject
-    //private Log log;
+    @Inject
+    private Log log;
 
     @Test(groups = {DATABASE_FREE})
     public void testExport() throws Exception {
@@ -56,10 +49,9 @@ public class BSPSampleExportTest extends ContainerTest {
                 "ExomeExpressPlan1",
                 new WorkflowDescription("HybridSelection", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
-
         String quoteString = "DNA385";
         Quote billingQuote = new org.broadinstitute.sequel.entity.billing.Quote(quoteString,
-                new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteString,new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
+                new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI")))));
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
@@ -73,15 +65,13 @@ public class BSPSampleExportTest extends ContainerTest {
 
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION} , enabled = true)
-    //@Test
+    @Test(groups = {DATABASE_FREE}, enabled = true)
     public void testIssueBSPPlating() throws Exception {
 
-        //BSPPlatingRequestService platingService = BSPPlatingRequestServiceProducer.qaInstance();
         BSPPlatingRequestServiceProducer producer = new BSPPlatingRequestServiceProducer();
-        BSPPlatingRequestService platingService = producer.produce(new BSPPlatingRequestServiceStub(), new BSPPlatingRequestServiceImpl(bspConfig));
+        //BSPPlatingRequestService platingService = producer.produce(new BSPPlatingRequestServiceStub(), new BSPPlatingRequestServiceImpl(bspConfig));
 
-        //BSPPlatingRequestService platingService =
+        BSPPlatingRequestService platingService = new BSPPlatingRequestServiceStub();
 
         BasicProject project = new BasicProject("BSPPlatingTestingProject", new JiraTicket());
         // BasicProjectPlan
@@ -92,7 +82,7 @@ public class BSPSampleExportTest extends ContainerTest {
 
         String quoteString = "DNA385";
         Quote billingQuote = new Quote(quoteString,
-                new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteString,new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
+                new org.broadinstitute.sequel.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI")))));
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
@@ -101,19 +91,32 @@ public class BSPSampleExportTest extends ContainerTest {
         StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
         projectPlan.getStarters().add(startingSample2);
 
-        //System.out.println("Quote :" + projectPlan.getQuoteDTO().getId());
-        //System.out.println("Quote Alpha :" + projectPlan.getQuoteDTO().getAlphanumericId());
         Map<StartingSample, AliquotParameters> starterMap = new HashMap<StartingSample, AliquotParameters>();
         for (Starter starter : projectPlan.getStarters()) {
-            starterMap.put((StartingSample)starter, new AliquotParameters(projectPlan, 1.9f, 1.6f));
+            starterMap.put((StartingSample) starter, new AliquotParameters(projectPlan, 1.9f, 1.6f));
         }
 
         BSPSampleFactory bspSampleFactory = new BSPSampleFactory();
-        bspSampleFactory.issueBSPPlatingRequest(starterMap, null, 0, null, null, null, "BSP Plating Test", "Illumina"
-        , "sampath" , "ExomeExpress-LCSET-JIRA-111" , "BSP Plating from Exome Express");
 
-        //BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPPlatingExportEntityBuilder(projectPlan);
-        //bspExportEntityBuilder.runTest();
+        List<BSPPlatingRequest> bspRequests = bspSampleFactory.buildBSPPlatingRequests(starterMap);
+        Assert.assertNotNull(bspRequests);
+        Assert.assertEquals(starterMap.keySet().size(), bspRequests.size());
+
+        BSPPlatingRequestOptions defaultOptions = platingService.getBSPPlatingRequestDefaultOptions();
+        //set PlatformAndProcess, notificationList
+        defaultOptions.setNotificationList("sampath@broadinstitute.org");
+        //defaultOptions.setNotificationList("projects@broadinstitute.org");
+        defaultOptions.setPlatformAndProcess(BSPPlatingRequestOptions.PlatformAndProcess.ILLUMINA_HYBRID_SELECTION_WGS_FRAGMENT_180BP); //TODO.. pass this
+
+        String platingRequestName = "TEST BSP PR-1";
+        String label = platingRequestName;
+        String comments = "BSP Plating Request test from ExomeExpress";
+        List<ControlWell> controlWells = new ArrayList<ControlWell>();
+        //TODO .. test add controls
+        //controlWells = bspSampleFactory.buildControlWells(null, projectPlan, 1, 0.5F, "DNA3DY", "DNA274");
+        String technology = "Solexa";
+        BSPPlatingRequestResult platingResult = platingService.issueBSPPlatingRequest(defaultOptions, bspRequests, controlWells, "sampath", platingRequestName, comments, technology, label);
+        Assert.assertNotNull(platingResult);
     }
 
     public static class BSPPlatingExportEntityBuilder {
@@ -152,7 +155,7 @@ public class BSPSampleExportTest extends ContainerTest {
 
             Collection<Starter> starters = projectPlan.getStarters();
             Assert.assertNotNull(starters);
-            Assert.assertEquals(starters.size() , 2, "Project Plan should have 2 starters");
+            Assert.assertEquals(starters.size(), 2, "Project Plan should have 2 starters");
             //TODO :- use IssueBSPPlatingRequest mock to get some aliquots
             //for now hardcode
             Map<String, StartingSample> aliquotSourceMap = new HashMap<String, StartingSample>();
@@ -188,7 +191,7 @@ public class BSPSampleExportTest extends ContainerTest {
 
             //now iterate through these aliquots, do some asserts and see if we can navigate back to requests.
             Assert.assertNotNull(bspAliquots);
-            Assert.assertEquals(bspAliquots.size(), starters.size() , "BSP Aliquot size should match Staters size");
+            Assert.assertEquals(bspAliquots.size(), starters.size(), "BSP Aliquot size should match Staters size");
             for (Starter aliquot : bspAliquots) {
                 Assert.assertTrue(aliquot.getLabel().contains("Aliquot"));
                 //check the source stock sample of each aliquot

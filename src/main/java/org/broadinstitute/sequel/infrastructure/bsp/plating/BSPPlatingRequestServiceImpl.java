@@ -11,11 +11,11 @@ import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.*;
 import org.broadinstitute.sequel.control.AbstractJerseyClientService;
 import org.broadinstitute.sequel.control.dao.project.JiraTicketDao;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
-//import org.broadinstitute.sequel.infrastructure.common.GroupingIterable;
 import org.broadinstitute.sequel.infrastructure.common.GroupingIterable;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
+import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
 import javax.inject.Inject;
 import java.text.DateFormat;
@@ -23,8 +23,6 @@ import java.util.*;
 
 @Impl
 public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService implements BSPPlatingRequestService {
-
-    // , BSPPlatingRequestServiceFullySpecified {
 
     // not sure these are really going to be constants; they should be true
     // for 96 tube Matrix racks but different size plates are certainly
@@ -43,13 +41,13 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
     @Inject
     private BSPConfig bspConfig;
 
-    //@Inject
-    //private Log log;
+    @Inject
+    private QuoteService quoteService;
 
     @Inject
+    private Log log;
+    @Inject
     private JiraTicketDao jiraTicketDao;
-
-    private static Log log = LogFactory.getLog(BSPPlatingRequestServiceImpl.class);
 
     private BSPPlatingRequestOptions defaultPlatingRequestOptions = new BSPPlatingRequestOptions(
             BSPPlatingRequestOptions.HighConcentrationOption.VOLUME_FIRST,
@@ -61,6 +59,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
 
 
     public BSPPlatingRequestServiceImpl() {
+        log = LogFactory.getLog(BSPPlatingRequestServiceImpl.class);
     }
 
     public BSPPlatingRequestServiceImpl(BSPConfig bspConfig) {
@@ -81,7 +80,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
 
         int totalStockCount = seqAliquots.size() + (controlWells == null ? 0 : controlWells.size());
 
-        if (totalStockCount >  96) {
+        if (totalStockCount > 96) {
             throw new IllegalArgumentException("Total Stocks & controls cannot be greater than 96 for plating ");
         }
 
@@ -436,7 +435,6 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
     }
 
 
-    @Override
     public void setSquidWorkRequestId(String platingRequestBarcode, long squidWorkRequestId) {
         WorkRequestManager bspWorkRequestManager =
                 bspManagerFactory.createWorkRequestManager();
@@ -452,8 +450,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
 
     }
 
-    @Override
-    public void setHumanReadableBarcode(String platingRequestReceipt, int plateIndex, String humanReadableText) {
+    public void setLabel(String platingRequestReceipt, int plateIndex, String label) {
         WorkRequestManager bspWorkRequestManager =
                 bspManagerFactory.createWorkRequestManager();
 
@@ -462,13 +459,12 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         checkWorkRequestResponse(workRequestResponse);
 
         SeqPlatingWorkRequest workRequest = (SeqPlatingWorkRequest) workRequestResponse.getWorkRequest();
-        workRequest.getPlateNameMap().put(plateIndex, humanReadableText);
+        workRequest.getPlateNameMap().put(plateIndex, label);
 
         bspWorkRequestManager.update(workRequest);
     }
 
 
-    @Override
     public BSPPlatingRequestResult tryAgain(String platingRequestBarcode) {
 
         WorkRequestManager bspWorkRequestManager =
@@ -486,19 +482,11 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
     }
 
 
-    @Override
     public String generateLinkToBSPPlatingRequestPage(String platingRequestBarcode) {
         return String.format("http://%s:%d/BSP/collection/find.action?barcode=%s",
                 bspConfig.getHost(),
                 bspConfig.getPort(),
                 platingRequestBarcode);
-    }
-
-    @Override
-    public String getLcSetJiraKey(JiraTicket ticket) {
-
-        //ticket.getLabBatch().
-        return null;
     }
 
     @Override
@@ -509,11 +497,31 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
-
     }
 
     @Override
     protected void customizeClient(Client client) {
         specifyHttpAuthCredentials(client, bspConfig);
+    }
+
+    @Override
+    public BSPPlatingRequestResult issueBSPPlatingRequest(BSPPlatingRequestOptions options, List<BSPPlatingRequest> requests,
+                                                          List<ControlWell> controlWells, String login, String platingRequestName,
+                                                          String comments, String seqTechnology, String label)
+            throws Exception {
+        List<SeqWorkRequestAliquot> bspStocks = new ArrayList<SeqWorkRequestAliquot>();
+        BSPPlatingRequestResult result = null;
+        for (BSPPlatingRequest request : requests) {
+            SeqWorkRequestAliquot aliquot = new SeqWorkRequestAliquot(request.getSampleName(),
+                    request.getAliquotParameters().getTargetVolume(),
+                    request.getAliquotParameters().getTargetConcentration(),
+                    request.getAliquotParameters().getProjectPlan().getQuoteDTO(quoteService).getAlphanumericId()
+            );
+
+            bspStocks.add(aliquot);
+        }
+
+        result = doPlatingRequest(null, options, login, platingRequestName, bspStocks, controlWells, comments, seqTechnology, label);
+        return result;
     }
 }

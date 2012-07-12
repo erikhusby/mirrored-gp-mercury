@@ -1,18 +1,13 @@
 package org.broadinstitute.sequel.infrastructure.bsp.plating;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.inject.Inject;
-
 public class Well {
 
     private char row;
     private int col;
     private Plateable.Size size;
 
-   // @Inject
-   // private Log log;
+    // @Inject
+    // private Log log;
 
     /**
      * Wells can be constructed by index as long as the {@link Plateable.Order}

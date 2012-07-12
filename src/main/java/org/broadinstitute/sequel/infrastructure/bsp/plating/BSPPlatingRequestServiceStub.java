@@ -1,51 +1,47 @@
 package org.broadinstitute.sequel.infrastructure.bsp.plating;
 
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.infrastructure.deployment.Stub;
 
-import java.util.*;
+import java.util.List;
 
 @Stub
 public class BSPPlatingRequestServiceStub implements BSPPlatingRequestService {
+
     @Override
     public BSPPlatingRequestResult createPlatingRequest(BSPPlatingRequestOptions options, String login, String platingRequestName, List<SeqWorkRequestAliquot> aliquots, List<ControlWell> controlWells, String comments, String seqTechnology, String humanReadableBarcode) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        BSPPlatingRequestResult result = new BSPPlatingRequestResult();
+        result.setPlatingRequestReceipt("WR-1234");
+        result.setPlatingRequestSubmitted(false);
+        return result;
     }
 
     @Override
     public BSPPlatingRequestResult updatePlatingRequest(String platingRequestReceipt, BSPPlatingRequestOptions options, String login, List<SeqWorkRequestAliquot> aliquots, List<ControlWell> controlWells) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void setSquidWorkRequestId(String platingRequestReceipt, long squidWorkRequestId) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void setHumanReadableBarcode(String platingRequestReceipt, int plateIndex, String humanReadableText) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public BSPPlatingRequestResult tryAgain(String platingRequestReceipt) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public String generateLinkToBSPPlatingRequestPage(String platingRequestReceipt) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public String getLcSetJiraKey(JiraTicket jiraTicket) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        BSPPlatingRequestResult result = new BSPPlatingRequestResult();
+        result.setPlatingRequestReceipt("WR-1234");
+        result.setPlatingRequestSubmitted(false);
+        return result;
     }
 
     @Override
     public BSPPlatingRequestOptions getBSPPlatingRequestDefaultOptions() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        BSPPlatingRequestOptions defaultPlatingRequestOptions = new BSPPlatingRequestOptions(
+                BSPPlatingRequestOptions.HighConcentrationOption.VOLUME_FIRST,
+                BSPPlatingRequestOptions.PlatformAndProcess.ILLUMINA_HYBRID_SELECTION_WGS_FRAGMENT_180BP,
+                BSPPlatingRequestOptions.PlateType.Matrix96SlotRackSC05,
+                BSPPlatingRequestOptions.TubeType.MatrixTubeSC05,
+                BSPPlatingRequestOptions.AllowLessThanOne.NO,
+                BSPPlatingRequestOptions.CancerProject.NO);
+
+        return defaultPlatingRequestOptions;
+    }
+
+    @Override
+    public BSPPlatingRequestResult issueBSPPlatingRequest(BSPPlatingRequestOptions options, List<BSPPlatingRequest> requests, List<ControlWell> controlWells, String login, String platingRequestName, String comments, String seqTechnology, String humanReadableBarcode) throws Exception {
+        BSPPlatingRequestResult result = new BSPPlatingRequestResult();
+        result.setPlatingRequestReceipt("WR-1234");
+        result.setPlatingRequestSubmitted(false);
+        return result;
     }
 }
