@@ -18,7 +18,7 @@ public class IndexedPlateFactoryTest extends ContainerTest {
     @Inject
     private IndexedPlateFactory indexedPlateFactory;
 
-    @Test(enabled = true, groups = EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
     public void testParseFile() {
 
         // Not sure about the following
