@@ -3,8 +3,6 @@ package org.broadinstitute.sequel.test;
 import org.broadinstitute.sequel.boundary.BaitSet;
 import org.broadinstitute.sequel.boundary.BaitSetListResult;
 import org.broadinstitute.sequel.boundary.DirectedPass;
-import org.broadinstitute.sequel.boundary.GSSRSampleKitRequest;
-import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPServiceProducer;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
@@ -16,6 +14,7 @@ import org.broadinstitute.sequel.boundary.pmbridge.data.ResearchProject;
 import org.broadinstitute.sequel.boundary.run.SolexaRunBean;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
+import org.broadinstitute.sequel.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
@@ -23,11 +22,10 @@ import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.sequel.control.zims.LibraryBeanFactory;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.Starter;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
+import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
+import org.broadinstitute.sequel.entity.project.*;
+import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
@@ -42,6 +40,7 @@ import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.bsp.plating.*;
 import org.broadinstitute.sequel.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraServiceProducer;
@@ -59,11 +58,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -103,9 +98,8 @@ public class ExomeExpressEndToEndTest {
         passService.storePass(directedPass);
 
         // if this is an EE pass take it through the SequeL process:
-        if ( true /* R3_725 directedPass.isExomeExpress() */ ) {
+        if (true /* R3_725 directedPass.isExomeExpress() */) {
             // PASS with quote IDs, price items (need PMBridge 2 for price items)
-
 
 
             // factory or something to convert from JAX-WS DTOs to entities (or refer to Squid PASS)
@@ -114,9 +108,8 @@ public class ExomeExpressEndToEndTest {
             // Project
 
             ResearchProject researchProject = null;
-            if ( directedPass.getResearchProject() != null )
+            if (directedPass.getResearchProject() != null)
                 researchProject = pmBridgeService.getResearchProjectByID(directedPass.getResearchProject());
-
 
 
             //TODO SGM: change this to PassBackedProjectPlan
@@ -147,9 +140,9 @@ public class ExomeExpressEndToEndTest {
             baitsCache.getBaitSetList().add(baitSet);
 
             // todo when R3_725 comes out, revert to looking this up via the pass
-            PriceItem priceItem = new PriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","Bananas","DNA Sequencing");
+            PriceItem priceItem = new PriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15", "Bananas", "DNA Sequencing");
 
-            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass,bspDataFetcher,baitsCache,priceItem);
+            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass, bspDataFetcher, baitsCache, priceItem);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
             projectPlan.getWorkflowDescription().initFromFile("HybridSelectionVisualParadigm.xml");
 
@@ -163,30 +156,32 @@ public class ExomeExpressEndToEndTest {
             }
             Assert.assertTrue(hasSeqLibAnnotation);
 
-            Assert.assertEquals(workflowAnnotations.size(),1);
+            Assert.assertEquals(workflowAnnotations.size(), 1);
 
             // create batches for the pass.  todo add more samples to the pass.
-            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan,2,"TESTBatch");
+            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan, 2, "TESTBatch");
             Assert.assertFalse(labBatches.isEmpty());
-            Assert.assertEquals(labBatches.size(),1);
+            Assert.assertEquals(labBatches.size(), 1);
+
+            int STARTER_COUNT = projectPlan.getStarters().size(); //This probably will be labBatch size eventually
 
             // create the jira ticket for each batch.
             JiraTicket jiraTicket = null;
 
             // grab the jira custom field definitions
-            final Map<String,CustomFieldDefinition> requiredFieldsMap = JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraService);
+            final Map<String, CustomFieldDefinition> requiredFieldsMap = JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraService);
             Assert.assertFalse(requiredFieldsMap.isEmpty());
-            Assert.assertEquals(requiredFieldsMap.size(),3);
+            Assert.assertEquals(requiredFieldsMap.size(), 3);
 
 
-            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS),"Work Request One Billion!");
+            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!");
             // kludge: expect stock samples to have a different field name (like "BSP STOCKS") when this goes live.  until then, we'll call it GSSR.
             final StringBuilder stockSamplesBuilder = new StringBuilder();
             for (Starter starter : projectPlan.getStarters()) {
                 stockSamplesBuilder.append(" ").append(starter.getLabel());
             }
-            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.GSSR_IDS),stockSamplesBuilder.toString());
-            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.PROTOCOL),"Protocol to take over the world");
+            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString());
+            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world");
 
             final Collection<CustomField> allCustomFields = new HashSet<CustomField>();
             allCustomFields.add(workRequestCustomField);
@@ -200,21 +195,45 @@ public class ExomeExpressEndToEndTest {
                         "Pass " + projectPlan.getPass().getProjectInformation().getPassNumber(), allCustomFields);
                 Assert.assertNotNull(createResponse);
                 Assert.assertNotNull(createResponse.getTicketName());
-                jiraTicket = new JiraTicket(jiraService,createResponse.getTicketName(),createResponse.getId());
+                jiraTicket = new JiraTicket(jiraService, createResponse.getTicketName(), createResponse.getId());
                 labBatch.setJiraTicket(jiraTicket);
+                //labBatch.get
             }
 
             // how do we wire up the lab batch and/or jira ticket to the plating request?
+            //TODO .. verify ProjectPlan.getStarters() are all starters... labbatch.getStarters() are ONLY starters for that batch ??
+            //TODO .. if so BSPPlating should be by each LabBatch . LabBatch.getStarters() should be the group to do BSPPlating ??
+            //Plating request to BSP
+            //From projectPlan .. build BSPPlatingRequest objects
+            Collection<Starter> starterStocks = projectPlan.getStarters();
+            //List<StartingSample> startingSamples = new ArrayList<StartingSample>();
+            Map<StartingSample, AliquotParameters> starterMap = new HashMap<StartingSample, AliquotParameters>();
+            for (Starter stock : starterStocks) {
+                starterMap.put((StartingSample) stock, new AliquotParameters(projectPlan, 1.9f, 1.6f));
+            }
 
-            // Plating request to BSP
-            // BSP Client mock to get receipt?
-            // Plating export from BSP
-            new GSSRSampleKitRequest();
+            BSPSampleFactory bspSampleFactory = new BSPSampleFactory();
+            List<BSPPlatingRequest> bspRequests = bspSampleFactory.buildBSPPlatingRequests(starterMap);
+            projectPlan.getPendingPlatingRequests().addAll(bspRequests);
+            Assert.assertNotNull(bspRequests);
+            Assert.assertEquals(bspRequests.size(), starterStocks.size(), "Plating Requests returned doesn't match the Starter count");
 
+            //add the controls ??
+            List<ControlWell> controls = new ArrayList<ControlWell>();
+            BSPPlatingRequestService bspPlatingService = new BSPPlatingRequestServiceStub();
+            BSPPlatingRequestOptions options = bspPlatingService.getBSPPlatingRequestDefaultOptions();
+            BSPPlatingRequestResult platingResult = bspPlatingService.issueBSPPlatingRequest(options, bspRequests, controls, "sampath",
+                    "EE-BSP-PLATING-1", "BSP Plating Exome Express Test", "Solexa", "EE-TEST-1");
+            Assert.assertNotNull(platingResult); //just Stub any way
+            BSPPlatingReceipt platingReceipt = bspSampleFactory.buildPlatingReceipt(bspRequests, platingResult);
+            Assert.assertNotNull(platingReceipt);
+            Assert.assertEquals(platingReceipt.getPlatingRequests().size(), bspRequests.size() , "BSP Plating Requests in receipt & passed requests count does not match");
+
+            Assert.assertEquals(platingReceipt.getPlatingRequests().size() , STARTER_COUNT, "Started with " + STARTER_COUNT + " samples. BSP Plating requests should be " + STARTER_COUNT);
             //Test BSP Plating EXPORT
-            BSPSampleExportTest.BSPPlatingExportEntityBuilder bspExportEntityBuilder = new BSPSampleExportTest.BSPPlatingExportEntityBuilder(projectPlan);
+            BSPSampleExportTest.runBSPExportTest(platingReceipt, projectPlan);
+            //new GSSRSampleKitRequest();
 
-            bspExportEntityBuilder.runTest();
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
             Collection<Starter> starters = projectPlan.getStarters();
             Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
@@ -240,7 +259,7 @@ public class ExomeExpressEndToEndTest {
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
 
             for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
-                mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(),(TwoDBarcodedTube)stockToAliquotEntry.getValue());
+                mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(), (TwoDBarcodedTube) stockToAliquotEntry.getValue());
             }
 
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
@@ -262,7 +281,7 @@ public class ExomeExpressEndToEndTest {
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
             RackOfTubes pondRack = libraryConstructionEntityBuilder.getPondRegRack();
-            Assert.assertEquals(pondRack.getSampleInstances().size(),2);
+            Assert.assertEquals(pondRack.getSampleInstances().size(), 2);
 
             // make sure that the pond sample instances contain the starters from the project plan.
             for (Starter starter : projectPlan.getStarters()) {
@@ -326,34 +345,34 @@ public class ExomeExpressEndToEndTest {
             for (SampleInstance sampleInstance : currEntry.getSampleInstances()) {
                 Assert.assertTrue(aliquotsFromProjectPlan.contains(sampleInstance.getStartingSample().getLabel()));
                 numStartersFromSampleInstances++;
-                Assert.assertEquals(projectPlan,sampleInstance.getSingleProjectPlan());
+                Assert.assertEquals(projectPlan, sampleInstance.getSingleProjectPlan());
             }
 
             Assert.assertEquals(startersFromProjectPlan.size(), numStartersFromSampleInstances);
 
             // todo arz fix semantics: is it "single sample ancestor" or "sequencing library"?
-            Map<StartingSample,Collection<LabVessel>> singleSampleAncestors = poolingResult.getVesselContainer().getSingleSampleAncestors(VesselPosition.A01);
+            Map<StartingSample, Collection<LabVessel>> singleSampleAncestors = poolingResult.getVesselContainer().getSingleSampleAncestors(VesselPosition.A01);
 
             for (Starter starter : projectPlan.getStarters()) {
                 LabVessel aliquot = projectPlan.getAliquot(starter);
                 Assert.assertNotNull(aliquot);
 
-                Assert.assertEquals(aliquot.getSampleInstances().size(),1);
+                Assert.assertEquals(aliquot.getSampleInstances().size(), 1);
 
                 for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
                     StartingSample aliquotStartingSample = aliquotSampleInstance.getStartingSample();
                     Collection<LabVessel> sequencingLibs = singleSampleAncestors.get(aliquotStartingSample);
-                    Assert.assertEquals(sequencingLibs.size(),1);
+                    Assert.assertEquals(sequencingLibs.size(), 1);
                     Assert.assertTrue(sequencingLibs.iterator().next().getLabel().startsWith(LabEventTest.POND_REGISTRATION_TUBE_PREFIX));
                 }
             }
-            Assert.assertEquals(singleSampleAncestors.size(),2);
+            Assert.assertEquals(singleSampleAncestors.size(), 2);
 
             Collection<LabBatch> nearestBatches = poolingResult.getVesselContainer().getNearestLabBatches(VesselPosition.A01);
-            Assert.assertEquals(nearestBatches.size(),1);
+            Assert.assertEquals(nearestBatches.size(), 1);
             LabBatch labBatch = nearestBatches.iterator().next();
 
-            Assert.assertEquals(labBatch.getJiraTicket(),jiraTicket);
+            Assert.assertEquals(labBatch.getJiraTicket(), jiraTicket);
 
             Quote quoteDTO = projectPlan.getQuoteDTO(quoteService);
 
@@ -364,8 +383,8 @@ public class ExomeExpressEndToEndTest {
 
             for (Starter starter : labBatch.getStarters()) {
                 ProjectPlan batchPlan = labBatch.getProjectPlan();
-                Assert.assertEquals(projectPlan,batchPlan);
-                batchPlan.doBilling(starter,labBatch,quoteService);
+                Assert.assertEquals(projectPlan, batchPlan);
+                batchPlan.doBilling(starter, labBatch, quoteService);
             }
 
             // todo add call to quote server to get all work done during the time period and verify
@@ -406,7 +425,7 @@ public class ExomeExpressEndToEndTest {
                     Collection<LibraryBean> libraries = zimsLane.getLibraries();
                     Assert.assertFalse(libraries.isEmpty());
                     for (LibraryBean library : libraries) {
-                        Assert.assertEquals(library.getProject(),directedPass.getResearchProject());
+                        Assert.assertEquals(library.getProject(), directedPass.getResearchProject());
                         // todo how to get from pass bait set id to bait name?
 //                        Assert.assertEquals(library.getBaitSetName(),directedPass.getBaitSetID());
                         // todo how to get from pass organism id to organism name?

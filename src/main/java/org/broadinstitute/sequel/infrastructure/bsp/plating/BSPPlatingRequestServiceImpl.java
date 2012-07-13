@@ -64,7 +64,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
 
     public BSPPlatingRequestServiceImpl(BSPConfig bspConfig) {
         this.bspConfig = bspConfig;
-        //log = LogFactory.getLog(BSPPlatingRequestServiceImpl.class);
+        log = LogFactory.getLog(BSPPlatingRequestServiceImpl.class);
     }
 
     @Override
@@ -524,4 +524,35 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         result = doPlatingRequest(null, options, login, platingRequestName, bspStocks, controlWells, comments, seqTechnology, label);
         return result;
     }
+
+
+/*
+    public BSPPlatingReceipt issueBSPPlatingRequestNew(BSPPlatingRequestOptions options, List<BSPPlatingRequest> requests,
+                                                          List<ControlWell> controlWells, String login, String platingRequestName,
+                                                          String comments, String seqTechnology, String label)
+            throws Exception {
+        List<SeqWorkRequestAliquot> bspStocks = new ArrayList<SeqWorkRequestAliquot>();
+        BSPPlatingReceipt receipt = null;
+        for (BSPPlatingRequest request : requests) {
+            SeqWorkRequestAliquot aliquot = new SeqWorkRequestAliquot(request.getSampleName(),
+                    request.getAliquotParameters().getTargetVolume(),
+                    request.getAliquotParameters().getTargetConcentration(),
+                    request.getAliquotParameters().getProjectPlan().getQuoteDTO(quoteService).getAlphanumericId()
+            );
+
+            bspStocks.add(aliquot);
+        }
+
+        BSPPlatingRequestResult result = doPlatingRequest(null, options, login, platingRequestName, bspStocks, controlWells, comments, seqTechnology, label);
+        //TODO .. depending on the result..if BSP WR is atleast created.. build receipt
+        if (result.getErrors() == null || result.getErrors().isEmpty()) {
+            //BSP work request was created
+            receipt = new BSPPlatingReceipt(result.getPlatingRequestReceipt());
+            receipt.getPlatingRequests().addAll(requests);
+        }
+        return receipt;
+    }
+*/
+
+
 }

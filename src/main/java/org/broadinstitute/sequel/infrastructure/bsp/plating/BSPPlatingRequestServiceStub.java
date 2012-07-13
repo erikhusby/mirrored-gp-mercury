@@ -44,4 +44,5 @@ public class BSPPlatingRequestServiceStub implements BSPPlatingRequestService {
         result.setPlatingRequestSubmitted(false);
         return result;
     }
+
 }

@@ -166,84 +166,6 @@ public class BSPSampleFactory {
         return bspAliquots;
     }
 
-
-    public void issueBSPPlatingRequest(Map<StartingSample, AliquotParameters> starterMap,
-                                       Map<String, AliquotParameters> posControlMap, int negcontrolCount, Float negControlVolume,
-                                       String posControlQuote, String negControlQuote,
-                                       String platingRequestName, String technology, String login, String label, String comments )
-            throws Exception {
-
-        List<SeqWorkRequestAliquot> bspStocks = new ArrayList<SeqWorkRequestAliquot>();
-
-        List<BSPPlatingRequest> bspPlatingRequests = new ArrayList<BSPPlatingRequest>();
-        BSPPlatingRequest platingRequest;
-        if (starterMap == null || starterMap.isEmpty()) {
-            throw new IllegalArgumentException("Null or empty Starter list ");
-        }
-
-        Iterator<StartingSample> starterIterator = starterMap.keySet().iterator();
-        while (starterIterator.hasNext()) {
-            StartingSample starter = starterIterator.next();
-            AliquotParameters parameters = starterMap.get(starter);
-            SeqWorkRequestAliquot aliquot = new SeqWorkRequestAliquot(starter.getSampleName(), parameters.getTargetVolume(),
-                    parameters.getTargetConcentration(), parameters.getProjectPlan().getQuoteDTO(quoteService).getAlphanumericId());
-            bspStocks.add(aliquot);
-            platingRequest = new BSPPlatingRequest(starter.getSampleName(), parameters);
-            bspPlatingRequests.add(platingRequest);
-        }
-
-        //pass control AliquotParameters .. quote
-        List<ControlWell> controls = new ArrayList<ControlWell>();
-        Character posControlRow = 'H';
-        int posControlCol = 02;
-        if (posControlMap != null) {
-            Iterator<String> posControlIterator = posControlMap.keySet().iterator();
-            while (posControlIterator.hasNext()) {
-                String externalID = posControlIterator.next();
-                AliquotParameters parameters = posControlMap.get(externalID);
-                Control.Positive posControl = new Control.Positive(externalID);
-                //TODO..This can be moved into service
-                Well well = new Well(posControlRow, posControlCol, Plateable.Size.WELLS_96);
-                ControlWell posControlWell = new ControlWell(well, posControl, parameters.getTargetVolume(),
-                        parameters.getTargetConcentration(), posControlQuote);
-                controls.add(posControlWell);
-                posControlCol++;
-
-                //platingRequest = new BSPPlatingRequest(null, parameters);
-                //bspPlatingRequests.add(platingRequest);
-            }
-        }
-
-        //negative controls /water controls
-        Character negControlRow = 'D';
-        int negControlCol = 10;
-        for (int i = 0; i < negcontrolCount; i++) {
-            Well well = new Well(negControlRow, negControlCol, Plateable.Size.WELLS_96);
-            ControlWell negcontrol = new ControlWell(well, Control.Negative.WATER_CONTROL);
-            negcontrol.setQuoteID(negControlQuote);
-            negcontrol.setVolume(negControlVolume);
-            negcontrol.setConcentration(WATER_CONTROL_CONCENTARTION);
-            controls.add(negcontrol);
-            negControlCol++;
-            //platingRequest = new BSPPlatingRequest(null, parameters);
-            //bspPlatingRequests.add(platingRequest);
-        }
-
-        BSPPlatingRequestOptions defaultOptions = bspPlatingRequestService.getBSPPlatingRequestDefaultOptions();
-        //TODO ..
-        //set PlatformAndProcess, notificationList
-        defaultOptions.setNotificationList("sampath@broadinstitute.org");
-        defaultOptions.setPlatformAndProcess(BSPPlatingRequestOptions.PlatformAndProcess.ILLUMINA_6_14Kb_JUMP); //TODO.. pass this
-        if (platingRequestName == null || platingRequestName.isEmpty()) {
-            platingRequestName = label;
-        }
-
-        BSPPlatingRequestResult platingResult = bspPlatingRequestService.createPlatingRequest(defaultOptions, login, platingRequestName, bspStocks, controls,
-                comments, technology, label);
-
-    }
-
-
     public List<BSPPlatingRequest> buildBSPPlatingRequests(Map<StartingSample, AliquotParameters> starterMap)
             throws Exception {
 
@@ -259,6 +181,9 @@ public class BSPSampleFactory {
             AliquotParameters parameters = starterMap.get(starter);
             platingRequest = new BSPPlatingRequest(starter.getSampleName(), parameters);
             bspPlatingRequests.add(platingRequest);
+
+            //TODO .. check back ..addToProjectPlan ??
+            starter.getRootProjectPlan().addPlatingRequest(platingRequest);
         }
 
         //TODO .. Do we controls added to BSPPlatingRequest ??
@@ -347,5 +272,99 @@ public class BSPSampleFactory {
         return controls;
 
     }
+
+    public BSPPlatingReceipt buildPlatingReceipt(List<BSPPlatingRequest> requests, BSPPlatingRequestResult platingResult) {
+        BSPPlatingReceipt receipt = null;
+
+        if (platingResult != null && platingResult.getPlatingRequestReceipt() != null && (platingResult.getErrors() == null || platingResult.getErrors().isEmpty())) {
+            //BSP work request was created
+            receipt = new BSPPlatingReceipt(platingResult.getPlatingRequestReceipt());
+            receipt.getPlatingRequests().addAll(requests);
+        }
+
+        return receipt;
+    }
+
+/*
+
+    public BSPPlatingRequestResult issueBSPPlatingRequest(Map<StartingSample, AliquotParameters> starterMap,
+                                                          Map<String, AliquotParameters> posControlMap, int negcontrolCount, Float negControlVolume,
+                                                          String posControlQuote, String negControlQuote,
+                                                          String platingRequestName, String technology, String login, String label, String comments )
+            throws Exception {
+
+        List<SeqWorkRequestAliquot> bspStocks = new ArrayList<SeqWorkRequestAliquot>();
+
+        List<BSPPlatingRequest> bspPlatingRequests = new ArrayList<BSPPlatingRequest>();
+        BSPPlatingRequest platingRequest;
+        if (starterMap == null || starterMap.isEmpty()) {
+            throw new IllegalArgumentException("Null or empty Starter list ");
+        }
+
+        Iterator<StartingSample> starterIterator = starterMap.keySet().iterator();
+        while (starterIterator.hasNext()) {
+            StartingSample starter = starterIterator.next();
+            AliquotParameters parameters = starterMap.get(starter);
+            SeqWorkRequestAliquot aliquot = new SeqWorkRequestAliquot(starter.getSampleName(), parameters.getTargetVolume(),
+                    parameters.getTargetConcentration(), parameters.getProjectPlan().getQuoteDTO(quoteService).getAlphanumericId());
+            bspStocks.add(aliquot);
+            platingRequest = new BSPPlatingRequest(starter.getSampleName(), parameters);
+            bspPlatingRequests.add(platingRequest);
+        }
+
+        //pass control AliquotParameters .. quote
+        List<ControlWell> controls = new ArrayList<ControlWell>();
+        Character posControlRow = 'H';
+        int posControlCol = 02;
+        if (posControlMap != null) {
+            Iterator<String> posControlIterator = posControlMap.keySet().iterator();
+            while (posControlIterator.hasNext()) {
+                String externalID = posControlIterator.next();
+                AliquotParameters parameters = posControlMap.get(externalID);
+                Control.Positive posControl = new Control.Positive(externalID);
+                //TODO..This can be moved into service
+                Well well = new Well(posControlRow, posControlCol, Plateable.Size.WELLS_96);
+                ControlWell posControlWell = new ControlWell(well, posControl, parameters.getTargetVolume(),
+                        parameters.getTargetConcentration(), posControlQuote);
+                controls.add(posControlWell);
+                posControlCol++;
+
+                //platingRequest = new BSPPlatingRequest(null, parameters);
+                //bspPlatingRequests.add(platingRequest);
+            }
+        }
+
+        //negative controls /water controls
+        Character negControlRow = 'D';
+        int negControlCol = 10;
+        for (int i = 0; i < negcontrolCount; i++) {
+            Well well = new Well(negControlRow, negControlCol, Plateable.Size.WELLS_96);
+            ControlWell negcontrol = new ControlWell(well, Control.Negative.WATER_CONTROL);
+            negcontrol.setQuoteID(negControlQuote);
+            negcontrol.setVolume(negControlVolume);
+            negcontrol.setConcentration(WATER_CONTROL_CONCENTARTION);
+            controls.add(negcontrol);
+            negControlCol++;
+            //platingRequest = new BSPPlatingRequest(null, parameters);
+            //bspPlatingRequests.add(platingRequest);
+        }
+
+        BSPPlatingRequestOptions defaultOptions = bspPlatingRequestService.getBSPPlatingRequestDefaultOptions();
+        //TODO ..
+        //set PlatformAndProcess, notificationList
+        defaultOptions.setNotificationList("sampath@broadinstitute.org");
+        defaultOptions.setPlatformAndProcess(BSPPlatingRequestOptions.PlatformAndProcess.ILLUMINA_6_14Kb_JUMP); //TODO.. pass this
+        if (platingRequestName == null || platingRequestName.isEmpty()) {
+            platingRequestName = label;
+        }
+
+        BSPPlatingRequestResult platingResult = bspPlatingRequestService.createPlatingRequest(defaultOptions, login, platingRequestName, bspStocks, controls,
+                comments, technology, label);
+
+        return platingResult;
+    }
+
+*/
+
 
 }

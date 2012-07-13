@@ -11,7 +11,6 @@ import java.util.List;
  * Versions of BSP Plating Service method intended to be called by Work Request
  * code. BSP connection parameters are pulled from Maven profiles, plating
  * request options are defaulted.
- *
  */
 public interface BSPPlatingRequestService extends Serializable {
 
@@ -70,5 +69,6 @@ public interface BSPPlatingRequestService extends Serializable {
             List<ControlWell> controlWells);
 
     BSPPlatingRequestOptions getBSPPlatingRequestDefaultOptions();
+
 
 }
