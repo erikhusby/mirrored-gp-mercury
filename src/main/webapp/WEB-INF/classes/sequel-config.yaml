@@ -73,24 +73,24 @@ quote:
 
 squid:
 
-  DEV:
+    DEV:
 
-    url: http://localhost:8080/squid
-
-
-  TEST:
-
-    url: http://prodinfobuild.broadinstitute.org:8020/squid
+      url: http://localhost:8080/squid
 
 
-  QA:
+    TEST:
 
-    url: http://vsquidrc.broadinstitute.org:8000/squid
+      url: http://prodinfobuild.broadinstitute.org:8020/squid
 
 
-  PROD:
+    QA:
 
-    url: http://squid-ui.broadinstitute.org:8000/squid
+      url: http://vsquidrc.broadinstitute.org:8000/squid
+
+
+    PROD:
+
+      url: http://squid-ui.broadinstitute.org:8000/squid
 
 
 

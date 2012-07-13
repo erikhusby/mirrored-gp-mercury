@@ -31,17 +31,21 @@ public class SequelConfigReader {
     };
 
 
-    private static final String SEQUEL_CONFIG = "/sequel-config.yaml";
+    private static final String SEQUEL_CONFIG = "/config/test-sequel-config.yaml";
 
-    private static final String SEQUEL_CONFIG_LOCAL = "/sequel-config-local.yaml";
+    private static final String SEQUEL_CONFIG_LOCAL = "/test-sequel-config-local.yaml";
 
     private static SequelConfigReader instance;
 
 
+    // Map of system key ("bsp", "squid", "thrift") to a Map of external system Deployments (TEST, QA, PROD) to
+    // AbstractConfigs describing those deployments
     private Map<String, Map<Deployment, AbstractConfig>> externalSystemsMap =
             new HashMap<String, Map<Deployment, AbstractConfig>>();
 
 
+    // Map of system key ("bsp", "squid", "thrift") to a Map of *SequeL* Deployments to the corresponding external
+    // system Deployment
     private Map<String, Map<Deployment, Deployment>> sequelConnectionsMap =
             new HashMap<String, Map<Deployment, Deployment>>();
 
@@ -65,7 +69,7 @@ public class SequelConfigReader {
 
 
     /**
-     * Private to route creation through {@link #getInstance()}
+     * Private to force access through {@link #getInstance()}
      */
     private SequelConfigReader() {}
 
@@ -78,8 +82,11 @@ public class SequelConfigReader {
     }
 
 
-
-
+    /**
+     * Load the configuration of external systems only, not the SequeL connections to those systems
+     *
+     * @param doc Top-level YAML document
+     */
     private void loadExternalSystems(Map<String, Map> doc) {
 
 
@@ -123,6 +130,12 @@ public class SequelConfigReader {
     }
 
 
+    /**
+     * Load the SequeL connections to external system deployments
+     *
+     * @param doc
+     * @param globalConfig
+     */
     private void loadSequelConnections(Map<String, Map> doc, boolean globalConfig) {
 
         if ( ! doc.containsKey("sequel") ) {
@@ -173,16 +186,46 @@ public class SequelConfigReader {
     }
 
 
-    /* package */ void loadGlobal(InputStream is) {
+    /**
+     * Package visible test-friendly version of getConfig that allows the caller to pass in YAML Maps for global and
+     * local configurations
+     *
+     * @param clazz
+     * @param deployment
+     * @param globalConfig
+     * @param localConfig
+     * @return
+     */
+    /* package */ AbstractConfig getConfig(
+            Class<? extends AbstractConfig> clazz, Deployment deployment, Map<String, Map> globalConfig, Map<String, Map> localConfig) {
 
-        Yaml yaml = new Yaml();
-        final Map<String, Map> doc = (Map<String, Map>) yaml.load(is);
-
-        loadExternalSystems(doc);
-        loadSequelConnections(doc, true);
-
+        return null;
     }
 
+
+    /**
+     * Intended solely for test code to clear out mappings
+     */
+    /* package */ void clear() {
+        externalSystemsMap.clear();
+        sequelConnectionsMap.clear();
+    }
+
+
+    /* package */ void load(Map<String, Map> globalConfigDoc, Map<String, Map> localConfigDoc) {
+
+
+        // load up external systems and overrides
+        loadExternalSystems(globalConfigDoc);
+        loadExternalSystems(localConfigDoc);
+
+        // now process the sequel connections to those systems
+        // second parameter indicates whether global or not.  global config must have "sequel" section.
+        loadSequelConnections(globalConfigDoc, true);
+        loadSequelConnections(localConfigDoc, false);
+
+
+    }
 
 
 
@@ -208,14 +251,7 @@ public class SequelConfigReader {
                 localConfigDoc = (Map<String, Map>) yaml.load(is);
 
 
-            // load up external systems and overrides
-            loadExternalSystems(globalConfigDoc);
-            loadExternalSystems(localConfigDoc);
-
-            // now process the sequel connections to those systems
-            // second parameter indicates whether global or not.  global config must have "sequel" section.
-            loadSequelConnections(globalConfigDoc, true);
-            loadSequelConnections(localConfigDoc, false);
+            load(globalConfigDoc, localConfigDoc);
 
         }
 
