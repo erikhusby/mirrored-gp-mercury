@@ -174,7 +174,8 @@ public class IlluminaRunResource implements Serializable {
                         zamboniLibrary.getGssrBarcodes(),
                         zamboniLibrary.getGssrSampleType(),
                         zamboniLibrary.getTargetLaneCoverage(),
-                        zamboniLibrary.aggregate);
+                        zamboniLibrary.aggregate,
+                        zamboniLibrary.getCustomAmpliconSetNames());
                 libraries.add(libBean);
             }
             runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer()));
