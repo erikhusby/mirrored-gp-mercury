@@ -23,6 +23,7 @@ import org.broadinstitute.sequel.control.pass.PassBatchUtil;
 import org.broadinstitute.sequel.control.pass.PassService;
 import org.broadinstitute.sequel.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.sequel.control.zims.LibraryBeanFactory;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.sequel.entity.project.Project;
@@ -31,6 +32,7 @@ import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
+import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
@@ -41,6 +43,7 @@ import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.sequel.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
@@ -390,6 +393,13 @@ public class ExomeExpressEndToEndTest {
             }
             Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge().iterator().next(), "No registered flowcell");
 
+            // We're container-free, so we have to populate the BSPSampleDTO ourselves
+            for (Starter starter : projectPlan.getStarters()) {
+                BSPSampleAuthorityTwoDTube aliquot = (BSPSampleAuthorityTwoDTube) projectPlan.getAliquot(starter);
+                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
+                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName()));
+            }
+
             // ZIMS
             LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
             ZimsIlluminaRun zimsRun = libraryBeanFactory.buildLibraries(illuminaSequencingRun);
@@ -411,15 +421,13 @@ public class ExomeExpressEndToEndTest {
 //                        Assert.assertEquals(library.getBaitSetName(),directedPass.getBaitSetID());
                         // todo how to get from pass organism id to organism name?
 //                        Assert.assertEquals(library.getOrganism(), directedPass.getProjectInformation().getOrganismID());
-/*
                         for (Sample sample : directedPass.getSampleDetailsInformation().getSample()) {
                             // todo probably wrong, not sure whether the sample id is lsid or stock id
-                            if (library.getLsid().equals(sample.getBspSampleID())) {
+                            if (library.getLsid().equals("lsid:" + sample.getBspSampleID())) {
                                 foundSample = true;
                             }
                         }
-                        Assert.assertTrue(foundSample);
-*/
+//                        Assert.assertTrue(foundSample);
                         // todo single sample ancestor comparison
                     }
                 }

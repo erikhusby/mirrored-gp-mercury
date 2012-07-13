@@ -89,8 +89,9 @@ public class BSPSampleDataFetcher {
         String volume = bspColumns[5];
         String concentration = bspColumns[6];
         String organism = bspColumns[7];
+        String sampleLsid = bspColumns[8];
 
-        return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,volume,concentration);
+        return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,volume,concentration, sampleLsid);
     }
 
     private List<String[]> getBSPResponse(Collection<String> sampleNames) {
@@ -102,6 +103,7 @@ public class BSPSampleDataFetcher {
                 BSPSampleSearchColumn.COLLECTION,
                 BSPSampleSearchColumn.VOLUME,
                 BSPSampleSearchColumn.CONCENTRATION,
-                BSPSampleSearchColumn.SPECIES);
+                BSPSampleSearchColumn.SPECIES,
+                BSPSampleSearchColumn.LSID);
     }
 }

@@ -86,8 +86,7 @@ public class BSPStartingSample extends StartingSample {
      * BSP DTO.
      */
     public String getContainerId() {
-        initDto();
-        return bspDTO.getContainerId();
+        return getBspDTO().getContainerId();
     }
 
     @Override
@@ -97,8 +96,7 @@ public class BSPStartingSample extends StartingSample {
      * BSP DTO.
      */
     public String getPatientId() {
-        initDto();
-        return bspDTO.getPatientId();
+        return getBspDTO().getPatientId();
     }
 
     /**
@@ -134,8 +132,7 @@ public class BSPStartingSample extends StartingSample {
      * underlying BSP DTO.
      */
     public String getOrganism() {
-        initDto();
-        return bspDTO.getOrganism();
+        return getBspDTO().getOrganism();
     }
 
     @Override
@@ -153,5 +150,10 @@ public class BSPStartingSample extends StartingSample {
     @Override
     public boolean isAliquotExpected() {
         return true;
+    }
+
+    public BSPSampleDTO getBspDTO() {
+        initDto();
+        return bspDTO;
     }
 }
