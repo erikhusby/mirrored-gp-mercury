@@ -25,6 +25,7 @@ public class DeploymentBuilderTest extends Arquillian {
 
     @Test
     public void testInjection() {
+        System.out.println("in inject test---");
         Assert.assertEquals(service.getName(), "SimpleServiceImpl");
     }
 }
