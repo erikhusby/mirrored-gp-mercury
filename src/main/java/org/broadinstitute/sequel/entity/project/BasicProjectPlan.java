@@ -156,7 +156,6 @@ public class BasicProjectPlan extends ProjectPlan {
         if (starter == null) {
             throw new NullPointerException("vessel cannot be null.");
         }
-        project.addStarter(starter);
         starters.add(starter);
     }
     
