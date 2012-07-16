@@ -90,6 +90,7 @@ public class BSPSampleDataFetcher {
         String concentration = bspColumns[6];
         String organism = bspColumns[7];
         String sampleLsid = bspColumns[8];
+        /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
 
         return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,volume,concentration, sampleLsid);
     }
