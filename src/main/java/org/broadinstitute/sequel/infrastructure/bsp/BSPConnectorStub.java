@@ -18,7 +18,9 @@ public class BSPConnectorStub implements BSPConnector {
 
     @Override
     public BSPPlatingResponse sendAliquotRequests(Collection<BSPPlatingRequest> aliquotRequests) {
-        log.info("Mock request for " + aliquotRequests.size() + " aliquots.");
+        if (log != null) {
+            log.info("Mock request for " + aliquotRequests.size() + " aliquots.");
+        }
         return new BSPPlatingResponse("Mock response", new BSPPlatingReceipt("MockReceipt" + System.currentTimeMillis()));
     }
 }
