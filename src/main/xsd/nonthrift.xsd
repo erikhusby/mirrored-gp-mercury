@@ -14,7 +14,7 @@
 
     <xsd:complexType name="flowcellDesignationType">
         <xsd:sequence>
-            <xsd:element name="lanes" type="laneType" maxOccurs="unbounded"/>
+            <xsd:element name="lane" type="laneType" maxOccurs="unbounded"/>
             <xsd:element name="designationName" type="xsd:string"/>
             <xsd:element name="readLength" type="xsd:int"/>
             <xsd:element name="pairedEndRun" type="xsd:boolean"/>

@@ -18,11 +18,15 @@ import java.text.SimpleDateFormat;
 @Produces("application/json")
 public class JacksonConfigurator implements ContextResolver<ObjectMapper> {
 
-    public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
     private ObjectMapper mapper = new ObjectMapper();
 
     public JacksonConfigurator() {
+        SerializationConfig serConfig = mapper.getSerializationConfig();
+        serConfig.setDateFormat(new SimpleDateFormat(DATE_FORMAT));
+        DeserializationConfig deserializationConfig = mapper.getDeserializationConfig();
+        deserializationConfig.setDateFormat(new SimpleDateFormat(DATE_FORMAT));
         mapper.configure(SerializationConfig.Feature.WRITE_DATES_AS_TIMESTAMPS, false);
     }
 
