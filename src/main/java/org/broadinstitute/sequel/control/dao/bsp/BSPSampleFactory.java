@@ -143,7 +143,7 @@ public class BSPSampleFactory {
 
             StartingSample aliquot = new BSPStartingSample(sampleName, projectPlan);
             LabVessel bspAliquot = new BSPSampleAuthorityTwoDTube(aliquot);
-            projectPlan.setAliquot(startingSample, bspAliquot);
+            projectPlan.addAliquotForStarter(startingSample, bspAliquot);
 
             bspAliquots.add(bspAliquot);
             AliquotReceiver aliquotReceiver = new AliquotReceiver();

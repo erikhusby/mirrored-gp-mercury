@@ -62,10 +62,10 @@ public class BSPSampleExportTest {
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
-        projectPlan.getStarters().add(startingSample);
+        projectPlan.addStarter(startingSample);
 
         StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
-        projectPlan.getStarters().add(startingSample2);
+        projectPlan.addStarter(startingSample2);
 
         Map<StartingSample, AliquotParameters> starterMap = new HashMap<StartingSample, AliquotParameters>();
         for (Starter starter : projectPlan.getStarters()) {
@@ -111,10 +111,10 @@ public class BSPSampleExportTest {
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
-        projectPlan.getStarters().add(startingSample);
+        projectPlan.addStarter(startingSample);
 
         StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
-        projectPlan.getStarters().add(startingSample2);
+        projectPlan.addStarter(startingSample2);
 
         BSPPlatingReceipt bspReceipt = buildTestReceipt(projectPlan);
         runBSPExportTest(bspReceipt, projectPlan);
@@ -223,7 +223,7 @@ public class BSPSampleExportTest {
         Assert.assertEquals(bspAliquots.size(), starterStocks.size());
         while (starterStocksIterator.hasNext()) {
             Starter starter = starterStocksIterator.next();
-            LabVessel aliquot = projectPlan.getAliquot(starter);
+            LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
             Assert.assertNotNull(aliquot);
             Assert.assertEquals(true, aliquot.getLabel().contains("Aliquot"));
             //assumed stock is in format SM-9999

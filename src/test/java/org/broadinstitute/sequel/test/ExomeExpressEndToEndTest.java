@@ -256,7 +256,7 @@ public class ExomeExpressEndToEndTest {
             Collection<Starter> starters = projectPlan.getStarters();
             Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
             for (Starter starter : starters) {
-                LabVessel aliquot = projectPlan.getAliquot(starter);
+                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                 Assert.assertNotNull(aliquot);
                 stockSampleAliquotMap.put(starter.getLabel(), aliquot);
             }
@@ -303,7 +303,7 @@ public class ExomeExpressEndToEndTest {
 
             // make sure that the pond sample instances contain the starters from the project plan.
             for (Starter starter : projectPlan.getStarters()) {
-                LabVessel aliquot = projectPlan.getAliquot(starter);
+                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                 for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
                     boolean foundIt = false;
                     for (SampleInstance pondSampleInstance : pondRack.getSampleInstances()) {
@@ -318,7 +318,7 @@ public class ExomeExpressEndToEndTest {
 
             // make sure that the pond sample instances contain the starters from the project plan.
             for (Starter starter : projectPlan.getStarters()) {
-                LabVessel aliquot = projectPlan.getAliquot(starter);
+                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                 for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
                     boolean foundIt = false;
                     for (SampleInstance pondSampleInstance : hybridSelectionEntityBuilder.getNormCatchRack().getSampleInstances()) {
@@ -355,7 +355,7 @@ public class ExomeExpressEndToEndTest {
             int numStartersFromSampleInstances = 0;
             final Collection<String> aliquotsFromProjectPlan = new HashSet<String>();
             for (Starter starter : projectPlan.getStarters()) {
-                final LabVessel aliquot = projectPlan.getAliquot(starter);
+                final LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                 for (SampleInstance sampleInstance : aliquot.getSampleInstances()) {
                     aliquotsFromProjectPlan.add(sampleInstance.getStartingSample().getLabel());
                 }
@@ -372,7 +372,7 @@ public class ExomeExpressEndToEndTest {
             Map<StartingSample, Collection<LabVessel>> singleSampleAncestors = poolingResult.getVesselContainer().getSingleSampleAncestors(VesselPosition.A01);
 
             for (Starter starter : projectPlan.getStarters()) {
-                LabVessel aliquot = projectPlan.getAliquot(starter);
+                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                 Assert.assertNotNull(aliquot);
 
                 Assert.assertEquals(aliquot.getSampleInstances().size(), 1);
@@ -429,7 +429,7 @@ public class ExomeExpressEndToEndTest {
 
             // We're container-free, so we have to populate the BSPSampleDTO ourselves
             for (Starter starter : projectPlan.getStarters()) {
-                BSPSampleAuthorityTwoDTube aliquot = (BSPSampleAuthorityTwoDTube) projectPlan.getAliquot(starter);
+                BSPSampleAuthorityTwoDTube aliquot = (BSPSampleAuthorityTwoDTube) projectPlan.getAliquotForStarter(starter);
                 BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
                 bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName()));
             }
