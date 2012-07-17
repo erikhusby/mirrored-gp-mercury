@@ -236,6 +236,7 @@ public class IlluminaRunResourceTest extends ContainerTest {
                 checkEquality(zLib.getMolecularIndexes(), libBean.getMolecularIndexingScheme());
                 assertEquals(libBean.getGssrBarcodes(),zLib.getGssrBarcodes());
                 checkEquality(libBean.getDevExperimentData(),zLib.getDevExperimentData());
+                assertEquals(libBean.getCustomAmpliconSetNames(), zLib.getCustomAmpliconSetNames());
             }
         }
         

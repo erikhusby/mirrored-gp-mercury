@@ -122,7 +122,10 @@ public class LibraryBean {
 
     @JsonProperty("targetLaneCoverage")
     private Short targetLaneCoverage;
-    
+
+    @JsonProperty("customAmpliconSetNames")
+    private Collection<String> customAmpliconSetNames = new ArrayList<String>();
+
     public LibraryBean() {}
 
     public LibraryBean(String library, String project, String initiative, Long workRequest,
@@ -133,7 +136,7 @@ public class LibraryBean {
             String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
             String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment,
             TZDevExperimentData devExperimentData, String gssrBarcode, Collection<String> gssrBarcodes,
-            String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation) {
+            String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation, Collection<String> customAmpliconSetNames) {
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -172,6 +175,7 @@ public class LibraryBean {
         this.gssrSampleType = gssrSampleType;
         this.targetLaneCoverage = targetLaneCoverage;
         this.doAggregation = doAggregation;
+        this.customAmpliconSetNames = customAmpliconSetNames;
     }
 
 
@@ -301,5 +305,9 @@ public class LibraryBean {
 
     public Boolean doAggregation() {
         return doAggregation;
+    }
+
+    public Collection<String> getCustomAmpliconSetNames() {
+        return customAmpliconSetNames;
     }
 }
