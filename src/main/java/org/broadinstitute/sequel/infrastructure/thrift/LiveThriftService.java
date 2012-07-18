@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
+import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
@@ -16,12 +17,16 @@ import javax.inject.Inject;
 public class LiveThriftService implements ThriftService {
 
 
-    @Inject
+//    @Inject
     private ThriftConfig thriftConfig;
 
     // stateful: created by open()
     private transient TTransport transport;
 
+    @Inject
+    public LiveThriftService(ThriftConfig thriftConfig) {
+        this.thriftConfig = thriftConfig;
+    }
 
     private void open() {
         close();
@@ -41,7 +46,7 @@ public class LiveThriftService implements ThriftService {
     }
 
     @Override
-    public TZamboniRun fetchRun(String runName) throws TZIMSException, TException {
+    public TZamboniRun fetchRun(final String runName) throws TZIMSException, TException {
         open();
         TZamboniRun run = null;
         try {
@@ -51,5 +56,46 @@ public class LiveThriftService implements ThriftService {
             close();
         }
         return run;
+/*
+        ThriftCall<TZamboniRun> call = new ThriftCall<TZamboniRun>() {
+            @Override
+            protected TZamboniRun doCall() throws TException, TZIMSException {
+                return client.fetchRun(runName);
+            }
+        };
+        return call.connectAndCall();
+*/
+    }
+
+    public FlowcellDesignation findFlowcellDesignationByTaskName(final String taskName) throws TException, TZIMSException {
+//        FlowcellDesignation flowcellDesignation = new LIMQueries.Client(new TBinaryProtocol(transport)).findFlowcellDesignationByTaskName(taskName);
+        ThriftCall<FlowcellDesignation> call = new ThriftCall<FlowcellDesignation>() {
+            @Override
+            protected FlowcellDesignation doCall() throws TException {
+                return client.findFlowcellDesignationByTaskName(taskName);
+            }
+        };
+        return call.connectAndCall();
+    }
+
+    private abstract class ThriftCall<T> {
+        protected abstract T doCall() throws TException, TZIMSException;
+
+        protected final LIMQueries.Client client;
+
+        protected ThriftCall() {
+            client = new LIMQueries.Client(new TBinaryProtocol(transport));
+        }
+
+        public T connectAndCall() throws TException, TZIMSException {
+            open();
+            T result = null;
+            try {
+                result = doCall();
+            } finally {
+                close();
+            }
+            return result;
+        }
     }
 }

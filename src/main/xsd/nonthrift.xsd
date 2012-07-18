@@ -7,10 +7,24 @@
                 <xsd:element name="booleanValue" type="xsd:boolean"/>
                 <xsd:element name="doubleValue" type="xsd:double"/>
                 <xsd:element name="stringValue" type="xsd:string"/>
+                <xsd:element name="booleanMap" type="booleanMapType"/>
                 <xsd:element name="flowcellDesignation" type="flowcellDesignationType"/>
             </xsd:choice>
         </xsd:complexType>
     </xsd:element>
+
+    <xsd:complexType name="booleanMapType">
+        <xsd:sequence>
+            <xsd:element name="entry" type="booleanMapEntryType" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="booleanMapEntryType">
+        <xsd:sequence>
+            <xsd:element name="name" type="xsd:string"/>
+            <xsd:element name="value" type="xsd:boolean"/>
+        </xsd:sequence>
+    </xsd:complexType>
 
     <xsd:complexType name="flowcellDesignationType">
         <xsd:sequence>
@@ -55,5 +69,4 @@
             <xsd:element name="referenceSequence" type="xsd:string"/>
         </xsd:sequence>
     </xsd:complexType>
-
 </xsd:schema>

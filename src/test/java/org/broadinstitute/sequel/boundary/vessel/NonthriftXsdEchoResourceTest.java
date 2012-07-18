@@ -168,15 +168,15 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
     }
 
     private String jsonForValue(boolean value) {
-        return "{\"booleanValue\":" + value +",\"doubleValue\":null,\"stringValue\":null,\"flowcellDesignation\":null}";
+        return "{\"booleanValue\":" + value +",\"doubleValue\":null,\"stringValue\":null,\"booleanMap\":null,\"flowcellDesignation\":null}";
     }
 
     private String jsonForValue(double value) {
-        return "{\"booleanValue\":null,\"doubleValue\":" + value + ",\"stringValue\":null,\"flowcellDesignation\":null}";
+        return "{\"booleanValue\":null,\"doubleValue\":" + value + ",\"stringValue\":null,\"booleanMap\":null,\"flowcellDesignation\":null}";
     }
 
     private String jsonForValue(String value) {
-        return "{\"booleanValue\":null,\"doubleValue\":null,\"stringValue\":\"" + value + "\",\"flowcellDesignation\":null}";
+        return "{\"booleanValue\":null,\"doubleValue\":null,\"stringValue\":\"" + value + "\",\"booleanMap\":null,\"flowcellDesignation\":null}";
     }
 
     private String xmlForValue(boolean value) {
@@ -193,7 +193,7 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
 
     private FlowcellDesignationType makeFlowcellDesignation() {
         FlowcellDesignationType designation = new FlowcellDesignationType();
-        flowcellDesignationJson.append("{\"booleanValue\":null,\"doubleValue\":null,\"stringValue\":null,\"flowcellDesignation\":{");
+        flowcellDesignationJson.append("{\"booleanValue\":null,\"doubleValue\":null,\"stringValue\":null,\"booleanMap\":null,\"flowcellDesignation\":{");
         flowcellDesignationXml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><response><flowcellDesignation>");
 
         flowcellDesignationJson.append("\"lane\":[");
