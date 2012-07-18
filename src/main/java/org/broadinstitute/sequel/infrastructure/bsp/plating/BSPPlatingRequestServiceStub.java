@@ -35,13 +35,11 @@ public class BSPPlatingRequestServiceStub implements BSPPlatingRequestService {
                 BSPPlatingRequestOptions.AllowLessThanOne.NO,
                 BSPPlatingRequestOptions.CancerProject.NO);
 
-        Assert.fail("failing in stub on purpose...");
         return defaultPlatingRequestOptions;
     }
 
     @Override
     public BSPPlatingRequestResult issueBSPPlatingRequest(BSPPlatingRequestOptions options, List<BSPPlatingRequest> requests, List<ControlWell> controlWells, String login, String platingRequestName, String comments, String seqTechnology, String humanReadableBarcode) throws Exception {
-        Assert.fail("failed from stub");
         BSPPlatingRequestResult result = new BSPPlatingRequestResult();
         result.setPlatingRequestReceipt("WR-1234");
         result.setPlatingRequestSubmitted(false);

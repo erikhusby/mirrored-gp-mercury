@@ -12,6 +12,7 @@ import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.sequel.infrastructure.bsp.plating.*;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
@@ -67,8 +68,11 @@ public class BSPSampleExportTest {
         StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
         projectPlan.getStarters().add(startingSample2);
 
+        Set<Starter> setStarters = new HashSet<Starter>();
+        setStarters.addAll(projectPlan.getStarters());
+        LabBatch labBatch = new LabBatch(projectPlan, "Test Lab batch 1", setStarters);
         Map<StartingSample, AliquotParameters> starterMap = new HashMap<StartingSample, AliquotParameters>();
-        for (Starter starter : projectPlan.getStarters()) {
+        for (Starter starter : labBatch.getStarters()) {
             starterMap.put((StartingSample) starter, new AliquotParameters(projectPlan, 1.9f, 1.6f));
         }
 
@@ -116,17 +120,21 @@ public class BSPSampleExportTest {
         StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
         projectPlan.getStarters().add(startingSample2);
 
-        BSPPlatingReceipt bspReceipt = buildTestReceipt(projectPlan);
-        runBSPExportTest(bspReceipt, projectPlan);
+        Set<Starter> setStarters = new HashSet<Starter>();
+        setStarters.addAll(projectPlan.getStarters());
+        LabBatch labBatch = new LabBatch(projectPlan, "Test Lab batch 1", setStarters);
+
+        BSPPlatingReceipt bspReceipt = buildTestReceipt(labBatch);
+        runBSPExportTest(bspReceipt, labBatch);
     }
 
-    private BSPPlatingReceipt buildTestReceipt(ProjectPlan projectPlan) {
+    private BSPPlatingReceipt buildTestReceipt(LabBatch labBatch) {
         BSPPlatingReceipt bspReceipt = new BSPPlatingReceipt("WR-1234");
-        if (projectPlan == null) {
-            throw new IllegalArgumentException("Invalid Project plan ");
+        if (labBatch == null) {
+            throw new IllegalArgumentException("Invalid Lab batch ");
         }
 
-        Iterator<Starter> stockItr = projectPlan.getStarters().iterator();
+        Iterator<Starter> stockItr = labBatch.getStarters().iterator();
 
         String startingStock = null;
         while (stockItr.hasNext()) {
@@ -134,31 +142,31 @@ public class BSPSampleExportTest {
 
             //TODO .. BSPAliquotWorkQueue & SampleSheet to be deprecated/deleted
             // request an aliquot from bsp
-            AliquotParameters aliquotParameters = new AliquotParameters(projectPlan, 1.9f, 1.6f);
+            AliquotParameters aliquotParameters = new AliquotParameters(labBatch.getProjectPlan(), 1.9f, 1.6f);
 
             //generate BSPPlatingRequests
             BSPPlatingRequest bspPlatingRequest = new BSPPlatingRequest(startingStock, aliquotParameters);
             bspPlatingRequest.setReceipt(bspReceipt);
-            projectPlan.getPendingPlatingRequests().add(bspPlatingRequest);
+            labBatch.getProjectPlan().getPendingPlatingRequests().add(bspPlatingRequest);
         }
 
         return bspReceipt;
     }
 
-    public static void runBSPExportTest(BSPPlatingReceipt bspReceipt, ProjectPlan projectPlan) throws Exception {
+    public static void runBSPExportTest(BSPPlatingReceipt bspReceipt, LabBatch labBatch) throws Exception {
         String ALIQUOT_LSID_PATTERN = "broadinstitute.org:bsp.prod.sample:Test Aliquot ";
 
         if (bspReceipt == null) {
             throw new IllegalArgumentException("Invalid BSP Plating Receipt ");
         }
-        if (projectPlan == null) {
+        if (labBatch == null) {
             throw new IllegalArgumentException("Invalid Project Plan ");
         }
 
         //TODO .. asserts for size of 2 should be removed and check with LabBatch size.
         //LabBatch ?? projectPlan can have many starters .. but batched .. so probably plating should be by batch
-        projectPlan.getPendingPlatingRequests().addAll(bspReceipt.getPlatingRequests());
-        Collection<Starter> starters = projectPlan.getStarters();
+        labBatch.getProjectPlan().getPendingPlatingRequests().addAll(bspReceipt.getPlatingRequests());
+        Collection<Starter> starters = labBatch.getStarters();
         Assert.assertNotNull(starters);
         Assert.assertEquals(starters.size(), 2, "Project Plan should have 2 starters");
         Assert.assertEquals(starters.size(), bspReceipt.getPlatingRequests().size(), "Project Plan should have same starters as BSP Plating Receipt");
@@ -202,7 +210,7 @@ public class BSPSampleExportTest {
             BSPSampleAuthorityTwoDTube bspAliquot = (BSPSampleAuthorityTwoDTube) aliquot;
             Project testProject = bspAliquot.getAllProjects().iterator().next();
             //Assert.assertEquals("BSPExportTestingProject", testProject.getProjectName());
-            Assert.assertEquals(projectPlan.getProject().getProjectName(), testProject.getProjectName());
+            Assert.assertEquals(labBatch.getProjectPlan().getProject().getProjectName(), testProject.getProjectName());
             //navigate from aliquot to ----> BSPStartingSample - !!
             StartingSample stockAliquot = bspAliquot.getSampleInstances().iterator().next().getStartingSample();
             Assert.assertNotNull(stockAliquot);
@@ -216,14 +224,14 @@ public class BSPSampleExportTest {
         }
 
         //iterate through Starters (BSPStartingSample) and make sure they all have aliquots
-        Collection<Starter> starterStocks = projectPlan.getStarters();
+        Collection<Starter> starterStocks = labBatch.getStarters();
         //should have starter
         Assert.assertNotNull(starterStocks);
         Iterator<Starter> starterStocksIterator = starterStocks.iterator();
         Assert.assertEquals(bspAliquots.size(), starterStocks.size());
         while (starterStocksIterator.hasNext()) {
             Starter starter = starterStocksIterator.next();
-            LabVessel aliquot = projectPlan.getAliquot(starter);
+            LabVessel aliquot = labBatch.getProjectPlan().getAliquot(starter);
             Assert.assertNotNull(aliquot);
             Assert.assertEquals(true, aliquot.getLabel().contains("Aliquot"));
             //assumed stock is in format SM-9999

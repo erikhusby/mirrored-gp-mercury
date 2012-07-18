@@ -13,11 +13,8 @@ import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestOptions;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestResult;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestService;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.ControlWell;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.sequel.infrastructure.bsp.plating.*;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.Funding;
 import org.broadinstitute.sequel.infrastructure.quote.FundingLevel;
@@ -37,12 +34,9 @@ public class BSPPlatingTest extends ContainerTest {
     public static final String masterSample2 = "SM-2222";
 
     @Inject
-    BSPConfig bspConfig;
-
-    @Inject
     private Log log;
 
-    @Inject
+    //@Inject
     BSPPlatingRequestService platingService;
 
     public BSPPlatingTest() {
@@ -52,16 +46,7 @@ public class BSPPlatingTest extends ContainerTest {
     @Test(groups = {EXTERNAL_INTEGRATION}, enabled = true)
     public void testIssueBSPPlating() throws Exception {
 
-        Assert.assertNotNull(bspConfig);
-        Assert.assertNotNull(platingService);
-
-        //BSPPlatingRequestServiceProducer producer = new BSPPlatingRequestServiceProducer();
-        //BSPPlatingRequestService platingService = BSPPlatingRequestServiceProducer.qaInstance();
-        //producer.produce(new BSPPlatingRequestServiceStub(), new BSPPlatingRequestServiceImpl(bspConfig));
-        //BSPPlatingRequestService platingService = new BSPPlatingRequestServiceImpl();
-
-        //platingService = new BSPPlatingRequestServiceStub();
-        //Assert.assertNotNull(platingService);
+        platingService = new BSPPlatingRequestServiceStub();
 
         BasicProject project = new BasicProject("BSPPlatingTestingProject", new JiraTicket());
         // BasicProjectPlan
