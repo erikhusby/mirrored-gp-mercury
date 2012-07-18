@@ -20,6 +20,9 @@ public class LiveThriftService implements ThriftService {
 //    @Inject
     private ThriftConfig thriftConfig;
 
+    @Inject
+    private ThriftConnection thriftConnection;
+
     // stateful: created by open()
     private transient TTransport transport;
 
