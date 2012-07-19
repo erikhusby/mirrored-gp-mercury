@@ -2,20 +2,15 @@ package org.broadinstitute.sequel.boundary.zims;
 
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
-import org.apache.commons.collections15.map.LRUMap;
 import org.apache.thrift.TException;
-import org.broadinstitute.sequel.control.dao.run.RunChamberDAO;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.sequel.entity.zims.LibraryBean;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.sequel.infrastructure.jmx.ZimsCacheControl;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 
-import javax.annotation.concurrent.GuardedBy;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -38,37 +33,16 @@ public class IlluminaRunResource implements Serializable {
     @Inject
     BSPSampleDataFetcher bspDataFetcher;
 
-
     @Inject
     ThriftService thriftService;
 
-    @Inject
-    ZimsCacheControl cacheControl;
-
-    private static Object cacheSemaphore = Boolean.TRUE;
-
-    @GuardedBy("cacheSemaphore")
-    private static LRUMap<String,ZimsIlluminaRun> runCache;
-
     public IlluminaRunResource() {
-        initCache();
     }
 
     public IlluminaRunResource(ThriftService thriftService,
-                               ZimsCacheControl cacheControl,
                                BSPSampleDataFetcher bspFetcher) {
         this.thriftService = thriftService;
-        this.cacheControl = cacheControl;
         this.bspDataFetcher = bspFetcher;
-        initCache();
-    }
-
-    private void initCache() {
-        synchronized (cacheSemaphore) {
-            if (runCache == null) {
-                runCache = new LRUMap<String, ZimsIlluminaRun>();
-            }
-        }
     }
 
     @GET
@@ -81,16 +55,7 @@ public class IlluminaRunResource implements Serializable {
             throw new NullPointerException("runName cannot be null");
         }
 
-        updateCache();
-        ZimsIlluminaRun runBean = getRunFromCache(runName);
-
-        if (runBean == null || runBean.getReads().isEmpty()) {
-            runBean = getRun(thriftService,runName);
-            if (runBean != null) {
-                runCache.remove(runName);
-                runCache.put(runName,runBean);
-            }
-        }
+       ZimsIlluminaRun runBean = getRun(thriftService,runName);
 
         return runBean;
     }
@@ -179,35 +144,6 @@ public class IlluminaRunResource implements Serializable {
             runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer()));
         }
         return runBean;
-    }
-
-    private ZimsIlluminaRun getRunFromCache(String runName) {
-        synchronized (cacheSemaphore) {
-            ZimsIlluminaRun run = null;
-            if (runCache.containsKey(runName)) {
-                run = runCache.get(runName);
-            }
-            return run;
-        }
-    }
-
-    /**
-     * Updates the cache.  If someone changed the cache size through
-     * JConsole, we resize the cache.  If the cache was invalidated through
-     * JConsole, we clear and reset it.
-     */
-    private void updateCache() {
-        synchronized (cacheSemaphore) {
-            if (cacheControl.wasInvalidated()) {
-                cacheControl.reset();
-                runCache.clear();
-            }
-            if (runCache.maxSize() != cacheControl.getMaximumCacheSize()) {
-                LRUMap<String,ZimsIlluminaRun> newCache = new LRUMap<String, ZimsIlluminaRun>(cacheControl.getMaximumCacheSize());
-                newCache.putAll(runCache);
-                runCache = newCache;
-            }
-        }
     }
 
     ZimsIlluminaRun getRun(ThriftService thriftService,
