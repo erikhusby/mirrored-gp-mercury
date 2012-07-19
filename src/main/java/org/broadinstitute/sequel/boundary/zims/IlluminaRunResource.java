@@ -36,13 +36,8 @@ import java.util.*;
 public class IlluminaRunResource implements Serializable {
 
     @Inject
-    private RunChamberDAO runChamberDAO;
-
-    @Inject
     BSPSampleDataFetcher bspDataFetcher;
 
-    @Inject
-    BSPSampleSearchService bspSearchService;
 
     @Inject
     ThriftService thriftService;
@@ -60,9 +55,11 @@ public class IlluminaRunResource implements Serializable {
     }
 
     public IlluminaRunResource(ThriftService thriftService,
-                               ZimsCacheControl cacheControl) {
+                               ZimsCacheControl cacheControl,
+                               BSPSampleDataFetcher bspFetcher) {
         this.thriftService = thriftService;
         this.cacheControl = cacheControl;
+        this.bspDataFetcher = bspFetcher;
         initCache();
     }
 
