@@ -37,7 +37,7 @@ public class EmptyReadsIlluminaRunResourceTest extends ContainerTest {
 
     private TZamboniRun zamboniRun;
 
-    public static final String RUN_NAME = "120717_SL-MAB_0108_AMS2006873-00300";
+    public static final String RUN_NAME = "120718_M00158_0008_AFC000000000-A13AJ";
 
     private final String WEBSERVICE_URL = "rest/IlluminaRun/query";
 
@@ -50,7 +50,7 @@ public class EmptyReadsIlluminaRunResourceTest extends ContainerTest {
         return DeploymentBuilder.buildSequelWar(Deployment.PROD);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION,dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,enabled = false)
+    @Test(groups = EXTERNAL_INTEGRATION,dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,enabled = true)
     @RunAsClient
     public void test_empty_reads(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
@@ -63,6 +63,23 @@ public class EmptyReadsIlluminaRunResourceTest extends ContainerTest {
                 .queryParam("runName", RUN_NAME)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         assertFalse(run.getReads().isEmpty());
+        run = Client.create(clientConfig).resource(url)
+                .queryParam("runName", "120717_SL-MAE_0107_AMS2006894-00300")
+                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+        assertFalse(run.getReads().isEmpty());
+        run = Client.create(clientConfig).resource(url)
+                .queryParam("runName", "120716_SL-MAJ_0009_AFC000000000-A125E")
+                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+        assertFalse(run.getReads().isEmpty());
+        String rawJson = Client.create(clientConfig).resource(url)
+                .queryParam("runName", "120717_SL-MAE_0107_AMS2006894-00300")
+                .accept(MediaType.APPLICATION_JSON).get(String.class);
+        run = Client.create(clientConfig).resource(url)
+                .queryParam("runName", "120717_SL-MAE_0107_AMS2006894-00300")
+                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+        assertFalse(run.getReads().isEmpty());
+
+        System.out.println(rawJson);
     }
 
 }

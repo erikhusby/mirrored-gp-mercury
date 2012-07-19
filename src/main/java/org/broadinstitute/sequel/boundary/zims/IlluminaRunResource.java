@@ -84,9 +84,10 @@ public class IlluminaRunResource implements Serializable {
         updateCache();
         ZimsIlluminaRun runBean = getRunFromCache(runName);
 
-        if (runBean == null) {
+        if (runBean == null || runBean.getReads().isEmpty()) {
             runBean = getRun(thriftService,runName);
             if (runBean != null) {
+                runCache.remove(runName);
                 runCache.put(runName,runBean);
             }
         }
