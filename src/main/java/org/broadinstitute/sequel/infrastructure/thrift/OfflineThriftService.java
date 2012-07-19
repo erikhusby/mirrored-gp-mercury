@@ -21,6 +21,11 @@ public class OfflineThriftService implements ThriftService {
         return makeRun(runName, 8, 12);
     }
 
+    @Override
+    public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) throws TException, TZIMSException {
+        return null;
+    }
+
     public static TZamboniRun makeRun(String runName, int numLanes, int numLibraries) {
         List<TZamboniLane> lanes = new ArrayList<TZamboniLane>();
         for (int i = 1; i <= numLanes; i++) {

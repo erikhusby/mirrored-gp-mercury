@@ -1,7 +1,9 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
+import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.testng.annotations.BeforeMethod;
@@ -20,7 +22,7 @@ public class LiveThriftServiceTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        thriftService = new LiveThriftService(ThriftConfigProducer.produce(Deployment.TEST));
+        thriftService = new LiveThriftService(new ThriftConnection(ThriftConfigProducer.produce(Deployment.TEST)));
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -32,5 +34,17 @@ public class LiveThriftServiceTest {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, expectedExceptions = TZIMSException.class)
     public void testFetchRunInvalid() throws Exception {
         thriftService.fetchRun("invalid_run");
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testFindFlowcellDesignationByTaskName() throws Exception {
+        FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByTaskName("14A_03.19.2012");
+        assertThat(flowcellDesignation, not(nullValue()));
+    }
+
+    // TODO: figure out why this is throwing TTransportException instead of TApplicationException
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, expectedExceptions = TTransportException.class)
+    public void testFindFlowcellDesignationByTaskNameInvalid() throws Exception {
+        thriftService.findFlowcellDesignationByTaskName("invalid_task");
     }
 }

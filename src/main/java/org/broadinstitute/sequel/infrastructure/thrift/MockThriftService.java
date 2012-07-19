@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
+import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.apache.thrift.TException;
@@ -24,5 +25,10 @@ public class MockThriftService implements ThriftService {
             throw new RuntimeException("Failed to deserialize run from local file",e);
         }
         return run;
+    }
+
+    @Override
+    public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) throws TException, TZIMSException {
+        return null;
     }
 }

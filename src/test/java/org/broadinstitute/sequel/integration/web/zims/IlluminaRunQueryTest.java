@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.integration.web.zims;
 
+import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.apache.thrift.TException;
@@ -115,6 +116,11 @@ public class IlluminaRunQueryTest extends Arquillian {
         @Override
         public TZamboniRun fetchRun(String runName) throws TZIMSException, TException {
             return OfflineThriftService.makeRun(runName, 4, 3);
+        }
+
+        @Override
+        public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) throws TException, TZIMSException {
+            return null;
         }
     }
 }
