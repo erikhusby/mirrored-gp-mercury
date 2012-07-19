@@ -50,7 +50,7 @@ public class EmptyReadsIlluminaRunResourceTest extends ContainerTest {
         return DeploymentBuilder.buildSequelWar(Deployment.PROD);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION,dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,enabled = true)
+    @Test(groups = EXTERNAL_INTEGRATION,dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,enabled = false)
     @RunAsClient
     public void test_empty_reads(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
