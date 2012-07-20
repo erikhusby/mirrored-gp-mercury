@@ -1,11 +1,6 @@
 package org.broadinstitute.sequel.boundary.vessel;
 
-import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
-import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
-import org.broadinstitute.sequel.nonthrift.jaxb.LaneType;
-import org.broadinstitute.sequel.nonthrift.jaxb.LibraryDataType;
 import org.broadinstitute.sequel.nonthrift.jaxb.Response;
-import org.broadinstitute.sequel.nonthrift.jaxb.SampleInfoType;
 
 import javax.ejb.Stateless;
 import javax.ws.rs.Consumes;
@@ -20,8 +15,8 @@ import javax.ws.rs.core.MediaType;
  * @author breilly
  */
 @Path("/nonthrift")
-@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-@Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 @Stateless
 public class NonthriftXsdEchoResource {
 

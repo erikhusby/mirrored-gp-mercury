@@ -93,18 +93,6 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEchoBooleanAsXml(@ArquillianResource URL baseUrl) {
-        String url = baseUrl + basePath + "/echoBoolean";
-
-        String result1 = Client.create(clientConfig).resource(url).queryParam("value", "false").accept(MediaType.APPLICATION_XML).get(String.class);
-        assertThat(result1, equalTo(xmlForValue(false)));
-
-        String result2 = Client.create(clientConfig).resource(url).queryParam("value", "true").accept(MediaType.APPLICATION_XML).get(String.class);
-        assertThat(result2, equalTo(xmlForValue(true)));
-    }
-
-    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
-    @RunAsClient
     public void testEchoDoubleAsJson(@ArquillianResource URL baseUrl) {
         String url = baseUrl + basePath + "/echoDouble";
 
@@ -113,18 +101,6 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
 
         String result2 = Client.create(clientConfig).resource(url).queryParam("value", "1.0").accept(MediaType.APPLICATION_JSON).get(String.class);
         assertThat(result2, equalTo(jsonForValue(1.0)));
-    }
-
-    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
-    @RunAsClient
-    public void testEchoDoubleAsXml(@ArquillianResource URL baseUrl) {
-        String url = baseUrl + basePath + "/echoDouble";
-
-        String result1 = Client.create(clientConfig).resource(url).queryParam("value", "1.234").accept(MediaType.APPLICATION_XML).get(String.class);
-        assertThat(result1, equalTo(xmlForValue(1.234)));
-
-        String result2 = Client.create(clientConfig).resource(url).queryParam("value", "1.0").accept(MediaType.APPLICATION_XML).get(String.class);
-        assertThat(result2, equalTo(xmlForValue(1.0)));
     }
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -138,33 +114,13 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testEchoStringAsXml(@ArquillianResource URL baseUrl) {
-        String url = baseUrl + basePath + "/echoString";
-
-        String result = Client.create(clientConfig).resource(url).queryParam("value", "test").accept(MediaType.APPLICATION_XML).get(String.class);
-        assertThat(result, equalTo(xmlForValue("test")));
-    }
-
-    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
-    @RunAsClient
     public void testEchoFlowcellDesignationAsJson(@ArquillianResource URL baseUrl) {
         String url = baseUrl + basePath + "/echoFlowcellDesignation";
 
         Response request = new Response();
         request.setFlowcellDesignation(flowcellDesignation);
-        String result = Client.create(clientConfig).resource(url).accept(MediaType.APPLICATION_JSON).post(String.class, request);
+        String result = Client.create(clientConfig).resource(url).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).post(String.class, flowcellDesignationJson.toString());
         assertThat(result, equalTo(flowcellDesignationJson.toString()));
-    }
-
-    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
-    @RunAsClient
-    public void testEchoFlowcellDesignationAsXml(@ArquillianResource URL baseUrl) {
-        String url = baseUrl + basePath + "/echoFlowcellDesignation";
-
-        Response request = new Response();
-        request.setFlowcellDesignation(flowcellDesignation);
-        String result = Client.create(clientConfig).resource(url).accept(MediaType.APPLICATION_XML).post(String.class, request);
-        assertThat(result, equalTo(flowcellDesignationXml.toString()));
     }
 
     private String jsonForValue(boolean value) {
@@ -196,12 +152,12 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
         flowcellDesignationJson.append("{\"booleanValue\":null,\"doubleValue\":null,\"stringValue\":null,\"booleanMap\":null,\"flowcellDesignation\":{");
         flowcellDesignationXml.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><response><flowcellDesignation>");
 
-        flowcellDesignationJson.append("\"lane\":[");
+        flowcellDesignationJson.append("\"lanes\":[");
         for (int i = 1; i <= 2; i++) {
             if (i > 1) {
                 flowcellDesignationJson.append(",");
             }
-            designation.getLane().add(makeLane(i));
+            designation.getLanes().add(makeLane(i));
         }
         flowcellDesignationJson.append("],");
 
@@ -238,7 +194,7 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
         LaneType lane = new LaneType();
         lane.setLaneName(Integer.toString(laneNum));
         flowcellDesignationJson.append("{\"laneName\":\"" + laneNum + "\"");
-        flowcellDesignationXml.append("<lane><laneName>" + laneNum + "</laneName>");
+        flowcellDesignationXml.append("<lanes><laneName>" + laneNum + "</laneName>");
 
         flowcellDesignationJson.append(",\"libraryData\":[");
         for (int i = 0; i < 2; i++) {
@@ -258,7 +214,7 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
         flowcellDesignationJson.append("]");
 
         flowcellDesignationJson.append("}");
-        flowcellDesignationXml.append("</lane>");
+        flowcellDesignationXml.append("</lanes>");
         return lane;
     }
 
