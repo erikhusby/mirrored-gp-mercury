@@ -30,6 +30,12 @@ public class BSPSampleDTO implements Serializable {
 
     private final Boolean negativeControl;
 
+    private final String sampleLsid;
+
+    // collaborator?
+    // species vs organism?
+    // strain?
+    // tissueType?
 
     public BSPSampleDTO(String containerId,
                         String stockSample,
@@ -40,7 +46,8 @@ public class BSPSampleDTO implements Serializable {
                         String collaboratorsSampleName,
                         String collection,
                         String volume,
-                        String concentration) {
+                        String concentration,
+                        String sampleLsid) {
         this.stockSample = stockSample;
         this.rootSample = rootSample;
         this.patientId = patientId;
@@ -49,11 +56,13 @@ public class BSPSampleDTO implements Serializable {
         this.volume = volume;
         this.concentration = concentration;
         this.organism = organism;
+        this.sampleLsid = sampleLsid;
         this.stockAtExport = null;
         this.positiveControl = false;
         this.negativeControl = false;
     }
 
+/*
     public BSPSampleDTO(String containerId,
                         String stockSample,
                         String rootSample,
@@ -79,6 +88,7 @@ public class BSPSampleDTO implements Serializable {
         this.positiveControl = positiveControl;
         this.negativeControl = negativeControl;
     }
+*/
 
     public String getVolume() {
         // todo strongly type, figure out units
@@ -142,4 +152,7 @@ public class BSPSampleDTO implements Serializable {
         return negativeControl;
     }
 
+    public String getSampleLsid() {
+        return sampleLsid;
+    }
 }

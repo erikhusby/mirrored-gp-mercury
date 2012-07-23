@@ -22,6 +22,11 @@ public class LiveThriftService implements ThriftService {
     // stateful: created by open()
     private transient TTransport transport;
 
+    public LiveThriftService() {}
+
+    public LiveThriftService(ThriftConfig config) {
+        this.thriftConfig = config;
+    }
 
     private void open() {
         close();

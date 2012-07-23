@@ -77,8 +77,8 @@ public class EndToEndTest  {
         Assert.assertTrue(project.getAllStarters().isEmpty());
         Assert.assertTrue(project2.getAllStarters().isEmpty());
         // add a sample to the project
-        project.addStarter(stock1);
-        project2.addStarter(stock2);
+        plan1.addStarter(stock1);
+        plan2.addStarter(stock2);
 
         Assert.assertTrue(project.getAllStarters().contains(stock1));
         Assert.assertTrue(project2.getAllStarters().contains(stock2));

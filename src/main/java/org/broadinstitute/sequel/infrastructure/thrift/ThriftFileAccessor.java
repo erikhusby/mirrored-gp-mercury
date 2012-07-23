@@ -99,4 +99,24 @@ public class ThriftFileAccessor {
 
         return zamboniRun;
     }
+
+    private static void addCustomAmplicons(TZamboniRun run) {
+        int laneCounter = 0;
+        int libraryCounter = 0;
+        for (TZamboniLane lane : run.getLanes()) {
+            if (laneCounter % 3 == 0) {
+                for (TZamboniLibrary library : lane.getLibraries()) {
+                    if (libraryCounter % 3 == 0) {
+                        for (int i = 0; i < laneCounter / 2 + 1; i++) {
+                            String customAmplicon = "TestCAT-" + laneCounter + "-" + libraryCounter + "-" + i;
+                            System.out.println(lane.getLaneNumber() + ": " + library.getLibrary() + ": " + customAmplicon);
+                            library.getCustomAmpliconSetNames().add(customAmplicon);
+                        }
+                    }
+                    libraryCounter++;
+                }
+            }
+            laneCounter++;
+        }
+    }
 }

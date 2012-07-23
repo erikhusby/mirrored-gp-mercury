@@ -41,12 +41,6 @@ import java.util.*;
 @Entity
 public class BasicProjectPlan extends ProjectPlan {
 
-    @Transient // todo arz fix me
-    private Map<Starter,LabVessel> aliquotForStarter = new HashMap<Starter, LabVessel>();
-
-    @Transient
-    private Collection<Starter> starters = new HashSet<Starter>();
-
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     protected WorkflowDescription workflowDescription;
 
@@ -76,11 +70,6 @@ public class BasicProjectPlan extends ProjectPlan {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Quote quote;
-
-    //@OneToMany(mappedBy = "projectPlan")
-    @Transient
-    private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
-
 
     public BasicProjectPlan(Project project,
                             String name,
@@ -150,19 +139,6 @@ public class BasicProjectPlan extends ProjectPlan {
     
     public void setQuote(Quote quote) {
         this.quote = quote;
-    }
-    
-    public void addStarter(Starter starter) {
-        if (starter == null) {
-            throw new NullPointerException("vessel cannot be null.");
-        }
-        project.addStarter(starter);
-        starters.add(starter);
-    }
-    
-    @Override
-    public Collection<Starter> getStarters() {
-        return starters;
     }
 
     public void addSequencingDetail(SequencingPlanDetail detail) {
@@ -263,23 +239,6 @@ public class BasicProjectPlan extends ProjectPlan {
 
     public String toString() {
         return planName;
-    }
-
-    public Set<StartingSample> getStartingSamples() {
-        return startingSamples;
-    }
-
-    @Override
-    public void setAliquot(Starter starter, LabVessel aliquot) {
-        if (!getStarters().contains(starter)) {
-            throw new RuntimeException(starter.getLabel() + " is not a starter for this project plan");
-        }
-        aliquotForStarter.put(starter,aliquot);
-    }
-
-    @Override
-    public LabVessel getAliquot(Starter starter) {
-        return aliquotForStarter.get(starter);
     }
 
     @Override

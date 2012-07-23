@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 public abstract class Project {
@@ -52,10 +53,6 @@ public abstract class Project {
     private JiraTicket jiraTicket;
 
     private boolean active;
-
-//    @OneToMany
-    @Transient
-    public Collection<Starter> starters = new HashSet<Starter>();
 
     @OneToMany
     private final Collection<LabWorkQueue> availableWorkQueues = new HashSet<LabWorkQueue>();
@@ -262,13 +259,6 @@ public abstract class Project {
         this.projectName = projectName;
     }
 
-    public void addStarter(Starter starter) {
-        if (starter == null) {
-            throw new NullPointerException("starter cannot be null.");
-        }
-        starters.add(starter);
-    }
-
     /**
      * It's up to the project to figure out for a given
      * sample aliquot instance how the aggregation
@@ -294,6 +284,10 @@ public abstract class Project {
 
 
     public Collection<Starter> getAllStarters() {
+        Set<Starter> starters = new HashSet<Starter>();
+        for (ProjectPlan projectPlan : projectPlans) {
+            starters.addAll(projectPlan.getStarters());
+        }
         return starters;
     }
 

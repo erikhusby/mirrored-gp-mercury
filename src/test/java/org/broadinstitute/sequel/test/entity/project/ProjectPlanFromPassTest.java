@@ -86,7 +86,7 @@ public class ProjectPlanFromPassTest {
 
 
         for (Starter starter : projectPlan.getStarters()) {
-            assertNull(projectPlan.getAliquot(starter));
+            assertNull(projectPlan.getAliquotForStarter(starter));
             assertEquals(starter.getSampleInstances().size(),1);
             SampleInstance sampleInstance = starter.getSampleInstances().iterator().next();
             assertTrue(passSampleNames.contains(sampleInstance.getStartingSample().getSampleName()));
@@ -95,8 +95,8 @@ public class ProjectPlanFromPassTest {
             BSPSampleAuthorityTwoDTube aliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(aliquotName,projectPlan,bspDataFetcher.fetchSingleSampleFromBSP(aliquotName)));
 
             // plating export will call this
-            projectPlan.setAliquot(starter,aliquot);
-            assertEquals(aliquot,projectPlan.getAliquot(starter));
+            projectPlan.addAliquotForStarter(starter,aliquot);
+            assertEquals(aliquot,projectPlan.getAliquotForStarter(starter));
 
             assertEquals(aliquot.getSampleInstances().size(),1);
             assertTrue(passSampleNames.contains(starter.getLabel()));
@@ -109,7 +109,7 @@ public class ProjectPlanFromPassTest {
             for (Starter starter : projectPlan.getStarters()) {
                 if (sample.getBspSampleID().equals(starter.getLabel())) {
                     foundIt = true;
-                    LabVessel aliquot = projectPlan.getAliquot(starter);
+                    LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                     assertNotNull(aliquot);
                 }
             }

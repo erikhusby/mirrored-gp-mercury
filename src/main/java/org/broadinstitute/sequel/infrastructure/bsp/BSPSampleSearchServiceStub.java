@@ -18,7 +18,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                 "Hungarian Goulash", // collection
                 "1.3",  // volume
                 "0.293", // concentration
-                "Chicken"  // species
+                "Chicken",  // species
+                "broadinstitute.org:bsp.prod.sample:12CO4" // sampleLsid
         });
         addToMap("SM-1P3WY",new String[] {
                 "PT-2LK3",  // patient
@@ -28,7 +29,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                 "Hungarian Goulash", // collection
                 "1.3",  // volume
                 "0.293", // concentration
-                "Chicken"  // species
+                "Chicken",  // species
+                "broadinstitute.org:bsp.prod.sample:1P3WY" // sampleLsid
         });
         addToMap("SM-1P3XN",new String[] {
                 "PT-2LK3",  // patient
@@ -38,7 +40,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                 "Hungarian Goulash", // collection
                 "1.3",  // volume
                 "0.293", // concentration
-                "Chicken"  // species
+                "Chicken",  // species
+                "broadinstitute.org:bsp.prod.sample:1P3XN" // sampleLsid
         });
     }
 

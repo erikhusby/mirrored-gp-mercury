@@ -1,6 +1,8 @@
 package org.broadinstitute.sequel.entity.project;
 
+import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
+import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.quote.Quote;
@@ -8,14 +10,22 @@ import org.broadinstitute.sequel.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Entity
 public abstract class ProjectPlan {
@@ -29,12 +39,32 @@ public abstract class ProjectPlan {
     @Transient
     protected Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
 
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    private Map<StartingSample, LabVessel> mapStartingSampleToAliquot = new HashMap<StartingSample, LabVessel>();
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    private Map<LabVessel, LabVessel> mapStartingLabVesselToAliquot = new HashMap<LabVessel, LabVessel>();
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    private Set<LabVessel> startingLabVessels = new HashSet<LabVessel>();
+
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    private Project project;
 
     public abstract void addPlatingRequest(BSPPlatingRequest platingRequest);
 
     public abstract Collection<BSPPlatingRequest> getPendingPlatingRequests();
 
-    public abstract Project getProject();
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
+    }
 
     public abstract WorkflowDescription getWorkflowDescription();
 
@@ -44,7 +74,26 @@ public abstract class ProjectPlan {
 
     public abstract Quote getQuoteDTO(QuoteService quoteService) throws QuoteServerException, QuoteNotFoundException;
 
-    public abstract Collection<Starter> getStarters();
+    public Set<Starter> getStarters() {
+        Set<Starter> starters = new HashSet<Starter>();
+        starters.addAll(startingSamples);
+        starters.addAll(startingLabVessels);
+        return Collections.unmodifiableSet(starters);
+    }
+
+    public void addStarter(Starter starter) {
+        if (starter == null) {
+            throw new NullPointerException("vessel cannot be null.");
+        }
+        if(OrmUtil.proxySafeIsInstance(starter, StartingSample.class)) {
+            startingSamples.add(OrmUtil.proxySafeCast(starter, StartingSample.class));
+        } else if(OrmUtil.proxySafeIsInstance(starter, LabVessel.class)) {
+            startingLabVessels.add(OrmUtil.proxySafeCast(starter, LabVessel.class));
+        } else {
+            throw new RuntimeException("Unexpected subclass " + starter.getClass());
+        }
+    }
+
 
     public Collection<SequencingPlanDetail> getPlanDetails() {
         return planDetails;
@@ -64,9 +113,30 @@ public abstract class ProjectPlan {
 
     public abstract void addJiraTicket(JiraTicket jiraTicket);
 
-    public abstract void setAliquot(Starter starter,LabVessel aliquot);
+    public LabVessel getAliquotForStarter(Starter starter) {
+        if(OrmUtil.proxySafeIsInstance(starter, StartingSample.class)) {
+            return mapStartingSampleToAliquot.get(OrmUtil.proxySafeCast(starter, StartingSample.class));
+        } else if(OrmUtil.proxySafeIsInstance(starter, LabVessel.class)) {
+            return mapStartingLabVesselToAliquot.get(OrmUtil.proxySafeCast(starter, LabVessel.class));
+        } else {
+            throw new RuntimeException("Unexpected subclass " + starter.getClass());
+        }
+    }
 
-    public abstract LabVessel getAliquot(Starter starter);
+    public void addAliquotForStarter(Starter starter, LabVessel aliquot) {
+        if (!getStarters().contains(starter)) {
+            throw new RuntimeException(starter.getLabel() + " is not a starter for this project plan");
+        }
+        if(OrmUtil.proxySafeIsInstance(starter, StartingSample.class)) {
+            mapStartingSampleToAliquot.put(OrmUtil.proxySafeCast(starter, StartingSample.class), aliquot);
+        } else if(OrmUtil.proxySafeIsInstance(starter, LabVessel.class)) {
+            mapStartingLabVesselToAliquot.put(OrmUtil.proxySafeCast(starter, LabVessel.class), aliquot);
+        } else {
+            throw new RuntimeException("Unexpected subclass " + starter.getClass());
+        }
+    }
+
+
 
     /**
      * Do the billing for the given {@link Starter}.  {@link LabBatch} is a temporary

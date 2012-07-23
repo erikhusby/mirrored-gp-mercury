@@ -222,7 +222,7 @@ public class BSPPlatingTest extends ContainerTest {
         Assert.assertEquals(bspAliquots.size(), starterStocks.size());
         while (starterStocksIterator.hasNext()) {
             Starter starter = starterStocksIterator.next();
-            LabVessel aliquot = projectPlan.getAliquot(starter);
+            LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
             Assert.assertNotNull(aliquot);
             Assert.assertEquals(true, aliquot.getLabel().contains("Aliquot"));
             //assumed stock is in format SM-9999

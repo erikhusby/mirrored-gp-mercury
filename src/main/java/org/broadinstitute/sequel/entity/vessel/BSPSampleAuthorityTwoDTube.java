@@ -42,4 +42,8 @@ public class BSPSampleAuthorityTwoDTube extends TwoDBarcodedTube {
     public boolean isSampleAuthority() {
         return true;
     }
+
+    public StartingSample getAliquot() {
+        return aliquot;
+    }
 }

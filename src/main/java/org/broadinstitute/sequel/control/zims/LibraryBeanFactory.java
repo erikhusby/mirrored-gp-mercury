@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.control.zims;
 
 import org.broadinstitute.sequel.control.dao.run.IlluminaSequencingRunDao;
+import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.sequel.entity.run.RunCartridge;
@@ -54,6 +55,8 @@ public class LibraryBeanFactory {
             SampleInstance sampleInstance = singleSampleLibrary.getSampleInstances().iterator().next();
 
             Project project = sampleInstance.getSingleProjectPlan().getProject();
+            // todo jmt is this downcast legitimate
+            BSPStartingSample bspStartingSample = (BSPStartingSample) sampleInstance.getStartingSample();
             libraries.add(new LibraryBean(
                     libraryName/*String library*/,
                     project.getProjectName()/*String project*/,
@@ -70,7 +73,7 @@ public class LibraryBeanFactory {
                     null/*String organism*/,
                     null/*String species*/,
                     null/*String strain*/,
-                    null/*String sampleLSID*/,
+                    bspStartingSample.getBspDTO().getSampleLsid()/*String sampleLSID*/,
                     null/*String tissueType*/,
                     null/*String expectedPlasmid*/,
                     null/*String aligner*/,
@@ -90,7 +93,8 @@ public class LibraryBeanFactory {
                     null/*Collection<String> gssrBarcodes*/,
                     null/*String gssrSampleType*/,
                     null/*Short targetLaneCoverage*/,
-                    null/*Boolean doAggregation*/));
+                    null/*Boolean doAggregation*/,
+                    null/*Collection<String> customAmpliconSetNames*/));
         }
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
         ZimsIlluminaRun zimsIlluminaRun = new ZimsIlluminaRun(illuminaSequencingRun.getRunName(),

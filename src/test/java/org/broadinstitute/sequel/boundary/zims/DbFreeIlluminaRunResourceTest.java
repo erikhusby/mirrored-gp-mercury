@@ -1,11 +1,16 @@
 package org.broadinstitute.sequel.boundary.zims;
 
+import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import junit.framework.Assert;
+import org.apache.thrift.TException;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.sequel.infrastructure.jmx.ZimsCacheControl;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.sequel.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftFileAccessor;
+import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -26,14 +31,8 @@ public class DbFreeIlluminaRunResourceTest {
         TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 new MockThriftService(),
-                new ZimsCacheControl()
+                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub())
         ).getRun(thriftRun,new HashMap<String, BSPSampleDTO>());
         IlluminaRunResourceTest.doAssertions(thriftRun,runBean);
     }
-    
-    
-
-
-    
-
 }

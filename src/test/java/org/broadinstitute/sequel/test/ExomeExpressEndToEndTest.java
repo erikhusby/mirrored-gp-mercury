@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.test;
 import org.broadinstitute.sequel.boundary.BaitSet;
 import org.broadinstitute.sequel.boundary.BaitSetListResult;
 import org.broadinstitute.sequel.boundary.DirectedPass;
+import org.broadinstitute.sequel.boundary.Sample;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.sequel.boundary.designation.LibraryRegistrationSOAPServiceProducer;
 import org.broadinstitute.sequel.boundary.designation.RegistrationJaxbConverter;
@@ -238,7 +239,7 @@ public class ExomeExpressEndToEndTest {
             Collection<Starter> starters = projectPlan.getStarters();
             Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
             for (Starter starter : starters) {
-                LabVessel aliquot = projectPlan.getAliquot(starter);
+                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                 Assert.assertNotNull(aliquot);
                 stockSampleAliquotMap.put(starter.getLabel(), aliquot);
             }
@@ -285,7 +286,7 @@ public class ExomeExpressEndToEndTest {
 
             // make sure that the pond sample instances contain the starters from the project plan.
             for (Starter starter : projectPlan.getStarters()) {
-                LabVessel aliquot = projectPlan.getAliquot(starter);
+                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                 for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
                     boolean foundIt = false;
                     for (SampleInstance pondSampleInstance : pondRack.getSampleInstances()) {
@@ -300,7 +301,7 @@ public class ExomeExpressEndToEndTest {
 
             // make sure that the pond sample instances contain the starters from the project plan.
             for (Starter starter : projectPlan.getStarters()) {
-                LabVessel aliquot = projectPlan.getAliquot(starter);
+                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                 for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
                     boolean foundIt = false;
                     for (SampleInstance pondSampleInstance : hybridSelectionEntityBuilder.getNormCatchRack().getSampleInstances()) {
@@ -337,7 +338,7 @@ public class ExomeExpressEndToEndTest {
             int numStartersFromSampleInstances = 0;
             final Collection<String> aliquotsFromProjectPlan = new HashSet<String>();
             for (Starter starter : projectPlan.getStarters()) {
-                final LabVessel aliquot = projectPlan.getAliquot(starter);
+                final LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                 for (SampleInstance sampleInstance : aliquot.getSampleInstances()) {
                     aliquotsFromProjectPlan.add(sampleInstance.getStartingSample().getLabel());
                 }
@@ -354,7 +355,7 @@ public class ExomeExpressEndToEndTest {
             Map<StartingSample, Collection<LabVessel>> singleSampleAncestors = poolingResult.getVesselContainer().getSingleSampleAncestors(VesselPosition.A01);
 
             for (Starter starter : projectPlan.getStarters()) {
-                LabVessel aliquot = projectPlan.getAliquot(starter);
+                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
                 Assert.assertNotNull(aliquot);
 
                 Assert.assertEquals(aliquot.getSampleInstances().size(), 1);
@@ -409,6 +410,13 @@ public class ExomeExpressEndToEndTest {
             }
             Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge().iterator().next(), "No registered flowcell");
 
+            // We're container-free, so we have to populate the BSPSampleDTO ourselves
+            for (Starter starter : projectPlan.getStarters()) {
+                BSPSampleAuthorityTwoDTube aliquot = (BSPSampleAuthorityTwoDTube) projectPlan.getAliquotForStarter(starter);
+                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
+                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName()));
+            }
+
             // ZIMS
             LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
             ZimsIlluminaRun zimsRun = libraryBeanFactory.buildLibraries(illuminaSequencingRun);
@@ -430,15 +438,14 @@ public class ExomeExpressEndToEndTest {
 //                        Assert.assertEquals(library.getBaitSetName(),directedPass.getBaitSetID());
                         // todo how to get from pass organism id to organism name?
 //                        Assert.assertEquals(library.getOrganism(), directedPass.getProjectInformation().getOrganismID());
-/*
                         for (Sample sample : directedPass.getSampleDetailsInformation().getSample()) {
                             // todo probably wrong, not sure whether the sample id is lsid or stock id
-                            if (library.getLsid().equals(sample.getBspSampleID())) {
+                            if (library.getLsid().equals("lsid:" + sample.getBspSampleID())) {
                                 foundSample = true;
                             }
                         }
-                        Assert.assertTrue(foundSample);
-*/
+//                        Assert.assertTrue(foundSample);
+
                         // todo single sample ancestor comparison
                     }
                 }

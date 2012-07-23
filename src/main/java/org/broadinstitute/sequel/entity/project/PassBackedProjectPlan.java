@@ -12,7 +12,6 @@ import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.*;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 
-import javax.inject.Inject;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -26,19 +25,11 @@ public class PassBackedProjectPlan extends ProjectPlan {
 
     private Set<JiraTicket> jiraTickets = new HashSet<JiraTicket>();
 
-    private Map<Starter,LabVessel> aliquotForStarter = new HashMap<Starter, LabVessel>();
     private AbstractPass pass;
-
-    private Project project;
-
-    private Set<Starter> starters = new HashSet<Starter>();
 
     private Set<ReagentDesign> baits = new HashSet<ReagentDesign>();
 
-    // todo arz pull out injected services and have constructors
-    // take in pre-fetched DTOs (Quote, BSPStartingSample)
-
-    @Inject BSPSampleDataFetcher bspDataFetcher;
+    private BSPSampleDataFetcher bspDataFetcher;
 
     private WorkflowDescription workflowDescription;
 
@@ -67,7 +58,7 @@ public class PassBackedProjectPlan extends ProjectPlan {
         initWorkflow(priceItem);
         initSequencePlanDetails();
 
-        this.project.addProjectPlan(this);
+        this.getProject().addProjectPlan(this);
     }
 
     private void initSequencePlanDetails() {
@@ -103,7 +94,7 @@ public class PassBackedProjectPlan extends ProjectPlan {
     }
 
     private void initProject() {
-        project = new BasicProject(pass.getResearchProject(),null);
+        setProject(new BasicProject(pass.getResearchProject(),null));
     }
 
     private void initSamples() {
@@ -115,7 +106,7 @@ public class PassBackedProjectPlan extends ProjectPlan {
 
         for (Sample passSample : pass.getSampleDetailsInformation().getSample()) {
             String bspSampleName = passSample.getBspSampleID();
-            starters.add(new BSPStartingSample(bspSampleName, this, sampleNameToSampleDTO.get(bspSampleName)));
+            addStarter(new BSPStartingSample(bspSampleName, this, sampleNameToSampleDTO.get(bspSampleName)));
         }
     }
 
@@ -132,11 +123,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
             throw new RuntimeException("Could not find bait with id " +baitSetId);
         }
         baits.add(new ReagentDesign(bait.getDesignName(), ReagentDesign.REAGENT_TYPE.BAIT));
-    }
-
-    @Override
-    public Project getProject() {
-        return project;
     }
 
     @Override
@@ -164,11 +150,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
             throw new RuntimeException("Failed to fetch quote",e);
         }
         return quote;
-    }
-
-    @Override
-    public Collection<Starter> getStarters() {
-        return starters;
     }
 
     @Override
@@ -204,19 +185,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
     @Override
     public void addJiraTicket(JiraTicket jiraTicket) {
         jiraTickets.add(jiraTicket);
-    }
-
-    @Override
-    public void setAliquot(Starter starter, LabVessel aliquot) {
-        if (!getStarters().contains(starter)) {
-            throw new RuntimeException(starter.getLabel() + " is not a starter for this project plan");
-        }
-        aliquotForStarter.put(starter, aliquot);
-    }
-
-    @Override
-    public LabVessel getAliquot(Starter starter) {
-        return aliquotForStarter.get(starter);
     }
 
     public AbstractPass getPass() {
