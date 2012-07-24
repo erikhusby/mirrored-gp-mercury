@@ -31,6 +31,13 @@ public class ThriftConnection {
     @Inject
     public ThriftConnection(ThriftConfig thriftConfig) {
         this.thriftConfig = thriftConfig;
+
+        /*
+         * Try creating the transport here instead of in open(). If it doesn't
+         * cause any problems, this can instead be injected from a producer
+         * class, which will make this class more testable.
+         */
+        transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
     }
 
     /**
@@ -74,7 +81,6 @@ public class ThriftConnection {
      */
     private void open() {
         close();
-        transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
         try {
             transport.open();
         }
@@ -89,7 +95,6 @@ public class ThriftConnection {
     private void close() {
         if (transport != null) {
             transport.close();
-            transport = null;
         }
     }
 

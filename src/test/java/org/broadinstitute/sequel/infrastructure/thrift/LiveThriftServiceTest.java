@@ -14,6 +14,10 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
 /**
+ * Integration test against the development thrift service.
+ *
+ * // TODO: consider moving these into a LimsQueryResource integration test instead
+ *
  * @author breilly
  */
 public class LiveThriftServiceTest {
