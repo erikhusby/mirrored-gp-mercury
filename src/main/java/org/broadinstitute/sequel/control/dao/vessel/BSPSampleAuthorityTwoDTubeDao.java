@@ -2,7 +2,7 @@ package org.broadinstitute.sequel.control.dao.vessel;
 
 import org.broadinstitute.sequel.control.dao.GenericDao;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
-import org.broadinstitute.sequel.entity.vessel.LabVessel_;
+//import org.broadinstitute.sequel.entity.vessel.LabVessel_;
 
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaQuery;
@@ -31,7 +31,7 @@ public class BSPSampleAuthorityTwoDTubeDao extends GenericDao {
         CriteriaQuery<BSPSampleAuthorityTwoDTube> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(BSPSampleAuthorityTwoDTube.class);
         Root<BSPSampleAuthorityTwoDTube> root = criteriaQuery.from(BSPSampleAuthorityTwoDTube.class);
-        criteriaQuery.where(root.get(LabVessel_.label).in(labels));
+//        criteriaQuery.where(root.get(LabVessel_.label).in(labels));
         List<BSPSampleAuthorityTwoDTube> bspSampleAuthorityTwoDTubes =
                 entityManager.createQuery(criteriaQuery).getResultList();
 
