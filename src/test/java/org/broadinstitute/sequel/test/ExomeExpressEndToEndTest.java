@@ -26,20 +26,12 @@ import org.broadinstitute.sequel.control.zims.LibraryBeanFactory;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
-import org.broadinstitute.sequel.entity.project.JiraTicket;
-import org.broadinstitute.sequel.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.sequel.entity.project.Project;
-import org.broadinstitute.sequel.entity.project.ProjectPlan;
-import org.broadinstitute.sequel.entity.project.Starter;
+import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
-import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
-import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.sequel.entity.vessel.VesselPosition;
+import org.broadinstitute.sequel.entity.vessel.*;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
@@ -48,11 +40,7 @@ import org.broadinstitute.sequel.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.sequel.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestOptions;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestResult;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestService;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
-import org.broadinstitute.sequel.infrastructure.bsp.plating.ControlWell;
+import org.broadinstitute.sequel.infrastructure.bsp.plating.*;
 import org.broadinstitute.sequel.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.jira.JiraServiceProducer;
@@ -70,13 +58,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
@@ -181,7 +163,8 @@ public class ExomeExpressEndToEndTest {
             Assert.assertFalse(labBatches.isEmpty());
             Assert.assertEquals(labBatches.size(), 1);
 
-            int STARTER_COUNT = projectPlan.getStarters().size(); //This probably will be labBatch size eventually
+            LabBatch testLabBatch = labBatches.iterator().next();
+            int STARTER_COUNT = testLabBatch.getStarters().size(); //This probably will be labBatch size eventually
 
             // create the jira ticket for each batch.
             JiraTicket jiraTicket = null;
@@ -195,7 +178,7 @@ public class ExomeExpressEndToEndTest {
             final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!");
             // kludge: expect stock samples to have a different field name (like "BSP STOCKS") when this goes live.  until then, we'll call it GSSR.
             final StringBuilder stockSamplesBuilder = new StringBuilder();
-            for (Starter starter : projectPlan.getStarters()) {
+            for (Starter starter : testLabBatch.getStarters()) {
                 stockSamplesBuilder.append(" ").append(starter.getLabel());
             }
             final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString());
@@ -223,7 +206,7 @@ public class ExomeExpressEndToEndTest {
             //TODO .. if so BSPPlating should be by each LabBatch . LabBatch.getStarters() should be the group to do BSPPlating ??
             //Plating request to BSP
             //From projectPlan .. build BSPPlatingRequest objects
-            Collection<Starter> starterStocks = projectPlan.getStarters();
+            Collection<Starter> starterStocks = testLabBatch.getStarters();
             //List<StartingSample> startingSamples = new ArrayList<StartingSample>();
             Map<StartingSample, AliquotParameters> starterMap = new HashMap<StartingSample, AliquotParameters>();
             for (Starter stock : starterStocks) {
@@ -249,7 +232,7 @@ public class ExomeExpressEndToEndTest {
 
             Assert.assertEquals(platingReceipt.getPlatingRequests().size() , STARTER_COUNT, "Started with " + STARTER_COUNT + " samples. BSP Plating requests should be " + STARTER_COUNT);
             //Test BSP Plating EXPORT
-            BSPSampleExportTest.runBSPExportTest(platingReceipt, projectPlan);
+            BSPSampleExportTest.runBSPExportTest(platingReceipt, testLabBatch);
             //new GSSRSampleKitRequest();
 
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
@@ -462,6 +445,7 @@ public class ExomeExpressEndToEndTest {
                             }
                         }
 //                        Assert.assertTrue(foundSample);
+
                         // todo single sample ancestor comparison
                     }
                 }

@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.infrastructure.bsp.plating;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
+import junit.framework.Assert;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.container.ContainerManager;
@@ -509,6 +510,8 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
                                                           List<ControlWell> controlWells, String login, String platingRequestName,
                                                           String comments, String seqTechnology, String label)
             throws Exception {
+        //Assert.fail("failed from impl on purpose");
+        Assert.assertNotNull(options);
         List<SeqWorkRequestAliquot> bspStocks = new ArrayList<SeqWorkRequestAliquot>();
         BSPPlatingRequestResult result = null;
         for (BSPPlatingRequest request : requests) {

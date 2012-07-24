@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.infrastructure.bsp.plating;
 
+import junit.framework.Assert;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.infrastructure.deployment.Stub;
 

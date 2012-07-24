@@ -16,31 +16,8 @@ public class IndexPositionBean {
     public IndexPositionBean() {}
 
     public IndexPositionBean(IndexPosition thriftPosition) {
-        
-        if (thriftPosition == IndexPosition.A) {
-            this.hint = "A";                    
-        }
-        else if (thriftPosition == IndexPosition.B) {
-            this.hint = "B";
-        }
-        else if (thriftPosition == IndexPosition.DEV) {
-            this.hint = "DEV";
-        }
-        else if (thriftPosition == IndexPosition.INTRA) {
-            this.hint = "INTRA";
-        }
-        else if (thriftPosition == IndexPosition.ONLY) {
-            this.hint = "ONLY";
-        }
-        else if (thriftPosition == IndexPosition.P5) {
-            this.hint = "P5";
-        }
-        else if (thriftPosition == IndexPosition.P7) {
-            this.hint = "P7";
-        }
-        else {
-            throw new RuntimeException("SequeL cannot map index position " + thriftPosition);
-        }
+
+        this.hint = thriftPosition.name();
     }
 
     @Override

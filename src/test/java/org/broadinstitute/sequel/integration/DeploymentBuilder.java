@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.integration;
 
+import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
@@ -25,6 +26,23 @@ public class DeploymentBuilder {
                 .as(WebArchive.class)
                 .addPackages(true, "org.broadinstitute.sequel")
                 .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=STUBBY"), "classes/jndi.properties");
+        war = addWarDependencies(war);
+        return war;
+    }
+
+    /**
+     * In the rare case where you want an in-container test to run as if it's really
+     * in another environment (for instance, to isolate a production bug), use
+     * this method.
+     * @param deployment
+     * @return
+     */
+    public static WebArchive buildSequelWar(Deployment deployment) {
+        WebArchive war = ShrinkWrap.create(ExplodedImporter.class, SEQUEL_WAR)
+                .importDirectory("src/main/webapp")
+                .as(WebArchive.class)
+                .addPackages(true, "org.broadinstitute.sequel")
+                .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
         war = addWarDependencies(war);
         return war;
     }

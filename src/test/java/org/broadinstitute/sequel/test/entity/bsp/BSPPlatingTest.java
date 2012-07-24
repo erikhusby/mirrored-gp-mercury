@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.test.entity.bsp;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.boundary.*;
 import org.broadinstitute.sequel.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.sequel.entity.billing.Quote;
@@ -12,43 +13,40 @@ import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
-import org.broadinstitute.sequel.entity.workflow.LabBatch;
-import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.sequel.infrastructure.bsp.plating.*;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.Funding;
 import org.broadinstitute.sequel.infrastructure.quote.FundingLevel;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.*;
 
-import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
-public class BSPSampleExportTest {
+public class BSPPlatingTest extends ContainerTest {
 
     public static final String masterSample1 = "SM-1111";
     public static final String masterSample2 = "SM-2222";
 
-    //private String aliquot1LSID = "broadinstitute.org:bsp.prod.sample:Test Aliquot 1111";
-    //private String aliquot2LSID = "broadinstitute.org:bsp.prod.sample:Test Aliquot 2222";
-
-    @Inject
-    BSPConfig bspConfig;
-
     @Inject
     private Log log;
 
+    //@Inject
+    BSPPlatingRequestService platingService;
 
-    @Test(groups = {DATABASE_FREE}, enabled = true)
+    public BSPPlatingTest() {
+        log = LogFactory.getLog(BSPPlatingTest.class);
+    }
+
+    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = true)
     public void testIssueBSPPlating() throws Exception {
 
-        BSPPlatingRequestServiceProducer producer = new BSPPlatingRequestServiceProducer();
-        //BSPPlatingRequestService platingService = producer.produce(new BSPPlatingRequestServiceStub(), new BSPPlatingRequestServiceImpl(bspConfig));
-
-        BSPPlatingRequestService platingService = new BSPPlatingRequestServiceStub();
+        platingService = new BSPPlatingRequestServiceStub();
 
         BasicProject project = new BasicProject("BSPPlatingTestingProject", new JiraTicket());
         // BasicProjectPlan
@@ -63,16 +61,13 @@ public class BSPSampleExportTest {
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
-        projectPlan.addStarter(startingSample);
+        projectPlan.getStarters().add(startingSample);
 
         StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
-        projectPlan.addStarter(startingSample2);
+        projectPlan.getStarters().add(startingSample2);
 
-        Set<Starter> setStarters = new HashSet<Starter>();
-        setStarters.addAll(projectPlan.getStarters());
-        LabBatch labBatch = new LabBatch(projectPlan, "Test Lab batch 1", setStarters);
         Map<StartingSample, AliquotParameters> starterMap = new HashMap<StartingSample, AliquotParameters>();
-        for (Starter starter : labBatch.getStarters()) {
+        for (Starter starter : projectPlan.getStarters()) {
             starterMap.put((StartingSample) starter, new AliquotParameters(projectPlan, 1.9f, 1.6f));
         }
 
@@ -99,7 +94,7 @@ public class BSPSampleExportTest {
         Assert.assertNotNull(platingResult);
     }
 
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
     public void testExport() throws Exception {
 
         BasicProject project = new BasicProject("BSPExportTestingProject", new JiraTicket());
@@ -115,26 +110,22 @@ public class BSPSampleExportTest {
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
-        projectPlan.addStarter(startingSample);
+        projectPlan.getStarters().add(startingSample);
 
         StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
-        projectPlan.addStarter(startingSample2);
+        projectPlan.getStarters().add(startingSample2);
 
-        Set<Starter> setStarters = new HashSet<Starter>();
-        setStarters.addAll(projectPlan.getStarters());
-        LabBatch labBatch = new LabBatch(projectPlan, "Test Lab batch 1", setStarters);
-
-        BSPPlatingReceipt bspReceipt = buildTestReceipt(labBatch);
-        runBSPExportTest(bspReceipt, labBatch);
+        BSPPlatingReceipt bspReceipt = buildTestReceipt(projectPlan);
+        runBSPExportTest(bspReceipt, projectPlan);
     }
 
-    private BSPPlatingReceipt buildTestReceipt(LabBatch labBatch) {
+    private BSPPlatingReceipt buildTestReceipt(ProjectPlan projectPlan) {
         BSPPlatingReceipt bspReceipt = new BSPPlatingReceipt("WR-1234");
-        if (labBatch == null) {
-            throw new IllegalArgumentException("Invalid Lab batch ");
+        if (projectPlan == null) {
+            throw new IllegalArgumentException("Invalid Project plan ");
         }
 
-        Iterator<Starter> stockItr = labBatch.getStarters().iterator();
+        Iterator<Starter> stockItr = projectPlan.getStarters().iterator();
 
         String startingStock = null;
         while (stockItr.hasNext()) {
@@ -142,31 +133,31 @@ public class BSPSampleExportTest {
 
             //TODO .. BSPAliquotWorkQueue & SampleSheet to be deprecated/deleted
             // request an aliquot from bsp
-            AliquotParameters aliquotParameters = new AliquotParameters(labBatch.getProjectPlan(), 1.9f, 1.6f);
+            AliquotParameters aliquotParameters = new AliquotParameters(projectPlan, 1.9f, 1.6f);
 
             //generate BSPPlatingRequests
             BSPPlatingRequest bspPlatingRequest = new BSPPlatingRequest(startingStock, aliquotParameters);
             bspPlatingRequest.setReceipt(bspReceipt);
-            labBatch.getProjectPlan().getPendingPlatingRequests().add(bspPlatingRequest);
+            projectPlan.getPendingPlatingRequests().add(bspPlatingRequest);
         }
 
         return bspReceipt;
     }
 
-    public static void runBSPExportTest(BSPPlatingReceipt bspReceipt, LabBatch labBatch) throws Exception {
+    public static void runBSPExportTest(BSPPlatingReceipt bspReceipt, ProjectPlan projectPlan) throws Exception {
         String ALIQUOT_LSID_PATTERN = "broadinstitute.org:bsp.prod.sample:Test Aliquot ";
 
         if (bspReceipt == null) {
             throw new IllegalArgumentException("Invalid BSP Plating Receipt ");
         }
-        if (labBatch == null) {
+        if (projectPlan == null) {
             throw new IllegalArgumentException("Invalid Project Plan ");
         }
 
         //TODO .. asserts for size of 2 should be removed and check with LabBatch size.
         //LabBatch ?? projectPlan can have many starters .. but batched .. so probably plating should be by batch
-        labBatch.getProjectPlan().getPendingPlatingRequests().addAll(bspReceipt.getPlatingRequests());
-        Collection<Starter> starters = labBatch.getStarters();
+        projectPlan.getPendingPlatingRequests().addAll(bspReceipt.getPlatingRequests());
+        Collection<Starter> starters = projectPlan.getStarters();
         Assert.assertNotNull(starters);
         Assert.assertEquals(starters.size(), 2, "Project Plan should have 2 starters");
         Assert.assertEquals(starters.size(), bspReceipt.getPlatingRequests().size(), "Project Plan should have same starters as BSP Plating Receipt");
@@ -210,7 +201,7 @@ public class BSPSampleExportTest {
             BSPSampleAuthorityTwoDTube bspAliquot = (BSPSampleAuthorityTwoDTube) aliquot;
             Project testProject = bspAliquot.getAllProjects().iterator().next();
             //Assert.assertEquals("BSPExportTestingProject", testProject.getProjectName());
-            Assert.assertEquals(labBatch.getProjectPlan().getProject().getProjectName(), testProject.getProjectName());
+            Assert.assertEquals(projectPlan.getProject().getProjectName(), testProject.getProjectName());
             //navigate from aliquot to ----> BSPStartingSample - !!
             StartingSample stockAliquot = bspAliquot.getSampleInstances().iterator().next().getStartingSample();
             Assert.assertNotNull(stockAliquot);
@@ -224,14 +215,14 @@ public class BSPSampleExportTest {
         }
 
         //iterate through Starters (BSPStartingSample) and make sure they all have aliquots
-        Collection<Starter> starterStocks = labBatch.getStarters();
+        Collection<Starter> starterStocks = projectPlan.getStarters();
         //should have starter
         Assert.assertNotNull(starterStocks);
         Iterator<Starter> starterStocksIterator = starterStocks.iterator();
         Assert.assertEquals(bspAliquots.size(), starterStocks.size());
         while (starterStocksIterator.hasNext()) {
             Starter starter = starterStocksIterator.next();
-            LabVessel aliquot = labBatch.getProjectPlan().getAliquotForStarter(starter);
+            LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
             Assert.assertNotNull(aliquot);
             Assert.assertEquals(true, aliquot.getLabel().contains("Aliquot"));
             //assumed stock is in format SM-9999
@@ -308,3 +299,4 @@ public class BSPSampleExportTest {
 
 
 }
+
