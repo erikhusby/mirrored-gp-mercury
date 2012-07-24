@@ -44,6 +44,7 @@ public abstract class StartingSample implements Starter {
 
     protected StartingSample(String sampleName, ProjectPlan projectPlan) {
         this.sampleName = sampleName;
+        // todo jmt add to projectPlan?
         this.projectPlan = projectPlan;
     }
 
