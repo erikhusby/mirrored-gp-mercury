@@ -31,8 +31,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
 
     private BSPSampleDataFetcher bspDataFetcher;
 
-    private WorkflowDescription workflowDescription;
-
     private PercentXFoldCoverage percentXFoldCoverage;
 
     public PassBackedProjectPlan() {}
@@ -89,7 +87,7 @@ public class PassBackedProjectPlan extends ProjectPlan {
                     passPriceItem.getUnits(),
                     passPriceItem.getPlatform());
                     */
-            workflowDescription =  new WorkflowDescription("Hybrid Selection",priceItem, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+            setWorkflowDescription(new WorkflowDescription("Hybrid Selection",priceItem, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
         }
     }
 
@@ -123,11 +121,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
             throw new RuntimeException("Could not find bait with id " +baitSetId);
         }
         baits.add(new ReagentDesign(bait.getDesignName(), ReagentDesign.REAGENT_TYPE.BAIT));
-    }
-
-    @Override
-    public WorkflowDescription getWorkflowDescription() {
-        return workflowDescription;
     }
 
     @Override
