@@ -3,8 +3,12 @@ package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
@@ -34,7 +38,7 @@ public class JiraTicket {
     @OneToMany(mappedBy = "jiraTicket")
     private Set<Project> projects = new HashSet<Project>();
 
-    @Transient
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private LabBatch labBatch;
 
     @Transient // todo arz make real hibernate relationship
@@ -121,5 +125,9 @@ public class JiraTicket {
 
     public LabBatch getLabBatch() {
         return labBatch;
+    }
+
+    public void setLabBatch(LabBatch labBatch) {
+        this.labBatch = labBatch;
     }
 }
