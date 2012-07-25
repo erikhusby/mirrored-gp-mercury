@@ -56,8 +56,8 @@ public class MolecularIndex implements Serializable {
     }
 
     @Id
-    @SequenceGenerator(name="molecular_index_seq", sequenceName="molecular_index_seq", allocationSize = 1)
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="molecular_index_seq")
+    @SequenceGenerator(name="seq_molecular_index", sequenceName="seq_molecular_index", allocationSize = 1)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_index")
     @Column(name = "id")
     @SuppressWarnings("unused")
     private Long getId() {
