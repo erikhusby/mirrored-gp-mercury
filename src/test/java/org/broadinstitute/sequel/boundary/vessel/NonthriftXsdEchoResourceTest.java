@@ -9,7 +9,6 @@ import org.broadinstitute.sequel.integration.ContainerTest;
 import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
 import org.broadinstitute.sequel.nonthrift.jaxb.LaneType;
 import org.broadinstitute.sequel.nonthrift.jaxb.LibraryDataType;
-import org.broadinstitute.sequel.nonthrift.jaxb.Response;
 import org.broadinstitute.sequel.nonthrift.jaxb.SampleInfoType;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -30,8 +29,7 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
     private static final String basePath = "rest/nonthrift";
 
     public final String FLOWCELL_DESIGNATION_JSON =
-            "{\"booleanValue\":null,\"doubleValue\":null,\"stringValue\":null,\"flowcellDesignation\":" +
-            "{\"lane\":[" +
+            "{\"lanes\":[" +
             "{\"laneName\":\"1\",\"libraryData\":[" +
             "{\"wasFound\":true,\"libraryName\":\"Library-100\",\"libraryType\":\"Test Library\",\"tubeBarcode\":\"00000100\",\"sampleDetails\":[" +
             "{\"sampleName\":\"SM-5000\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\"}," +
@@ -60,7 +58,7 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
             "{\"sampleName\":\"SM-5010\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\"}," +
             "{\"sampleName\":\"SM-5011\",\"sampleType\":\"Test Sample\",\"indexLength\":6,\"indexSequence\":\"TACTAG\",\"referenceSequence\":\"Test Reference\"}]," +
             "\"dateCreated\":\"2012-07-12T11:23:45.000-0400\",\"discarded\":false,\"destroyed\":false}]}]," +
-            "\"designationName\":\"Test Designation\",\"readLength\":101,\"pairedEndRun\":true,\"indexedRun\":true,\"controlLane\":2,\"keepIntensityFiles\":false}}";
+            "\"designationName\":\"Test Designation\",\"readLength\":101,\"pairedEndRun\":true,\"indexedRun\":true,\"controlLane\":2,\"keepIntensityFiles\":false}";
     private FlowcellDesignationType flowcellDesignation;
     private StringBuilder flowcellDesignationJson = new StringBuilder();
     private StringBuilder flowcellDesignationXml = new StringBuilder();
@@ -85,10 +83,10 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
         String url = baseUrl + basePath + "/echoBoolean";
 
         String result1 = Client.create(clientConfig).resource(url).queryParam("value", "false").accept(MediaType.APPLICATION_JSON).get(String.class);
-        assertThat(result1, equalTo(jsonForValue(false)));
+        assertThat(result1, equalTo("false"));
 
         String result2 = Client.create(clientConfig).resource(url).queryParam("value", "true").accept(MediaType.APPLICATION_JSON).get(String.class);
-        assertThat(result2, equalTo(jsonForValue(true)));
+        assertThat(result2, equalTo("true"));
     }
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -96,11 +94,11 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
     public void testEchoDoubleAsJson(@ArquillianResource URL baseUrl) {
         String url = baseUrl + basePath + "/echoDouble";
 
-        String result = Client.create(clientConfig).resource(url).queryParam("value", "1.234").accept(MediaType.APPLICATION_JSON).get(String.class);
-        assertThat(result, equalTo(jsonForValue(1.234)));
+        String result1 = Client.create(clientConfig).resource(url).queryParam("value", "1.234").accept(MediaType.APPLICATION_JSON).get(String.class);
+        assertThat(result1, equalTo("1.234"));
 
         String result2 = Client.create(clientConfig).resource(url).queryParam("value", "1.0").accept(MediaType.APPLICATION_JSON).get(String.class);
-        assertThat(result2, equalTo(jsonForValue(1.0)));
+        assertThat(result2, equalTo("1.0"));
     }
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -109,7 +107,7 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
         String url = baseUrl + basePath + "/echoString";
 
         String result = Client.create(clientConfig).resource(url).queryParam("value", "test").accept(MediaType.APPLICATION_JSON).get(String.class);
-        assertThat(result, equalTo(jsonForValue("test")));
+        assertThat(result, equalTo("test"));
     }
 
     @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -117,10 +115,8 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
     public void testEchoFlowcellDesignationAsJson(@ArquillianResource URL baseUrl) {
         String url = baseUrl + basePath + "/echoFlowcellDesignation";
 
-        Response request = new Response();
-        request.setFlowcellDesignation(flowcellDesignation);
-        String result = Client.create(clientConfig).resource(url).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).post(String.class, flowcellDesignationJson.toString());
-        assertThat(result, equalTo(flowcellDesignationJson.toString()));
+        String result = Client.create(clientConfig).resource(url).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).post(String.class, FLOWCELL_DESIGNATION_JSON);
+        assertThat(result, equalTo(FLOWCELL_DESIGNATION_JSON));
     }
 
     private String jsonForValue(boolean value) {
