@@ -413,8 +413,8 @@ public class MolecularIndexingScheme {
     }
 
     @Id
-    @SequenceGenerator(name="molecular_indexing_scheme_seq", sequenceName="molecular_indexing_scheme_seq", allocationSize = 1)
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="molecular_indexing_scheme_seq")
+    @SequenceGenerator(name="seq_molecular_indexing_scheme", sequenceName="seq_molecular_indexing_scheme", allocationSize = 1)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_indexing_scheme")
     @Column(name = "id")
     @SuppressWarnings("unused")
     private Long getId() {

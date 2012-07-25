@@ -1,14 +1,15 @@
 package org.broadinstitute.sequel.entity.vessel;
 
 import org.broadinstitute.sequel.entity.OrmUtil;
-import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.labevent.Failure;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
-import org.broadinstitute.sequel.entity.notice.Stalker;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.notice.UserRemarks;
-import org.broadinstitute.sequel.entity.project.*;
+import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.Project;
+import org.broadinstitute.sequel.entity.project.ProjectPlan;
+import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
@@ -499,6 +500,7 @@ public abstract class LabVessel implements Starter {
         return isSingleSample;
     }
 
+    @Override
     public void addLabBatch(LabBatch labBatch) {
         labBatches.add(labBatch);
     }

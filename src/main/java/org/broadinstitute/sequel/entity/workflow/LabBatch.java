@@ -102,6 +102,7 @@ public class LabBatch {
         } else {
             throw new RuntimeException("Unexpected subclass " + starter.getClass());
         }
+        starter.addLabBatch(this);
     }
 
     public boolean getActive() {
