@@ -1,6 +1,6 @@
 package org.broadinstitute.sequel.boundary.vessel;
 
-import org.broadinstitute.sequel.nonthrift.jaxb.Response;
+import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
 
 import javax.ejb.Stateless;
 import javax.ws.rs.Consumes;
@@ -15,40 +15,35 @@ import javax.ws.rs.core.MediaType;
  * @author breilly
  */
 @Path("/nonthrift")
-@Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 @Stateless
 public class NonthriftXsdEchoResource {
 
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/echoBoolean")
-    public Response echoBoolean(@QueryParam("value") boolean value) {
-        Response response = new Response();
-        response.setBooleanValue(value);
-        return response;
+    public boolean echoBoolean(@QueryParam("value") boolean value) {
+        return value;
     }
 
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/echoDouble")
-    public Response echoDouble(@QueryParam("value") double value) {
-        Response response = new Response();
-        response.setDoubleValue(value);
-        return response;
+    public double echoDouble(@QueryParam("value") double value) {
+        return value;
     }
 
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/echoString")
-    public Response echoString(@QueryParam("value") String value) {
-        Response response = new Response();
-        response.setStringValue(value);
-        return response;
+    public String echoString(@QueryParam("value") String value) {
+        return value;
     }
 
     @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Path("/echoFlowcellDesignation")
-    public Response echoFlowcellDesignation(Response flowcellDesignationResponse) {
-        Response response = new Response();
-        response.setFlowcellDesignation(flowcellDesignationResponse.getFlowcellDesignation());
-        return response;
+    public FlowcellDesignationType echoFlowcellDesignation(FlowcellDesignationType flowcellDesignation) {
+        return flowcellDesignation;
     }
 }

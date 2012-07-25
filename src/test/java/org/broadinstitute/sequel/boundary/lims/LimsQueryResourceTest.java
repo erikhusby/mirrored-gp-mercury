@@ -7,7 +7,7 @@ import org.apache.thrift.TException;
 import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
-import org.broadinstitute.sequel.nonthrift.jaxb.Response;
+import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -40,9 +40,8 @@ public class LimsQueryResourceTest {
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testFindFlowcellDesignationByTaskName() throws TException, TZIMSException {
         FlowcellDesignation flowcellDesignation = new FlowcellDesignation();
-        Response response = new Response();
         expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andReturn(flowcellDesignation);
-        expect(mockResponseFactory.makeFlowcellDesignationResponse(flowcellDesignation)).andReturn(response);
+        expect(mockResponseFactory.makeFlowcellDesignation(flowcellDesignation)).andReturn(new FlowcellDesignationType());
         replayAll();
 
         resource.findFlowcellDesignationByTaskName("TestTask");

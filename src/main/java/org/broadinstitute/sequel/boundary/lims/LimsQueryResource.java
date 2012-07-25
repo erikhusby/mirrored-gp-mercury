@@ -6,7 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
-import org.broadinstitute.sequel.nonthrift.jaxb.Response;
+import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -40,10 +40,10 @@ public class LimsQueryResource {
 
     @GET
     @Path("/findFlowcellDesignationByTaskName")
-    public Response findFlowcellDesignationByTaskName(@QueryParam("taskName") String taskName) {
+    public FlowcellDesignationType findFlowcellDesignationByTaskName(@QueryParam("taskName") String taskName) {
         try {
             FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByTaskName(taskName);
-            return responseFactory.makeFlowcellDesignationResponse(flowcellDesignation);
+            return responseFactory.makeFlowcellDesignation(flowcellDesignation);
         } catch (TException e) {
             log.error(e);
             throw new WebApplicationException(javax.ws.rs.core.Response.serverError().entity(e.getMessage()).build());

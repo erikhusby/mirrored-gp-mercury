@@ -8,7 +8,6 @@ import edu.mit.broad.prodinfo.thrift.lims.SampleInfo;
 import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
 import org.broadinstitute.sequel.nonthrift.jaxb.LaneType;
 import org.broadinstitute.sequel.nonthrift.jaxb.LibraryDataType;
-import org.broadinstitute.sequel.nonthrift.jaxb.Response;
 import org.broadinstitute.sequel.nonthrift.jaxb.SampleInfoType;
 
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -21,12 +20,6 @@ import java.util.GregorianCalendar;
  * @author breilly
  */
 public class LimsQueryResourceResponseFactory {
-
-    public Response makeFlowcellDesignationResponse(FlowcellDesignation designation) {
-        Response response = new Response();
-        response.setFlowcellDesignation(makeFlowcellDesignation(designation));
-        return response;
-    }
 
     public FlowcellDesignationType makeFlowcellDesignation(FlowcellDesignation designation) {
         FlowcellDesignationType outDesignation = new FlowcellDesignationType();
