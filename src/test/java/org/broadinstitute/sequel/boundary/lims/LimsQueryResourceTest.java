@@ -21,6 +21,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * @author breilly
  */
+@Test(singleThreaded = true)
 public class LimsQueryResourceTest {
 
     private ThriftService mockThriftService;

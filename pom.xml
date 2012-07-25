@@ -1243,43 +1243,50 @@
                 </executions>
             </plugin>
 
-
+            <!--
+             Configuration is a little quirky, but it's what's needed to put
+             the output of different XSDs into different packages. Based on
+             "Multiple schemas with different configuration" section of
+             http://mojo.codehaus.org/jaxb2-maven-plugin/usage.html.
+             -->
             <plugin>
-                <groupId>com.sun.tools.xjc.maven2</groupId>
-                <artifactId>maven-jaxb-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>jaxb2-maven-plugin</artifactId>
+                <version>1.4</version>
                 <executions>
                     <execution>
                         <id>bettalims</id>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>xjc</goal>
                         </goals>
                         <configuration>
-                            <schemaDirectory>src/main/xsd</schemaDirectory>
-                            <includeSchemas>
-                                <includeSchema>bettalims.xsd</includeSchema>
-                            </includeSchemas>
-                            <generatePackage>org.broadinstitute.sequel.bettalims.jaxb</generatePackage>
-                            <includeBindings>
-                                <includeBinding>*.xjb</includeBinding>
-                            </includeBindings>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>bettalims.xsd</schemaFiles>
+                            <packageName>org.broadinstitute.sequel.bettalims.jaxb</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.bettalimsXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <!--<clearOutputDir>false</clearOutputDir>-->
                         </configuration>
                     </execution>
                     <execution>
                         <id>nonthrift</id>
                         <goals>
-                            <goal>generate</goal>
+                            <goal>xjc</goal>
                         </goals>
                         <configuration>
-                            <schemaDirectory>src/main/xsd</schemaDirectory>
-                            <includeSchemas>
-                                <includeSchema>nonthrift.xsd</includeSchema>
-                            </includeSchemas>
-                            <generatePackage>org.broadinstitute.sequel.nonthrift.jaxb</generatePackage>
-                            <generateDirectory>${project.build.directory}/generated-sources/nonthrift-jaxb</generateDirectory>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>nonthrift.xsd</schemaFiles>
+                            <packageName>org.broadinstitute.sequel.nonthrift.jaxb</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.nonthriftXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
