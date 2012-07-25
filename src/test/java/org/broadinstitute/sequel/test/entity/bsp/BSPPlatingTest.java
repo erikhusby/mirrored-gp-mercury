@@ -61,10 +61,10 @@ public class BSPPlatingTest extends ContainerTest {
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
-        projectPlan.getStarters().add(startingSample);
+        projectPlan.addStarter(startingSample);
 
         StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
-        projectPlan.getStarters().add(startingSample2);
+        projectPlan.addStarter(startingSample2);
 
         Map<StartingSample, AliquotParameters> starterMap = new HashMap<StartingSample, AliquotParameters>();
         for (Starter starter : projectPlan.getStarters()) {
@@ -110,10 +110,10 @@ public class BSPPlatingTest extends ContainerTest {
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
-        projectPlan.getStarters().add(startingSample);
+        projectPlan.addStarter(startingSample);
 
         StartingSample startingSample2 = new BSPStartingSample(masterSample2, projectPlan);
-        projectPlan.getStarters().add(startingSample2);
+        projectPlan.addStarter(startingSample2);
 
         BSPPlatingReceipt bspReceipt = buildTestReceipt(projectPlan);
         runBSPExportTest(bspReceipt, projectPlan);
