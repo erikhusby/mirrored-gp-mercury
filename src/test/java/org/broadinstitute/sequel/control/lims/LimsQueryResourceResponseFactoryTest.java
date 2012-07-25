@@ -8,7 +8,6 @@ import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
 import org.broadinstitute.sequel.nonthrift.jaxb.LaneType;
 import org.broadinstitute.sequel.nonthrift.jaxb.LibraryDataType;
-import org.broadinstitute.sequel.nonthrift.jaxb.Response;
 import org.broadinstitute.sequel.nonthrift.jaxb.SampleInfoType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -47,16 +46,6 @@ public class LimsQueryResourceResponseFactoryTest {
         libraryData = new LibraryData(true, "TestLibrary-1", "TestLibrary", "12345678", Arrays.asList(sampleInfo), new SimpleDateFormat("yyyy/MM/dd HH:mm").format(libraryDateCreated), true, true);
         lane = new Lane("1", Arrays.asList(libraryData), 1.23, Arrays.asList(libraryData));
         flowcellDesignation = new FlowcellDesignation(Arrays.asList(lane), "TestDesignation", (short) 101, true, true, (short) 3, true);
-    }
-
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testMakeFlowcellDesignationResponse() {
-        Response response = factory.makeFlowcellDesignationResponse(flowcellDesignation);
-        assertThat(response.isBooleanValue(), nullValue());
-        assertThat(response.getDoubleValue(), nullValue());
-        assertThat(response.getStringValue(), nullValue());
-        assertThat(response.getBooleanMap(), nullValue());
-        assertFlowcellDesignation(response.getFlowcellDesignation(), flowcellDesignation);
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
