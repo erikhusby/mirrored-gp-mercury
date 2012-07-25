@@ -4,7 +4,7 @@ package org.broadinstitute.sequel.boundary.labevent;
 
 import com.sun.jersey.api.client.Client;
 import org.broadinstitute.sequel.TestGroups;
-import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
+import org.broadinstitute.sequel.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.sequel.boundary.run.SolexaRunBean;
 import org.broadinstitute.sequel.boundary.run.SolexaRunResource;
 import org.broadinstitute.sequel.control.dao.vessel.StaticPlateDAO;

@@ -1,14 +1,14 @@
 package org.broadinstitute.sequel.test;
 
-import org.broadinstitute.sequel.bettalims.jaxb.CherryPickSourceType;
-import org.broadinstitute.sequel.bettalims.jaxb.PlateCherryPickEvent;
-import org.broadinstitute.sequel.bettalims.jaxb.PlateEventType;
-import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
-import org.broadinstitute.sequel.bettalims.jaxb.PlateType;
-import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
-import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
-import org.broadinstitute.sequel.bettalims.jaxb.ReceptacleType;
-import org.broadinstitute.sequel.bettalims.jaxb.StationEventType;
+import org.broadinstitute.sequel.bettalims.generated.CherryPickSourceType;
+import org.broadinstitute.sequel.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.sequel.bettalims.generated.PlateEventType;
+import org.broadinstitute.sequel.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.sequel.bettalims.generated.PlateType;
+import org.broadinstitute.sequel.bettalims.generated.PositionMapType;
+import org.broadinstitute.sequel.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.sequel.bettalims.generated.ReceptacleType;
+import org.broadinstitute.sequel.bettalims.generated.StationEventType;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 
 import javax.xml.datatype.DatatypeConfigurationException;

@@ -205,6 +205,9 @@
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
+                            <excludes>
+                                <exclude>**/generated/*.java</exclude>
+                            </excludes>
                         </configuration>
                         <executions>
                             <execution>
@@ -1262,7 +1265,7 @@
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
                             <schemaFiles>bettalims.xsd</schemaFiles>
-                            <packageName>org.broadinstitute.sequel.bettalims.jaxb</packageName>
+                            <packageName>org.broadinstitute.sequel.bettalims.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.bettalimsXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->

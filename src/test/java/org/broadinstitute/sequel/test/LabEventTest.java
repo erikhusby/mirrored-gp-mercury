@@ -2,13 +2,13 @@ package org.broadinstitute.sequel.test;
 
 //import com.jprofiler.api.agent.Controller;
 
-import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
-import org.broadinstitute.sequel.bettalims.jaxb.PlateCherryPickEvent;
-import org.broadinstitute.sequel.bettalims.jaxb.PlateEventType;
-import org.broadinstitute.sequel.bettalims.jaxb.PlateTransferEventType;
-import org.broadinstitute.sequel.bettalims.jaxb.PositionMapType;
-import org.broadinstitute.sequel.bettalims.jaxb.ReceptaclePlateTransferEvent;
-import org.broadinstitute.sequel.bettalims.jaxb.ReceptacleType;
+import org.broadinstitute.sequel.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.sequel.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.sequel.bettalims.generated.PlateEventType;
+import org.broadinstitute.sequel.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.sequel.bettalims.generated.PositionMapType;
+import org.broadinstitute.sequel.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.sequel.bettalims.generated.ReceptacleType;
 import org.broadinstitute.sequel.boundary.run.SolexaRunBean;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;

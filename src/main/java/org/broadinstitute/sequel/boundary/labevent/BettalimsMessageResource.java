@@ -2,7 +2,7 @@ package org.broadinstitute.sequel.boundary.labevent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.sequel.bettalims.jaxb.BettaLIMSMessage;
+import org.broadinstitute.sequel.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.sequel.boundary.ResourceException;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
