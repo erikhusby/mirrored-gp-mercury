@@ -72,8 +72,7 @@ public abstract class LabVessel implements Starter {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel projectAuthority;
 
-    @Transient
-    // todo arz hibernate-ify
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
     @ManyToOne(fetch = FetchType.LAZY)

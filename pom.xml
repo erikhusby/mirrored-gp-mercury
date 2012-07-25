@@ -1010,14 +1010,11 @@
             </exclusions>
         </dependency>
 
-<!--
-todo jmt enable this
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-jpamodelgen</artifactId>
             <version>1.2.0.Final</version>
         </dependency>
--->
 
         <dependency>
             <groupId>postgresql</groupId>
@@ -1205,6 +1202,9 @@ todo jmt enable this
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
+                    <annotationProcessors>
+                        <annotationProcessor>org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor</annotationProcessor>
+                    </annotationProcessors>
                     <compilerArguments>
                         <endorseddirs>${project.build.directory}/endorsed</endorseddirs>
                     </compilerArguments>
@@ -1325,7 +1325,7 @@ todo jmt enable this
                         </component>
                     </components>
                     <componentProperties>
-                        <persistenceunit>test_pu</persistenceunit>
+                        <persistenceunit>sequel_pu</persistenceunit>
                         <console>false</console>
                         <format>true</format>
                         <jdk5>true</jdk5>

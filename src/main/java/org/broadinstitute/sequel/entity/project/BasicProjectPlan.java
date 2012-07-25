@@ -41,12 +41,6 @@ import java.util.*;
 @Entity
 public class BasicProjectPlan extends ProjectPlan {
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    protected WorkflowDescription workflowDescription;
-
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    protected Project project;
-    
     protected String planName;
     
     private String notes;
@@ -74,34 +68,17 @@ public class BasicProjectPlan extends ProjectPlan {
     public BasicProjectPlan(Project project,
                             String name,
                             WorkflowDescription workflowDescription)  {
-        if (project == null) {
-             throw new NullPointerException("project cannot be null."); 
-        }
+        super(project, workflowDescription);
         if (name == null) {
              throw new NullPointerException("name cannot be null."); 
         }
-        if (workflowDescription == null) {
-             throw new NullPointerException("workflowDescription cannot be null.");
-        }
-        this.project = project;
         this.planName = name;
-        this.workflowDescription = workflowDescription;
         project.addProjectPlan(this);
     }
 
     protected BasicProjectPlan() {
     }
 
-    @Override
-    public Project getProject() {
-        return project;
-    }
-
-    @Override
-    public WorkflowDescription getWorkflowDescription() {
-        return workflowDescription;
-    }
-    
     @Override
     public Collection<ReagentDesign> getReagentDesigns() {
         return reagentDesigns;

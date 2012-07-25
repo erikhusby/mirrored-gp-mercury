@@ -9,6 +9,8 @@ import org.broadinstitute.sequel.infrastructure.quote.Quote;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
+import org.hibernate.annotations.MapKeyType;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -18,6 +20,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKey;
+import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyJoinColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.Collection;
@@ -40,9 +45,13 @@ public abstract class ProjectPlan {
     protected Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    // hbm2ddl always generates mapkey
+    @MapKeyJoinColumn(name = "mapkey")
     private Map<StartingSample, LabVessel> mapStartingSampleToAliquot = new HashMap<StartingSample, LabVessel>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    // hbm2ddl always generates mapkey
+    @MapKeyJoinColumn(name = "mapkey")
     private Map<LabVessel, LabVessel> mapStartingLabVesselToAliquot = new HashMap<LabVessel, LabVessel>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
@@ -53,6 +62,23 @@ public abstract class ProjectPlan {
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private Project project;
+
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    private WorkflowDescription workflowDescription;
+
+    protected ProjectPlan(Project project, WorkflowDescription workflowDescription) {
+        if (project == null) {
+            throw new NullPointerException("project cannot be null.");
+        }
+        if (workflowDescription == null) {
+            throw new NullPointerException("workflowDescription cannot be null.");
+        }
+        this.project = project;
+        this.workflowDescription = workflowDescription;
+    }
+
+    protected ProjectPlan() {
+    }
 
     public abstract void addPlatingRequest(BSPPlatingRequest platingRequest);
 
@@ -66,7 +92,13 @@ public abstract class ProjectPlan {
         this.project = project;
     }
 
-    public abstract WorkflowDescription getWorkflowDescription();
+    public WorkflowDescription getWorkflowDescription() {
+        return workflowDescription;
+    }
+
+    public void setWorkflowDescription(WorkflowDescription workflowDescription) {
+        this.workflowDescription = workflowDescription;
+    }
 
     public abstract Collection<ReagentDesign> getReagentDesigns();
 

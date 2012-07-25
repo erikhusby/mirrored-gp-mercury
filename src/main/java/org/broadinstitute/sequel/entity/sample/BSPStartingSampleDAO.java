@@ -1,4 +1,5 @@
 package org.broadinstitute.sequel.entity.sample;
+// todo jmt this should be in the control.dao package
 
 import org.broadinstitute.sequel.control.dao.GenericDao;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;

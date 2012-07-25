@@ -51,6 +51,7 @@ public class VesselContainer<T extends LabVessel> {
     // have to specify name, generated name is too long for Oracle
     @JoinTable(name = "lv_map_position_to_vessel")
     @MapKeyEnumerated(EnumType.STRING)
+    // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")
     // todo jmt get Hibernate to sort this
     // the map value has to be LabVessel, not T, because JPAMetaModelEntityProcessor can't handle type parameters
