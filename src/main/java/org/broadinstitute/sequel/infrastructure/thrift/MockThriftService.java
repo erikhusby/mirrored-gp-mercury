@@ -8,6 +8,7 @@ import org.apache.thrift.TException;
 import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.Default;
 import java.io.IOException;
+import java.util.List;
 
 @Alternative
 public class MockThriftService implements ThriftService {
@@ -30,5 +31,10 @@ public class MockThriftService implements ThriftService {
     @Override
     public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) throws TException, TZIMSException {
         return null;
+    }
+
+    @Override
+    public boolean doesSquidRecognizeAllLibraries(List<String> barcodes) {
+        return false;
     }
 }

@@ -8,6 +8,7 @@ import org.apache.thrift.TException;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 
 import javax.inject.Inject;
+import java.util.List;
 
 @Impl
 public class LiveThriftService implements ThriftService {
@@ -37,6 +38,16 @@ public class LiveThriftService implements ThriftService {
             @Override
             public FlowcellDesignation call(LIMQueries.Client client) throws TException, TZIMSException {
                 return client.findFlowcellDesignationByTaskName(taskName);
+            }
+        });
+    }
+
+    @Override
+    public boolean doesSquidRecognizeAllLibraries(final List<String> barcodes) throws TException, TZIMSException {
+        return thriftConnection.call(new ThriftConnection.Call<Boolean>() {
+            @Override
+            public Boolean call(LIMQueries.Client client) throws TException, TZIMSException {
+                return client.doesSquidRecognizeAllLibraries(barcodes);
             }
         });
     }

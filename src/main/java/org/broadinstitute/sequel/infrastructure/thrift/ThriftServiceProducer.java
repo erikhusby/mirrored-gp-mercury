@@ -18,6 +18,7 @@ public class ThriftServiceProducer {
     private Deployment deployment;
 
 
+    // TODO: make selection dynamic to avoid error from ThriftConfigProducer when deploying to a STUBBY container
     @Produces
     @Default
     @SessionScoped

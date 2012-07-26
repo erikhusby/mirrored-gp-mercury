@@ -6,6 +6,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.apache.thrift.TException;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Wrapper around thrift that helps us
@@ -17,4 +18,6 @@ public interface ThriftService extends Serializable {
     public TZamboniRun fetchRun(String runName) throws TZIMSException, TException;
 
     public FlowcellDesignation findFlowcellDesignationByTaskName(final String taskName) throws TException, TZIMSException;
+
+    boolean doesSquidRecognizeAllLibraries(List<String> barcodes) throws TException, TZIMSException;
 }
