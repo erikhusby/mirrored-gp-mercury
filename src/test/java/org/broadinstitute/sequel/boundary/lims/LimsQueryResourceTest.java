@@ -7,7 +7,7 @@ import org.apache.thrift.TException;
 import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
-import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
+import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

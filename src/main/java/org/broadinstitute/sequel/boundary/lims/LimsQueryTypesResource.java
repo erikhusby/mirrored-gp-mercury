@@ -1,6 +1,6 @@
-package org.broadinstitute.sequel.boundary.vessel;
+package org.broadinstitute.sequel.boundary.lims;
 
-import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
+import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
 
 import javax.ejb.Stateless;
 import javax.ws.rs.Consumes;
@@ -15,9 +15,9 @@ import java.util.Map;
 /**
  * @author breilly
  */
-@Path("/nonthrift")
+@Path("/limsQueryTypes")
 @Stateless
-public class NonthriftXsdEchoResource {
+public class LimsQueryTypesResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

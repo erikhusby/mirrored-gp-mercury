@@ -1,4 +1,4 @@
-package org.broadinstitute.sequel.boundary.vessel;
+package org.broadinstitute.sequel.boundary.lims;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -6,10 +6,10 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
 import org.broadinstitute.sequel.integration.ContainerTest;
-import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
-import org.broadinstitute.sequel.nonthrift.jaxb.LaneType;
-import org.broadinstitute.sequel.nonthrift.jaxb.LibraryDataType;
-import org.broadinstitute.sequel.nonthrift.jaxb.SampleInfoType;
+import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
+import org.broadinstitute.sequel.limsquery.generated.LaneType;
+import org.broadinstitute.sequel.limsquery.generated.LibraryDataType;
+import org.broadinstitute.sequel.limsquery.generated.SampleInfoType;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.testng.annotations.BeforeMethod;
@@ -24,9 +24,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * @author breilly
  */
-public class NonthriftXsdEchoResourceTest extends ContainerTest {
+public class LimsQueryTypesResourceTest extends ContainerTest {
 
-    private static final String basePath = "rest/nonthrift";
+    private static final String basePath = "rest/limsQueryTypes";
 
     public final String FLOWCELL_DESIGNATION_JSON =
             "{\"lanes\":[" +
@@ -67,7 +67,7 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
 
     private ClientConfig clientConfig;
 
-    public NonthriftXsdEchoResourceTest() {
+    public LimsQueryTypesResourceTest() {
         flowcellDesignation = makeFlowcellDesignation();
     }
 

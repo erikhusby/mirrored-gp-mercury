@@ -5,10 +5,10 @@ import edu.mit.broad.prodinfo.thrift.lims.Lane;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.SampleInfo;
 import org.broadinstitute.sequel.TestGroups;
-import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
-import org.broadinstitute.sequel.nonthrift.jaxb.LaneType;
-import org.broadinstitute.sequel.nonthrift.jaxb.LibraryDataType;
-import org.broadinstitute.sequel.nonthrift.jaxb.SampleInfoType;
+import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
+import org.broadinstitute.sequel.limsquery.generated.LaneType;
+import org.broadinstitute.sequel.limsquery.generated.LibraryDataType;
+import org.broadinstitute.sequel.limsquery.generated.SampleInfoType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -19,7 +19,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -49,7 +48,7 @@ public class LimsQueryResourceResponseFactoryTest {
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
-    public void testMakeFlowcellDeisgnation() {
+    public void testMakeFlowcellDesignation() {
         FlowcellDesignationType outFlowcellDesignation = factory.makeFlowcellDesignation(flowcellDesignation);
         assertFlowcellDesignation(outFlowcellDesignation, flowcellDesignation);
     }
