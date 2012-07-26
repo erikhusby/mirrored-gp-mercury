@@ -119,6 +119,16 @@ public class NonthriftXsdEchoResourceTest extends ContainerTest {
         assertThat(result, equalTo(FLOWCELL_DESIGNATION_JSON));
     }
 
+    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testEchoStringToBooleanMap(@ArquillianResource URL baseUrl) {
+        String url = baseUrl + basePath + "/echoStringToBooleanMap";
+
+        String request = "{\"result1\":false,\"result2\":true}";
+        String result = Client.create(clientConfig).resource(url).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).post(String.class, request);
+        assertThat(result, equalTo(request));
+    }
+
     private String jsonForValue(boolean value) {
         return "{\"booleanValue\":" + value +",\"doubleValue\":null,\"stringValue\":null,\"booleanMap\":null,\"flowcellDesignation\":null}";
     }

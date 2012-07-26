@@ -10,6 +10,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.util.Map;
 
 /**
  * @author breilly
@@ -45,5 +46,13 @@ public class NonthriftXsdEchoResource {
     @Path("/echoFlowcellDesignation")
     public FlowcellDesignationType echoFlowcellDesignation(FlowcellDesignationType flowcellDesignation) {
         return flowcellDesignation;
+    }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/echoStringToBooleanMap")
+    public Map<String, Boolean> echoStringToBooleanMap(Map<String, Boolean> map) {
+        return map;
     }
 }
