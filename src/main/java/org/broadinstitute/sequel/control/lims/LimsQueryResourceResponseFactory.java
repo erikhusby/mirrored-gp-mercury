@@ -5,12 +5,11 @@ import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.Lane;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.SampleInfo;
-import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
-import org.broadinstitute.sequel.nonthrift.jaxb.LaneType;
-import org.broadinstitute.sequel.nonthrift.jaxb.LibraryDataType;
-import org.broadinstitute.sequel.nonthrift.jaxb.SampleInfoType;
+import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
+import org.broadinstitute.sequel.limsquery.generated.LaneType;
+import org.broadinstitute.sequel.limsquery.generated.LibraryDataType;
+import org.broadinstitute.sequel.limsquery.generated.SampleInfoType;
 
-import javax.xml.datatype.XMLGregorianCalendar;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;

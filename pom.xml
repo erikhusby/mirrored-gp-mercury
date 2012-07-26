@@ -1273,16 +1273,16 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>nonthrift</id>
+                        <id>LimsQuery</id>
                         <goals>
                             <goal>xjc</goal>
                         </goals>
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>nonthrift.xsd</schemaFiles>
-                            <packageName>org.broadinstitute.sequel.nonthrift.jaxb</packageName>
+                            <schemaFiles>LimsQueryTypes.xsd</schemaFiles>
+                            <packageName>org.broadinstitute.sequel.limsquery.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
-                            <staleFile>${project.build.directory}/jaxb2/.nonthriftXjcStaleFlag</staleFile>
+                            <staleFile>${project.build.directory}/jaxb2/.limsqueryXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>

@@ -1,6 +1,6 @@
-package org.broadinstitute.sequel.boundary.vessel;
+package org.broadinstitute.sequel.boundary.lims;
 
-import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
+import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
 
 import javax.ejb.Stateless;
 import javax.ws.rs.Consumes;
@@ -10,13 +10,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.util.Map;
 
 /**
  * @author breilly
  */
-@Path("/nonthrift")
+@Path("/limsQueryTypes")
 @Stateless
-public class NonthriftXsdEchoResource {
+public class LimsQueryTypesResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -45,5 +46,13 @@ public class NonthriftXsdEchoResource {
     @Path("/echoFlowcellDesignation")
     public FlowcellDesignationType echoFlowcellDesignation(FlowcellDesignationType flowcellDesignation) {
         return flowcellDesignation;
+    }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/echoStringToBooleanMap")
+    public Map<String, Boolean> echoStringToBooleanMap(Map<String, Boolean> map) {
+        return map;
     }
 }

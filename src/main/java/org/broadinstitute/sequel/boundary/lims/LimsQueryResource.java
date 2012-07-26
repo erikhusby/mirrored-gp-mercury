@@ -6,7 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
-import org.broadinstitute.sequel.nonthrift.jaxb.FlowcellDesignationType;
+import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -20,7 +20,7 @@ import javax.ws.rs.core.MediaType;
  * @author breilly
  */
 @Path("/limsQuery")
-@Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+@Produces({MediaType.APPLICATION_JSON})
 public class LimsQueryResource {
 
     private ThriftService thriftService;
