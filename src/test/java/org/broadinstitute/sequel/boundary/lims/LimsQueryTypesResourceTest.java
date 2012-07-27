@@ -1,11 +1,15 @@
 package org.broadinstitute.sequel.boundary.lims;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.UniformInterfaceException;
+import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.org.apache.xerces.internal.jaxp.datatype.XMLGregorianCalendarImpl;
+import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.integration.ContainerTest;
+import org.broadinstitute.sequel.integration.RestServiceContainerTest;
 import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.sequel.limsquery.generated.LaneType;
 import org.broadinstitute.sequel.limsquery.generated.LibraryDataType;
@@ -18,15 +22,15 @@ import org.testng.annotations.Test;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author breilly
  */
-public class LimsQueryTypesResourceTest extends ContainerTest {
-
-    private static final String basePath = "rest/limsQueryTypes";
+public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
 
     public final String FLOWCELL_DESIGNATION_JSON =
             "{\"lanes\":[" +
@@ -65,68 +69,107 @@ public class LimsQueryTypesResourceTest extends ContainerTest {
     private int libraryNumber = 100;
     private int sampleNumber = 5000;
 
-    private ClientConfig clientConfig;
-
     public LimsQueryTypesResourceTest() {
         flowcellDesignation = makeFlowcellDesignation();
     }
 
-    @BeforeMethod
-    public void setUp() throws Exception {
-        clientConfig = new DefaultClientConfig();
-        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+    @Override
+    protected String getResourcePath() {
+        return "limsQueryTypes";
     }
 
-    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoBooleanAsJson(@ArquillianResource URL baseUrl) {
-        String url = baseUrl + basePath + "/echoBoolean";
+        WebResource resource = makeWebResource(baseUrl, "echoBoolean");
 
-        String result1 = Client.create(clientConfig).resource(url).queryParam("value", "false").accept(MediaType.APPLICATION_JSON).get(String.class);
+        String result1 = get(resource.queryParam("value", "false"));
         assertThat(result1, equalTo("false"));
 
-        String result2 = Client.create(clientConfig).resource(url).queryParam("value", "true").accept(MediaType.APPLICATION_JSON).get(String.class);
+        String result2 = get(resource.queryParam("value", "true"));
         assertThat(result2, equalTo("true"));
     }
 
-    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoDoubleAsJson(@ArquillianResource URL baseUrl) {
-        String url = baseUrl + basePath + "/echoDouble";
+        WebResource resource = makeWebResource(baseUrl, "echoDouble");
 
-        String result1 = Client.create(clientConfig).resource(url).queryParam("value", "1.234").accept(MediaType.APPLICATION_JSON).get(String.class);
+        String result1 = get(resource.queryParam("value", "1.234"));
         assertThat(result1, equalTo("1.234"));
 
-        String result2 = Client.create(clientConfig).resource(url).queryParam("value", "1.0").accept(MediaType.APPLICATION_JSON).get(String.class);
+        String result2 = get(resource.queryParam("value", "1.0"));
         assertThat(result2, equalTo("1.0"));
     }
 
-    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoStringAsJson(@ArquillianResource URL baseUrl) {
-        String url = baseUrl + basePath + "/echoString";
+        WebResource resource = makeWebResource(baseUrl, "echoString");
 
-        String result = Client.create(clientConfig).resource(url).queryParam("value", "test").accept(MediaType.APPLICATION_JSON).get(String.class);
+        String result = get(resource.queryParam("value", "test"));
         assertThat(result, equalTo("test"));
     }
 
-    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoFlowcellDesignationAsJson(@ArquillianResource URL baseUrl) {
-        String url = baseUrl + basePath + "/echoFlowcellDesignation";
+        WebResource resource = makeWebResource(baseUrl, "echoFlowcellDesignation");
 
-        String result = Client.create(clientConfig).resource(url).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).post(String.class, FLOWCELL_DESIGNATION_JSON);
+        String result = post(resource, FLOWCELL_DESIGNATION_JSON);
         assertThat(result, equalTo(FLOWCELL_DESIGNATION_JSON));
     }
 
-    @Test(dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoStringToBooleanMap(@ArquillianResource URL baseUrl) {
-        String url = baseUrl + basePath + "/echoStringToBooleanMap";
+        WebResource resource = makeWebResource(baseUrl, "echoStringToBooleanMap");
 
         String request = "{\"result1\":false,\"result2\":true}";
-        String result = Client.create(clientConfig).resource(url).type(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON).post(String.class, request);
+        String result = post(resource, request);
         assertThat(result, equalTo(request));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testThrowRuntimeException(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "throwRuntimeException");
+
+        String error = null;
+        try {
+            resource.queryParam("message", "testThrowRuntimeException").accept(APPLICATION_JSON_TYPE).get(String.class);
+        } catch (UniformInterfaceException e) {
+            error = e.getResponse().getEntity(String.class);
+        }
+        assertThat(error, equalTo("testThrowRuntimeException"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testThrowTException(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "throwTException");
+
+        String error = null;
+        try {
+            resource.queryParam("message", "testThrowTException").accept(APPLICATION_JSON_TYPE).get(String.class);
+        } catch (UniformInterfaceException e) {
+            error = e.getResponse().getEntity(String.class);
+        }
+        assertThat(error, equalTo("testThrowTException"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testThrowTZIMSException(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "throwTZIMSException");
+
+        String error = null;
+        try {
+            resource.queryParam("details", "testThrowTZIMSException").accept(APPLICATION_JSON_TYPE).get(String.class);
+        } catch (UniformInterfaceException e) {
+            error = e.getResponse().getEntity(String.class);
+        }
+        assertThat(error, equalTo("testThrowTZIMSException"));
     }
 
     private String jsonForValue(boolean value) {

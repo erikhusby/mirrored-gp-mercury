@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.boundary.lims;
 
+import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
+import org.apache.thrift.TException;
 import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
 
 import javax.ejb.Stateless;
@@ -54,5 +56,26 @@ public class LimsQueryTypesResource {
     @Path("/echoStringToBooleanMap")
     public Map<String, Boolean> echoStringToBooleanMap(Map<String, Boolean> map) {
         return map;
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/throwRuntimeException")
+    public void throwRuntimeException(@QueryParam("message") String message) {
+        throw new RuntimeException(message);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/throwTException")
+    public void throwTException(@QueryParam("message") String message) throws TException {
+        throw new TException(message);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("throwTZIMSException")
+    public void throwTZIMSException(@QueryParam("details") String details) throws TZIMSException {
+        throw new TZIMSException(details);
     }
 }
