@@ -211,6 +211,9 @@ public enum LabEventType {
 
     JUMP_ENRICHED_LIBRARY_REGISTRATION("JumpEnrichedLibraryRegistration", false, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    PICO_DILUTION_TRANSFER ("PicoDilutionTransfer", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
     ;
 
     private final String name;
