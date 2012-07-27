@@ -56,16 +56,15 @@ public class LimsQueryResourceUnitTest {
     public void testFindFlowcellDesignationByTaskNameThriftError() throws Exception {
         TException thrown = new TException("Thrift error!");
         expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        mockLog.error(thrown);
         replayAll();
 
-        Exception caught = null;
+        TException caught = null;
         try {
             resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (Exception e) {
+        } catch (TException e) {
             caught = e;
         }
-        assertException(caught, 500, thrown.getMessage());
+        assertThat(caught.getMessage(), equalTo(thrown.getMessage()));
 
         verifyAll();
     }
@@ -74,16 +73,15 @@ public class LimsQueryResourceUnitTest {
     public void testFindFlowcellDesignationByTaskNameZimsError() throws Exception {
         TZIMSException thrown = new TZIMSException("ZIMS error!");
         expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        mockLog.error(thrown);
         replayAll();
 
-        Exception caught = null;
+        TZIMSException caught = null;
         try {
             resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (Exception e) {
+        } catch (TZIMSException e) {
             caught = e;
         }
-        assertException(caught, 500, thrown.getDetails());
+        assertThat(caught.getDetails(), equalTo(thrown.getDetails()));
 
         verifyAll();
     }
@@ -92,16 +90,15 @@ public class LimsQueryResourceUnitTest {
     public void testFindFlowcellDesignationByTaskNameRuntimeException() throws Exception {
         RuntimeException thrown = new RuntimeException("Runtime exception!");
         expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        mockLog.error(thrown);
         replayAll();
 
-        Exception caught = null;
+        RuntimeException caught = null;
         try {
             resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             caught = e;
         }
-        assertException(caught, 500, thrown.getMessage());
+        assertThat(caught.getMessage(), equalTo(thrown.getMessage()));
 
         verifyAll();
     }
