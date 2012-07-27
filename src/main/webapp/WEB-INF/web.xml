@@ -82,7 +82,8 @@
         <!-- comma separated list of jax-rs resource classes -->
         <param-value>
             org.broadinstitute.sequel.boundary.zims.IlluminaRunResource,
-            org.broadinstitute.sequel.boundary.vessel.NonthriftXsdEchoResource,
+            org.broadinstitute.sequel.boundary.lims.LimsQueryResource,
+            org.broadinstitute.sequel.boundary.lims.LimsQueryTypesResource,
             org.broadinstitute.sequel.boundary.vessel.RackOfTubesResource,
             org.broadinstitute.sequel.boundary.labevent.BettalimsMessageResource,
             org.broadinstitute.sequel.boundary.run.SolexaRunResource
