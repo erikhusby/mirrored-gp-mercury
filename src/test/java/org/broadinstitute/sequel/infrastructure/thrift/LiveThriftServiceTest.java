@@ -9,7 +9,10 @@ import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
+
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 
@@ -50,5 +53,14 @@ public class LiveThriftServiceTest {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, expectedExceptions = TTransportException.class)
     public void testFindFlowcellDesignationByTaskNameInvalid() throws Exception {
         thriftService.findFlowcellDesignationByTaskName("invalid_task");
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testDoesSquidRecognizeAllLibraries() throws Exception {
+        boolean result1 = thriftService.doesSquidRecognizeAllLibraries(Arrays.asList("0099443960", "406164"));
+        assertThat(result1, is(true));
+
+        boolean result2 = thriftService.doesSquidRecognizeAllLibraries(Arrays.asList("0099443960", "406164", "unknown_barcode"));
+        assertThat(result2, is(false));
     }
 }

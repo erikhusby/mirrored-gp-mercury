@@ -91,7 +91,13 @@
     </context-param>
     <context-param>
         <param-name>resteasy.providers</param-name>
-        <param-value>org.broadinstitute.sequel.infrastructure.jaxrs.JacksonConfigurator</param-value>
+        <param-value>
+            org.broadinstitute.sequel.infrastructure.jaxrs.JacksonConfigurator,
+            org.broadinstitute.sequel.infrastructure.jaxrs.CatchAllExceptionMapper,
+            org.broadinstitute.sequel.infrastructure.jaxrs.EJBExceptionMapper,
+            org.broadinstitute.sequel.infrastructure.jaxrs.TExceptionMapper,
+            org.broadinstitute.sequel.infrastructure.jaxrs.TZIMSExceptionMapper
+        </param-value>
     </context-param>
 
     <!-- for JBoss AS 7 -->

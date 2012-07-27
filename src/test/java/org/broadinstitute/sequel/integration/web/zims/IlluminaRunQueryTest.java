@@ -19,6 +19,7 @@ import org.testng.annotations.Test;
 import javax.enterprise.inject.Alternative;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 
@@ -121,6 +122,11 @@ public class IlluminaRunQueryTest extends Arquillian {
         @Override
         public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) throws TException, TZIMSException {
             return null;
+        }
+
+        @Override
+        public boolean doesSquidRecognizeAllLibraries(List<String> barcodes) {
+            return false;
         }
     }
 }

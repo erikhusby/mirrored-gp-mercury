@@ -1,121 +1,56 @@
 package org.broadinstitute.sequel.boundary.lims;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import org.apache.commons.logging.Log;
-import org.apache.thrift.TException;
-import org.broadinstitute.sequel.TestGroups;
-import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
-import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
-import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
-import org.testng.annotations.BeforeMethod;
+import com.sun.jersey.api.client.WebResource;
+import org.broadinstitute.sequel.integration.DeploymentBuilder;
+import org.broadinstitute.sequel.integration.RestServiceContainerTest;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.WebApplicationException;
+import java.net.URL;
 
-import static org.easymock.EasyMock.*;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * @author breilly
  */
-@Test(singleThreaded = true)
-public class LimsQueryResourceTest {
+public class LimsQueryResourceTest extends RestServiceContainerTest {
 
-    private ThriftService mockThriftService;
-    private LimsQueryResourceResponseFactory mockResponseFactory;
-    private LimsQueryResource resource;
-    private Log mockLog;
-
-    @BeforeMethod(groups = TestGroups.DATABASE_FREE)
-    public void setUp() throws Exception {
-        mockThriftService = createMock(ThriftService.class);
-        mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
-        mockLog = createMock(Log.class);
-        resource = new LimsQueryResource(mockThriftService, mockResponseFactory, mockLog);
+    @Deployment
+    public static WebArchive buildSequelWar() {
+        // need TEST here for now because there's no STUBBY version of ThriftConfig
+        // see ThriftServiceProducer.produce()
+        return DeploymentBuilder.buildSequelWar(TEST);
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskName() throws TException, TZIMSException {
-        FlowcellDesignation flowcellDesignation = new FlowcellDesignation();
-        expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andReturn(flowcellDesignation);
-        expect(mockResponseFactory.makeFlowcellDesignation(flowcellDesignation)).andReturn(new FlowcellDesignationType());
-        replayAll();
-
-        resource.findFlowcellDesignationByTaskName("TestTask");
-
-        verifyAll();
+    @Override
+    protected String getResourcePath() {
+        return "limsQuery";
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskNameThriftError() throws Exception {
-        TException thrown = new TException("Thrift error!");
-        expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        mockLog.error(thrown);
-        replayAll();
-
-        Exception caught = null;
-        try {
-            resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (Exception e) {
-            caught = e;
-        }
-        assertException(caught, 500, thrown.getMessage());
-
-        verifyAll();
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindFlowcellDesignationByTaskName(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "14A_03.19.2012");
+        String result = get(resource);
+        assertThat(result, notNullValue());
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskNameZimsError() throws Exception {
-        TZIMSException thrown = new TZIMSException("ZIMS error!");
-        expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        mockLog.error(thrown);
-        replayAll();
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testDoesLimsRecognizeAllTubes(@ArquillianResource URL baseUrl) {
+        WebResource webResource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");
 
-        Exception caught = null;
-        try {
-            resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (Exception e) {
-            caught = e;
-        }
-        assertException(caught, 500, thrown.getDetails());
+        String result1 = post(webResource, "[\"0099443960\",\"406164\"]");
+        assertThat(result1, equalTo("true"));
 
-        verifyAll();
-    }
-
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskNameRuntimeException() throws Exception {
-        RuntimeException thrown = new RuntimeException("Runtime exception!");
-        expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        mockLog.error(thrown);
-        replayAll();
-
-        Exception caught = null;
-        try {
-            resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (Exception e) {
-            caught = e;
-        }
-        assertException(caught, 500, thrown.getMessage());
-
-        verifyAll();
-    }
-
-    private void assertException(Exception caught, int status, String error) {
-        assertThat(caught, instanceOf(WebApplicationException.class));
-        WebApplicationException webApplicationException = (WebApplicationException) caught;
-        assertThat(webApplicationException.getResponse().getStatus(), equalTo(status));
-        Object entity = webApplicationException.getResponse().getEntity();
-        assertThat((String) entity, equalTo(error));
-    }
-
-    private void replayAll() {
-        replay(mockThriftService, mockResponseFactory, mockLog);
-    }
-
-    private void verifyAll() {
-        verify(mockThriftService, mockResponseFactory, mockLog);
+        String result2 = post(webResource, "[\"0099443960\",\"406164\",\"unknown_barcode\"]");
+        assertThat(result2, equalTo("false"));
     }
 }

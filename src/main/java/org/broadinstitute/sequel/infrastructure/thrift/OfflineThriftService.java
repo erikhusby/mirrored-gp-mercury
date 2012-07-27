@@ -26,6 +26,11 @@ public class OfflineThriftService implements ThriftService {
         return null;
     }
 
+    @Override
+    public boolean doesSquidRecognizeAllLibraries(List<String> barcodes) {
+        return false;
+    }
+
     public static TZamboniRun makeRun(String runName, int numLanes, int numLibraries) {
         List<TZamboniLane> lanes = new ArrayList<TZamboniLane>();
         for (int i = 1; i <= numLanes; i++) {
