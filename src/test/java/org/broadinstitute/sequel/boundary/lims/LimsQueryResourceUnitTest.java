@@ -11,13 +11,10 @@ import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.WebApplicationException;
-
 import java.util.Arrays;
 
 import static org.easymock.EasyMock.*;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -116,14 +113,6 @@ public class LimsQueryResourceUnitTest {
         assertThat(result2, is(false));
 
         verifyAll();
-    }
-
-    private void assertException(Exception caught, int status, String error) {
-        assertThat(caught, instanceOf(WebApplicationException.class));
-        WebApplicationException webApplicationException = (WebApplicationException) caught;
-        assertThat(webApplicationException.getResponse().getStatus(), equalTo(status));
-        Object entity = webApplicationException.getResponse().getEntity();
-        assertThat((String) entity, equalTo(error));
     }
 
     private void replayAll() {
