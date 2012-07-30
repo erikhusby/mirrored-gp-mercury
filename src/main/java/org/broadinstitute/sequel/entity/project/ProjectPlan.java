@@ -9,8 +9,6 @@ import org.broadinstitute.sequel.infrastructure.quote.Quote;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
-import org.hibernate.annotations.MapKeyType;
-import org.hibernate.annotations.Type;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -18,10 +16,9 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.MapKey;
-import javax.persistence.MapKeyColumn;
 import javax.persistence.MapKeyJoinColumn;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
@@ -45,18 +42,25 @@ public abstract class ProjectPlan {
     protected Collection<SequencingPlanDetail> planDetails = new HashSet<SequencingPlanDetail>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    // have to specify name, generated name is too long for Oracle
+    @JoinTable(name = "pp_map_start_sample_to_aliquot")
     // hbm2ddl always generates mapkey
     @MapKeyJoinColumn(name = "mapkey")
     private Map<StartingSample, LabVessel> mapStartingSampleToAliquot = new HashMap<StartingSample, LabVessel>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    // have to specify name, generated name is too long for Oracle
+    @JoinTable(name = "pp_map_start_vessel_to_aliquot")
     // hbm2ddl always generates mapkey
     @MapKeyJoinColumn(name = "mapkey")
-    private Map<LabVessel, LabVessel> mapStartingLabVesselToAliquot = new HashMap<LabVessel, LabVessel>();
+    // For Oracle, this name must be <= 30 characters, including underscores from camel case conversion
+    private Map<LabVessel, LabVessel> mapStartingVesselToAliquot = new HashMap<LabVessel, LabVessel>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
 
+    // have to specify name, generated name is too long for Oracle
+    @JoinTable(name = "pp_starting_lab_vessels")
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<LabVessel> startingLabVessels = new HashSet<LabVessel>();
 
@@ -149,7 +153,7 @@ public abstract class ProjectPlan {
         if(OrmUtil.proxySafeIsInstance(starter, StartingSample.class)) {
             return mapStartingSampleToAliquot.get(OrmUtil.proxySafeCast(starter, StartingSample.class));
         } else if(OrmUtil.proxySafeIsInstance(starter, LabVessel.class)) {
-            return mapStartingLabVesselToAliquot.get(OrmUtil.proxySafeCast(starter, LabVessel.class));
+            return mapStartingVesselToAliquot.get(OrmUtil.proxySafeCast(starter, LabVessel.class));
         } else {
             throw new RuntimeException("Unexpected subclass " + starter.getClass());
         }
@@ -162,7 +166,7 @@ public abstract class ProjectPlan {
         if(OrmUtil.proxySafeIsInstance(starter, StartingSample.class)) {
             mapStartingSampleToAliquot.put(OrmUtil.proxySafeCast(starter, StartingSample.class), aliquot);
         } else if(OrmUtil.proxySafeIsInstance(starter, LabVessel.class)) {
-            mapStartingLabVesselToAliquot.put(OrmUtil.proxySafeCast(starter, LabVessel.class), aliquot);
+            mapStartingVesselToAliquot.put(OrmUtil.proxySafeCast(starter, LabVessel.class), aliquot);
         } else {
             throw new RuntimeException("Unexpected subclass " + starter.getClass());
         }
