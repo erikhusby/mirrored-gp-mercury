@@ -89,7 +89,9 @@ public abstract class LabEvent {
     /** for transfers from a single vessel to an entire section, e.g. from a tube to a plate */
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<VesselToSectionTransfer>();
-    // todo jmt tube to tube transfers, or will they always be in a rack?
+
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
+    private Set<VesselToVesselTransfer> vesselToVesselTransfers = new HashSet<VesselToVesselTransfer>();
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private LabVessel inPlaceLabVessel;
@@ -177,6 +179,10 @@ public abstract class LabEvent {
         for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfers) {
             targetLabVessels.add(vesselToSectionTransfer.getTargetVesselContainer().getEmbedder());
         }
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfers) {
+            targetLabVessels.add(vesselToVesselTransfer.getTargetLabVessel());
+        }
+
         return targetLabVessels;
     }
 
@@ -196,6 +202,10 @@ public abstract class LabEvent {
         for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfers) {
             sourceLabVessels.add(vesselToSectionTransfer.getSourceVessel());
         }
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfers) {
+            sourceLabVessels.add(vesselToVesselTransfer.getSourceVessel());
+        }
+
         return sourceLabVessels;
     }
 
@@ -262,6 +272,9 @@ public abstract class LabEvent {
         return vesselToSectionTransfers;
     }
 
+    public Set<VesselToVesselTransfer> getVesselToVesselTransfers() {
+        return vesselToVesselTransfers;
+    }
 
     /**
      * An "override" of the {@link org.broadinstitute.sequel.entity.project.BasicProjectPlan} effectively says "From
@@ -297,6 +310,8 @@ public abstract class LabEvent {
         this.eventDate = eventDate;
     }
 
+/*
+todo jmt adder methods
     public void setSectionTransfers(Set<SectionTransfer> sectionTransfers) {
         this.sectionTransfers = sectionTransfers;
     }
@@ -308,6 +323,7 @@ public abstract class LabEvent {
     public void setVesselToSectionTransfers(Set<VesselToSectionTransfer> vesselToSectionTransfers) {
         this.vesselToSectionTransfers = vesselToSectionTransfers;
     }
+*/
 
     public Long getDisambiguator() {
         return disambiguator;

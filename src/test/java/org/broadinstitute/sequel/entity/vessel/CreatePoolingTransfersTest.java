@@ -1,15 +1,11 @@
 package org.broadinstitute.sequel.entity.vessel;
 
-import com.sun.jersey.api.client.Client;
-import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
-import org.broadinstitute.sequel.boundary.vessel.RackBean;
-import org.broadinstitute.sequel.boundary.vessel.TubeBean;
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
 import org.broadinstitute.sequel.control.dao.person.PersonDAO;
-import org.broadinstitute.sequel.control.dao.vessel.RackOfTubesDao;
-import org.broadinstitute.sequel.entity.labevent.CherryPickTransfer;
+import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEventType;
+import org.broadinstitute.sequel.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.sequel.integration.ContainerTest;
 import org.testng.annotations.Test;
 
@@ -17,13 +13,11 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.ws.rs.core.MediaType;
-
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -35,7 +29,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
     private PersonDAO personDAO;
 
     @Inject
-    private RackOfTubesDao rackOfTubesDao;
+    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
     @Inject
     private LabEventDao labEventDao;
@@ -48,8 +42,8 @@ public class CreatePoolingTransfersTest extends ContainerTest {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "    r.barcode as source_tube_barcode, " +
                 "    r2.barcode as target_tube_barcode, " +
-                "    wd.NAME as well_name, " +
-                "    p.barcode as rack_barcode, " +
+//                "    wd.NAME as well_name, " +
+//                "    p.barcode as rack_barcode, " +
                 "    se.start_time, " +
                 "    lm.machine_name, " +
                 "    s.user_id " +
@@ -57,14 +51,14 @@ public class CreatePoolingTransfersTest extends ContainerTest {
                 "    receptacle_transfer_event rte " +
                 "    INNER JOIN receptacle r " +
                 "        ON   r.receptacle_id = rte.src_receptacle_id " +
-                "    LEFT OUTER JOIN well_map_entry wme " +
-                "        ON   wme.receptacle_id = r.receptacle_id " +
-                "    LEFT OUTER JOIN well_description wd " +
-                "        ON   wd.well_description_id = wme.well_description_id " +
-                "    LEFT OUTER JOIN well_map wm " +
-                "        ON   wm.well_map_id = wme.well_map_id " +
-                "    LEFT OUTER JOIN plate p " +
-                "        ON   p.plate_id = wm.rack_plate_id " +
+//                "    LEFT OUTER JOIN well_map_entry wme " +
+//                "        ON   wme.receptacle_id = r.receptacle_id " +
+//                "    LEFT OUTER JOIN well_description wd " +
+//                "        ON   wd.well_description_id = wme.well_description_id " +
+//                "    LEFT OUTER JOIN well_map wm " +
+//                "        ON   wm.well_map_id = wme.well_map_id " +
+//                "    LEFT OUTER JOIN plate p " +
+//                "        ON   p.plate_id = wm.rack_plate_id " +
                 "    INNER JOIN receptacle_event re " +
                 "        ON   re.station_event_id = rte.station_event_id " +
                 "    INNER JOIN receptacle r2 " +
@@ -100,63 +94,49 @@ public class CreatePoolingTransfersTest extends ContainerTest {
         nativeQuery.setHint("org.hibernate.timeout", new Integer(600));
         List resultList = nativeQuery.getResultList();
         String previousTargetTubeBarcode = "";
-        RackBean sourceRackOfTubes = null;
-        List<TubeBean> tubeBeans = null;
-        int wellIndex = 0;
-        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+
+        List<String> sourceTubeBarcodes = null;
         for (Object o : resultList) {
-            wellIndex++;
             Object[] columns = (Object[]) o;
             String sourceTubeBarcode = (String) columns[0];
             String targetTubeBarcode = (String) columns[1];
-            String wellName = (String) columns[2];
-            if(wellName == null) {
-                wellName = bettaLimsMessageFactory.buildWellName(wellIndex);
-            }
-            String rackBarcode = (String) columns[3];
-            if(rackBarcode == null) {
-                rackBarcode = Long.toString(System.currentTimeMillis());
-            }
-            Timestamp eventDate = (Timestamp) columns[4];
-            String eventLocation = (String) columns[5];
-            String operator = (String) columns[6];
+            Timestamp eventDate = (Timestamp) columns[2];
+            String eventLocation = (String) columns[3];
+            String operator = (String) columns[4];
 
             if(!targetTubeBarcode.equals(previousTargetTubeBarcode)) {
                 previousTargetTubeBarcode = targetTubeBarcode;
-                if(sourceRackOfTubes != null) {
-                    try {
-                        System.out.println("About to persist rack " + sourceRackOfTubes.barcode + ", target tube " + targetTubeBarcode);
-                        String sourceRackLabel = persistRack(sourceRackOfTubes);
-                        RackBean targetRackOfTubes = new RackBean(Long.toString(System.currentTimeMillis() + 1), null,
-                                Arrays.asList(new TubeBean(targetTubeBarcode, "A01", null)));
-                        String targetRackLabel = persistRack(targetRackOfTubes);
-                        GenericLabEvent genericLabEvent = new GenericLabEvent(LabEventType.POOLING_TRANSFER,
-                                eventDate, eventLocation, 1L, personDAO.findByName(operator));
-                        RackOfTubes dbSourceRackOfTubes = rackOfTubesDao.getByLabel(sourceRackLabel);
-                        RackOfTubes dbTargetRackOfTubes = rackOfTubesDao.getByLabel(targetRackLabel);
-                        for (TubeBean tubeBean : tubeBeans) {
-                            genericLabEvent.getCherryPickTransfers().add(new CherryPickTransfer(
-                                    dbSourceRackOfTubes.getVesselContainer(),
-                                    VesselPosition.getByName(tubeBean.position),
-                                    dbTargetRackOfTubes.getVesselContainer(),
-                                    VesselPosition.getByName("A01"),
-                                    genericLabEvent));
-                        }
-                        labEventDao.persist(genericLabEvent);
-                        labEventDao.flush();
-                        labEventDao.clear();
-                    } catch (Exception e) {
-                        System.out.println(e.getMessage());
+                if(sourceTubeBarcodes != null) {
+                    GenericLabEvent genericLabEvent = new GenericLabEvent(LabEventType.POOLING_TRANSFER,
+                            eventDate, eventLocation, 1L, personDAO.findByName(operator));
+
+                    TwoDBarcodedTube targetTube = twoDBarcodedTubeDAO.findByBarcode(targetTubeBarcode);
+                    if(targetTube == null) {
+                        targetTube = new TwoDBarcodedTube(targetTubeBarcode);
                     }
+
+                    Map<String,TwoDBarcodedTube> mapBarcodeToSourceTube = twoDBarcodedTubeDAO.findByBarcodes(sourceTubeBarcodes);
+                    for (String tubeBarcode  : sourceTubeBarcodes) {
+                        TwoDBarcodedTube sourceTube = mapBarcodeToSourceTube.get(tubeBarcode);
+                        if(sourceTube == null) {
+                            sourceTube = new TwoDBarcodedTube(tubeBarcode);
+                        }
+                        genericLabEvent.getVesselToVesselTransfers().add(new VesselToVesselTransfer(
+                                sourceTube,
+                                targetTube,
+                                genericLabEvent));
+                    }
+                    labEventDao.persist(genericLabEvent);
+                    labEventDao.flush();
+                    labEventDao.clear();
                 }
-                tubeBeans = new ArrayList<TubeBean>();
-                wellIndex = 0;
-                sourceRackOfTubes = new RackBean(rackBarcode, null, tubeBeans);
+                sourceTubeBarcodes = new ArrayList<String>();
             }
-            tubeBeans.add(new TubeBean(sourceTubeBarcode, wellName, null));
+            sourceTubeBarcodes.add(sourceTubeBarcode);
         }
     }
 
+/*
     private String persistRack(RackBean sourceRackOfTubes) {
         // Use a web service, rather than just calling persist on a DAO, because a constraint
         // violation invalidates the EntityManager.  The web service gets a fresh EntityManager for
@@ -169,4 +149,5 @@ public class CreatePoolingTransfersTest extends ContainerTest {
         System.out.println(label);
         return label;
     }
+*/
 }
