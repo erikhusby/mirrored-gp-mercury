@@ -33,6 +33,16 @@ public class LiveThriftService implements ThriftService {
     }
 
     @Override
+    public boolean doesSquidRecognizeAllLibraries(final List<String> barcodes) throws TException, TZIMSException {
+        return thriftConnection.call(new ThriftConnection.Call<Boolean>() {
+            @Override
+            public Boolean call(LIMQueries.Client client) throws TException, TZIMSException {
+                return client.doesSquidRecognizeAllLibraries(barcodes);
+            }
+        });
+    }
+
+    @Override
     public FlowcellDesignation findFlowcellDesignationByTaskName(final String taskName) throws TException, TZIMSException {
         return thriftConnection.call(new ThriftConnection.Call<FlowcellDesignation>() {
             @Override
@@ -43,11 +53,11 @@ public class LiveThriftService implements ThriftService {
     }
 
     @Override
-    public boolean doesSquidRecognizeAllLibraries(final List<String> barcodes) throws TException, TZIMSException {
-        return thriftConnection.call(new ThriftConnection.Call<Boolean>() {
+    public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(final String flowcellBarcode) throws TException, TZIMSException {
+        return thriftConnection.call(new ThriftConnection.Call<FlowcellDesignation>() {
             @Override
-            public Boolean call(LIMQueries.Client client) throws TException, TZIMSException {
-                return client.doesSquidRecognizeAllLibraries(barcodes);
+            public FlowcellDesignation call(LIMQueries.Client client) throws TException, TZIMSException {
+                return client.findFlowcellDesignationByFlowcellBarcode(flowcellBarcode);
             }
         });
     }

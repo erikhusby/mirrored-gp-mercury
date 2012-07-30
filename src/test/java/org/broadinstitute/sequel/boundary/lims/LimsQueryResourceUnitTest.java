@@ -2,7 +2,6 @@ package org.broadinstitute.sequel.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
@@ -27,14 +26,12 @@ public class LimsQueryResourceUnitTest {
     private ThriftService mockThriftService;
     private LimsQueryResourceResponseFactory mockResponseFactory;
     private LimsQueryResource resource;
-    private Log mockLog;
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
         mockThriftService = createMock(ThriftService.class);
         mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
-        mockLog = createMock(Log.class);
-        resource = new LimsQueryResource(mockThriftService, mockResponseFactory, mockLog);
+        resource = new LimsQueryResource(mockThriftService, mockResponseFactory);
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
@@ -116,10 +113,10 @@ public class LimsQueryResourceUnitTest {
     }
 
     private void replayAll() {
-        replay(mockThriftService, mockResponseFactory, mockLog);
+        replay(mockThriftService, mockResponseFactory);
     }
 
     private void verifyAll() {
-        verify(mockThriftService, mockResponseFactory, mockLog);
+        verify(mockThriftService, mockResponseFactory);
     }
 }

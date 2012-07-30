@@ -72,7 +72,7 @@ public abstract class RestServiceContainerTest extends ContainerTest {
         try {
             return resource.accept(APPLICATION_JSON_TYPE).get(String.class);
         } catch (UniformInterfaceException e) {
-            fail(e.getResponse().getEntity(String.class), e);
+            fail("Error with GET: " + e.getResponse().getEntity(String.class), e);
         }
         // Can't technically get here, but javac doesn't understand that fail() is guaranteed to throw a runtime exception
         return null;
@@ -91,7 +91,7 @@ public abstract class RestServiceContainerTest extends ContainerTest {
         try {
             return resource.type(APPLICATION_JSON_TYPE).accept(APPLICATION_JSON_TYPE).post(String.class, request);
         } catch (UniformInterfaceException e) {
-            fail(e.getResponse().getEntity(String.class), e);
+            fail("Error with POST: " + e.getResponse().getEntity(String.class), e);
         }
         // Can't technically get here, but javac doesn't understand that fail() is guaranteed to throw a runtime exception
         return null;

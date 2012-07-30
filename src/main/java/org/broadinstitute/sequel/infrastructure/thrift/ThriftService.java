@@ -17,7 +17,9 @@ public interface ThriftService extends Serializable {
 
     public TZamboniRun fetchRun(String runName) throws TZIMSException, TException;
 
+    boolean doesSquidRecognizeAllLibraries(List<String> barcodes) throws TException, TZIMSException;
+
     public FlowcellDesignation findFlowcellDesignationByTaskName(final String taskName) throws TException, TZIMSException;
 
-    boolean doesSquidRecognizeAllLibraries(List<String> barcodes) throws TException, TZIMSException;
+    public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(final String flowcellBarcode) throws TException, TZIMSException;
 }

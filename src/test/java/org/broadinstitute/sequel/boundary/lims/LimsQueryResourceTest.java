@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.boundary.lims;
 
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.sequel.integration.DeploymentBuilder;
 import org.broadinstitute.sequel.integration.RestServiceContainerTest;
@@ -11,6 +12,7 @@ import org.testng.annotations.Test;
 
 import java.net.URL;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,14 +38,6 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testFindFlowcellDesignationByTaskName(@ArquillianResource URL baseUrl) {
-        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "14A_03.19.2012");
-        String result = get(resource);
-        assertThat(result, notNullValue());
-    }
-
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
-    @RunAsClient
     public void testDoesLimsRecognizeAllTubes(@ArquillianResource URL baseUrl) {
         WebResource webResource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");
 
@@ -52,5 +46,43 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
         String result2 = post(webResource, "[\"0099443960\",\"406164\",\"unknown_barcode\"]");
         assertThat(result2, equalTo("false"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindFlowcellDesignationByTaskName(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "14A_03.19.2012");
+        String result = get(resource);
+        assertThat(result, notNullValue());
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindFlowcellDesignationByTaskNameInvalid(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "invalid_task");
+        try {
+            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
+        } catch (UniformInterfaceException e) {
+            assertThat(e.getResponse().getStatus(), equalTo(204));
+        }
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindFlowcellDesignationByFlowcellBarcode(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode").queryParam("flowcellBarcode", "C0GHCACXX");
+        String result = get(resource);
+        assertThat(result, notNullValue());
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindFlowcellDesignationByFlowcellBarcodeInvalid(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode").queryParam("taskName", "invalid_flowcell");
+        try {
+            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
+        } catch (UniformInterfaceException e) {
+            assertThat(e.getResponse().getStatus(), equalTo(204));
+        }
     }
 }

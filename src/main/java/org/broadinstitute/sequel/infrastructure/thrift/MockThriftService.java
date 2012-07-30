@@ -29,12 +29,17 @@ public class MockThriftService implements ThriftService {
     }
 
     @Override
+    public boolean doesSquidRecognizeAllLibraries(List<String> barcodes) {
+        return false;
+    }
+
+    @Override
     public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) throws TException, TZIMSException {
         return null;
     }
 
     @Override
-    public boolean doesSquidRecognizeAllLibraries(List<String> barcodes) {
-        return false;
+    public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(String flowcellBarcode) throws TException, TZIMSException {
+        return null;
     }
 }
