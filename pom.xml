@@ -1457,8 +1457,8 @@
 -->
                     <docletArtifact>
                         <groupId>org.umlgraph</groupId>
-                        <artifactId>doclet</artifactId>
-                        <version>5.1</version>
+                        <artifactId>umlgraph</artifactId>
+                        <version>5.6</version>
                     </docletArtifact>
                     <!-- Note, the following parameters must be on one line -->
                     <additionalparam>-views -inferrel -inferdep -quiet -hide java.* -collpackages java.util.* -qualify -postfixpackage -nodefontsize 9 -nodefontpackagesize 7</additionalparam>
