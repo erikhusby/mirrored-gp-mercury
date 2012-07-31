@@ -22,6 +22,11 @@ public class OfflineThriftService implements ThriftService {
     }
 
     @Override
+    public List<LibraryData> fetchLibraryDetailsByTubeBarcode(List<String> tubeBarcodes, boolean includeWorkRequestDetails) throws TException, TZIMSException {
+        return null;
+    }
+
+    @Override
     public boolean doesSquidRecognizeAllLibraries(List<String> barcodes) {
         return false;
     }
@@ -33,6 +38,11 @@ public class OfflineThriftService implements ThriftService {
 
     @Override
     public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(String flowcellBarcode) throws TException, TZIMSException {
+        return null;
+    }
+
+    @Override
+    public String fetchUserIdForBadgeId(String badgeId) throws TException, TZIMSException {
         return null;
     }
 

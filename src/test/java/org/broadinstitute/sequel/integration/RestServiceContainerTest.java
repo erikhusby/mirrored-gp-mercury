@@ -78,6 +78,17 @@ public abstract class RestServiceContainerTest extends ContainerTest {
         return null;
     }
 
+    protected UniformInterfaceException getError(WebResource resource) {
+        UniformInterfaceException caught = null;
+        try {
+            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
+            fail("Expected UniformInterfaceException not thrown");
+        } catch (UniformInterfaceException e) {
+            caught = e;
+        }
+        return caught;
+    }
+
     /**
      * Performs a POST on the given WebResource with the given request payload.
      * Automatically throws an assertion failure if the call results in a

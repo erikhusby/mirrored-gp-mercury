@@ -53,19 +53,24 @@ public class LimsQueryResourceResponseFactory {
         outLibraryData.setLibraryName(libraryData.getLibraryName());
         outLibraryData.setLibraryType(libraryData.getLibraryType());
         outLibraryData.setTubeBarcode(libraryData.getTubeBarcode());
-        for (SampleInfo sampleInfo : libraryData.getSampleDetails()) {
-            outLibraryData.getSampleDetails().add(makeSampleInfo(sampleInfo));
+        if (libraryData.getSampleDetails() != null) {
+            for (SampleInfo sampleInfo : libraryData.getSampleDetails()) {
+                outLibraryData.getSampleDetails().add(makeSampleInfo(sampleInfo));
+            }
         }
 
         Date createDateTime;
-        try {
-            createDateTime = new SimpleDateFormat("yyyy/MM/dd HH:mm").parse(libraryData.getDateCreated());
-        } catch (ParseException e) {
-            throw new RuntimeException("Unexpected date format. Wanted: yyyy-MM-ddTHH:mm:ss.SSSZ. Got: " + libraryData.getDateCreated(), e);
+        String dateCreated = libraryData.getDateCreated();
+        if (dateCreated != null) {
+            try {
+                createDateTime = new SimpleDateFormat("yyyy/MM/dd HH:mm").parse(dateCreated);
+            } catch (ParseException e) {
+                throw new RuntimeException("Unexpected date format. Wanted: yyyy-MM-ddTHH:mm:ss.SSSZ. Got: " + dateCreated, e);
+            }
+            GregorianCalendar calendar = new GregorianCalendar();
+            calendar.setTime(createDateTime);
+            outLibraryData.setDateCreated(new XMLGregorianCalendarImpl(calendar));
         }
-        GregorianCalendar calendar = new GregorianCalendar();
-        calendar.setTime(createDateTime);
-        outLibraryData.setDateCreated(new XMLGregorianCalendarImpl(calendar));
 
         outLibraryData.setDiscarded(libraryData.isIsDiscarded());
         outLibraryData.setDestroyed(libraryData.isIsDestroyed());

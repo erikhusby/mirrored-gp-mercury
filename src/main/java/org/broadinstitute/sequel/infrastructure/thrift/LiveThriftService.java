@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
+import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.apache.thrift.TException;
@@ -33,6 +34,16 @@ public class LiveThriftService implements ThriftService {
     }
 
     @Override
+    public List<LibraryData> fetchLibraryDetailsByTubeBarcode(final List<String> tubeBarcodes, final boolean includeWorkRequestDetails) throws TException, TZIMSException {
+        return thriftConnection.call(new ThriftConnection.Call<List<LibraryData>>() {
+            @Override
+            public List<LibraryData> call(LIMQueries.Client client) throws TException, TZIMSException {
+                return client.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
+            }
+        });
+    }
+
+    @Override
     public boolean doesSquidRecognizeAllLibraries(final List<String> barcodes) throws TException, TZIMSException {
         return thriftConnection.call(new ThriftConnection.Call<Boolean>() {
             @Override
@@ -58,6 +69,16 @@ public class LiveThriftService implements ThriftService {
             @Override
             public FlowcellDesignation call(LIMQueries.Client client) throws TException, TZIMSException {
                 return client.findFlowcellDesignationByFlowcellBarcode(flowcellBarcode);
+            }
+        });
+    }
+
+    @Override
+    public String fetchUserIdForBadgeId(final String badgeId) throws TException, TZIMSException {
+        return thriftConnection.call(new ThriftConnection.Call<String>() {
+            @Override
+            public String call(LIMQueries.Client client) throws TException, TZIMSException {
+                return client.fetchUserIdForBadgeId(badgeId);
             }
         });
     }

@@ -39,6 +39,18 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode").queryParam("includeWorkRequestDetails", "true");
+
+        String result1 = post(resource, "[\"0099443960\",\"406164\"]");
+        assertThat(result1, notNullValue());
+
+        String result2 = post(resource, "[\"0099443960\",\"406164\",\"unknown_barcode\"]");
+        assertThat(result2, notNullValue());
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testDoesLimsRecognizeAllTubes(@ArquillianResource URL baseUrl) {
         WebResource webResource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");
 
@@ -87,6 +99,23 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         } catch (UniformInterfaceException e) {
             assertThat(e.getResponse().getStatus(), equalTo(204));
         }
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchUserIdForBadgeId(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "8f03f000f7ff12e0");
+        String result = get(resource);
+        assertThat(result, equalTo("breilly"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchUserIdForBadgeIdNotFound(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "invalid_badge_id");
+        UniformInterfaceException caught = getError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(caught.getResponse().getEntity(String.class), equalTo("fetchUserIdForBadgeId failed: unknown result"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
