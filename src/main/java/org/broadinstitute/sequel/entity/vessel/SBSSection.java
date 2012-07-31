@@ -804,7 +804,27 @@ public enum SBSSection {
             VesselPosition.P18,
             VesselPosition.P20,
             VesselPosition.P22,
-            VesselPosition.P24))
+            VesselPosition.P24)),
+    // The first column of a 96 well plate
+    P96_COL1("P96_COL1", Arrays.asList(
+            VesselPosition.A01,
+            VesselPosition.B01,
+            VesselPosition.C01,
+            VesselPosition.D01,
+            VesselPosition.E01,
+            VesselPosition.F01,
+            VesselPosition.G01,
+            VesselPosition.H01)),
+    // In a 384 well plate, alternate wells in column 2, starting at row B
+    P384_COL2_1INTERVAL_B("P384_COL2_1INTERVAL_B", Arrays.asList(
+            VesselPosition.B02,
+            VesselPosition.D02,
+            VesselPosition.F02,
+            VesselPosition.H02,
+            VesselPosition.J02,
+            VesselPosition.L02,
+            VesselPosition.N02,
+            VesselPosition.P02))
     ;
 
     private final String sectionName;

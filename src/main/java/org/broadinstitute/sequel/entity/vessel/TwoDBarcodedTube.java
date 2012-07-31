@@ -3,17 +3,19 @@ package org.broadinstitute.sequel.entity.vessel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.labevent.Failure;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
-import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,6 +42,7 @@ public class TwoDBarcodedTube extends LabVessel {
     @OneToMany
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
 
+    // todo jmt why is this never assigned?
     @Transient
     private StartingSample startingSample;
 

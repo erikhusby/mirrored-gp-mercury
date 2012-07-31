@@ -40,13 +40,6 @@ public class LabBatchResource {
 
     @POST
     public String createLabBatch(LabBatchBean labBatchBean) {
-        // todo jmt fix workflow
-        JiraTicket jiraTicket = new JiraTicket(new JiraServiceStub(), labBatchBean.getBatchId(), labBatchBean.getBatchId());
-        BasicProjectPlan projectPlan = new BasicProjectPlan(
-                new BasicProject(labBatchBean.getBatchId(), jiraTicket),
-                labBatchBean.getBatchId(),
-                new WorkflowDescription(labBatchBean.getWorkflowName(), null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
-
         List<String> tubeBarcodes = new ArrayList<String>();
         List<String> sampleBarcodes = new ArrayList<String>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
@@ -56,6 +49,24 @@ public class LabBatchResource {
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(tubeBarcodes);
         Map<String, BSPStartingSample> mapBarcodeToSample = bspStartingSampleDAO.findByNames(sampleBarcodes);
+        BasicProjectPlan projectPlan = buildProjectPlan(labBatchBean, mapBarcodeToTube, mapBarcodeToSample);
+
+
+        projectPlanDao.persist(projectPlan);
+        projectPlanDao.flush();
+        return "Batch persisted";
+    }
+
+    public BasicProjectPlan buildProjectPlan(
+            LabBatchBean labBatchBean,
+            Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+            Map<String, BSPStartingSample> mapBarcodeToSample) {
+        // todo jmt fix workflow
+        JiraTicket jiraTicket = new JiraTicket(new JiraServiceStub(), labBatchBean.getBatchId(), labBatchBean.getBatchId());
+        BasicProjectPlan projectPlan = new BasicProjectPlan(
+                new BasicProject(labBatchBean.getBatchId(), jiraTicket),
+                labBatchBean.getBatchId(),
+                new WorkflowDescription(labBatchBean.getWorkflowName(), null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
@@ -78,8 +89,6 @@ public class LabBatchResource {
             projectPlan.addAliquotForStarter(bspSampleAuthorityTwoDTube, twoDBarcodedTube);
         }
         jiraTicket.setLabBatch(new LabBatch(projectPlan, labBatchBean.getBatchId(), projectPlan.getStarters()));
-        projectPlanDao.persist(projectPlan);
-        projectPlanDao.flush();
-        return "Batch persisted";
+        return projectPlan;
     }
 }

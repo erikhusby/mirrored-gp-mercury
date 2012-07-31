@@ -53,6 +53,7 @@
         <xs:attribute name="start" type="xs:dateTime" use="required"/>
         <xs:attribute name="end" type="xs:dateTime"/>
         <xs:attribute name="disambiguator" type="xs:long"/>
+        <xs:attribute name="batchId" type="xs:NMTOKEN" />
     </xs:complexType>
 
     <xs:complexType name="experimentType">
