@@ -21,6 +21,7 @@
     <subpackage name="boundary">
         <allow pkg="javax.enterprise.context"/>
         <allow pkg="javax.enterprise.inject"/>
+        <allow pkg="javax.xml"/>
     </subpackage>
 
     <subpackage name="control">
@@ -42,6 +43,11 @@
         <!-- Only DAOs are allowed to access the EntityManager -->
         <disallow class="javax.persistence.EntityManager"/>
         <disallow class="javax.persistence.EntityManagerFactory"/>
+    </subpackage>
+
+    <subpackage name="infrastructure">
+        <allow pkg="javax.annotation"/>
+        <allow pkg="javax.management"/>
     </subpackage>
 
     <!-- unit tests are allowed to import external SequeL interfaces, test frameworks, mock frameworks, etc. -->
