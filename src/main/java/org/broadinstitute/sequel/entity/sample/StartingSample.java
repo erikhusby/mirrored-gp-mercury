@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
+import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 
@@ -37,6 +38,9 @@ public abstract class StartingSample implements Starter {
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private ProjectPlan projectPlan;
+
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    BSPSampleAuthorityTwoDTube bspSampleAuthorityTwoDTube;
 
     // todo arz hibernate-ify
     @Transient
@@ -100,5 +104,13 @@ public abstract class StartingSample implements Starter {
     @Override
     public void addLabBatch(LabBatch labBatch) {
         labBatches.add(labBatch);
+    }
+
+    public BSPSampleAuthorityTwoDTube getBspSampleAuthorityTwoDTube() {
+        return bspSampleAuthorityTwoDTube;
+    }
+
+    public void setBspSampleAuthorityTwoDTube(BSPSampleAuthorityTwoDTube bspSampleAuthorityTwoDTube) {
+        this.bspSampleAuthorityTwoDTube = bspSampleAuthorityTwoDTube;
     }
 }

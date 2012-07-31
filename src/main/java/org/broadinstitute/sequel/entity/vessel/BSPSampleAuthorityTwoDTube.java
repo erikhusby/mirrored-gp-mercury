@@ -28,6 +28,7 @@ public class BSPSampleAuthorityTwoDTube extends TwoDBarcodedTube {
     public BSPSampleAuthorityTwoDTube(StartingSample aliquot) {
         super(aliquot.getLabel());
         this.aliquot = aliquot;
+        aliquot.setBspSampleAuthorityTwoDTube(this);
     }
 
     protected BSPSampleAuthorityTwoDTube() {
