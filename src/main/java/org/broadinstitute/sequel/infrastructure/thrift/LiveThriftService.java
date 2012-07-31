@@ -61,4 +61,24 @@ public class LiveThriftService implements ThriftService {
             }
         });
     }
+
+    @Override
+    public double fetchQpcrForTube(final String tubeBarcode) throws TException, TZIMSException {
+        return thriftConnection.call(new ThriftConnection.Call<Double>() {
+            @Override
+            public Double call(LIMQueries.Client client) throws TException, TZIMSException {
+                return client.fetchQpcrForTube(tubeBarcode);
+            }
+        });
+    }
+
+    @Override
+    public double fetchQuantForTube(final String tubeBarcode, final String quantType) throws TException, TZIMSException {
+        return thriftConnection.call(new ThriftConnection.Call<Double>() {
+            @Override
+            public Double call(LIMQueries.Client client) throws TException, TZIMSException {
+                return client.fetchQuantForTube(tubeBarcode, quantType);
+            }
+        });
+    }
 }

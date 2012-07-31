@@ -22,4 +22,8 @@ public interface ThriftService extends Serializable {
     public FlowcellDesignation findFlowcellDesignationByTaskName(final String taskName) throws TException, TZIMSException;
 
     public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(final String flowcellBarcode) throws TException, TZIMSException;
+
+    public double fetchQpcrForTube(String tubeBarcode) throws TException, TZIMSException;
+
+    public double fetchQuantForTube(String tubeBarcode, String quantType) throws TException, TZIMSException;
 }

@@ -80,4 +80,28 @@ public class LimsQueryResource {
         }
         return flowcellDesignationType;
     }
+
+    @GET
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("/fetchQpcrForTube")
+    public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode) throws TException, TZIMSException {
+        try {
+            return thriftService.fetchQpcrForTube(tubeBarcode);
+        } catch (TTransportException e) {
+            // This seems to be thrown when the tube or qpcr data doesn't exist
+            return null;
+        }
+    }
+
+    @GET
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("/fetchQuantForTube")
+    public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode, @QueryParam("quantType") String quantType) throws TException, TZIMSException {
+        try {
+            return thriftService.fetchQuantForTube(tubeBarcode, quantType);
+        } catch (TTransportException e) {
+            // This seems to be thrown when the tube or quant doesn't exist
+            return null;
+        }
+    }
 }

@@ -42,4 +42,14 @@ public class MockThriftService implements ThriftService {
     public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(String flowcellBarcode) throws TException, TZIMSException {
         return null;
     }
+
+    @Override
+    public double fetchQpcrForTube(String tubeBarcode) {
+        return 0;
+    }
+
+    @Override
+    public double fetchQuantForTube(String tubeBarcode, String quantType) throws TException, TZIMSException {
+        return 0;
+    }
 }

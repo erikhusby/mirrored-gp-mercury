@@ -36,6 +36,16 @@ public class OfflineThriftService implements ThriftService {
         return null;
     }
 
+    @Override
+    public double fetchQpcrForTube(String tubeBarcode) {
+        return 0;
+    }
+
+    @Override
+    public double fetchQuantForTube(String tubeBarcode, String quantType) throws TException, TZIMSException {
+        return 0;
+    }
+
     public static TZamboniRun makeRun(String runName, int numLanes, int numLibraries) {
         List<TZamboniLane> lanes = new ArrayList<TZamboniLane>();
         for (int i = 1; i <= numLanes; i++) {

@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.boundary.lims;
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
@@ -13,8 +14,7 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 
 import static org.easymock.EasyMock.*;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -108,6 +108,75 @@ public class LimsQueryResourceUnitTest {
 
         boolean result2 = resource.doesLimsRecognizeAllTubes(Arrays.asList("bad_barcode"));
         assertThat(result2, is(false));
+
+        verifyAll();
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testFindFlowcellDesignationByFlowcellBarcode() throws Exception {
+        FlowcellDesignation designation = new FlowcellDesignation();
+        expect(mockThriftService.findFlowcellDesignationByFlowcellBarcode("good_barcode")).andReturn(designation);
+        expect(mockResponseFactory.makeFlowcellDesignation(designation)).andReturn(new FlowcellDesignationType());
+        replayAll();
+
+        FlowcellDesignationType result = resource.findFlowcellDesignationByFlowcellBarcode("good_barcode");
+
+        assertThat(result, notNullValue());
+
+        verifyAll();
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testFindFlowcellDesignationByFlowcellBarcodeNotFound() throws Exception {
+        expect(mockThriftService.findFlowcellDesignationByFlowcellBarcode("bad_barcode")).andThrow(new TTransportException());
+        replayAll();
+
+        FlowcellDesignationType result = resource.findFlowcellDesignationByFlowcellBarcode("bad_barcode");
+        assertThat(result, nullValue());
+
+        verifyAll();
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testFetchQpcrForTube() throws Exception {
+        expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
+        replayAll();
+
+        double result = resource.fetchQpcrForTube("barcode");
+        assertThat(result, equalTo(1.23));
+
+        verifyAll();
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testFetchQpcrForTubeNotFound() throws Exception {
+        expect(mockThriftService.fetchQpcrForTube("barcode")).andThrow(new TTransportException());
+        replayAll();
+
+        Double result = resource.fetchQpcrForTube("barcode");
+        assertThat(result, nullValue());
+
+        verifyAll();
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testFetchQuantForTube() throws Exception {
+        expect(mockThriftService.fetchQuantForTube("barcode", "test")).andReturn(1.23);
+        replayAll();
+
+        double result = resource.fetchQuantForTube("barcode", "test");
+        assertThat(result, equalTo(1.23));
+
+        verifyAll();
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testFetchQuantForTubeNotFound() throws Exception {
+        expect(mockThriftService.fetchQuantForTube("barcode", "test")).andThrow(new TTransportException());
+        replayAll();
+
+        Double result = resource.fetchQuantForTube("barcode", "test");
+        assertThat(result, nullValue());
 
         verifyAll();
     }
