@@ -65,7 +65,7 @@ public abstract class Project {
     @Transient
     private Collection<String> grants = new HashSet<String>();
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.PERSIST)
     private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
 
     @OneToMany

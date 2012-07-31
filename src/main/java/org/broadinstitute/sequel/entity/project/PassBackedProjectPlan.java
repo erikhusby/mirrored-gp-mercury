@@ -23,8 +23,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
 
     private Set<BSPPlatingRequest> pendingPlatingRequests = new HashSet<BSPPlatingRequest>();
 
-    private Set<JiraTicket> jiraTickets = new HashSet<JiraTicket>();
-
     private AbstractPass pass;
 
     private Set<ReagentDesign> baits = new HashSet<ReagentDesign>();
@@ -146,11 +144,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
     }
 
     @Override
-    public Collection<JiraTicket> getJiraTickets() {
-        return jiraTickets;
-    }
-
-    @Override
     public String getName() {
         return pass.getProjectInformation().getPassNumber();
     }
@@ -173,11 +166,6 @@ public class PassBackedProjectPlan extends ProjectPlan {
     @Override
     public void addSequencingDetail(SequencingPlanDetail sequencingDetail) {
         planDetails.add(sequencingDetail);
-    }
-
-    @Override
-    public void addJiraTicket(JiraTicket jiraTicket) {
-        jiraTickets.add(jiraTicket);
     }
 
     public AbstractPass getPass() {

@@ -20,6 +20,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKeyJoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Transient;
 import java.util.Collection;
@@ -69,6 +70,9 @@ public abstract class ProjectPlan {
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private WorkflowDescription workflowDescription;
+
+    @OneToMany(cascade = CascadeType.PERSIST)
+    private final Collection<JiraTicket> jiraTickets = new HashSet<JiraTicket>();
 
     protected ProjectPlan(Project project, WorkflowDescription workflowDescription) {
         if (project == null) {
@@ -135,7 +139,20 @@ public abstract class ProjectPlan {
         return planDetails;
     }
 
-    public abstract Collection<JiraTicket> getJiraTickets();
+    public void addJiraTicket(JiraTicket jiraTicket) {
+        // should this also link this ticket to
+        // the project's ticket?
+        jiraTickets.add(jiraTicket);
+    }
+
+    /**
+     * What are all the jira tickets that were used
+     * for this plan?
+     * @return
+     */
+    public Collection<JiraTicket> getJiraTickets() {
+        return jiraTickets;
+    }
 
     public abstract String getName();
 
@@ -146,8 +163,6 @@ public abstract class ProjectPlan {
     public abstract void setComplete(boolean isComplete);
 
     public abstract void addSequencingDetail(SequencingPlanDetail sequencingDetail);
-
-    public abstract void addJiraTicket(JiraTicket jiraTicket);
 
     public LabVessel getAliquotForStarter(Starter starter) {
         if(OrmUtil.proxySafeIsInstance(starter, StartingSample.class)) {

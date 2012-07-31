@@ -59,9 +59,6 @@ public class BasicProjectPlan extends ProjectPlan {
     @Transient
     private final Collection<BSPPlatingRequest> platingRequests = new HashSet<BSPPlatingRequest>();
 
-    @OneToMany
-    private final Collection<JiraTicket> jiraTickets = new HashSet<JiraTicket>();
-
     @ManyToOne(fetch = FetchType.LAZY)
     private Quote quote;
 
@@ -142,22 +139,6 @@ public class BasicProjectPlan extends ProjectPlan {
         return pendingRequests;
     }
     
-    public void addJiraTicket(JiraTicket jiraTicket) {
-        // should this also link this ticket to
-        // the project's ticket?
-        jiraTickets.add(jiraTicket);
-    }
-
-    /**
-     * What are all the jira tickets that were used
-     * for this plan?
-     * @return
-     */
-    @Override
-    public Collection<JiraTicket> getJiraTickets() {
-        return jiraTickets;
-    }
-
     /**
      * What's the name of this plan?
      * @return
