@@ -166,6 +166,12 @@ public class MolecularIndexingScheme {
             switch (this) {
                 case P5 : return IndexPosition.ILLUMINA_P5;
                 case P7 : return IndexPosition.ILLUMINA_P7;
+			case IS1 : return IndexPosition.ILLUMINA_IS1;
+			case IS2 : return IndexPosition.ILLUMINA_IS2;
+			case IS3 : return IndexPosition.ILLUMINA_IS3;
+			case IS4 : return IndexPosition.ILLUMINA_IS4;
+			case IS5 : return IndexPosition.ILLUMINA_IS5;
+			case IS6 : return IndexPosition.ILLUMINA_IS6;
                 default : throw new IllegalArgumentException("The IndexPosition for IlluminaPositionHint " + this + " is undefined.");
             }
         }
@@ -396,6 +402,7 @@ public class MolecularIndexingScheme {
      * {@link MolecularIndexingSchemeFactory} to create scheme instances, not the
      * constructors in this class.
      */
+    // todo jmt switch this back to package visible
     public MolecularIndexingScheme(final Map<PositionHint, MolecularIndex> positionIndexMap) {
         if (positionIndexMap == null) {
             throw new NullPointerException("The list of index pairs can't be null.");
@@ -480,7 +487,7 @@ public class MolecularIndexingScheme {
     }
 
     @SuppressWarnings("unused")
-    private void setName(final String name) {
+    protected void setName(final String name) {
         this.name = name;
     }
 
@@ -541,7 +548,7 @@ public class MolecularIndexingScheme {
     @Transient
     public int getIndexCount() {
         return this.getIndexes().size();
-    }
+	}
 
     /**
      * Identity is based on the name of the scheme: each name is unique for schemes
