@@ -50,7 +50,7 @@ public class ImportFromSquidTest extends ContainerTest {
     /**
      * Import index schemes from Squid.
      */
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testImportIndexingSchemes() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     mis.NAME, " +
@@ -98,7 +98,7 @@ public class ImportFromSquidTest extends ContainerTest {
     /**
      * Import index plates from Squid.  This takes about 15 minutes.
      */
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION, dependsOnMethods = {"testImportIndexingSchemes"})
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION, dependsOnMethods = {"testImportIndexingSchemes"})
     public void testImportIndexPlates() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     p.barcode as plate_barcode, " +
@@ -163,7 +163,7 @@ public class ImportFromSquidTest extends ContainerTest {
      * To prepare for sending past production BettaLIMS messages into SequeL, this method creates LC Sets and associated
      * batches of tubes that are stored in Squid.
      */
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateLcSets() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     l.KEY, " +
@@ -248,7 +248,7 @@ public class ImportFromSquidTest extends ContainerTest {
     /**
      * To prepare for sending past production BettaLIMS messages into SequeL, this method creates bait tubes.
      */
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateBaits() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "    DISTINCT r.barcode " +
