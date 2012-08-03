@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
-import org.apache.thrift.TException;
 import org.broadinstitute.sequel.infrastructure.Offline;
 
 import java.util.ArrayList;
@@ -17,13 +16,43 @@ public class OfflineThriftService implements ThriftService {
     private static int libraryNumber = 100;
 
     @Override
-    public TZamboniRun fetchRun(String runName) throws TZIMSException, TException {
+    public TZamboniRun fetchRun(String runName) {
         return makeRun(runName, 8, 12);
     }
 
     @Override
-    public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) throws TException, TZIMSException {
+    public List<LibraryData> fetchLibraryDetailsByTubeBarcode(List<String> tubeBarcodes, boolean includeWorkRequestDetails) {
         return null;
+    }
+
+    @Override
+    public boolean doesSquidRecognizeAllLibraries(List<String> barcodes) {
+        return false;
+    }
+
+    @Override
+    public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) {
+        return null;
+    }
+
+    @Override
+    public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(String flowcellBarcode) {
+        return null;
+    }
+
+    @Override
+    public String fetchUserIdForBadgeId(String badgeId) {
+        return null;
+    }
+
+    @Override
+    public double fetchQpcrForTube(String tubeBarcode) {
+        return 0;
+    }
+
+    @Override
+    public double fetchQuantForTube(String tubeBarcode, String quantType) {
+        return 0;
     }
 
     public static TZamboniRun makeRun(String runName, int numLanes, int numLibraries) {

@@ -27,8 +27,12 @@ public class ThriftConnectionTest {
     public void testConnection() throws Exception {
         double result = connection.call(new ThriftConnection.Call<Double>() {
             @Override
-            public Double call(LIMQueries.Client client) throws TException, TZIMSException {
-                return client.fetchQpcrForTube("0121541795");
+            public Double call(LIMQueries.Client client) {
+                try {
+                    return client.fetchQpcrForTube("0121541795");
+                } catch (TException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
         assertThat(result, greaterThan(1.0));

@@ -1,121 +1,177 @@
 package org.broadinstitute.sequel.boundary.lims;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import org.apache.commons.logging.Log;
-import org.apache.thrift.TException;
-import org.broadinstitute.sequel.TestGroups;
-import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
-import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
-import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
-import org.testng.annotations.BeforeMethod;
+import com.sun.jersey.api.client.UniformInterfaceException;
+import com.sun.jersey.api.client.WebResource;
+import org.broadinstitute.sequel.integration.DeploymentBuilder;
+import org.broadinstitute.sequel.integration.RestServiceContainerTest;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.WebApplicationException;
+import java.net.URL;
 
-import static org.easymock.EasyMock.*;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 /**
  * @author breilly
  */
-@Test(singleThreaded = true)
-public class LimsQueryResourceTest {
+public class LimsQueryResourceTest extends RestServiceContainerTest {
 
-    private ThriftService mockThriftService;
-    private LimsQueryResourceResponseFactory mockResponseFactory;
-    private LimsQueryResource resource;
-    private Log mockLog;
-
-    @BeforeMethod(groups = TestGroups.DATABASE_FREE)
-    public void setUp() throws Exception {
-        mockThriftService = createMock(ThriftService.class);
-        mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
-        mockLog = createMock(Log.class);
-        resource = new LimsQueryResource(mockThriftService, mockResponseFactory, mockLog);
+    @Deployment
+    public static WebArchive buildSequelWar() {
+        // need TEST here for now because there's no STUBBY version of ThriftConfig
+        // see ThriftServiceProducer.produce()
+        return DeploymentBuilder.buildSequelWar(TEST);
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskName() throws TException, TZIMSException {
-        FlowcellDesignation flowcellDesignation = new FlowcellDesignation();
-        expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andReturn(flowcellDesignation);
-        expect(mockResponseFactory.makeFlowcellDesignation(flowcellDesignation)).andReturn(new FlowcellDesignationType());
-        replayAll();
-
-        resource.findFlowcellDesignationByTaskName("TestTask");
-
-        verifyAll();
+    @Override
+    protected String getResourcePath() {
+        return "limsQuery";
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskNameThriftError() throws Exception {
-        TException thrown = new TException("Thrift error!");
-        expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        mockLog.error(thrown);
-        replayAll();
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode").queryParam("includeWorkRequestDetails", "true");
 
-        Exception caught = null;
-        try {
-            resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (Exception e) {
-            caught = e;
-        }
-        assertException(caught, 500, thrown.getMessage());
+        String result1 = post(resource, "[\"0099443960\",\"406164\"]");
+        assertThat(result1, notNullValue());
 
-        verifyAll();
+        String result2 = post(resource, "[\"0099443960\",\"406164\",\"unknown_barcode\"]");
+        assertThat(result2, notNullValue());
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskNameZimsError() throws Exception {
-        TZIMSException thrown = new TZIMSException("ZIMS error!");
-        expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        mockLog.error(thrown);
-        replayAll();
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testDoesLimsRecognizeAllTubes(@ArquillianResource URL baseUrl) {
+        WebResource webResource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");
 
-        Exception caught = null;
-        try {
-            resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (Exception e) {
-            caught = e;
-        }
-        assertException(caught, 500, thrown.getDetails());
+        String result1 = post(webResource, "[\"0099443960\",\"406164\"]");
+        assertThat(result1, equalTo("true"));
 
-        verifyAll();
+        String result2 = post(webResource, "[\"0099443960\",\"406164\",\"unknown_barcode\"]");
+        assertThat(result2, equalTo("false"));
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskNameRuntimeException() throws Exception {
-        RuntimeException thrown = new RuntimeException("Runtime exception!");
-        expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        mockLog.error(thrown);
-        replayAll();
-
-        Exception caught = null;
-        try {
-            resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (Exception e) {
-            caught = e;
-        }
-        assertException(caught, 500, thrown.getMessage());
-
-        verifyAll();
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindFlowcellDesignationByTaskName(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "14A_03.19.2012");
+        String result = get(resource);
+        assertThat(result, notNullValue());
     }
 
-    private void assertException(Exception caught, int status, String error) {
-        assertThat(caught, instanceOf(WebApplicationException.class));
-        WebApplicationException webApplicationException = (WebApplicationException) caught;
-        assertThat(webApplicationException.getResponse().getStatus(), equalTo(status));
-        Object entity = webApplicationException.getResponse().getEntity();
-        assertThat((String) entity, equalTo(error));
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindFlowcellDesignationByTaskNameInvalid(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "invalid_task");
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Designation not found for task name: invalid_task"));
     }
 
-    private void replayAll() {
-        replay(mockThriftService, mockResponseFactory, mockLog);
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindFlowcellDesignationByFlowcellBarcode(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode").queryParam("flowcellBarcode", "C0GHCACXX");
+        String result = get(resource);
+        assertThat(result, notNullValue());
     }
 
-    private void verifyAll() {
-        verify(mockThriftService, mockResponseFactory, mockLog);
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindFlowcellDesignationByFlowcellBarcodeInvalid(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode").queryParam("flowcellBarcode", "invalid_flowcell");
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Designation not found for flowcell barcode: invalid_flowcell"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchUserIdForBadgeId(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "8f03f000f7ff12e0");
+        String result = get(resource);
+        assertThat(result, equalTo("breilly"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchUserIdForBadgeIdNotFound(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "invalid_badge_id");
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("User not found for badge ID: invalid_badge_id"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchQpcrForTube(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "0075414288");
+        String result = get(resource);
+        assertThat(result, equalTo("19.37698653"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchQpcrForTubeNotFound(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "invalid_tube");
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Tube or QPCR not found for barcode: invalid_tube"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchQpcrForTubeNoQpcr(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "000001848862");
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Tube or QPCR not found for barcode: 000001848862"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchQuantForTube(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600").queryParam("quantType", "Catch Pico");
+        String result = get(resource);
+        assertThat(result, equalTo("5.33803"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchQuantForTubeNotFound(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "invalid_tube").queryParam("quantType", "Catch Pico");
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Tube or quant not found for barcode: invalid_tube, quant type: Catch Pico"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchQuantForTubeUnknownQuant(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600").queryParam("quantType", "Bogus Pico");
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Tube or quant not found for barcode: 0108462600, quant type: Bogus Pico"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchQuantForTubeNoQuant(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "000001859062").queryParam("quantType", "Catch Pico");
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Tube or quant not found for barcode: 000001859062, quant type: Catch Pico"));
+    }
+
+    private String getResponseContent(UniformInterfaceException caught) {
+        return caught.getResponse().getEntity(String.class);
     }
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.integration.web.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
+import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.apache.thrift.TException;
@@ -19,6 +20,7 @@ import org.testng.annotations.Test;
 import javax.enterprise.inject.Alternative;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 
@@ -114,13 +116,43 @@ public class IlluminaRunQueryTest extends Arquillian {
     @Alternative
     public static class StubThriftService implements ThriftService {
         @Override
-        public TZamboniRun fetchRun(String runName) throws TZIMSException, TException {
+        public TZamboniRun fetchRun(String runName) {
             return OfflineThriftService.makeRun(runName, 4, 3);
         }
 
         @Override
-        public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) throws TException, TZIMSException {
+        public List<LibraryData> fetchLibraryDetailsByTubeBarcode(List<String> tubeBarcodes, boolean includeWorkRequestDetails) {
             return null;
+        }
+
+        @Override
+        public boolean doesSquidRecognizeAllLibraries(List<String> barcodes) {
+            return false;
+        }
+
+        @Override
+        public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) {
+            return null;
+        }
+
+        @Override
+        public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(String flowcellBarcode) {
+            return null;
+        }
+
+        @Override
+        public String fetchUserIdForBadgeId(String badgeId) {
+            return null;
+        }
+
+        @Override
+        public double fetchQpcrForTube(String tubeBarcode) {
+            return 0;
+        }
+
+        @Override
+        public double fetchQuantForTube(String tubeBarcode, String quantType) {
+            return 0;
         }
     }
 }
