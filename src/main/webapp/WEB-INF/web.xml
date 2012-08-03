@@ -94,9 +94,7 @@
         <param-value>
             org.broadinstitute.sequel.infrastructure.jaxrs.JacksonConfigurator,
             org.broadinstitute.sequel.infrastructure.jaxrs.CatchAllExceptionMapper,
-            org.broadinstitute.sequel.infrastructure.jaxrs.EJBExceptionMapper,
-            org.broadinstitute.sequel.infrastructure.jaxrs.TExceptionMapper,
-            org.broadinstitute.sequel.infrastructure.jaxrs.TZIMSExceptionMapper
+            org.broadinstitute.sequel.infrastructure.jaxrs.EJBExceptionMapper
         </param-value>
     </context-param>
 
