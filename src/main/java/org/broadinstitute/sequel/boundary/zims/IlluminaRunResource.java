@@ -149,21 +149,13 @@ public class IlluminaRunResource implements Serializable {
     ZimsIlluminaRun getRun(ThriftService thriftService,
                            String runName) {
         ZimsIlluminaRun runBean = null;
-        try {
-            final TZamboniRun tRun = thriftService.fetchRun(runName);
-            if (tRun == null) {
-                throw new RuntimeException("Could not load run " + runName);
-            }
-            else {
-                final Map<String,BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
-                runBean = getRun(tRun,lsidToBSPSample);
-            }
+        final TZamboniRun tRun = thriftService.fetchRun(runName);
+        if (tRun == null) {
+            throw new RuntimeException("Could not load run " + runName);
         }
-        catch(TZIMSException e) {
-            throw new RuntimeException("Failed to fetch run " + runName,e);
-        }
-        catch(TException e) {
-            throw new RuntimeException("Failed to fetch run " + runName,e);
+        else {
+            final Map<String,BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
+            runBean = getRun(tRun,lsidToBSPSample);
         }
 
         return runBean;

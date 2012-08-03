@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
-import org.apache.thrift.TException;
 import org.broadinstitute.sequel.infrastructure.Offline;
 
 import java.util.ArrayList;
@@ -17,12 +16,12 @@ public class OfflineThriftService implements ThriftService {
     private static int libraryNumber = 100;
 
     @Override
-    public TZamboniRun fetchRun(String runName) throws TZIMSException, TException {
+    public TZamboniRun fetchRun(String runName) {
         return makeRun(runName, 8, 12);
     }
 
     @Override
-    public List<LibraryData> fetchLibraryDetailsByTubeBarcode(List<String> tubeBarcodes, boolean includeWorkRequestDetails) throws TException, TZIMSException {
+    public List<LibraryData> fetchLibraryDetailsByTubeBarcode(List<String> tubeBarcodes, boolean includeWorkRequestDetails) {
         return null;
     }
 
@@ -32,17 +31,17 @@ public class OfflineThriftService implements ThriftService {
     }
 
     @Override
-    public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) throws TException, TZIMSException {
+    public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) {
         return null;
     }
 
     @Override
-    public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(String flowcellBarcode) throws TException, TZIMSException {
+    public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(String flowcellBarcode) {
         return null;
     }
 
     @Override
-    public String fetchUserIdForBadgeId(String badgeId) throws TException, TZIMSException {
+    public String fetchUserIdForBadgeId(String badgeId) {
         return null;
     }
 
@@ -52,7 +51,7 @@ public class OfflineThriftService implements ThriftService {
     }
 
     @Override
-    public double fetchQuantForTube(String tubeBarcode, String quantType) throws TException, TZIMSException {
+    public double fetchQuantForTube(String tubeBarcode, String quantType) {
         return 0;
     }
 

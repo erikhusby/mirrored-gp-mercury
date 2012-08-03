@@ -71,7 +71,7 @@ public class ThriftFileAccessor {
         outputStream.close();
     }
 
-    public static TZamboniRun deserializeRun() throws IOException,TException {
+    public static TZamboniRun deserializeRun() throws IOException {
         /*
         try {
            writeRunFile();
@@ -94,7 +94,11 @@ public class ThriftFileAccessor {
         }
         TBinaryProtocol thriftReader = new TBinaryProtocol(new TIOStreamTransport(inputStream));
         TZamboniRun zamboniRun = new TZamboniRun();
-        zamboniRun.read(thriftReader);
+        try {
+            zamboniRun.read(thriftReader);
+        } catch (TException e) {
+            throw new RuntimeException("Error reading thrift file", e);
+        }
         inputStream.close();
 
         return zamboniRun;

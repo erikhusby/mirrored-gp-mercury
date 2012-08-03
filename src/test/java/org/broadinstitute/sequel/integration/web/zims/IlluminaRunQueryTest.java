@@ -116,12 +116,12 @@ public class IlluminaRunQueryTest extends Arquillian {
     @Alternative
     public static class StubThriftService implements ThriftService {
         @Override
-        public TZamboniRun fetchRun(String runName) throws TZIMSException, TException {
+        public TZamboniRun fetchRun(String runName) {
             return OfflineThriftService.makeRun(runName, 4, 3);
         }
 
         @Override
-        public List<LibraryData> fetchLibraryDetailsByTubeBarcode(List<String> tubeBarcodes, boolean includeWorkRequestDetails) throws TException, TZIMSException {
+        public List<LibraryData> fetchLibraryDetailsByTubeBarcode(List<String> tubeBarcodes, boolean includeWorkRequestDetails) {
             return null;
         }
 
@@ -131,17 +131,17 @@ public class IlluminaRunQueryTest extends Arquillian {
         }
 
         @Override
-        public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) throws TException, TZIMSException {
+        public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) {
             return null;
         }
 
         @Override
-        public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(String flowcellBarcode) throws TException, TZIMSException {
+        public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(String flowcellBarcode) {
             return null;
         }
 
         @Override
-        public String fetchUserIdForBadgeId(String badgeId) throws TException, TZIMSException {
+        public String fetchUserIdForBadgeId(String badgeId) {
             return null;
         }
 
@@ -151,7 +151,7 @@ public class IlluminaRunQueryTest extends Arquillian {
         }
 
         @Override
-        public double fetchQuantForTube(String tubeBarcode, String quantType) throws TException, TZIMSException {
+        public double fetchQuantForTube(String tubeBarcode, String quantType) {
             return 0;
         }
     }

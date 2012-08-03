@@ -24,7 +24,7 @@ public class CatchAllExceptionMapper implements ExceptionMapper<Exception> {
 
     @Override
     public Response toResponse(Exception e) {
-        log.error(e);
+        log.error("Exception thrown from JAX-RS service", e);
         return Response.serverError().entity(e.getMessage()).build();
     }
 }

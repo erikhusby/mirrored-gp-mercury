@@ -47,40 +47,6 @@ public class LimsQueryResourceUnitTest {
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskNameThriftError() throws Exception {
-        TException thrown = new TException("Thrift error!");
-        expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        replayAll();
-
-        TException caught = null;
-        try {
-            resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (TException e) {
-            caught = e;
-        }
-        assertThat(caught.getMessage(), equalTo(thrown.getMessage()));
-
-        verifyAll();
-    }
-
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByTaskNameZimsError() throws Exception {
-        TZIMSException thrown = new TZIMSException("ZIMS error!");
-        expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
-        replayAll();
-
-        TZIMSException caught = null;
-        try {
-            resource.findFlowcellDesignationByTaskName("TestTask");
-        } catch (TZIMSException e) {
-            caught = e;
-        }
-        assertThat(caught.getDetails(), equalTo(thrown.getDetails()));
-
-        verifyAll();
-    }
-
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testFindFlowcellDesignationByTaskNameRuntimeException() throws Exception {
         RuntimeException thrown = new RuntimeException("Runtime exception!");
         expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
@@ -127,17 +93,6 @@ public class LimsQueryResourceUnitTest {
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFindFlowcellDesignationByFlowcellBarcodeNotFound() throws Exception {
-        expect(mockThriftService.findFlowcellDesignationByFlowcellBarcode("bad_barcode")).andThrow(new TTransportException());
-        replayAll();
-
-        FlowcellDesignationType result = resource.findFlowcellDesignationByFlowcellBarcode("bad_barcode");
-        assertThat(result, nullValue());
-
-        verifyAll();
-    }
-
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testFetchQpcrForTube() throws Exception {
         expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
         replayAll();
@@ -149,34 +104,12 @@ public class LimsQueryResourceUnitTest {
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFetchQpcrForTubeNotFound() throws Exception {
-        expect(mockThriftService.fetchQpcrForTube("barcode")).andThrow(new TTransportException());
-        replayAll();
-
-        Double result = resource.fetchQpcrForTube("barcode");
-        assertThat(result, nullValue());
-
-        verifyAll();
-    }
-
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testFetchQuantForTube() throws Exception {
         expect(mockThriftService.fetchQuantForTube("barcode", "test")).andReturn(1.23);
         replayAll();
 
         double result = resource.fetchQuantForTube("barcode", "test");
         assertThat(result, equalTo(1.23));
-
-        verifyAll();
-    }
-
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testFetchQuantForTubeNotFound() throws Exception {
-        expect(mockThriftService.fetchQuantForTube("barcode", "test")).andThrow(new TTransportException());
-        replayAll();
-
-        Double result = resource.fetchQuantForTube("barcode", "test");
-        assertThat(result, nullValue());
 
         verifyAll();
     }

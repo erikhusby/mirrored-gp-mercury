@@ -12,13 +12,11 @@ import org.testng.annotations.Test;
 
 import java.net.URL;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.testng.Assert.fail;
 
 /**
  * @author breilly
@@ -73,12 +71,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFindFlowcellDesignationByTaskNameInvalid(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "invalid_task");
-        try {
-            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
-            fail("Expected UniformInterfaceException not thrown");
-        } catch (UniformInterfaceException e) {
-            assertThat(e.getResponse().getStatus(), equalTo(204));
-        }
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Designation not found for task name: invalid_task"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -92,13 +87,10 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFindFlowcellDesignationByFlowcellBarcodeInvalid(@ArquillianResource URL baseUrl) {
-        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode").queryParam("taskName", "invalid_flowcell");
-        try {
-            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
-            fail("Expected UniformInterfaceException not thrown");
-        } catch (UniformInterfaceException e) {
-            assertThat(e.getResponse().getStatus(), equalTo(204));
-        }
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByFlowcellBarcode").queryParam("flowcellBarcode", "invalid_flowcell");
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Designation not found for flowcell barcode: invalid_flowcell"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -113,9 +105,9 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchUserIdForBadgeIdNotFound(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "invalid_badge_id");
-        UniformInterfaceException caught = getError(resource);
+        UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
-        assertThat(caught.getResponse().getEntity(String.class), equalTo("fetchUserIdForBadgeId failed: unknown result"));
+        assertThat(getResponseContent(caught), equalTo("User not found for badge ID: invalid_badge_id"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -130,24 +122,18 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQpcrForTubeNotFound(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "invalid_tube");
-        try {
-            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
-            fail("Expected UniformInterfaceException not thrown");
-        } catch (UniformInterfaceException e) {
-            assertThat(e.getResponse().getStatus(), equalTo(204));
-        }
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Tube or QPCR not found for barcode: invalid_tube"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQpcrForTubeNoQpcr(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchQpcrForTube").queryParam("tubeBarcode", "000001848862");
-        try {
-            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
-            fail("Expected UniformInterfaceException not thrown");
-        } catch (UniformInterfaceException e) {
-            assertThat(e.getResponse().getStatus(), equalTo(204));
-        }
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Tube or QPCR not found for barcode: 000001848862"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -162,35 +148,30 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testFetchQuantForTubeNotFound(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "invalid_tube").queryParam("quantType", "Catch Pico");
-        try {
-            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
-            fail("Expected UniformInterfaceException not thrown");
-        } catch (UniformInterfaceException e) {
-            assertThat(e.getResponse().getStatus(), equalTo(204));
-        }
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Tube or quant not found for barcode: invalid_tube, quant type: Catch Pico"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQuantForTubeUnknownQuant(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "0108462600").queryParam("quantType", "Bogus Pico");
-        try {
-            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
-            fail("Expected UniformInterfaceException not thrown");
-        } catch (UniformInterfaceException e) {
-            assertThat(e.getResponse().getStatus(), equalTo(204));
-        }
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Tube or quant not found for barcode: 0108462600, quant type: Bogus Pico"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchQuantForTubeNoQuant(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchQuantForTube").queryParam("tubeBarcode", "000001859062").queryParam("quantType", "Catch Pico");
-        try {
-            resource.accept(APPLICATION_JSON_TYPE).get(String.class);
-            fail("Expected UniformInterfaceException not thrown");
-        } catch (UniformInterfaceException e) {
-            assertThat(e.getResponse().getStatus(), equalTo(204));
-        }
+        UniformInterfaceException caught = getWithError(resource);
+        assertThat(caught.getResponse().getStatus(), equalTo(500));
+        assertThat(getResponseContent(caught), equalTo("Tube or quant not found for barcode: 000001859062, quant type: Catch Pico"));
+    }
+
+    private String getResponseContent(UniformInterfaceException caught) {
+        return caught.getResponse().getEntity(String.class);
     }
 }

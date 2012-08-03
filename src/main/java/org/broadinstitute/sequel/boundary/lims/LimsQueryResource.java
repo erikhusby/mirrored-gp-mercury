@@ -65,19 +65,8 @@ public class LimsQueryResource {
     @Path("/findFlowcellDesignationByTaskName")
     public FlowcellDesignationType findFlowcellDesignationByTaskName(@QueryParam("taskName") String taskName) throws TException, TZIMSException {
         FlowcellDesignationType flowcellDesignationType;
-        try {
-            FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByTaskName(taskName);
-            flowcellDesignationType = responseFactory.makeFlowcellDesignation(flowcellDesignation);
-        } catch (TTransportException e) {
-            /* This seems to be thrown when the designation doesn't exist.
-             * Looking at LIMQueriesImpl.java,
-             * findFlowcellDesignationByTaskName(FcellDesignationGroup, EntityManager)
-             * is given null in this case and likely throws a
-             * NullPointerException, though that detail is not exposed to thrift
-             * clients. Returning null here will result in "204 No Content".
-             */
-            flowcellDesignationType = null;
-        }
+        FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByTaskName(taskName);
+        flowcellDesignationType = responseFactory.makeFlowcellDesignation(flowcellDesignation);
         return flowcellDesignationType;
     }
 
@@ -86,13 +75,8 @@ public class LimsQueryResource {
     @Path("/findFlowcellDesignationByFlowcellBarcode")
     public FlowcellDesignationType findFlowcellDesignationByFlowcellBarcode(@QueryParam("flowcellBarcode") String flowcellBarcode) throws TException, TZIMSException {
         FlowcellDesignationType flowcellDesignationType;
-        try {
-            FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByFlowcellBarcode(flowcellBarcode);
-            flowcellDesignationType = responseFactory.makeFlowcellDesignation(flowcellDesignation);
-        } catch (TTransportException e) {
-            // This seems to be thrown when the flowcell doesn't exist
-            flowcellDesignationType = null;
-        }
+        FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByFlowcellBarcode(flowcellBarcode);
+        flowcellDesignationType = responseFactory.makeFlowcellDesignation(flowcellDesignation);
         return flowcellDesignationType;
     }
 
@@ -107,23 +91,13 @@ public class LimsQueryResource {
     @Produces({MediaType.APPLICATION_JSON})
     @Path("/fetchQpcrForTube")
     public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode) throws TException, TZIMSException {
-        try {
-            return thriftService.fetchQpcrForTube(tubeBarcode);
-        } catch (TTransportException e) {
-            // This seems to be thrown when the tube or qpcr data doesn't exist
-            return null;
-        }
+        return thriftService.fetchQpcrForTube(tubeBarcode);
     }
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     @Path("/fetchQuantForTube")
     public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode, @QueryParam("quantType") String quantType) throws TException, TZIMSException {
-        try {
-            return thriftService.fetchQuantForTube(tubeBarcode, quantType);
-        } catch (TTransportException e) {
-            // This seems to be thrown when the tube or quant doesn't exist
-            return null;
-        }
+        return thriftService.fetchQuantForTube(tubeBarcode, quantType);
     }
 }

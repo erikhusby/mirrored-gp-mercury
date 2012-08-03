@@ -78,7 +78,7 @@ public abstract class RestServiceContainerTest extends ContainerTest {
         return null;
     }
 
-    protected UniformInterfaceException getError(WebResource resource) {
+    protected UniformInterfaceException getWithError(WebResource resource) {
         UniformInterfaceException caught = null;
         try {
             resource.accept(APPLICATION_JSON_TYPE).get(String.class);

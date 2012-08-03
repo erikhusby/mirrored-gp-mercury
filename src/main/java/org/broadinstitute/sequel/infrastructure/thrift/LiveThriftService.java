@@ -5,100 +5,160 @@ import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 
 import javax.inject.Inject;
 import java.util.List;
 
+/**
+ * Thrift service client that connects to a live thrift endpoint. All thrift
+ * communication details and handling of error conditions are handled here.
+ */
 @Impl
 public class LiveThriftService implements ThriftService {
 
-    @Inject
     private ThriftConnection thriftConnection;
 
-    public LiveThriftService() {}
+    private Log log;
 
-    public LiveThriftService(ThriftConnection thriftConnection) {
+    @Inject
+    public LiveThriftService(ThriftConnection thriftConnection, Log log) {
         this.thriftConnection = thriftConnection;
+        this.log = log;
     }
 
     @Override
-    public TZamboniRun fetchRun(final String runName) throws TZIMSException, TException {
+    public TZamboniRun fetchRun(final String runName) {
         return thriftConnection.call(new ThriftConnection.Call<TZamboniRun>() {
             @Override
-            public TZamboniRun call(LIMQueries.Client client) throws TException, TZIMSException {
-                return client.fetchRun(runName);
+            public TZamboniRun call(LIMQueries.Client client) {
+                try {
+                    return client.fetchRun(runName);
+                } catch (TZIMSException e) {
+                    String message = "Failed to fetch run: " + runName;
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
+                } catch (TException e) {
+                    String message = "Failed to fetch run: " + runName;
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
+                }
             }
         });
     }
 
     @Override
-    public List<LibraryData> fetchLibraryDetailsByTubeBarcode(final List<String> tubeBarcodes, final boolean includeWorkRequestDetails) throws TException, TZIMSException {
+    public List<LibraryData> fetchLibraryDetailsByTubeBarcode(final List<String> tubeBarcodes, final boolean includeWorkRequestDetails) {
         return thriftConnection.call(new ThriftConnection.Call<List<LibraryData>>() {
             @Override
-            public List<LibraryData> call(LIMQueries.Client client) throws TException, TZIMSException {
-                return client.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
+            public List<LibraryData> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
+                } catch (TException e) {
+                    String message = "Thrift error: " + e.getMessage();
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
+                }
             }
         });
     }
 
     @Override
-    public boolean doesSquidRecognizeAllLibraries(final List<String> barcodes) throws TException, TZIMSException {
+    public boolean doesSquidRecognizeAllLibraries(final List<String> barcodes) {
         return thriftConnection.call(new ThriftConnection.Call<Boolean>() {
             @Override
-            public Boolean call(LIMQueries.Client client) throws TException, TZIMSException {
-                return client.doesSquidRecognizeAllLibraries(barcodes);
+            public Boolean call(LIMQueries.Client client) {
+                try {
+                    return client.doesSquidRecognizeAllLibraries(barcodes);
+                } catch (TException e) {
+                    String message = "Thrift error: " + e.getMessage();
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
+                }
             }
         });
     }
 
     @Override
-    public FlowcellDesignation findFlowcellDesignationByTaskName(final String taskName) throws TException, TZIMSException {
+    public FlowcellDesignation findFlowcellDesignationByTaskName(final String taskName) {
         return thriftConnection.call(new ThriftConnection.Call<FlowcellDesignation>() {
             @Override
-            public FlowcellDesignation call(LIMQueries.Client client) throws TException, TZIMSException {
-                return client.findFlowcellDesignationByTaskName(taskName);
+            public FlowcellDesignation call(LIMQueries.Client client) {
+                try {
+                    return client.findFlowcellDesignationByTaskName(taskName);
+                } catch (TException e) {
+                    /* This seems to be thrown when the designation doesn't
+                     * exist. Looking at LIMQueriesImpl.java,
+                     * findFlowcellDesignationByTaskName(FcellDesignationGroup, EntityManager)
+                     * is given null in this case and likely throws a
+                     * NullPointerException, though that detail is not exposed
+                     * to thrift clients.
+                     */
+                    log.error("Thrift error. Probably couldn't find designation for task name '" + taskName + "': " + e.getMessage(), e);
+                    throw new RuntimeException("Designation not found for task name: " + taskName, e);
+                }
             }
         });
     }
 
     @Override
-    public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(final String flowcellBarcode) throws TException, TZIMSException {
+    public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(final String flowcellBarcode) {
         return thriftConnection.call(new ThriftConnection.Call<FlowcellDesignation>() {
             @Override
-            public FlowcellDesignation call(LIMQueries.Client client) throws TException, TZIMSException {
-                return client.findFlowcellDesignationByFlowcellBarcode(flowcellBarcode);
+            public FlowcellDesignation call(LIMQueries.Client client) {
+                try {
+                    return client.findFlowcellDesignationByFlowcellBarcode(flowcellBarcode);
+                } catch (TException e) {
+                    log.error("Thrift error. Probably couldn't find designation for flowcell barcode '" + flowcellBarcode + "': " + e.getMessage(), e);
+                    throw new RuntimeException("Designation not found for flowcell barcode: " + flowcellBarcode, e);
+                }
             }
         });
     }
 
     @Override
-    public String fetchUserIdForBadgeId(final String badgeId) throws TException, TZIMSException {
+    public String fetchUserIdForBadgeId(final String badgeId) {
         return thriftConnection.call(new ThriftConnection.Call<String>() {
             @Override
-            public String call(LIMQueries.Client client) throws TException, TZIMSException {
-                return client.fetchUserIdForBadgeId(badgeId);
+            public String call(LIMQueries.Client client) {
+                try {
+                    return client.fetchUserIdForBadgeId(badgeId);
+                } catch (TException e) {
+                    log.error("Thrift error. Probably couldn't find user for badge ID '" + badgeId + "': " + e.getMessage(), e);
+                    throw new RuntimeException("User not found for badge ID: " + badgeId, e);
+                }
             }
         });
     }
 
     @Override
-    public double fetchQpcrForTube(final String tubeBarcode) throws TException, TZIMSException {
+    public double fetchQpcrForTube(final String tubeBarcode) {
         return thriftConnection.call(new ThriftConnection.Call<Double>() {
             @Override
-            public Double call(LIMQueries.Client client) throws TException, TZIMSException {
-                return client.fetchQpcrForTube(tubeBarcode);
+            public Double call(LIMQueries.Client client) {
+                try {
+                    return client.fetchQpcrForTube(tubeBarcode);
+                } catch (TException e) {
+                    log.error("Thrift error. Probably couldn't find tube '" + tubeBarcode + "': " + e.getMessage(), e);
+                    throw new RuntimeException("Tube or QPCR not found for barcode: " + tubeBarcode, e);
+                }
             }
         });
     }
 
     @Override
-    public double fetchQuantForTube(final String tubeBarcode, final String quantType) throws TException, TZIMSException {
+    public double fetchQuantForTube(final String tubeBarcode, final String quantType) {
         return thriftConnection.call(new ThriftConnection.Call<Double>() {
             @Override
-            public Double call(LIMQueries.Client client) throws TException, TZIMSException {
-                return client.fetchQuantForTube(tubeBarcode, quantType);
+            public Double call(LIMQueries.Client client) {
+                try {
+                    return client.fetchQuantForTube(tubeBarcode, quantType);
+                } catch (TException e) {
+                    log.error("Thrift error. Probably couldn't find tube '" + tubeBarcode + "': " + e.getMessage(), e);
+                    throw new RuntimeException("Tube or quant not found for barcode: " + tubeBarcode + ", quant type: " + quantType, e);
+                }
             }
         });
     }

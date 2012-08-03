@@ -18,37 +18,48 @@ import javax.inject.Inject;
  * closing the connection. However, it is probably not the most efficient way to
  * perform multiple service calls.
  *
+ * This is a stateful object and therefore not thread-safe and must be
+ * configured for injection with the default dependent scope.
+ *
  * @author andrew
  * @author breilly
  */
 public class ThriftConnection {
 
-    private ThriftConfig thriftConfig;
-
-    // stateful: created by open()
-    private transient TTransport transport;
-
-    @Inject
-    public ThriftConnection(ThriftConfig thriftConfig) {
-        this.thriftConfig = thriftConfig;
-
-        /*
-         * Try creating the transport here instead of in open(). If it doesn't
-         * cause any problems, this can instead be injected from a producer
-         * class, which will make this class more testable.
-         */
-        transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
-    }
-
     /**
      * An object containing the code to call a particular thrift service method.
-     * Called from ThriftConnection#call(Call).
+     * Called from ThriftConnection#call(Call). Thrift exceptions must not
+     * escape from this level.
      *
      * @param <T>    the type of result returned from the service method
      * @see ThriftConnection#call(org.broadinstitute.sequel.infrastructure.thrift.ThriftConnection.Call)
      */
     public interface Call<T> {
-        T call(LIMQueries.Client client) throws TException, TZIMSException;
+
+        /**
+         * Perform the actual thrift call given the connected client interface.
+         * Thrift exceptions must be interpreted and handled or wrapped in
+         * an application exception.
+         *
+         * @param client    the client interface to use for the thrift call
+         * @return the result of the thrift call
+         */
+        T call(LIMQueries.Client client);
+    }
+
+    // stateful: created by constructor
+    private transient TTransport transport;
+
+    @Inject
+    public ThriftConnection(ThriftConfig thriftConfig) {
+        /*
+         * Try creating the transport here instead of in open(). If it doesn't
+         * cause any problems, this can instead be injected from a producer
+         * class, which will make this class more testable. Otherwise, we'll
+         * have to keep a reference to the ThriftConfig and create a new TSocket
+         * for every call.
+         */
+        transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
     }
 
     /**
@@ -63,7 +74,7 @@ public class ThriftConnection {
      * @throws TException when there is a problem communicating with the thrift service
      * @throws TZIMSException when there is an error in a ZIMS service method
      */
-    public <T> T call(Call<T> call) throws TException, TZIMSException {
+    public <T> T call(Call<T> call) {
         open();
         T result = null;
         try {
