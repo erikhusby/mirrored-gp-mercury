@@ -103,7 +103,7 @@ public class LabWorkQueueWorkflowTest {
         // for each vessel, get most recent event, check whether it's a predecessor to the proposed event
         LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                 shearingTransferEventJaxb, mapBarcodeToTube, null);
-        labEventHandler.processEvent(shearingTransferEventEntity, workflow);
+        labEventHandler.processEvent(shearingTransferEventEntity);
 
         LabVessel outputPlate = shearingTransferEventEntity.getTargetLabVessels().iterator().next();
 
@@ -133,7 +133,7 @@ public class LabWorkQueueWorkflowTest {
                     "PostShearingTransferCleanup", shearPlateBarcode, shearCleanPlateBarcode);
             LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                     postShearingTransferCleanupEventJaxb, shearingPlate, null);
-            labEventHandler.processEvent(postShearingTransferCleanupEntity, workflow);
+            labEventHandler.processEvent(postShearingTransferCleanupEntity);
 
             assertTrue(labWorkQueue.isEmpty());
 
@@ -151,7 +151,7 @@ public class LabWorkQueueWorkflowTest {
                     "PostShearingTransferCleanup", shearPlateBarcode, shearCleanPlateBarcode);
             postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                     postShearingTransferCleanupEventJaxb, shearingPlate, null);
-            labEventHandler.processEvent(postShearingTransferCleanupEntity, workflow);
+            labEventHandler.processEvent(postShearingTransferCleanupEntity);
 
             assertTrue(labWorkQueue.isEmpty());
             shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();

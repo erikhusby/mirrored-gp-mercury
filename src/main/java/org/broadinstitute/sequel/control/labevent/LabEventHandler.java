@@ -2,12 +2,10 @@ package org.broadinstitute.sequel.control.labevent;
 
 
 import org.broadinstitute.sequel.control.dao.labevent.LabEventDao;
-import org.broadinstitute.sequel.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.labevent.*;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
-import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.queue.LabWorkQueue;
@@ -18,9 +16,6 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
-import org.broadinstitute.sequel.entity.workflow.LabBatch;
-import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
-import org.broadinstitute.sequel.infrastructure.jira.JiraService;
 import org.broadinstitute.sequel.infrastructure.quote.Billable;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
 
@@ -68,7 +63,7 @@ public class LabEventHandler {
 
         // then on to the good stuff..
         LabEvent labEvent = createEvent(eventMessage);
-        HANDLER_RESPONSE response = processEvent(labEvent, null);
+        HANDLER_RESPONSE response = processEvent(labEvent);
         if (response == HANDLER_RESPONSE.OK) {
             this.labEventDao.persist(labEvent);
         }
@@ -88,7 +83,7 @@ public class LabEventHandler {
         throw new RuntimeException("Method not yet implemented.");
     }
 
-    public HANDLER_RESPONSE processEvent(LabEvent labEvent, WorkflowDescription workflow) {
+    public HANDLER_RESPONSE processEvent(LabEvent labEvent) {
         // random thought, which should go onto confluence doc:
         /*
 
@@ -296,7 +291,7 @@ public class LabEventHandler {
      */
     private void retryInvalidMolecularState(LabEvent labEvent) {
         for (LabEvent partiallyProcessedEvent: invalidMolecularState.findRelatedEvents(labEvent)) {
-            processEvent(partiallyProcessedEvent, null);
+            processEvent(partiallyProcessedEvent);
         }
     }
     
@@ -329,7 +324,7 @@ public class LabEventHandler {
         // pull back a pile of partially processed events and
         // reprocess them.
         for (LabEvent partiallyProcessedEvent: unanchored.findRelatedEvents(labEvent)) {
-            processEvent(partiallyProcessedEvent, null);
+            processEvent(partiallyProcessedEvent);
 
             /*
             interesting problems arise here.  if you have a compound out of order

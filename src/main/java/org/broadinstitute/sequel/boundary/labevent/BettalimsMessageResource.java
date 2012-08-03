@@ -96,7 +96,7 @@ todo jmt fix this
     public void processMessage(BettaLIMSMessage message) {
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
-            labEventHandler.processEvent(labEvent, null);
+            labEventHandler.processEvent(labEvent);
         }
     }
 
