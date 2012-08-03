@@ -4,7 +4,6 @@ package org.broadinstitute.sequel.test;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.infrastructure.bsp.AliquotReceiver;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConnectorStub;
-import org.broadinstitute.sequel.control.dao.vessel.LabVesselDAO;
 import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
@@ -32,9 +31,6 @@ import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 
 public class EndToEndTest  {
 
-    //@Inject
-    LabVesselDAO labVesselDAO;
-    
     //@Inject
     LabEventHandler handler;
 

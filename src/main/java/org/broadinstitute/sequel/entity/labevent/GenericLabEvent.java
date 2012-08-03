@@ -2,12 +2,15 @@ package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
-import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -18,6 +21,9 @@ public class GenericLabEvent extends LabEvent {
 
     @Enumerated(EnumType.STRING)
     private LabEventType labEventType;
+
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    private LabBatch labBatch;
 
     public GenericLabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Long disambiguator, Person operator) {
         this.labEventType = labEventType;
@@ -176,5 +182,13 @@ public class GenericLabEvent extends LabEvent {
 
     public LabEventType getLabEventType() {
         return this.labEventType;
+    }
+
+    public void setLabBatch(LabBatch labBatch) {
+        this.labBatch = labBatch;
+    }
+
+    public LabBatch getLabBatch() {
+        return labBatch;
     }
 }
