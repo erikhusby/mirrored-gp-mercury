@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.infrastructure.deployment;
 
 import junit.framework.Assert;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.sequel.infrastructure.jira.JiraConfig;
 import org.broadinstitute.sequel.infrastructure.squid.SquidConfig;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftConfig;
 import org.testng.annotations.Test;
@@ -14,7 +15,7 @@ import java.net.URL;
 import java.util.Map;
 
 @Test
-public class DeploymentTest  {
+public class SequelConfigurationTest {
 
     final String GLOBAL_YAML = "/config/test-sequel-config.yaml";
 
@@ -43,17 +44,17 @@ public class DeploymentTest  {
 
 
 
-        final SequelConfigReader configReader = SequelConfigReader.getInstance();
+        final SequelConfiguration configuration = SequelConfiguration.getInstance();
 
-        configReader.clear();
-        configReader.load(globalDoc, localDoc);
+        configuration.clear();
+        configuration.load(globalDoc, localDoc);
 
 
-        final ThriftConfig qaThriftConfig = (ThriftConfig) configReader.getConfig(ThriftConfig.class, Deployment.QA);
+        final ThriftConfig qaThriftConfig = (ThriftConfig) configuration.getConfig(ThriftConfig.class, Deployment.QA);
         Assert.assertEquals(qaThriftConfig.getHost(), "seqtest04");
 
 
-        final ThriftConfig devThriftConfig = (ThriftConfig) configReader.getConfig(ThriftConfig.class, Deployment.DEV);
+        final ThriftConfig devThriftConfig = (ThriftConfig) configuration.getConfig(ThriftConfig.class, Deployment.DEV);
 
 
         // The Deployments passed to configReader are SequeL-centric, and both QA and DEV SequeLs point to QA thrift,
@@ -63,14 +64,21 @@ public class DeploymentTest  {
 
         // Test override of parameters
 
-        final SquidConfig devSquidConfig = (SquidConfig) configReader.getConfig(SquidConfig.class, Deployment.DEV);
+        final SquidConfig devSquidConfig = (SquidConfig) configuration.getConfig(SquidConfig.class, Deployment.DEV);
 
         Assert.assertEquals(devSquidConfig.getUrl(), "http://localhost:9090");
 
 
+        // More parameter override, make sure we still have the non-local parameters set
+        final JiraConfig testJiraConfig = (JiraConfig) configuration.getConfig(JiraConfig.class, Deployment.TEST);
+
+        Assert.assertEquals(testJiraConfig.getPort(), 8888);
+        Assert.assertEquals(testJiraConfig.getHost(), "vsquid00.broadinstitute.org");
+
+
         // And Deployment mappings
 
-        final BSPConfig testBSPConfig = (BSPConfig) configReader.getConfig(BSPConfig.class, Deployment.TEST);
+        final BSPConfig testBSPConfig = (BSPConfig) configuration.getConfig(BSPConfig.class, Deployment.TEST);
 
         Assert.assertEquals(testBSPConfig.getHost(), "bsp.broadinstitute.org");
 

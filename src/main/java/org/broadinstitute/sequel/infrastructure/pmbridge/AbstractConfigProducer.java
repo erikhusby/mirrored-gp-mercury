@@ -2,7 +2,7 @@ package org.broadinstitute.sequel.infrastructure.pmbridge;
 
 import org.broadinstitute.sequel.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
-import org.broadinstitute.sequel.infrastructure.deployment.SequelConfigReader;
+import org.broadinstitute.sequel.infrastructure.deployment.SequelConfiguration;
 
 import java.lang.reflect.ParameterizedType;
 
@@ -19,6 +19,6 @@ public abstract class AbstractConfigProducer<C extends AbstractConfig> {
 
     public C produce( Deployment deployment ) {
 
-        return (C) SequelConfigReader.getInstance().getConfig(getTypeArgument(), deployment);
+        return (C) SequelConfiguration.getInstance().getConfig(getTypeArgument(), deployment);
     }
 }

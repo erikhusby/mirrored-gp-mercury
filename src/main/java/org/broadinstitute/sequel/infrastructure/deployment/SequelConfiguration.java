@@ -16,9 +16,9 @@ import java.util.Map;
 import java.util.Set;
 
 
-public class SequelConfigReader {
+public class SequelConfiguration {
 
-    // can hopefully do something with portable extensions and @Observes ProcessAnnotatedType<T> to find these
+    // Hopefully we can do something with portable extensions and @Observes ProcessAnnotatedType<T> to find these
     // automatically, and maybe something really sneaky to create qualified bean instances of these types to
     // support @TestInstance-style qualifier injection with producer classes.  But not in this version.
     private static final Class [] CONFIG_CLASSES = new Class [] {
@@ -31,11 +31,11 @@ public class SequelConfigReader {
     };
 
 
-    private static final String SEQUEL_CONFIG = "/config/test-sequel-config.yaml";
+    private static final String SEQUEL_CONFIG = "/sequel-config.yaml";
 
-    private static final String SEQUEL_CONFIG_LOCAL = "/test-sequel-config-local.yaml";
+    private static final String SEQUEL_CONFIG_LOCAL = "/sequel-config-local.yaml";
 
-    private static SequelConfigReader instance;
+    private static SequelConfiguration instance;
 
 
     // Map of system key ("bsp", "squid", "thrift") to a Map of external system Deployments (TEST, QA, PROD) to
@@ -71,12 +71,12 @@ public class SequelConfigReader {
     /**
      * Private to force access through {@link #getInstance()}
      */
-    private SequelConfigReader() {}
+    private SequelConfiguration() {}
 
 
-    public static SequelConfigReader getInstance() {
+    public static SequelConfiguration getInstance() {
         if ( instance == null )
-            instance = new SequelConfigReader();
+            instance = new SequelConfiguration();
 
         return instance;
     }
@@ -114,7 +114,16 @@ public class SequelConfigReader {
 
                 Deployment deployment = Deployment.valueOf(deploymentString);
 
-                AbstractConfig config = newConfig(configClass);
+                AbstractConfig config;
+
+                // Fish out an existing config if we're already defined one.  This is likely to be the case if we are
+                // processing local overrides
+                if ( externalSystemsMap.containsKey(systemKey) && externalSystemsMap.get(systemKey).containsKey(deployment))
+                    config = externalSystemsMap.get(systemKey).get(deployment);
+                else
+                    config  = newConfig(configClass);
+
+
                 config.setExternalDeployment(deployment);
 
                 setPropertiesIntoConfig(deploymentEntry.getValue(), config);
