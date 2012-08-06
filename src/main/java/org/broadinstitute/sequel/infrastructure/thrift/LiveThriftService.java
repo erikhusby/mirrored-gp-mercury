@@ -11,6 +11,7 @@ import org.broadinstitute.sequel.infrastructure.deployment.Impl;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Thrift service client that connects to a live thrift endpoint. All thrift
@@ -128,6 +129,21 @@ public class LiveThriftService implements ThriftService {
                 } catch (TException e) {
                     log.error("Thrift error. Probably couldn't find user for badge ID '" + badgeId + "': " + e.getMessage(), e);
                     throw new RuntimeException("User not found for badge ID: " + badgeId, e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public Map<String, Boolean> fetchParentRackContentsForPlate(final String plateBarcode) {
+        return thriftConnection.call(new ThriftConnection.Call<Map<String, Boolean>>() {
+            @Override
+            public Map<String, Boolean> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchParentRackContentsForPlate(plateBarcode);
+                } catch (TException e) {
+                    log.error("Thrift error. Probably couldn't find the plate for barcode '" + plateBarcode + "': " + e.getMessage(), e);
+                    throw new RuntimeException("Plate not found for barcode: " + plateBarcode, e);
                 }
             }
         });

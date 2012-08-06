@@ -19,11 +19,11 @@ public class EJBExceptionMapper implements ExceptionMapper<EJBException> {
 
     @Override
     public Response toResponse(EJBException e) {
-        log.error(e);
+        log.error("EJBException thrown from JAX-RS service", e);
         Exception realCause;
         if (e.getCausedByException() != null) {
             realCause = e.getCausedByException();
-            log.error(realCause);
+            log.error("EJBException's CausedByException", realCause);
         } else {
             realCause = e;
         }
