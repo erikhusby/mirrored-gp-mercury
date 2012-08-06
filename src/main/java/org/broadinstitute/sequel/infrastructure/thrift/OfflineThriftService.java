@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.infrastructure.Offline;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author breilly
@@ -42,6 +43,11 @@ public class OfflineThriftService implements ThriftService {
 
     @Override
     public String fetchUserIdForBadgeId(String badgeId) {
+        return null;
+    }
+
+    @Override
+    public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode) {
         return null;
     }
 
