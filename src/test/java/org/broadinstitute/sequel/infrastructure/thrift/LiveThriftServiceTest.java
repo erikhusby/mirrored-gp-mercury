@@ -32,7 +32,7 @@ public class LiveThriftServiceTest {
     @BeforeMethod
     public void setUp() throws Exception {
         mockLog = createMock(Log.class);
-        thriftService = new LiveThriftService(new ThriftConnection(ThriftConfigProducer.produce(Deployment.DEV)), mockLog);
+        thriftService = new LiveThriftService(new ThriftConnection(ThriftConfigProducer.getConfig(Deployment.DEV)), mockLog);
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)

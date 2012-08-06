@@ -1,7 +1,6 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.apache.thrift.TException;
 import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
@@ -20,7 +19,7 @@ public class ThriftConnectionTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        connection = new ThriftConnection(ThriftConfigProducer.produce(Deployment.TEST));
+        connection = new ThriftConnection(ThriftConfigProducer.getConfig(Deployment.TEST));
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
