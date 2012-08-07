@@ -241,12 +241,16 @@ public class SequelConfiguration {
 
         // load up external systems and overrides
         loadExternalSystems(globalConfigDoc);
-        loadExternalSystems(localConfigDoc);
+
+        if ( localConfigDoc != null )
+            loadExternalSystems(localConfigDoc);
 
         // now process the sequel connections to those systems
         // second parameter indicates whether global or not.  global config must have "sequel" section.
         loadSequelConnections(globalConfigDoc, true);
-        loadSequelConnections(localConfigDoc, false);
+
+        if ( localConfigDoc != null )
+            loadSequelConnections(localConfigDoc, false);
 
 
     }
