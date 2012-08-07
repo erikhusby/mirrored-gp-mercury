@@ -93,12 +93,14 @@ public class SequelConfiguration {
         for (Map.Entry<String, Map> section :  doc.entrySet()) {
 
             String systemKey = section.getKey();
-            if ( getConfigClass(systemKey) == null && ! "sequel".equals(systemKey) )
-                throw new RuntimeException("Unrecognized top-level key: '" + systemKey +"'");
 
             // this method doesn't deal with sequel connections
             if ( "sequel".equals(systemKey) )
                 continue;
+
+            if ( getConfigClass(systemKey) == null )
+                throw new RuntimeException("Unrecognized top-level key: '" + systemKey +"'");
+
 
 
             final Class<? extends AbstractConfig> configClass = getConfigClass(systemKey);
@@ -116,7 +118,7 @@ public class SequelConfiguration {
 
                 AbstractConfig config;
 
-                // Fish out an existing config if we're already defined one.  This is likely to be the case if we are
+                // Fish out an existing config if we've already defined one.  This is likely to be the case if we are
                 // processing local overrides
                 if ( externalSystemsMap.containsKey(systemKey) && externalSystemsMap.get(systemKey).containsKey(deployment))
                     config = externalSystemsMap.get(systemKey).get(deployment);
@@ -165,7 +167,7 @@ public class SequelConfiguration {
 
 
             Deployment sequelDeployment = Deployment.valueOf(sequelDeploymentString);
-            Map<String, String> systemsMappings = ( Map<String, String >) deployments.getValue();
+            Map<String, String> systemsMappings = ( Map<String, String>) deployments.getValue();
 
             for (Map.Entry<String, String> systemsMapping : systemsMappings.entrySet()) {
 
