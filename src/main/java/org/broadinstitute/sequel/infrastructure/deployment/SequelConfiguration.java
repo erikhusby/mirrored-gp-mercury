@@ -16,6 +16,19 @@ import java.util.Map;
 import java.util.Set;
 
 
+/**
+ * Core class of SequeL configuration.  The two Maps in this class contain
+ *
+ * <ol>
+ *
+ *     <li>Descriptions of external deployments.  These correspond to all stanzas except the "sequel" stanza in the
+ *     configuration files.</li>
+ *
+ *     <li>Descriptions of how SequeL deployments connect to those external deployments.  This corresponds to the "sequel"
+ *     stanza in the configuration file(s).</li>
+ * </ol>
+ *
+ */
 public class SequelConfiguration {
 
     // Hopefully we can do something with portable extensions and @Observes ProcessAnnotatedType<T> to find these
