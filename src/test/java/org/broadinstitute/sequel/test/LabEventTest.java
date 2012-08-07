@@ -10,7 +10,6 @@ import org.broadinstitute.sequel.bettalims.generated.PositionMapType;
 import org.broadinstitute.sequel.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.sequel.bettalims.generated.ReceptacleType;
 import org.broadinstitute.sequel.boundary.run.SolexaRunBean;
-import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
@@ -19,6 +18,7 @@ import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
@@ -42,6 +42,7 @@ import org.broadinstitute.sequel.entity.vessel.StripTube;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
+import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.easymock.EasyMock;
@@ -72,6 +73,18 @@ public class LabEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
     public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
+
+    private final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher = new LabEventFactory.LabEventRefDataFetcher() {
+        @Override
+        public Person getOperator(String userId) {
+            return new Person(userId);
+        }
+
+        @Override
+        public LabBatch getLabBatch(String labBatchName) {
+            return null;
+        }
+    };
 
     /**
      * Used in test verification, accumulates the events in a chain of transfers
@@ -125,7 +138,7 @@ public class LabEventTest {
         // Messaging
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setPersonDAO(new PersonDAO());
+        labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
         LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(workflowDescription,
@@ -202,7 +215,7 @@ public class LabEventTest {
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setPersonDAO(new PersonDAO());
+        labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
         LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
 
         // todo jmt fix preflight
@@ -304,7 +317,7 @@ public class LabEventTest {
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setPersonDAO(new PersonDAO());
+        labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
         LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
         BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke();
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageFactory, labEventFactory,

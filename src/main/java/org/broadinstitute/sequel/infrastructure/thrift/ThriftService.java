@@ -2,12 +2,11 @@ package org.broadinstitute.sequel.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
-import org.apache.thrift.TException;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Thrift client wrapper that handles all of the communication and error
@@ -30,6 +29,8 @@ public interface ThriftService extends Serializable {
     public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(final String flowcellBarcode);
 
     public String fetchUserIdForBadgeId(String badgeId);
+
+    public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode);
 
     public double fetchQpcrForTube(String tubeBarcode);
 

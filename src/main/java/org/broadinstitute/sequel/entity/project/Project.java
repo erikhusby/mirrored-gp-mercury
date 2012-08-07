@@ -80,7 +80,7 @@ public abstract class Project {
         this.quotesCache = cache;
     }
 
-    JiraTicket getJiraTicket() {
+    public JiraTicket getJiraTicket() {
         return jiraTicket;
     }
 
