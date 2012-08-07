@@ -17,6 +17,11 @@ public class ThriftConfig extends AbstractConfig implements Serializable {
     public ThriftConfig() {
     }
 
+    public ThriftConfig(String host, int port) {
+        this.host = host;
+        this.port = port;
+    }
+
     public String getHost() {
         return host;
     }
