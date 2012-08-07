@@ -12,6 +12,8 @@ import java.net.URL;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.testng.Assert.fail;
 
 /**
@@ -78,6 +80,14 @@ public abstract class RestServiceContainerTest extends ContainerTest {
         return null;
     }
 
+    /**
+     * Performs a GET on the given WebResource, expecting an error response and
+     * returning the UniformInterfaceException. Throws an assertion failure if
+     * the call does NOT result in a UniformInterfaceException.
+     *
+     * @param resource    the web resource to GET
+     * @return the caught UniformInterfaceException
+     */
     protected UniformInterfaceException getWithError(WebResource resource) {
         UniformInterfaceException caught = null;
         try {
@@ -87,6 +97,20 @@ public abstract class RestServiceContainerTest extends ContainerTest {
             caught = e;
         }
         return caught;
+    }
+
+    /**
+     * Convenience method to perform assertions of the status and content of a
+     * UniformInterfaceException. Throws and assertion failure if there is a
+     * mismatch.
+     *
+     * @param caught     the caught UniformInterfaceException
+     * @param status     the expected status code
+     * @param content    the expected response content
+     */
+    protected void assertErrorResponse(UniformInterfaceException caught, int status, String content) {
+        assertThat(caught.getResponse().getStatus(), equalTo(status));
+        assertThat(getResponseContent(caught), equalTo(content));
     }
 
     /**
@@ -106,5 +130,9 @@ public abstract class RestServiceContainerTest extends ContainerTest {
         }
         // Can't technically get here, but javac doesn't understand that fail() is guaranteed to throw a runtime exception
         return null;
+    }
+
+    protected String getResponseContent(UniformInterfaceException caught) {
+        return caught.getResponse().getEntity(String.class);
     }
 }

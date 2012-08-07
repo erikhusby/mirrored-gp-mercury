@@ -4,7 +4,6 @@ import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
@@ -20,6 +19,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author breilly
@@ -86,6 +86,14 @@ public class LimsQueryResource {
     public String fetchUserIdForBadgeId(@QueryParam("badgeId") String badgeId) throws TException, TZIMSException {
         return thriftService.fetchUserIdForBadgeId(badgeId);
     }
+
+    @GET
+    @Produces({MediaType.APPLICATION_JSON})
+    @Path("/fetchParentRackContentsForPlate")
+    public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
+        return thriftService.fetchParentRackContentsForPlate(plateBarcode);
+    }
+
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})

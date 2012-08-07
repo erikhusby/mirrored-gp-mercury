@@ -67,15 +67,8 @@ public class LimsQueryTypesResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/throwTException")
-    public void throwTException(@QueryParam("message") String message) throws TException {
-        throw new TException(message);
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("throwTZIMSException")
-    public void throwTZIMSException(@QueryParam("details") String details) throws TZIMSException {
-        throw new TZIMSException(details);
+    @Path("/throwApplicationException")
+    public void throwApplicationException(@QueryParam("message") String message) throws Exception {
+        throw new Exception(message);
     }
 }

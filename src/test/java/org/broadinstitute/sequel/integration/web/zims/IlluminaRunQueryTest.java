@@ -2,9 +2,7 @@ package org.broadinstitute.sequel.integration.web.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
-import org.apache.thrift.TException;
 import org.broadinstitute.sequel.infrastructure.thrift.OfflineThriftService;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 import org.broadinstitute.sequel.integration.DeploymentBuilder;
@@ -21,6 +19,7 @@ import javax.enterprise.inject.Alternative;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
 
@@ -142,6 +141,11 @@ public class IlluminaRunQueryTest extends Arquillian {
 
         @Override
         public String fetchUserIdForBadgeId(String badgeId) {
+            return null;
+        }
+
+        @Override
+        public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode) {
             return null;
         }
 

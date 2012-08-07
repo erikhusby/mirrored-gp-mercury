@@ -1,17 +1,23 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
+import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.apache.commons.logging.Log;
+import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
+import org.easymock.IExpectationSetters;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
+import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.easymock.EasyMock.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -22,17 +28,29 @@ import static org.hamcrest.Matchers.*;
  *
  * // TODO: consider moving these into a LimsQueryResource integration test instead
  *
+ * This test class now has a mix of integration and unit tests using mocks. I'm
+ * thinking that unit tests are fine at this level because I'm just testing how
+ * LiveThriftService handles exceptions. I think that perhaps
+ * LimsQueryResourceTest provides enough integration testing for this, but I'm
+ * still undecided, which is why I haven't yet standardized these tests one way
+ * or the other.
+ *
  * @author breilly
  */
+@Test(singleThreaded = true)
 public class LiveThriftServiceTest {
 
     private LiveThriftService thriftService;
+    private ThriftConnection mockThriftConnection;
     private Log mockLog;
+    private LIMQueries.Client mockClient;
 
-    @BeforeMethod
+    @BeforeMethod(groups = {DATABASE_FREE, EXTERNAL_INTEGRATION})
     public void setUp() throws Exception {
         mockLog = createMock(Log.class);
         thriftService = new LiveThriftService(new ThriftConnection(ThriftConfigProducer.produce(Deployment.DEV)), mockLog);
+        mockThriftConnection = createMock(ThriftConnection.class);
+        mockClient = createMock(LIMQueries.Client.class);
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)
@@ -112,5 +130,62 @@ public class LiveThriftServiceTest {
         assertThat(caught.getMessage(), equalTo("Designation not found for flowcell barcode: invalid_flowcell"));
 
         verify(mockLog);
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchParentRackContentsForPlate() throws Exception {
+        expectThriftCall();
+        Map<String, Boolean> expected = new HashMap<String, Boolean>();
+        expected.put("0001", true);
+        expected.put("0002", false);
+        expect(mockClient.fetchParentRackContentsForPlate("123456")).andReturn(expected);
+
+        replayAll();
+
+        LiveThriftService thriftService = new LiveThriftService(mockThriftConnection, mockLog);
+        Map<String, Boolean> result = thriftService.fetchParentRackContentsForPlate("123456");
+        assertThat(result, equalTo(expected));
+
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchParentRackContentsForPlateNotFound() throws Exception {
+        expectThriftCall();
+        expect(mockClient.fetchParentRackContentsForPlate("123456")).andThrow(new TException("not found"));
+        mockLog.error(eq("Thrift error. Probably couldn't find the plate for barcode '123456': not found"), isA(TException.class));
+
+        replayAll();
+
+        LiveThriftService thriftService = new LiveThriftService(mockThriftConnection, mockLog);
+        Exception caught = null;
+        try {
+            thriftService.fetchParentRackContentsForPlate("123456");
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), equalTo("Plate not found for barcode: 123456"));
+
+        verifyAll();
+    }
+
+    private IExpectationSetters<Object> expectThriftCall() {
+        IExpectationSetters<Object> expect;
+        expect = expect(mockThriftConnection.call(isA(ThriftConnection.Call.class))).andDelegateTo(new ThriftConnection(new ThriftConfig("none", 0)) {
+            @Override
+            public <T> T call(Call<T> call) {
+                return call.call(mockClient);
+            }
+        });
+        return expect;
+    }
+
+    private void replayAll() {
+        replay(mockThriftConnection, mockClient, mockLog);
+    }
+
+    private void verifyAll() {
+        verify(mockThriftConnection, mockClient, mockLog);
     }
 }

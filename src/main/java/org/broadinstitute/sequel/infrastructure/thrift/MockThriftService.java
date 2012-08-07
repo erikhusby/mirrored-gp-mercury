@@ -7,6 +7,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Alternative
 public class MockThriftService implements ThriftService {
@@ -48,6 +49,11 @@ public class MockThriftService implements ThriftService {
 
     @Override
     public String fetchUserIdForBadgeId(String badgeId) {
+        return null;
+    }
+
+    @Override
+    public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode) {
         return null;
     }
 
