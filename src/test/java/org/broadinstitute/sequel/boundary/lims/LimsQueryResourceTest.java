@@ -189,8 +189,4 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("Tube or quant not found for barcode: 000001859062, quant type: Catch Pico"));
     }
-
-    private String getResponseContent(UniformInterfaceException caught) {
-        return caught.getResponse().getEntity(String.class);
-    }
 }

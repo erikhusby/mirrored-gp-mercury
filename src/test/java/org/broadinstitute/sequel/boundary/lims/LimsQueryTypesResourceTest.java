@@ -9,7 +9,6 @@ import org.testng.annotations.Test;
 
 import java.net.URL;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -112,41 +111,15 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testThrowRuntimeException(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "throwRuntimeException");
-
-        String error = null;
-        try {
-            resource.queryParam("message", "testThrowRuntimeException").accept(APPLICATION_JSON_TYPE).get(String.class);
-        } catch (UniformInterfaceException e) {
-            error = e.getResponse().getEntity(String.class);
-        }
-        assertThat(error, equalTo("testThrowRuntimeException"));
+        UniformInterfaceException caught = getWithError(resource.queryParam("message", "testThrowRuntimeException"));
+        assertErrorResponse(caught, 500, "testThrowRuntimeException");
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
-    public void testThrowTException(@ArquillianResource URL baseUrl) {
-        WebResource resource = makeWebResource(baseUrl, "throwTException");
-
-        String error = null;
-        try {
-            resource.queryParam("message", "testThrowTException").accept(APPLICATION_JSON_TYPE).get(String.class);
-        } catch (UniformInterfaceException e) {
-            error = e.getResponse().getEntity(String.class);
-        }
-        assertThat(error, equalTo("testThrowTException"));
-    }
-
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
-    @RunAsClient
-    public void testThrowTZIMSException(@ArquillianResource URL baseUrl) {
-        WebResource resource = makeWebResource(baseUrl, "throwTZIMSException");
-
-        String error = null;
-        try {
-            resource.queryParam("details", "testThrowTZIMSException").accept(APPLICATION_JSON_TYPE).get(String.class);
-        } catch (UniformInterfaceException e) {
-            error = e.getResponse().getEntity(String.class);
-        }
-        assertThat(error, equalTo("testThrowTZIMSException"));
+    public void testThrowApplicationException(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "throwApplicationException");
+        UniformInterfaceException caught = getWithError(resource.queryParam("message", "testThrowApplicationException"));
+        assertErrorResponse(caught, 500, "testThrowApplicationException");
     }
 }
