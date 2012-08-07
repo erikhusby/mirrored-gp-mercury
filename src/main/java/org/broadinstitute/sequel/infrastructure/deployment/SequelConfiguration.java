@@ -239,30 +239,35 @@ public class SequelConfiguration {
     }
 
 
-
     public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
 
         if (sequelConnectionsMap.size() == 0) {
 
-            InputStream is;
+            synchronized (this) {
 
-            is = getClass().getResourceAsStream(SEQUEL_CONFIG);
+                if (sequelConnectionsMap.size() == 0) {
 
-            if ( is ==  null )
-                throw new RuntimeException("Cannot find global config file '" + SEQUEL_CONFIG + "'");
+                    InputStream is;
 
-            Yaml yaml = new Yaml();
-            final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
+                    is = getClass().getResourceAsStream(SEQUEL_CONFIG);
 
-            // take local overrides if any
-            Map<String, Map> localConfigDoc = null;
-            is = getClass().getResourceAsStream(SEQUEL_CONFIG_LOCAL);
+                    if (is == null)
+                        throw new RuntimeException("Cannot find global config file '" + SEQUEL_CONFIG + "'");
 
-            if ( is != null )
-                localConfigDoc = (Map<String, Map>) yaml.load(is);
+                    Yaml yaml = new Yaml();
+                    final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
+
+                    // take local overrides if any
+                    Map<String, Map> localConfigDoc = null;
+                    is = getClass().getResourceAsStream(SEQUEL_CONFIG_LOCAL);
+
+                    if (is != null)
+                        localConfigDoc = (Map<String, Map>) yaml.load(is);
 
 
-            load(globalConfigDoc, localConfigDoc);
+                    load(globalConfigDoc, localConfigDoc);
+                }
+            }
 
         }
 
