@@ -329,10 +329,18 @@ public abstract class LabVessel implements Starter {
         labEvent.setInPlaceLabVessel(this);
     }
 
+    public abstract CONTAINER_TYPE getType();
+
     public enum CONTAINER_TYPE {
         STATIC_PLATE,
+        PLATE_WELL,
+        RACK_OF_TUBES,
         TUBE,
-        RACK_OF_TUBES
+        FLOWCELL,
+        STRIP_TUBE,
+        STRIP_TUBE_WELL,
+        PACBIO_PLATE,
+        ILLUMINA_RUN_CHAMBER
     }
 
     /**

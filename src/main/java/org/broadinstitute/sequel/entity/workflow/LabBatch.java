@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.workflow;
 
 import org.broadinstitute.sequel.entity.OrmUtil;
+import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
@@ -15,6 +16,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -52,6 +54,9 @@ public class LabBatch {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private ProjectPlan projectPlan;
+
+    @OneToMany(mappedBy = "labBatch")
+    private Set<GenericLabEvent> labEvents = new HashSet<GenericLabEvent>();
 
     /**
      * Create a new batch with the given name
@@ -136,4 +141,11 @@ public class LabBatch {
         throw new RuntimeException("I haven't been written yet.");
     }
 
+    public Set<GenericLabEvent> getLabEvents() {
+        return labEvents;
+    }
+
+    public void setLabEvents(Set<GenericLabEvent> labEvents) {
+        this.labEvents = labEvents;
+    }
 }

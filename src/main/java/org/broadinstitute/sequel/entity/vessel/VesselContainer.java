@@ -419,7 +419,7 @@ public class VesselContainer<T extends LabVessel> {
         return this.mapPositionToVessel.keySet();
     }
 
-    Map<VesselPosition, T> getMapPositionToVessel() {
+    public Map<VesselPosition, T> getMapPositionToVessel() {
         return (Map<VesselPosition, T>) mapPositionToVessel;
     }
 

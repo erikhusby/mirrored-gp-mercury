@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 
@@ -56,6 +57,11 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     @Override
     public Set<LabEvent> getTransfersTo() {
         return vesselContainer.getTransfersTo();
+    }
+
+    @Override
+    public CONTAINER_TYPE getType() {
+        return CONTAINER_TYPE.FLOWCELL;
     }
 
     @Override

@@ -4,6 +4,8 @@ import junit.framework.Assert;
 import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.sequel.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.sequel.boundary.labevent.LabEventBean;
+import org.broadinstitute.sequel.boundary.labevent.LabEventResource;
 import org.broadinstitute.sequel.boundary.vessel.LabBatchBean;
 import org.broadinstitute.sequel.boundary.vessel.LabBatchResource;
 import org.broadinstitute.sequel.boundary.vessel.TubeBean;
@@ -54,9 +56,14 @@ public class SamplesPicoEndToEndTest {
             mapBarcodeToTube.put(aliquotForStarter.getLabel(), (TwoDBarcodedTube) aliquotForStarter);
         }
 
+        LabBatch labBatch = projectPlan.getProject().getJiraTicket().getLabBatch();
         SamplesPicoMessageBuilder samplesPicoMessageBuilder = new SamplesPicoMessageBuilder(mapBarcodeToTube,
-                projectPlan.getProject().getJiraTicket().getLabBatch());
+                labBatch);
         samplesPicoMessageBuilder.buildEntities();
+
+        LabEventResource labEventResource = new LabEventResource();
+        List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(labBatch.getLabEvents());
+        Assert.assertEquals("Wrong number of messages", 10, labEventBeans.size());
         // event web service, by batch
         // transfer visualizer?
         // datamart?
@@ -135,6 +142,7 @@ public class SamplesPicoEndToEndTest {
                     "PicoMicroflourTransfer", picoDilutionPlateBarcode, picoMicroflourPlateBarcode);
             picoMicroflourTransferJaxb.getSourcePlate().setSection(SBSSection.ALL384.getSectionName());
             picoMicroflourTransferJaxb.getPlate().setSection(SBSSection.ALL384.getSectionName());
+            // todo jmt batch ID is set only for the first message?
             picoMicroflourTransferJaxb.setBatchId(labBatch.getBatchName());
 
             BettaLIMSMessage microflourTransferMessage = new BettaLIMSMessage();

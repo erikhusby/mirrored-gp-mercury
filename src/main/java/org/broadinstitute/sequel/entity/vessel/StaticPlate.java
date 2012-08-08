@@ -29,6 +29,10 @@ import java.util.Set;
 @Entity
 public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell>, Serializable {
 
+    public PlateType getPlateType() {
+        return plateType;
+    }
+
     public enum PlateType {
         Eppendorf96("Eppendorf96"),
         CovarisRack("CovarisRack"),
@@ -83,6 +87,11 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
     @Override
     public Set<LabEvent> getTransfersTo() {
         return vesselContainer.getTransfersTo();
+    }
+
+    @Override
+    public CONTAINER_TYPE getType() {
+        return CONTAINER_TYPE.STATIC_PLATE;
     }
 
     @Override

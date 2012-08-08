@@ -97,6 +97,11 @@ public class TwoDBarcodedTube extends LabVessel {
     }
 
     @Override
+    public CONTAINER_TYPE getType() {
+        return CONTAINER_TYPE.TUBE;
+    }
+
+    @Override
     public boolean isProgeny(LabVessel ancestor) {
         throw new RuntimeException("I haven't been written yet.");
     }
