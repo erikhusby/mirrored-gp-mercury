@@ -23,16 +23,6 @@ public class DeploymentBuilder {
 
     private static final File SEQUEL_CONFIG_YAML = new File("src/main/resources/sequel-config.yaml");
 
-    public static WebArchive buildSequelWar() {
-        WebArchive war = ShrinkWrap.create(ExplodedImporter.class, SEQUEL_WAR)
-                .importDirectory("src/main/webapp")
-                .as(WebArchive.class)
-                .addPackages(true, "org.broadinstitute.sequel")
-                .addAsWebInfResource(SEQUEL_CONFIG_YAML, "sequel-config.yaml")
-                .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=STUBBY"), "classes/jndi.properties");
-        war = addWarDependencies(war);
-        return war;
-    }
 
     /**
      * In the rare case where you want an in-container test to run as if it's really
@@ -51,6 +41,13 @@ public class DeploymentBuilder {
         war = addWarDependencies(war);
         return war;
     }
+
+
+    public static WebArchive buildSequelWar() {
+
+        return buildSequelWar(Deployment.STUBBY);
+    }
+
 
     public static WebArchive buildSequelWar(String beansXml) {
         WebArchive war = ShrinkWrap.create(WebArchive.class, SEQUEL_WAR)
