@@ -50,17 +50,83 @@ public class SequelConfiguration {
 
     private static SequelConfiguration instance;
 
+    private class ExternalSystems {
 
-    // Map of system key ("bsp", "squid", "thrift") to a Map of external system Deployments (TEST, QA, PROD) to
+        // Map of system key ("bsp", "squid", "thrift") to a Map of external system Deployments (TEST, QA, PROD) to
+        // AbstractConfigs describing those deployments
+        private Map<String, Map<Deployment, AbstractConfig>> map =
+                new HashMap<String, Map<Deployment, AbstractConfig>>();
+
+
+        public void set(String systemKey, Deployment deployment, AbstractConfig config) {
+
+            if ( ! map.containsKey( systemKey ) )
+                map.put(systemKey, new HashMap<Deployment, AbstractConfig>());
+
+            map.get( systemKey ).put( deployment, config );
+        }
+
+
+        public AbstractConfig getConfig(String systemKey, Deployment deployment) {
+
+            if ( ! map.containsKey( systemKey) )
+                return null;
+
+            if ( ! map.get(systemKey).containsKey(deployment) )
+                return null;
+
+            return map.get( systemKey ).get( deployment );
+        }
+
+
+    }
+
+
+    private class SequelConnections {
+
+        // Map of system key ("bsp", "squid", "thrift") to a Map of *SequeL* Deployments to the corresponding external
+        // system Deployment
+        private Map<String, Map<Deployment, Deployment>> map =
+                new HashMap<String, Map<Deployment, Deployment>>();
+
+
+
+        public boolean isInitialized() {
+            return map.size() != 0;
+        }
+
+        public void set( String systemKey, Deployment sequelDeployment, Deployment externalDeployment ) {
+
+            if ( ! map.containsKey(systemKey) )
+                map.put(systemKey, new HashMap<Deployment, Deployment>());
+
+            map.get( systemKey ).put( sequelDeployment, externalDeployment );
+
+        }
+
+
+        public Deployment getExternalDeployment( String systemKey, Deployment sequelDeployment ) {
+
+            if ( ! map.containsKey(systemKey) )
+                return null;
+
+            if ( ! map.get( systemKey ).containsKey( sequelDeployment ))
+                return null;
+
+            return map.get( systemKey ).get( sequelDeployment );
+        }
+
+    }
+
+
+    // Map of system key ("bsp", "squid", "thrift") to external system Deployments (TEST, QA, PROD) to
     // AbstractConfigs describing those deployments
-    private Map<String, Map<Deployment, AbstractConfig>> externalSystemsMap =
-            new HashMap<String, Map<Deployment, AbstractConfig>>();
+    private ExternalSystems externalSystems = new ExternalSystems();
 
 
-    // Map of system key ("bsp", "squid", "thrift") to a Map of *SequeL* Deployments to the corresponding external
+    // Map of system key ("bsp", "squid", "thrift") to *SequeL* Deployments to the corresponding external
     // system Deployment
-    private Map<String, Map<Deployment, Deployment>> sequelConnectionsMap =
-            new HashMap<String, Map<Deployment, Deployment>>();
+    private SequelConnections sequelConnections = new SequelConnections();
 
 
 
@@ -111,12 +177,12 @@ public class SequelConfiguration {
             if ( "sequel".equals(systemKey) )
                 continue;
 
-            if ( getConfigClass(systemKey) == null )
+            final Class<? extends AbstractConfig> configClass = getConfigClass(systemKey);
+
+
+            if ( configClass == null )
                 throw new RuntimeException("Unrecognized top-level key: '" + systemKey +"'");
 
-
-
-            final Class<? extends AbstractConfig> configClass = getConfigClass(systemKey);
 
             // iterate the deployments for this external system
             for (Map.Entry<String, Map> deploymentEntry : ((Map<String, Map>) section.getValue()).entrySet()) {
@@ -129,24 +195,18 @@ public class SequelConfiguration {
 
                 Deployment deployment = Deployment.valueOf(deploymentString);
 
-                AbstractConfig config;
+                AbstractConfig config = externalSystems.getConfig( systemKey, deployment );
 
-                // Fish out an existing config if we've already defined one.  This is likely to be the case if we are
-                // processing local overrides
-                if ( externalSystemsMap.containsKey(systemKey) && externalSystemsMap.get(systemKey).containsKey(deployment))
-                    config = externalSystemsMap.get(systemKey).get(deployment);
-                else
-                    config  = newConfig(configClass);
+                if ( config == null )
+                    config = newConfig( configClass );
+                // else roll with the preexisting config
 
 
                 config.setExternalDeployment(deployment);
 
                 setPropertiesIntoConfig(deploymentEntry.getValue(), config);
 
-                if ( ! externalSystemsMap.containsKey(systemKey) )
-                    externalSystemsMap.put(systemKey, new HashMap<Deployment, AbstractConfig>());
-
-                externalSystemsMap.get(systemKey).put(deployment, config);
+                externalSystems.set(systemKey, deployment, config);
 
             }
 
@@ -184,8 +244,8 @@ public class SequelConfiguration {
 
             for (Map.Entry<String, String> systemsMapping : systemsMappings.entrySet()) {
 
-
                 String externalDeploymentString = systemsMapping.getValue();
+
                 // This must point to a known external deployment for this system
                 if ( Deployment.valueOf(externalDeploymentString) == null )
                     throw new RuntimeException("Unrecognized deployment '" + externalDeploymentString + "'");
@@ -195,13 +255,13 @@ public class SequelConfiguration {
 
                 String systemKey = systemsMapping.getKey();
 
-                if ( ! externalSystemsMap.containsKey(systemKey) )
+                final AbstractConfig config = externalSystems.getConfig(systemKey, externalDeployment);
+
+                if ( config == null )
                     throw new RuntimeException("Unrecognized external system in sequel connections: '" + systemKey + "'");
 
-                if ( ! sequelConnectionsMap.containsKey(systemKey) )
-                    sequelConnectionsMap.put(systemKey, new HashMap<Deployment, Deployment>());
 
-                sequelConnectionsMap.get(systemKey).put(sequelDeployment, externalDeployment);
+                sequelConnections.set(systemKey, sequelDeployment, externalDeployment);
 
             }
 
@@ -231,8 +291,8 @@ public class SequelConfiguration {
      * Intended solely for test code to clear out mappings
      */
     /* package */ void clear() {
-        externalSystemsMap.clear();
-        sequelConnectionsMap.clear();
+        externalSystems = new ExternalSystems();
+        sequelConnections = new SequelConnections();
     }
 
 
@@ -258,11 +318,11 @@ public class SequelConfiguration {
 
     public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
 
-        if (sequelConnectionsMap.size() == 0) {
+        if ( ! sequelConnections.isInitialized() ) {
 
             synchronized (this) {
 
-                if (sequelConnectionsMap.size() == 0) {
+                if ( ! sequelConnections.isInitialized() ) {
 
                     InputStream is;
 
@@ -291,11 +351,11 @@ public class SequelConfiguration {
         String systemKey = getConfigKey(clazz);
 
         // Find the external deployment for this system key and SequeL deployment
-        Deployment externalDeployment = sequelConnectionsMap.get(systemKey).get(deployment);
+        Deployment externalDeployment = sequelConnections.getExternalDeployment(systemKey, deployment);
 
 
         // Look up the config for this system
-        return externalSystemsMap.get(systemKey).get(externalDeployment);
+        return externalSystems.getConfig( systemKey, externalDeployment );
     }
 
 
