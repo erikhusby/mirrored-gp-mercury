@@ -83,7 +83,7 @@ public class PassServiceImpl extends SquidWebServiceClient<SquidTopicPortype> im
         if ( squidConfig == null ) {
 
             final Deployment deployment = deploymentProducer.produce();
-            squidConfig = SquidConfigProducer.produce(deployment);
+            squidConfig = SquidConfigProducer.getConfig(deployment);
         }
 
 
@@ -120,7 +120,7 @@ public class PassServiceImpl extends SquidWebServiceClient<SquidTopicPortype> im
      */
     public PassServiceImpl(Deployment deployment) {
 
-        squidConfig = SquidConfigProducer.produce(deployment);
+        squidConfig = SquidConfigProducer.getConfig(deployment);
 
     }
 

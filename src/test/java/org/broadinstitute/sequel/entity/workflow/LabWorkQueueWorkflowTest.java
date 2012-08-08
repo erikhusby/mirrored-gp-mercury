@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.workflow;
 
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
+import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
@@ -94,7 +95,17 @@ public class LabWorkQueueWorkflowTest {
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         final LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setPersonDAO(new PersonDAO());
+        labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
+            @Override
+            public Person getOperator(String userId) {
+                return new Person(userId);
+            }
+
+            @Override
+            public LabBatch getLabBatch(String labBatchName) {
+                return null;
+            }
+        });
         final LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO(labWorkQueue));
 
         String shearPlateBarcode = "ShearPlate";

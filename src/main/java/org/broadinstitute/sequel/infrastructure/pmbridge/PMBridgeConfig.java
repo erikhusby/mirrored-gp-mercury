@@ -1,21 +1,25 @@
 package org.broadinstitute.sequel.infrastructure.pmbridge;
 
 
+import org.broadinstitute.sequel.infrastructure.deployment.AbstractConfig;
+import org.broadinstitute.sequel.infrastructure.deployment.ConfigKey;
+
 import java.io.Serializable;
 
-public class PMBridgeConfig implements Serializable {
+@ConfigKey("pmbridge")
+public class PMBridgeConfig extends AbstractConfig implements Serializable {
 
 
-    private String baseUrl;
+    private String url;
 
-
-    public PMBridgeConfig(String baseUrl) {
-        this.baseUrl = baseUrl;
+    public PMBridgeConfig() {
     }
 
-
-    public String getBaseUrl() {
-        return baseUrl;
+    public String getUrl() {
+        return url;
     }
 
+    public void setUrl(String url) {
+        this.url = url;
+    }
 }

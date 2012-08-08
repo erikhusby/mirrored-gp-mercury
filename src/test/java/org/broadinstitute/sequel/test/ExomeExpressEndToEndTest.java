@@ -16,7 +16,6 @@ import org.broadinstitute.sequel.boundary.run.SolexaRunBean;
 import org.broadinstitute.sequel.boundary.squid.SequelLibrary;
 import org.broadinstitute.sequel.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.sequel.control.dao.bsp.BSPSampleFactory;
-import org.broadinstitute.sequel.control.dao.person.PersonDAO;
 import org.broadinstitute.sequel.control.labevent.LabEventFactory;
 import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.control.pass.PassBatchUtil;
@@ -26,6 +25,7 @@ import org.broadinstitute.sequel.control.zims.LibraryBeanFactory;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.sequel.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
+import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.project.*;
 import org.broadinstitute.sequel.entity.queue.AliquotParameters;
 import org.broadinstitute.sequel.entity.run.IlluminaSequencingRun;
@@ -254,7 +254,17 @@ public class ExomeExpressEndToEndTest {
             // (deck query for workflow)
             // deck sends message, check workflow
             LabEventFactory labEventFactory = new LabEventFactory();
-            labEventFactory.setPersonDAO(new PersonDAO());
+            labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
+                @Override
+                public Person getOperator(String userId) {
+                    return new Person(userId);
+                }
+
+                @Override
+                public LabBatch getLabBatch(String labBatchName) {
+                    return null;
+                }
+            });
             LabEventHandler labEventHandler = new LabEventHandler();
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
