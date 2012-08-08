@@ -1,12 +1,13 @@
 package org.broadinstitute.sequel.infrastructure.thrift;
 
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
+import org.broadinstitute.sequel.infrastructure.pmbridge.AbstractConfigProducer;
 
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-public class ThriftConfigProducer {
+public class ThriftConfigProducer extends AbstractConfigProducer<ThriftConfig> {
 
 
     @Inject
@@ -21,27 +22,8 @@ public class ThriftConfigProducer {
     }
 
 
-    public static ThriftConfig produce( Deployment deployment ) {
-
-        switch ( deployment ) {
-            // not sure if DEV and TEST should use the QA system?
-            case DEV:
-            case TEST:
-            case QA:
-                return new ThriftConfig(
-                    "seqtest04", 9090
-                );
-
-            case PROD:
-
-                return new ThriftConfig(
-                    "seqlims", 9090
-                );
-
-            default:
-
-                throw new RuntimeException( "Don't know how to make ThriftConfig for deployment " + deployment );
-        }
-
+    public static ThriftConfig getConfig( Deployment deployment ) {
+        return new ThriftConfigProducer().produce( deployment );
     }
+
 }

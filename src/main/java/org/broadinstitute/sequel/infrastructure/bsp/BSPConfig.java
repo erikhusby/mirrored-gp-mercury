@@ -1,10 +1,14 @@
 package org.broadinstitute.sequel.infrastructure.bsp;
 
 import org.broadinstitute.sequel.control.LoginAndPassword;
+import org.broadinstitute.sequel.infrastructure.deployment.AbstractConfig;
+import org.broadinstitute.sequel.infrastructure.deployment.ConfigKey;
 
 import java.io.Serializable;
 
-public class BSPConfig implements LoginAndPassword, Serializable {
+
+@ConfigKey("bsp")
+public class BSPConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 
 
     private String login;
@@ -15,12 +19,8 @@ public class BSPConfig implements LoginAndPassword, Serializable {
 
     private int port;
 
-    public BSPConfig(String login, String password, String host, int port) {
-        this.login = login;
-        this.password = password;
-        this.host = host;
-        this.port = port;
-    }
+    public BSPConfig() {}
+
 
     public String getLogin() {
         return login;
@@ -36,5 +36,21 @@ public class BSPConfig implements LoginAndPassword, Serializable {
 
     public int getPort() {
         return port;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 }

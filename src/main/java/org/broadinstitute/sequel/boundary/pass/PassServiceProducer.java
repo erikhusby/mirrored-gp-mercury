@@ -60,7 +60,7 @@ public class PassServiceProducer {
             return new PassServiceStub();
 
         final SquidConfig squidConfig =
-                SquidConfigProducer.produce(deployment);
+                SquidConfigProducer.getConfig(deployment);
 
         return new PassServiceImpl(squidConfig);
     }

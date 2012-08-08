@@ -25,6 +25,6 @@ public abstract class SquidWebServiceClient<T> extends AbstractWebServiceClient<
 
     @Override
     protected String getBaseUrl() {
-        return getSquidConfig().getBaseUrl();
+        return getSquidConfig().getUrl();
     }
 }

@@ -13,6 +13,10 @@
         </configuration>
     </container>
 
+    <extension qualifier="selenium-server">
+       <property name="skip">true</property>
+    </extension>
+
     <!--  Uncomment to have test archives exported to the file system for inspection  -->
     <!--
     <engine>

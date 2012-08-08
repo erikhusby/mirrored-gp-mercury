@@ -44,4 +44,12 @@
             <xsd:element name="referenceSequence" type="xsd:string"/>
         </xsd:sequence>
     </xsd:complexType>
+
+    <xsd:complexType name="poolGroupType">
+        <xsd:sequence>
+            <xsd:element name="name" type="xsd:string"/>
+            <xsd:element name="tubeBarcodes" type="xsd:string" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
 </xsd:schema>
