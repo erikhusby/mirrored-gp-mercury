@@ -16,11 +16,24 @@ public class JiraServiceProducer {
     private Deployment deployment;
 
 
+    private static JiraService testInstance;
+
+
     public static JiraService testInstance() {
 
-        JiraConfig jiraConfig = JiraConfigProducer.getConfig( Deployment.TEST );
+        if (testInstance == null)
 
-        return new JiraServiceImpl( jiraConfig );
+            synchronized (JiraService.class) {
+
+                if (testInstance == null) {
+
+                    JiraConfig jiraConfig = JiraConfigProducer.getConfig(Deployment.TEST);
+
+                    testInstance = new JiraServiceImpl(jiraConfig);
+                }
+            }
+
+        return testInstance;
 
     }
 
