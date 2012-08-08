@@ -390,6 +390,7 @@
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-surefire-plugin</artifactId>
                             <configuration>
+                                <excludedGroups>UI</excludedGroups>
                                 <runOrder>failedFirst</runOrder>
                                 <parallel>methods</parallel>
                                 <threadCount>10</threadCount>
@@ -399,6 +400,20 @@
                 </build>
             </profile>
 
+            <profile>
+                <id>Tests.UI</id>
+                <build>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <groups>UI,arquillian</groups>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </build>
+            </profile>
         <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
             <id>JavaEE</id>
@@ -1390,6 +1405,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <!--<excludedGroups>UI</excludedGroups>-->
 <!--
                     <includes>
                         <include>**/org/broadinstitute/sequel/test/**/*Test.java</include>

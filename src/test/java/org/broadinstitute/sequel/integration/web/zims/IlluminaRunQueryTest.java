@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.integration.web.zims;
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.infrastructure.thrift.OfflineThriftService;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 import org.broadinstitute.sequel.integration.DeploymentBuilder;
@@ -42,7 +43,7 @@ public class IlluminaRunQueryTest extends Arquillian {
 
     private IlluminaRunQueryPage page;
 
-    @BeforeMethod
+    @BeforeMethod(groups = TestGroups.UI)
     protected void setUp() throws Exception {
         if (deploymentUrl == null) {
             deploymentUrl = new URL("http://localhost:8080/");
@@ -50,7 +51,7 @@ public class IlluminaRunQueryTest extends Arquillian {
         page = new IlluminaRunQueryPage(driver, deploymentUrl);
     }
 
-//    @Test
+    @Test(groups = TestGroups.UI)
     public void testLoadQueryFormWebDriver() throws InterruptedException {
         page.get();
 
