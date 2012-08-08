@@ -11,6 +11,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
+import java.io.File;
 import java.util.Collection;
 
 /**
@@ -20,11 +21,14 @@ public class DeploymentBuilder {
 
     private static final String SEQUEL_WAR = "SequeL-Arquillian.war";
 
+    private static final File SEQUEL_CONFIG_YAML = new File("src/main/resources/sequel-config.yaml");
+
     public static WebArchive buildSequelWar() {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, SEQUEL_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .addPackages(true, "org.broadinstitute.sequel")
+                .addAsWebInfResource(SEQUEL_CONFIG_YAML, "sequel-config.yaml")
                 .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=STUBBY"), "classes/jndi.properties");
         war = addWarDependencies(war);
         return war;
@@ -42,6 +46,7 @@ public class DeploymentBuilder {
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .addPackages(true, "org.broadinstitute.sequel")
+                .addAsWebInfResource(SEQUEL_CONFIG_YAML, "sequel-config.yaml")
                 .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
         war = addWarDependencies(war);
         return war;
