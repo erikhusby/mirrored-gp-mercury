@@ -662,6 +662,12 @@
                     <testResource>
                         <directory>src/test/resources-dev</directory>
                     </testResource>
+                    <testResource>
+                        <directory>src/main/webapp/WEB-INF/classes</directory>
+                        <includes>
+                            <include>sequel-config.yaml</include>
+                        </includes>
+                    </testResource>
                 </testResources>
             </build>
         </profile>
@@ -675,6 +681,12 @@
                     <testResource>
                         <directory>src/test/resources-build</directory>
                         <filtering>true</filtering>
+                    </testResource>
+                    <testResource>
+                        <directory>src/main/webapp/WEB-INF/classes</directory>
+                        <includes>
+                            <include>sequel-config.yaml</include>
+                        </includes>
                     </testResource>
                 </testResources>
 	    </build>
@@ -1531,6 +1543,19 @@
             </plugin>
 
         </plugins>
+
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>src/main/webapp/WEB-INF/classes</directory>
+                <includes>
+                    <include>sequel-config.yaml</include>
+                </includes>
+            </testResource>
+        </testResources>
+
 
     </build>
 
