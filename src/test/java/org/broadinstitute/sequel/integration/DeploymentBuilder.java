@@ -11,7 +11,6 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
-import java.io.File;
 import java.util.Collection;
 
 /**
@@ -21,13 +20,10 @@ public class DeploymentBuilder {
 
     private static final String SEQUEL_WAR = "SequeL-Arquillian.war";
 
-    private static final File SEQUEL_CONFIG_YAML = new File("src/main/resources/sequel-config.yaml");
-
-
     /**
-     * In the rare case where you want an in-container test to run as if it's really
-     * in another environment (for instance, to isolate a production bug), use
-     * this method.
+     * Called by default {@link #buildSequelWar()}, and also useful explicitly in the rare case where you want an
+     * in-container test to run as if it's really in another environment (for instance, to isolate a production bug).
+     *
      * @param deployment
      * @return
      */
@@ -36,7 +32,6 @@ public class DeploymentBuilder {
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .addPackages(true, "org.broadinstitute.sequel")
-                .addAsWebInfResource(SEQUEL_CONFIG_YAML, "sequel-config.yaml")
                 .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
         war = addWarDependencies(war);
         return war;
