@@ -1,10 +1,13 @@
 package org.broadinstitute.sequel.infrastructure.jira;
 
 import org.broadinstitute.sequel.control.LoginAndPassword;
+import org.broadinstitute.sequel.infrastructure.deployment.AbstractConfig;
+import org.broadinstitute.sequel.infrastructure.deployment.ConfigKey;
 
 import java.io.Serializable;
 
-public class JiraConfig implements LoginAndPassword, Serializable {
+@ConfigKey("jira")
+public class JiraConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 
     private String host;
 
@@ -15,12 +18,8 @@ public class JiraConfig implements LoginAndPassword, Serializable {
     private String password;
 
 
-    public JiraConfig(String host, int port, String login, String password) {
-        this.host = host;
-        this.port = port;
-        this.login = login;
-        this.password = password;
-    }
+    public JiraConfig() {}
+
 
     public String getHost() {
         return host;
@@ -36,5 +35,21 @@ public class JiraConfig implements LoginAndPassword, Serializable {
 
     public String getPassword() {
         return password;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

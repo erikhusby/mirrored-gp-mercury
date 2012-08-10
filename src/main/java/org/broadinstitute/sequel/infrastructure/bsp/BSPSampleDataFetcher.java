@@ -69,30 +69,63 @@ public class BSPSampleDataFetcher {
             BSPSampleDTO bspDTO = toDTO(result);
             String sampleName = bspDTO.getStockSample();
 
-            if (sampleName.equals(bspDTO.getStockSample()) || sampleName.equals(bspDTO.getRootSample())) {
-                sampleNames.remove(sampleName);
-                sampleNameToDTO.put(sampleName,bspDTO);
-            }
-            else {
-                throw new RuntimeException("Can't map bsp sample " + bspDTO.getStockSample() + " any of the " + sampleNames.size() + " queried samples");
+            if (sampleName != null) {
+                if (sampleNames.contains(sampleName)) {
+                    if (sampleName.equals(bspDTO.getStockSample()) || sampleName.equals(bspDTO.getRootSample())) {
+                        sampleNames.remove(sampleName);
+                        sampleNameToDTO.put(sampleName,bspDTO);
+                    }
+                    else {
+                        throw new RuntimeException("Can't map bsp sample " + bspDTO.getStockSample() + " any of the " + sampleNames.size() + " queried samples");
+                    }
+                }
             }
         }
         return sampleNameToDTO;
     }
 
     private BSPSampleDTO toDTO(String[] bspColumns) {
-        String patientId = bspColumns[0];
-        String rootSample = bspColumns[1];
-        String stockSample = bspColumns[2];
-        String collaboratorSampleId = bspColumns[3];
-        String collection = bspColumns[4];
-        String volume = bspColumns[5];
-        String concentration = bspColumns[6];
-        String organism = bspColumns[7];
-        String sampleLsid = bspColumns[8];
+        String patientId = null;
+        String rootSample = null;
+        String stockSample = null;
+        String collaboratorSampleId = null;
+        String collection = null;
+        String volume = null;
+        String concentration = null;
+        String organism = null;
+        String sampleLsid = null;
+
+        if (bspColumns.length > 0) {
+            patientId = bspColumns[0];
+        }
+        if (bspColumns.length > 1) {
+            rootSample = bspColumns[1];
+        }
+        if (bspColumns.length > 2) {
+            stockSample = bspColumns[2];
+        }
+        if (bspColumns.length > 3) {
+            collaboratorSampleId = bspColumns[3];
+        }
+        if (bspColumns.length > 4) {
+            collection = bspColumns[4];
+        }
+        if (bspColumns.length > 4) {
+            volume = bspColumns[5];
+        }
+        if (bspColumns.length > 5) {
+            concentration = bspColumns[6];
+        }
+        if (bspColumns.length > 6) {
+            organism = bspColumns[7];
+        }
+        if (bspColumns.length > 7) {
+            sampleLsid = bspColumns[8];
+        }
         /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
 
         return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,volume,concentration, sampleLsid);
+
     }
 
     private List<String[]> getBSPResponse(Collection<String> sampleNames) {

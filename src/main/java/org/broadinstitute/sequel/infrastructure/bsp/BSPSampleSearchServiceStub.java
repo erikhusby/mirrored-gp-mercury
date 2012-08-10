@@ -13,7 +13,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
         addToMap("SM-12CO4",new String[] {
                 "PT-2LK3",  // patient
                 "ROOT", // root
-                "STOCK", // stock
+                "SM-12CO4", // stock
                 "CollaboratorSampleX", // collaborator sample id
                 "Hungarian Goulash", // collection
                 "1.3",  // volume
@@ -24,7 +24,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
         addToMap("SM-1P3WY",new String[] {
                 "PT-2LK3",  // patient
                 "ROOT", // root
-                "STOCK", // stock
+                "SM-1P3WY", // stock
                 "CollaboratorSampleX", // collaborator sample id
                 "Hungarian Goulash", // collection
                 "1.3",  // volume
@@ -35,7 +35,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
         addToMap("SM-1P3XN",new String[] {
                 "PT-2LK3",  // patient
                 "ROOT", // root
-                "STOCK", // stock
+                "SM-1P3XN", // stock
                 "CollaboratorSampleX", // collaborator sample id
                 "Hungarian Goulash", // collection
                 "1.3",  // volume

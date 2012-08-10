@@ -2,24 +2,24 @@ package org.broadinstitute.sequel.infrastructure.quote;
 
 
 import org.broadinstitute.sequel.control.LoginAndPassword;
+import org.broadinstitute.sequel.infrastructure.deployment.AbstractConfig;
+import org.broadinstitute.sequel.infrastructure.deployment.ConfigKey;
 
 import java.io.Serializable;
 
-public class QuoteConfig implements LoginAndPassword, Serializable {
+@ConfigKey("quote")
+public class QuoteConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 
     private String login;
 
     private String password;
 
-    private String baseUrl;
+    private String url;
 
 
-    public QuoteConfig( String login, String password, String baseUrl ) {
-
-        this.login    = login;
-        this.password = password;
-        this.baseUrl  = baseUrl;
+    public QuoteConfig() {
     }
+
 
     @Override
     public String getLogin() {
@@ -33,9 +33,19 @@ public class QuoteConfig implements LoginAndPassword, Serializable {
     }
 
 
-    public String getBaseUrl() {
-        return baseUrl;
+    public String getUrl() {
+        return url;
     }
 
+    public void setLogin(String login) {
+        this.login = login;
+    }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
 }

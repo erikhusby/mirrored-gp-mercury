@@ -1,0 +1,161 @@
+
+# External system definitions.  These describe the various deployments of external systems with which SequeL might
+# integrate.
+
+
+bsp:
+
+    DEV:
+
+      login:    seqsystem
+      password: bspbsp
+      host:     gapdev2.broadinstitute.org
+      port:     8080
+
+
+    QA:
+
+      login:    seqsystem
+      password: bspbsp
+      host:     gapqa.broadinstitute.org
+      port:     8080
+
+
+    PROD:
+
+      login:    seqsystem
+      password: bspbsp
+      host:     bsp.broadinstitute.org
+      port:     80
+
+
+
+
+jira:
+
+    TEST:
+
+      login:    squid
+      password: squid
+      host:     vsquid00.broadinstitute.org
+      port:     8020
+
+    # not defining the PROD instance for now since we will not be referencing it yet
+
+
+
+
+pmbridge:
+
+    DEV:
+
+      url: http://pmbridgedev.broadinstitute.org/PMBridge
+
+
+    PROD:
+
+      url: http://pmbridge.broadinstitute.org/PMBridge
+
+
+
+
+quote:
+
+    QA:
+
+      login:    rnordin@broadinstitute.org
+      password: Squ1d_us3r
+      url:      http://quoteqa:8080
+
+    # also no PROD here
+
+
+
+squid:
+
+  DEV:
+
+    url: http://localhost:8080/squid
+
+
+  TEST:
+
+    url: http://prodinfobuild.broadinstitute.org:8020/squid
+
+
+  QA:
+
+    url: http://vsquidrc.broadinstitute.org:8000/squid
+
+
+  PROD:
+
+    url: http://squid-ui.broadinstitute.org:8000/squid
+
+
+
+
+thrift:
+
+    QA:
+
+      host: seqtest04
+      port: 9090
+
+
+    PROD:
+
+      host: seqlims
+      port: 9090
+
+
+
+
+
+# SequeL configuration, this describes how SequeL deployments are connected to external system deployments.
+
+
+
+sequel:
+
+    DEV:
+
+      bsp:      QA
+      jira:     TEST
+      pmbridge: DEV
+      quote:    QA
+      squid:    DEV
+      thrift:   QA
+
+
+    TEST:
+
+      bsp:      QA
+      jira:     TEST
+      pmbridge: DEV
+      quote:    QA
+      squid:    TEST
+      thrift:   QA
+
+
+    QA:
+
+      bsp:      QA
+      jira:     TEST
+      pmbridge: DEV
+      quote:    QA
+      squid:    QA
+      thrift:   QA
+
+
+    PROD:
+
+      bsp:      PROD
+      # not ready to talk to PROD jira yet, we should see an error if the live service asks to reference this
+      #jira:     PROD
+      pmbridge: PROD
+      # not ready for PROD quote yet either
+      #quote:    PROD
+      squid:    PROD
+      thrift:   PROD
+

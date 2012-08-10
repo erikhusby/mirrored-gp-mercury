@@ -8,6 +8,9 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.testng.annotations.Test;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -90,6 +93,38 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void testEchoStringArrayAsJson(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "echoStringArray");
+
+        List<String> values = Arrays.asList("value1", "value2");
+        String result = get(addQueryParam(resource, "s", values));
+
+        assertThat(result, equalTo(toJson(values)));
+    }
+
+    /**
+     * Test that a list of 384 12-digit strings (i.e., tube barcodes) can be
+     * sent to a service as query parameters. The alternative is falling back on
+     * POST instead of GET even though it may be a query service call.
+     *
+     * @param baseUrl
+     */
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testEchoStringArrayLargeAsJson(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "echoStringArray");
+
+        List<String> values = new ArrayList<String>();
+        for (int i = 0; i < 384; i++) {
+            values.add(String.format("%012d", i));
+        }
+        String result = get(addQueryParam(resource, "s", values));
+
+        assertThat(result, equalTo(toJson(values)));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testEchoFlowcellDesignationAsJson(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoFlowcellDesignation");
 
@@ -121,5 +156,26 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         WebResource resource = makeWebResource(baseUrl, "throwApplicationException");
         UniformInterfaceException caught = getWithError(resource.queryParam("message", "testThrowApplicationException"));
         assertErrorResponse(caught, 500, "testThrowApplicationException");
+    }
+
+    private WebResource addQueryParam(WebResource resource, String name, List<String> values) {
+        for (String value : values) {
+            resource = resource.queryParam(name, value);
+        }
+        return resource;
+    }
+
+    private String toJson(List<String> strings) {
+        StringBuilder sb = new StringBuilder("[");
+        boolean first = true;
+        for (String string : strings) {
+            if (!first) {
+                sb.append(",");
+            }
+            sb.append("\"").append(string).append("\"");
+            first = false;
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }

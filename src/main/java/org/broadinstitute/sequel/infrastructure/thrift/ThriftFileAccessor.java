@@ -27,9 +27,34 @@ public class ThriftFileAccessor {
      * @throws Exception
      */
     private static void writeRunFile() throws Exception {
-        ThriftConfig qaThrift = ThriftConfigProducer.produce( QA );
+        ThriftConfig qaThrift = ThriftConfigProducer.getConfig( QA );
         TZamboniRun runFetchedFromService = fetchRun(qaThrift);
         serializeRun(runFetchedFromService,RUN_FILE);
+    }
+
+    public static void main(String[] args) {
+        ThriftConfig qaThrift = ThriftConfigProducer.getConfig( QA );
+        try {
+            TZamboniRun updateRun = ThriftFileAccessor.fetchRun(qaThrift);
+
+            int laneCounter = 0;
+
+            for(TZamboniLane lane:updateRun.getLanes()) {
+                for(TZamboniLibrary lib:lane.getLibraries()) {
+                    lib.setFastTrack(laneCounter%3==0?true:false);
+                }
+                laneCounter++;
+            }
+
+            ThriftFileAccessor.serializeRun(updateRun,ThriftFileAccessor.RUN_FILE);
+
+        } catch (TZIMSException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (TException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
     }
 
     private static TZamboniRun fetchRun(ThriftConfig thriftConfig) throws TZIMSException, TException {

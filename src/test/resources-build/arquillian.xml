@@ -41,6 +41,10 @@
         </configuration>
     </container>
 
+    <extension qualifier="selenium-server">
+       <property name="skip">true</property>
+    </extension>
+
 <!-- for Arquillian-JBossAS7-Managed to download and manage its own AS instance
     <container qualifier="jbossas-7-managed" default="true">
         <configuration>

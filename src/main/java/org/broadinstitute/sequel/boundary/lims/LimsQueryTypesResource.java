@@ -12,6 +12,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,6 +41,13 @@ public class LimsQueryTypesResource {
     @Path("/echoString")
     public String echoString(@QueryParam("value") String value) {
         return value;
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/echoStringArray")
+    public List<String> echoStringArray(@QueryParam("s") List<String> strings) {
+        return strings;
     }
 
     @POST

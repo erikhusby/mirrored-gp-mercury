@@ -20,7 +20,7 @@ public class EverythingYouAskForYouGetAndItsHuman implements BSPSampleSearchServ
         final List<String[]> samples = new ArrayList<String[]>();
         for (String sampleID : sampleIDs) {
             samples.add(new String[] {
-                    "1","2","3","4","5","6","7","sapiens", "broadinstitute.org:bsp.prod.sample:1"
+                    "1","2",sampleID,"4","5","6","7","sapiens", "broadinstitute.org:bsp.prod.sample:1"
 
             });
         }

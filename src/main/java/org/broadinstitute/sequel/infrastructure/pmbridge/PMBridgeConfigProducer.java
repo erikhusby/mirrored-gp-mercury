@@ -7,19 +7,11 @@ import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-public class PMBridgeConfigProducer {
+public class PMBridgeConfigProducer extends AbstractConfigProducer<PMBridgeConfig> {
 
 
     @Inject
     private Deployment deployment;
-
-
-    // PMBridge has only a DEV and PROD instance
-
-    private static final String DEV_URL = "http://pmbridgedev.broadinstitute.org/PMBridge";
-
-    private static final String PROD_URL = "http://pmbridge.broadinstitute.org/PMBridge";
-
 
 
     @Produces
@@ -28,27 +20,9 @@ public class PMBridgeConfigProducer {
         return produce( deployment );
     }
 
-
-
-    public static PMBridgeConfig produce(Deployment deployment) {
-
-        switch ( deployment ) {
-
-            case DEV:
-            case TEST:
-            case QA:
-
-                return new PMBridgeConfig( DEV_URL );
-
-            case PROD:
-
-                return new PMBridgeConfig( PROD_URL );
-
-            default:
-
-                throw new RuntimeException( "Asked to make PMBridgeConnectionParameters for deployment " + deployment);
-        }
-
+    public static PMBridgeConfig getConfig( Deployment deployment ) {
+        return new PMBridgeConfigProducer().produce( deployment );
     }
+
 
 }
