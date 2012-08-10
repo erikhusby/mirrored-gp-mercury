@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -14,6 +15,7 @@ import javax.persistence.SequenceGenerator;
 import java.util.Collection;
 
 @Entity
+@Audited
 public abstract class LabWorkQueue<T extends LabWorkQueueParameters> {
 
     @Id

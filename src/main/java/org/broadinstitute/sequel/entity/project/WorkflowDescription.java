@@ -10,6 +10,7 @@ import org.broadinstitute.sequel.entity.workflow.WorkflowTransition;
 import org.broadinstitute.sequel.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.sequel.infrastructure.quote.PriceItem;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -26,6 +27,7 @@ import java.util.*;
  * and "WGS 7.2"
  */
 @Entity
+@Audited
 public class WorkflowDescription {
 
     @Id

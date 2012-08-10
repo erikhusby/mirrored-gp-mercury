@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.entity.vessel;
 
+import org.hibernate.envers.Audited;
+
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -40,6 +42,7 @@ import java.io.Serializable;
  * molecular state.
  */
 @Entity
+@Audited
 public class MolecularState implements Serializable {
 
     @Id

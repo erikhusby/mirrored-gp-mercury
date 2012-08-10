@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
+import org.hibernate.envers.Audited;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -58,6 +59,7 @@ import java.util.Set;
 // todo rename to "Event"--everything is an event, including
     // deltas in an aggregation in zamboni
 @Entity
+@Audited
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
 public abstract class LabEvent {
 
@@ -78,6 +80,7 @@ public abstract class LabEvent {
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> reagents = new HashSet<Reagent>();
 
+    // todo jmt a single transfer superclass that permits all section, position, vessel combinations
     /** for transfers using a tip box, e.g. Bravo */
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<SectionTransfer> sectionTransfers = new HashSet<SectionTransfer>();

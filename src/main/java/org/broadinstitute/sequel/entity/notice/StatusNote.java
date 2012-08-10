@@ -3,12 +3,14 @@ package org.broadinstitute.sequel.entity.notice;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.entity.labevent.LabEventName;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import java.util.Date;
 
 @Entity
+@Audited
 public class StatusNote {
 
     @Id

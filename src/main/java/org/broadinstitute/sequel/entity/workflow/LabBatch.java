@@ -7,6 +7,7 @@ import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -29,6 +30,7 @@ import java.util.Set;
  * in the lab.  A batch is basically an lc set.
  */
 @Entity
+@Audited
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
 public class LabBatch {
 
@@ -82,6 +84,22 @@ public class LabBatch {
             addStarter(starter);
         }
     }
+
+    public LabBatch(
+            String batchName,
+            Set<Starter> starters) {
+        if (batchName == null) {
+            throw new NullPointerException("BatchName cannot be null");
+        }
+        if (starters == null) {
+            throw new NullPointerException("starters cannot be null");
+        }
+        this.batchName = batchName;
+        for (Starter starter : starters) {
+            addStarter(starter);
+        }
+    }
+
 
     protected LabBatch() {
     }

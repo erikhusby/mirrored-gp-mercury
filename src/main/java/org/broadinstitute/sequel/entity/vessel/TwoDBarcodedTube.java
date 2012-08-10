@@ -10,6 +10,7 @@ import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
@@ -22,6 +23,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 @Entity
+@Audited
 @NamedQueries({
         @NamedQuery(
                 name = "TwoDBarcodedTube.fetchByBarcodes",

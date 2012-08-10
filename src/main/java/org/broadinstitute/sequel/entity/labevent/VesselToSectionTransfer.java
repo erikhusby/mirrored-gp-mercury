@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -19,6 +20,7 @@ import javax.persistence.SequenceGenerator;
  * Represents a transfer from a tube to all positions (wells) in a (plate) section
  */
 @Entity
+@Audited
 public class VesselToSectionTransfer {
     @Id
     @SequenceGenerator(name = "SEQ_VESSEL_TO_SECTION_TRANSFER", sequenceName = "SEQ_VESSEL_TO_SECTION_TRANSFER")

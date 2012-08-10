@@ -19,6 +19,8 @@ import org.broadinstitute.sequel.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.sequel.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
@@ -48,6 +50,7 @@ import java.util.logging.Logger;
 @Entity
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
 @BatchSize(size = 50)
+@Audited
 public abstract class LabVessel implements Starter {
 
     private final static Logger logger = Logger.getLogger(LabVessel.class.getName());
@@ -85,6 +88,7 @@ public abstract class LabVessel implements Starter {
 
     /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
      * avoid an unnecessary database round trip  */
+    @NotAudited
     @Formula("(select count(*) from lab_vessel_reagent_contents where lab_vessel_reagent_contents.lab_vessel = lab_vessel_id)")
     private Integer reagentContentsCount = 0;
 
@@ -93,6 +97,7 @@ public abstract class LabVessel implements Starter {
 
     /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
      * avoid an unnecessary database round trip  */
+    @NotAudited
     @Formula("(select count(*) from lab_vessel_containers where lab_vessel_containers.lab_vessel = lab_vessel_id)")
     private Integer containersCount = 0;
 
