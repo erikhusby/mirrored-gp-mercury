@@ -89,7 +89,7 @@ public class LimsQueryResource {
 
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    @Path("/findFlowcellDesignationByTaskName")
+    @Path("/findFlowcellDesignationByReagentBlockBarcode")
     public FlowcellDesignationType findFlowcellDesignationByReagentBlockBarcode(@QueryParam("reagentBlockBarcode") String reagentBlockBarcode) {
         // TODO: thrift proxy implementation
         return null;
