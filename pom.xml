@@ -997,13 +997,13 @@
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>4.1.1.Final</version>
+            <version>4.1.3.Final</version>
         </dependency>
 
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
-            <version>4.1.1.Final</version>
+            <version>4.1.3.Final</version>
             <exclusions>
                 <!-- using cglib-nodep instead -->
                 <exclusion>
@@ -1017,6 +1017,12 @@
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-jpamodelgen</artifactId>
             <version>1.2.0.Final</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-envers</artifactId>
+            <version>4.1.3.Final</version>
         </dependency>
 
         <dependency>
@@ -1345,45 +1351,98 @@
                 </configuration>
             </plugin>
 
+<!--
+This doesn't work, because HibernateToolTask depends on Hibernate 3
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>hibernate3-maven-plugin</artifactId>
-                <version>2.2</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
                 <executions>
                     <execution>
+                        <id>generate-create-schema-ddl</id>
                         <phase>process-classes</phase>
+                        <configuration>
+                            <target>
+
+                                <taskdef name="hibernatetool" classname="org.hibernate.tool.ant.EnversHibernateToolTask" classpathref="maven.plugin.classpath"/>
+                                <hibernatetool destdir="${project.basedir}/target/generated-sources/ddl/">
+                                    <jpaconfiguration persistenceunit="sequel_pu" />
+                                    <hbm2ddl
+                                            drop="true"
+                                            create="true"
+                                            export="false"
+                                            outputfilename="generated_schema.sql"
+                                            delimiter=";"
+                                            format="true"/>
+                                </hibernatetool>
+
+                            </target>
+                        </configuration>
                         <goals>
-                            <goal>hbm2ddl</goal>
+                            <goal>run</goal>
                         </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <components>
-                        <component>
-                            <name>hbm2ddl</name>
-                            <implementation>jpaconfiguration</implementation>
-                            <outputDirectory>
-                                target/generated-sources/ddl
-                            </outputDirectory>
-                        </component>
-                    </components>
-                    <componentProperties>
-                        <persistenceunit>sequel_pu</persistenceunit>
-                        <console>false</console>
-                        <format>true</format>
-                        <jdk5>true</jdk5>
-                        <propertyfile>
-                            src/main/resources/database.properties
-                        </propertyfile>
-                        <outputfilename>generated_schema.sql</outputfilename>
-                        <scan-classes>true</scan-classes>
-                        <drop>true</drop>
-                        <create>true</create>
-                        <export>false</export>
-                        <format>true</format>
-                        <namingstrategy>org.hibernate.cfg.ImprovedNamingStrategy</namingstrategy>
-                    </componentProperties>
-                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.hibernate</groupId>
+                        <artifactId>hibernate-entitymanager</artifactId>
+                        <version>4.1.3.Final</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.hibernate</groupId>
+                        <artifactId>hibernate-envers</artifactId>
+                        <version>4.1.3.Final</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.hibernate</groupId>
+                        <artifactId>hibernate-tools</artifactId>
+                        <version>3.2.4.GA</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.glassfish.main.extras</groupId>
+                        <artifactId>glassfish-embedded-all</artifactId>
+                        <version>3.1.2</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+-->
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.1.1</version>
+                <executions>
+                    <execution>
+                        <id>generate-create-schema-ddl</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>org.broadinstitute.sequel.infrastructure.jpa.EnversSchemaExport</mainClass>
+                            <arguments>
+                                <argument>--drop</argument>
+                                <argument>--create</argument>
+                                <argument>--delimiter=</argument>
+                                <argument>--output=${project.basedir}/target/generated-sources/ddl/generated_schema.sql</argument>
+                                <argument>sequel_pu</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.hibernate</groupId>
+                        <artifactId>hibernate-entitymanager</artifactId>
+                        <version>4.1.3.Final</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.glassfish.main.extras</groupId>
+                        <artifactId>glassfish-embedded-all</artifactId>
+                        <version>3.1.2</version>
+                    </dependency>
+                </dependencies>
             </plugin>
 
             <plugin>
