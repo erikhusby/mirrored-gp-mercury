@@ -9,6 +9,7 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import org.testng.annotations.BeforeMethod;
 
 import java.net.URL;
+import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
@@ -134,5 +135,26 @@ public abstract class RestServiceContainerTest extends ContainerTest {
 
     protected String getResponseContent(UniformInterfaceException caught) {
         return caught.getResponse().getEntity(String.class);
+    }
+
+    protected WebResource addQueryParam(WebResource resource, String name, List<String> values) {
+        for (String value : values) {
+            resource = resource.queryParam(name, value);
+        }
+        return resource;
+    }
+
+    protected String toJson(List<String> strings) {
+        StringBuilder sb = new StringBuilder("[");
+        boolean first = true;
+        for (String string : strings) {
+            if (!first) {
+                sb.append(",");
+            }
+            sb.append("\"").append(string).append("\"");
+            first = false;
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }
