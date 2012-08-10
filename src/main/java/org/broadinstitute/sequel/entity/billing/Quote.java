@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.billing;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -15,6 +16,7 @@ import java.util.Collection;
  * details.
  */
 @Entity
+@Audited
 public class Quote {
 
     @Transient

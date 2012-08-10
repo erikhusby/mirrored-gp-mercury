@@ -53,6 +53,11 @@ public class IlluminaRunChamber extends RunChamber {
     }
 
     @Override
+    public CONTAINER_TYPE getType() {
+        return CONTAINER_TYPE.ILLUMINA_RUN_CHAMBER;
+    }
+
+    @Override
     public Collection<LabEvent> getEvents() {
         throw new RuntimeException("I haven't been written yet.");
     }

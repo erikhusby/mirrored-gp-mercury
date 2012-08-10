@@ -1,11 +1,13 @@
 package org.broadinstitute.sequel.entity.workflow;
 
 import org.broadinstitute.sequel.entity.OrmUtil;
+import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
 import org.broadinstitute.sequel.entity.project.ProjectPlan;
 import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -15,11 +17,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -27,6 +31,7 @@ import java.util.Set;
  * in the lab.  A batch is basically an lc set.
  */
 @Entity
+@Audited
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
 public class LabBatch {
 
@@ -53,6 +58,10 @@ public class LabBatch {
     @ManyToOne(fetch = FetchType.LAZY)
     private ProjectPlan projectPlan;
 
+    // todo jmt get Hibernate to sort this
+    @OneToMany(mappedBy = "labBatch")
+    private Set<GenericLabEvent> labEvents = new LinkedHashSet<GenericLabEvent>();
+
     /**
      * Create a new batch with the given name
      * and set of {@link Starter starting materials}
@@ -77,6 +86,22 @@ public class LabBatch {
             addStarter(starter);
         }
     }
+
+    public LabBatch(
+            String batchName,
+            Set<Starter> starters) {
+        if (batchName == null) {
+            throw new NullPointerException("BatchName cannot be null");
+        }
+        if (starters == null) {
+            throw new NullPointerException("starters cannot be null");
+        }
+        this.batchName = batchName;
+        for (Starter starter : starters) {
+            addStarter(starter);
+        }
+    }
+
 
     protected LabBatch() {
     }
@@ -136,4 +161,11 @@ public class LabBatch {
         throw new RuntimeException("I haven't been written yet.");
     }
 
+    public Set<GenericLabEvent> getLabEvents() {
+        return labEvents;
+    }
+
+    public void setLabEvents(Set<GenericLabEvent> labEvents) {
+        this.labEvents = labEvents;
+    }
 }

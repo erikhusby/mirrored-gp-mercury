@@ -9,6 +9,7 @@ import org.broadinstitute.sequel.infrastructure.quote.Quote;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Entity
+@Audited
 public abstract class ProjectPlan {
 
     @Id

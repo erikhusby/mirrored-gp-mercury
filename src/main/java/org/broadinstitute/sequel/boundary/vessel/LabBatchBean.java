@@ -19,6 +19,8 @@ public class LabBatchBean {
         this.tubeBeans = tubeBeans;
     }
 
+    /** Used by JAXB */
+    @SuppressWarnings("UnusedDeclaration")
     public LabBatchBean() {
     }
 
@@ -26,6 +28,7 @@ public class LabBatchBean {
         return batchId;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setBatchId(String batchId) {
         this.batchId = batchId;
     }
@@ -34,6 +37,7 @@ public class LabBatchBean {
         return workflowName;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setWorkflowName(String workflowName) {
         this.workflowName = workflowName;
     }
@@ -42,6 +46,7 @@ public class LabBatchBean {
         return tubeBeans;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setTubeBeans(List<TubeBean> tubeBeans) {
         this.tubeBeans = tubeBeans;
     }

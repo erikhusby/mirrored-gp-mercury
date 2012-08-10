@@ -34,6 +34,11 @@ public class PacbioPlate extends RunCartridge {
     }
 
     @Override
+    public CONTAINER_TYPE getType() {
+        return CONTAINER_TYPE.PACBIO_PLATE;
+    }
+
+    @Override
     public Set<SampleInstance> getSampleInstances() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }

@@ -126,6 +126,9 @@ public class LibraryBean {
     @JsonProperty("customAmpliconSetNames")
     private Collection<String> customAmpliconSetNames = new ArrayList<String>();
 
+    @JsonProperty("fastTrack")
+    private Boolean isFastTrack;
+
     public LibraryBean() {}
 
     public LibraryBean(String library, String project, String initiative, Long workRequest,
@@ -136,7 +139,7 @@ public class LibraryBean {
             String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
             String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment,
             TZDevExperimentData devExperimentData, String gssrBarcode, Collection<String> gssrBarcodes,
-            String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation, Collection<String> customAmpliconSetNames) {
+            String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation, Collection<String> customAmpliconSetNames, Boolean fastTrack) {
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -176,6 +179,7 @@ public class LibraryBean {
         this.targetLaneCoverage = targetLaneCoverage;
         this.doAggregation = doAggregation;
         this.customAmpliconSetNames = customAmpliconSetNames;
+        this.isFastTrack = fastTrack;
     }
 
 
@@ -309,5 +313,9 @@ public class LibraryBean {
 
     public Collection<String> getCustomAmpliconSetNames() {
         return customAmpliconSetNames;
+    }
+
+    public Boolean getFastTrack() {
+        return isFastTrack;
     }
 }

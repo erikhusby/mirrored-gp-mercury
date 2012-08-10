@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.vessel;
 
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -13,6 +14,7 @@ import java.util.Set;
  * An aliquot made on behalf of a particular starter.
  */
 @Entity
+@Audited
 public class BSPSampleAuthorityTwoDTube extends TwoDBarcodedTube {
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)

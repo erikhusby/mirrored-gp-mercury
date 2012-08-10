@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -20,8 +21,10 @@ import javax.persistence.SequenceGenerator;
 
 /**
  * Represents a transfer between positions in two vessel containers
+ * todo jmt if the JAXB references multiple source racks, but transfers out of only one, there is no association between lab vessel and lab event.
  */
 @Entity
+@Audited
 public class CherryPickTransfer {
     @Id
     @SequenceGenerator(name = "SEQ_CHERRY_PICK_TRANSFER", sequenceName = "SEQ_CHERRY_PICK_TRANSFER")

@@ -775,6 +775,7 @@ public class LabEventFactory {
                 throw new RuntimeException("Failed to find lab batch " + stationEventType.getBatchId());
             }
             genericLabEvent.setLabBatch(labBatch);
+            labBatch.getLabEvents().add(genericLabEvent);
         }
         return genericLabEvent;
     }

@@ -16,6 +16,7 @@ import org.broadinstitute.sequel.entity.run.CapacityDimension;
 import org.broadinstitute.sequel.entity.run.SequencingResult;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.infrastructure.quote.QuotesCache;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
+@Audited
 public abstract class Project {
 
     @Id

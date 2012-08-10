@@ -8,6 +8,7 @@ import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.sequel.infrastructure.quote.QuoteService;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -39,6 +40,7 @@ import java.util.*;
  *
  */
 @Entity
+@Audited
 public class BasicProjectPlan extends ProjectPlan {
 
     protected String planName;
