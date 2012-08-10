@@ -6,9 +6,9 @@ import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.project.JiraTicket;
+import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.project.WorkflowDescription;
 import org.broadinstitute.sequel.entity.sample.BSPStartingSampleDAO;
-import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.jira.JiraServiceStub;
@@ -19,8 +19,10 @@ import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * For importing data from Squid and BSP, creates a batch of tubes
@@ -51,7 +53,6 @@ public class LabBatchResource {
         Map<String, BSPStartingSample> mapBarcodeToSample = bspStartingSampleDAO.findByNames(sampleBarcodes);
         BasicProjectPlan projectPlan = buildProjectPlan(labBatchBean, mapBarcodeToTube, mapBarcodeToSample);
 
-
         projectPlanDao.persist(projectPlan);
         projectPlanDao.flush();
         return "Batch persisted";
@@ -63,11 +64,20 @@ public class LabBatchResource {
             Map<String, BSPStartingSample> mapBarcodeToSample) {
         // todo jmt fix workflow
         JiraTicket jiraTicket = new JiraTicket(new JiraServiceStub(), labBatchBean.getBatchId(), labBatchBean.getBatchId());
+        BasicProject project = new BasicProject(labBatchBean.getBatchId(), jiraTicket);
         BasicProjectPlan projectPlan = new BasicProjectPlan(
-                new BasicProject(labBatchBean.getBatchId(), jiraTicket),
+                project,
                 labBatchBean.getBatchId(),
                 new WorkflowDescription(labBatchBean.getWorkflowName(), null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
+        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapBarcodeToSample, projectPlan);
+        jiraTicket.setLabBatch(labBatch);
+        return projectPlan;
+    }
+
+    public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+            Map<String, BSPStartingSample> mapBarcodeToSample, BasicProjectPlan projectPlan) {
+        Set<Starter> starters = new HashSet<Starter>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
             if (twoDBarcodedTube == null) {
@@ -75,20 +85,26 @@ public class LabBatchResource {
                 mapBarcodeToTube.put(tubeBean.getBarcode(), twoDBarcodedTube);
             }
 
-            BSPStartingSample bspStartingSample = mapBarcodeToSample.get(tubeBean.getSampleBarcode());
-            BSPSampleAuthorityTwoDTube bspSampleAuthorityTwoDTube;
-            if(bspStartingSample == null) {
-                bspStartingSample = new BSPStartingSample(tubeBean.getSampleBarcode() + ".aliquot", projectPlan);
-                mapBarcodeToSample.put(tubeBean.getSampleBarcode(), bspStartingSample);
-                bspSampleAuthorityTwoDTube = new BSPSampleAuthorityTwoDTube(bspStartingSample);
+            if (tubeBean.getSampleBarcode() == null) {
+                starters.add(twoDBarcodedTube);
             } else {
-                bspSampleAuthorityTwoDTube = bspStartingSample.getBspSampleAuthorityTwoDTube();
-            }
+                BSPStartingSample bspStartingSample = mapBarcodeToSample.get(tubeBean.getSampleBarcode());
+                if(bspStartingSample == null) {
+                    bspStartingSample = new BSPStartingSample(tubeBean.getSampleBarcode() + ".aliquot", projectPlan);
+                    mapBarcodeToSample.put(tubeBean.getSampleBarcode(), bspStartingSample);
+                }
 
-            projectPlan.addStarter(bspSampleAuthorityTwoDTube);
-            projectPlan.addAliquotForStarter(bspSampleAuthorityTwoDTube, twoDBarcodedTube);
+                starters.add(bspStartingSample);
+                projectPlan.addStarter(bspStartingSample);
+                projectPlan.addAliquotForStarter(bspStartingSample, twoDBarcodedTube);
+            }
         }
-        jiraTicket.setLabBatch(new LabBatch(projectPlan, labBatchBean.getBatchId(), projectPlan.getStarters()));
-        return projectPlan;
+        LabBatch labBatch;
+        if(projectPlan == null) {
+            labBatch = new LabBatch(labBatchBean.getBatchId(), starters);
+        } else {
+            labBatch = new LabBatch(projectPlan, labBatchBean.getBatchId(), starters);
+        }
+        return labBatch;
     }
 }

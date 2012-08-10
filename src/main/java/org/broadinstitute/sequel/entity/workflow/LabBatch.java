@@ -23,6 +23,7 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -57,8 +58,9 @@ public class LabBatch {
     @ManyToOne(fetch = FetchType.LAZY)
     private ProjectPlan projectPlan;
 
+    // todo jmt get Hibernate to sort this
     @OneToMany(mappedBy = "labBatch")
-    private Set<GenericLabEvent> labEvents = new HashSet<GenericLabEvent>();
+    private Set<GenericLabEvent> labEvents = new LinkedHashSet<GenericLabEvent>();
 
     /**
      * Create a new batch with the given name

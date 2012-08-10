@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.sequel.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.sequel.boundary.labevent.LabEventBean;
 import org.broadinstitute.sequel.boundary.labevent.LabEventResource;
+import org.broadinstitute.sequel.boundary.labevent.LabVesselBean;
 import org.broadinstitute.sequel.boundary.vessel.LabBatchBean;
 import org.broadinstitute.sequel.boundary.vessel.LabBatchResource;
 import org.broadinstitute.sequel.boundary.vessel.TubeBean;
@@ -14,9 +15,6 @@ import org.broadinstitute.sequel.control.labevent.LabEventHandler;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.person.Person;
-import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
-import org.broadinstitute.sequel.entity.project.Starter;
-import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.SBSSection;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
@@ -24,7 +22,6 @@ import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,22 +38,16 @@ public class SamplesPicoEndToEndTest {
         List<TubeBean> tubeBeans = new ArrayList<TubeBean>();
         for(int rackPosition = 1; rackPosition <= 8; rackPosition++) {
             String barcode = "R" + rackPosition;
-            String bspStock = "SM-" + rackPosition;
-            tubeBeans.add(new TubeBean(barcode, bspStock));
+            tubeBeans.add(new TubeBean(barcode, null));
         }
         String batchId = "BP-1";
-        BasicProjectPlan projectPlan = labBatchResource.buildProjectPlan(new LabBatchBean(batchId, "HybSel", tubeBeans),
-                new HashMap<String, TwoDBarcodedTube>(), new HashMap<String, BSPStartingSample>());
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        Map<String, BSPStartingSample> mapBarcodeToSample = new LinkedHashMap<String, BSPStartingSample>();
+        LabBatch labBatch = labBatchResource.buildLabBatch(new LabBatchBean(batchId, "HybSel", tubeBeans),
+                mapBarcodeToTube, mapBarcodeToSample, null);
 
         // validate workflow?
         // messaging
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        for (Starter starter : projectPlan.getStarters()) {
-            LabVessel aliquotForStarter = projectPlan.getAliquotForStarter(starter);
-            mapBarcodeToTube.put(aliquotForStarter.getLabel(), (TwoDBarcodedTube) aliquotForStarter);
-        }
-
-        LabBatch labBatch = projectPlan.getProject().getJiraTicket().getLabBatch();
         SamplesPicoMessageBuilder samplesPicoMessageBuilder = new SamplesPicoMessageBuilder(mapBarcodeToTube,
                 labBatch);
         samplesPicoMessageBuilder.buildEntities();
@@ -64,6 +55,12 @@ public class SamplesPicoEndToEndTest {
         LabEventResource labEventResource = new LabEventResource();
         List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(labBatch.getLabEvents());
         Assert.assertEquals("Wrong number of messages", 10, labEventBeans.size());
+        LabEventBean standardsTransferEvent = labEventBeans.get(labEventBeans.size() - 1);
+        LabVesselBean microfluorPlate = standardsTransferEvent.getTargets().iterator().next();
+        Assert.assertEquals("Wrong barcode", samplesPicoMessageBuilder.getPicoMicrofluorTransferJaxb().getPlate().getBarcode(),
+                microfluorPlate.getBarcode());
+        Assert.assertEquals("Wrong starter", mapBarcodeToTube.values().iterator().next().getLabel(),
+                microfluorPlate.getMapPositionToLabVessel().get("A01").getStarter());
         // event web service, by batch
         // transfer visualizer?
         // datamart?
@@ -81,7 +78,7 @@ public class SamplesPicoEndToEndTest {
         private PlateTransferEventType picoDilutionTransferJaxbA1;
         private PlateTransferEventType picoDilutionTransferJaxbA2;
         private PlateTransferEventType picoDilutionTransferJaxbB1;
-        private PlateTransferEventType picoMicroflourTransferJaxb;
+        private PlateTransferEventType picoMicrofluorTransferJaxb;
         private PlateTransferEventType picoStandardsTransferCol2Jaxb;
         private PlateTransferEventType picoStandardsTransferCol4Jaxb;
         private PlateTransferEventType picoStandardsTransferCol6Jaxb;
@@ -136,52 +133,52 @@ public class SamplesPicoEndToEndTest {
             messageList.add(bettaLIMSMessage2);
 
 */
-            // PicoMicroflourTransfer
-            String picoMicroflourPlateBarcode = "PicoMicroflourPlate";
-            picoMicroflourTransferJaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                    "PicoMicroflourTransfer", picoDilutionPlateBarcode, picoMicroflourPlateBarcode);
-            picoMicroflourTransferJaxb.getSourcePlate().setSection(SBSSection.ALL384.getSectionName());
-            picoMicroflourTransferJaxb.getPlate().setSection(SBSSection.ALL384.getSectionName());
+            // PicoMicrofluorTransfer
+            String picoMicrofluorPlateBarcode = "PicoMicrofluorPlate";
+            picoMicrofluorTransferJaxb = bettaLimsMessageFactory.buildPlateToPlate(
+                    "PicoMicrofluorTransfer", picoDilutionPlateBarcode, picoMicrofluorPlateBarcode);
+            picoMicrofluorTransferJaxb.getSourcePlate().setSection(SBSSection.ALL384.getSectionName());
+            picoMicrofluorTransferJaxb.getPlate().setSection(SBSSection.ALL384.getSectionName());
             // todo jmt batch ID is set only for the first message?
-            picoMicroflourTransferJaxb.setBatchId(labBatch.getBatchName());
+            picoMicrofluorTransferJaxb.setBatchId(labBatch.getBatchName());
 
-            BettaLIMSMessage microflourTransferMessage = new BettaLIMSMessage();
-            microflourTransferMessage.getPlateTransferEvent().add(picoMicroflourTransferJaxb);
-            messageList.add(microflourTransferMessage);
+            BettaLIMSMessage microfluorTransferMessage = new BettaLIMSMessage();
+            microfluorTransferMessage.getPlateTransferEvent().add(picoMicrofluorTransferJaxb);
+            messageList.add(microfluorTransferMessage);
 
             // 6 x PicoStandardsTransfer
             picoStandardsTransferCol2Jaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicroflourPlateBarcode);
+                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicrofluorPlateBarcode);
             picoStandardsTransferCol2Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
             picoStandardsTransferCol2Jaxb.getPlate().setSection(SBSSection.P384_COL2_1INTERVAL_B.getSectionName());
             picoStandardsTransferCol2Jaxb.setBatchId(labBatch.getBatchName());
 
             picoStandardsTransferCol4Jaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicroflourPlateBarcode);
+                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicrofluorPlateBarcode);
             picoStandardsTransferCol4Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
             picoStandardsTransferCol4Jaxb.getPlate().setSection(SBSSection.P384_COL4_1INTERVAL_B.getSectionName());
             picoStandardsTransferCol4Jaxb.setBatchId(labBatch.getBatchName());
 
             picoStandardsTransferCol6Jaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicroflourPlateBarcode);
+                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicrofluorPlateBarcode);
             picoStandardsTransferCol6Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
             picoStandardsTransferCol6Jaxb.getPlate().setSection(SBSSection.P384_COL6_1INTERVAL_B.getSectionName());
             picoStandardsTransferCol6Jaxb.setBatchId(labBatch.getBatchName());
 
             picoStandardsTransferCol8Jaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicroflourPlateBarcode);
+                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicrofluorPlateBarcode);
             picoStandardsTransferCol8Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
             picoStandardsTransferCol8Jaxb.getPlate().setSection(SBSSection.P384_COL8_1INTERVAL_B.getSectionName());
             picoStandardsTransferCol8Jaxb.setBatchId(labBatch.getBatchName());
 
             picoStandardsTransferCol10Jaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicroflourPlateBarcode);
+                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicrofluorPlateBarcode);
             picoStandardsTransferCol10Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
             picoStandardsTransferCol10Jaxb.getPlate().setSection(SBSSection.P384_COL10_1INTERVAL_B.getSectionName());
             picoStandardsTransferCol10Jaxb.setBatchId(labBatch.getBatchName());
 
             picoStandardsTransferCol12Jaxb = bettaLimsMessageFactory.buildPlateToPlate(
-                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicroflourPlateBarcode);
+                    "PicoStandardsTransfer", "PicoStandardsPlate", picoMicrofluorPlateBarcode);
             picoStandardsTransferCol12Jaxb.getSourcePlate().setSection(SBSSection.P96_COL1.getSectionName());
             picoStandardsTransferCol12Jaxb.getPlate().setSection(SBSSection.P384_COL12_1INTERVAL_B.getSectionName());
             picoStandardsTransferCol12Jaxb.setBatchId(labBatch.getBatchName());
@@ -227,42 +224,46 @@ public class SamplesPicoEndToEndTest {
                     picoDilutionTransferJaxbB1, mapBarcodeToTube, dilutionPlate);
             labEventHandler.processEvent(picoDilutionTransferEntityB1);
 
-            LabEvent picoMicroflourTransferEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    picoMicroflourTransferJaxb, dilutionPlate, null);
-            labEventHandler.processEvent(picoMicroflourTransferEntity);
-            StaticPlate microflourPlate = (StaticPlate) picoMicroflourTransferEntity.getTargetLabVessels().iterator().next();
+            LabEvent picoMicrofluorTransferEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
+                    picoMicrofluorTransferJaxb, dilutionPlate, null);
+            labEventHandler.processEvent(picoMicrofluorTransferEntity);
+            StaticPlate microfluorPlate = (StaticPlate) picoMicrofluorTransferEntity.getTargetLabVessels().iterator().next();
 
             StaticPlate picoStandardsPlate = new StaticPlate("PicoStandardsPlate", StaticPlate.PlateType.Eppendorf96);
             LabEvent picoStandardsTransferCol2Entity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    picoStandardsTransferCol2Jaxb, picoStandardsPlate, microflourPlate);
+                    picoStandardsTransferCol2Jaxb, picoStandardsPlate, microfluorPlate);
             labEventHandler.processEvent(picoStandardsTransferCol2Entity);
 
             LabEvent picoStandardsTransferCol4Entity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    picoStandardsTransferCol4Jaxb, picoStandardsPlate, microflourPlate);
+                    picoStandardsTransferCol4Jaxb, picoStandardsPlate, microfluorPlate);
             labEventHandler.processEvent(picoStandardsTransferCol4Entity);
 
             LabEvent picoStandardsTransferCol6Entity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    picoStandardsTransferCol6Jaxb, picoStandardsPlate, microflourPlate);
+                    picoStandardsTransferCol6Jaxb, picoStandardsPlate, microfluorPlate);
             labEventHandler.processEvent(picoStandardsTransferCol6Entity);
 
             LabEvent picoStandardsTransferCol8Entity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    picoStandardsTransferCol8Jaxb, picoStandardsPlate, microflourPlate);
+                    picoStandardsTransferCol8Jaxb, picoStandardsPlate, microfluorPlate);
             labEventHandler.processEvent(picoStandardsTransferCol8Entity);
 
             LabEvent picoStandardsTransferCol10Entity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    picoStandardsTransferCol10Jaxb, picoStandardsPlate, microflourPlate);
+                    picoStandardsTransferCol10Jaxb, picoStandardsPlate, microfluorPlate);
             labEventHandler.processEvent(picoStandardsTransferCol10Entity);
 
             LabEvent picoStandardsTransferCol12Entity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    picoStandardsTransferCol12Jaxb, picoStandardsPlate, microflourPlate);
+                    picoStandardsTransferCol12Jaxb, picoStandardsPlate, microfluorPlate);
             labEventHandler.processEvent(picoStandardsTransferCol12Entity);
 
 //            Assert.assertEquals("Wrong number of sample instances", mapBarcodeToTube.size(),
-//                    microflourPlate.getSampleInstances().size());
+//                    microfluorPlate.getSampleInstances().size());
         }
 
         public List<BettaLIMSMessage> getMessageList() {
             return messageList;
+        }
+
+        public PlateTransferEventType getPicoMicrofluorTransferJaxb() {
+            return picoMicrofluorTransferJaxb;
         }
     }
 }

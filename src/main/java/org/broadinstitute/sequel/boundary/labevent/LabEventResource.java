@@ -3,7 +3,9 @@ package org.broadinstitute.sequel.boundary.labevent;
 import org.broadinstitute.sequel.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
+import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
@@ -15,6 +17,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,13 +71,55 @@ public class LabEventResource {
         return labEventBeans;
     }
 
+    // todo jmt make this work for sample starters
+    static class StarterCriteria implements VesselContainer.TransferTraverserCriteria {
+        private LabVessel starter;
+
+        @Override
+        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+            if (labVessel != null) {
+                if(labVessel.getTransfersTo().isEmpty()) {
+                    for (LabBatch labBatch : labVessel.getLabBatches()) {
+                        if(labBatch.getStarters().contains(labVessel)) {
+                            starter = labVessel;
+                            return TraversalControl.StopTraversing;
+                        }
+                    }
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        public LabVessel getStarter() {
+            return starter;
+        }
+    }
+
     private LabVesselBean buildLabVesselBean(LabVessel labVesselEntity) {
+        // todo jmt need to hide on-the-fly creation of plate wells
         LabVesselBean labVesselBean = new LabVesselBean(labVesselEntity.getLabel(), labVesselEntity.getType().name());
         if(OrmUtil.proxySafeIsInstance(labVesselEntity, VesselContainerEmbedder.class)) {
             VesselContainer vesselContainer = OrmUtil.proxySafeCast(labVesselEntity, VesselContainerEmbedder.class).getVesselContainer();
-            Set<Map.Entry<VesselPosition, LabVessel>> entrySet = vesselContainer.getMapPositionToVessel().entrySet();
-            for (Map.Entry<VesselPosition, LabVessel> positionToLabVessel : entrySet) {
-                labVesselBean.getMapPositionToLabVessel().put(positionToLabVessel.getKey().name(), buildLabVesselBean(positionToLabVessel.getValue()));
+            if(OrmUtil.proxySafeIsInstance(labVesselEntity, StaticPlate.class)) {
+                StaticPlate staticPlate = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class);
+                Iterator<String> positionNames = staticPlate.getPlateType().getVesselGeometry().getPositionNames();
+                while (positionNames.hasNext()) {
+                    String positionName  =  positionNames.next();
+                    labVesselBean.getMapPositionToLabVessel().put(positionName, new LabVesselBean(null, LabVessel.CONTAINER_TYPE.PLATE_WELL.name()));
+                }
+            } else {
+                Set<Map.Entry<VesselPosition, LabVessel>> entrySet = vesselContainer.getMapPositionToVessel().entrySet();
+                for (Map.Entry<VesselPosition, LabVessel> positionToLabVessel : entrySet) {
+                    labVesselBean.getMapPositionToLabVessel().put(positionToLabVessel.getKey().name(), buildLabVesselBean(positionToLabVessel.getValue()));
+                }
+            }
+            for (Map.Entry<String, LabVesselBean> positionLabVesselBeanEntry : labVesselBean.getMapPositionToLabVessel().entrySet()) {
+                StarterCriteria starterCriteria = new StarterCriteria();
+                vesselContainer.evaluateCriteria(VesselPosition.getByName(positionLabVesselBeanEntry.getKey()), starterCriteria,
+                        VesselContainer.TraversalDirection.Ancestors, null, 0);
+                if (starterCriteria.getStarter() != null) {
+                    positionLabVesselBeanEntry.getValue().setStarter(starterCriteria.getStarter().getLabel());
+                }
             }
         }
         return labVesselBean;
