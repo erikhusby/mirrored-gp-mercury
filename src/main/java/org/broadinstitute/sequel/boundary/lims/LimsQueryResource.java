@@ -41,7 +41,7 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchLibraryDetailsByTubeBarcode")
-    public List<LibraryDataType> fetchLibraryDetailsByTubeBarcode(@QueryParam("q") List<String> tubeBarcodes, @QueryParam("includeWorkRequestDetails") boolean includeWorkRequestDetails) throws TException, TZIMSException {
+    public List<LibraryDataType> fetchLibraryDetailsByTubeBarcode(@QueryParam("q") List<String> tubeBarcodes, @QueryParam("includeWorkRequestDetails") boolean includeWorkRequestDetails) {
         List<LibraryData> libraryData = thriftService.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
         List<LibraryDataType> result = new ArrayList<LibraryDataType>();
         for (LibraryData data : libraryData) {
@@ -57,7 +57,7 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/doesLimsRecognizeAllTubes")
-    public boolean doesLimsRecognizeAllTubes(@QueryParam("q") List<String> barcodes) throws TException, TZIMSException {
+    public boolean doesLimsRecognizeAllTubes(@QueryParam("q") List<String> barcodes) {
         return thriftService.doesSquidRecognizeAllLibraries(barcodes);
     }
 
@@ -66,7 +66,7 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findFlowcellDesignationByTaskName")
-    public FlowcellDesignationType findFlowcellDesignationByTaskName(@QueryParam("taskName") String taskName) throws TException, TZIMSException {
+    public FlowcellDesignationType findFlowcellDesignationByTaskName(@QueryParam("taskName") String taskName) {
         FlowcellDesignationType flowcellDesignationType;
         FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByTaskName(taskName);
         flowcellDesignationType = responseFactory.makeFlowcellDesignation(flowcellDesignation);
@@ -76,7 +76,7 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findFlowcellDesignationByFlowcellBarcode")
-    public FlowcellDesignationType findFlowcellDesignationByFlowcellBarcode(@QueryParam("flowcellBarcode") String flowcellBarcode) throws TException, TZIMSException {
+    public FlowcellDesignationType findFlowcellDesignationByFlowcellBarcode(@QueryParam("flowcellBarcode") String flowcellBarcode) {
         FlowcellDesignationType flowcellDesignationType;
         FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByFlowcellBarcode(flowcellBarcode);
         flowcellDesignationType = responseFactory.makeFlowcellDesignation(flowcellDesignation);
@@ -117,7 +117,7 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchUserIdForBadgeId")
-    public String fetchUserIdForBadgeId(@QueryParam("badgeId") String badgeId) throws TException, TZIMSException {
+    public String fetchUserIdForBadgeId(@QueryParam("badgeId") String badgeId) {
         return thriftService.fetchUserIdForBadgeId(badgeId);
     }
 
@@ -135,14 +135,14 @@ public class LimsQueryResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQpcrForTube")
-    public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode) throws TException, TZIMSException {
+    public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode) {
         return thriftService.fetchQpcrForTube(tubeBarcode);
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQuantForTube")
-    public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode, @QueryParam("quantType") String quantType) throws TException, TZIMSException {
+    public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode, @QueryParam("quantType") String quantType) {
         return thriftService.fetchQuantForTube(tubeBarcode, quantType);
     }
 

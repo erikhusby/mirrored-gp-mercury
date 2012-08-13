@@ -57,6 +57,7 @@ public class LiveThriftServiceTest {
     public void testFetchRun() throws Exception {
         TZamboniRun run = thriftService.fetchRun("120320_SL-HBN_0159_AFCC0GHCACXX");
         assertThat(run, not(nullValue()));
+        assertThat(run.getRunName(), equalTo("120320_SL-HBN_0159_AFCC0GHCACXX"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)
