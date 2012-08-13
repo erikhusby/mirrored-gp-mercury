@@ -100,7 +100,7 @@ public class EnversSchemaExport {
 
     private static void export(PrintWriter writer, String delimiter, Formatter formatter, String[] createSQL) {
         for (String line : createSQL) {
-            writer.print(formatter.format(line) + "\n" + delimiter + "\n");
+            writer.print(formatter.format(line) + delimiter + "\n");
         }
     }
 }
