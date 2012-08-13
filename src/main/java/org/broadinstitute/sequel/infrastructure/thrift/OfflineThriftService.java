@@ -79,7 +79,7 @@ public class OfflineThriftService implements ThriftService {
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
             libraryNumber++;
         }
-        return new TZamboniLane((short) laneNumber, libraries, "PESP1+T");
+        return new TZamboniLane((short) laneNumber, libraries, "PESP1+T", "LaneLibrary-"+laneNumber);
     }
 
     private static TZamboniLibrary makeLibrary(String number) {
