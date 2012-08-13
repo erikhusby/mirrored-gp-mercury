@@ -40,6 +40,11 @@ public class ThriftFileAccessor {
             int laneCounter = 0;
 
             for(TZamboniLane lane:updateRun.getLanes()) {
+                if(lane.getSequencedLibraryName() == null ||
+                   lane.getSequencedLibraryName().isEmpty()) {
+                    lane.setSequencedLibraryName("LaneLibrary-"+lane.getLaneNumber());
+                }
+
                 for(TZamboniLibrary lib:lane.getLibraries()) {
                     lib.setFastTrack(laneCounter%3==0?true:false);
                 }
