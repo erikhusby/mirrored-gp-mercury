@@ -89,6 +89,9 @@
                             <p:column headerText="Libraries">
                                 #{lane.libraries.size()}
                             </p:column>
+                            <p:column headerText="Sequenced Library">
+                                #{lane.sequencedLibrary}
+                            </p:column>
                         </p:dataTable>
                     </td>
                 </tr></table>
@@ -98,7 +101,7 @@
                 <!-- LIBRARY DETAILS FOR SELECTED LANE -->
                 <p:dataTable id="libraryTable" value="#{illuminaRunQuery.selectedLane == null ? null : illuminaRunQuery.selectedLane.libraries}" var="library" emptyMessage="Select a lane">
                     <f:facet name="header">
-                        <h:outputText id="laneDetailsHeader" value="Lane #{illuminaRunQuery.selectedLane.name} Details"/>
+                        <h:outputText id="laneDetailsHeader" value="Lane #{illuminaRunQuery.selectedLane.name} Details (#{illuminaRunQuery.selectedLane.sequencedLibrary})"/>
                         <div style="float: right">
                             <p:selectCheckboxMenu id="laneDetailColumns" value="#{illuminaRunQuery.columnNames}" label="Lane Detail Columns" height="300">
                                 <p:ajax event="change" update=":form:libraryTable"/>
