@@ -48,9 +48,9 @@ import java.util.logging.Logger;
  *
  */
 @Entity
+@Audited
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
 @BatchSize(size = 50)
-@Audited
 public abstract class LabVessel implements Starter {
 
     private final static Logger logger = Logger.getLogger(LabVessel.class.getName());

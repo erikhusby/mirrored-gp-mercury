@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
@@ -12,6 +13,7 @@ import java.util.Set;
  * A Generic reagent that doesn't change the molecular envelope
  */
 @Entity
+@Audited
 public class GenericReagent extends Reagent {
 
     @ManyToMany
