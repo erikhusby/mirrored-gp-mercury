@@ -97,7 +97,11 @@ public class LabEventResource {
 
     private LabVesselBean buildLabVesselBean(LabVessel labVesselEntity) {
         // todo jmt need to hide on-the-fly creation of plate wells
-        LabVesselBean labVesselBean = new LabVesselBean(labVesselEntity.getLabel(), labVesselEntity.getType().name());
+        String type = labVesselEntity.getType().name();
+        if(type.equals(LabVessel.CONTAINER_TYPE.STATIC_PLATE.name())) {
+            type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getDisplayName();
+        }
+        LabVesselBean labVesselBean = new LabVesselBean(labVesselEntity.getLabel(), type);
         if(OrmUtil.proxySafeIsInstance(labVesselEntity, VesselContainerEmbedder.class)) {
             VesselContainer vesselContainer = OrmUtil.proxySafeCast(labVesselEntity, VesselContainerEmbedder.class).getVesselContainer();
             if(OrmUtil.proxySafeIsInstance(labVesselEntity, StaticPlate.class)) {

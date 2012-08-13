@@ -506,7 +506,8 @@ public class LabEventFactory {
         RackOfTubes rackOfTubes = buildRack(mapBarcodeToSourceTubes, plateTransferEvent.getSourcePlate(),
                 plateTransferEvent.getSourcePositionMap());
         if(targetPlate == null) {
-            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
+            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(),
+                    StaticPlate.PlateType.getByDisplayName(plateTransferEvent.getPlate().getPhysType()));
         }
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
@@ -529,7 +530,8 @@ public class LabEventFactory {
             StaticPlate targetPlate) {
         LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
         if(targetPlate == null) {
-            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
+            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(),
+                    StaticPlate.PlateType.getByDisplayName(plateTransferEvent.getPlate().getPhysType()));
         }
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
@@ -669,7 +671,8 @@ public class LabEventFactory {
             StaticPlate plate) {
         LabEvent labEvent = constructReferenceData(plateEvent, labEventRefDataFetcher);
         if(plate == null) {
-            plate = new StaticPlate(plateEvent.getPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
+            plate = new StaticPlate(plateEvent.getPlate().getBarcode(),
+                    StaticPlate.PlateType.getByDisplayName(plateEvent.getPlate().getPhysType()));
         }
 
         plate.addInPlaceEvent(labEvent);
@@ -695,7 +698,8 @@ public class LabEventFactory {
             StaticPlate targetPlate) {
         LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
         if(targetPlate == null) {
-            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
+            targetPlate = new StaticPlate(plateTransferEvent.getPlate().getBarcode(),
+                    StaticPlate.PlateType.getByDisplayName(plateTransferEvent.getPlate().getPhysType()));
         }
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
@@ -726,7 +730,8 @@ public class LabEventFactory {
             TwoDBarcodedTube sourceTube, StaticPlate targetPlate, String targetSection) {
         LabEvent labEvent = constructReferenceData(receptaclePlateTransferEvent, labEventRefDataFetcher);
         if(targetPlate == null) {
-            targetPlate = new StaticPlate(receptaclePlateTransferEvent.getDestinationPlate().getBarcode(), StaticPlate.PlateType.Eppendorf96);
+            targetPlate = new StaticPlate(receptaclePlateTransferEvent.getDestinationPlate().getBarcode(),
+                    StaticPlate.PlateType.getByDisplayName(receptaclePlateTransferEvent.getDestinationPlate().getPhysType()));
         }
         labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube, targetSection,
                 targetPlate.getVesselContainer(), labEvent));
