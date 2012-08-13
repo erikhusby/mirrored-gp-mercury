@@ -45,7 +45,7 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
             libraryNumber++;
         }
-        return new ZimsIlluminaChamber((short) laneNumber, libraries, "PESP1+T");
+        return new ZimsIlluminaChamber((short) laneNumber, libraries, "PESP1+T", "LaneLibrary-"+laneNumber);
     }
 
     private ZimsIlluminaChamber makeLane(int laneNumber) {

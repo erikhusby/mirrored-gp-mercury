@@ -102,7 +102,7 @@ public class LibraryBeanFactory {
                 illuminaSequencingRun.getRunBarcode(), runCartridge.getCartridgeBarcode(),
                 illuminaSequencingRun.getMachineName(), null, simpleDateFormat.format(illuminaSequencingRun.getRunDate()),
                 (short) 0, (short) 0, (short) 0, (short) 0, (short) 0, false);
-        zimsIlluminaRun.addLane(new ZimsIlluminaChamber((short) 1, libraries, ""));
+        zimsIlluminaRun.addLane(new ZimsIlluminaChamber((short) 1, libraries, "",""));
         return zimsIlluminaRun;
     }
 }
