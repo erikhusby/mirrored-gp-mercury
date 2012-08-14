@@ -16,6 +16,8 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -34,11 +36,12 @@ public class LabEventResource {
 
     @Path("/batch/{batchId}")
     @GET
-    public List<LabEventBean> transfersByBatchId(@PathParam("batchId")String batchId) {
+    @Produces({MediaType.APPLICATION_XML})
+    public LabEventResponseBean transfersByBatchId(@PathParam("batchId")String batchId) {
         LabBatch labBatch = labBatchDAO.findByName(batchId);
         Set<GenericLabEvent> labEvents = labBatch.getLabEvents();
         List<LabEventBean> labEventBeans = buildLabEventBeans(labEvents);
-        return labEventBeans;
+        return new LabEventResponseBean(labEventBeans);
     }
 
     public List<LabEventBean> buildLabEventBeans(Set<GenericLabEvent> labEvents) {
@@ -47,7 +50,8 @@ public class LabEventResource {
             LabEventBean labEventBean = new LabEventBean(
                     labEvent.getLabEventType().getName(),
                     labEvent.getEventLocation(),
-                    labEvent.getEventOperator().getLogin());
+                    labEvent.getEventOperator().getLogin(),
+                    labEvent.getEventDate());
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
 
             // todo jmt rationalize these?  Each side can be a vessel, or a vessel + section, or a vessel + position

@@ -771,9 +771,12 @@ public class LabEventFactory {
         if(operator == null) {
             throw new RuntimeException("Failed to find operator " + stationEventType.getOperator());
         }
+        Long disambiguator = stationEventType.getDisambiguator();
+        if(disambiguator == null) {
+            disambiguator = 1L;
+        }
         GenericLabEvent genericLabEvent = new GenericLabEvent(labEventType, stationEventType.getStart().toGregorianCalendar().getTime(),
-                stationEventType.getStation(), stationEventType.getDisambiguator(),
-                operator);
+                stationEventType.getStation(), disambiguator, operator);
         if(stationEventType.getBatchId() != null) {
             LabBatch labBatch = labEventRefDataFetcher.getLabBatch(stationEventType.getBatchId());
             if(labBatch == null) {

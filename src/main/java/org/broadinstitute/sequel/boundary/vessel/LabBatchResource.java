@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.boundary.vessel;
 
 import org.broadinstitute.sequel.control.dao.project.ProjectPlanDao;
 import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.sequel.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.sequel.entity.bsp.BSPStartingSample;
 import org.broadinstitute.sequel.entity.project.BasicProject;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
@@ -40,6 +41,9 @@ public class LabBatchResource {
     @Inject
     private BSPStartingSampleDAO bspStartingSampleDAO;
 
+    @Inject
+    private LabBatchDAO labBatchDAO;
+
     @POST
     public String createLabBatch(LabBatchBean labBatchBean) {
         List<String> tubeBarcodes = new ArrayList<String>();
@@ -51,9 +55,14 @@ public class LabBatchResource {
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(tubeBarcodes);
         Map<String, BSPStartingSample> mapBarcodeToSample = bspStartingSampleDAO.findByNames(sampleBarcodes);
-        BasicProjectPlan projectPlan = buildProjectPlan(labBatchBean, mapBarcodeToTube, mapBarcodeToSample);
+        if(labBatchBean.getWorkflowName() == null) {
+            LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapBarcodeToSample, null);
+            labBatchDAO.persist(labBatch);
+        } else {
+            BasicProjectPlan projectPlan = buildProjectPlan(labBatchBean, mapBarcodeToTube, mapBarcodeToSample);
+            projectPlanDao.persist(projectPlan);
+        }
 
-        projectPlanDao.persist(projectPlan);
         projectPlanDao.flush();
         return "Batch persisted";
     }
