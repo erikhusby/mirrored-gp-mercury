@@ -2,8 +2,6 @@ package org.broadinstitute.sequel.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import org.apache.thrift.TException;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
@@ -99,8 +97,25 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchLibraryDetailsByLibraryName")
     public List<LibraryDataType> fetchLibraryDetailsByLibraryName(@QueryParam("q") List<String> libraryNames) {
-        // TODO: thrift proxy implementation
-        return null;
+
+        if (libraryNames == null || libraryNames.isEmpty()) {
+            //return null || error
+            return null;
+        }
+
+        LibraryDataType libraryDataType = null;
+        List<LibraryDataType> libraryDataTypeList = new ArrayList<LibraryDataType>();
+        List<LibraryData> libraryDataList = thriftService.fetchLibraryDetailsByLibraryName(libraryNames);
+        if (libraryDataList == null || libraryDataList.isEmpty()) {
+            return  null;
+        }
+
+        for (LibraryData libraryData : libraryDataList) {
+            libraryDataType = responseFactory.makeLibraryData(libraryData);
+            libraryDataTypeList.add(libraryDataType);
+        }
+
+        return libraryDataTypeList;
     }
 
     // TODO round 2: list<string> fetchUnfulfilledDesignations()

@@ -66,4 +66,9 @@ public class MockThriftService implements ThriftService {
     public double fetchQuantForTube(String tubeBarcode, String quantType) {
         return 0;
     }
+
+    @Override
+    public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
+        return null;
+    }
 }

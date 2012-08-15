@@ -61,6 +61,11 @@ public class OfflineThriftService implements ThriftService {
         return 0;
     }
 
+    @Override
+    public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
+        return null;
+    }
+
     public static TZamboniRun makeRun(String runName, int numLanes, int numLibraries) {
         List<TZamboniLane> lanes = new ArrayList<TZamboniLane>();
         for (int i = 1; i <= numLanes; i++) {
