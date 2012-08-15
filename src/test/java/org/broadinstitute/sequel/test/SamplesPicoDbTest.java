@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.test;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.filter.LoggingFilter;
 import junit.framework.Assert;
 import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.bettalims.generated.BettaLIMSMessage;
@@ -35,12 +36,14 @@ public class SamplesPicoDbTest extends ContainerTest {
 
         ArrayList<TubeBean> tubeBeans = new ArrayList<TubeBean>();
         for(int i = 1; i <= 96; i++) {
-            tubeBeans.add(new TubeBean("SM-PICO" + i + "_" + timestamp, null));
+            tubeBeans.add(new TubeBean("PICO" + i + "_" + timestamp, null));
         }
         String batchId = "BP-" + timestamp;
         LabBatchBean labBatchBean = new LabBatchBean(batchId, null, tubeBeans);
 
         Client client = Client.create();
+        client.addFilter(new LoggingFilter(System.out));
+
         String response = client.resource(baseUrl.toExternalForm() + "rest/labbatch")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
