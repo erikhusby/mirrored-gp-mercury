@@ -3,8 +3,23 @@
         "http://glassfish.org/dtds/glassfish-web-app_3_0-1.dtd">
 
 <glassfish-web-app>
-    <locale-charset-info default-locale="">
-        <locale-charset-map locale="" charset=""/>
-        <parameter-encoding default-charset="UTF-8"/>
-    </locale-charset-info>
+    <security-role-mapping>
+        <role-name>PMBAdmins</role-name>
+        <group-name>PMBAdmins</group-name>
+    </security-role-mapping>
+
+    <security-role-mapping>
+        <role-name>PMBAdmins</role-name>
+        <group-name>PMBAdmins</group-name>
+    </security-role-mapping>
+
+    <security-role-mapping>
+        <role-name>PMBUsers</role-name>
+        <group-name>PMBUsers</group-name>
+    </security-role-mapping>
+
+    <security-role-mapping>
+        <role-name>PMBUsers</role-name>
+        <group-name>PMBViewers</group-name>
+    </security-role-mapping>
 </glassfish-web-app>

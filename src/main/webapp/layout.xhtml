@@ -74,7 +74,7 @@
                                 <p:menuitem value="Release Notes." url="/releaseNotes.xhtml"/>
                             </p:submenu>
 
-                            <p:menuitem value="Quit" url="/logout.xhtml" icon="ui-icon-close" style=""/>
+                            <p:menuitem value="Quit" action="#{logoutHandler.logout}" icon="ui-icon-close" style=""/>
                         </p:menubar>
 
                     </h:form>

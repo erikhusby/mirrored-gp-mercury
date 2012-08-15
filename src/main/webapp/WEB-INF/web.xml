@@ -30,10 +30,31 @@
         <url-pattern>*.xhtml</url-pattern>
     </servlet-mapping>
 
+    <security-role>
+        <role-name>PMBAdmins</role-name>
+    </security-role>
+    <security-role>
+        <role-name>PMBUsers</role-name>
+    </security-role>
 
     <welcome-file-list>
         <welcome-file>/summary/summary.xhtml</welcome-file>
     </welcome-file-list>
+
+    <login-config>
+        <auth-method>FORM</auth-method>
+        <realm-name>crowd_custom_realm</realm-name>
+    </login-config>
+
+    <filter>
+        <filter-name>AuthorizationFilter</filter-name>
+        <filter-class>org.broadinstitute.pmbridge.presentation.security.AuthorizationFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>AuthorizationFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
     <!-- for GlassFish -->
     <servlet>
