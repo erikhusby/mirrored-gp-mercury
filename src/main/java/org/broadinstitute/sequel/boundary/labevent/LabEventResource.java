@@ -19,6 +19,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -39,12 +40,13 @@ public class LabEventResource {
     @Produces({MediaType.APPLICATION_XML})
     public LabEventResponseBean transfersByBatchId(@PathParam("batchId")String batchId) {
         LabBatch labBatch = labBatchDAO.findByName(batchId);
-        Set<GenericLabEvent> labEvents = labBatch.getLabEvents();
-        List<LabEventBean> labEventBeans = buildLabEventBeans(labEvents);
+        List<GenericLabEvent> labEventsByTime = new ArrayList<GenericLabEvent>(labBatch.getLabEvents());
+        Collections.sort(labEventsByTime, LabEvent.byEventDate);
+        List<LabEventBean> labEventBeans = buildLabEventBeans(labEventsByTime);
         return new LabEventResponseBean(labEventBeans);
     }
 
-    public List<LabEventBean> buildLabEventBeans(Set<GenericLabEvent> labEvents) {
+    public List<LabEventBean> buildLabEventBeans(List<GenericLabEvent> labEvents) {
         List<LabEventBean> labEventBeans = new ArrayList<LabEventBean>();
         for (GenericLabEvent labEvent : labEvents) {
             LabEventBean labEventBean = new LabEventBean(
