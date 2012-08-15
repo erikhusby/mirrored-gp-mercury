@@ -1,13 +1,15 @@
 package org.broadinstitute.sequel.boundary.labevent;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import org.broadinstitute.sequel.boundary.Namespaces;
+
+import javax.xml.bind.annotation.XmlType;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * A JAX-RS DTO for lab vessels, used in transfers
  */
-@XmlRootElement
+@XmlType(namespace = Namespaces.LAB_EVENT)
 public class LabVesselBean {
     private String barcode;
     private String type;

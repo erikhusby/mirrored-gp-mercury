@@ -1,8 +1,13 @@
 package org.broadinstitute.sequel.boundary.labevent;
 
+import org.broadinstitute.sequel.boundary.Namespaces;
+
+import javax.xml.bind.annotation.XmlType;
+
 /**
  * A JAX-RS DTO for transfers
  */
+@XmlType(namespace = Namespaces.LAB_EVENT)
 public class TransferBean {
     /** Cherry pick, section, tube to tube etc. */
     private String type;

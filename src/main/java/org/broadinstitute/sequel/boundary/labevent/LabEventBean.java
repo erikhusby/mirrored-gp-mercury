@@ -1,6 +1,8 @@
 package org.broadinstitute.sequel.boundary.labevent;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import org.broadinstitute.sequel.boundary.Namespaces;
+
+import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -8,6 +10,7 @@ import java.util.List;
 /**
  * A JAX-RS DTO for lab events
  */
+@XmlType(namespace = Namespaces.LAB_EVENT)
 public class LabEventBean {
     private String eventType;
     private String station;
