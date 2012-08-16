@@ -215,7 +215,7 @@ public enum LabEventType {
     PICO_DILUTION_TRANSFER ("PicoDilutionTransfer", true, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
-    PICO_MICROFLOUR_TRANSFER ("PicoMicroflourTransfer", true, true,
+    PICO_MICROFLUOR_TRANSFER("PicoMicrofluorTransfer", true, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     PICO_STANDARDS_TRANSFER ("PicoStandardsTransfer", true, true,

@@ -6,6 +6,7 @@ import org.broadinstitute.sequel.entity.vessel.SBSSection;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -22,6 +23,7 @@ import javax.persistence.SequenceGenerator;
  * Represents a transfer between two sections.
  */
 @Entity
+@Audited
 @SuppressWarnings("rawtypes")
 public class SectionTransfer {
     @Id

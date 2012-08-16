@@ -21,15 +21,20 @@ public class ZimsIlluminaChamber {
 
     @JsonProperty("primer")
     private String primer;
+
+    @JsonProperty("sequencedLibrary")
+    private String sequencedLibraryName;
     
     public ZimsIlluminaChamber() {}
             
     public ZimsIlluminaChamber(short chamberName,
                                final List<LibraryBean> libraries,
-                               final String primer) {
+                               final String primer,
+                               final String sequencedLibraryName) {
         this.chamberName = Short.toString(chamberName);
         this.libraries = libraries;
         this.primer = primer;
+        this.sequencedLibraryName = sequencedLibraryName;
     }
     
     public String getPrimer() {
@@ -42,5 +47,9 @@ public class ZimsIlluminaChamber {
 
     public Collection<LibraryBean> getLibraries() {
         return libraries;
+    }
+    
+    public String getSequencedLibrary() {
+        return this.sequencedLibraryName;
     }
 }

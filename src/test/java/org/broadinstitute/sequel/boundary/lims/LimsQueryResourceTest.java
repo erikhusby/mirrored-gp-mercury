@@ -11,6 +11,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import java.net.URL;
+import java.util.Arrays;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.sequel.infrastructure.deployment.Deployment.TEST;
@@ -39,22 +40,37 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     public void testFetchLibraryDetailsByTubeBarcode(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchLibraryDetailsByTubeBarcode").queryParam("includeWorkRequestDetails", "true");
 
-        String result1 = post(resource, "[\"0099443960\",\"406164\"]");
+        String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
         assertThat(result1, notNullValue());
+        int index = result1.indexOf("\"wasFound\":true");
+        assertThat(index, not(equalTo(-1)));
+        index = result1.indexOf("\"wasFound\":true", index+1);
+        assertThat(index, not(equalTo(-1)));
+        index = result1.indexOf("\"wasFound\":true", index+1);
+        assertThat(index, equalTo(-1));
 
-        String result2 = post(resource, "[\"0099443960\",\"406164\",\"unknown_barcode\"]");
+        String result2 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "unknown_barcode")));
         assertThat(result2, notNullValue());
+        index = result2.indexOf("\"wasFound\":true");
+        assertThat(index, not(equalTo(-1)));
+        index = result2.indexOf("\"wasFound\":true", index+1);
+        assertThat(index, equalTo(-1));
+
+        index = result2.indexOf("\"wasFound\":false");
+        assertThat(index, not(equalTo(-1)));
+        index = result2.indexOf("\"wasFound\":false", index+1);
+        assertThat(index, equalTo(-1));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testDoesLimsRecognizeAllTubes(@ArquillianResource URL baseUrl) {
-        WebResource webResource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");
+        WebResource resource = makeWebResource(baseUrl, "doesLimsRecognizeAllTubes");
 
-        String result1 = post(webResource, "[\"0099443960\",\"406164\"]");
+        String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
         assertThat(result1, equalTo("true"));
 
-        String result2 = post(webResource, "[\"0099443960\",\"406164\",\"unknown_barcode\"]");
+        String result2 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "unknown_barcode")));
         assertThat(result2, equalTo("false"));
     }
 
@@ -90,6 +106,15 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("Designation not found for flowcell barcode: invalid_flowcell"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindFlowcellDesignationByReagentBlockBarcode(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByReagentBlockBarcode").queryParam("reagentBlockBarcode", "MS0000252-50");
+        String result = get(resource);
+        assertThat(result, notNullValue());
+        assertThat(result, containsString("9A_10.26.2011"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)

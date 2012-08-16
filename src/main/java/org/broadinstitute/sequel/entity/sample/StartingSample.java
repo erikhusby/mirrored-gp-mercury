@@ -8,6 +8,7 @@ import org.broadinstitute.sequel.entity.project.Starter;
 import org.broadinstitute.sequel.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.Collection;
@@ -27,6 +28,7 @@ import java.util.Set;
  * bypassing the usual BSP checkout.
  */
 @Entity
+@Audited
 public abstract class StartingSample implements Starter {
 
     @SequenceGenerator(name = "SEQ_STARTING_SAMPLE", sequenceName = "SEQ_STARTING_SAMPLE")

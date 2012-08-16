@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.entity.person;
 
+import org.hibernate.envers.Audited;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -29,6 +31,7 @@ import javax.persistence.SequenceGenerator;
  * like projects.
  */
 @Entity
+@Audited
 public class Person {
 
     @Id

@@ -3,8 +3,6 @@ package org.broadinstitute.sequel.boundary.lims;
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-import org.broadinstitute.sequel.TestGroups;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
@@ -13,6 +11,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
+import static org.broadinstitute.sequel.TestGroups.DATABASE_FREE;
 import static org.easymock.EasyMock.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,14 +26,14 @@ public class LimsQueryResourceUnitTest {
     private LimsQueryResourceResponseFactory mockResponseFactory;
     private LimsQueryResource resource;
 
-    @BeforeMethod(groups = TestGroups.DATABASE_FREE)
+    @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() throws Exception {
         mockThriftService = createMock(ThriftService.class);
         mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
         resource = new LimsQueryResource(mockThriftService, mockResponseFactory);
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
+    @Test(groups = DATABASE_FREE)
     public void testFindFlowcellDesignationByTaskName() throws TException, TZIMSException {
         FlowcellDesignation flowcellDesignation = new FlowcellDesignation();
         expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andReturn(flowcellDesignation);
@@ -46,7 +45,7 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
+    @Test(groups = DATABASE_FREE)
     public void testFindFlowcellDesignationByTaskNameRuntimeException() throws Exception {
         RuntimeException thrown = new RuntimeException("Runtime exception!");
         expect(mockThriftService.findFlowcellDesignationByTaskName("TestTask")).andThrow(thrown);
@@ -63,7 +62,39 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
+    @Test(groups = DATABASE_FREE)
+    public void testFindFlowcellDesignationByReagentBlockBarcode() throws Exception {
+        FlowcellDesignation flowcellDesignation = new FlowcellDesignation();
+        expect(mockThriftService.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock")).andReturn(flowcellDesignation);
+        FlowcellDesignationType expected = new FlowcellDesignationType();
+        expect(mockResponseFactory.makeFlowcellDesignation(flowcellDesignation)).andReturn(expected);
+        replayAll();
+
+        FlowcellDesignationType result = resource.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock");
+        assertThat(result, equalTo(expected));
+
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFindFlowcellDesignationByReagentBlockBarcodeNotFound() {
+        RuntimeException thrown = new RuntimeException("Not found");
+        expect(mockThriftService.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock")).andThrow(thrown);
+        replayAll();
+
+        RuntimeException caught = null;
+        try {
+            resource.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock");
+        } catch (RuntimeException e) {
+            caught = e;
+        }
+        assertThat(caught.getMessage(), equalTo(thrown.getMessage()));
+
+        verifyAll();
+    }
+
+
+    @Test(groups = DATABASE_FREE)
     public void testDoesLimsRecognizeAllTubes() throws Exception {
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("good_barcode"))).andReturn(true);
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("bad_barcode"))).andReturn(false);
@@ -78,7 +109,7 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
+    @Test(groups = DATABASE_FREE)
     public void testFindFlowcellDesignationByFlowcellBarcode() throws Exception {
         FlowcellDesignation designation = new FlowcellDesignation();
         expect(mockThriftService.findFlowcellDesignationByFlowcellBarcode("good_barcode")).andReturn(designation);
@@ -92,7 +123,7 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
+    @Test(groups = DATABASE_FREE)
     public void testFetchQpcrForTube() throws Exception {
         expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
         replayAll();
@@ -103,7 +134,7 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
+    @Test(groups = DATABASE_FREE)
     public void testFetchQuantForTube() throws Exception {
         expect(mockThriftService.fetchQuantForTube("barcode", "test")).andReturn(1.23);
         replayAll();

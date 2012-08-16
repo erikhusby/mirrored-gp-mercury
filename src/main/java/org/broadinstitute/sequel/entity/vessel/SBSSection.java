@@ -414,7 +414,7 @@ public enum SBSSection {
             VesselPosition.LANE8
     )),
     // Quadrant containing the odd rows and odd columns on a 384-well plate.
-    A1("A1", Arrays.asList(
+    P384_96TIP_1INTERVAL_A1("P384_96TIP_1INTERVAL_A1", Arrays.asList(
             VesselPosition.A01,
             VesselPosition.A03,
             VesselPosition.A05,
@@ -512,7 +512,7 @@ public enum SBSSection {
             VesselPosition.O21,
             VesselPosition.O23)),
     // Quadrant containing the odd rows and even columns on a 384-well plate.
-    A2("A2", Arrays.asList(
+    P384_96TIP_1INTERVAL_A2("P384_96TIP_1INTERVAL_A2", Arrays.asList(
             VesselPosition.A02,
             VesselPosition.A04,
             VesselPosition.A06,
@@ -610,7 +610,7 @@ public enum SBSSection {
             VesselPosition.O22,
             VesselPosition.O24)),
     // Quadrant containing the even rows and odd columns on a 384-well plate.
-    B1("B1", Arrays.asList(
+    P384_96TIP_1INTERVAL_B1("P384_96TIP_1INTERVAL_B1", Arrays.asList(
             VesselPosition.B01,
             VesselPosition.B03,
             VesselPosition.B05,
@@ -708,7 +708,7 @@ public enum SBSSection {
             VesselPosition.P21,
             VesselPosition.P23)),
     // Quadrant containing the even rows and even columns on a 384-well plate.
-    B2("B2", Arrays.asList(
+    P384_96TIP_1INTERVAL_B2("P384_96TIP_1INTERVAL_B2", Arrays.asList(
             VesselPosition.B02,
             VesselPosition.B04,
             VesselPosition.B06,

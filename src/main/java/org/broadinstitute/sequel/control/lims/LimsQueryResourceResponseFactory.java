@@ -41,8 +41,10 @@ public class LimsQueryResourceResponseFactory {
             outLane.getLibraryData().add(makeLibraryData(libraryData));
         }
         outLane.setLoadingConcentration(lane.getLoadingConcentration());
-        for (LibraryData libraryData : lane.getDerivedLibraryData()) {
-            outLane.getDerivedLibraryData().add(makeLibraryData(libraryData));
+        if (lane.getDerivedLibraryData() != null) {
+            for (LibraryData libraryData : lane.getDerivedLibraryData()) {
+                outLane.getDerivedLibraryData().add(makeLibraryData(libraryData));
+            }
         }
         return outLane;
     }

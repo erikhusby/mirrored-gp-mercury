@@ -11,6 +11,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
+//import java.io.File;
 import java.util.Collection;
 
 /**
@@ -20,20 +21,10 @@ public class DeploymentBuilder {
 
     private static final String SEQUEL_WAR = "SequeL-Arquillian.war";
 
-    public static WebArchive buildSequelWar() {
-        WebArchive war = ShrinkWrap.create(ExplodedImporter.class, SEQUEL_WAR)
-                .importDirectory("src/main/webapp")
-                .as(WebArchive.class)
-                .addPackages(true, "org.broadinstitute.sequel")
-                .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=STUBBY"), "classes/jndi.properties");
-        war = addWarDependencies(war);
-        return war;
-    }
-
     /**
-     * In the rare case where you want an in-container test to run as if it's really
-     * in another environment (for instance, to isolate a production bug), use
-     * this method.
+     * Called by default {@link #buildSequelWar()}, and also useful explicitly in the rare case where you want an
+     * in-container test to run as if it's really in another environment (for instance, to isolate a production bug).
+     *
      * @param deployment
      * @return
      */
@@ -41,11 +32,20 @@ public class DeploymentBuilder {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, SEQUEL_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
+//                .addAsWebInfResource(new File("src/test/resources/glassfish-resources.xml"))
+//                .addAsResource(new File("src/main/resources/META-INF/persistence.xml") , "META-INF/persistence.xml")
                 .addPackages(true, "org.broadinstitute.sequel")
                 .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
         war = addWarDependencies(war);
         return war;
     }
+
+
+    public static WebArchive buildSequelWar() {
+
+        return buildSequelWar(Deployment.STUBBY);
+    }
+
 
     public static WebArchive buildSequelWar(String beansXml) {
         WebArchive war = ShrinkWrap.create(WebArchive.class, SEQUEL_WAR)

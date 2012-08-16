@@ -57,6 +57,7 @@ public class LiveThriftServiceTest {
     public void testFetchRun() throws Exception {
         TZamboniRun run = thriftService.fetchRun("120320_SL-HBN_0159_AFCC0GHCACXX");
         assertThat(run, not(nullValue()));
+        assertThat(run.getRunName(), equalTo("120320_SL-HBN_0159_AFCC0GHCACXX"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)
@@ -112,7 +113,7 @@ public class LiveThriftServiceTest {
     @Test(groups = EXTERNAL_INTEGRATION)
     public void testFindFlowcellDesignationByFlowcellBarcode() throws Exception {
         FlowcellDesignation designation = thriftService.findFlowcellDesignationByFlowcellBarcode("C0GHCACXX");
-        assertThat(designation, not(nullValue()));
+        assertThat(designation, notNullValue());
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)
@@ -128,6 +129,29 @@ public class LiveThriftServiceTest {
         }
         assertThat(caught, instanceOf(RuntimeException.class));
         assertThat(caught.getMessage(), equalTo("Designation not found for flowcell barcode: invalid_flowcell"));
+
+        verify(mockLog);
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFindFlowcellDesignationByReagentBlockBarcode() throws Exception {
+        FlowcellDesignation designation = thriftService.findFlowcellDesignationByReagentBlockBarcode("MS0000252-50");
+        assertThat(designation, notNullValue());
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFindFlowcellDesignationByReagentBlockBarcodeNotFound() throws Exception {
+        mockLog.error(eq("Thrift error. Probably couldn't find designation for reagent block barcode 'invalid_reagent_block': null"), isA(TTransportException.class));
+        replay(mockLog);
+
+        Exception caught = null;
+        try {
+            thriftService.findFlowcellDesignationByReagentBlockBarcode("invalid_reagent_block");
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), equalTo("Designation not found for flowcell barcode: invalid_reagent_block"));
 
         verify(mockLog);
     }

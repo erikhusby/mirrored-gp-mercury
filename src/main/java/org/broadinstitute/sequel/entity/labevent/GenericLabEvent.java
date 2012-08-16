@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.labevent;
 import org.broadinstitute.sequel.entity.person.Person;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -17,6 +18,7 @@ import java.util.Date;
  * Most general form of lab event
  */
 @Entity
+@Audited
 public class GenericLabEvent extends LabEvent {
 
     @Enumerated(EnumType.STRING)
@@ -36,6 +38,7 @@ public class GenericLabEvent extends LabEvent {
     protected GenericLabEvent() {
     }
 
+    // todo jmt delete?
     @Override
     public LabEventName getEventName() {
         return LabEventName.GENERIC;

@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.reagent;
 
 import org.broadinstitute.sequel.entity.vessel.Containable;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -25,6 +26,7 @@ import javax.persistence.Transient;
  * {@link Reagent}s.
  */
 @Entity
+@Audited
 public abstract class Reagent implements Containable {
 
     @Id

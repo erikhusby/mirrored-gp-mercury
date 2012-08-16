@@ -45,7 +45,7 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
             libraryNumber++;
         }
-        return new ZimsIlluminaChamber((short) laneNumber, libraries, "PESP1+T");
+        return new ZimsIlluminaChamber((short) laneNumber, libraries, "PESP1+T", "LaneLibrary-"+laneNumber);
     }
 
     private ZimsIlluminaChamber makeLane(int laneNumber) {
@@ -62,6 +62,6 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
             gssrBarcodes.add(number + "." + i);
         }
         TZDevExperimentData experimentData = new TZDevExperimentData("Experiment " + number, conditions);
-        return new LibraryBean("Library-" + number, "Project-" + number, "Initiative-" + number, 1L, new MolecularIndexingScheme("IndexingScheme-" + number, new HashMap<IndexPosition, String>()), Boolean.TRUE, number, "Analysis-" + number, "Reference-" + number, "RefVer-" + number, "Sample-" + number, "Collaborator-" + number, "Organism-" + number, "Species-" + number, "Strain-" + number, "LSID-" + number, "Tissue-" + number, "Plasmid-" + number, "Aligner-" + number, "Size Range " + number, "Enzyme-" + number, "CellLine-" + number, "Bait-" + number, "Individual-" + number, 123.4, Boolean.FALSE, Boolean.FALSE, "no weirdness", 123.4, Boolean.FALSE, experimentData, "GSSR-" + number, gssrBarcodes, "GSSR SampleType-" + number, Short.valueOf((short) 1), Boolean.FALSE, new ArrayList<String>());
+        return new LibraryBean("Library-" + number, "Project-" + number, "Initiative-" + number, 1L, new MolecularIndexingScheme("IndexingScheme-" + number, new HashMap<IndexPosition, String>()), Boolean.TRUE, number, "Analysis-" + number, "Reference-" + number, "RefVer-" + number, "Sample-" + number, "Collaborator-" + number, "Organism-" + number, "Species-" + number, "Strain-" + number, "LSID-" + number, "Tissue-" + number, "Plasmid-" + number, "Aligner-" + number, "Size Range " + number, "Enzyme-" + number, "CellLine-" + number, "Bait-" + number, "Individual-" + number, 123.4, Boolean.FALSE, Boolean.FALSE, "no weirdness", 123.4, Boolean.FALSE, experimentData, "GSSR-" + number, gssrBarcodes, "GSSR SampleType-" + number, Short.valueOf((short) 1), Boolean.FALSE, new ArrayList<String>(), false);
     }
 }

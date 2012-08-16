@@ -22,6 +22,17 @@ import java.util.List;
 public class BettaLimsMessageFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
 
+    private long time = System.currentTimeMillis();
+
+    /**
+     * LabEvent has a unique constraint that includes a timestamp, so database test code must advance the timestamp
+     * after each message.  The timestamp does not need to be advanced for each event within a message, because
+     * each event has a disambiguator.
+     */
+    public void advanceTime() {
+        time++;
+    }
+
     public String buildWellName(int positionNumber) {
         @SuppressWarnings("NumericCastThatLosesPrecision")
         char row = (char) ('A' + (positionNumber / NUMBER_OF_RACK_COLUMNS));
@@ -31,11 +42,6 @@ public class BettaLimsMessageFactory {
             row--;
         }
         String columnString = String.valueOf(column);
-/*
-        if(columnString.length() < 2) {
-            columnString = '0' + columnString;
-        }
-*/
         return row + columnString;
     }
 
@@ -285,7 +291,12 @@ public class BettaLimsMessageFactory {
 
     private void setStationEventData(String eventType, StationEventType plateTransferEvent) throws DatatypeConfigurationException {
         plateTransferEvent.setEventType(eventType);
-        plateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(new GregorianCalendar()));
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        gregorianCalendar.setTimeInMillis(time);
+        plateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
+        plateTransferEvent.setDisambiguator(1L);
+        plateTransferEvent.setOperator("jowalsh");
+        plateTransferEvent.setStation("ZAN");
     }
 
     private PlateType buildRack(String rackBarcode) {

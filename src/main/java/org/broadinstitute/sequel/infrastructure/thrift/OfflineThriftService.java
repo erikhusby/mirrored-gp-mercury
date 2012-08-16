@@ -42,6 +42,11 @@ public class OfflineThriftService implements ThriftService {
     }
 
     @Override
+    public FlowcellDesignation findFlowcellDesignationByReagentBlockBarcode(String flowcellBarcode) {
+        return null;
+    }
+
+    @Override
     public String fetchUserIdForBadgeId(String badgeId) {
         return null;
     }
@@ -79,7 +84,7 @@ public class OfflineThriftService implements ThriftService {
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
             libraryNumber++;
         }
-        return new TZamboniLane((short) laneNumber, libraries, "PESP1+T");
+        return new TZamboniLane((short) laneNumber, libraries, "PESP1+T", "LaneLibrary-"+laneNumber);
     }
 
     private static TZamboniLibrary makeLibrary(String number) {
@@ -92,7 +97,7 @@ public class OfflineThriftService implements ThriftService {
             gssrBarcodes.add(number + "." + i);
         }
         TZDevExperimentData experimentData = new TZDevExperimentData("Experiment " + number, conditions);
-        return new TZamboniLibrary("Library-" + number, "Project-" + number, "Initiative-" + number, 1L, new MolecularIndexingScheme("IndexingScheme-" + number, new HashMap<IndexPosition, String>()), null, null, number, "Analysis-" + number, (short) 1, "GSSR-" + number, "OrganismDescription-" + number, "LSID-" + number, "Strain-" + number, "Sample-" + number, "Collaborator-" + number, "Tissue-" + number, "Organism-" + number, "Plasmid-" + number, false, false, "Aligner-" + number, "Size Range " + number, "Enzyme-" + number, "Species-" + number, "CellLine-" + number, "Reference-" + number, "RevVer-" + number, "Bait-" + number, true, "GSSR SampleType-" + number, gssrBarcodes, "Individual-" + number, 123.4, false, false, "no weirdness", 123.4, false, experimentData, new ArrayList<String>());
+        return new TZamboniLibrary("Library-" + number, "Project-" + number, "Initiative-" + number, 1L, new MolecularIndexingScheme("IndexingScheme-" + number, new HashMap<IndexPosition, String>()), null, null, number, "Analysis-" + number, (short) 1, "GSSR-" + number, "OrganismDescription-" + number, "LSID-" + number, "Strain-" + number, "Sample-" + number, "Collaborator-" + number, "Tissue-" + number, "Organism-" + number, "Plasmid-" + number, false, false, "Aligner-" + number, "Size Range " + number, "Enzyme-" + number, "Species-" + number, "CellLine-" + number, "Reference-" + number, "RevVer-" + number, "Bait-" + number, true, "GSSR SampleType-" + number, gssrBarcodes, "Individual-" + number, 123.4, false, false, "no weirdness", 123.4, false, experimentData, new ArrayList<String>(), false);
 
     }
 }

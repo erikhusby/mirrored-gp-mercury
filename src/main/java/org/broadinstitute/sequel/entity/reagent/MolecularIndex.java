@@ -1,5 +1,7 @@
 package org.broadinstitute.sequel.entity.reagent;
 
+import org.hibernate.envers.Audited;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -19,6 +21,7 @@ import java.util.Map;
  * contain both T *and* U.
  */
 @Entity
+@Audited
 @NamedQueries({
         @NamedQuery(
                 name="MolecularIndex.findBySequence",

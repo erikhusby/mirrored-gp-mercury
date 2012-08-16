@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import java.util.Collection;
@@ -13,6 +14,7 @@ import java.util.Set;
  * One of many (usually 8) tubes in a StripTube
  */
 @Entity
+@Audited
 public class StripTubeWell extends LabVessel {
 
     protected StripTubeWell(String label) {
@@ -30,6 +32,11 @@ public class StripTubeWell extends LabVessel {
     @Override
     public Set<LabEvent> getTransfersTo() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public CONTAINER_TYPE getType() {
+        return CONTAINER_TYPE.STRIP_TUBE_WELL;
     }
 
     @Override

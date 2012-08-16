@@ -8,6 +8,9 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.testng.annotations.Test;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -86,6 +89,38 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
 
         String result = get(resource.queryParam("value", "test"));
         assertThat(result, equalTo("test"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testEchoStringArrayAsJson(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "echoStringArray");
+
+        List<String> values = Arrays.asList("value1", "value2");
+        String result = get(addQueryParam(resource, "s", values));
+
+        assertThat(result, equalTo(toJson(values)));
+    }
+
+    /**
+     * Test that a list of 384 12-digit strings (i.e., tube barcodes) can be
+     * sent to a service as query parameters. The alternative is falling back on
+     * POST instead of GET even though it may be a query service call.
+     *
+     * @param baseUrl
+     */
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testEchoStringArrayLargeAsJson(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "echoStringArray");
+
+        List<String> values = new ArrayList<String>();
+        for (int i = 0; i < 384; i++) {
+            values.add(String.format("%012d", i));
+        }
+        String result = get(addQueryParam(resource, "s", values));
+
+        assertThat(result, equalTo(toJson(values)));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)

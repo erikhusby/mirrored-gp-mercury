@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -23,6 +24,7 @@ import java.util.Set;
         )
 })
 @Entity
+@Audited
 public class StripTube extends LabVessel implements VesselContainerEmbedder<StripTubeWell> {
 
     protected StripTube() {
@@ -74,6 +76,11 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
     @Override
     public Set<LabEvent> getTransfersTo() {
         return this.vesselContainer.getTransfersTo();
+    }
+
+    @Override
+    public CONTAINER_TYPE getType() {
+        return CONTAINER_TYPE.STRIP_TUBE;
     }
 
     // todo jmt remove these empty methods

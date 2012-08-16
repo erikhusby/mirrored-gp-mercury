@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -27,20 +28,24 @@ import java.util.Set;
         )
 )
 @Entity
+@Audited
 public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell>, Serializable {
 
     public enum PlateType {
-        Eppendorf96("Eppendorf96"),
-        CovarisRack("CovarisRack"),
-        IndexedAdapterPlate96("IndexedAdapterPlate96"),
-        SageCassette("SageCassette"),
-        Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC"),
-        FilterPlate96("FilterPlate96");
+        Eppendorf96("Eppendorf96", VesselGeometry.G12x8),
+        CovarisRack("CovarisRack", VesselGeometry.G12x8),
+        IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
+        SageCassette("SageCassette", VesselGeometry.SAGE_CASSETTE),
+        Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
+        FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
+        Eppendorf384("Eppendorf384", VesselGeometry.G24x16);
 
         private String displayName;
+        private VesselGeometry vesselGeometry;
 
-        PlateType(String displayName) {
+        PlateType(String displayName, VesselGeometry vesselGeometry) {
             this.displayName = displayName;
+            this.vesselGeometry = vesselGeometry;
         }
 
         public String getDisplayName() {
@@ -56,6 +61,10 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
 
         public static PlateType getByDisplayName(String displayName) {
             return mapDisplayNameToType.get(displayName);
+        }
+
+        public VesselGeometry getVesselGeometry() {
+            return vesselGeometry;
         }
     }
 
@@ -75,6 +84,10 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
     protected StaticPlate() {
     }
 
+    public PlateType getPlateType() {
+        return plateType;
+    }
+
     @Override
     public Set<LabEvent> getTransfersFrom() {
         return vesselContainer.getTransfersFrom();
@@ -83,6 +96,11 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
     @Override
     public Set<LabEvent> getTransfersTo() {
         return vesselContainer.getTransfersTo();
+    }
+
+    @Override
+    public CONTAINER_TYPE getType() {
+        return CONTAINER_TYPE.STATIC_PLATE;
     }
 
     @Override

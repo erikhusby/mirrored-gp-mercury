@@ -80,6 +80,7 @@ public class IlluminaRunQuery extends AbstractJsfBean {
         addColumn("GSSR Barcodes", null, "illuminaRunQuery.join(library.gssrBarcodes)");
         addColumn("GSSR Sample Type", "gssrSampleType", null);
         addColumn("Target Lane Coverage", "targetLaneCoverage", null);
+        addColumn("Fast Track", "fastTrack", null);
     }
 
     public static void addColumn(String header, String property, String expression) {

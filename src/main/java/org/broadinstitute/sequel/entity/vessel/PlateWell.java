@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -13,6 +14,7 @@ import javax.persistence.ManyToOne;
 import java.util.Collection;
 import java.util.Set;
 @Entity
+@Audited
 public class PlateWell extends LabVessel {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,6 +45,11 @@ public class PlateWell extends LabVessel {
     @Override
     public Set<LabEvent> getTransfersTo() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public CONTAINER_TYPE getType() {
+        return CONTAINER_TYPE.PLATE_WELL;
     }
 
     @Override

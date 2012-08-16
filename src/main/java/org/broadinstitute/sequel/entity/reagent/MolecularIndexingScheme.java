@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.reagent;
 
 import org.hibernate.annotations.Sort;
 import org.hibernate.annotations.SortType;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.Collections;
@@ -25,6 +26,7 @@ import java.util.TreeMap;
  * {@link MolecularIndexingSchemeFactory}.
  */
 @Entity
+@Audited
 @NamedNativeQueries({
         @NamedNativeQuery(
                 name="MolecularIndexingScheme.findSingleIndexScheme",

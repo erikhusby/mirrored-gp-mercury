@@ -5,6 +5,7 @@ import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.reagent.Reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 
+import org.hibernate.envers.Audited;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -18,6 +19,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -58,8 +60,20 @@ import java.util.Set;
 // todo rename to "Event"--everything is an event, including
     // deltas in an aggregation in zamboni
 @Entity
+@Audited
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
 public abstract class LabEvent {
+
+    public static final Comparator<GenericLabEvent> byEventDate = new Comparator<GenericLabEvent>() {
+        @Override
+        public int compare(GenericLabEvent o1, GenericLabEvent o2) {
+            int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
+            if (dateComparison == 0) {
+                return o1.getDisambiguator().compareTo(o2.getDisambiguator());
+            }
+            return dateComparison;
+        }
+    };
 
     @Id
     @SequenceGenerator(name = "SEQ_LAB_EVENT", sequenceName = "SEQ_LAB_EVENT")
@@ -78,6 +92,7 @@ public abstract class LabEvent {
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<Reagent> reagents = new HashSet<Reagent>();
 
+    // todo jmt a single transfer superclass that permits all section, position, vessel combinations
     /** for transfers using a tip box, e.g. Bravo */
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<SectionTransfer> sectionTransfers = new HashSet<SectionTransfer>();

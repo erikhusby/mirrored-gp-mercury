@@ -138,10 +138,12 @@ public class IlluminaRunResource implements Serializable {
                         zamboniLibrary.getGssrSampleType(),
                         zamboniLibrary.getTargetLaneCoverage(),
                         zamboniLibrary.aggregate,
-                        zamboniLibrary.getCustomAmpliconSetNames());
+                        zamboniLibrary.getCustomAmpliconSetNames(),
+                        zamboniLibrary.isFastTrack());
                 libraries.add(libBean);
             }
-            runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer()));
+            //TODO SGM:  pull lane library name from tZamboniLane
+            runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer(), tZamboniLane.getSequencedLibraryName()));
         }
         return runBean;
     }

@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -17,6 +18,7 @@ import javax.persistence.SequenceGenerator;
  * which includes racks.
  */
 @Entity
+@Audited
 public class VesselToVesselTransfer {
     @Id
     @SequenceGenerator(name = "SEQ_VESSEL_TO_VESSEL_TRANSFER", sequenceName = "SEQ_VESSEL_TO_VESSEL_TRANSFER")

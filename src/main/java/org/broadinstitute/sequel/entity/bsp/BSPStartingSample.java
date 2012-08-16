@@ -8,6 +8,7 @@ import org.broadinstitute.sequel.entity.sample.SampleInstance;
 import org.broadinstitute.sequel.entity.sample.StartingSample;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.sequel.infrastructure.bsp.BSPSampleDataFetcher;
+import org.hibernate.envers.Audited;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
@@ -27,6 +28,7 @@ import java.util.Set;
  * a service lookup the real data from bsp.
  */
 @Entity
+@Audited
 @NamedQueries({
         @NamedQuery(
                 name = "BSPStartingSample.fetchBySampleName",

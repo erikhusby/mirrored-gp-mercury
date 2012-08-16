@@ -5,6 +5,7 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.entity.analysis.ReadBucket;
 import org.broadinstitute.sequel.entity.project.BasicProjectPlan;
 import org.broadinstitute.sequel.entity.vessel.MolecularState;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -17,6 +18,7 @@ import java.util.Collection;
  * A change to the state (of a SampleSheet).
  */
 @Entity
+@Audited
 public class StateChange {
 
     @Id

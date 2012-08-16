@@ -185,6 +185,10 @@ public class IlluminaRunResourceTest extends ContainerTest {
         assertEquals(laneBean.getPrimer(),zLane.getPrimer());
         assertEquals(laneBean.getLibraries().size(), zLane.getLibraries().size());
 
+        assertNotNull(laneBean.getSequencedLibrary());
+        assertFalse(laneBean.getSequencedLibrary().isEmpty());
+        assertEquals(laneBean.getSequencedLibrary(), zLane.getSequencedLibraryName());
+
         for (TZamboniLibrary thriftLib : zLane.getLibraries()) {
             doAssertions(thriftLib,laneBean.getLibraries());
         }

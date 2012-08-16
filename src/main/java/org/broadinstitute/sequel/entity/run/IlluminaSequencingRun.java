@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.run;
 
 import org.broadinstitute.sequel.entity.person.Person;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
@@ -15,6 +16,7 @@ import java.util.HashSet;
         )
 })
 @Entity
+@Audited
 public class IlluminaSequencingRun extends SequencingRun {
 
     public IlluminaSequencingRun(final IlluminaFlowcell flowcell,

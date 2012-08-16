@@ -141,6 +141,11 @@ public class IlluminaRunQueryTest extends Arquillian {
         }
 
         @Override
+        public FlowcellDesignation findFlowcellDesignationByReagentBlockBarcode(String flowcellBarcode) {
+            return null;
+        }
+
+        @Override
         public String fetchUserIdForBadgeId(String badgeId) {
             return null;
         }

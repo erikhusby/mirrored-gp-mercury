@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.entity.project;
 
 import org.broadinstitute.sequel.entity.workflow.LabBatch;
 import org.broadinstitute.sequel.infrastructure.jira.JiraService;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -26,6 +27,7 @@ import java.util.Set;
                 query = "from JiraTicket j where j.ticketName = :ticketName")
 })
 @Entity
+@Audited
 public class JiraTicket {
 
     public static final String TEST_PROJECT_PREFIX = "LCSET";

@@ -5,8 +5,10 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -25,6 +27,7 @@ import java.util.Set;
         )
 })
 @Entity
+@Audited
 public class IlluminaFlowcell extends AbstractRunCartridge implements VesselContainerEmbedder<RunChamber> {
 
     // todo jmt fix this
@@ -56,6 +59,11 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     @Override
     public Set<LabEvent> getTransfersTo() {
         return vesselContainer.getTransfersTo();
+    }
+
+    @Override
+    public CONTAINER_TYPE getType() {
+        return CONTAINER_TYPE.FLOWCELL;
     }
 
     @Override

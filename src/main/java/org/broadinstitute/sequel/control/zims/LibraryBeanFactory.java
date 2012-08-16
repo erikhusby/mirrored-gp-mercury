@@ -94,14 +94,15 @@ public class LibraryBeanFactory {
                     null/*String gssrSampleType*/,
                     null/*Short targetLaneCoverage*/,
                     null/*Boolean doAggregation*/,
-                    null/*Collection<String> customAmpliconSetNames*/));
+                    null/*Collection<String> customAmpliconSetNames*/,
+                    false/*Boolean fastTrack*/));
         }
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
         ZimsIlluminaRun zimsIlluminaRun = new ZimsIlluminaRun(illuminaSequencingRun.getRunName(),
                 illuminaSequencingRun.getRunBarcode(), runCartridge.getCartridgeBarcode(),
                 illuminaSequencingRun.getMachineName(), null, simpleDateFormat.format(illuminaSequencingRun.getRunDate()),
                 (short) 0, (short) 0, (short) 0, (short) 0, (short) 0, false);
-        zimsIlluminaRun.addLane(new ZimsIlluminaChamber((short) 1, libraries, ""));
+        zimsIlluminaRun.addLane(new ZimsIlluminaChamber((short) 1, libraries, "",""));
         return zimsIlluminaRun;
     }
 }
