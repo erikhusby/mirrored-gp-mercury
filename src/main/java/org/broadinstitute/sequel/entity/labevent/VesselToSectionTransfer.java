@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.labevent;
 
 import org.broadinstitute.sequel.entity.OrmUtil;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.vessel.SBSSection;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
 import org.hibernate.annotations.Index;
@@ -9,6 +10,8 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -30,7 +33,8 @@ public class VesselToSectionTransfer {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
 
-    private String targetSection;
+    @Enumerated(EnumType.STRING)
+    private SBSSection targetSection;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel targetVessel;
@@ -39,7 +43,7 @@ public class VesselToSectionTransfer {
     @ManyToOne
     private LabEvent labEvent;
 
-    public VesselToSectionTransfer(LabVessel sourceVessel, String targetSection, VesselContainer<?> targetVesselContainer, LabEvent labEvent) {
+    public VesselToSectionTransfer(LabVessel sourceVessel, SBSSection targetSection, VesselContainer<?> targetVesselContainer, LabEvent labEvent) {
         this.sourceVessel = sourceVessel;
         this.targetSection = targetSection;
         this.labEvent = labEvent;
@@ -53,7 +57,7 @@ public class VesselToSectionTransfer {
         return sourceVessel;
     }
 
-    public String getTargetSection() {
+    public SBSSection getTargetSection() {
         return targetSection;
     }
 

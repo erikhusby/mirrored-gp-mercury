@@ -1,6 +1,7 @@
 package org.broadinstitute.sequel.entity.run;
 
 import org.broadinstitute.sequel.entity.person.Person;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -16,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@Audited
 public class SequencingRun {
 
     @SequenceGenerator(name = "SEQ_SEQUENCING_RUN", sequenceName = "SEQ_SEQUENCING_RUN")

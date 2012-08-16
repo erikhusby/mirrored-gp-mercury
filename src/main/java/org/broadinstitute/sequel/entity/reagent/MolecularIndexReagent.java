@@ -4,12 +4,14 @@ package org.broadinstitute.sequel.entity.reagent;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 
 @Entity
+@Audited
 public class MolecularIndexReagent extends Reagent {
 
     @ManyToOne(fetch = FetchType.LAZY)

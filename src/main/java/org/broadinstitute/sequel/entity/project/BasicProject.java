@@ -3,12 +3,14 @@ package org.broadinstitute.sequel.entity.project;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.entity.person.Person;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 
 @Entity
+@Audited
 public class BasicProject extends Project {
     
     private static Log gLog = LogFactory.getLog(BasicProject.class);

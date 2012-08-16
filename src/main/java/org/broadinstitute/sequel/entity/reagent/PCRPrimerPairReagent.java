@@ -5,10 +5,12 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.sequel.entity.vessel.MolecularStateRange;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 
 @Entity
+@Audited
 public class PCRPrimerPairReagent extends Reagent {
 
     private static Log gLog = LogFactory.getLog(PCRPrimerPairReagent.class);

@@ -4,10 +4,12 @@ package org.broadinstitute.sequel.entity.reagent;
 import org.broadinstitute.sequel.entity.run.SequencingTechnology;
 import org.broadinstitute.sequel.entity.vessel.MolecularAppendage;
 import org.broadinstitute.sequel.entity.vessel.MolecularEnvelope;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 
 @Entity
+@Audited
 public class IndexEnvelope  extends MolecularEnvelope {
 
     private String threePrimeSeq;

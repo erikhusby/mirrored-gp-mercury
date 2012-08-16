@@ -19,6 +19,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -62,6 +63,17 @@ import java.util.Set;
 @Audited
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
 public abstract class LabEvent {
+
+    public static final Comparator<GenericLabEvent> byEventDate = new Comparator<GenericLabEvent>() {
+        @Override
+        public int compare(GenericLabEvent o1, GenericLabEvent o2) {
+            int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
+            if (dateComparison == 0) {
+                return o1.getDisambiguator().compareTo(o2.getDisambiguator());
+            }
+            return dateComparison;
+        }
+    };
 
     @Id
     @SequenceGenerator(name = "SEQ_LAB_EVENT", sequenceName = "SEQ_LAB_EVENT")

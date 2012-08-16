@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.entity.run;
 
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 
@@ -13,6 +14,7 @@ import javax.persistence.Entity;
  * pacbio plate
  */
 @Entity
+@Audited
 public abstract class RunCartridge extends LabVessel {
 
     public RunCartridge(String label) {

@@ -4,6 +4,7 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -27,6 +28,7 @@ import java.util.Set;
         )
 )
 @Entity
+@Audited
 public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell>, Serializable {
 
     public enum PlateType {
@@ -35,7 +37,8 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
         IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
         SageCassette("SageCassette", VesselGeometry.SAGE_CASSETTE),
         Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
-        FilterPlate96("FilterPlate96", VesselGeometry.G12x8);
+        FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
+        Eppendorf384("Eppendorf384", VesselGeometry.G24x16);
 
         private String displayName;
         private VesselGeometry vesselGeometry;

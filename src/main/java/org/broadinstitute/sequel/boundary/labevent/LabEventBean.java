@@ -1,26 +1,31 @@
 package org.broadinstitute.sequel.boundary.labevent;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import org.broadinstitute.sequel.boundary.Namespaces;
+
+import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
  * A JAX-RS DTO for lab events
  */
-@XmlRootElement
+@XmlType(namespace = Namespaces.LAB_EVENT)
 public class LabEventBean {
     private String eventType;
     private String station;
     private String operator;
+    private Date eventDate;
     private String batchId;
     private List<LabVesselBean> sources = new ArrayList<LabVesselBean>();
     private List<LabVesselBean> targets = new ArrayList<LabVesselBean>();
     private List<TransferBean> transfers = new ArrayList<TransferBean>();
 
-    public LabEventBean(String eventType, String station, String operator) {
+    public LabEventBean(String eventType, String station, String operator, Date eventDate) {
         this.eventType = eventType;
         this.station = station;
         this.operator = operator;
+        this.eventDate = eventDate;
     }
 
     /** For JAXB */
@@ -49,6 +54,14 @@ public class LabEventBean {
 
     public void setOperator(String operator) {
         this.operator = operator;
+    }
+
+    public Date getEventDate() {
+        return eventDate;
+    }
+
+    public void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
     }
 
     public List<LabVesselBean> getSources() {

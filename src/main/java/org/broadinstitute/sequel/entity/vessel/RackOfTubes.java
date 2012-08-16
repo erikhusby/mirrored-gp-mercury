@@ -4,9 +4,12 @@ import org.broadinstitute.sequel.entity.labevent.LabEvent;
 import org.broadinstitute.sequel.entity.notice.StatusNote;
 import org.broadinstitute.sequel.entity.project.Project;
 import org.broadinstitute.sequel.entity.sample.SampleInstance;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import java.io.UnsupportedEncodingException;
@@ -36,21 +39,51 @@ import java.util.Set;
         )
 })
 @Entity
+@Audited
 public class RackOfTubes extends LabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
+
+    public enum RackType {
+        Matrix96("Matrix96", VesselGeometry.G12x8);
+
+        private final String displayName;
+        private final VesselGeometry vesselGeometry;
+
+        RackType(String displayName, VesselGeometry vesselGeometry) {
+            //To change body of created methods use File | Settings | File Templates.
+            this.displayName = displayName;
+            this.vesselGeometry = vesselGeometry;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public VesselGeometry getVesselGeometry() {
+            return vesselGeometry;
+        }
+    }
 
     // todo jmt can't make this non-null, because all LabVessels subtypes are in the same table
     // todo jmt unique constraint?
 //    @Column(nullable = false)
     private String digest;
 
+    @Enumerated(EnumType.STRING)
+    private RackType rackType;
+
     @Embedded
     private VesselContainer<TwoDBarcodedTube> vesselContainer = new VesselContainer<TwoDBarcodedTube>(this);
 
-    public RackOfTubes(String label) {
+    public RackOfTubes(String label, RackType rackType) {
         super(label);
+        this.rackType = rackType;
     }
 
     protected RackOfTubes() {
+    }
+
+    public RackType getRackType() {
+        return rackType;
     }
 
     public void makeDigest() {

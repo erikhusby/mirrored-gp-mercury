@@ -356,6 +356,63 @@
                 </plugins>
             </reporting>
         </profile>
+        <profile>
+            <!-- schemagen generates XSDs from JAX-RS DTOs.  schemagen and clover seem to interfere, so schemagen must be run separately -->
+            <id>Jaxb.schemagen</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>jaxb2-maven-plugin</artifactId>
+                        <version>1.4</version>
+                        <executions>
+                            <execution>
+                                <id>SchemaGen</id>
+                                <goals>
+                                    <goal>schemagen</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>org/broadinstitute/sequel/boundary/Namespaces.java</include>
+                                        <include>org/broadinstitute/sequel/boundary/labevent/*Bean.java</include>
+                                    </includes>
+                                    <transformSchemas>
+                                        <!--
+                                            Each schema element defines:
+
+                                            a) A <<namespace uri>> for one of your namespaces.
+                                               This namespace uri must be unique within the schemas element.
+
+                                            b) A <<toPrefix>> that you want to use for the namespace.
+                                               Should not contain whitespace or exotic characters.
+                                               This yields a namespace definition on the form
+                                               <xs:schema ... xmlns:[toPrefix]="[uri]" ... />
+
+                                               (I.e: <xs:schema ... xmlns:some="http://some/namespace"
+                                                                    xmlns:xs="http://www.w3.org/2001/XMLSchema"> )
+
+                                               ... and transforms relevant xml schema elements to use the provided namespace prefix:
+
+                                               <some:elementName ... />
+
+                                            c) The desired <<toFile>> name of the generated XML schema definition file,
+                                               excluding the ".xsd" suffix (which will be added automatically).
+                                        -->
+                                        <transformSchema>
+                                            <uri>http://broadinstitute.org/sequel/labevent</uri>
+                                            <!--
+                                            <toPrefix>labevent</toPrefix>
+                                            -->
+                                            <toFile>labevent.xsd</toFile>
+                                        </transformSchema>
+                                    </transformSchemas>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
             <profile>
                 <id>Tests.ExternalIntegration</id>
                 <build>
@@ -1359,7 +1416,7 @@
                     </execution>
                 </executions>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -1398,7 +1455,7 @@
                             <arguments>
                                 <argument>--drop</argument>
                                 <argument>--create</argument>
-                                <argument>--delimiter=</argument>
+                                <argument>--delimiter=;</argument>
                                 <argument>--output=${project.basedir}/target/generated-sources/ddl/generated_schema.sql</argument>
                                 <argument>sequel_pu</argument>
                             </arguments>
