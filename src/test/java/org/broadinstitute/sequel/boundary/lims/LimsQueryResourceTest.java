@@ -110,6 +110,15 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void testFindFlowcellDesignationByReagentBlockBarcode(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByReagentBlockBarcode").queryParam("reagentBlockBarcode", "MS0000252-50");
+        String result = get(resource);
+        assertThat(result, notNullValue());
+        assertThat(result, containsString("9A_10.26.2011"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testFetchUserIdForBadgeId(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "8f03f000f7ff12e0");
         String result = get(resource);

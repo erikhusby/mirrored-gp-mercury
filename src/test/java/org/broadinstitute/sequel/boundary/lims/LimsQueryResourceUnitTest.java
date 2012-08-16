@@ -63,6 +63,38 @@ public class LimsQueryResourceUnitTest {
     }
 
     @Test(groups = DATABASE_FREE)
+    public void testFindFlowcellDesignationByReagentBlockBarcode() throws Exception {
+        FlowcellDesignation flowcellDesignation = new FlowcellDesignation();
+        expect(mockThriftService.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock")).andReturn(flowcellDesignation);
+        FlowcellDesignationType expected = new FlowcellDesignationType();
+        expect(mockResponseFactory.makeFlowcellDesignation(flowcellDesignation)).andReturn(expected);
+        replayAll();
+
+        FlowcellDesignationType result = resource.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock");
+        assertThat(result, equalTo(expected));
+
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFindFlowcellDesignationByReagentBlockBarcodeNotFound() {
+        RuntimeException thrown = new RuntimeException("Not found");
+        expect(mockThriftService.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock")).andThrow(thrown);
+        replayAll();
+
+        RuntimeException caught = null;
+        try {
+            resource.findFlowcellDesignationByReagentBlockBarcode("TestReagentBlock");
+        } catch (RuntimeException e) {
+            caught = e;
+        }
+        assertThat(caught.getMessage(), equalTo(thrown.getMessage()));
+
+        verifyAll();
+    }
+
+
+    @Test(groups = DATABASE_FREE)
     public void testDoesLimsRecognizeAllTubes() throws Exception {
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("good_barcode"))).andReturn(true);
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("bad_barcode"))).andReturn(false);

@@ -120,6 +120,21 @@ public class LiveThriftService implements ThriftService {
     }
 
     @Override
+    public FlowcellDesignation findFlowcellDesignationByReagentBlockBarcode(final String reagentBlockBarcode) {
+        return thriftConnection.call(new ThriftConnection.Call<FlowcellDesignation>() {
+            @Override
+            public FlowcellDesignation call(LIMQueries.Client client) {
+                try {
+                    return client.findFlowcellDesignationByReagentBlockBarcode(reagentBlockBarcode);
+                } catch (TException e) {
+                    log.error("Thrift error. Probably couldn't find designation for reagent block barcode '" + reagentBlockBarcode + "': " + e.getMessage(), e);
+                    throw new RuntimeException("Designation not found for flowcell barcode: " + reagentBlockBarcode);
+                }
+            }
+        });
+    }
+
+    @Override
     public String fetchUserIdForBadgeId(final String badgeId) {
         return thriftConnection.call(new ThriftConnection.Call<String>() {
             @Override

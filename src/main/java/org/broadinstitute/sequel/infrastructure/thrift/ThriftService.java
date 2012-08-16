@@ -28,6 +28,8 @@ public interface ThriftService extends Serializable {
 
     public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(final String flowcellBarcode);
 
+    public FlowcellDesignation findFlowcellDesignationByReagentBlockBarcode(final String flowcellBarcode);
+
     public String fetchUserIdForBadgeId(String badgeId);
 
     public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode);

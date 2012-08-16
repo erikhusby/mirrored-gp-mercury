@@ -48,6 +48,11 @@ public class MockThriftService implements ThriftService {
     }
 
     @Override
+    public FlowcellDesignation findFlowcellDesignationByReagentBlockBarcode(String flowcellBarcode) {
+        return null;
+    }
+
+    @Override
     public String fetchUserIdForBadgeId(String badgeId) {
         return null;
     }

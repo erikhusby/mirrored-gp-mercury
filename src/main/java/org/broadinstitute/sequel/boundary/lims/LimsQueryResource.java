@@ -87,8 +87,8 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findFlowcellDesignationByReagentBlockBarcode")
     public FlowcellDesignationType findFlowcellDesignationByReagentBlockBarcode(@QueryParam("reagentBlockBarcode") String reagentBlockBarcode) {
-        // TODO: thrift proxy implementation
-        return null;
+        FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByReagentBlockBarcode(reagentBlockBarcode);
+        return responseFactory.makeFlowcellDesignation(flowcellDesignation);
     }
 
     // TODO round 2: bool checkReceptaclesInTask(1:list<string> tubeBarcodes, 2:string taskName) throws(1:NotFoundException details)
