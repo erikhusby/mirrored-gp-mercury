@@ -2,10 +2,11 @@
 #
 # Deploy SequeL to seqlims
 #
+RELEASEID=$1
 HOST="seqlims.broadinstitute.org"
 ADMIN_PORT=4848
 ADMIN_USER=admin
-WAR_FILE="target/SequeL-1.0-SNAPSHOT.war"
+WAR_FILE="target/SequeL-$RELEASEID.war"
 APP_NAME="SequeL"
 DOMAIN="domain1"
 
