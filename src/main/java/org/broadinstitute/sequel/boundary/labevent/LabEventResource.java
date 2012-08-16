@@ -2,9 +2,14 @@ package org.broadinstitute.sequel.boundary.labevent;
 
 import org.broadinstitute.sequel.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.sequel.entity.OrmUtil;
+import org.broadinstitute.sequel.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.sequel.entity.labevent.GenericLabEvent;
 import org.broadinstitute.sequel.entity.labevent.LabEvent;
+import org.broadinstitute.sequel.entity.labevent.SectionTransfer;
+import org.broadinstitute.sequel.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.sequel.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.sequel.entity.vessel.LabVessel;
+import org.broadinstitute.sequel.entity.vessel.RackOfTubes;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.VesselContainer;
 import org.broadinstitute.sequel.entity.vessel.VesselContainerEmbedder;
@@ -57,10 +62,39 @@ public class LabEventResource {
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
 
             // todo jmt rationalize these?  Each side can be a vessel, or a vessel + section, or a vessel + position
-            labEvent.getCherryPickTransfers();
-            labEvent.getSectionTransfers();
-            labEvent.getVesselToSectionTransfers();
-            labEvent.getVesselToVesselTransfers();
+            for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
+                TransferBean transferBean = new TransferBean();
+                transferBean.setType("CherryPickTransfer");
+                transferBean.setSourceBarcode(cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel());
+                transferBean.setSourcePosition(cherryPickTransfer.getSourcePosition().name());
+                transferBean.setTargetBarcode(cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel());
+                transferBean.setTargetPosition(cherryPickTransfer.getTargetPosition().name());
+                labEventBean.getTransfers().add(transferBean);
+            }
+            for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
+                TransferBean transferBean = new TransferBean();
+                transferBean.setType("SectionTransfer");
+                transferBean.setSourceBarcode(sectionTransfer.getSourceVesselContainer().getEmbedder().getLabel());
+                transferBean.setSourceSection(sectionTransfer.getSourceSection().getSectionName());
+                transferBean.setTargetBarcode(sectionTransfer.getTargetVesselContainer().getEmbedder().getLabel());
+                transferBean.setTargetSection(sectionTransfer.getTargetSection().getSectionName());
+                labEventBean.getTransfers().add(transferBean);
+            }
+            for (VesselToSectionTransfer vesselToSectionTransfer : labEvent.getVesselToSectionTransfers()) {
+                TransferBean transferBean = new TransferBean();
+                transferBean.setType("VesselToSectionTransfer");
+                transferBean.setSourceBarcode(vesselToSectionTransfer.getSourceVessel().getLabel());
+                transferBean.setTargetBarcode(vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel());
+                transferBean.setTargetSection(vesselToSectionTransfer.getTargetSection().getSectionName());
+                labEventBean.getTransfers().add(transferBean);
+            }
+            for (VesselToVesselTransfer vesselToVesselTransfer : labEvent.getVesselToVesselTransfers()) {
+                TransferBean transferBean = new TransferBean();
+                transferBean.setType("VesselToVesselTransfer");
+                transferBean.setSourceBarcode(vesselToVesselTransfer.getSourceVessel().getLabel());
+                transferBean.setTargetBarcode(vesselToVesselTransfer.getTargetLabVessel().getLabel());
+                labEventBean.getTransfers().add(transferBean);
+            }
 
             for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
                 labEventBean.getSources().add(buildLabVesselBean(sourceLabVessel));
@@ -70,8 +104,6 @@ public class LabEventResource {
                 labEventBean.getTargets().add(buildLabVesselBean(targetLabVessel));
             }
 
-            TransferBean transferBean = new TransferBean();
-            labEventBean.getTransfers().add(transferBean);
             labEventBeans.add(labEventBean);
         }
         return labEventBeans;
@@ -106,6 +138,8 @@ public class LabEventResource {
         String type = labVesselEntity.getType().name();
         if(type.equals(LabVessel.CONTAINER_TYPE.STATIC_PLATE.name())) {
             type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getDisplayName();
+        } else if(type.equals(LabVessel.CONTAINER_TYPE.RACK_OF_TUBES.name())) {
+            type = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class).getRackType().getDisplayName();
         }
         LabVesselBean labVesselBean = new LabVesselBean(labVesselEntity.getLabel(), type);
         if(OrmUtil.proxySafeIsInstance(labVesselEntity, VesselContainerEmbedder.class)) {
@@ -115,20 +149,31 @@ public class LabEventResource {
                 Iterator<String> positionNames = staticPlate.getPlateType().getVesselGeometry().getPositionNames();
                 while (positionNames.hasNext()) {
                     String positionName  =  positionNames.next();
-                    labVesselBean.getMapPositionToLabVessel().put(positionName, new LabVesselBean(null, LabVessel.CONTAINER_TYPE.PLATE_WELL.name()));
+                    labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
+                            positionName, new LabVesselBean(null, LabVessel.CONTAINER_TYPE.PLATE_WELL.name())));
+                }
+            } else if(OrmUtil.proxySafeIsInstance(labVesselEntity, RackOfTubes.class)) {
+                RackOfTubes rackOfTubes = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class);
+                Iterator<String> positionNames = rackOfTubes.getRackType().getVesselGeometry().getPositionNames();
+                while (positionNames.hasNext()) {
+                    String positionName  =  positionNames.next();
+                    LabVessel labVessel = (LabVessel) vesselContainer.getMapPositionToVessel().get(VesselPosition.getByName(positionName));
+                    labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
+                            positionName, buildLabVesselBean(labVessel)));
                 }
             } else {
                 Set<Map.Entry<VesselPosition, LabVessel>> entrySet = vesselContainer.getMapPositionToVessel().entrySet();
                 for (Map.Entry<VesselPosition, LabVessel> positionToLabVessel : entrySet) {
-                    labVesselBean.getMapPositionToLabVessel().put(positionToLabVessel.getKey().name(), buildLabVesselBean(positionToLabVessel.getValue()));
+                    labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
+                            positionToLabVessel.getKey().name(), buildLabVesselBean(positionToLabVessel.getValue())));
                 }
             }
-            for (Map.Entry<String, LabVesselBean> positionLabVesselBeanEntry : labVesselBean.getMapPositionToLabVessel().entrySet()) {
+            for (LabVesselPositionBean labVesselPositionBean : labVesselBean.getLabVesselPositionBeans()) {
                 StarterCriteria starterCriteria = new StarterCriteria();
-                vesselContainer.evaluateCriteria(VesselPosition.getByName(positionLabVesselBeanEntry.getKey()), starterCriteria,
+                vesselContainer.evaluateCriteria(VesselPosition.getByName(labVesselPositionBean.getPosition()), starterCriteria,
                         VesselContainer.TraversalDirection.Ancestors, null, 0);
                 if (starterCriteria.getStarter() != null) {
-                    positionLabVesselBeanEntry.getValue().setStarter(starterCriteria.getStarter().getLabel());
+                    labVesselPositionBean.getLabVesselBean().setStarter(starterCriteria.getStarter().getLabel());
                 }
             }
         }

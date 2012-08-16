@@ -3,8 +3,7 @@ package org.broadinstitute.sequel.boundary.labevent;
 import org.broadinstitute.sequel.boundary.Namespaces;
 
 import javax.xml.bind.annotation.XmlType;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * A JAX-RS DTO for lab vessels, used in transfers
@@ -15,7 +14,7 @@ public class LabVesselBean {
     private String type;
     private String starter;
     private String starterType;
-    private Map<String, LabVesselBean> mapPositionToLabVessel = new HashMap<String, LabVesselBean>();
+    private List<LabVesselPositionBean> labVesselPositionBeans = new java.util.ArrayList<LabVesselPositionBean>();
 
     public LabVesselBean(String barcode, String type) {
         this.barcode = barcode;
@@ -58,11 +57,11 @@ public class LabVesselBean {
         this.starterType = starterType;
     }
 
-    public Map<String, LabVesselBean> getMapPositionToLabVessel() {
-        return mapPositionToLabVessel;
+    public List<LabVesselPositionBean> getLabVesselPositionBeans() {
+        return labVesselPositionBeans;
     }
 
-    public void setMapPositionToLabVessel(Map<String, LabVesselBean> mapPositionToLabVessel) {
-        this.mapPositionToLabVessel = mapPositionToLabVessel;
+    public void setLabVesselPositionBeans(List<LabVesselPositionBean> labVesselPositionBeans) {
+        this.labVesselPositionBeans = labVesselPositionBeans;
     }
 }

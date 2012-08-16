@@ -11,6 +11,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
+import java.io.File;
 import java.util.Collection;
 
 /**
@@ -31,6 +32,8 @@ public class DeploymentBuilder {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, SEQUEL_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
+                .addAsWebInfResource(new File("src/test/resources/glassfish-resources.xml"))
+                .addAsResource(new File("src/main/resources/META-INF/persistence.xml") , "META-INF/persistence.xml")
                 .addPackages(true, "org.broadinstitute.sequel")
                 .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
         war = addWarDependencies(war);

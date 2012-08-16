@@ -549,7 +549,7 @@ public class LabEventFactory {
      */
     private RackOfTubes buildRack(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, PlateType plate, PositionMapType positionMap) {
         // todo jmt fix label
-        RackOfTubes rackOfTubes = new RackOfTubes(plate.getBarcode() + "_" + Long.toString(System.currentTimeMillis()));
+        RackOfTubes rackOfTubes = new RackOfTubes(plate.getBarcode() + "_" + Long.toString(System.currentTimeMillis()), RackOfTubes.RackType.Matrix96);
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if(twoDBarcodedTube == null) {
@@ -733,8 +733,8 @@ public class LabEventFactory {
             targetPlate = new StaticPlate(receptaclePlateTransferEvent.getDestinationPlate().getBarcode(),
                     StaticPlate.PlateType.getByDisplayName(receptaclePlateTransferEvent.getDestinationPlate().getPhysType()));
         }
-        labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube, targetSection,
-                targetPlate.getVesselContainer(), labEvent));
+        labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube,
+                SBSSection.getBySectionName(targetSection), targetPlate.getVesselContainer(), labEvent));
         return labEvent;
     }
 

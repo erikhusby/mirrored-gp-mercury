@@ -7,6 +7,7 @@ import org.broadinstitute.sequel.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.sequel.boundary.labevent.LabEventBean;
 import org.broadinstitute.sequel.boundary.labevent.LabEventResource;
 import org.broadinstitute.sequel.boundary.labevent.LabVesselBean;
+import org.broadinstitute.sequel.boundary.labevent.LabVesselPositionBean;
 import org.broadinstitute.sequel.boundary.vessel.LabBatchBean;
 import org.broadinstitute.sequel.boundary.vessel.LabBatchResource;
 import org.broadinstitute.sequel.boundary.vessel.TubeBean;
@@ -66,8 +67,10 @@ public class SamplesPicoEndToEndTest {
         LabVesselBean microfluorPlate = standardsTransferEvent.getTargets().iterator().next();
         Assert.assertEquals("Wrong barcode", samplesPicoJaxbBuilder.getPicoMicrofluorTransferJaxb().getPlate().getBarcode(),
                 microfluorPlate.getBarcode());
+        LabVesselPositionBean labVesselPositionBean = microfluorPlate.getLabVesselPositionBeans().get(0);
+        Assert.assertEquals("Wrong position", "A01", labVesselPositionBean.getPosition());
         Assert.assertEquals("Wrong starter", mapBarcodeToTube.values().iterator().next().getLabel(),
-                microfluorPlate.getMapPositionToLabVessel().get("A01").getStarter());
+                labVesselPositionBean.getLabVesselBean().getStarter());
 
         printLabEvents(labEventBeans);
 
@@ -373,14 +376,17 @@ public class SamplesPicoEndToEndTest {
             System.out.print(columnName + "  ");
         }
         System.out.println();
+        int positionIndex = 0;
         for (String rowName : vesselGeometry.getRowNames()) {
             System.out.print(rowName + " ");
             for (String columnName : vesselGeometry.getColumnNames()) {
-                String starter = labVesselBean.getMapPositionToLabVessel().get(rowName + columnName).getStarter();
+                LabVesselPositionBean labVesselPositionBean = labVesselBean.getLabVesselPositionBeans().get(positionIndex);
+                String starter = labVesselPositionBean.getLabVesselBean().getStarter();
                 if(starter == null) {
                     starter = "   ";
                 }
                 System.out.print(starter + " ");
+                positionIndex++;
             }
             System.out.println();
         }

@@ -267,7 +267,7 @@ public class LabEventTest {
         String sageCleanupBarcode = "SageCleanup";
         PlateTransferEventType sageCleanupJaxb = bettaLimsMessageFactory.buildRackToRack("SageCleanup", sageUnloadBarcode,
                 sageUnloadTubeBarcodes, sageCleanupBarcode, sageCleanupTubeBarcodes);
-        RackOfTubes sageUnloadRackRearrayed = new RackOfTubes("sageUnloadRearray");
+        RackOfTubes sageUnloadRackRearrayed = new RackOfTubes("sageUnloadRearray", RackOfTubes.RackType.Matrix96);
         List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<TwoDBarcodedTube>(mapBarcodeToSageUnloadTubes.values());
         for(int i = 0; i < NUM_POSITIONS_IN_RACK; i++) {
             sageUnloadRackRearrayed.getVesselContainer().addContainedVessel(sageUnloadTubes.get(i),
