@@ -209,7 +209,7 @@ public class SequencingServiceImpl implements SequencingService {
                     updatedDate = summary.getCreatedDate().getTime();
                 }
                 ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(
-                        creator, updatedDate,
+                        summary.getTitle(), creator, updatedDate,
                         ExperimentType.WholeGenomeSequencing
                 );
                 experimentRequestSummary.setExperimentId(new ExperimentId(summary.getPassNumber()));

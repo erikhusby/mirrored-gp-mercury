@@ -2,6 +2,7 @@ package org.broadinstitute.pmbridge.entity.experiments.gap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.pmbridge.entity.bsp.BSPSample;
 import org.broadinstitute.pmbridge.entity.common.EntityUtils;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.experiments.*;
@@ -12,7 +13,9 @@ import org.broadinstitute.pmbridge.infrastructure.gap.ExperimentPlan;
 import org.broadinstitute.pmbridge.infrastructure.gap.Product;
 import org.broadinstitute.pmbridge.infrastructure.quote.Quote;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -29,6 +32,7 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
     private Quote bspQuote;
     private Quote gapQuote;
     private Product technologyProduct;
+
 
     public GapExperimentRequest(ExperimentRequestSummary experimentRequestSummary) {
         super(experimentRequestSummary, ExperimentType.Genotyping);
@@ -204,6 +208,16 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
             this.getExperimentPlanDTO().setProgramPm(programPMStr);
 
         }
+    }
+
+
+    @Override
+    public List<BSPSample> getSamples() {
+        List<BSPSample> bspSamples = new ArrayList<BSPSample>();
+
+         //TODO
+
+        return  bspSamples;
     }
 
     @Override

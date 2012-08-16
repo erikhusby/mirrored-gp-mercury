@@ -4,6 +4,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broad.squid.services.TopicService.*;
+import org.broadinstitute.pmbridge.entity.bsp.BSPSample;
+import org.broadinstitute.pmbridge.entity.bsp.SampleId;
 import org.broadinstitute.pmbridge.entity.common.EntityUtils;
 import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.common.QuoteId;
@@ -397,6 +399,21 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
         return errorMessages;
 
+    }
+
+
+    @Override
+    public List<BSPSample> getSamples() {
+        List<BSPSample> bspSamples = new ArrayList<BSPSample>();
+
+        if (! getConcretePass().getSampleDetailsInformation().getSample().isEmpty()) {
+            for ( Sample sample : getConcretePass().getSampleDetailsInformation().getSample() ) {
+                BSPSample bspSample = new BSPSample(new SampleId( sample.getBspSampleID()) );
+                bspSamples.add(bspSample);
+            }
+        }
+
+        return  bspSamples;
     }
 
     public String submit(final SquidTopicPortype squidServicePort) throws SubmissionException {

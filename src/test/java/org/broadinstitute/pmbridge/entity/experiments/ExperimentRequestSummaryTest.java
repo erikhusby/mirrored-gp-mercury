@@ -27,7 +27,7 @@ public class ExperimentRequestSummaryTest {
     @BeforeMethod
     public void setUp() throws Exception {
         experimentRequestSummary = new ExperimentRequestSummary(
-                new Person("pmbridge", RoleType.PROGRAM_PM),
+                "An Experiment Title", new Person("pmbridge", RoleType.PROGRAM_PM),
                 new Date(),
                 ExperimentType.WholeGenomeSequencing
         );
@@ -39,7 +39,6 @@ public class ExperimentRequestSummaryTest {
 
     @Test
     public void testGetTitle() throws Exception {
-        Assert.assertNull(experimentRequestSummary.getTitle());
         experimentRequestSummary.setTitle(new Name("ExpTitle"));
         Assert.assertEquals(experimentRequestSummary.getTitle().name, "ExpTitle");
     }

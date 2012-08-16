@@ -4,6 +4,7 @@ import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.pmbridge.entity.experiments.gap.GapExperimentRequest;
 import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.infrastructure.SubmissionException;
+import org.broadinstitute.pmbridge.infrastructure.UserNotFoundException;
 import org.broadinstitute.pmbridge.infrastructure.ValidationException;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public interface GenotypingService {
             SubmissionException;
 
     // Get a list of experiment request summaries
-    public List<ExperimentRequestSummary> getRequestSummariesByCreator(final Person creator);
+    public List<ExperimentRequestSummary> getRequestSummariesByCreator(final Person creator) throws UserNotFoundException;
 
     // Get all supported platforms and products
     public Platforms getPlatforms();

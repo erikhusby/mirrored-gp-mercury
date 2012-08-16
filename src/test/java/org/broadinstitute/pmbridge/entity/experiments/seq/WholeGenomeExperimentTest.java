@@ -33,7 +33,7 @@ public class WholeGenomeExperimentTest {
     @BeforeMethod
     public void setUp() throws Exception {
         experimentRequestSummary = new ExperimentRequestSummary(
-                new Person("pmbridge", RoleType.PROGRAM_PM),
+                "An Experiment Title", new Person("pmbridge", RoleType.PROGRAM_PM),
                 new Date(),
                 ExperimentType.WholeGenomeSequencing
         );
@@ -141,7 +141,7 @@ public class WholeGenomeExperimentTest {
     @Test
     public void testToString() throws Exception {
         WholeGenomeExperiment wholeGenomeExperiment2 = new WholeGenomeExperiment(experimentRequestSummary);
-        Assert.assertEquals("SeqExperimentRequest{seqCoverageModel=null, organism=null, referenceSequenceName=null, experimentRequestSummary=null, samples=[], experimentType=WholeGenomeSequencing}",
+        Assert.assertEquals("SeqExperimentRequest{seqCoverageModel=null, organism=null, referenceSequenceName=null, experimentRequestSummary=Name{name='An Experiment Title'}, samples=[], experimentType=WholeGenomeSequencing}",
                 wholeGenomeExperiment2.toString());
     }
 

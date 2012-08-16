@@ -168,7 +168,7 @@ public class EndToEndTest extends Arquillian {
         ResearchProject myResearchProject = createTestResearchProject(programMgr);
 
         ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(
-                new Person("mccrory", RoleType.PROGRAM_PM),
+                "An Experiment Title", new Person("mccrory", RoleType.PROGRAM_PM),
                 new Date(),
                 ExperimentType.Genotyping
         );

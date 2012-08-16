@@ -24,7 +24,7 @@ public class BSPSampleDTO implements Serializable {
     private final BigDecimal concentration;
 
     private final String organism;
-    
+
     public BSPSampleDTO(String containerId,
                         String stockSample,
                         String rootSample,

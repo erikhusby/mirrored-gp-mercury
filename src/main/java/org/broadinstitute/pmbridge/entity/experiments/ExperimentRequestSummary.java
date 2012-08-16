@@ -27,16 +27,22 @@ public class ExperimentRequestSummary {
     private Name status = DRAFT_STATUS;
     private ExperimentType experimentType;
 
-
-    public ExperimentRequestSummary(Person creator, Date createdDate, ExperimentType experimentType) {
+    public ExperimentRequestSummary(final String title, Person creator, Date createdDate, ExperimentType experimentType) {
         if (creator == null || StringUtils.isBlank(creator.getUsername())) {
             throw BLANK_CREATOR_EXCEPTION;
         }
+        if (createdDate == null) {
+            throw new IllegalArgumentException("Creator date must not be null for creator " + creator.getUsername() );
+        }
+        if ( StringUtils.isBlank( title) ){
+            throw new IllegalArgumentException("Experimnet title must not be blank." );
+        }
+
         this.creation = new ChangeEvent(createdDate, creator);
         this.experimentId = new ExperimentId("DRAFT_" + this.creation.date.getTime());
         this.modification = new ChangeEvent(new Date(this.creation.date.getTime()), creator);
         this.experimentType = experimentType;
-
+        this.title = new Name( title );
 
     }
 
@@ -83,9 +89,9 @@ public class ExperimentRequestSummary {
     }
 
     // Temp setter until we can get the creation date from the summarized pass.
-    public void setCreation(final ChangeEvent creation) {
-        this.creation = creation;
-    }
+//    public void setCreation(final ChangeEvent creation) {
+//        this.creation = creation;
+//    }
 
     public void setStatus(final Name status) {
         this.status = status;

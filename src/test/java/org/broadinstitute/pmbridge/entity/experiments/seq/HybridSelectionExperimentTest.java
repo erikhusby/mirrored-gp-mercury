@@ -35,7 +35,7 @@ public class HybridSelectionExperimentTest {
     @BeforeMethod
     public void setUp() throws Exception {
         experimentRequestSummary = new ExperimentRequestSummary(
-                new Person("pmbridge", RoleType.PROGRAM_PM),
+                "An Experiment Title", new Person("pmbridge", RoleType.PROGRAM_PM),
                 new Date(),
                 ExperimentType.HybridSelection
         );

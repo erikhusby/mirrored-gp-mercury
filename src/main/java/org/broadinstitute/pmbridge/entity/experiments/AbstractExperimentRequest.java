@@ -5,6 +5,7 @@ import org.broadinstitute.pmbridge.entity.common.Name;
 import org.broadinstitute.pmbridge.entity.person.Person;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -48,9 +49,7 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
 
     public abstract Set<Person> getProgramProjectManagers();
 
-    public Set<BSPSample> getSamples() {
-        return samples;
-    }
+    public abstract List<BSPSample> getSamples();
 
     public Name getTitle() {
         return getExperimentRequestSummary().getTitle();
@@ -60,7 +59,6 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
     public ExperimentType getExperimentType() {
         return experimentType;
     }
-
 
     public abstract void setTitle(final Name title);
 

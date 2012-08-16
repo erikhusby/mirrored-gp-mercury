@@ -8,8 +8,6 @@ package org.broadinstitute.pmbridge.entity.experiments.seq;
  */
 public abstract class SeqCoverageModel {
 
-//    protected abstract SeqCoverageModel getConcreteModel();
-
     protected abstract CoverageModelType getConcreteModelType();
 
 }

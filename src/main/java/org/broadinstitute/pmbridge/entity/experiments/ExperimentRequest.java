@@ -6,6 +6,7 @@ import org.broadinstitute.pmbridge.entity.person.Person;
 import org.broadinstitute.pmbridge.entity.project.ResearchProject;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Interface for experiment requests in PMBridge outlining
@@ -26,7 +27,7 @@ public interface ExperimentRequest {
 
     Collection<Person> getProgramProjectManagers();
 
-    Collection<BSPSample> getSamples();
+    List<BSPSample> getSamples();
 
     ExperimentId getRemoteId();
 

@@ -13,8 +13,8 @@ public class GapQAConnectionParameters implements GapConnectionParameters {
 
     private final String username = "pmbridge";
     private final String password = "bspbsp";
-    private String QA_HOST = "http://gapdev2.broadinstitute.org:8080";
-//    private String QA_HOST = "http://gapqa3.broadinstitute.org:8080";
+    private String QA_HOST = "http://gapdev.broadinstitute.org:8080";
+//    private String QA_HOST = "http://gapqa.broadinstitute.org:8080";
 
     public GapQAConnectionParameters() {}
 

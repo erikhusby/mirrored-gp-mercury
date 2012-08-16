@@ -7,6 +7,9 @@
 
     <alternatives>
         <class>org.broadinstitute.pmbridge.infrastructure.squid.SequencingServiceImpl</class>
+        <class>org.broadinstitute.pmbridge.infrastructure.gap.GenotypingServiceImpl</class>
+        <class>org.broadinstitute.pmbridge.infrastructure.quote.QuoteServiceImpl</class>
+        <!--<class>org.broadinstitute.pmbridge.control.experiments.PMBExperimentRequestService</class>-->
     </alternatives>
 
 </beans>

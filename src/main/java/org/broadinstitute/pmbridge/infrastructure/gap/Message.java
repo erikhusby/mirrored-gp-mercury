@@ -45,4 +45,10 @@ public class Message {
         this.data = data;
     }
 
+    @Override
+    public String toString() {
+        return type +
+                ": " + message +
+                " - " + field + "=" + data;
+    }
 }

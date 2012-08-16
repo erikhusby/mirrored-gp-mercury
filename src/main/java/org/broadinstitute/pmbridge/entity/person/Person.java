@@ -107,10 +107,10 @@ public class Person {
     @Override
     public int hashCode() {
         int result = username != null ? username.hashCode() : 0;
-        result = 31 * result + (firstName != null ? firstName.hashCode() : 0);
-        result = 31 * result + (lastName != null ? lastName.hashCode() : 0);
-        result = 31 * result + (personId != null ? personId.hashCode() : 0);
-        result = 31 * result + (roleType != null ? roleType.hashCode() : 0);
+        result = (31 * result) + (firstName != null ? firstName.hashCode() : 0);
+        result = (31 * result) + (lastName != null ? lastName.hashCode() : 0);
+        result = (31 * result) + (personId != null ? personId.hashCode() : 0);
+        result = (31 * result) + (roleType != null ? roleType.hashCode() : 0);
         return result;
     }
 

@@ -32,7 +32,12 @@ public class ResearchProjectResource {
     @Path("{researchProjectId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public ResearchProject findResearchProjectById(@PathParam("researchProjectId") String researchProjectId) {
+        return findRPById(researchProjectId);
 
+
+    }
+
+    private ResearchProject findRPById(final String researchProjectId) {
         // Check for content
         if (StringUtils.isBlank(researchProjectId)) {
             throw new RuntimeException("ResearchProject Id is invalid.");
@@ -51,9 +56,20 @@ public class ResearchProjectResource {
         if (researchProject == null) {
             throw new RuntimeException("Could not retrieve research project with id " + researchProjectId);
         }
-
         return researchProject;
     }
+
+
+    // For testing in a browser - dev only !!
+    @GET
+    @Path("{researchProjectId}")
+    @Produces({MediaType.TEXT_HTML})
+    public ResearchProject findResearchProjectByIdHtml(@PathParam("researchProjectId") String researchProjectId) {
+
+        // Check for content
+        return findRPById(researchProjectId);
+    }
+
 
     /**
      * Method to GET the list of research projects. Optionally filter this by the user who created them if the creator

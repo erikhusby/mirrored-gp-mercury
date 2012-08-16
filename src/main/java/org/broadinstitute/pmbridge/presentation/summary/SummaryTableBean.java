@@ -1,12 +1,15 @@
 package org.broadinstitute.pmbridge.presentation.summary;
 
 import org.apache.commons.logging.Log;
+import org.broadinstitute.pmbridge.control.experiments.ExperimentRequestService;
 import org.broadinstitute.pmbridge.entity.bsp.BSPSample;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequest;
 import org.broadinstitute.pmbridge.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.pmbridge.entity.experiments.ExperimentType;
 import org.broadinstitute.pmbridge.entity.person.Person;
-import org.broadinstitute.pmbridge.entity.person.RoleType;
-import org.broadinstitute.pmbridge.infrastructure.squid.SequencingService;
+import org.broadinstitute.pmbridge.infrastructure.UserNotFoundException;
+import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.pmbridge.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.pmbridge.presentation.AbstractJsfBean;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.TabChangeEvent;
@@ -20,6 +23,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.model.ListDataModel;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -34,18 +38,25 @@ import java.util.List;
 @SessionScoped
 public class SummaryTableBean extends AbstractJsfBean {
 
-
     @Inject
     Log log;
 
     @Inject
-    SequencingService sequencingService;
+    ExperimentRequestService experimentService;
+
+    //TODO Would like to move/wrap this in a PMB boundary/control specific class
+    // The summary table bean does not need to know about the BSPSampleSearchService
+    // For example the PMBSampleSearchService could supplement the samples that the
+    // BSPSampleSearchService with samples from an RP associated BSP Collection.
+    @Inject
+    private BSPSampleSearchService bspSampleSearchService;
 
     private ExpReqSummaryList expReqSummaryList = new ExpReqSummaryList();
     private ExperimentRequestSummary selectedExperimentRequestSummary = null;
     private ExperimentRequest selectedExperimentRequest;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy 'at' hh:mm aa");
     ListDataModel<BSPSample> sampleListDataModel;
+    List<BSPSample> samples;
 
     private boolean rebuild = true;
 
@@ -53,23 +64,20 @@ public class SummaryTableBean extends AbstractJsfBean {
     private String username = "mccrory";
 
     private int tabIndex = 1;
-    //TODO - remove this.
-    private final int PASS_NUMBER_OFFSET = 5;
 
     Boolean experimentSelected = false;
 
     public ExpReqSummaryList getExpReqSummaryList() {
 
         if (rebuild && (getUsername() != null)) {
-
-            List<ExperimentRequestSummary> summaryList = sequencingService.getRequestSummariesByCreator(
-                    new Person(getUsername(), RoleType.PROGRAM_PM));
-
+            List<ExperimentRequestSummary> summaryList = null;
+            try {
+                summaryList = experimentService.findExperimentSummaries( getUsername() );
+            } catch (UserNotFoundException e) {
+                //TODO hmc set message for user that the username was not found
+            }
             expReqSummaryList.setWrappedData(summaryList);
             setRebuild(false);
-
-        } else {
-            System.out.println("Not updated.");
         }
 
         return expReqSummaryList;
@@ -89,9 +97,12 @@ public class SummaryTableBean extends AbstractJsfBean {
     }
 
     public void setUsername(final String username) {
+        if ( ! this.username.equalsIgnoreCase(username)) {
+            this.selectedExperimentRequestSummary = null;
+            this.selectedExperimentRequest = null;
+        }
         this.username = username;
         setRebuild(true);
-        onRowUnselect(null);
     }
 
     public int getTabIndex() {
@@ -141,7 +152,7 @@ public class SummaryTableBean extends AbstractJsfBean {
     }
 
     public int sortByDate(Object date1, Object date2) {
-        return ((Date) date1).compareTo((Date) date2);
+            return ((Date) date1).compareTo((Date) date2);
     }
 
     public int sortByLong(Object id1, Object id2) {
@@ -178,13 +189,8 @@ public class SummaryTableBean extends AbstractJsfBean {
 
     public void onRowSelect(SelectEvent event) {
         this.selectedExperimentRequestSummary = (ExperimentRequestSummary) event.getObject();
-
-        this.selectedExperimentRequest = sequencingService.getPlatformRequest(selectedExperimentRequestSummary);
-
-        //TODO
-        //sampleListDataModel.setWrappedData(selectedExperimentRequest.getSamples());
+        this.selectedExperimentRequest = experimentService.getPlatformRequest(selectedExperimentRequestSummary);
     }
-
 
     public void onRowUnselect(UnselectEvent event) {
         this.selectedExperimentRequestSummary = null;
@@ -203,7 +209,46 @@ public class SummaryTableBean extends AbstractJsfBean {
         return selectedExperimentRequest;
     }
 
-    public Boolean getExperimentSelected() {
-        return (this.selectedExperimentRequest != null);
+    public List<BSPSample> getSamples() {
+
+        List<BSPSample> bspSampleList =  this.selectedExperimentRequest.getSamples();
+
+        if ( this.selectedExperimentRequest != null ) {
+
+            //TODO - Under construction !!!!
+            //TODO This code needs to be moved out of the presentation layer and into the boundary or control layer.
+
+            if ( bspSampleList.size() > 0 ) {
+                List<String> sampleList = new ArrayList<String>();
+                for (BSPSample bspSample: bspSampleList) {
+                    sampleList.add(bspSample.getId().value);
+                }
+
+                List<String[]>  sampleData = bspSampleSearchService.runSampleSearch(sampleList,
+                        BSPSampleSearchColumn.SAMPLE_ID,
+                        BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID);
+
+                // TODO transfer bsp sample Meta data to BSPSamplelist
+
+            }
+
+        }
+
+        return bspSampleList;
+    }
+
+    public ExperimentType getSelectedExperimentType() {
+        return selectedExperimentRequest.getExperimentType();
+    }
+
+    public List<Person> getPlatformManagers() {
+        List<Person> platformProjectManagers = new ArrayList<Person>();
+
+        if ( this.selectedExperimentRequest != null ) {
+            for ( Person person : this.selectedExperimentRequest.getPlatformProjectManagers() ) {
+                platformProjectManagers.add(person);
+            }
+        }
+        return platformProjectManagers;
     }
 }

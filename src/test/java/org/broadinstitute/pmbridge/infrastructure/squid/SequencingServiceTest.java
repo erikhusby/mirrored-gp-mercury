@@ -289,7 +289,7 @@ public class SequencingServiceTest {
 
         // Call the getPlatformRequest without a exp req Id
         try {
-            seqExperimentRequest = sequencingService.getPlatformRequest(new ExperimentRequestSummary(null, new Date(), null));
+            seqExperimentRequest = sequencingService.getPlatformRequest(new ExperimentRequestSummary("An Experiment Title", null, new Date(), null));
             fail(SHOULD_HAVE_THROWN_EXCEPTION + IllegalArgumentException.class.getSimpleName());
         } catch (Exception exp) {
             assertTrue(exp instanceof IllegalArgumentException);
@@ -325,7 +325,7 @@ public class SequencingServiceTest {
         EasyMock.expect(mockSquidTopicPortype.loadPassByNumber((String) EasyMock.anyObject())).andReturn(aPass).once();
         EasyMock.replay(mockSquidTopicPortype);
 
-        ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(new Person("pmbridge", RoleType.PROGRAM_PM),
+        ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary("An Experiment Title", new Person("pmbridge", RoleType.PROGRAM_PM),
                 new Date(), ExperimentType.WholeGenomeSequencing);
         experimentRequestSummary.setExperimentId(new ExperimentId(projectInformation.getPassNumber()));
 
