@@ -13,11 +13,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
 
 /**
  * Represents a transfer between two sections.
@@ -25,11 +21,7 @@ import javax.persistence.SequenceGenerator;
 @Entity
 @Audited
 @SuppressWarnings("rawtypes")
-public class SectionTransfer {
-    @Id
-    @SequenceGenerator(name = "SEQ_SECTION_TRANSFER", sequenceName = "SEQ_SECTION_TRANSFER")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SECTION_TRANSFER")
-    private Long sectionTransferId;
+public class SectionTransfer extends VesselTransfer {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;

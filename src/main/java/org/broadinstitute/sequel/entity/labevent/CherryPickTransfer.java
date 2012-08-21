@@ -13,11 +13,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
 
 /**
  * Represents a transfer between positions in two vessel containers
@@ -25,11 +21,7 @@ import javax.persistence.SequenceGenerator;
  */
 @Entity
 @Audited
-public class CherryPickTransfer {
-    @Id
-    @SequenceGenerator(name = "SEQ_CHERRY_PICK_TRANSFER", sequenceName = "SEQ_CHERRY_PICK_TRANSFER")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_CHERRY_PICK_TRANSFER")
-    private Long cherryPickTransferId;
+public class CherryPickTransfer extends VesselTransfer {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
