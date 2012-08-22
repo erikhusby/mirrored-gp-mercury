@@ -367,7 +367,7 @@
                         <version>1.4</version>
                         <executions>
                             <execution>
-                                <id>SchemaGen</id>
+                                <id>LabEventSchemaGen</id>
                                 <goals>
                                     <goal>schemagen</goal>
                                 </goals>
@@ -404,6 +404,27 @@
                                             <toPrefix>labevent</toPrefix>
                                             -->
                                             <toFile>labevent.xsd</toFile>
+                                        </transformSchema>
+                                    </transformSchemas>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>VesselSchemaGen</id>
+                                <goals>
+                                    <goal>schemagen</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>org/broadinstitute/sequel/boundary/Namespaces.java</include>
+                                        <include>org/broadinstitute/sequel/boundary/vessel/*Bean.java</include>
+                                    </includes>
+                                    <transformSchemas>
+                                        <transformSchema>
+                                            <uri>http://broadinstitute.org/sequel/vessel</uri>
+                                            <!--
+                                            <toPrefix>labevent</toPrefix>
+                                            -->
+                                            <toFile>vessel.xsd</toFile>
                                         </transformSchema>
                                     </transformSchemas>
                                 </configuration>

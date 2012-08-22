@@ -1,13 +1,17 @@
 package org.broadinstitute.sequel.boundary.vessel;
 
+import org.broadinstitute.sequel.boundary.Namespaces;
+
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Used to import racks from Squid
  */
-@XmlRootElement
+@XmlRootElement(namespace = Namespaces.VESSEL)
+@XmlType(namespace = Namespaces.VESSEL)
 public class LabBatchBean {
     private String batchId;
     private String workflowName;
