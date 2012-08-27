@@ -30,10 +30,9 @@
         <url-pattern>*.xhtml</url-pattern>
     </servlet-mapping>
 
-    <!-- for GlassFish -->
-    <listener>
-        <listener-class>org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap</listener-class>
-    </listener>
+    <!-- BEGIN for GlassFish -->
+<!--
+    &lt;!&ndash; JAX-WS &ndash;&gt;
 
     <listener>
         <listener-class>
@@ -58,6 +57,12 @@
         <url-pattern>/SampleKit</url-pattern>
     </servlet-mapping>
 
+    &lt;!&ndash; JAX-RS &ndash;&gt;
+
+    <listener>
+        <listener-class>org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap</listener-class>
+    </listener>
+
     <servlet>
         <display-name>rest</display-name>
         <servlet-name>rest</servlet-name>
@@ -72,6 +77,44 @@
         <param-name>resteasy.servlet.mapping.prefix</param-name>
         <param-value>/rest</param-value>
     </context-param>
+-->
+    <!-- END for GlassFish -->
+
+    <!-- BEGIN for JBoss AS 7 -->
+
+    <!-- JAX-WS -->
+
+    <servlet>
+        <servlet-name>PASSService</servlet-name>
+        <servlet-class>org.broadinstitute.sequel.boundary.pass.PassServiceImpl</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PASSService</servlet-name>
+        <url-pattern>/PASS</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>SampleKitService</servlet-name>
+        <servlet-class>org.broadinstitute.sequel.boundary.samplekit.SampleKitSOAPServiceImpl</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SampleKitService</servlet-name>
+        <url-pattern>/SampleKit</url-pattern>
+    </servlet-mapping>
+
+    <!-- JAX-RS -->
+
+    <servlet>
+        <servlet-name>javax.ws.rs.core.Application</servlet-name>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>javax.ws.rs.core.Application</servlet-name>
+        <url-pattern>/rest/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- END for JBoss AS 7 -->
+
     <context-param>
         <param-name>resteasy.scan.resources </param-name>
         <!-- we don't scan for test performance reasons.  use resteasy.resources explicitly instead. -->
@@ -99,17 +142,6 @@
         </param-value>
     </context-param>
 
-    <!-- for JBoss AS 7 -->
-<!--
-    <servlet>
-        <servlet-name>javax.ws.rs.core.Application</servlet-name>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>javax.ws.rs.core.Application</servlet-name>
-        <url-pattern>/rest/*</url-pattern>
-    </servlet-mapping>
--->
     <security-role>
         <role-name>Sequel-Admins</role-name>
     </security-role>
