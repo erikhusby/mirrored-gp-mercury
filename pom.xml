@@ -1627,6 +1627,7 @@
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
                     </webResources>
+                    <packagingExcludes>WEB-INF/classes/META-INF/persistence.xml</packagingExcludes>
                 </configuration>
             </plugin>
 
