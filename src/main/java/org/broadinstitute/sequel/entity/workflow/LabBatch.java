@@ -15,6 +15,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -46,6 +47,8 @@ public class LabBatch {
     private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    // have to specify name, generated aud name is too long for Oracle
+    @JoinTable(name = "lb_starting_lab_vessels")
     private Set<LabVessel> startingLabVessels = new HashSet<LabVessel>();
 
     private boolean isActive = true;

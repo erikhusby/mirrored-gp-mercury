@@ -421,6 +421,7 @@ public class MolecularIndexingScheme {
         this.setName(this.generateName());
     }
 
+    // todo jmt why allocationSize = 1?
     @Id
     @SequenceGenerator(name="seq_molecular_indexing_scheme", sequenceName="seq_molecular_indexing_scheme", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_indexing_scheme")

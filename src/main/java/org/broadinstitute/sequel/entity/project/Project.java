@@ -25,6 +25,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -57,6 +58,8 @@ public abstract class Project {
     private boolean active;
 
     @OneToMany
+    // have to specify name, generated aud name is too long for Oracle
+    @JoinTable(name = "project_available_work_qs")
     private final Collection<LabWorkQueue> availableWorkQueues = new HashSet<LabWorkQueue>();
 
     // todo jmt fix this

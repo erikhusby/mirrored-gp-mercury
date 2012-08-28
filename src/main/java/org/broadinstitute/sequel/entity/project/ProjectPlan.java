@@ -46,20 +46,22 @@ public abstract class ProjectPlan {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated name is too long for Oracle
-    @JoinTable(name = "pp_map_start_sample_to_aliquot")
+    @JoinTable(name = "pp_map_start_smpl_to_aliqt")
     // hbm2ddl always generates mapkey
     @MapKeyJoinColumn(name = "mapkey")
     private Map<StartingSample, LabVessel> mapStartingSampleToAliquot = new HashMap<StartingSample, LabVessel>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated name is too long for Oracle
-    @JoinTable(name = "pp_map_start_vessel_to_aliquot")
+    @JoinTable(name = "pp_map_start_vssl_to_aliqt")
     // hbm2ddl always generates mapkey
     @MapKeyJoinColumn(name = "mapkey")
     // For Oracle, this name must be <= 30 characters, including underscores from camel case conversion
     private Map<LabVessel, LabVessel> mapStartingVesselToAliquot = new HashMap<LabVessel, LabVessel>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    // have to specify name, generated aud name is too long for Oracle
+    @JoinTable(name = "pp_starting_samples")
     private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
 
     // have to specify name, generated name is too long for Oracle

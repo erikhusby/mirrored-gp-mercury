@@ -29,6 +29,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -84,12 +85,14 @@ public abstract class LabVessel implements Starter {
 
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    // have to specify name, generated aud name is too long for Oracle
+    @JoinTable(name = "lv_reagent_contents")
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
     /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
      * avoid an unnecessary database round trip  */
     @NotAudited
-    @Formula("(select count(*) from lab_vessel_reagent_contents where lab_vessel_reagent_contents.lab_vessel = lab_vessel_id)")
+    @Formula("(select count(*) from lv_reagent_contents where lv_reagent_contents.lab_vessel = lab_vessel_id)")
     private Integer reagentContentsCount = 0;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
