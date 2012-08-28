@@ -11,6 +11,7 @@ import org.broadinstitute.sequel.entity.vessel.PlateWell;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,6 +29,7 @@ import java.util.Set;
 /**
  * This class creates plates containing molecular index reagents
  */
+@Stateless
 public class IndexedPlateFactory {
     private static final Log LOG = LogFactory.getLog(IndexedPlateFactory.class);
     public static final int BARCODE_LENGTH = 12;
