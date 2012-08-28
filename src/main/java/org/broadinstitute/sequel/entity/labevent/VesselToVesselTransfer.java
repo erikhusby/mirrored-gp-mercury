@@ -7,11 +7,7 @@ import org.hibernate.envers.Audited;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
 
 /**
  * Represents a transfer from one tube to another, with no racks.  Compare to CherryPickTransfer,
@@ -19,11 +15,7 @@ import javax.persistence.SequenceGenerator;
  */
 @Entity
 @Audited
-public class VesselToVesselTransfer {
-    @Id
-    @SequenceGenerator(name = "SEQ_VESSEL_TO_VESSEL_TRANSFER", sequenceName = "SEQ_VESSEL_TO_VESSEL_TRANSFER")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_VESSEL_TO_VESSEL_TRANSFER")
-    private Long tubeToTubeTransferId;
+public class VesselToVesselTransfer extends VesselTransfer{
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
