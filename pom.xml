@@ -1483,7 +1483,7 @@
                                 <argument>--create</argument>
                                 <argument>--delimiter=;</argument>
                                 <argument>--output=${project.basedir}/target/generated-sources/ddl/generated_schema.sql</argument>
-                                <argument>sequel_pu</argument>
+                                <argument>mercury_pu</argument>
                             </arguments>
                         </configuration>
                     </execution>
