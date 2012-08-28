@@ -1,5 +1,6 @@
 package org.broadinstitute.sequel.integration;
 
+import org.apache.commons.io.FileUtils;
 import org.broadinstitute.sequel.infrastructure.deployment.Deployment;
 import org.broadinstitute.sequel.test.BettaLimsMessageFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -37,8 +38,19 @@ public class DeploymentBuilder {
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
                 .addPackages(true, "org.broadinstitute.sequel")
                 .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
+        addWebResourcesTo(war, "src/test/resources/testdata");
         war = addWarDependencies(war);
         return war;
+    }
+
+    private static WebArchive addWebResourcesTo(WebArchive archive, String directoryName) {
+        final File webAppDirectory = new File(directoryName);
+        for (File file : FileUtils.listFiles(webAppDirectory, null, true)) {
+            if (!file.isDirectory()) {
+                archive.addAsResource(file, file.getPath().substring(directoryName.length()));
+            }
+        }
+        return archive;
     }
 
 

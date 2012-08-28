@@ -6,7 +6,6 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
@@ -34,10 +33,9 @@ public class IndexedPlateFactoryTest extends ContainerTest {
 //        File spreadsheet = new File("C:\\Users\\thompson\\Documents\\Sequencing\\IndexPlates\\COA - SO# 5882088 - 7-2-10-1-DupeMod.xlsx");
 //        Map<String,StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseAndPersist(
 //                spreadsheet, IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
-        File spreadsheet = new File(Thread.currentThread().getContextClassLoader().getResource(
-                "testdata/DuplexCOAforBroad.xlsx").getFile());
-        Map<String,StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseFile(
-                spreadsheet, IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
+        Map<String,StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseStream(
+                Thread.currentThread().getContextClassLoader().getResourceAsStream("DuplexCOAforBroad.xlsx"),
+                IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
         Assert.assertEquals(mapBarcodeToPlate.size(), 50, "Wrong number of plates");
     }
 }
