@@ -21,8 +21,6 @@ public class JNDIResolverImpl implements JNDIResolver {
     @Override
     public String lookupProperty(String name) throws NamingException {
 
-        if ( System.getProperty(name) != null)
-            return System.getProperty(name);
 
         final InitialContext initialContext = new InitialContext();
 
@@ -38,6 +36,12 @@ public class JNDIResolverImpl implements JNDIResolver {
         }
 
 
+        // failing the Arquillian lookup in the JNDI environment, look up in System properties for JBoss
+        if ( System.getProperty(name) != null)
+            return System.getProperty(name);
+
+
+        // failing JBoss lookup, look up in regular JNDI for Glassfish
         return initialContext.<String>doLookup(name);
 
     }

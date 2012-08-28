@@ -48,12 +48,8 @@ public class DeploymentProducer implements Serializable {
 
         try {
 
-
-            deploymentString = System.getProperty(SEQUEL_DEPLOYMENT);
-
-            if (deploymentString == null)
-                // NamingException lookup failures checked below if SEQUEL_DEPLOYMENT is not found
-                deploymentString = jndiResolver.lookupProperty(SEQUEL_DEPLOYMENT);
+            // NamingException lookup failures checked below if SEQUEL_DEPLOYMENT is not found
+            deploymentString = jndiResolver.lookupProperty(SEQUEL_DEPLOYMENT);
 
             // NullPointerException or IllegalArgumentException from Enum#valueOf() checked below, exceptions propagated
             // to abort deployment if we don't like the value of SEQUEL_DEPLOYMENT
