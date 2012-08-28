@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<datasources xmlns="http://www.jboss.org/ironjacamar/schema"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="
+        http://www.jboss.org/ironjacamar/schema
+        http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
+    <datasource jndi-name="java:jboss/jdbc/sequel_pool" pool-name="sequel_pool" enabled="true">
+        <connection-url>jdbc:postgresql://localhost/postgres</connection-url>
+        <driver>org.postgresql</driver>
+        <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+        <pool>
+            <min-pool-size>10</min-pool-size>
+            <max-pool-size>100</max-pool-size>
+            <prefill>true</prefill>
+        </pool>
+        <security>
+            <user-name>sequel</user-name>
+            <password>sequel_local</password>
+        </security>
+        <statement>
+            <prepared-statement-cache-size>32</prepared-statement-cache-size>
+            <share-prepared-statements/>
+        </statement>
+    </datasource>
+    <datasource jndi-name="java:jboss/jdbc/squid_pool" pool-name="squid_pool" enabled="true">
+        <connection-url>jdbc:oracle:thin:@ora01:1521:seqprod</connection-url>
+        <driver>com.oracle</driver>
+        <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>
+        <pool>
+            <min-pool-size>10</min-pool-size>
+            <max-pool-size>100</max-pool-size>
+            <prefill>true</prefill>
+        </pool>
+        <security>
+            <user-name>seq20</user-name>
+            <password>wmlalos!</password>
+        </security>
+        <statement>
+            <prepared-statement-cache-size>32</prepared-statement-cache-size>
+            <share-prepared-statements/>
+        </statement>
+    </datasource>
+    <drivers>
+        <driver name="com.oracle" module="com.oracle">
+            <xa-datasource-class>oracle.jdbc.pool.OracleDataSource</xa-datasource-class>
+        </driver>
+        <driver name="org.postgresql" module="org.postgresql">
+            <xa-datasource-class>org.postgresql.ds.PGSimpleDataSource</xa-datasource-class>
+        </driver>
+    </drivers>
+</datasources>

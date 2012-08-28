@@ -15,8 +15,8 @@ import javax.persistence.PersistenceContextType;
 @Stateful
 @RequestScoped
 public class ThreadEntityManager {
-    //todo:  SGM/JMT  uncomment when we are ready to add JDBC definitions to Glassfish Servers
-//    @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "test_pu")
+    /** To avoid LazyInitialization exceptions in JSF pages, the persistence context is extended */
+    @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "sequel_pu")
     private EntityManager entityManager;
 
     public EntityManager getEntityManager() {
