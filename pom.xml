@@ -197,6 +197,13 @@
         <jersey.version>1.11</jersey.version>
 
         <jbossas_7.version>7.1.1.Final</jbossas_7.version>
+
+        <!-- In order to ignore the UI tests by default but turn them on in the Tests.UI profile, we need to do this
+        by using properties. The Tests.UI profile basically reverses these properties. Doing this from the command line
+        was not really possible.
+        -->
+        <tests.excludedGroups>UI</tests.excludedGroups>
+        <tests.groups/>
     </properties>
 
     <profiles>
@@ -475,6 +482,7 @@
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-surefire-plugin</artifactId>
                             <configuration>
+                                <excludedGroups>UI</excludedGroups>
                                 <runOrder>failedFirst</runOrder>
                                 <parallel>methods</parallel>
                                 <threadCount>10</threadCount>
@@ -484,6 +492,14 @@
                 </build>
             </profile>
 
+        <!-- This profile is use to only run the UI Tests. -->
+            <profile>
+                <id>Tests.UI</id>
+                <properties>
+                    <tests.excludedGroups/>
+                    <tests.groups>UI,arquillian</tests.groups>
+                </properties>
+            </profile>
         <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
             <id>JavaEE</id>
@@ -1274,6 +1290,17 @@
                     <version>2.1</version>
                 </plugin>
 
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>1.7</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>2.3.2</version>
+                </plugin>
                 <!--
                                 <plugin>
                                     <artifactId>maven-dependency-plugin</artifactId>
@@ -1495,11 +1522,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-<!--
-                    <includes>
-                        <include>**/org/broadinstitute/sequel/test/**/*Test.java</include>
-                    </includes>
--->
+                    <groups>${tests.groups}</groups>
+                    <excludedGroups>${tests.excludedGroups}</excludedGroups>
                     <forkMode>never</forkMode>
                 </configuration>
             </plugin>
@@ -1619,6 +1643,41 @@
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
                     </webResources>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>Update Version property file for use by Bamboo</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <propertyfile file="${pom.basedir}/target/version.properties">
+                                    <entry key="project.version" type="string" value="${project.version}"
+                                           operation="="/>
+                                </propertyfile>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <tagNameFormat>@{project.version}</tagNameFormat>
+                    <preparationGoals>clean validate</preparationGoals>
+                    <goals>validate</goals>
+                    <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <scmCommentPrefix>[Release]</scmCommentPrefix>
                 </configuration>
             </plugin>
 
