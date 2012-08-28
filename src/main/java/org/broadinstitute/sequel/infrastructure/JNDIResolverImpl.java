@@ -21,6 +21,9 @@ public class JNDIResolverImpl implements JNDIResolver {
     @Override
     public String lookupProperty(String name) throws NamingException {
 
+        if ( System.getProperty(name) != null)
+            return System.getProperty(name);
+
         final InitialContext initialContext = new InitialContext();
 
         final Hashtable<?,?> environment = initialContext.getEnvironment();
