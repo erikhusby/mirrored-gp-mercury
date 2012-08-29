@@ -49,12 +49,10 @@
     <container qualifier="jbossas-7-managed" default="true">
         <configuration>
             <!--<property name="jbossHome">target/jboss-as-7.0.2.Final</property>-->
-            <configuration>
                       <property name="managementAddress">69.173.75.87</property>
                       <property name="managementPort">9999</property>
                       <property name="username">Administrator</property>
                       <property name="password">sm@ck99</property>
-                  </configuration>
         </configuration>
     </container>
 <!-- -->
