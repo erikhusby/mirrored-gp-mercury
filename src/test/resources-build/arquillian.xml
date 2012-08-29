@@ -29,17 +29,17 @@
      for Arquillian-Glassfish (managed) for use with the BUILD profile and the Arquillian-Glassfish-Managed which
      is what is used in the Bamboo build.
  -->
-    <container qualifier="glassfish" default="true">
-        <configuration>
-            <property name="glassFishHome">${glassfish.home}</property>
-            <property name="adminHost">${glassfish.host}</property>
-            <property name="adminPort">8008</property>
-	    <property name="adminUser">admin</property>
-	    <property name="adminPassword"/>
-	    <property name="domain">ArquillianDomain</property>
-<!--            <property name="outputToConsole">true</property> -->
-        </configuration>
-    </container>
+    <!--<container qualifier="glassfish" default="true">-->
+        <!--<configuration>-->
+            <!--<property name="glassFishHome">${glassfish.home}</property>-->
+            <!--<property name="adminHost">${glassfish.host}</property>-->
+            <!--<property name="adminPort">8008</property>-->
+	    <!--<property name="adminUser">admin</property>-->
+	    <!--<property name="adminPassword"/>-->
+	    <!--<property name="domain">ArquillianDomain</property>-->
+<!--&lt;!&ndash;            <property name="outputToConsole">true</property> &ndash;&gt;-->
+        <!--</configuration>-->
+    <!--</container>-->
 
     <extension qualifier="selenium-server">
        <property name="skip">true</property>
