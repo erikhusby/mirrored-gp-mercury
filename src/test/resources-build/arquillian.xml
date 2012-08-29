@@ -45,17 +45,17 @@
        <property name="skip">true</property>
     </extension>
 
-<!-- for Arquillian-JBossAS7-Managed to download and manage its own AS instance -->
+<!-- for Arquillian-JBossAS7-Managed with the BUILD profile. -->
     <container qualifier="jbossas-7-managed" default="true">
         <configuration>
             <!--<property name="jbossHome">target/jboss-as-7.0.2.Final</property>-->
-                      <property name="managementAddress">69.173.75.87</property>
-                      <property name="managementPort">9999</property>
-                      <property name="username">Administrator</property>
-                      <property name="password">sm@ck99</property>
+            <property name="managementAddress">${jboss.managementAddress}</property>
+            <property name="managementPort">${jboss.managementPort}</property>
+            <property name="username">${jboss.username}</property>
+            <property name="password">${jboss.password}</property>
         </configuration>
     </container>
-<!-- -->
+    <!-- -->
 
 <!-- for Arquillian-JBossAS7-Managed to download and manage its own AS instance
     <container qualifier="dev" default="true">
