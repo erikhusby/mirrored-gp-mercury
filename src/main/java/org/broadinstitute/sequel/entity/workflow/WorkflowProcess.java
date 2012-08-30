@@ -8,4 +8,13 @@ import java.util.List;
 public class WorkflowProcess {
     private String name;
     private List<WorkflowStep> workflowSteps;
+
+    public WorkflowProcess(String name) {
+        this.name = name;
+        this.workflowSteps = workflowSteps;
+    }
+
+    public void addStep(WorkflowStep workflowStep) {
+        workflowSteps.add(workflowStep);
+    }
 }

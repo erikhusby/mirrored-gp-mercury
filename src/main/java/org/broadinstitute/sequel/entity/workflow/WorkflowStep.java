@@ -10,4 +10,17 @@ import java.util.List;
 public class WorkflowStep {
     private String name;
     private List<LabEventType> labEventTypes;
+    // checkpoint - decision
+    // entry point - support adding sample metadata for walk up sequencing
+    // re-entry point - notice to batch watchers
+    // QC point - data uploaded
+
+    public WorkflowStep(String name) {
+        this.name = name;
+    }
+
+    public WorkflowStep addLabEvent(LabEventType labEventType) {
+        labEventTypes.add(labEventType);
+        return this;
+    }
 }
