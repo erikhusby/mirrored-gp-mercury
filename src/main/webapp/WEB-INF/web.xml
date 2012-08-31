@@ -142,6 +142,31 @@
         </param-value>
     </context-param>
 
+    <security-constraint>
+        <web-resource-collection>
+            <!-- mlc this is a straight up hack to force JBoss 7.1.1 to create a SecurityConstraint so
+                 we can do programmatic authentication.  The url-pattern is a dummy that we intend never to
+                 match.  see
+
+                 https://community.jboss.org/thread/161511
+            -->
+            <web-resource-name>SecuredArea</web-resource-name>
+            <url-pattern>/dummy-url/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>Sequel-Admins</role-name>
+            <role-name>Sequel-LabUsers</role-name>
+            <role-name>Sequel-LabManagers</role-name>
+            <role-name>Sequel-ProjectManagers</role-name>
+            <role-name>Sequel-Developers</role-name>
+        </auth-constraint>
+    </security-constraint>
+
+<!--    <login-config>
+        <auth-method>BASIC</auth-method>
+        <realm-name>other</realm-name>
+    </login-config>-->
+
     <security-role>
         <role-name>Sequel-Admins</role-name>
     </security-role>
@@ -171,6 +196,7 @@
             <form-error-page>/security/login_error.xhtml</form-error-page>
         </form-login-config>
     </login-config>
+
 
     <filter>
         <filter-name>AuthorizationFilter</filter-name>
