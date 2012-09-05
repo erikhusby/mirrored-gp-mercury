@@ -14,6 +14,7 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import java.net.URL;
@@ -168,7 +169,6 @@ public class IlluminaRunQueryTest extends Arquillian {
         @Override
         //@Test
         public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
-            System.out.println("--in test--");
             List<LibraryData> libraryDataList = new ArrayList<LibraryData>();
             for (String libraryName : libraryNames) {
                 LibraryData libraryData = new LibraryData();
