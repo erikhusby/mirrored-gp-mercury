@@ -63,7 +63,15 @@ public class OfflineThriftService implements ThriftService {
 
     @Override
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
-        return null;
+        List<LibraryData> libraryDataList = new ArrayList<LibraryData>();
+        for (String libraryName : libraryNames) {
+            LibraryData libraryData = new LibraryData();
+            libraryData.setLibraryName(libraryName);
+            libraryData.setLibraryNameIsSet(true);
+            libraryDataList.add(libraryData);
+        }
+
+        return libraryDataList;
     }
 
     public static TZamboniRun makeRun(String runName, int numLanes, int numLibraries) {
@@ -84,7 +92,7 @@ public class OfflineThriftService implements ThriftService {
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
             libraryNumber++;
         }
-        return new TZamboniLane((short) laneNumber, libraries, "PESP1+T", "LaneLibrary-"+laneNumber);
+        return new TZamboniLane((short) laneNumber, libraries, "PESP1+T", "LaneLibrary-" + laneNumber);
     }
 
     private static TZamboniLibrary makeLibrary(String number) {

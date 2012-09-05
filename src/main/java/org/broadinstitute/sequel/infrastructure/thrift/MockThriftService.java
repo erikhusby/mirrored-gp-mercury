@@ -12,7 +12,8 @@ import java.util.Map;
 @Alternative
 public class MockThriftService implements ThriftService {
 
-    public MockThriftService() {}
+    public MockThriftService() {
+    }
 
     @Override
     public TZamboniRun fetchRun(String runName) {
@@ -20,9 +21,8 @@ public class MockThriftService implements ThriftService {
 
         try {
             run = ThriftFileAccessor.deserializeRun();
-        }
-        catch(IOException e) {
-            throw new RuntimeException("Failed to deserialize run from local file",e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to deserialize run from local file", e);
         }
         return run;
     }
@@ -69,6 +69,8 @@ public class MockThriftService implements ThriftService {
 
     @Override
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
-        return null;
+        return  null;
     }
+
+
 }
