@@ -37,6 +37,7 @@ public class WorkflowStepDef {
     private boolean reEntryPoint;
     /** QC point - data uploaded */
     private QuantType quantType;
+    private Integer expectedCycleTimeMinutes;
 
     public WorkflowStepDef(String name) {
         this.name = name;
