@@ -193,4 +193,20 @@ public class LiveThriftService implements ThriftService {
             }
         });
     }
+
+    @Override
+    public List<LibraryData> fetchLibraryDetailsByLibraryName(final List<String> libraryNames) {
+        return thriftConnection.call(new ThriftConnection.Call<List<LibraryData>>() {
+            @Override
+            public List<LibraryData> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchLibraryDetailsByLibraryName(libraryNames);
+                } catch (TException e) {
+                    log.error("Thrift error. Probably couldn't find libraries  : " + e.getMessage(), e);
+                    throw new RuntimeException("Libraries not found : " , e);
+                }
+            }
+        });
+    }
+
 }

@@ -21,7 +21,9 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.sequel.TestGroups.EXTERNAL_INTEGRATION;
@@ -91,7 +93,7 @@ public class IlluminaRunResourceTest extends ContainerTest {
         assertEquals(run.getName(),RUN_NAME);
         doAssertions(zamboniRun,run);
 
-    }      
+    }
     
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean) {
         assertEquals(runBean.getLanes().size(),thriftRun.getLanes().size());
@@ -298,4 +300,18 @@ public class IlluminaRunResourceTest extends ContainerTest {
         zamboniRun = new MockThriftService().fetchRun(RUN_NAME);
     }
 
+
+   // @Override/
+    //@Test
+    public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
+        List<LibraryData> libraryDataList = new ArrayList<LibraryData>();
+        for (String libraryName : libraryNames) {
+            LibraryData libraryData = new LibraryData();
+            libraryData.setLibraryName(libraryName);
+            libraryData.setLibraryNameIsSet(true);
+            libraryDataList.add(libraryData);
+        }
+
+        return libraryDataList;
+    }
 }

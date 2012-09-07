@@ -18,6 +18,7 @@ import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -163,6 +164,20 @@ public class IlluminaRunQueryTest extends Arquillian {
         @Override
         public double fetchQuantForTube(String tubeBarcode, String quantType) {
             return 0;
+        }
+
+        @Override
+        //@Test
+        public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
+            List<LibraryData> libraryDataList = new ArrayList<LibraryData>();
+            for (String libraryName : libraryNames) {
+                LibraryData libraryData = new LibraryData();
+                libraryData.setLibraryName(libraryName);
+                libraryData.setLibraryNameIsSet(true);
+                libraryDataList.add(libraryData);
+            }
+
+            return libraryDataList;
         }
     }
 }
