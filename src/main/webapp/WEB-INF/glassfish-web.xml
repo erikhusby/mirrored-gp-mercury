@@ -4,7 +4,7 @@
 
 <glassfish-web-app>
     <context-root>/PMBridge</context-root>
-    
+
     <security-role-mapping>
         <role-name>PMBAdmins</role-name>
         <group-name>PMBAdmins</group-name>
