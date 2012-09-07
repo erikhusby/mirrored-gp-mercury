@@ -9,6 +9,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
@@ -39,6 +40,8 @@ public class SequencingRun {
     private Date runDate;
 
     @OneToMany(cascade = CascadeType.PERSIST)
+    // have to specify name, generated aud name is too long for Oracle
+    @JoinTable(name = "seq_run_run_cartridges")
     private Set<RunCartridge> runCartridges = new HashSet<RunCartridge>();
 
     public SequencingRun(String runName, String runBarcode, String machineName, Person operator, Boolean testRun,

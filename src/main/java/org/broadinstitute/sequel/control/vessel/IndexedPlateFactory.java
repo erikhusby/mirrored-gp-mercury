@@ -11,11 +11,13 @@ import org.broadinstitute.sequel.entity.vessel.PlateWell;
 import org.broadinstitute.sequel.entity.vessel.StaticPlate;
 import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,6 +29,7 @@ import java.util.Set;
 /**
  * This class creates plates containing molecular index reagents
  */
+@Stateless
 public class IndexedPlateFactory {
     private static final Log LOG = LogFactory.getLog(IndexedPlateFactory.class);
     public static final int BARCODE_LENGTH = 12;
@@ -65,7 +68,12 @@ public class IndexedPlateFactory {
     }
 
     public Map<String, StaticPlate> parseAndPersist(File file, TechnologiesAndParsers technologiesAndParsers) {
-        Map<String, StaticPlate> platesByBarcode = parseFile(file, technologiesAndParsers);
+        Map<String, StaticPlate> platesByBarcode = null;
+        try {
+            platesByBarcode = parseStream(new FileInputStream(file), technologiesAndParsers);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         for (StaticPlate staticPlate : platesByBarcode.values()) {
             if (staticPlateDAO.findByBarcode(staticPlate.getLabel()) != null) {
                 throw new RuntimeException("Plate already exists: " + staticPlate.getLabel());
@@ -77,24 +85,16 @@ public class IndexedPlateFactory {
         return platesByBarcode;
     }
 
-    public Map<String, StaticPlate> parseFile(File file, TechnologiesAndParsers technologiesAndParsers) {
-        if (file == null) {
-            throw new RuntimeException("Please enter a file name.");
-        }
+    public Map<String, StaticPlate> parseStream(InputStream inputStream, TechnologiesAndParsers technologiesAndParsers) {
         final IndexedPlateParser parser = technologiesAndParsers.getIndexedPlateParser();
         final List<PlateWellIndexAssociation> associations;
         try {
-            FileInputStream fileInputStream = new FileInputStream(file);
+            associations = parser.parseInputStream(inputStream);
+        } finally {
             try {
-                associations = parser.parseInputStream(fileInputStream);
-            } finally {
-                try {
-                    fileInputStream.close();
-                } catch (IOException ignored) {
-                }
+                inputStream.close();
+            } catch (IOException ignored) {
             }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         }
         Map<String, StaticPlate> platesByBarcode = uploadIndexedPlates(associations);
 //                setSuccessText("Uploaded " + associations.size() + " rows from " + file.getName());

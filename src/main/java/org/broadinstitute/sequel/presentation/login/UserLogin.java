@@ -8,6 +8,8 @@ package org.broadinstitute.sequel.presentation.login;
 
 //import com.atlassian.crowd.application.jaas.CrowdLoginModule;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.sequel.presentation.AbstractJsfBean;
 
 import javax.faces.application.FacesMessage;
@@ -32,6 +34,8 @@ public class UserLogin extends AbstractJsfBean {
 
     private String userName;
     private String password;
+
+    private Log loginLogger = LogFactory.getLog(UserLogin.class);
 
 
     public String getUserName() {
@@ -64,11 +68,14 @@ public class UserLogin extends AbstractJsfBean {
                 targetPage =previouslyTargettedPage;
             }
         } catch (LoginException le) {
-             FacesContext.getCurrentInstance()
+
+            loginLogger.error("LoginException Retrieved: ",le);
+            FacesContext.getCurrentInstance()
                         .addMessage(null, new FacesMessage("The username and password combination entered was not able to be authenticated."));
             targetPage = "/security/login";
         } catch (ServletException le) {
-             FacesContext.getCurrentInstance()
+            loginLogger.error("ServletExcpetion Retrieved: ",le);
+            FacesContext.getCurrentInstance()
                         .addMessage(null, new FacesMessage("The username and password combination entered was not able to be authenticated."));
             targetPage = "/security/login";
         }

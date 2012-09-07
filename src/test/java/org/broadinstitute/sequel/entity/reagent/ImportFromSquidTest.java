@@ -34,8 +34,7 @@ import java.util.TreeMap;
  */
 public class ImportFromSquidTest extends ContainerTest {
 
-    //todo:  SGM/JMT  uncomment when we are ready to add JDBC definitions to Glassfish Servers
-//    @PersistenceContext(unitName = "squid_pu")
+    @PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
     @Inject

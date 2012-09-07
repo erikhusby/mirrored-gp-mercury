@@ -109,8 +109,8 @@ public class BettalimsMessageResourceTest extends ContainerTest {
             twoDBarcodedTubeDAO.clear();
         }
 
-        Map<String,StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseFile(
-                new File(Thread.currentThread().getContextClassLoader().getResource("testdata/DuplexCOAforBroad.xlsx").getFile()),
+        Map<String,StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseStream(
+                Thread.currentThread().getContextClassLoader().getResourceAsStream("DuplexCOAforBroad.xlsx"),
                 IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
         StaticPlate indexPlate = mapBarcodeToPlate.values().iterator().next();
         if(staticPlateDAO.findByBarcode(indexPlate.getLabel()) == null) {

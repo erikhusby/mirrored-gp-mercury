@@ -1059,6 +1059,8 @@
 -->
         <!-- END seam-faces -->
 
+        <!-- disable when deploying to JBoss AS 7 -->
+<!--
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-crypto</artifactId>
@@ -1088,6 +1090,7 @@
             <artifactId>resteasy-jaxb-provider</artifactId>
             <version>2.2.0.GA</version>
         </dependency>
+-->
 
         <dependency>
             <groupId>log4j</groupId>
@@ -1170,11 +1173,13 @@
         </dependency>
 
         <!-- disable when deploying to JBoss AS 7 -->
+<!--
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-server</artifactId>
             <version>${jersey.version}</version>
         </dependency>
+-->
 
         <dependency>
             <groupId>com.sun.jersey</groupId>
@@ -1235,6 +1240,13 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.10</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>com.sun.org.apache</groupId>
+            <artifactId>jaxp-ri</artifactId>
+            <version>1.4</version>
         </dependency>
 
     </dependencies>
@@ -1499,7 +1511,7 @@
                                 <argument>--create</argument>
                                 <argument>--delimiter=;</argument>
                                 <argument>--output=${project.basedir}/target/generated-sources/ddl/generated_schema.sql</argument>
-                                <argument>sequel_pu</argument>
+                                <argument>mercury_pu</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -1643,6 +1655,9 @@
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
                     </webResources>
+<!--
+                    <packagingExcludes>WEB-INF/classes/META-INF/persistence.xml</packagingExcludes>
+-->
                 </configuration>
             </plugin>
 

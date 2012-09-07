@@ -10,6 +10,8 @@ import org.broadinstitute.sequel.limsquery.generated.LaneType;
 import org.broadinstitute.sequel.limsquery.generated.LibraryDataType;
 import org.broadinstitute.sequel.limsquery.generated.SampleInfoType;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -71,7 +73,11 @@ public class LimsQueryResourceResponseFactory {
             }
             GregorianCalendar calendar = new GregorianCalendar();
             calendar.setTime(createDateTime);
-            outLibraryData.setDateCreated(new XMLGregorianCalendarImpl(calendar));
+            try {
+                outLibraryData.setDateCreated(DatatypeFactory.newInstance().newXMLGregorianCalendar(calendar));
+            } catch (DatatypeConfigurationException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         outLibraryData.setDiscarded(libraryData.isIsDiscarded());

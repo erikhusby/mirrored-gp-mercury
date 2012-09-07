@@ -2,6 +2,8 @@
 <endpoints
         xmlns='http://java.sun.com/xml/ns/jax-ws/ri/runtime'
         version='2.0'>
+<!-- commented out for JBoss; should eventually remove sun-jaxws.xml altogether once we're settled on JBoss AS 7 -->
+<!--
 <endpoint
         name='PASSService'
         implementation='org.broadinstitute.sequel.boundary.pass.PassServiceImpl'
@@ -11,5 +13,6 @@
         name='SampleKit'
         implementation='org.broadinstitute.sequel.boundary.samplekit.SampleKitSOAPServiceImpl'
         url-pattern='/SampleKit' />
+-->
 
         </endpoints>

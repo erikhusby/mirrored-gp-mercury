@@ -58,6 +58,7 @@ public class MolecularIndex implements Serializable {
         this.setSequence(sequence);
     }
 
+    // todo jmt why allocationSize = 1?
     @Id
     @SequenceGenerator(name="seq_molecular_index", sequenceName="seq_molecular_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_index")
