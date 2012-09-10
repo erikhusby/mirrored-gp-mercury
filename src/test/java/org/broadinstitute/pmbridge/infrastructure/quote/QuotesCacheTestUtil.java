@@ -2,8 +2,6 @@ package org.broadinstitute.pmbridge.infrastructure.quote;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.pmbridge.infrastructure.ObjectMarshaller;
-import org.broadinstitute.pmbridge.infrastructure.quote.Quotes;
-import org.broadinstitute.pmbridge.infrastructure.quote.QuotesCache;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -24,7 +22,7 @@ public class QuotesCacheTestUtil {
             throw new NullPointerException("Quotes filename cannot be null");
         }
 
-        Quotes quoteData=null;
+        Quotes quoteData = null;
         BufferedReader rdr = null;
 
         try {
@@ -35,14 +33,14 @@ public class QuotesCacheTestUtil {
             InputStream inStream = this.getClass().getResourceAsStream(localFileName);
             rdr = new BufferedReader(new InputStreamReader(inStream));
 
-            while( (line = rdr.readLine()) != null) {
+            while ((line = rdr.readLine()) != null) {
                 sb.append(line);
             }
             quoteData = ObjectMarshaller.unmarshall(Quotes.class, sb.toString());
         } catch (Exception ue) {
-                  // Do nothing - Just return the message from the exp in it's original format.
+            // Do nothing - Just return the message from the exp in it's original format.
         } finally {
-            if ( rdr != null ) rdr.close();
+            if (rdr != null) rdr.close();
         }
 
         return new QuotesCache(quoteData);
