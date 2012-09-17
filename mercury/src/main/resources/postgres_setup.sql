@@ -1,7 +1,7 @@
---password is sequel_local
-CREATE ROLE sequel LOGIN ENCRYPTED PASSWORD 'md5a2a36fd51f14a52a5fab711046947b7f'
+--password is mercury_local
+CREATE ROLE mercury LOGIN ENCRYPTED PASSWORD 'md5c95f4bb87c013c7d6654015080802f87'
   CREATEDB
    VALID UNTIL 'infinity';
 
-CREATE SCHEMA sequel
-       AUTHORIZATION sequel;
+CREATE SCHEMA mercury
+       AUTHORIZATION mercury;
