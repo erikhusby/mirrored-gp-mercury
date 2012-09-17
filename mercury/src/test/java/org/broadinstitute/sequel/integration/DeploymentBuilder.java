@@ -35,7 +35,8 @@ public class DeploymentBuilder {
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .addAsWebInfResource(new File("src/test/resources/mercury-dev-ds.xml"))
-                .addAsWebInfResource(new File("src/test/resources/squid-dev-ds.xml"))
+                // todo jmt switch this back to dev
+                .addAsWebInfResource(new File("src/test/resources/squid-prod-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
                 .addPackages(true, "org.broadinstitute.sequel")
                 .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
