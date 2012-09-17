@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<PriceList>
+    <PriceItem platform="Biological Samples" categoryName="Patient Kit" id="7632" name="Patient Kit - RAPID Control" price="34.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="8182" name="Bioanalyzer (12 Samples)" price="202.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Retrieval" id="7661" name="CLE Cell lines (per vial)" price="125.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Viral Sample" id="7648" name="Viral HIV Reverse Transcription -Short Protocol- 20uL rctn (24 sample batch)" price="598.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Patient Kit" id="7636" name="Patient Kit - PCAD and MIGEN" price="46.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Patient Kit" id="7637" name="Patient Kit - Primo Renal" price="13.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Patient Kit" id="7638" name="Patient Kit - Renal Deletion" price="56.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Patient Kit" id="7639" name="Patient Kit- I2B2" price="6.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Patient Kit" id="7641" name="Patient Kit- SLE Study" price="74.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Viral Sample" id="7642" name="Viral Dengue Reverse Transcription - 20uL rctn (12 sample batch)" price="371.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Viral Sample" id="7644" name="Viral Dengue Reverse Transcription - 20uL rctn (48 sample batch)" price="1053.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Viral Sample" id="7645" name="Viral HIV Reverse Transcription -Long Protocol- 20uL rctn (12 sample batch)" price="991.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Viral Sample" id="7646" name="Viral HIV Reverse Transcription -Long Protocol- 20uL rctn (24 sample batch)" price="1773.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Viral Sample" id="7647" name="Viral HIV Reverse Transcription -Short Protocol- 20uL rctn (12 sample batch)" price="371.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Viral Sample" id="7649" name="Viral HIV Reverse Transcription -Short Protocol- 20uL rctn (48 sample batch)" price="1053.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Plating" id="7650" name="GSSR HT Sequencing" price="7.5"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7651" name="DNA Extraction Compromised Frozen Blood Addition" price="6.5"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7652" name="DNA Extraction from Human Blood or Tissue Sample" price="25.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7653" name="DNA Reprecipitation with ETOH - per batch of 18 samples" price="403.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7654" name="DNA Reprecipitation with ETOH - per sample" price="42.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7655" name="RNA Extraction - PAXgene Tubes" price="31.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7656" name="RNA Extraction - Trizol or Rneasy" price="20.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7657" name="Spin, Aliquot &amp; Freeze - Blood, Serum, or Plasma (per 8-10mL tube)" price="14.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7658" name="Tissue Pathology QC" price="46.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Whole Genome Amplification" id="7659" name="Whole Genome Amplification" price="22.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Retrieval" id="7662" name="Cryovial (frozen sample) Retrieval (per 1-10 samples)" price="33.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Retrieval" id="7664" name="Cryovial (frozen sample) Retrieval (per 41-81 samples)" price="105.0"/>
+    <PriceItem platform="Biological Samples" categoryName="" id="7665" name="Hourly Charge - Informatics" price="76.0"/>
+    <PriceItem platform="Biological Samples" categoryName="" id="7667" name="Hourly Charge - Project Management" price="99.0"/>
+    <PriceItem platform="Biological Samples" categoryName="" id="7668" name="Hourly Charge - Tissue Macrodissection for Nucleic Acid Extraction" price="43.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Kit" id="7570" name="DNA/RNA Matrix Sample Kit Full Plate (49 - 96 Samples)" price="384.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Patient Kit" id="7634" name="Patient Kit - Autism Consortium Pediatric" price="41.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Viral Sample" id="7643" name="Viral Dengue Reverse Transcription - 20uL rctn (24 sample batch)" price="598.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Whole Genome Amplification" id="7660" name="Whole Genome Amplification Cleanup" price="5.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Retrieval" id="7663" name="Cryovial (frozen sample) Retrieval (per 11-40 samples)" price="62.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7572" name="DNA Extraction Oragene Saliva Kit Addition" price="6.5"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7573" name="DNA QC - Quality Gel (per gel) - per sample" price="2.5"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="7574" name="DNA Quantification - Picogreen" price="2.5"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Plating" id="7576" name="Sample Plating (96 Well Plate)" price="192.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Kit" id="7577" name="Cryovials Partial Kit (1 - 40 Samples)" price="3.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Kit" id="7630" name="DNA/RNA Matrix Sample Kit Partial Plate (1 - 48 Samples)" price="5.5"/>
+    <PriceItem platform="Biological Samples" categoryName="" id="7666" name="Hourly Charge - Laboratory" price="43.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="8752" name="GTEx Fibroblast Initiation and Cell Culture (per line)" price="850.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="8870" name="GTEx Lymphoblast EBV transformation and cell culture (per line)" price="856.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Processing" id="8871" name="RNA concentration via RNA Stable (per sample)" price="11.0"/>
+    <PriceItem platform="Biological Samples" categoryName="" id="7626" name="Hourly Charge - Pathology" price="181.0"/>
+    <PriceItem platform="Biological Samples" categoryName="" id="7628" name="Materials" price="1.5"/>
+    <PriceItem platform="Biological Samples" categoryName="Sample Kit" id="7629" name="Cryovials Full Kit (41 - 81 Samples)" price="200.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Patient Kit" id="7631" name="Patient Kit - RAPID Case" price="46.0"/>
+    <PriceItem platform="Biological Samples" categoryName="Patient Kit" id="7633" name="Patient Kit - Autism Consortium" price="81.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="7682" name="Materials" price="1.5"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="7670" name="Primary Screening" price="0.48"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8450" name="Assay Fee" price="19610.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="Picks" id="8452" name="Custom Compound Picks" price="7.19"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8453" name="Secondary Screening" price="2.36"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8456" name="DOS Lantern" price="146.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8459" name="Hourly Charge - Analytical Chemistry" price="58.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8460" name="Hourly Charge - Assay Dev" price="101.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8461" name="Hourly Charge - Compound Management" price="88.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8462" name="Hourly Charge - Informatics" price="108.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8463" name="Hourly Charge - Screening" price="102.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8464" name="Hourly Charge - Medicinal Chemitry" price="88.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8465" name="Hourly Charge - Medium Throughput Chemistry" price="86.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8466" name="Hourly Charge - DOS Chemistry" price="86.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8467" name="Assay Ready Plates -384 Wells-" price="99.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8468" name="Assay Ready Plates -1536 Wells-" price="218.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8469" name="Validation Set" price="2301.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8515" name="Outreach Lab Fee" price="4945.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8516" name="SMM Array Production" price="1395.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8517" name="SMM Screening" price="1396.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8518" name="Medicinal Chemistry" price="760.0"/>
+    <PriceItem platform="Chemical Screening" categoryName="" id="8519" name="Medium Throughput Chemistry" price="365.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="" id="8520" name="Custom Bait" price="1.5"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Special Projects - Hourly Charge" id="7683" name="Informatics" price="113.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Special Projects - Hourly Charge" id="7684" name="Senior Technical Advice" price="160.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Special Projects - Hourly Charge" id="7685" name="Project Management" price="97.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Special Projects - Hourly Charge" id="7686" name="Technical Development" price="75.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8830" name="Illumina Custom Hybrid Selection Library (93 sample batch size)" price="35030.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8831" name="Illumina HiSeq Paired End Run 25 Base" price="10787.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8832" name="Illumina HiSeq Run 44 Base" price="10088.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8833" name="Illumina HiSeq Paired End Run 76 Base" price="18880.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8834" name="Illumina HiSeq Paired End Run 101 Base" price="21657.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8835" name="Illumina MiSeq Long (up to 2x150 read length)" price="3241.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8836" name="Illumina MiSeq Short (up to 2x25 read length)" price="2664.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8837" name="Illumina Whole Exome Hybrid Selection Library" price="506.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8838" name="Illumina Mouse Whole Exome Hybrid Selection Library" price="983.1"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8839" name="Illumina Low Coverage WGS Library (400bp +/-10%)" price="462.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8840" name="Illumina High Coverage WGS Library (400bp +/-10%)" price="630.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8841" name="Illumina WGS Library (200bp +/-100%)" price="263.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8842" name="Illumina dUTP RNA-Seq Library (PolyA method)" price="465.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8843" name="Illumina TruSeq RNA-Seq Library (Poly A Selected)" price="555.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8844" name="Illumina DSN RNA-Seq Library (Non-poly A)" price="1766.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="454 Sequencing" id="8846" name="454 Sequencing Run" price="14870.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="454 Sequencing" id="8847" name="454 Sequencing Library" price="274.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="454 Sequencing" id="8848" name="454 Viral Library -per sample-" price="248.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="454 Sequencing" id="8849" name="454 16S Library -per sample-" price="47.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="454 Sequencing" id="8850" name="454 HLA Library" price="75.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="454 Sequencing" id="8851" name="HIV RT and PCR" price="226.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Production Pilot Activities" id="8852" name="Ion Torrent 316 Run" price="2031.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Production Pilot Activities" id="8853" name="Ion Torrent Library" price="313.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Production Pilot Activities" id="8854" name="Fluidigm Chip (up to 48 samples)" price="1888.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Production Pilot Activities" id="8855" name="Pac Bio Library" price="1628.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Production Pilot Activities" id="8856" name="Pac Bio Run" price="325.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="" id="7704" name="Materials" price="1.5"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Special Projects - Hourly Charge" id="7625" name="Lab Process" price="59.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8872" name="Illumina Automated Jumping Libraries" price="379.0"/>
+    <PriceItem platform="DNA Sequencing" categoryName="Illumina Sequencing" id="8873" name="Illumina 180bp Bacterial Library" price="245.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Hourly Charge" id="7620" name="Hourly Charge" price="64.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Materials" id="7720" name="Materials" price="1.5"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8753" name="Addition for NuGen Pico RNA Amplification" price="151.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8754" name="Addition for NuGen RNA Amplification -ADD-" price="138.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8755" name="Affy HT Perfect Match Array Expression Profiling (96 or more Samples Submitted Together)" price="637.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8756" name="Affy HT Perfect Match Array Expression Profiling (less than 96 Samples Submitted Together)" price="664.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8757" name="Cartridge Expression Mouse 430 2.0" price="1032.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8758" name="Cartridge Expression U133 / 2.0+" price="1032.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8759" name="Cartridge Expression WT GeneArray 1.0 ST" price="691.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8760" name="HT 430A Array Profiling -Mouse- per sample" price="701.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8761" name="Affy Processing Only" price="271.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Agilent" id="8762" name="Agilent Bioanalyzer Chip" price="218.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Illumina Expression" id="8763" name="Illumina Processing Only" price="250.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Illumina Expression" id="8764" name="Illumina WG 6- per sample in multiples of 6" price="562.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Illumina Expression" id="8765" name="Illumina Ref 12- per sample in multiples of 12" price="464.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Illumina Expression" id="8766" name="Illumina Ref 8- per sample in multiples of 8" price="464.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Luminex" id="8767" name="Luminex L1000" price="7.97"/>
+    <PriceItem platform="Gene Expression" categoryName="Luminex" id="8768" name="Luminex Processing Only" price="2.74"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8769" name="Cartridge Expression Mouse 430A" price="766.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8770" name="Affymetrix Human U133A 2.0" price="765.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Affymetrix Expression" id="8771" name="U219" price="543.0"/>
+    <PriceItem platform="Gene Expression" categoryName="Luminex" id="7619" name="Luminex Hourly Machine Charge" price="131.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Illumina Genotyping" id="8221" name="Hourly Charge" price="76.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Sequenom" id="8233" name="Hourly Charge" price="73.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Affymetrix Materials" id="8671" name="Materials" price="1.5"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Illumina Materials" id="8672" name="Materials" price="1.5"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Oligos" id="7735" name="Oligos at Cost" price="1.5"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Materials" id="7736" name="Materials" price="1.5"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Affymetrix Genotyping - Small Projects" id="7742" name="Hourly Charge" price="69.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Hourly Charge" id="7540" name="Hourly Charge - GAP Tech Dev" price="74.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Hourly Charge" id="8332" name="Hourly Charge - Informatics" price="102.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Hourly Charge" id="8333" name="Hourly Charge - Project Management" price="94.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Affymetrix Genotyping - Large Projects" id="8772" name="6.0 chip with processing" price="295.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Affymetrix Genotyping - Small Projects" id="8773" name="Processing per chip (dual chemistry single chip)" price="245.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Affymetrix Genotyping - Small Projects" id="8774" name="Processing per chip (single chemistry single chip)" price="207.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Illumina Golden Gate" id="8775" name="Golden Gate - 1536 plex" price="5681.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Illumina Golden Gate" id="8776" name="Golden Gate - 3072 plex" price="6721.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Illumina Golden Gate" id="8777" name="Golden Gate - 768 plex" price="5681.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8874" name="Infinium Omni Express v1 - PER SAMPLE" price="214.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8779" name="Infinium i-Select - Processing Only - Chip at Cost" price="163.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8780" name="Infinium Metabo/Immuno Chip" price="87.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8781" name="Infinium Methylation 450K - Per Sample" price="430.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8782" name="Infinium Omni1 Quad" price="468.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8783" name="Infinium Omni 2.5 v1 - PER SAMPLE (4 Samples per Chip)" price="624.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8784" name="Infinium Omni 5M - Per Sample" price="894.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8785" name="Infinium CytoSNP - Per Sample" price="149.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8786" name="Exome Array-Per Sample" price="87.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8787" name="Infinium Omni 2.5 v1 - PER SAMPLE (8 Samples per Chip)" price="438.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Infinium" id="8788" name="Infinium Omni Express Plus Exome - Per Sample" price="282.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Sequenom" id="8789" name="Probe QC" price="673.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Sequenom" id="8790" name="Sequenom - HME-plus Chemistry Per Plate" price="962.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Sequenom" id="8791" name="Sequenom - I-PLEX-Plus Chemistry" price="1974.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Sequenom Fingerprinting" id="8792" name="Sequenom - I-PLEX-Plus Chemistry with Primers Per Plate" price="2280.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Fluidigm Fingerprinting" id="8793" name="Fluidigm FP - Per Sample" price="10.0"/>
+    <PriceItem platform="Genetic Analysis" categoryName="Bead Express" id="8796" name="Illumina Bead Express - Processing Only" price="638.0"/>
+    <PriceItem platform="Metabolite Profiling" categoryName="" id="7549" name="Materials" price="1.5"/>
+    <PriceItem platform="Metabolite Profiling" categoryName="" id="8470" name="Screening Method - 3 Columns" price="294.0"/>
+    <PriceItem platform="Metabolite Profiling" categoryName="" id="8471" name="Positively Charged Polar Metabolite - HILIC-MS Profiling" price="85.0"/>
+    <PriceItem platform="Metabolite Profiling" categoryName="" id="8472" name="Central Metabolites - Negatively Charged Polar Metabolites - IPR Profiling" price="171.0"/>
+    <PriceItem platform="Metabolite Profiling" categoryName="" id="8473" name="Abundant Lipids - C4-LC-MS" price="93.0"/>
+    <PriceItem platform="Metabolite Profiling" categoryName="" id="8474" name="Free Fatty Acids - C18-LC-MS" price="88.0"/>
+    <PriceItem platform="Metabolite Profiling" categoryName="" id="8475" name="Combined HILIC/IPR/Lipid Analysis" price="316.0"/>
+    <PriceItem platform="Metabolite Profiling" categoryName="" id="8476" name="Acylcarnitines" price="220.0"/>
+    <PriceItem platform="Metabolite Profiling" categoryName="" id="8477" name="Hourly Charge" price="96.0"/>
+    <PriceItem platform="Proteomics" categoryName="General" id="10057" name="Low Complexity - 1 Injection" price="300.0"/>
+    <PriceItem platform="Proteomics" categoryName="Discovery" id="10058" name="Biomarker Discovery - 30 injections" price="5100.0"/>
+    <PriceItem platform="Proteomics" categoryName="Verification" id="10059" name="AIMS Complex Sample Analysis - 15 injections" price="4087.0"/>
+    <PriceItem platform="Proteomics" categoryName="Verification" id="10060" name="Targeted Quantification - 1 injection" price="170.0"/>
+    <PriceItem platform="Proteomics" categoryName="Affinity Proteomics" id="10061" name="Affinity Proteomics 2-state SILAC - 12 injections" price="5564.0"/>
+    <PriceItem platform="Proteomics" categoryName="Affinity Proteomics" id="10062" name="Affinity Proteomics by SILAC 2-state TC done by collaborator" price="5000.0"/>
+    <PriceItem platform="Proteomics" categoryName="Affinity Proteomics" id="10063" name="Affinity Proteomics by iTRAQ label 100ug - 12 injections" price="5505.0"/>
+    <PriceItem platform="Proteomics" categoryName="Global Proteomics" id="10064" name="Global Proteomics by SILAC Double Label - 24 injections" price="6046.0"/>
+    <PriceItem platform="Proteomics" categoryName="Global Proteomics" id="10065" name="Global Proteomics by iTRAQ label 100ug - 24 injections" price="6255.0"/>
+    <PriceItem platform="Proteomics" categoryName="Global Proteomics" id="10066" name="Global Proteomics by iTRAQ label 1mg - 24 injections" price="7355.0"/>
+    <PriceItem platform="Proteomics" categoryName="Global Phospho" id="10067" name="Global Phospho SILAC Double Label  2 mg - 12 injections" price="6100.0"/>
+    <PriceItem platform="Proteomics" categoryName="Global Phospho" id="10068" name="Global Phospho iTRAQ label 1 mg -12 injections" price="6100.0"/>
+    <PriceItem platform="Proteomics" categoryName="Global Phospho" id="10069" name="Global Phospho iTRAQ Quad label 1.5 mg - 12 injections" price="6735.0"/>
+    <PriceItem platform="Proteomics" categoryName="Global Proteomics and Phospho" id="10070" name="Global Proteomics and Phospho 2-state SILAC   2mg - 36 injections" price="7064.0"/>
+    <PriceItem platform="Proteomics" categoryName="Global Proteomics and Phospho" id="10071" name="Global Proteomics and Phospho iTRAQ Quad label 1mg- 36 injections" price="7837.0"/>
+    <PriceItem platform="Proteomics" categoryName="Global Proteomics and Phospho" id="10072" name="Global Proteomics and Phospho iTRAQ Quad label 1.5mg- 36 injections" price="8500.0"/>
+    <PriceItem platform="Proteomics" categoryName="Ubiquitin" id="10073" name="Unbiquitin with Antibody and SILAC labeled cells - 4 injections" price="3026.0"/>
+    <PriceItem platform="Proteomics" categoryName="Ubiquitin" id="10074" name="Unbiquitin with Antibody with SILAC done by collaborator - 4 injections" price="2361.0"/>
+    <PriceItem platform="Proteomics" categoryName="QC" id="10075" name="Peptide QC Advion" price="35.0"/>
+    <PriceItem platform="Proteomics" categoryName="QC" id="10076" name="SILAC Labeling Efficiency Test" price="337.0"/>
+    <PriceItem platform="Proteomics" categoryName="Materials" id="10077" name="Additional SILAC Charge for Triple Label" price="316.0"/>
+    <PriceItem platform="Proteomics" categoryName="Materials" id="10078" name="Additional SILAC Charge for Triple Label Phospho" price="412.0"/>
+    <PriceItem platform="Proteomics" categoryName="Materials" id="10079" name="2-State SILAC Media @ 100ml/set" price="63.0"/>
+    <PriceItem platform="Proteomics" categoryName="Materials" id="10080" name="3-State SILAC Media @ 100ml/set" price="113.0"/>
+    <PriceItem platform="Proteomics" categoryName="Materials" id="10081" name="Additional iTRAQ costs for Quad Label/ 100ug" price="182.0"/>
+    <PriceItem platform="Proteomics" categoryName="Materials" id="10082" name="Materials" price="1.5"/>
+    <PriceItem platform="Proteomics" categoryName="" id="10083" name="Hourly Charge - Additional Machine Time" price="124.0"/>
+    <PriceItem platform="Proteomics" categoryName="" id="10084" name="Hourly Charge- Technical" price="118.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Virus Prep" id="8496" name="Plate Based" price="480.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Virus Prep" id="8497" name="Large Scale" price="869.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Virus Prep" id="8498" name="Virus Titer 96 well" price="136.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="" id="8499" name="ORF DNA Rearray (up to 20 clones)" price="269.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="" id="8500" name="ORF DNA Rearray (up to 90 clones)" price="567.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="" id="8502" name="Hourly Charge - Experimental" price="48.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="" id="8503" name="Hourly Charge - Data Analysis" price="94.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="" id="8504" name="Hourly Charge - Project Management" price="105.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="pDNA Prep" id="8505" name="DNA Aliquot" price="34.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Virus Aliquot" id="8506" name="Virus Aliquot 384w plate" price="887.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Virus Aliquot" id="8507" name="Virus Aliquot 96w plate" price="222.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="HT Infections" id="8486" name="Entry Clone Seqence and LR Transfer" price="1332.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="" id="8531" name="ORF Single Clone (bacterial stock)" price="68.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="" id="8296" name="Lentiviral Stocks" price="0.08"/>
+    <PriceItem platform="RNAi Screening" categoryName="" id="7575" name="Materials" price="1.5"/>
+    <PriceItem platform="RNAi Screening" categoryName="Glycerol Stocks" id="8478" name="Glycerol copy, 96 well library plate" price="145.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Glycerol Stocks" id="8479" name="LKO.1-shRNA From Custom Chip" price="22.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Glycerol Stocks" id="8480" name="Rearray Glycerol 96 Well Plate" price="859.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="pDNA Prep" id="8481" name="DNA Rearray" price="271.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="pDNA Prep" id="8482" name="pDNA 96w miniprep" price="481.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="HT Infections" id="8483" name="HT Infections 384 well" price="314.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="HT Infections" id="8484" name="HT Infections 96 well" price="204.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="HT Infections" id="8485" name="Custom LKO shRNA glycerol" price="4659.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="HT Infections" id="8487" name="Custom Pool Generation per 4k" price="1012.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Pooled Screening" id="8488" name="Illumina Sequencing and Sample Prep" price="3136.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Pooled Screening" id="8489" name="Pooled Screening Virus" price="284.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Pooled Screening" id="8490" name="Screening Assay Dev" price="2368.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Pooled Screening" id="8491" name="Pooled Screening Infections" price="1322.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Pooled Screening" id="8492" name="Pooled Screening Maintenance" price="622.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Pooled Screening" id="8493" name="Platform Bundle Pooled Screening" price="8440.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Pooled Screening" id="8494" name="Pooled Screening Microarray" price="1180.0"/>
+    <PriceItem platform="RNAi Screening" categoryName="Pooled Screening" id="8495" name="Researcher Access" price="350.0"/>
+    <PriceItem platform="Imaging" categoryName="Project Imaging" id="7612" name="Hourly Charge - Imaging Project Hour" price="198.0"/>
+</PriceList>

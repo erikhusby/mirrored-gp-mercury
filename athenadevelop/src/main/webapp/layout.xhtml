@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ The Broad Institute
+  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
+  ~ This software and its documentation are copyright 2011 by the
+  ~ Broad Institute/Massachusetts Institute of Technology. All rights are
+  ~ reserved.
+  ~
+  ~ This software is supplied without any warranty or guaranteed support
+  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+  ~ use, misuse, or functionality.
+  -->
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://primefaces.org/ui ">
+
+<!--
+  Base JSF page template to be used in the "template" attribure of
+  ui:composition tags. Supports the following ui:define fragments:
+
+    metadata: an f:metadata element, and may also include f:event elements
+    title: text rendered in the window title
+    header: top header rendered in the window content area
+    content: page content wrapped by page template and navigation
+  -->
+<f:view contentType="text/html">
+    <ui:insert name="metadata"/>
+    <h:head>
+        <!--<link href='http://fonts.googleapis.com/css?family=Lato|Arvo|PT+Sans|Cantarell|Open+Sans' rel='stylesheet' type='text/css'/>-->
+        <h:outputStylesheet library="css" name="styles.css"/>
+        <title>PMBridge : <ui:insert name="title"/></title>
+        <ui:insert name="head"/>
+    </h:head>
+    <h:body>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 5px;">
+            <tr>
+                <td>
+                    <h:link outcome="/summary/summary">
+                        <h:graphicImage value="/images/bridge.jpeg" align="left" alt="PMBridge" height="80" width="80"/>
+                    </h:link>
+                </td>
+                <td>
+                    <h:form id="menuform">
+                        <p:growl id="messages"/>
+
+                        <!--<p></p>-->
+                        <p:menubar autoDisplay="false">
+                            <p:menuitem value="Research Projects" url="/researchProjects.xhtml" icon="ui-icon-contact"/>
+
+                            <p:submenu label="Experiments" icon="ui-icon-gear">
+                                <p:menuitem value="Summary" url="/summary/summary.xhtml" icon="ui-icon-contact"/>
+                                <p:submenu label="New Experiment" icon="ui-icon-folder-open">
+                                    <p:submenu label="Sequencing" icon="ui-icon-document">
+                                        <p:menuitem value="Whole Genome" url="#"/>
+                                        <p:menuitem value="Hybrid Selection" url="#"/>
+                                        <p:menuitem value="RNA Seq" url="#"/>
+                                        <p:menuitem value="Exome Express" url="/experiments/experiment.xhtml"/>
+                                    </p:submenu>
+                                    <p:separator/>
+                                    <p:menuitem value="Genotyping" icon="ui-icon-document" url="#"/>
+                                </p:submenu>
+                            </p:submenu>
+
+                            <p:submenu label="Help" icon="ui-icon-help">
+                                <p:menuitem value="Help Documents." url="/help.xhtml"/>
+                                <p:menuitem value="Release Notes." url="/releaseNotes.xhtml"/>
+                            </p:submenu>
+
+                            <p:menuitem value="Quit" action="#{logoutHandler.logout}" icon="ui-icon-close" style=""/>
+                        </p:menubar>
+
+                    </h:form>
+
+                </td>
+                <td align="right">
+                    <h:graphicImage value="/images/broad_logo.png" alt="Broad Institute"/>
+                </td>
+            </tr>
+            <!--<tr>-->
+
+            <!--</tr>-->
+        </table>
+
+        <table width="100%">
+            <tr>
+                <!--<td width="150px" valign="top">-->
+                <!--<ui:include src="navigation.xhtml"></ui:include>-->
+                <!--</td>-->
+                <td>
+                    <div id="content">
+                        <p:panel>
+                            <f:facet name="header">
+                                <span id="panelTitle"><ui:insert name="title"/></span>
+                            </f:facet>
+                            <!-- show messages/errors -->
+                            <h:messages/>
+
+                            <ui:insert name="body"/>
+                        </p:panel>
+
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <ui:debug/>
+    </h:body>
+</f:view>
+</html>

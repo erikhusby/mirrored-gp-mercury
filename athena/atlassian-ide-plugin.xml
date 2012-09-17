@@ -1,0 +1,22 @@
+<atlassian-ide-plugin>
+  <project-configuration>
+    <servers>
+      <bamboo>
+        <server-id>a288b928-b0f9-479a-a980-99a491e578c0</server-id>
+        <name>prodinfobuild.broadinstitute.org</name>
+        <url>http://prodinfobuild.broadinstitute.org:8085</url>
+        <shared>false</shared>
+        <use-favourites>false</use-favourites>
+        <bamboo2>false</bamboo2>
+        <plans />
+      </bamboo>
+      <jira>
+        <server-id>eacdece1-0abd-4eac-aa6b-af4a96281760</server-id>
+        <name>jira.broadinstitute.org</name>
+        <url>https://jira.broadinstitute.org</url>
+        <shared>false</shared>
+      </jira>
+    </servers>
+    <default-jira-server>eacdece1-0abd-4eac-aa6b-af4a96281760</default-jira-server>
+  </project-configuration>
+</atlassian-ide-plugin>
