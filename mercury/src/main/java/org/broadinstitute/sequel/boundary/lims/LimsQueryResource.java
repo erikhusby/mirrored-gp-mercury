@@ -2,6 +2,7 @@ package org.broadinstitute.sequel.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
+import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
@@ -28,12 +29,15 @@ public class LimsQueryResource {
 
     private LimsQueryResourceResponseFactory responseFactory;
 
+    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
+
     public LimsQueryResource() {}
 
     @Inject
-    public LimsQueryResource(ThriftService thriftService, LimsQueryResourceResponseFactory responseFactory) {
+    public LimsQueryResource(ThriftService thriftService, LimsQueryResourceResponseFactory responseFactory, TwoDBarcodedTubeDAO twoDBarcodedTubeDAO) {
         this.thriftService = thriftService;
         this.responseFactory = responseFactory;
+        this.twoDBarcodedTubeDAO = twoDBarcodedTubeDAO;
     }
 
     @GET
@@ -56,7 +60,9 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/doesLimsRecognizeAllTubes")
     public boolean doesLimsRecognizeAllTubes(@QueryParam("q") List<String> barcodes) {
-        return thriftService.doesSquidRecognizeAllLibraries(barcodes);
+        boolean doesSquidRecognizeAllTubes = thriftService.doesSquidRecognizeAllLibraries(barcodes);
+        boolean doesSequelRecognizeAllTubes = twoDBarcodedTubeDAO.findByBarcodes(barcodes).size() == barcodes.size();
+        return doesSquidRecognizeAllTubes || doesSequelRecognizeAllTubes;
     }
 
     // TODO round 2: list<string> fetchMaterialTypesForTubeBarcodes(1:list<string> tubeBarcodes)
