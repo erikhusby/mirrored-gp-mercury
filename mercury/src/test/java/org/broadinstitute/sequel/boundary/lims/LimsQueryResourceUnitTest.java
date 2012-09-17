@@ -3,6 +3,7 @@ package org.broadinstitute.sequel.boundary.lims;
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.apache.thrift.TException;
+import org.broadinstitute.sequel.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.sequel.entity.vessel.TwoDBarcodedTube;
@@ -30,13 +31,15 @@ public class LimsQueryResourceUnitTest {
     private LimsQueryResourceResponseFactory mockResponseFactory;
     private TwoDBarcodedTubeDAO mockTwoDBarcodedTubeDAO;
     private LimsQueryResource resource;
+    private StaticPlateDAO mockStaticPlateDAO;
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() throws Exception {
         mockThriftService = createMock(ThriftService.class);
         mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
         mockTwoDBarcodedTubeDAO = createMock(TwoDBarcodedTubeDAO.class);
-        resource = new LimsQueryResource(mockThriftService, mockResponseFactory, mockTwoDBarcodedTubeDAO);
+        mockStaticPlateDAO = createMock(StaticPlateDAO.class);
+        resource = new LimsQueryResource(mockThriftService, mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -191,10 +194,10 @@ public class LimsQueryResourceUnitTest {
     }
 
     private void replayAll() {
-        replay(mockThriftService, mockResponseFactory, mockTwoDBarcodedTubeDAO);
+        replay(mockThriftService, mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
     }
 
     private void verifyAll() {
-        verify(mockThriftService, mockResponseFactory, mockTwoDBarcodedTubeDAO);
+        verify(mockThriftService, mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
     }
 }

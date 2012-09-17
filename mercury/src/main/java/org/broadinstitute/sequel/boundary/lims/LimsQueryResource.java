@@ -2,8 +2,12 @@ package org.broadinstitute.sequel.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
+import org.broadinstitute.sequel.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.sequel.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.sequel.control.lims.LimsQueryResourceResponseFactory;
+import org.broadinstitute.sequel.entity.vessel.PlateWell;
+import org.broadinstitute.sequel.entity.vessel.StaticPlate;
+import org.broadinstitute.sequel.entity.vessel.VesselPosition;
 import org.broadinstitute.sequel.infrastructure.thrift.ThriftService;
 import org.broadinstitute.sequel.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.sequel.limsquery.generated.LibraryDataType;
@@ -16,6 +20,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,19 +30,25 @@ import java.util.Map;
 @Path("/limsQuery")
 public class LimsQueryResource {
 
+    @Inject
     private ThriftService thriftService;
 
+    @Inject
     private LimsQueryResourceResponseFactory responseFactory;
 
+    @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
+
+    @Inject
+    private StaticPlateDAO staticPlateDAO;
 
     public LimsQueryResource() {}
 
-    @Inject
-    public LimsQueryResource(ThriftService thriftService, LimsQueryResourceResponseFactory responseFactory, TwoDBarcodedTubeDAO twoDBarcodedTubeDAO) {
+    public LimsQueryResource(ThriftService thriftService, LimsQueryResourceResponseFactory responseFactory, TwoDBarcodedTubeDAO twoDBarcodedTubeDAO, StaticPlateDAO staticPlateDAO) {
         this.thriftService = thriftService;
         this.responseFactory = responseFactory;
         this.twoDBarcodedTubeDAO = twoDBarcodedTubeDAO;
+        this.staticPlateDAO = staticPlateDAO;
     }
 
     @GET
@@ -142,11 +153,33 @@ public class LimsQueryResource {
         return thriftService.fetchUserIdForBadgeId(badgeId);
     }
 
+    /**
+     * Returns a map of well position to boolean indicating whether or not the
+     * well contains any material that was transferred from an upstream tube
+     * rack.
+     *
+     * @param plateBarcode    the plate barcode
+     * @return map of well position to well non-empty status
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchParentRackContentsForPlate")
     public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        return thriftService.fetchParentRackContentsForPlate(plateBarcode);
+        Map<String, Boolean> map;
+        try {
+            map = thriftService.fetchParentRackContentsForPlate(plateBarcode);
+        } catch (RuntimeException e) {
+            map = null;
+        }
+
+        Map<String, Boolean> mercuryMap = null;
+        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        if (plate != null) {
+            mercuryMap = new HashMap<String, Boolean>();
+            // TODO
+        }
+
+        return map != null ? map : mercuryMap;
     }
 
     // TODO round 2: TZamboniRun fetchSingleLane(1:string runName, 2:i16 laneNumber) throws (1:TZIMSException details)
