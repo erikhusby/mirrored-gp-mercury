@@ -86,7 +86,7 @@
 
     <servlet>
         <servlet-name>PASSService</servlet-name>
-        <servlet-class>org.broadinstitute.sequel.boundary.pass.PassServiceImpl</servlet-class>
+        <servlet-class>org.broadinstitute.gpinformatics.mercury.boundary.pass.PassServiceImpl</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>PASSService</servlet-name>
@@ -95,7 +95,7 @@
 
     <servlet>
         <servlet-name>SampleKitService</servlet-name>
-        <servlet-class>org.broadinstitute.sequel.boundary.samplekit.SampleKitSOAPServiceImpl</servlet-class>
+        <servlet-class>org.broadinstitute.gpinformatics.mercury.boundary.samplekit.SampleKitSOAPServiceImpl</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>SampleKitService</servlet-name>
@@ -124,20 +124,20 @@
         <param-name>resteasy.resources</param-name>
         <!-- comma separated list of jax-rs resource classes -->
         <param-value>
-            org.broadinstitute.sequel.boundary.zims.IlluminaRunResource,
-            org.broadinstitute.sequel.boundary.lims.LimsQueryResource,
-            org.broadinstitute.sequel.boundary.lims.LimsQueryTypesResource,
-            org.broadinstitute.sequel.boundary.vessel.LabBatchResource,
-            org.broadinstitute.sequel.boundary.labevent.BettalimsMessageResource,
-            org.broadinstitute.sequel.boundary.labevent.LabEventResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryResource,
+            org.broadinstitute.gpinformaticsmercuryl.boundary.lims.LimsQueryTypesResource,
+            org.broadinstitute.gpinformaticmercuryel.boundary.vessel.LabBatchResource,
+            org.broadinstitute.gpinformaticmercuryel.org.broadinstitute.gpinformatics.sequelmsMessageResource,
+            org.broadinstitute.sequel.boundaorg.broadinstitute.gpinformatics.sequelrce,
             org.broadinstitute.sequel.boundary.run.SolexaRunResource
         </param-value>
     </context-param>
     <context-param>
         <param-name>resteasy.providers</param-name>
         <param-value>
-            org.broadinstitute.sequel.infrastructure.jaxrs.JacksonConfigurator,
-            org.broadinstitute.sequel.infrastructure.jaxrs.CatchAllExceptionMapper,
+            org.broadinstitute.gpinformatics.mercury.infrastructure.jaxrs.JacksonConfigurator,
+            org.broadinstitute.gpinformatics.mercury.infrastructure.jaxrs.CatchAllEorg.broadinstitute.gpinformatics.sequel
             org.broadinstitute.sequel.infrastructure.jaxrs.EJBExceptionMapper
         </param-value>
     </context-param>
@@ -200,7 +200,7 @@
 
     <filter>
         <filter-name>AuthorizationFilter</filter-name>
-        <filter-class>org.broadinstitute.sequel.presentation.security.AuthorizationFilter</filter-class>
+        <filter-class>org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter</filter-class>
 
         <init-param>
             <param-name>error_page</param-name>

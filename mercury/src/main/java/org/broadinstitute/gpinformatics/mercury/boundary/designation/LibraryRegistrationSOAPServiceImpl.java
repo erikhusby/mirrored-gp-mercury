@@ -1,0 +1,103 @@
+package org.broadinstitute.gpinformatics.mercury.boundary.designation;
+
+import org.broadinstitute.gpinformatics.mercury.boundary.squid.LibraryRegistrationPortType;
+import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
+import org.broadinstitute.gpinformatics.mercury.entity.project.PassBackedProjectPlan;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.DeploymentProducer;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidConfig;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidConfigProducer;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidWebServiceClient;
+
+import javax.inject.Inject;
+
+
+/**
+ * @author Scott Matthews
+ *         Date: 6/20/12
+ *         Time: 4:30 PM
+ */
+
+
+@Impl
+public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<LibraryRegistrationPortType>
+        implements LibraryRegistrationSOAPService {
+
+
+    @Inject
+    private DeploymentProducer deploymentProducer;
+
+
+    private SquidConfig squidConfig;
+
+    /**
+     * Managed Bean classes must have no-arg constructor or constructor annotiated @Initializer
+     */
+    public LibraryRegistrationSOAPServiceImpl() {
+    }
+
+    /**
+     * Deployment-specific constructor, not driven by SEQUEL_DEPLOYMENT
+     *
+     * @param deployment
+     */
+    public LibraryRegistrationSOAPServiceImpl(Deployment deployment) {
+
+        squidConfig = SquidConfigProducer.getConfig(deployment);
+
+    }
+
+
+    public LibraryRegistrationSOAPServiceImpl(SquidConfig squidConfig) {
+
+        this.squidConfig = squidConfig;
+    }
+
+
+
+    @Override
+    public void registerSequeLLibrary(SequelLibrary registrationContextIn) {
+        squidCall().registerSequeLLibrary(registrationContextIn);
+    }
+
+    @Override
+    public void registerForDesignation(String libraryName, PassBackedProjectPlan projectPlanIn,
+                                       boolean needsControlLane) {
+
+        int readLength = 0;
+        int lanes = 0;
+
+        lanes = projectPlanIn.getLaneCoverage();
+        readLength = projectPlanIn.getReadLength();
+
+        squidCall().registerForDesignation(libraryName, lanes, readLength, needsControlLane);
+    }
+
+    @Override
+    protected SquidConfig getSquidConfig() {
+        if ( squidConfig == null ) {
+
+            final Deployment deployment = deploymentProducer.produce();
+            squidConfig = SquidConfigProducer.getConfig(deployment);
+        }
+
+
+        return squidConfig;
+    }
+
+    @Override
+    protected String getNameSpace() {
+        return "urn:ExtLibraryRegistration";
+    }
+
+    @Override
+    protected String getServiceName() {
+        return "ExtLibraryRegistrationService";
+    }
+
+    @Override
+    protected String getWsdlLocation() {
+        return "/services/ExtLibraryRegistrationService?WSDL";
+    }
+}

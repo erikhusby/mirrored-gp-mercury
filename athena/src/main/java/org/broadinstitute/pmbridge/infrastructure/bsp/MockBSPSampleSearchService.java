@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
- * User: mccrory  based on mockservice in sequel.
+ * User: mccrory  based on mockservice in mercury.
  * Date: 6/6/12
  * Time: 10:01 AM
  */

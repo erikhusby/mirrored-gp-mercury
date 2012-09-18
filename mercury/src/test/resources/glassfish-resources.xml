@@ -12,7 +12,7 @@
         <!--<property name="serverName" value="localhost"/>-->
         <!--<property name="databaseName" value="postgres"/>-->
         <!--<property name="portNumber" value="5432"/>-->
-        <!--<property name="user" value="sequel"/>-->
+        <!--<property name="user" value="mercury"/>-->
         <!--<property name="password" value="sequel_local"/>-->
     <!--</jdbc-connection-pool>-->
 <!--&lt;!&ndash;-->
@@ -25,7 +25,7 @@
             <!--steady-pool-size="0"-->
             <!--statement-timeout-in-seconds="30">-->
         <!--<property name="URL" value="jdbc:oracle:thin:@seqdev1:1521:seqdev1"></property>-->
-        <!--<property name="User" value="sequel"></property>-->
+        <!--<property name="User" value="mercury"></property>-->
         <!--<property name="Password" value="sequel_dev1"></property>-->
     <!--</jdbc-connection-pool>-->
 <!--&ndash;&gt;-->

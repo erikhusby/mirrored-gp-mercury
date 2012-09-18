@@ -7,7 +7,7 @@
 
 <!--
     <alternatives>
-        <stereotype>org.broadinstitute.sequel.infrastructure.Offline</stereotype>
+        <stereotype>org.broadinstitute.gpinformatics.mercuryy.infrastructure.Offline</stereotype>
     </alternatives>
 -->
 
