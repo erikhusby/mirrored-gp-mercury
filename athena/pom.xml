@@ -128,7 +128,7 @@
         <site.path>/prodinfo/releng/m2-projects</site.path>
 
         <!-- TODO  - Does this property need to move to the profiles only ? -->
-        <squid.root>http://seq01.broadinstitute.org:8020/</squid.root>
+        <squid.root>http://squid-ui.broadinstitute.org:8000/</squid.root>
 
         <seam.version>3.1.0.Final</seam.version>
         <!--<jersey.version>1.8</jersey.version>-->
@@ -595,29 +595,29 @@
                     </testResource>
                 </testResources>
             </build>
-            <dependencies>
-                <dependency>
-                    <groupId>javax</groupId>
-                    <artifactId>javaee-api</artifactId>
-                    <version>6.0</version>
-                    <scope>provided</scope>
-                </dependency>
+            <!--<dependencies>-->
+                <!--<dependency>-->
+                    <!--<groupId>javax</groupId>-->
+                    <!--<artifactId>javaee-api</artifactId>-->
+                    <!--<version>6.0</version>-->
+                    <!--<scope>provided</scope>-->
+                <!--</dependency>-->
 
-                <dependency>
-                    <groupId>com.sun.faces</groupId>
-                    <artifactId>jsf-api</artifactId>
-                    <version>2.1.1-b04</version>
-                    <scope>compile</scope>
-                </dependency>
+                <!--<dependency>-->
+                    <!--<groupId>com.sun.faces</groupId>-->
+                    <!--<artifactId>jsf-api</artifactId>-->
+                    <!--<version>2.1.1-b04</version>-->
+                    <!--<scope>compile</scope>-->
+                <!--</dependency>-->
 
-                <dependency>
-                    <groupId>com.sun.faces</groupId>
-                    <artifactId>jsf-impl</artifactId>
-                    <version>2.1.1-b04</version>
-                    <scope>compile</scope>
-                </dependency>
+                <!--<dependency>-->
+                    <!--<groupId>com.sun.faces</groupId>-->
+                    <!--<artifactId>jsf-impl</artifactId>-->
+                    <!--<version>2.1.1-b04</version>-->
+                    <!--<scope>compile</scope>-->
+                <!--</dependency>-->
 
-            </dependencies>
+            <!--</dependencies>-->
         </profile>
         <profile>
             <id>BUILD</id>
@@ -880,11 +880,11 @@
             <version>${jersey.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.sun.jersey</groupId>-->
+            <!--<artifactId>jersey-server</artifactId>-->
+            <!--<version>${jersey.version}</version>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>com.sun.jersey</groupId>

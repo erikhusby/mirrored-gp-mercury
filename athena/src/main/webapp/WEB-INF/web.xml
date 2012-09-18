@@ -57,20 +57,20 @@
     </filter-mapping>
 
     <!-- for GlassFish -->
-    <servlet>
-        <servlet-name>Jersey Web Application</servlet-name>
-        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
-        <init-param>
-            <param-name>com.sun.jersey.config.property.packages</param-name>
-            <!-- Scan for root resource and provider classes in these packages -->
-            <param-value>org.broadinstitute.pmbridge.boundary.projects</param-value>
-        </init-param>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>Jersey Web Application</servlet-name>
-        <url-pattern>/rest/*</url-pattern>
-    </servlet-mapping>
+    <!--<servlet>-->
+        <!--<servlet-name>Jersey Web Application</servlet-name>-->
+        <!--<servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>-->
+        <!--<init-param>-->
+            <!--<param-name>com.sun.jersey.config.property.packages</param-name>-->
+            <!--&lt;!&ndash; Scan for root resource and provider classes in these packages &ndash;&gt;-->
+            <!--<param-value>org.broadinstitute.pmbridge.boundary.projects</param-value>-->
+        <!--</init-param>-->
+        <!--<load-on-startup>1</load-on-startup>-->
+    <!--</servlet>-->
+    <!--<servlet-mapping>-->
+        <!--<servlet-name>Jersey Web Application</servlet-name>-->
+        <!--<url-pattern>/rest/*</url-pattern>-->
+    <!--</servlet-mapping>-->
 
     <!--<listener>-->
     <!--<listener-class>com.sun.faces.config.ConfigureListener</listener-class>-->
