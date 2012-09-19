@@ -1313,6 +1313,14 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.3.2</version>
                 </plugin>
+
+                <plugin>
+                    <groupId>org.jboss.as.plugins</groupId>
+                    <artifactId>jboss-as-maven-plugin</artifactId>
+                    <version>7.1.1.Final</version>
+                </plugin>
+
+
                 <!--
                                 <plugin>
                                     <artifactId>maven-dependency-plugin</artifactId>
@@ -1339,6 +1347,7 @@
                                     </executions>
                                 </plugin>
                 -->
+
 
             </plugins>
 
@@ -1694,6 +1703,11 @@
                     <useReleaseProfile>false</useReleaseProfile>
                     <scmCommentPrefix>[Release]</scmCommentPrefix>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jboss.as.plugins</groupId>
+                <artifactId>jboss-as-maven-plugin</artifactId>
             </plugin>
 
         </plugins>
