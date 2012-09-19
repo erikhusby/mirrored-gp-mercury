@@ -1,35 +1,47 @@
 package org.broadinstitute.gpinformatics.mercury.infrastructure.quote;
 
+import org.broadinstitute.gpinformatics.mercury.infrastructure.DateAdapter;
+
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.util.Date;
 
 @XmlRootElement(name = "Funding")
 public class Funding {
-    
+
     public static final String FUNDS_RESERVATION = "Funds Reservation";
-    
+
     public static final String PURCHASE_ORDER = "Purchase Order";
-    
+
     private String costObject;
-    
+
     private String broadName;
-    
+
     private String commonName;
-    
+
     private String grantDescription;
-    
+
+    private String grantNumber;
+
     private String grantStatus;
 
+    private String sponsorName;
+
     private String fundingType;
-    
+
+    private Date grantStartDate;
+
+    private Date grantEndDate;
+
     private String institute;
 
     private String purchaseOrderNumber;
 
     public Funding() {}
-    
+
     public Funding(String fundingType,
-                  String grantDescription) {
+                   String grantDescription) {
         this.fundingType = fundingType;
         this.grantDescription = grantDescription;
     }
@@ -70,6 +82,15 @@ public class Funding {
         this.grantDescription = grantDescription;
     }
 
+    @XmlAttribute(name = "grantNumber")
+    public String getGrantNumber() {
+        return grantNumber;
+    }
+
+    public void setGrantNumber(String grantNumber) {
+        this.grantNumber = grantNumber;
+    }
+
     @XmlAttribute(name = "grantStatus")
     public String getGrantStatus() {
         return grantStatus;
@@ -79,6 +100,14 @@ public class Funding {
         this.grantStatus = grantStatus;
     }
 
+    @XmlAttribute(name = "sponsorName")
+    public String getSponsorName() {
+        return sponsorName;
+    }
+    public void setSponsorName(String sponsorName) {
+        this.sponsorName = sponsorName;
+    }
+
     @XmlAttribute(name = "fundingType")
     public String getFundingType() {
         return fundingType;
@@ -86,6 +115,24 @@ public class Funding {
 
     public void setFundingType(String fundingType) {
         this.fundingType = fundingType;
+    }
+
+    @XmlAttribute(name = "grantStartDate")
+    @XmlJavaTypeAdapter(DateAdapter.class)
+    public Date getGrantStartDate() {
+        return grantStartDate;
+    }
+    public void setGrantStartDate(Date grantStartDate) {
+        this.grantStartDate = grantStartDate;
+    }
+
+    @XmlAttribute(name = "grantEndDate")
+    @XmlJavaTypeAdapter(DateAdapter.class)
+    public Date getGrantEndDate() {
+        return grantEndDate;
+    }
+    public void setGrantEndDate(Date grantEndDate) {
+        this.grantEndDate = grantEndDate;
     }
 
     @XmlAttribute(name = "institute")
@@ -119,7 +166,9 @@ public class Funding {
         if (fundingType != null ? !fundingType.equals(funding.fundingType) : funding.fundingType != null) return false;
         if (grantDescription != null ? !grantDescription.equals(funding.grantDescription) : funding.grantDescription != null)
             return false;
+        if (grantNumber != null ? !grantNumber.equals(funding.grantNumber) : funding.grantNumber != null) return false;
         if (grantStatus != null ? !grantStatus.equals(funding.grantStatus) : funding.grantStatus != null) return false;
+        if (sponsorName != null ? !sponsorName.equals(funding.sponsorName) : funding.sponsorName != null) return false;
         if (institute != null ? !institute.equals(funding.institute) : funding.institute != null) return false;
         if (purchaseOrderNumber != null ? !purchaseOrderNumber.equals(funding.purchaseOrderNumber) : funding.purchaseOrderNumber != null)
             return false;
@@ -133,7 +182,9 @@ public class Funding {
         result = 31 * result + (broadName != null ? broadName.hashCode() : 0);
         result = 31 * result + (commonName != null ? commonName.hashCode() : 0);
         result = 31 * result + (grantDescription != null ? grantDescription.hashCode() : 0);
+        result = 31 * result + (grantNumber != null ? grantNumber.hashCode() : 0);
         result = 31 * result + (grantStatus != null ? grantStatus.hashCode() : 0);
+        result = 31 * result + (sponsorName != null ? sponsorName.hashCode() : 0);
         result = 31 * result + (fundingType != null ? fundingType.hashCode() : 0);
         result = 31 * result + (institute != null ? institute.hashCode() : 0);
         result = 31 * result + (purchaseOrderNumber != null ? purchaseOrderNumber.hashCode() : 0);

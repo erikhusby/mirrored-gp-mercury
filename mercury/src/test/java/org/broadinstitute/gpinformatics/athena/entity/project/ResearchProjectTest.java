@@ -57,6 +57,7 @@ public class ResearchProjectTest {
 
         Date stop = new Date();
         Funding funding1 = new Funding(Funding.FUNDS_RESERVATION, "SmallGrant");
+        // TODO PMB this looks like a bug, there is no grant stop setter
         funding1.setGrantStartDate(start);
         funding1.setGrantStartDate(stop);
         funding1.setGrantNumber("100");
