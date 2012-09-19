@@ -120,9 +120,9 @@
         <jira.url>http://prodinfojira.broadinstitute.org:8080/jira</jira.url>
         <bamboo.url>http://prodinfobuild.broadinstitute.org:8085</bamboo.url>
 
-        <!-- git clone gitolite@git.broadinstitute.org:pmbridge -->
-        <git.url>gitolite@git.broadinstitute.org:pmbridge</git.url>
-        <git.browseUrl>https://crucible.broadinstitute.org/browse/pmbridge</git.browseUrl>
+        <!-- git clone gitolite@git.broadinstitute.org:athena -->
+        <git.url>git@stash.broadinstitute.org:7999/GPIN/mercury.git</git.url>
+<!--         <git.browseUrl>https://crucible.broadinstitute.org/browse/PMBridgeV2</git.browseUrl> -->
 
         <site.url>http://prodinfosvn.broadinstitute.org:8000/m2-projects</site.url>
         <site.path>/prodinfo/releng/m2-projects</site.path>
