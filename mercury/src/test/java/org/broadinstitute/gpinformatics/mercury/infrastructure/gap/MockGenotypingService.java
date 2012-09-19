@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.gap;
+package org.broadinstitute.gpinformatics.mercury.infrastructure.gap;
 
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.gap.GapExperimentRequest;

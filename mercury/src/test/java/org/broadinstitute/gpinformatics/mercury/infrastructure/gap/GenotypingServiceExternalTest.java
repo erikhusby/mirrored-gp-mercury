@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.gap;
+package org.broadinstitute.gpinformatics.mercury.infrastructure.gap;
 
 import org.broadinstitute.gpinformatics.athena.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;

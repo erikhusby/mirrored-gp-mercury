@@ -7,7 +7,7 @@
 
     <alternatives>
         <class>org.broadinstitute.gpinformatics.athena.infrastructure.squid.SequencingServiceImpl</class>
-        <class>org.broadinstitute.gpinformatics.athena.infrastructure.gap.GenotypingServiceImpl</class>
+        <class>org.broadinstitute.gpinformatics.mercury.infrastructure.gap.GenotypingServiceImpl</class>
         <class>org.broadinstitute.gpinformatics.athena.infrastructure.quote.QuoteServiceImpl</class>
         <!--<class>org.broadinstitute.gpinformatics.athenaontrol.experiments.PMBExperimentRequestService</class>-->
     </alternatives>

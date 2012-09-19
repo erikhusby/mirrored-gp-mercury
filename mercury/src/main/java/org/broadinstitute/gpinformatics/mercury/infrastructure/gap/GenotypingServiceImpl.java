@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.gap;
+package org.broadinstitute.gpinformatics.mercury.infrastructure.gap;
 
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;

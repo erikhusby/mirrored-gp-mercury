@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.gap;
+package org.broadinstitute.gpinformatics.mercury.infrastructure.gap;
 
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlEnumValue;

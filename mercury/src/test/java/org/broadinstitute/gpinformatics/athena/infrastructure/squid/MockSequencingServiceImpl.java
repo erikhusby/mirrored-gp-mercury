@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.SeqExperim
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.athena.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SequencingService;
 
 import javax.enterprise.inject.Alternative;
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.List;
  * Time: 1:54 PM
  */
 @Alternative
-public class MockSequencingServiceImpl implements  SequencingService {
+public class MockSequencingServiceImpl implements SequencingService {
 
     @Override
     public List<Person> getPlatformPeople() {

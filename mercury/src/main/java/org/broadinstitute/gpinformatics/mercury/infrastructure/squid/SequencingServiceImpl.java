@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
+package org.broadinstitute.gpinformatics.mercury.infrastructure.squid;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
