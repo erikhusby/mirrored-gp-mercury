@@ -21,8 +21,8 @@ import org.broadinstitute.gpinformatics.mercury.infrastructure.gap.GenotypingSer
 import org.broadinstitute.gpinformatics.mercury.infrastructure.gap.GenotypingServiceImpl;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.gap.Product;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.*;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SequencingService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SequencingServiceImpl;
+import org.broadinstitute.gpinformatics.athena.infrastructure.squid.SequencingService;
+import org.broadinstitute.gpinformatics.athena.infrastructure.squid.SequencingServiceImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;

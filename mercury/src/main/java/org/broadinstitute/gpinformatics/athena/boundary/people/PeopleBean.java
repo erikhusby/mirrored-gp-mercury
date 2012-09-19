@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.people;
 
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SequencingService;
+import org.broadinstitute.gpinformatics.athena.infrastructure.squid.SequencingService;
 import org.broadinstitute.gpinformatics.athena.presentation.AbstractJsfBean;
 
 import javax.faces.bean.ManagedBean;

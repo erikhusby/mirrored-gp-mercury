@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.infrastructure.squid;
+package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
 
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.BaitSetName;

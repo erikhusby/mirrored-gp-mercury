@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.SeqExperim
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SequencingService;
 
 import javax.enterprise.inject.Alternative;
 import java.util.List;

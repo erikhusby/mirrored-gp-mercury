@@ -1,13 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentId;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.*;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -26,7 +26,7 @@ import static org.testng.Assert.*;
  * Date: 5/3/12
  * Time: 2:55 PM
  */
-@Test(groups = UNIT)
+@Test(groups = TestGroups.UNIT)
 public class SequencingServiceTest {
 
     public static final String SHOULD_HAVE_THROWN_EXCEPTION = "Should have thrown exception ";

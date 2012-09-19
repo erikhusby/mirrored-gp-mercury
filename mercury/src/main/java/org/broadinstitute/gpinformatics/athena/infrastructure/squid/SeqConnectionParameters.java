@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.infrastructure.squid;
+package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
 
 /**
  * Created by IntelliJ IDEA.

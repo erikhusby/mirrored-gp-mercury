@@ -7,8 +7,6 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.OrganismNa
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.ReferenceSequenceName;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SequencingService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SequencingServiceImpl;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -28,7 +26,7 @@ import static org.testng.Assert.assertNotNull;
  * Date: 5/3/12
  * Time: 2:55 PM
  */
-@Test(groups = {EXTERNAL_INTEGRATION})
+@Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
 public class SequencingServiceExternalTest extends Arquillian {
 
     @Inject

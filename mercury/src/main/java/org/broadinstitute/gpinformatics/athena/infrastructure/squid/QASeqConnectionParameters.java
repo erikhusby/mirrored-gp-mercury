@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.infrastructure.squid;
+package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
 
 import javax.enterprise.inject.Default;
 
