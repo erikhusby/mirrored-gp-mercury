@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
+import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
@@ -27,6 +28,9 @@ import java.util.Map;
  */
 @Path("/limsQuery")
 public class LimsQueryResource {
+
+    @Inject
+    private Log log;
 
     @Inject
     private ThriftService thriftService;
@@ -70,8 +74,8 @@ public class LimsQueryResource {
     @Path("/doesLimsRecognizeAllTubes")
     public boolean doesLimsRecognizeAllTubes(@QueryParam("q") List<String> barcodes) {
         boolean doesSquidRecognizeAllTubes = thriftService.doesSquidRecognizeAllLibraries(barcodes);
-        boolean doesSequelRecognizeAllTubes = twoDBarcodedTubeDAO.findByBarcodes(barcodes).size() == barcodes.size();
-        return doesSquidRecognizeAllTubes || doesSequelRecognizeAllTubes;
+//        boolean doesSequelRecognizeAllTubes = twoDBarcodedTubeDAO.findByBarcodes(barcodes).size() == barcodes.size();
+        return doesSquidRecognizeAllTubes; // || doesSequelRecognizeAllTubes;
     }
 
     // TODO round 2: list<string> fetchMaterialTypesForTubeBarcodes(1:list<string> tubeBarcodes)
@@ -177,6 +181,9 @@ public class LimsQueryResource {
             // TODO
         }
 
+        if (map == null && mercuryMap == null) {
+            throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+        }
         return map != null ? map : mercuryMap;
     }
 
