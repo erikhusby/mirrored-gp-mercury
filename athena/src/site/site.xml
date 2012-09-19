@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project name="org.broadinstitute.pmbridge">
+<project name="org.broadinstitute.gpinformatics.athena">
 
     <skin>
         <groupId>com.googlecode.fluido-skin</groupId>
@@ -8,7 +8,7 @@
     </skin>
 
 <bannerLeft>
-<name>org.broadinstitute.pmbridge</name>
+<name>org.broadinstitute.gpinformatics.athena</name>
 </bannerLeft>
 
     <bannerRight>

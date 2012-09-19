@@ -3,13 +3,13 @@
         "-//Puppy Crawl//DTD Import Control 1.1//EN"
         "http://www.puppycrawl.com/dtds/import_control_1_1.dtd">
 
-<import-control pkg="org.broadinstitute.pmbridge">
+<import-control pkg="org.broadinstitute.gpinformatics.athena">
 
     <!--allow access to utility libraries -->
     <allow pkg="java"/>
     <allow pkg="sun"/>
     <allow pkg="org.apache.commons"/>
-    <allow pkg="org.broadinstitute.pmbridge"/>
+    <allow pkg="org.broadinstitute.gpinformatics.athena"/>
 
     <subpackage name="bettalims">
         <subpackage name="jaxb">

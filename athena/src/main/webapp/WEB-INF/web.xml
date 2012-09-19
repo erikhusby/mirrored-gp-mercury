@@ -48,7 +48,7 @@
 
     <filter>
         <filter-name>AuthorizationFilter</filter-name>
-        <filter-class>org.broadinstitute.pmbridge.presentation.security.AuthorizationFilter</filter-class>
+        <filter-class>org.broadinstitute.gpinformatics.athena.presentation.security.AuthorizationFilter</filter-class>
     </filter>
 
     <filter-mapping>
@@ -63,7 +63,7 @@
         <!--<init-param>-->
             <!--<param-name>com.sun.jersey.config.property.packages</param-name>-->
             <!--&lt;!&ndash; Scan for root resource and provider classes in these packages &ndash;&gt;-->
-            <!--<param-value>org.broadinstitute.pmbridge.boundary.projects</param-value>-->
+            <!--<param-value>org.broadinstitute.gpinformatics.athena.boundary.projects</param-value>-->
         <!--</init-param>-->
         <!--<load-on-startup>1</load-on-startup>-->
     <!--</servlet>-->
