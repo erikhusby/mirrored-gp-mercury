@@ -1,7 +1,7 @@
-package org.broadinstitute.gpinformatics.athena.orders;
+package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.Namespaces;
-import org.broadinstitute.gpinformatics.athena.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
@@ -26,7 +26,7 @@ public class OrderItem implements Serializable {
     private Product product;
     private String quoteId;
     private List<BSPSample> samples;
-    private List<org.broadinstitute.gpinformatics.athena.orders.RiskContingency> risks;  // lists of risks associated with this orderItem
+    private List<org.broadinstitute.gpinformatics.athena.entity.orders.RiskContingency> risks;  // lists of risks associated with this orderItem
 
     public Product getProduct() {
         return product;

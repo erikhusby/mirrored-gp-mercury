@@ -1,8 +1,8 @@
-package org.broadinstitute.gpinformatics.athena.products;
+package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
 import org.broadinstitute.gpinformatics.athena.Namespaces;
-import org.broadinstitute.gpinformatics.athena.orders.RiskContingency;
+import org.broadinstitute.gpinformatics.athena.entity.orders.RiskContingency;
 
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;

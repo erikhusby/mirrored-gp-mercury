@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.orders;
+package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.Namespaces;
 
