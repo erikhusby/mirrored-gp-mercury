@@ -10,7 +10,7 @@ import java.math.BigInteger;
  */
 public class TargetCoverageModel extends SeqCoverageModel {
 
-    private final org.broad.squid.services.TopicService.TargetCoverageModel targetCoverageModel;
+    private final org.broadinstitute.gpinformatics.mercury.boundary.TargetCoverageModel targetCoverageModel;
     public final static BigInteger DEFAULT_DEPTH = BigInteger.ZERO;
     public final static BigInteger DEFAULT_PERCENT = BigInteger.ZERO;
 
@@ -19,12 +19,12 @@ public class TargetCoverageModel extends SeqCoverageModel {
     }
 
     public TargetCoverageModel(final BigInteger targetDepth, final BigInteger targetPercent) {
-        this(new org.broad.squid.services.TopicService.TargetCoverageModel());
+        this(new org.broadinstitute.gpinformatics.mercury.boundary.TargetCoverageModel());
         this.targetCoverageModel.setDepth(targetDepth);
         this.targetCoverageModel.setCoveragePercentage(targetPercent);
     }
 
-    public TargetCoverageModel(final org.broad.squid.services.TopicService.TargetCoverageModel targetCoverageModel) {
+    public TargetCoverageModel(final org.broadinstitute.gpinformatics.mercury.boundary.TargetCoverageModel targetCoverageModel) {
         this.targetCoverageModel = targetCoverageModel;
     }
 

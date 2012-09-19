@@ -93,8 +93,8 @@ public class HybridSelectionExperiment extends SeqExperimentRequest {
             org.broadinstitute.gpinformatics.athena.entity.experiments.seq.TargetCoverageModel seqTargetCoverageModel =
                     new org.broadinstitute.gpinformatics.athena.entity.experiments.seq.TargetCoverageModel();
 
-            org.broad.squid.services.TopicService.TargetCoverageModel squidTargetCoverageModel =
-                    new org.broad.squid.services.TopicService.TargetCoverageModel();
+            org.broadinstitute.gpinformatics.mercury.boundary.TargetCoverageModel squidTargetCoverageModel =
+                    new org.broadinstitute.gpinformatics.mercury.boundary.TargetCoverageModel();
             squidTargetCoverageModel.setCoveragePercentage(seqTargetCoverageModel.getPercent());
             squidTargetCoverageModel.setDepth(seqTargetCoverageModel.getDepth());
             coverageAndAnalysisInformation.setTargetCoverageModel(squidTargetCoverageModel);

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 
-import org.broad.squid.services.TopicService.*;
+import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 

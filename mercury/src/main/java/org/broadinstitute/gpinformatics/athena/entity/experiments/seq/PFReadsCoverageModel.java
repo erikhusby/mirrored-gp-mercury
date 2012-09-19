@@ -10,7 +10,7 @@ import java.math.BigInteger;
  */
 public class PFReadsCoverageModel extends SeqCoverageModel {
 
-    private final org.broad.squid.services.TopicService.PFReadsCoverageModel pfReadsCoverageModel;
+    private final org.broadinstitute.gpinformatics.mercury.boundary.PFReadsCoverageModel pfReadsCoverageModel;
     public final static BigInteger DEFAULT_READS = BigInteger.ONE;
     public final static BigInteger MINIMUM_READS = DEFAULT_READS;
 
@@ -19,11 +19,11 @@ public class PFReadsCoverageModel extends SeqCoverageModel {
     }
 
     public PFReadsCoverageModel(final BigInteger readsDesired) {
-        this(new org.broad.squid.services.TopicService.PFReadsCoverageModel());
+        this(new org.broadinstitute.gpinformatics.mercury.boundary.PFReadsCoverageModel());
         this.pfReadsCoverageModel.setReadsDesired(readsDesired);
     }
 
-    public PFReadsCoverageModel(final org.broad.squid.services.TopicService.PFReadsCoverageModel pfReadsCoverageModel) {
+    public PFReadsCoverageModel(final org.broadinstitute.gpinformatics.mercury.boundary.PFReadsCoverageModel pfReadsCoverageModel) {
         this.pfReadsCoverageModel = pfReadsCoverageModel;
     }
 

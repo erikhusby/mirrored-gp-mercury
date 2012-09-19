@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broad.squid.services.TopicService.*;
+import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPSample;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.SampleId;
 import org.broadinstitute.gpinformatics.athena.entity.common.EntityUtils;

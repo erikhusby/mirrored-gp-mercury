@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 
-import org.broad.squid.services.TopicService.*;
+import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 
@@ -120,8 +120,8 @@ public class RNASeqExperiment extends SeqExperimentRequest {
             coverageAndAnalysisInformation.setAttemptedLanesCoverageModel(attemptedLanesCoverageModel);
             setSeqCoverageModel(lanesCoverageModel);
         } else {
-            org.broad.squid.services.TopicService.PFReadsCoverageModel squidPFReadsCoverageModel =
-                    new org.broad.squid.services.TopicService.PFReadsCoverageModel();
+            org.broadinstitute.gpinformatics.mercury.boundary.PFReadsCoverageModel squidPFReadsCoverageModel =
+                    new org.broadinstitute.gpinformatics.mercury.boundary.PFReadsCoverageModel();
             org.broadinstitute.gpinformatics.athena.entity.experiments.seq.PFReadsCoverageModel seqPFReadsCoverageModel =
                     new org.broadinstitute.gpinformatics.athena.entity.experiments.seq.PFReadsCoverageModel();
             squidPFReadsCoverageModel.setReadsDesired(seqPFReadsCoverageModel.getReadsDesired());

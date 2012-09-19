@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.athena.infrastructure.ValidationException;
 
-import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Alternative;
 import java.util.List;
 
 /**
@@ -18,7 +18,7 @@ import java.util.List;
  * Date: 5/11/12
  * Time: 1:54 PM
  */
-@Default
+@Alternative
 public class MockSequencingServiceImpl implements  SequencingService {
 
     @Override

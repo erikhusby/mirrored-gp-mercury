@@ -193,7 +193,7 @@ public class CoverageAndAnalysisInformation
      * Gets the value of the aligner property.
      *
      * @return possible object is
-     *         {@link org.broad.squid.services.TopicService.AlignerType }
+     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.AlignerType }
      */
     public AlignerType getAligner() {
         return aligner;
@@ -203,7 +203,7 @@ public class CoverageAndAnalysisInformation
      * Sets the value of the aligner property.
      *
      * @param value allowed object is
-     *              {@link org.broad.squid.services.TopicService.AlignerType }
+     *              {@link org.broadinstitute.gpinformatics.mercury.boundary.AlignerType }
      */
     public void setAligner(AlignerType value) {
         this.aligner = value;

@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
-import org.broad.squid.services.TopicService.*;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentId;
@@ -13,8 +12,9 @@ import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.athena.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.mercury.boundary.*;
 
-import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  * Date: 5/1/12
  * Time: 12:58 PM
  */
-@Alternative
+@Default
 public class SequencingServiceImpl implements SequencingService {
 
     public static final IllegalArgumentException ILLEGAL_EXPERIMENTID_ARG_EXCEPTION =

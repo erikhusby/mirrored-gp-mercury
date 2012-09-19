@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 
 import junit.framework.Assert;
-import org.broad.squid.services.TopicService.AlignerType;
-import org.broad.squid.services.TopicService.CoverageAndAnalysisInformation;
-import org.broad.squid.services.TopicService.RNASeqPass;
-import org.broad.squid.services.TopicService.RNASeqProtocolType;
+import org.broadinstitute.gpinformatics.mercury.boundary.AlignerType;
+import org.broadinstitute.gpinformatics.mercury.boundary.CoverageAndAnalysisInformation;
+import org.broadinstitute.gpinformatics.mercury.boundary.RNASeqPass;
+import org.broadinstitute.gpinformatics.mercury.boundary.RNASeqProtocolType;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;

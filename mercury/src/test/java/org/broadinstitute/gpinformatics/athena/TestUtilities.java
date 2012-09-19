@@ -1,16 +1,16 @@
 package org.broadinstitute.gpinformatics.athena;
 
-import org.jboss.weld.environment.se.Weld;
-import org.jboss.weld.environment.se.WeldContainer;
-
 /**
  * Utility methods shared by tests
  */
+@Deprecated
 public class TestUtilities {
 
-    public static WeldUtil bootANewWeld() {
-        WeldContainer weld = new Weld().initialize();
-        return new WeldUtil(weld);
+    public static org.broadinstitute.gpinformatics.athena.WeldUtil bootANewWeld() {
+//        WeldContainer weld = new Weld().initialize();
+        //service = weld.instance().select(BSPSampleSearchService.class).get();
+//        return new WeldUtil(weld);
+        return new org.broadinstitute.gpinformatics.athena.WeldUtil();
     }
 
 }

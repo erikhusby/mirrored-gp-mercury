@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 
-import org.broad.squid.services.TopicService.ProgramPseudoDepthCoverageModel;
+import org.broadinstitute.gpinformatics.mercury.boundary.ProgramPseudoDepthCoverageModel;
 
 import java.math.BigInteger;
 
@@ -12,7 +12,7 @@ import java.math.BigInteger;
  */
 public class DepthCoverageModel extends SeqCoverageModel {
 
-    private final org.broad.squid.services.TopicService.ProgramPseudoDepthCoverageModel programPseudoDepthCoverageModel;
+    private final org.broadinstitute.gpinformatics.mercury.boundary.ProgramPseudoDepthCoverageModel programPseudoDepthCoverageModel;
     public final static BigInteger DEFAULT_DEPTH = BigInteger.ZERO;
 
 
@@ -21,7 +21,7 @@ public class DepthCoverageModel extends SeqCoverageModel {
     }
 
     public DepthCoverageModel(BigInteger desiredCoverage) {
-        this(new org.broad.squid.services.TopicService.ProgramPseudoDepthCoverageModel());
+        this(new org.broadinstitute.gpinformatics.mercury.boundary.ProgramPseudoDepthCoverageModel());
         programPseudoDepthCoverageModel.setCoverageDesired(desiredCoverage);
     }
 

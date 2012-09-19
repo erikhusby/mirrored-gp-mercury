@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 
-import org.broad.squid.services.TopicService.AttemptedLanesCoverageModel;
+import org.broadinstitute.gpinformatics.mercury.boundary.AttemptedLanesCoverageModel;
 
 import java.math.BigDecimal;
 
@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 public class LanesCoverageModel extends SeqCoverageModel {
 
     public final static BigDecimal DEFAULT_LANES = new BigDecimal(8);
-    private org.broad.squid.services.TopicService.AttemptedLanesCoverageModel attemptedLanesCoverageModel;
+    private org.broadinstitute.gpinformatics.mercury.boundary.AttemptedLanesCoverageModel attemptedLanesCoverageModel;
 
 
     public LanesCoverageModel() {
@@ -21,7 +21,7 @@ public class LanesCoverageModel extends SeqCoverageModel {
     }
 
     public LanesCoverageModel(final BigDecimal lanesCoverage) {
-        this(new org.broad.squid.services.TopicService.AttemptedLanesCoverageModel());
+        this(new org.broadinstitute.gpinformatics.mercury.boundary.AttemptedLanesCoverageModel());
         this.attemptedLanesCoverageModel.setAttemptedLanes(lanesCoverage);
     }
 
