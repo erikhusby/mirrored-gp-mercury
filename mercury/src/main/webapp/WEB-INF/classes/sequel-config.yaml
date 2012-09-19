@@ -80,7 +80,7 @@ squid:
 
     TEST:
 
-      url: http://prodinfobuild.broadinstitute.org:8020/squid
+      url: http://vsquidrc.broadinstitute.org:8000/squid
 
 
     QA:

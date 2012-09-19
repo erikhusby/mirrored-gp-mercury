@@ -126,19 +126,19 @@
         <param-value>
             org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource,
             org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryResource,
-            org.broadinstitute.gpinformaticsmercuryl.boundary.lims.LimsQueryTypesResource,
-            org.broadinstitute.gpinformaticmercuryel.boundary.vessel.LabBatchResource,
-            org.broadinstitute.gpinformaticmercuryel.org.broadinstitute.gpinformatics.sequelmsMessageResource,
-            org.broadinstitute.sequel.boundaorg.broadinstitute.gpinformatics.sequelrce,
-            org.broadinstitute.sequel.boundary.run.SolexaRunResource
+            org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryTypesResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource
         </param-value>
     </context-param>
     <context-param>
         <param-name>resteasy.providers</param-name>
         <param-value>
             org.broadinstitute.gpinformatics.mercury.infrastructure.jaxrs.JacksonConfigurator,
-            org.broadinstitute.gpinformatics.mercury.infrastructure.jaxrs.CatchAllEorg.broadinstitute.gpinformatics.sequel
-            org.broadinstitute.sequel.infrastructure.jaxrs.EJBExceptionMapper
+            org.broadinstitute.gpinformatics.mercury.infrastructure.jaxrs.CatchAllExceptionMapper,
+            org.broadinstitute.gpinformatics.mercury.infrastructure.jaxrs.EJBExceptionMapper
         </param-value>
     </context-param>
 
