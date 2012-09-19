@@ -181,6 +181,9 @@ public class LimsQueryResource {
             // TODO
         }
 
+        if (map == null && mercuryMap == null) {
+            throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+        }
         return map != null ? map : mercuryMap;
     }
 
