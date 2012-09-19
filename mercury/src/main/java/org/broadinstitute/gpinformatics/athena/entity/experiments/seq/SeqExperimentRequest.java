@@ -13,8 +13,8 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.*;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.infrastructure.SubmissionException;
-import org.broadinstitute.gpinformatics.athena.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.SubmissionException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.ValidationException;
 
 import java.util.ArrayList;
 import java.util.HashSet;

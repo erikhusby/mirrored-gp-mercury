@@ -14,13 +14,13 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType
 import org.broadinstitute.gpinformatics.athena.entity.experiments.gap.GapExperimentRequest;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.infrastructure.SubmissionException;
-import org.broadinstitute.gpinformatics.athena.infrastructure.UserNotFoundException;
-import org.broadinstitute.gpinformatics.athena.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.athena.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.athena.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.athena.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.athena.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.SubmissionException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.UserNotFoundException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteService;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;

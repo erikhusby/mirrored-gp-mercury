@@ -7,9 +7,9 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequ
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.infrastructure.UserNotFoundException;
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.UserNotFoundException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.athena.presentation.AbstractJsfBean;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.TabChangeEvent;

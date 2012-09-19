@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.infrastructure.quote;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.infrastructure.ObjectMarshaller;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.ObjectMarshaller;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

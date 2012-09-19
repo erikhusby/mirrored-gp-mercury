@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequest;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Funding;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;

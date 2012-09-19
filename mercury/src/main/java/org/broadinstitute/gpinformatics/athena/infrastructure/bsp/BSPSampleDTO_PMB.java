@@ -7,7 +7,8 @@ import java.math.BigDecimal;
  * A simple DTO for fetching commonly used 
  * data from BSP.
  */
-public class BSPSampleDTO implements Serializable {
+//TODO PMB - REMOVE this class as its nearly a dupe of BSPSampleDTO
+public class BSPSampleDTO_PMB implements Serializable {
 
     private final String patientId;
     
@@ -25,16 +26,16 @@ public class BSPSampleDTO implements Serializable {
 
     private final String organism;
 
-    public BSPSampleDTO(String containerId,
-                        String stockSample,
-                        String rootSample,
-                        String aliquotSample,
-                        String patientId,
-                        String organism,
-                        String collaboratorsSampleName,
-                        String collection,
-                        BigDecimal volume,
-                        BigDecimal concentration) {
+    public BSPSampleDTO_PMB(String containerId,
+                            String stockSample,
+                            String rootSample,
+                            String aliquotSample,
+                            String patientId,
+                            String organism,
+                            String collaboratorsSampleName,
+                            String collection,
+                            BigDecimal volume,
+                            BigDecimal concentration) {
         this.stockSample = stockSample;
         this.rootSample = rootSample;
         this.patientId = patientId;

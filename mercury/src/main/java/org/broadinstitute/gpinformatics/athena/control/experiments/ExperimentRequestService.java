@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.control.experiments;
 
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequest;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
-import org.broadinstitute.gpinformatics.athena.infrastructure.UserNotFoundException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.UserNotFoundException;
 
 import java.util.List;
 

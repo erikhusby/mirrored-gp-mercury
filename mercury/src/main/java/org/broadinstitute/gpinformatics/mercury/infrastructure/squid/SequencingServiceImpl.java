@@ -10,8 +10,8 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.*;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.infrastructure.SubmissionException;
-import org.broadinstitute.gpinformatics.athena.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.SubmissionException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.boundary.*;
 
 import javax.enterprise.inject.Default;

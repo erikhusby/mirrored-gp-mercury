@@ -35,4 +35,11 @@ public interface QuoteService extends Serializable {
                                   String callbackUrl,
                                   String callbackParameterName,
                                   String callbackParameterValue);
+
+    public Quote getQuoteByNumericId(final String numericId) throws QuoteServerException, QuoteNotFoundException;
+
+
+    //TODO Remove this method , its a dupe of getQuoteFromQuoteServer
+    public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException;
+
 }

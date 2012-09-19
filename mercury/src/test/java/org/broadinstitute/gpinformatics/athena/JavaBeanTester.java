@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena;
 
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDTO;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;

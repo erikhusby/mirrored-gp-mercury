@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.infrastructure.gap;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.gap.GapExperimentRequest;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.infrastructure.SubmissionException;
-import org.broadinstitute.gpinformatics.athena.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.SubmissionException;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.ValidationException;
 
 import javax.enterprise.inject.Default;
 import java.util.List;

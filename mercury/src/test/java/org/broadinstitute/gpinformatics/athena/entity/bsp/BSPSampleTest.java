@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.bsp;
 
 import org.broadinstitute.gpinformatics.athena.JavaBeanTester;
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.MockBSPSampleSearchService;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.MockBSPSampleSearchService;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

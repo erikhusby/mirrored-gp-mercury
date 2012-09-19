@@ -36,7 +36,10 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         SINGLE_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
         ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
         ALL_PRICE_ITEMS("/quotes/ws/portals/private/get_price_list"),
-        REGISTER_WORK("/quotes/ws/portals/private/createworkitem");
+        REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
+        //TODO this next enum value will be removed soon.
+        SINGLE_NUMERIC_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_ids=")
+        ;
 
         String suffixUrl;
 
@@ -154,41 +157,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     @Override
     public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException {
 
-        Quote quote;
-        if(StringUtils.isEmpty(id))
-        {
-           return(null);
-        }
-
-        String url = url( Endpoint.SINGLE_QUOTE );
-        Client client = getJerseyClient();
-        client.setFollowRedirects(true);
-        WebResource resource = getJerseyClient().resource(url + id);
-
-
-        try
-        {
-            Quotes quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
-
-            if(quotes.getQuotes() != null && quotes.getQuotes().size()>0)
-            {
-                quote = quotes.getQuotes().get(0);
-            }
-            else
-            {
-                throw new QuoteNotFoundException("Could not find quote " + id);
-            }
-        }
-        catch(UniformInterfaceException e)
-        {
-           throw new QuoteNotFoundException("Could not find quote " + id,e);
-        }
-        catch(ClientHandlerException e)
-        {
-            throw new QuoteServerException("Could not communicate with quote server", e);
-        }
-
-        return quote;
+        return this.getSingleQuoteById(id, url(Endpoint.SINGLE_QUOTE));
     }
 
     @Override
@@ -240,6 +209,59 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         }
 
         return quotes;
+    }
+
+
+    @Override
+    public Quote getQuoteByNumericId(final String numericId) throws QuoteServerException, QuoteNotFoundException {
+        return this.getSingleQuoteById(numericId, url(Endpoint.SINGLE_NUMERIC_QUOTE));
+    }
+
+
+    @Override
+    public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
+
+        return this.getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE));
+    }
+    /*
+     * private method to get a single quote.
+     * Can be overridden by mocks.
+     * @param id
+     * @param queryUrl
+     * @return
+     * @throws QuoteNotFoundException
+     * @throws QuoteServerException
+     */
+    private Quote getSingleQuoteById(final String id, String url) throws QuoteNotFoundException, QuoteServerException {
+        Quote quote;
+        if(StringUtils.isEmpty(id))
+        {
+           return(null);
+        }
+
+        WebResource resource = getJerseyClient().resource(url + id);
+
+        try
+        {
+            Quotes quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
+            if(quotes.getQuotes() != null && quotes.getQuotes().size()>0)
+            {
+                quote = quotes.getQuotes().get(0);
+            }
+            else
+            {
+                throw new QuoteNotFoundException("Could not find quote " + id + " at " + url );
+            }
+        }
+        catch(UniformInterfaceException e)
+        {
+            throw new QuoteNotFoundException("Could not find quote " + id + " at " + url );
+        }
+        catch(ClientHandlerException e)
+        {
+            throw new QuoteServerException("Could not communicate with quote server at " + url, e);
+        }
+        return quote;
     }
 
 }

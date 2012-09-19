@@ -32,14 +32,14 @@ public class BSPSampleDataFetcher {
      * @param sampleName
      * @return
      */
-    public BSPSampleDTO fetchSingleSampleFromBSP(String sampleName) {
+    public BSPSampleDTO_PMB fetchSingleSampleFromBSP(String sampleName) {
         if (service == null) {
             throw new RuntimeException("No BSP service has been declared.");
         }
         else {
             Collection<String> sampleNames = new HashSet<String>();
             sampleNames.add(sampleName);
-            Map<String,BSPSampleDTO> sampleNameToDTO = fetchSamplesFromBSP(sampleNames);
+            Map<String,BSPSampleDTO_PMB> sampleNameToDTO = fetchSamplesFromBSP(sampleNames);
 
             if (sampleNameToDTO.isEmpty()) {
                 throw new RuntimeException("Could not find " + sampleName + " in bsp.");
@@ -58,18 +58,18 @@ public class BSPSampleDataFetcher {
      * @param sampleNames
      * @return
      */
-    public Map<String,BSPSampleDTO> fetchSamplesFromBSP(Collection<String> sampleNames) {
+    public Map<String,BSPSampleDTO_PMB> fetchSamplesFromBSP(Collection<String> sampleNames) {
         if (sampleNames == null) {
             throw new NullPointerException("sampleNames cannot be null.");
         }
         if (sampleNames.isEmpty()) {
             throw new RuntimeException("sampleNames is empty.  No samples to lookup.");
         }
-        final Map<String,BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
+        final Map<String,BSPSampleDTO_PMB> sampleNameToDTO = new HashMap<String, BSPSampleDTO_PMB>();
         final List<String[]> results = getBSPResponse(sampleNames);
 
         for (String[] result : results) {
-            BSPSampleDTO bspDTO = toDTO(result);
+            BSPSampleDTO_PMB bspDTO = toDTO(result);
             String sampleName = bspDTO.getStockSample();
 
             if (sampleName.equals(bspDTO.getStockSample()) || sampleName.equals(bspDTO.getRootSample())) {
@@ -83,7 +83,7 @@ public class BSPSampleDataFetcher {
         return sampleNameToDTO;
     }
 
-    private BSPSampleDTO toDTO(String[] bspColumns) {
+    private BSPSampleDTO_PMB toDTO(String[] bspColumns) {
         String patientId = bspColumns[0];
         String rootSample = bspColumns[1];
         String stockSample = bspColumns[2];
@@ -95,7 +95,7 @@ public class BSPSampleDataFetcher {
         BigDecimal concentration = new BigDecimal(concentrationStr);
         String organism = bspColumns[7];
 
-        return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,volume,concentration);
+        return new BSPSampleDTO_PMB(null,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,volume,concentration);
     }
 
     private List<String[]> getBSPResponse(Collection<String> sampleNames) {

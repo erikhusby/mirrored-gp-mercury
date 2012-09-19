@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure;
+package org.broadinstitute.gpinformatics.mercury.infrastructure;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.text.SimpleDateFormat;

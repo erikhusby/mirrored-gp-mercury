@@ -14,13 +14,13 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.SeqExperim
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleSearchServiceImpl;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchServiceImpl;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.gap.GenotypingService;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.gap.GenotypingServiceImpl;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.gap.Product;
-import org.broadinstitute.gpinformatics.athena.infrastructure.quote.*;
+import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.*;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SequencingService;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SequencingServiceImpl;
 import org.jboss.arquillian.container.test.api.Deployment;

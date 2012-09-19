@@ -52,4 +52,18 @@ public class QuoteServiceStub implements QuoteService {
     public String registerNewWork(Quote quote, PriceItem priceItem, double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
         return Integer.toString(workItemId++);
     }
+
+    @Override
+    public Quote getQuoteByNumericId(final String numericId) throws QuoteServerException, QuoteNotFoundException {
+        //TODO PMB remove this impl method
+        throw new IllegalStateException("Not Yet Implemented");
+        //return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public Quote getQuoteByAlphaId(final String alphaId) throws QuoteServerException, QuoteNotFoundException {
+        //TODO PMB remove this impl method
+        throw new IllegalStateException("Not Yet Implemented");
+        //return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 }

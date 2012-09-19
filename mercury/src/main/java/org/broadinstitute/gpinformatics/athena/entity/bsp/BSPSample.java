@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.bsp;
 
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleDTO_PMB;
 
 import javax.persistence.Transient;
 import java.math.BigDecimal;
@@ -14,13 +14,13 @@ import java.math.BigDecimal;
 public class BSPSample {
 
     private final SampleId id;
-    private BSPSampleDTO bspDTO;
+    private BSPSampleDTO_PMB bspDTO;
 
     public BSPSample(SampleId id) {
         this.id = id;
     }
 
-    public BSPSample(SampleId id, BSPSampleDTO bspDTO) {
+    public BSPSample(SampleId id, BSPSampleDTO_PMB bspDTO) {
         this.id = id;
         this.bspDTO = bspDTO;
     }
@@ -29,11 +29,11 @@ public class BSPSample {
         return id;
     }
 
-    public BSPSampleDTO getBspDTO() {
+    public BSPSampleDTO_PMB getBspDTO() {
         return bspDTO;
     }
 
-    public void setBspDTO(BSPSampleDTO bspDTO) {
+    public void setBspDTO(BSPSampleDTO_PMB bspDTO) {
         this.bspDTO = bspDTO;
     }
 
