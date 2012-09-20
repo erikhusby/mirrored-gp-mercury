@@ -8,8 +8,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.*;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularStateRange;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 
 import java.io.IOException;
 import java.util.*;

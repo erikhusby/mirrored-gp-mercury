@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.customfields.CustomFieldJsonParser;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldJsonParser;
 import org.testng.annotations.Test;
 
 import java.util.Collection;

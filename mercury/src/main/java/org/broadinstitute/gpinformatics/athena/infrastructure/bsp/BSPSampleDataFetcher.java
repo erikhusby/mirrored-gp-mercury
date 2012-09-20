@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 
 /**
  * Wrapper around {@link BSPSampleSearchService} that

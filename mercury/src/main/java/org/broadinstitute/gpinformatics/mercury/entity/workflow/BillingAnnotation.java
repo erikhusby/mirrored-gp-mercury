@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 
 public class BillingAnnotation implements WorkflowAnnotation {
 

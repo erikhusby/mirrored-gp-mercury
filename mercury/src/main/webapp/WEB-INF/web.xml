@@ -136,9 +136,9 @@
     <context-param>
         <param-name>resteasy.providers</param-name>
         <param-value>
-            org.broadinstitute.gpinformatics.mercury.infrastructure.jaxrs.JacksonConfigurator,
-            org.broadinstitute.gpinformatics.mercury.infrastructure.jaxrs.CatchAllExceptionMapper,
-            org.broadinstitute.gpinformatics.mercury.infrastructure.jaxrs.EJBExceptionMapper
+            org.broadinstitute.gpinformatics.infrastructure.jaxrs.JacksonConfigurator,
+            org.broadinstitute.gpinformatics.infrastructure.jaxrs.CatchAllExceptionMapper,
+            org.broadinstitute.gpinformatics.infrastructure.jaxrs.EJBExceptionMapper
         </param-value>
     </context-param>
 

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration;
 
 import org.apache.commons.io.FileUtils;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;

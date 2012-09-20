@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bsp;
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;

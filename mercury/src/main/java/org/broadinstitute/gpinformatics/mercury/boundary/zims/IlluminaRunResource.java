@@ -5,10 +5,10 @@ import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPLSIDUtil;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;

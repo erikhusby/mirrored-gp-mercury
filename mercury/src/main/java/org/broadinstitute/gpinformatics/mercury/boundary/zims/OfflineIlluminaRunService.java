@@ -8,7 +8,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.Offline;
+import org.broadinstitute.gpinformatics.infrastructure.Offline;
 
 import java.io.Serializable;
 import java.util.ArrayList;

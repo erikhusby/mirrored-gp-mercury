@@ -5,12 +5,12 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SquidTopicPortype;
 import org.broadinstitute.gpinformatics.mercury.control.pass.PassService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.DeploymentProducer;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Impl;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidConfig;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidConfigProducer;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidWebServiceClient;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfigProducer;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidWebServiceClient;
 
 import javax.ejb.EJB;
 import javax.jws.WebParam;

@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescripti
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowState;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

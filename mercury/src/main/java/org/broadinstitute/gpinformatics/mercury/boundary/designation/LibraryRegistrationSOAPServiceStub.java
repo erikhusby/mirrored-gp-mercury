@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.designation;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Stub;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 /**
  * @author Scott Matthews

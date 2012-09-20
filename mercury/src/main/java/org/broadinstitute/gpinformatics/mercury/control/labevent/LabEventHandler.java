@@ -16,8 +16,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Billable;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;

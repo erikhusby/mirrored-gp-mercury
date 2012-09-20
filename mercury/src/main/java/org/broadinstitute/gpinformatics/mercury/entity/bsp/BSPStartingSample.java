@@ -6,8 +6,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.hibernate.envers.Audited;
 
 import javax.enterprise.context.spi.CreationalContext;

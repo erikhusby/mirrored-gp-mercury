@@ -3,12 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.boundary.designation;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.LibraryRegistrationPortType;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.DeploymentProducer;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Impl;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidConfig;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidConfigProducer;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidWebServiceClient;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfigProducer;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidWebServiceClient;
 
 import javax.inject.Inject;
 

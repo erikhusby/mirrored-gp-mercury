@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.quotes;
 
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.*;
+import org.broadinstitute.gpinformatics.infrastructure.quote.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

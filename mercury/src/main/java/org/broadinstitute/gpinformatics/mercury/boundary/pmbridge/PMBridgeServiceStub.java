@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.pmbridge;
 
 
 import org.broadinstitute.gpinformatics.mercury.boundary.pmbridge.data.ResearchProject;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Stub;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import java.util.HashMap;
 import java.util.Map;

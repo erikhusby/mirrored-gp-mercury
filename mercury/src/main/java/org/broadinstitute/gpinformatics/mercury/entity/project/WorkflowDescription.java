@@ -7,8 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowAnnotation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowState;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowTransition;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.entity.bsp;
 
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.*;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

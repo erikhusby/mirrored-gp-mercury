@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.project;
 
 
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;

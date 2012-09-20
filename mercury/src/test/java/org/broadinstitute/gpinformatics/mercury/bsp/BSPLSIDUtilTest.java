@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.bsp;
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPLSIDUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

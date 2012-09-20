@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.project;
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 
 /**
  * A portfolio is a container for projects.

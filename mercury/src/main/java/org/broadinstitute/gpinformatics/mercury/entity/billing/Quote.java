@@ -19,7 +19,7 @@ import java.util.Collection;
 public class Quote {
 
     @Transient
-    private org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote quoteDTO;
+    private org.broadinstitute.gpinformatics.infrastructure.quote.Quote quoteDTO;
 
     @Id
     private String alphanumericId;
@@ -31,7 +31,7 @@ public class Quote {
      *                 fetched from the quote server
      */
     public Quote(String alphanumericId,
-                 org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote quoteDTO) {
+                 org.broadinstitute.gpinformatics.infrastructure.quote.Quote quoteDTO) {
         this.quoteDTO = quoteDTO;
         this.alphanumericId = alphanumericId;
     }
@@ -43,7 +43,7 @@ public class Quote {
         return alphanumericId;
     }
 
-    public org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote getQuote() {
+    public org.broadinstitute.gpinformatics.infrastructure.quote.Quote getQuote() {
         return quoteDTO;
     }
 

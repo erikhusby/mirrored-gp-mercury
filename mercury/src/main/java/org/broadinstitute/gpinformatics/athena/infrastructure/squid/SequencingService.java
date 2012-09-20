@@ -6,8 +6,8 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.OrganismNa
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.ReferenceSequenceName;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.SeqExperimentRequest;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.SubmissionException;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 
 import java.util.List;
 

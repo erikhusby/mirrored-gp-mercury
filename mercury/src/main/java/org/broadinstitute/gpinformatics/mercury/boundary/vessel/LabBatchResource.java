@@ -12,8 +12,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescripti
 import org.broadinstitute.gpinformatics.mercury.entity.sample.BSPStartingSampleDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.JiraServiceStub;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;

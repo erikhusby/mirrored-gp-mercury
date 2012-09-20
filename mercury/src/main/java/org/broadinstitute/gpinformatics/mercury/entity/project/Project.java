@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.notice.Stalker;
 import org.broadinstitute.gpinformatics.mercury.entity.run.CapacityDimension;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingResult;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuotesCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotesCache;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;

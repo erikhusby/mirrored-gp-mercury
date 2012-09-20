@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.pass;
 
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchResultFormatter;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchResultFormatter;
 
 public enum PassBSPColumn {
 

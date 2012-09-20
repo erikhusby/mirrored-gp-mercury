@@ -14,11 +14,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.BSPStartingSampleD
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.AliquotReceiver;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.plating.*;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.AliquotReceiver;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.inject.Inject;
 import java.util.*;

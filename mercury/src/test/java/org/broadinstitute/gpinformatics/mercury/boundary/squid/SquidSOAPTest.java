@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.squid;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.control.pass.PassService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.TestInstance;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.TestInstance;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;

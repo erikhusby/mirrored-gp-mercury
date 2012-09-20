@@ -2,11 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchServiceStub;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.thrift.MockThriftService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.thrift.ThriftFileAccessor;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;

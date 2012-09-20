@@ -4,8 +4,8 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequ
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.UserNotFoundException;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.gap.GenotypingService;
+import org.broadinstitute.gpinformatics.infrastructure.UserNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.gap.GenotypingService;
 import org.broadinstitute.gpinformatics.athena.infrastructure.squid.SequencingService;
 
 import javax.enterprise.inject.Default;

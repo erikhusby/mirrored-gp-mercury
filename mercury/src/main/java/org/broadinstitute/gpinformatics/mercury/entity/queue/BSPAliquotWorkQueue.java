@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularStateRange;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPConnector;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConnector;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingResponse;
 

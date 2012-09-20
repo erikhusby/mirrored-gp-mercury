@@ -4,9 +4,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.billing.Quote;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -93,8 +93,8 @@ public class BasicProjectPlan extends ProjectPlan {
     }
     
     @Override
-    public org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote getQuoteDTO(QuoteService quoteService) throws QuoteServerException, QuoteNotFoundException {
-        org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote quoteDTO = null;
+    public org.broadinstitute.gpinformatics.infrastructure.quote.Quote getQuoteDTO(QuoteService quoteService) throws QuoteServerException, QuoteNotFoundException {
+        org.broadinstitute.gpinformatics.infrastructure.quote.Quote quoteDTO = null;
         if (quote != null) {
             quoteDTO = quote.getQuote();
         }

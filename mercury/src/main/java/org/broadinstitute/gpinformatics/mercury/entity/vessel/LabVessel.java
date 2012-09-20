@@ -445,7 +445,7 @@ public abstract class LabVessel implements Starter {
      * Reporting will want to look at aliquot-level
      * notes, not traipse through our {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent}
      * history.  So every time we do a {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent}
-     * or have key things happen like {@link org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.AliquotReceiver receiving an aliquot},
+     * or have key things happen like {@link org.broadinstitute.gpinformatics.infrastructure.bsp.AliquotReceiver receiving an aliquot},
      * recording quants, etc. our code will want to post
      * a semi-structured note here for reporting.
      * @param statusNote

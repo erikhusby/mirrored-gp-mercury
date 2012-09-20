@@ -9,9 +9,9 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.*;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.gap.ExperimentPlan;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.gap.Product;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.gap.ExperimentPlan;
+import org.broadinstitute.gpinformatics.infrastructure.gap.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 
 import java.util.ArrayList;
 import java.util.Date;

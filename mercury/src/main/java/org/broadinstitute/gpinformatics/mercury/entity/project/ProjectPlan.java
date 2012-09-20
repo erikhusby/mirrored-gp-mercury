@@ -5,10 +5,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -196,7 +196,7 @@ public abstract class ProjectPlan {
     /**
      * Do the billing for the given {@link Starter}.  {@link LabBatch} is a temporary
      * stub so that we can have something to link back to from the quote server.
-     * See {@link org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteService#registerNewWork(org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote, org.broadinstitute.gpinformatics.mercury.infrastructure.quote.PriceItem, double, String, String, String)}, especially the callback
+     * See {@link org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService#registerNewWork(org.broadinstitute.gpinformatics.infrastructure.quote.Quote, org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem, double, String, String, String)}, especially the callback
      * url.  Eventually the callback will be the SequeL UI, but for the moment,
      * we'll just redirect to jira so we can demo this to sheila.
      * @param starter

@@ -12,12 +12,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.*;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.quote.*;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -258,7 +258,7 @@ public class ProjectTest  {
         BasicProjectPlan plan = new BasicProjectPlan(project,project.getProjectName() + " Plan",workflow);
         String quoteId = "DNA23";
         plan.setQuote(new Quote(quoteId,
-                new org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote(quoteId,new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))))));
+                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteId,new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))))));
         
         return plan;
     }
@@ -381,7 +381,7 @@ public class ProjectTest  {
                                                           String grantName) {
         project.addGrant(grantName);
         QuotesCache quotesCache = buildQuotesCache();
-        for (org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote quoteDTO: quotesCache.getQuotes()) {
+        for (org.broadinstitute.gpinformatics.infrastructure.quote.Quote quoteDTO: quotesCache.getQuotes()) {
             if (grantName.equalsIgnoreCase(quoteDTO.getQuoteFunding().getFundingLevel().getFunding().getGrantDescription())) {
                 project.addAvailableQuote(new Quote(quoteDTO.getAlphanumericId(),quoteDTO));
             }
@@ -391,9 +391,9 @@ public class ProjectTest  {
     
     private QuotesCache buildQuotesCache() {
         Quotes quotes = new Quotes();
-        quotes.addQuote(new org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote("GF128",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
-        quotes.addQuote(new  org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote("GF129",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
-        quotes.addQuote(new  org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote("GF130",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
+        quotes.addQuote(new org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF128",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
+        quotes.addQuote(new  org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF129",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
+        quotes.addQuote(new  org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF130",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
         return new QuotesCache(quotes);
     }
 }

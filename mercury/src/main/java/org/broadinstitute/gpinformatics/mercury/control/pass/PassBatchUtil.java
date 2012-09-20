@@ -5,9 +5,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.AbstractPass;
 import org.broadinstitute.gpinformatics.mercury.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 
 import java.io.IOException;
 import java.util.*;

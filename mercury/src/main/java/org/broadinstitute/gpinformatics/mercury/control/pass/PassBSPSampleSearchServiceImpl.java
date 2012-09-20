@@ -2,8 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.control.pass;
 
 
 import org.apache.commons.beanutils.BeanUtils;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.mercury.presentation.pass.PassSample;
 
 import javax.inject.Inject;

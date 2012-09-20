@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollectionID;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

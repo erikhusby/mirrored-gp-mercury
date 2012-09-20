@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.pass;
 
 import org.broadinstitute.gpinformatics.mercury.control.pass.PassService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.TestInstance;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidConfig;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.squid.SquidConfigProducer;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.TestInstance;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfigProducer;
 
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Default;
@@ -12,8 +12,8 @@ import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Deployment.STUBBY;
-import static org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Deployment.TEST;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 
 /**

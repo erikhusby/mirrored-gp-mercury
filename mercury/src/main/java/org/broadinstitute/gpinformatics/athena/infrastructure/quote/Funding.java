@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.infrastructure.quote;
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.DateAdapter;
+import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;

@@ -3,12 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.Visibility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

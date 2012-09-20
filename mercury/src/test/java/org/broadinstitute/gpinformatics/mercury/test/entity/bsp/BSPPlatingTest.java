@@ -13,11 +13,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.plating.*;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Funding;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.FundingLevel;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteFunding;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
 import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -57,7 +57,7 @@ public class BSPPlatingTest extends ContainerTest {
 
         String quoteString = "DNA385";
         Quote billingQuote = new Quote(quoteString,
-                new org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI")))));
+                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI")))));
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
@@ -106,7 +106,7 @@ public class BSPPlatingTest extends ContainerTest {
 
         String quoteString = "DNA385";
         Quote billingQuote = new org.broadinstitute.gpinformatics.mercury.entity.billing.Quote(quoteString,
-                new org.broadinstitute.gpinformatics.mercury.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI")))));
+                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI")))));
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);

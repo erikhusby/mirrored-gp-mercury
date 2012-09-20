@@ -7,10 +7,10 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.ClientFilter;
 import org.broadinstitute.gpinformatics.mercury.boundary.pmbridge.data.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.boundary.pmbridge.data.ResearchProjectsResult;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Impl;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.pmbridge.PMBridgeConfig;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.pmbridge.PMBridgeConfigProducer;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.infrastructure.pmbridge.PMBridgeConfig;
+import org.broadinstitute.gpinformatics.infrastructure.pmbridge.PMBridgeConfigProducer;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;

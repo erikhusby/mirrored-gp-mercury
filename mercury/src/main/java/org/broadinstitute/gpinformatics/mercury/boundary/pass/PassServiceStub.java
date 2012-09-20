@@ -8,7 +8,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.broadinstitute.gpinformatics.mercury.control.pass.PassService;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Stub;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.inject.Inject;
 import javax.jws.WebParam;

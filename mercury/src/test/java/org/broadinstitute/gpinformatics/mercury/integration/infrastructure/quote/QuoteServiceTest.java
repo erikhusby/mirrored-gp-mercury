@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.integration.infrastructure.quote;
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.*;
+import org.broadinstitute.gpinformatics.infrastructure.quote.*;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

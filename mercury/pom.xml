@@ -1514,7 +1514,7 @@
                             <goal>java</goal>
                         </goals>
                         <configuration>
-                            <mainClass>org.broadinstitute.gpinformatics.mercury.infrastructure.jpa.EnversSchemaExport</mainClass>
+                            <mainClass>org.broadinstitute.gpinformatics.infrastructure.jpa.EnversSchemaExport</mainClass>
                             <arguments>
                                 <argument>--drop</argument>
                                 <argument>--create</argument>

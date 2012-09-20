@@ -14,7 +14,7 @@ import java.net.URL;
 import java.util.Arrays;
 
 import static org.broadinstitute.gpinformatics.mercury.TestGroups.EXTERNAL_INTEGRATION;
-import static org.broadinstitute.gpinformatics.mercury.infrastructure.deployment.Deployment.TEST;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 

@@ -2,12 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.AliquotReceiver;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPConnectorStub;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.JiraServiceStub;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.AliquotReceiver;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConnectorStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingResponse;
