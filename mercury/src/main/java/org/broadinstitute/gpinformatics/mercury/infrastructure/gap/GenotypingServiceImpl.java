@@ -22,7 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteNotFou
 import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.quote.QuoteService;
 
-import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -41,7 +41,7 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
  * Date: 5/22/12
  * Time: 12:27 PM
  */
-@Alternative
+@Default
 public class GenotypingServiceImpl extends AbstractJerseyClientService implements GenotypingService {
 
     private org.apache.commons.logging.Log logger = LogFactory.getLog(GenotypingServiceImpl.class);

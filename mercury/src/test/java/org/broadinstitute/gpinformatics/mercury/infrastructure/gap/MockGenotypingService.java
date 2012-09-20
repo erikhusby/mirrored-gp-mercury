@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.mercury.infrastructure.ValidationException;
 
-import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Alternative;
 import java.util.List;
 
 /**
@@ -15,7 +15,7 @@ import java.util.List;
  * Date: 5/29/12
  * Time: 1:20 PM
  */
-@Default
+@Alternative
 public class MockGenotypingService implements GenotypingService {
 
 
