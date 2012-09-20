@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequ
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.infrastructure.squid.SequencingService;
+import org.broadinstitute.gpinformatics.infrastructure.squid.PMBSequencingService;
 import org.broadinstitute.gpinformatics.infrastructure.UserNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.gap.GenotypingService;
@@ -23,7 +23,7 @@ import java.util.List;
 public class PMBExperimentRequestServiceImpl implements PMBExperimentRequestService {
 
     @Inject
-    SequencingService sequencingService;
+    PMBSequencingService sequencingService;
 
     @Inject
     private GenotypingService genotypingService;

@@ -8,6 +8,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.inject.Inject;
@@ -15,7 +16,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.HashSet;
 import java.util.Set;
 
-
+@Impl
 public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements PMBQuoteService {
 
     private org.apache.commons.logging.Log logger = LogFactory.getLog(PMBQuoteServiceImpl.class);

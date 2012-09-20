@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
+package org.broadinstitute.gpinformatics.infrastructure.squid;
 
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.BaitSetName;
@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -17,7 +18,7 @@ import java.util.List;
  * Date: 5/1/12
  * Time: 12:56 PM
  */
-public interface SequencingService {
+public interface PMBSequencingService extends Serializable {
 
     // Sequencing people
     List<Person> getPlatformPeople();

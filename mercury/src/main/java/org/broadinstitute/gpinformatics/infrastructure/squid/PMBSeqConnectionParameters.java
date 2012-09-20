@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
+package org.broadinstitute.gpinformatics.infrastructure.squid;
 
 /**
  * Created by IntelliJ IDEA.
@@ -6,7 +6,7 @@ package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
  * Date: 4/17/12
  * Time: 10:04 AM
  */
-public interface SeqConnectionParameters {
+public interface PMBSeqConnectionParameters {
 
 
     public final String SQUID_NAMESPACE = "urn:SquidTopic";

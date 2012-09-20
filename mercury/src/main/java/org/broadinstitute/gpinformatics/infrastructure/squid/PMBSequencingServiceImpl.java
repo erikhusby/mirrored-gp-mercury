@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
+package org.broadinstitute.gpinformatics.infrastructure.squid;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
@@ -12,10 +12,9 @@ import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.*;
 
-import javax.enterprise.inject.Default;
-import javax.inject.Inject;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.MalformedURLException;
@@ -31,8 +30,8 @@ import java.util.regex.Pattern;
  * Date: 5/1/12
  * Time: 12:58 PM
  */
-@Default
-public class SequencingServiceImpl implements SequencingService {
+@Impl
+public class PMBSequencingServiceImpl implements PMBSequencingService {
 
     public static final IllegalArgumentException ILLEGAL_EXPERIMENTID_ARG_EXCEPTION =
             new IllegalArgumentException("Cannot get sequencing experiment request without a remote sequencing experiment Id");
@@ -40,22 +39,27 @@ public class SequencingServiceImpl implements SequencingService {
             new IllegalArgumentException("Cannot get experiment request summaries without a valid username.");
     public static final IllegalArgumentException ILLEGAL_EXPREQ_ARG_EXCEPTION = new IllegalArgumentException("Experiment request is null.");
 
-    private org.apache.commons.logging.Log logger = LogFactory.getLog(SequencingServiceImpl.class);
+    private org.apache.commons.logging.Log logger = LogFactory.getLog(PMBSequencingServiceImpl.class);
 
     private SquidTopicPortype squidServicePort;
     private boolean initialized = false;
-    private SeqConnectionParameters seqConnectionParameters;
+    private PMBSeqConnectionParameters seqConnectionParameters;
 
+    public PMBSequencingServiceImpl() {
+    }
+
+    /* TODO PMB JBoss rightly complains that it cannot find an implementation of PMBSeqConnectionParameters to inject here...
     @Inject
-    public SequencingServiceImpl(SeqConnectionParameters seqConnectionParameters) throws MalformedURLException {
+    public PMBSequencingServiceImpl(PMBSeqConnectionParameters seqConnectionParameters) throws MalformedURLException {
 
         this.seqConnectionParameters = seqConnectionParameters;
         init(seqConnectionParameters);
     }
+    */
 
-    private void init(final SeqConnectionParameters seqConnectionParameters) throws MalformedURLException {
-        QName serviceName = new QName(SeqConnectionParameters.SQUID_NAMESPACE, SeqConnectionParameters.SQUID_TOPIC);
-        String wsdlURL = seqConnectionParameters.getSquidRoot() + SeqConnectionParameters.SQUID_WSDL;
+    private void init(final PMBSeqConnectionParameters seqConnectionParameters) throws MalformedURLException {
+        QName serviceName = new QName(PMBSeqConnectionParameters.SQUID_NAMESPACE, PMBSeqConnectionParameters.SQUID_TOPIC);
+        String wsdlURL = seqConnectionParameters.getSquidRoot() + PMBSeqConnectionParameters.SQUID_WSDL;
         URL url = new URL(wsdlURL);
         Service service = Service.create(url, serviceName);
         squidServicePort = service.getPort(serviceName, SquidTopicPortype.class);
@@ -313,7 +317,7 @@ public class SequencingServiceImpl implements SequencingService {
 
 
     //For unit testing only
-    SequencingServiceImpl(SquidTopicPortype squidServicePort) {
+    PMBSequencingServiceImpl(SquidTopicPortype squidServicePort) {
         this.squidServicePort = squidServicePort;
         initialized = true;
     }
