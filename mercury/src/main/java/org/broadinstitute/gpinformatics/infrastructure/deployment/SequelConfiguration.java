@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.gap.GAPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.pmbridge.PMBridgeConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
@@ -40,7 +41,8 @@ public class SequelConfiguration {
         PMBridgeConfig.class,
         JiraConfig.class,
         QuoteConfig.class,
-        ThriftConfig.class
+        ThriftConfig.class,
+        GAPConfig.class
     };
 
 

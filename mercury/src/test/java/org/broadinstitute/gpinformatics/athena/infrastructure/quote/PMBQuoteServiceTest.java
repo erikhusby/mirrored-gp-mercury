@@ -12,12 +12,12 @@ import java.util.Set;
 import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
 
 @Test(groups = {UNIT})
-public class QuoteServiceTest {
+public class PMBQuoteServiceTest {
 
     @Test
     public void test_get_a_quote() throws Exception {
-        QuoteService service = new MockQuoteServiceImpl();
-        Quote quote = service.getQuoteByAlphaId("DNA23H");
+        PMBQuoteService servicePMB = new MockPMBQuoteServiceImpl();
+        Quote quote = servicePMB.getQuoteByAlphaId("DNA23H");
 
         Assert.assertNotNull(quote);
         Assert.assertEquals("NIAID (CO 5035331)", quote.getName());
@@ -26,7 +26,7 @@ public class QuoteServiceTest {
         Assert.assertEquals(Funding.FUNDS_RESERVATION,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
         Assert.assertEquals("DNA23H",quote.getAlphanumericId());
 
-        quote = service.getQuoteByAlphaId("DNA3A9");
+        quote = servicePMB.getQuoteByAlphaId("DNA3A9");
         Assert.assertEquals("HARVARD UNIVERSITY",quote.getQuoteFunding().getFundingLevel().getFunding().getInstitute());
         Assert.assertEquals(Funding.PURCHASE_ORDER,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
         Assert.assertEquals("DNA3A9",quote.getAlphanumericId());
@@ -36,8 +36,8 @@ public class QuoteServiceTest {
     @Test
     public void test_get_all_quotes_for_sequencing() throws Exception {
 
-        QuoteService service = new MockQuoteServiceImpl();
-        Quotes quotes = service.getAllQuotes();
+        PMBQuoteService servicePMB = new MockPMBQuoteServiceImpl();
+        Quotes quotes = servicePMB.getAllQuotes();
 
         Assert.assertNotNull(quotes);
         Assert.assertFalse(quotes.getQuotes().isEmpty());

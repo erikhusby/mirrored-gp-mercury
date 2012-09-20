@@ -8,10 +8,11 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollectionID;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
@@ -30,12 +31,33 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
     private static Log logger = LogFactory.getLog(BSPCohortSearchServiceImpl.class);
 
     @Inject
-    private BSPConnectionParameters connParams;
+    private BSPConfig bspConfig;
 
-    @Inject
-    public BSPCohortSearchServiceImpl(BSPConnectionParameters connParams) {
-        this.connParams = connParams;
+    enum Endpoint {
+
+        SAMPLE_SEARCH("search/runSampleSearch"),
+        USERS_COHORT("collection/getSampleCollectionsByPM?username=");
+
+        String suffixUrl;
+
+        Endpoint(String suffixUrl) {
+            this.suffixUrl = suffixUrl;
+        }
+
+        public String getSuffixUrl() {
+            return suffixUrl;
+        }
+
     }
+
+
+
+    private String url( Endpoint endpoint ) {
+
+        return String.format("%s:%d/ws/bsp/%s", bspConfig.getHost(), bspConfig.getPort(), endpoint.getSuffixUrl());
+
+    }
+
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
@@ -45,7 +67,7 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
 
     @Override
     protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, connParams);
+        specifyHttpAuthCredentials(client, bspConfig);
     }
 
 // TODO remove
@@ -62,9 +84,7 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
 
         List<String[]> ret = new ArrayList<String[]>();
 
-        String urlString = "http://%s:%d%s";
-        urlString = String.format(urlString, connParams.getHostname(), connParams.getPort(),
-                BSPConnectionParameters.BSP_SAMPLE_SEARCH_URL);
+        String urlString = url(Endpoint.SAMPLE_SEARCH);
 
         logger.info(String.format("url string is '%s'", urlString));
 
@@ -149,8 +169,7 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
         }
 
         HashSet<BSPCollection> usersCohorts = new HashSet<BSPCollection>();
-        urlString = String.format(urlString, connParams.getHostname(), connParams.getPort(),
-                BSPConnectionParameters.BSP_USERS_COHORT_URL + bspUser.getUsername().trim() );
+        urlString = url(Endpoint.USERS_COHORT)  + bspUser.getUsername().trim();
         logger.info(String.format("url string is '%s'", urlString));
         WebResource webResource = getJerseyClient().resource(urlString);
 

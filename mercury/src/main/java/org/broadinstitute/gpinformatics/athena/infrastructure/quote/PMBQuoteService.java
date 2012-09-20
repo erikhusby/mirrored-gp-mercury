@@ -8,7 +8,7 @@ import java.util.Set;
  * Service to talk to the quote server.
  */
 
-public interface QuoteService {
+public interface PMBQuoteService {
 
     /**
      * Method tries to retrieve the quote using the alphaNumeric quoteId.

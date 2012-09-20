@@ -7,27 +7,47 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
-import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.util.HashSet;
 import java.util.Set;
 
-@Alternative
-public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
 
-    private org.apache.commons.logging.Log logger = LogFactory.getLog(QuoteServiceImpl.class);
+public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements PMBQuoteService {
+
+    private org.apache.commons.logging.Log logger = LogFactory.getLog(PMBQuoteServiceImpl.class);
+
+    enum Endpoint {
+
+        SINGLE_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
+        ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
+        ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
+        ALL_PRICE_ITEMS("/quotes/ws/portals/private/get_price_list"),
+        REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
+        //TODO this next enum value will be removed soon.
+        SINGLE_NUMERIC_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_ids=")
+        ;
+
+        String suffixUrl;
+
+        Endpoint(String suffixUrl) {
+            this.suffixUrl = suffixUrl;
+        }
+
+        public String getSuffixUrl() {
+            return suffixUrl;
+        }
+
+    }
+
 
     @Inject
-    private QuoteConnectionParameters connectionParameters;
+    private QuoteConfig quoteConfig;
 
-    public QuoteServiceImpl() {}
-
-    public QuoteServiceImpl(QuoteConnectionParameters quoteConnectionParameters) {
-        connectionParameters = quoteConnectionParameters;
-    }
+    public PMBQuoteServiceImpl() {}
 
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
@@ -36,20 +56,32 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     @Override
     protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, connectionParameters);
+        specifyHttpAuthCredentials(client, quoteConfig);
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }
+
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
 
-        return this.getSingleQuoteById(alphaId, QuoteConnectionParameters.GET_SINGLE_ALPHA_QUOTE_URL);
+        return getSingleQuoteById(alphaId, url( Endpoint.SINGLE_QUOTE) );
+
     }
+
+
 
     @Override
     public Quote getQuoteByNumericId(final String numericId) throws QuoteServerException, QuoteNotFoundException {
-        return this.getSingleQuoteById(numericId, QuoteConnectionParameters.GET_SINGLE_NUMERIC_QUOTE_URL);
+        return this.getSingleQuoteById(numericId, url( Endpoint.SINGLE_NUMERIC_QUOTE ));
     }
+
+
+
+    private String url( Endpoint endpoint ) {
+
+        return quoteConfig.getUrl() + endpoint.getSuffixUrl();
+    }
+
 
     /*
      * protected method to get a single quote.
@@ -60,14 +92,13 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
      * @throws QuoteNotFoundException
      * @throws QuoteServerException
      */
-    protected Quote getSingleQuoteById(final String id, String queryUrl) throws QuoteNotFoundException, QuoteServerException {
+    protected Quote getSingleQuoteById(final String id, String url) throws QuoteNotFoundException, QuoteServerException {
         Quote quote;
         if(StringUtils.isEmpty(id))
         {
            return(null);
         }
 
-        String url = connectionParameters.getUrl(queryUrl);
         WebResource resource = getJerseyClient().resource(url + id);
 
         try
@@ -105,7 +136,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
 
         //TODO probably best to Cache this data some how and refresh frequently async on separate thread.
-        String url = connectionParameters.getUrl(QuoteConnectionParameters.GET_QUOTES_BASE_URL);
+
+        String url = url( Endpoint.ALL_QUOTES );
         WebResource resource = getJerseyClient().resource(url);
 
         Quotes quotes;
@@ -189,7 +221,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     protected PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
 
-        String url = connectionParameters.getUrl(QuoteConnectionParameters.GET_ALL_PRICE_ITEMS);
+        String url = url( Endpoint.ALL_PRICE_ITEMS );
         WebResource resource = getJerseyClient().resource(url);
         PriceList prices = null;
         try

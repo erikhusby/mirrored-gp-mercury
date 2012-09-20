@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.infrastructure.quote;
 
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.QAInstance;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -20,6 +22,11 @@ public class QuotesCacheTest {
     Quote quote2 = new Quote("DNA33", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant"))), ApprovalStatus.FUNDED);
     Quote quote3 = new Quote("DNA34", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Cheap Grant"))), ApprovalStatus.FUNDED);
     Quote quote4 = new Quote("DNA35", new QuoteFunding(new FundingLevel("50", new Funding(Funding.FUNDS_RESERVATION, "NHGRI"))), ApprovalStatus.FUNDED);
+
+    @Inject
+    @QAInstance
+    private PMBQuoteService quoteService;
+
 
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void test_quotes_for_funding_source() throws Exception {
@@ -72,7 +79,7 @@ public class QuotesCacheTest {
     public void test_known_good_funding_sources() throws Exception {
 
         long start = System.currentTimeMillis();
-        QuotesCache cache = new QuotesCache(new QuoteServiceImpl(new QAQuoteConnectionParams()).getAllQuotes());
+        QuotesCache cache = new QuotesCache(quoteService.getAllQuotes());
         System.out.println("Quotes call took " + (System.currentTimeMillis() - start) + "ms");
 
         Funding nhgriGrant = new Funding(Funding.FUNDS_RESERVATION, "NHGRI_NIH_LANDER");

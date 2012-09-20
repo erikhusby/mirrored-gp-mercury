@@ -29,6 +29,22 @@ bsp:
       port:     80
 
 
+gap:
+
+    DEV:
+
+      login:    pmbridge
+      password: bspbsp
+      url:      http://gapdevanalysis.broadinstitute.org:8080
+
+
+    QA:
+
+      login:    pmbridge
+      password: bspbsp
+      url:      http://gapqaanalysis.broadinstitute.org:8080
+
+
 
 
 jira:
@@ -121,6 +137,7 @@ sequel:
     DEV:
 
       bsp:      QA
+      gap:      DEV
       jira:     TEST
       pmbridge: DEV
       quote:    QA
@@ -131,6 +148,7 @@ sequel:
     TEST:
 
       bsp:      QA
+      gap:      QA
       jira:     TEST
       pmbridge: DEV
       quote:    QA
@@ -141,6 +159,7 @@ sequel:
     QA:
 
       bsp:      QA
+      gap:      QA
       jira:     TEST
       pmbridge: DEV
       quote:    QA
@@ -151,6 +170,7 @@ sequel:
     PROD:
 
       bsp:      PROD
+      gap:      QA
       # not ready to talk to PROD jira yet, we should see an error if the live service asks to reference this
       #jira:     PROD
       pmbridge: PROD

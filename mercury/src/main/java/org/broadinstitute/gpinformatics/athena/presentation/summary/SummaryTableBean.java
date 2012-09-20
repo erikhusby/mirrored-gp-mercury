@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.summary;
 
 import org.apache.commons.logging.Log;
-import org.broadinstitute.gpinformatics.athena.control.experiments.ExperimentRequestService;
+import org.broadinstitute.gpinformatics.athena.control.experiments.PMBExperimentRequestService;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPSample;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequest;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
@@ -42,7 +42,7 @@ public class SummaryTableBean extends AbstractJsfBean {
     Log log;
 
     @Inject
-    ExperimentRequestService experimentService;
+    PMBExperimentRequestService experimentService;
 
     //TODO Would like to move/wrap this in a PMB boundary/control specific class
     // The summary table bean does not need to know about the BSPCohortSearchService

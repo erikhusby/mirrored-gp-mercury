@@ -17,7 +17,7 @@ public class QuotesCache {
      * New one up, using the #quotes 
      * as the backing store.  This is because
      * we assume that #quotes is going
-     * to come from {@link org.broadinstitute.gpinformatics.athena.infrastructure.quote.QuoteServiceImpl#getAllQuotes()}
+     * to come from {@link PMBQuoteServiceImpl#getAllQuotes()}
      * @param quotes
      */
     public QuotesCache(Quotes quotes) {

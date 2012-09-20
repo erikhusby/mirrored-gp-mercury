@@ -5,7 +5,6 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentId;
@@ -17,12 +16,13 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.infrastructure.UserNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -41,20 +41,45 @@ import static org.apache.commons.lang.StringUtils.isNotBlank;
  * Date: 5/22/12
  * Time: 12:27 PM
  */
-@Default
+@Impl
 public class GenotypingServiceImpl extends AbstractJerseyClientService implements GenotypingService {
 
+
+    enum Endpoint {
+
+        PLATFORMS("get_experiment_platforms"),
+        USERS("auth/get_users_by_role?role_name=Project%20Manager&domain=GAP"),
+        EXPERIMENTS("get_experiment_plan"),
+        TECHNOLOGIES("get_experiment_platforms"),
+        CREATE_EXPERIMENT("create_experiment_plan");
+
+        String suffixUrl;
+
+        Endpoint(String suffixUrl) {
+            this.suffixUrl = suffixUrl;
+        }
+
+        public String getSuffixUrl() {
+            return suffixUrl;
+        }
+    }
+
+
+    private String url( Endpoint endpoint ) {
+
+        return gapConfig.getUrl() + "/ws/project_management/" + endpoint.getSuffixUrl();
+    }
+
+
     private org.apache.commons.logging.Log logger = LogFactory.getLog(GenotypingServiceImpl.class);
+
+
     @Inject
-    private GapConnectionParameters gapConnectionParameters;
+    private GAPConfig gapConfig;
 
     @Inject
     private QuoteService quoteService;
 
-    @Inject
-    public GenotypingServiceImpl(GapConnectionParameters gapConnectionParameters) {
-        this.gapConnectionParameters = gapConnectionParameters;
-    }
 
     public GapExperimentRequest populateQuotes(GapExperimentRequest gapExperimentRequest,
                                                QuoteService quoteService) {
@@ -109,7 +134,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 
     @Override
     protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, gapConnectionParameters);
+        specifyHttpAuthCredentials(client, gapConfig);
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }
 
@@ -189,7 +214,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 
         try {
             String planXmlStr = ObjectMarshaller.marshall(experimentPlan);
-            String baseUrl = gapConnectionParameters.getUrl(GapConnectionParameters.GAP_CREATE_EXPERIMENT_URL);
+            String baseUrl = url(Endpoint.CREATE_EXPERIMENT);
             String fullUrl = baseUrl + "?plan_data=" + encode(planXmlStr);
             logger.info(String.format("url string is '%s'", fullUrl));
 
@@ -292,7 +317,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 
         try {
             String planXmlStr = ObjectMarshaller.marshall(requiredExperimentPlan);
-            String baseUrl = gapConnectionParameters.getUrl(GapConnectionParameters.GAP_EXPERIMENTS_URL);
+            String baseUrl = url(Endpoint.EXPERIMENTS);
             String fullUrl = baseUrl + "?plan_data=" + encode(planXmlStr);
             logger.info(String.format("url string is '%s'", fullUrl));
 
@@ -340,7 +365,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
         try {
 
             String planXmlStr = ObjectMarshaller.marshall(requiredExperimentPlan);
-            String baseUrl = gapConnectionParameters.getUrl(GapConnectionParameters.GAP_EXPERIMENTS_URL);
+            String baseUrl = url(Endpoint.EXPERIMENTS);
             String fullUrl = baseUrl + "?plan_data=" + encode(planXmlStr);
             logger.info(String.format("url string is '%s'", fullUrl));
 
@@ -370,7 +395,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
     public Platforms getPlatforms() {
         Platforms platforms;
 
-        String url = gapConnectionParameters.getUrl(GapConnectionParameters.GAP_TECHNOLOGIES_URL);
+        String url = url( Endpoint.TECHNOLOGIES );
         logger.info(String.format("url string is '%s'", url));
 
         try {

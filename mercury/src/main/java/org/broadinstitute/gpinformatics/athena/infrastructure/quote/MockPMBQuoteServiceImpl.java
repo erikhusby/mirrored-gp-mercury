@@ -15,14 +15,15 @@ import java.util.regex.Pattern;
  * Time: 11:26 AM
  */
 @Default
-public class MockQuoteServiceImpl extends QuoteServiceImpl {
+// TODO PMB review why extending impl
+public class MockPMBQuoteServiceImpl extends PMBQuoteServiceImpl {
 
     public static final String QUOTE_TEST_DATA_XML = "src/test/data/quote/quoteTestData.xml";
     public static final String PRICE_TEST_DATA_XML = "src/test/data/quote/priceTestData.xml";
     Quotes quotes;
     PriceList prices;
 
-    public MockQuoteServiceImpl() {
+    public MockPMBQuoteServiceImpl() {
         super();
         try {
             quotes = (Quotes) JAXBContext.newInstance(Quotes.class).createUnmarshaller().unmarshal(

@@ -36,7 +36,7 @@ public class PriceListCacheTest {
 
     @Test(groups = UNIT)
     public void test_gsp_prices() throws Exception {
-        PriceListCache cache = new PriceListCache(new MockQuoteServiceImpl().getAllPriceItems());
+        PriceListCache cache = new PriceListCache(new MockPMBQuoteServiceImpl().getAllPriceItems());
         Assert.assertFalse(cache.getPlatformPriceList(QuotePlatformType.SEQ.getPlatformName()).isEmpty());
 
         for (PriceItem priceItem : cache.getPlatformPriceList(QuotePlatformType.SEQ.getPlatformName()) ) {
