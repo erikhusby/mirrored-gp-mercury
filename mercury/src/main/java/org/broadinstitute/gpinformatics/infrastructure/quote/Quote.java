@@ -6,26 +6,32 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name="Quote")
 public class Quote {
+
+
     private String alphanumericId;
-    private String approvalStatus;
+    private ApprovalStatus approvalStatus;
+    private Boolean isExpired;
     private String id;
     private String name;
     private QuoteFunding quoteFunding;
+    private QuoteType quoteType;
+
 
     public Quote() {}
 
-    public Quote(String alphanumericId,QuoteFunding quoteFunding) {
+    public Quote(String alphanumericId,QuoteFunding quoteFunding, ApprovalStatus approvalStatus) {
         if (alphanumericId == null) {
             throw new NullPointerException("alphanumeric Id cannot be null.");
         }
         this.alphanumericId = alphanumericId;
         this.quoteFunding = quoteFunding;
+        this.approvalStatus = approvalStatus;
     }
-    
-    public Quote(String alphanumericId) {
-        this(alphanumericId,null);
-    }
-    
+
+//    Quote(String alphanumericId) {
+//        this(alphanumericId, null, null);
+//    }
+
     @XmlElement(name = "QuoteFunding")
     public QuoteFunding getQuoteFunding() {
         return quoteFunding;
@@ -64,14 +70,33 @@ public class Quote {
     }
 
     @XmlAttribute(name="approvalStatus")
-    public String getApprovalStatus() {
+    public ApprovalStatus getApprovalStatus() {
         return approvalStatus;
     }
 
-    public void setApprovalStatus(String approvalStatus) {
+    public void setApprovalStatus(ApprovalStatus approvalStatus) {
         this.approvalStatus = approvalStatus;
     }
-    
+
+    @XmlAttribute(name="isExpired")
+    public Boolean getExpired() {
+        return isExpired;
+    }
+
+    public void setExpired(final Boolean expired) {
+        isExpired = expired;
+    }
+
+    @XmlAttribute(name="quoteType")
+    public QuoteType getQuoteType() {
+        return quoteType;
+    }
+
+    public void setQuoteType(QuoteType quoteType) {
+        this.quoteType = quoteType;
+    }
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -88,9 +113,5 @@ public class Quote {
     @Override
     public int hashCode() {
         return alphanumericId != null ? alphanumericId.hashCode() : 0;
-    }
-    
-    public String toString() {
-        return alphanumericId;
     }
 }

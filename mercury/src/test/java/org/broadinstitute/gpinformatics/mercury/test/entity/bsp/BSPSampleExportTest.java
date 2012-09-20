@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test.entity.bsp;
 
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.billing.Quote;
@@ -59,7 +60,7 @@ public class BSPSampleExportTest {
 
         String quoteString = "DNA385";
         Quote billingQuote = new Quote(quoteString,
-                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI")))));
+                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI"))), ApprovalStatus.FUNDED));
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);
@@ -111,7 +112,7 @@ public class BSPSampleExportTest {
 
         String quoteString = "DNA385";
         Quote billingQuote = new org.broadinstitute.gpinformatics.mercury.entity.billing.Quote(quoteString,
-                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI")))));
+                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI"))), ApprovalStatus.FUNDED));
         projectPlan.setQuote(billingQuote);
 
         StartingSample startingSample = new BSPStartingSample(masterSample1, projectPlan);

@@ -1,4 +1,6 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.quote;
+package org.broadinstitute.gpinformatics.infrastructure.quote;
+
+
 
 import javax.enterprise.inject.Default;
 import javax.xml.bind.JAXBContext;
@@ -109,7 +111,7 @@ public class MockPMBQuoteServiceImpl extends PMBQuoteServiceImpl {
      * Mocked method to get the mocked priceItems.
      */
     @Override
-    protected PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
+    public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
         return prices;
     }
 

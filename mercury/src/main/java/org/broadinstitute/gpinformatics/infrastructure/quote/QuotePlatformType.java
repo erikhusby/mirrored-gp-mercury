@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.quote;
+package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 /**
  * Created by IntelliJ IDEA.

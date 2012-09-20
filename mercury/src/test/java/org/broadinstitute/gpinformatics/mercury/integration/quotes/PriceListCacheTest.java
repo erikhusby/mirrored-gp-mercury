@@ -14,8 +14,8 @@ public class PriceListCacheTest {
     @Test(groups = DATABASE_FREE)
     public void test_gsp_platform() {
         PriceList priceList = new PriceList();
-        PriceItem item1 = new PriceItem("Illumina Sequencing","123","101bp MiSeq","5","Sample",PriceItem.GSP_PLATFORM_NAME);
-        PriceItem item2 = new PriceItem("Illumina Sequencing","1234","151bp MiSeq","5","Sample",PriceItem.GSP_PLATFORM_NAME);       
+        PriceItem item1 = new PriceItem("Illumina Sequencing","123","101bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());
+        PriceItem item2 = new PriceItem("Illumina Sequencing","1234","151bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());       
         priceList.add(item1);
         priceList.add(item2);
         priceList.add(new PriceItem("Illumina Sequencing","1234","151bp MiSeq","3","Sample","Cookie Baking Platform"));
@@ -36,7 +36,7 @@ public class PriceListCacheTest {
         Assert.assertFalse(cache.getGSPPriceList().isEmpty());
 
         for (PriceItem priceItem : cache.getGSPPriceList()) {
-            Assert.assertTrue(PriceItem.GSP_PLATFORM_NAME.equalsIgnoreCase(priceItem.getPlatform()));
+            Assert.assertTrue(QuotePlatformType.SEQ.getPlatformName().equalsIgnoreCase(priceItem.getPlatform()));
             System.out.println(priceItem.getName());
         }
     }

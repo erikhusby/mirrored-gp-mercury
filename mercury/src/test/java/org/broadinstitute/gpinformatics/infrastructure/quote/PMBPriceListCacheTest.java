@@ -1,11 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.quote;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
-import java.util.Collection;
-
-import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
+package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,7 +6,8 @@ import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
  * Date: 5/21/12
  * Time: 2:30 PM
  */
-public class PriceListCacheTest {
+public class PMBPriceListCacheTest {
+    /*
 
     @Test(groups = UNIT)
     public void test_gsp_platform() {
@@ -44,4 +38,5 @@ public class PriceListCacheTest {
 //            System.out.println(priceItem.getName());
         }
     }
+    */
 }

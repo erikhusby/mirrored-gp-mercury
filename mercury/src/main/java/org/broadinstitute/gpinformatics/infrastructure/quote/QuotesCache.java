@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A simple cache of quotes extracted
@@ -83,5 +81,35 @@ public class QuotesCache {
             }
         }
         return quotesForFundingSource;
+    }
+
+
+    public Map<Funding, HashSet<Quote>> getQuotesByFundingSource(){
+
+//        Collection<Funding> fundingSources = getAllFundingSources();
+        Map<Funding, HashSet<Quote>> quotesByFundingSource = new HashMap<Funding, HashSet<Quote>>();
+
+        for (Quote quote : quotes.getQuotes()) {
+            if (quote.getQuoteFunding() != null) {
+                if (quote.getQuoteFunding().getFundingLevel() != null) {
+                    if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
+                        Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
+                        if ((funding.getGrantDescription() != null) && (funding.getGrantNumber() != null)) {
+                            // get/create the set of quotes
+                            HashSet<Quote> quotesSet=quotesByFundingSource.get(funding);
+                            if  (quotesSet== null) {
+                                quotesSet = new HashSet<Quote>();
+                                quotesByFundingSource.put(funding, quotesSet);
+                            }
+                            quotesSet.add(quote);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        return quotesByFundingSource;
+
     }
 }

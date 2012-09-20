@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "PriceItem")
 public class PriceItem {
 
-    public static final String GSP_PLATFORM_NAME = "DNA Sequencing";
+    public static final String GSP_PLATFORM_NAME = QuotePlatformType.SEQ.getPlatformName();
 
     public static final String SAMPLE_UNITS = "Sample";
     

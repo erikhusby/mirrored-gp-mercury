@@ -252,13 +252,13 @@ public class ProjectTest  {
      * @return
      */
     private BasicProjectPlan projectManagerAddsProjectPlan(Project project) {
-        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",PriceItem.GSP_PLATFORM_NAME);
+        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars",QuotePlatformType.SEQ.getPlatformName());
 
         WorkflowDescription workflow = new WorkflowDescription("HybridSelection", null,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         BasicProjectPlan plan = new BasicProjectPlan(project,project.getProjectName() + " Plan",workflow);
         String quoteId = "DNA23";
         plan.setQuote(new Quote(quoteId,
-                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteId,new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))))));
+                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteId,new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))), ApprovalStatus.FUNDED)));
         
         return plan;
     }
@@ -391,9 +391,9 @@ public class ProjectTest  {
     
     private QuotesCache buildQuotesCache() {
         Quotes quotes = new Quotes();
-        quotes.addQuote(new org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF128",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
-        quotes.addQuote(new  org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF129",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI")))));
-        quotes.addQuote(new  org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF130",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI")))));
+        quotes.addQuote(new org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF128",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))), ApprovalStatus.FUNDED));
+        quotes.addQuote(new  org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF129",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))), ApprovalStatus.FUNDED));
+        quotes.addQuote(new  org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF130",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI"))), ApprovalStatus.FUNDED));
         return new QuotesCache(quotes);
     }
 }

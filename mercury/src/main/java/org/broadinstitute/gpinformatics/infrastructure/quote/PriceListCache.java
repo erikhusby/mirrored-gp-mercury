@@ -17,7 +17,7 @@ public class PriceListCache {
     public Collection<PriceItem> getGSPPriceList() {
         Collection<PriceItem> priceItems = new HashSet<PriceItem>();
         for (PriceItem priceItem : prices.getPriceList()) {
-            if (PriceItem.GSP_PLATFORM_NAME.equalsIgnoreCase(priceItem.getPlatform())) {
+            if (QuotePlatformType.SEQ.getPlatformName().equalsIgnoreCase(priceItem.getPlatform())) {
                 priceItems.add(priceItem);
             }
         }
