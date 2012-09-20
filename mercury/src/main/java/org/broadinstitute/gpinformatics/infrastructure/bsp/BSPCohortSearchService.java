@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.bsp;
+package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;

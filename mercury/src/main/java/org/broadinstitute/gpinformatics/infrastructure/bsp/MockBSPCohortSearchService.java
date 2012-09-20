@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.bsp;
+package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -6,7 +6,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollectionID;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 
 import javax.enterprise.inject.Default;
 import java.util.*;

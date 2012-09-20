@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.bsp;
 
-import org.broadinstitute.gpinformatics.athena.infrastructure.bsp.BSPSampleDTO_PMB;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO_PMB;
 
 import javax.persistence.Transient;
 import java.math.BigDecimal;

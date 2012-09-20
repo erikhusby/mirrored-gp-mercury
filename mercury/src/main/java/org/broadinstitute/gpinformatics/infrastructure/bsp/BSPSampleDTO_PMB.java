@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.bsp;
+package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
