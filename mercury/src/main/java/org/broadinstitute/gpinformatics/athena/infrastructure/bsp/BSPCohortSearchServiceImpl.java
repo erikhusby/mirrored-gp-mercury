@@ -12,9 +12,10 @@ import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollectionID;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
-import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
@@ -24,7 +25,7 @@ import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.util.*;
 
-@Alternative
+@Impl
 public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService implements BSPCohortSearchService {
 
 
