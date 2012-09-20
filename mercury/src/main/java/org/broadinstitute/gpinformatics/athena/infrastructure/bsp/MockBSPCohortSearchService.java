@@ -17,12 +17,12 @@ import java.util.*;
  * Time: 10:01 AM
  */
 @Default
-public class MockBSPSampleSearchService implements BSPSampleSearchService  {
+public class MockBSPCohortSearchService implements BSPCohortSearchService {
 
-    private static Log logger = LogFactory.getLog(MockBSPSampleSearchService.class);
+    private static Log logger = LogFactory.getLog(MockBSPCohortSearchService.class);
     private final Map<String,String[]> samples = new HashMap<String,String[]>();
 
-    public MockBSPSampleSearchService() {
+    public MockBSPCohortSearchService() {
         addToMap("SM-12CO4",new String[] {
                 "PT-2LK3",  // patient
                 "ROOT", // root
@@ -55,7 +55,8 @@ public class MockBSPSampleSearchService implements BSPSampleSearchService  {
         });
     }
 
-    @Override
+//    @Override
+    //TODO PMB remove
     public List<String[]> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
         List<String[]> sampleAttributes = new ArrayList<String[]>();
         for (String sampleID : sampleIDs) {

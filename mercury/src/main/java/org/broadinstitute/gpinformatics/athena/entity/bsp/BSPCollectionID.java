@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.bsp;
 
-import org.broadinstitute.gpinformatics.athena.entity.common.Id;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Created by IntelliJ IDEA.
@@ -8,8 +8,19 @@ import org.broadinstitute.gpinformatics.athena.entity.common.Id;
  * Date: 4/12/12
  * Time: 3:37 PM
  */
-public class BSPCollectionID extends Id {
-    public BSPCollectionID(String id) {
-        super(id);
+public class BSPCollectionID {
+
+    public final String value;
+
+    public BSPCollectionID(String value) {
+        if ((value == null) || StringUtils.isBlank(value)) {
+            throw new IllegalArgumentException("Id is invalid. Must be non-null and non-empty.");
+        }
+        this.value = value;
     }
+
+    public String getValue() {
+        return value;
+    }
+
 }

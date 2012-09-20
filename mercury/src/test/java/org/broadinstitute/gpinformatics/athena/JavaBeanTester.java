@@ -1,12 +1,9 @@
 package org.broadinstitute.gpinformatics.athena;
 
-import org.broadinstitute.gpinformatics.mercury.infrastructure.bsp.BSPSampleDTO;
-
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.*;
-import java.math.BigDecimal;
 
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
@@ -118,8 +115,9 @@ public class JavaBeanTester {
 
 		} else if (clazz == char.class || clazz == Character.class) {
 			return 'Y';
-        } else if ( clazz == BSPSampleDTO.class) {
-            return new BSPSampleDTO("containerId","stockSample","rootSample","null","patientId","organism","collaboratorSampleId","collection",new BigDecimal("1"),new BigDecimal("2"));
+            //TODO PMB need to refactor BSPSampleDTO_PMB out
+//        } else if ( clazz == BSPSampleDTO.class) {
+//            return new BSPSampleDTO("containerId","stockSample","rootSample","null","patientId","organism","collaboratorSampleId","collection",new BigDecimal("1"),new BigDecimal("2"));
 
 	 // Add your own rules here
 

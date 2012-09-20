@@ -11,7 +11,7 @@ public class TestUtilities {
 
     public static WeldUtil bootANewWeld() {
 //        WeldContainer weld = new Weld().initialize();
-        //service = weld.instance().select(BSPSampleSearchService.class).get();
+        //service = weld.instance().select(BSPCohortSearchService.class).get();
 //        return new WeldUtil(weld);
         return new WeldUtil();
     }

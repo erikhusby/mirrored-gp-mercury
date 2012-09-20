@@ -24,16 +24,16 @@ import java.net.URLEncoder;
 import java.util.*;
 
 @Alternative
-public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
+public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService implements BSPCohortSearchService {
 
 
-    private static Log logger = LogFactory.getLog(BSPSampleSearchServiceImpl.class);
+    private static Log logger = LogFactory.getLog(BSPCohortSearchServiceImpl.class);
 
     @Inject
     private BSPConnectionParameters connParams;
 
     @Inject
-    public BSPSampleSearchServiceImpl(BSPConnectionParameters connParams) {
+    public BSPCohortSearchServiceImpl(BSPConnectionParameters connParams) {
         this.connParams = connParams;
     }
 
@@ -48,8 +48,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
         specifyHttpAuthCredentials(client, connParams);
     }
 
-
-    @Override
+// TODO remove
     public List<String[]> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... queryColumns) {
 
         if (queryColumns == null || queryColumns.length == 0)

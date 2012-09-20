@@ -45,9 +45,9 @@ public class SummaryTableBean extends AbstractJsfBean {
     ExperimentRequestService experimentService;
 
     //TODO Would like to move/wrap this in a PMB boundary/control specific class
-    // The summary table bean does not need to know about the BSPSampleSearchService
+    // The summary table bean does not need to know about the BSPCohortSearchService
     // For example the PMBSampleSearchService could supplement the samples that the
-    // BSPSampleSearchService with samples from an RP associated BSP Collection.
+    // BSPCohortSearchService with samples from an RP associated BSP Collection.
     @Inject
     private BSPSampleSearchService bspSampleSearchService;
 
