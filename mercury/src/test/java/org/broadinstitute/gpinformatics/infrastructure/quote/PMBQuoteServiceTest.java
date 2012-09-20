@@ -23,12 +23,12 @@ public class PMBQuoteServiceTest {
         Assert.assertEquals("NIAID (CO 5035331)", quote.getName());
         Assert.assertEquals("5035331", quote.getQuoteFunding().getFundingLevel().getFunding().getCostObject());
         Assert.assertEquals("GENSEQCTR_(NIH)NIAID",quote.getQuoteFunding().getFundingLevel().getFunding().getGrantDescription());
-        Assert.assertEquals(org.broadinstitute.gpinformatics.athena.infrastructure.quote.Funding.FUNDS_RESERVATION,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
+        Assert.assertEquals(Funding.FUNDS_RESERVATION,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
         Assert.assertEquals("DNA23H",quote.getAlphanumericId());
 
         quote = servicePMB.getQuoteByAlphaId("DNA3A9");
         Assert.assertEquals("HARVARD UNIVERSITY",quote.getQuoteFunding().getFundingLevel().getFunding().getInstitute());
-        Assert.assertEquals(org.broadinstitute.gpinformatics.athena.infrastructure.quote.Funding.PURCHASE_ORDER,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
+        Assert.assertEquals(Funding.PURCHASE_ORDER,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
         Assert.assertEquals("DNA3A9",quote.getAlphanumericId());
 
     }
@@ -51,10 +51,10 @@ public class PMBQuoteServiceTest {
                         Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
                         fundingTypes.add(funding.getFundingType());
                         //System.out.println(funding.getFundingType());
-                        if (org.broadinstitute.gpinformatics.athena.infrastructure.quote.Funding.FUNDS_RESERVATION.equals(funding.getFundingType())) {
+                        if (Funding.FUNDS_RESERVATION.equals(funding.getFundingType())) {
                             grants.add(funding.getGrantDescription());
                         }
-                        else if (org.broadinstitute.gpinformatics.athena.infrastructure.quote.Funding.PURCHASE_ORDER.equals(funding.getFundingType())) {
+                        else if (Funding.PURCHASE_ORDER.equals(funding.getFundingType())) {
                             pos.add(funding.getPurchaseOrderNumber());
                         }
                     }
@@ -63,7 +63,7 @@ public class PMBQuoteServiceTest {
             }
         }
         Assert.assertEquals(fundingTypes.size(), 3);   // includes null fundingType
-        Assert.assertTrue(fundingTypes.contains(org.broadinstitute.gpinformatics.athena.infrastructure.quote.Funding.FUNDS_RESERVATION));
+        Assert.assertTrue(fundingTypes.contains(Funding.FUNDS_RESERVATION));
         Assert.assertTrue(fundingTypes.contains(Funding.PURCHASE_ORDER));
     }
 
