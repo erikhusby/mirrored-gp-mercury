@@ -2,12 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 //import com.jprofiler.api.agent.Controller;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
-import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Test the factory

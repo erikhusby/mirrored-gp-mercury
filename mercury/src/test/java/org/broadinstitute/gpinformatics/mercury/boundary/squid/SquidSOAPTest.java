@@ -5,7 +5,7 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.control.pass.PassService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.TestInstance;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
-import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -14,7 +14,7 @@ import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.URL;
 
-import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * External integration test to connect to Squid's PASS related webservices

@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
-import org.broadinstitute.gpinformatics.mercury.integration.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 import java.net.URL;
 import java.util.Arrays;
 
-import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;

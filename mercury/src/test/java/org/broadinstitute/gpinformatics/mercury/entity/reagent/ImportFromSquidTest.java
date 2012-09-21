@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import com.sun.jersey.api.client.Client;
-import org.broadinstitute.gpinformatics.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;

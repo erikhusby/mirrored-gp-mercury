@@ -19,14 +19,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueReq
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFunding;
-import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.*;
 
-import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 
 public class BSPPlatingTest extends ContainerTest {

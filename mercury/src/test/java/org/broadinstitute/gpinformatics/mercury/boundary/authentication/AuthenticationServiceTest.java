@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.authentication;
 
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.AuthorizedRole;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.PageAuthorization;
-import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;

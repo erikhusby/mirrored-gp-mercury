@@ -4,7 +4,7 @@ import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.Lane;
 import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.SampleInfo;
-import org.broadinstitute.gpinformatics.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;

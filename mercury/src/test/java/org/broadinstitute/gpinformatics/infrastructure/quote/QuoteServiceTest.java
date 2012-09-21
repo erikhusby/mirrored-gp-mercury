@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
 public class QuoteServiceTest {
 

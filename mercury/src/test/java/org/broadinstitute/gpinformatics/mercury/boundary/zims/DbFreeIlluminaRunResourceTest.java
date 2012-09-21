@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 
 import java.util.HashMap;
 
-import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
 /**
  * Instead of spending so much time waiting for the thrift server

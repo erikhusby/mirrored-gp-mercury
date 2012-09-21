@@ -4,7 +4,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.testng.annotations.Test;
 
-import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
 import java.util.Collection;
 

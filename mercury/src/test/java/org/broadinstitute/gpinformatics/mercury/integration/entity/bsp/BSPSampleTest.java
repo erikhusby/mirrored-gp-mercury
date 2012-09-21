@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
 public class BSPSampleTest {
 

@@ -4,7 +4,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
  * Based on test from SequeL
  */
 
-import org.broadinstitute.gpinformatics.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

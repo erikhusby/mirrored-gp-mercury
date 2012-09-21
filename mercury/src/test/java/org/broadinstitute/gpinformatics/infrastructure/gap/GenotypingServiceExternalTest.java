@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.gap;
 
-import org.broadinstitute.gpinformatics.TestGroups;
-import org.broadinstitute.gpinformatics.athena.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -19,7 +20,7 @@ import javax.inject.Inject;
  * Date: 5/23/12
  * Time: 10:58 AM
  */
-public class GenotypingServiceExternalTest extends Arquillian {
+public class GenotypingServiceExternalTest extends ContainerTest {
 
 
     @BeforeMethod
@@ -36,7 +37,7 @@ public class GenotypingServiceExternalTest extends Arquillian {
     @Deployment
     public static WebArchive buildBridgeWar() {
 //        WebArchive war = DeploymentBuilder.buildBridgeWar();
-        WebArchive war = DeploymentBuilder.buildBridgeWarWithAlternatives(
+        WebArchive war = DeploymentBuilder.buildSequelWarWithAlternatives(
                 GenotypingServiceImpl.class
         );
         return war;

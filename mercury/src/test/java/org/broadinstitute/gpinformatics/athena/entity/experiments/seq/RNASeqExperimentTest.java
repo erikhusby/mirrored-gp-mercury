@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.AlignerType;
 import org.broadinstitute.gpinformatics.mercury.boundary.CoverageAndAnalysisInformation;
 import org.broadinstitute.gpinformatics.mercury.boundary.RNASeqPass;

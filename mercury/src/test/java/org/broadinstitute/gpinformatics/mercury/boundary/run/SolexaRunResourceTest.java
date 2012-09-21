@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import com.sun.jersey.api.client.Client;
-import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
 
-import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Test run registration web service

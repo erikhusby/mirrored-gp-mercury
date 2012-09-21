@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics;
+package org.broadinstitute.gpinformatics.infrastructure.test;
 
 
 public class TestGroups {

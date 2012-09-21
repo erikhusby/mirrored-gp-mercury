@@ -6,8 +6,8 @@ import org.testng.annotations.Test;
 
 import java.util.Collection;
 
-import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 public class PriceListCacheTest {
     

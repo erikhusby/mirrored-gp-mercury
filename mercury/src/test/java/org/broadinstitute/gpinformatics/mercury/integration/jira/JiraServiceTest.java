@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.util.Collection;
 
-import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 @Test(groups = EXTERNAL_INTEGRATION)
 public class JiraServiceTest {

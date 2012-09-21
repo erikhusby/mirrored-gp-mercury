@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.integration.test;
 
-import org.broadinstitute.gpinformatics.mercury.integration.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.integration.test.beans.SimpleService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;

@@ -9,7 +9,7 @@ import org.easymock.EasyMock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
 public class IlluminaRunResourceBadThriftTest {
 

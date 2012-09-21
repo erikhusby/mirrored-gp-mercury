@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.integration;
+package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -23,6 +23,8 @@ public class DeploymentBuilder {
 
     private static final String SEQUEL_WAR = "SequeL-Arquillian.war";
 
+
+
     /**
      * Called by default {@link #buildSequelWar()}, and also useful explicitly in the rare case where you want an
      * in-container test to run as if it's really in another environment (for instance, to isolate a production bug).
@@ -38,7 +40,11 @@ public class DeploymentBuilder {
                 // todo jmt switch this back to dev
                 .addAsWebInfResource(new File("src/test/resources/squid-prod-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
-                .addPackages(true, "org.broadinstitute.gpinformatics.mercury")
+                // TODO PMB
+                // TODO MLC this misses infrastucture and athena
+                // .addPackages(true, "org.broadinstitute.gpinformatics.mercury")
+                // this is yielding weird duplicate definition errors probably due to all our weird duplicate definitions
+                .addPackages(true, "org.broadinstitute.gpinformatics")
                 .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
         addWebResourcesTo(war, "src/test/resources/testdata");
         war = addWarDependencies(war);

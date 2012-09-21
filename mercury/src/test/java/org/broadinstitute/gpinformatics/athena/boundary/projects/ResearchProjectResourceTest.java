@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.broadinstitute.gpinformatics.athena.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjects;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -20,16 +20,11 @@ import static org.testng.AssertJUnit.assertNull;
  * Date: 5/9/12
  * Time: 1:56 PM
  */
-public class ResearchProjectResourceTest extends Arquillian {
+public class ResearchProjectResourceTest extends ContainerTest {
 
     @Inject
     ResearchProjectResource researchProjectResource;
 
-    @Deployment
-    public static WebArchive buildBridgeWar() {
-        WebArchive war = DeploymentBuilder.buildBridgeWar();
-        return war;
-    }
 
     @Test
     public void testFindResearchProjectById() throws Exception {

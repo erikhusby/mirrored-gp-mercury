@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.pass;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.boundary.SquidTopicPortype;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.testng.Assert;

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.quotes;
 
 
-import org.broadinstitute.gpinformatics.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PMBQuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.QAInstance;
 import org.broadinstitute.gpinformatics.infrastructure.quote.*;

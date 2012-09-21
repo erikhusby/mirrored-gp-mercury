@@ -2,11 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.integration.bsp;
 
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.project.PassBackedProjectPlan;
-import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Test that BSPStartingSample can initialize BSPDto

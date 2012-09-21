@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.log4j.Logger;
-import org.broadinstitute.gpinformatics.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollectionID;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;

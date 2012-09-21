@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.common;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
-import org.broadinstitute.gpinformatics.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.testng.annotations.Test;
