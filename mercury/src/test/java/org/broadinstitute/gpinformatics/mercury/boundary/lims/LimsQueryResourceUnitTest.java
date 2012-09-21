@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
 import static org.easymock.EasyMock.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;

@@ -14,7 +14,7 @@ import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.URL;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * External integration test to connect to Squid's PASS related webservices

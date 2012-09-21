@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
 import org.apache.thrift.TException;
-import org.broadinstitute.gpinformatics.mercury.TestGroups;
+import org.broadinstitute.gpinformatics.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

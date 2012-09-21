@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
 
 public class BSPLSIDUtilTest {
 

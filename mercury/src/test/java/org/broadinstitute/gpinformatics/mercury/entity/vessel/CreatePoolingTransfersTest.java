@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Imports from Squid the pooling transfers that were done in the user interface, before this transfer was messaged.

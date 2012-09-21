@@ -2,13 +2,12 @@ package org.broadinstitute.gpinformatics.athena.entity.common;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import org.broadinstitute.gpinformatics.TestGroups;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.testng.annotations.Test;
 
 import java.util.Date;
-
-import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,7 +22,7 @@ public class ChangeEventTest extends TestCase {
 
     }
 
-    @Test(groups = {UNIT})
+    @Test(groups = {TestGroups.DATABASE_FREE})
     public void testDatePerson() throws Exception {
 
         ChangeEvent changeEvent = new ChangeEvent(new Date(), new Person("person1", RoleType.BROAD_SCIENTIST));

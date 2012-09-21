@@ -1,11 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.gap;
 
+import org.broadinstitute.gpinformatics.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,7 +12,7 @@ import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
  * Date: 5/29/12
  * Time: 3:13 PM
  */
-@Test(groups = {UNIT})
+@Test(groups = {TestGroups.DATABASE_FREE})
 public class GenotypingServiceTest {
 
     GenotypingService genotypingService;

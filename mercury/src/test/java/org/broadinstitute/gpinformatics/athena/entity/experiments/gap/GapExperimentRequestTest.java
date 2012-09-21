@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments.gap;
 
+import org.broadinstitute.gpinformatics.TestGroups;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
@@ -11,7 +12,6 @@ import org.testng.annotations.Test;
 import java.beans.IntrospectionException;
 import java.util.Date;
 
-import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,7 +40,7 @@ public class GapExperimentRequestTest {
     }
 
 
-    @Test(groups = {UNIT})
+    @Test(groups = {TestGroups.DATABASE_FREE})
     public void testClass() throws IntrospectionException {
 
     }

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
 
 public class DBFreeBSPSampleTest {
 

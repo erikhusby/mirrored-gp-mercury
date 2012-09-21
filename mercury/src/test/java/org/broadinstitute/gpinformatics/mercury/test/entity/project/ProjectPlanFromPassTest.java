@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
 import static org.testng.Assert.*;
 
 public class ProjectPlanFromPassTest {

@@ -60,7 +60,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
 
 /**
  * A container free test of Exome Express

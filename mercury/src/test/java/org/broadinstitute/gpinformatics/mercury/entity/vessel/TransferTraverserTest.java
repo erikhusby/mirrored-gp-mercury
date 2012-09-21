@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Validate that the traverser finds events correctly

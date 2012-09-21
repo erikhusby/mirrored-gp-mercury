@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Test creation of plates

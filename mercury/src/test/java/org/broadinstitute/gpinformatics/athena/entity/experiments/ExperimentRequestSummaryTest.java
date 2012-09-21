@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments;
 
 import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.TestGroups;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -11,15 +12,13 @@ import org.testng.annotations.Test;
 
 import java.util.Date;
 
-import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
-
 /**
  * Created by IntelliJ IDEA.
  * User: mccrory
  * Date: 5/30/12
  * Time: 5:22 PM
  */
-@Test(groups = {UNIT})
+@Test(groups = {TestGroups.DATABASE_FREE})
 public class ExperimentRequestSummaryTest {
 
     private ExperimentRequestSummary experimentRequestSummary;

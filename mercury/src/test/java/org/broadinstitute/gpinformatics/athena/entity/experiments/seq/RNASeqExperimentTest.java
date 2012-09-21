@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 
 import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.AlignerType;
 import org.broadinstitute.gpinformatics.mercury.boundary.CoverageAndAnalysisInformation;
 import org.broadinstitute.gpinformatics.mercury.boundary.RNASeqPass;
@@ -16,7 +17,6 @@ import org.testng.annotations.Test;
 import java.util.Date;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
 import static org.testng.Assert.fail;
 
 /**
@@ -25,7 +25,7 @@ import static org.testng.Assert.fail;
  * Date: 5/30/12
  * Time: 2:51 PM
  */
-@Test(groups = {UNIT})
+@Test(groups = {TestGroups.DATABASE_FREE})
 public class RNASeqExperimentTest {
 
     private RNASeqExperiment rnaSeqExperiment;

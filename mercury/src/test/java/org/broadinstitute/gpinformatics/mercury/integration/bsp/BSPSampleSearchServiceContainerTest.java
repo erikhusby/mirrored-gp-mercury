@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.integration.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Test that BSPStartingSample can initialize BSPDto

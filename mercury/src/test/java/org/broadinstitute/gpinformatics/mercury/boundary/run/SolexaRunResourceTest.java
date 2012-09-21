@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Test run registration web service

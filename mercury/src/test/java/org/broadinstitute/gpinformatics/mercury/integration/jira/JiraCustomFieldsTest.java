@@ -8,7 +8,7 @@ import java.util.Collection;
 
 import static org.testng.Assert.*;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
 
 public class JiraCustomFieldsTest {
 

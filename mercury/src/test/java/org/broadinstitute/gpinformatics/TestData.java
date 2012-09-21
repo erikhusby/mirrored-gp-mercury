@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury;
+package org.broadinstitute.gpinformatics;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Retention;

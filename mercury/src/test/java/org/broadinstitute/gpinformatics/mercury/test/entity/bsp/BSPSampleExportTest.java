@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.*;
 
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.TestGroups.DATABASE_FREE;
 
 public class BSPSampleExportTest {
 

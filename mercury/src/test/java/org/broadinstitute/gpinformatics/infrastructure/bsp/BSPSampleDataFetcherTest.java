@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.testng.annotations.Test;
-import static org.broadinstitute.gpinformatics.mercury.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.TestGroups.EXTERNAL_INTEGRATION;
 
 public class BSPSampleDataFetcherTest {
 

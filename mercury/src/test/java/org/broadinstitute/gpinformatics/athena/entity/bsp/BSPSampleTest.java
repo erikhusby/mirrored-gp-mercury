@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.bsp;
 
+import org.broadinstitute.gpinformatics.TestGroups;
 import org.broadinstitute.gpinformatics.athena.JavaBeanTester;
 import org.testng.annotations.Test;
 
 import java.beans.IntrospectionException;
 
-import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
 
 public class BSPSampleTest {
 
@@ -37,7 +37,7 @@ public class BSPSampleTest {
 
 
 
-    @Test(groups = {UNIT})
+    @Test(groups = {TestGroups.DATABASE_FREE})
     public void testClass() throws IntrospectionException {
 
         JavaBeanTester.test(BSPSample.class, "bspDTO");

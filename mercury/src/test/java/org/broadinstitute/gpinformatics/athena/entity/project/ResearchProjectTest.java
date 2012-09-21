@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.log4j.Logger;
+import org.broadinstitute.gpinformatics.TestGroups;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollectionID;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
@@ -12,7 +13,6 @@ import org.testng.annotations.Test;
 
 import java.util.Date;
 
-import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,7 +20,7 @@ import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
  * Date: 4/12/12
  * Time: 11:26 AM
  */
-@Test(groups = {UNIT})
+@Test(groups = {TestGroups.DATABASE_FREE})
 public class ResearchProjectTest {
 
     private static final Logger LOG = Logger.getLogger(ResearchProjectTest.class);

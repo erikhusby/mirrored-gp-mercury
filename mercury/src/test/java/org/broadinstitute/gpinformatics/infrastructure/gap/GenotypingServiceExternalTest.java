@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.gap;
 
+import org.broadinstitute.gpinformatics.TestGroups;
 import org.broadinstitute.gpinformatics.athena.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -11,7 +12,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.athena.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,7 +43,7 @@ public class GenotypingServiceExternalTest extends Arquillian {
     }
 
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
     public void testLookupTechnologyProductById() throws Exception {
 
         // <product name="Omni1M"/>
