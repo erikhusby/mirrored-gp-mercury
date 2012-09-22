@@ -50,6 +50,10 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
 
     public PMBQuoteServiceImpl() {}
 
+    public PMBQuoteServiceImpl( QuoteConfig quoteConfig ) {
+        this.quoteConfig = quoteConfig;
+    }
+
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
         acceptAllServerCertificates(clientConfig);

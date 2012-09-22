@@ -1,14 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.integration.quotes;
 
 
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PMBQuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.QAInstance;
 import org.broadinstitute.gpinformatics.infrastructure.quote.*;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,10 +20,6 @@ public class QuotesCacheTest {
     Quote quote2 = new Quote("DNA33", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant"))), ApprovalStatus.FUNDED);
     Quote quote3 = new Quote("DNA34", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Cheap Grant"))), ApprovalStatus.FUNDED);
     Quote quote4 = new Quote("DNA35", new QuoteFunding(new FundingLevel("50", new Funding(Funding.FUNDS_RESERVATION, "NHGRI"))), ApprovalStatus.FUNDED);
-
-    @Inject
-    @QAInstance
-    private PMBQuoteService quoteService;
 
 
     @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
@@ -78,6 +71,8 @@ public class QuotesCacheTest {
     // Very Slow external test.
     @Test(groups = {TestGroups.EXTERNAL_INTEGRATION}, enabled = false)
     public void test_known_good_funding_sources() throws Exception {
+
+        PMBQuoteService quoteService = PMBQuoteServiceProducer.qaInstance();
 
         long start = System.currentTimeMillis();
         QuotesCache cache = new QuotesCache(quoteService.getAllQuotes());
