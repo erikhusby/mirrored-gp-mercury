@@ -22,6 +22,8 @@ import edu.mit.broad.prodinfo.squid.services.labopsjira.samples.LcSetSampleDataS
 import edu.mit.broad.prodinfo.squid.workrequest.entity.*;
 */
 
+import org.broadinstitute.gpinformatics.infrastructure.test.WeldBooter;
+
 /**
  * Commented out because it's an experiment
  * aimed at exporting squid data into

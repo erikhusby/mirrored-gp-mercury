@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury;
+package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;

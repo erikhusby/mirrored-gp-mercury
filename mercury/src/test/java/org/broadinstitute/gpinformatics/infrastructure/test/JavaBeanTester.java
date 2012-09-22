@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena;
+package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;

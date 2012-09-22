@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.athena.JavaBeanTester;
+import org.broadinstitute.gpinformatics.infrastructure.test.JavaBeanTester;
 import org.testng.annotations.Test;
 
 import java.beans.IntrospectionException;
