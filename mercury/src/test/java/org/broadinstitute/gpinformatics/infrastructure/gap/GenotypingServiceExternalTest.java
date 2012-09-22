@@ -1,14 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.gap;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.QAInstance;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -23,25 +18,9 @@ import javax.inject.Inject;
 public class GenotypingServiceExternalTest extends ContainerTest {
 
 
-    @BeforeMethod
-    public void setUp() throws Exception {
-    }
-
-    @AfterMethod
-    public void tearDown() throws Exception {
-    }
-
     @Inject
+    @QAInstance
     private GenotypingService genotypingService;
-
-    @Deployment
-    public static WebArchive buildBridgeWar() {
-//        WebArchive war = DeploymentBuilder.buildBridgeWar();
-        WebArchive war = DeploymentBuilder.buildSequelWarWithAlternatives(
-                GenotypingServiceImpl.class
-        );
-        return war;
-    }
 
 
     @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})

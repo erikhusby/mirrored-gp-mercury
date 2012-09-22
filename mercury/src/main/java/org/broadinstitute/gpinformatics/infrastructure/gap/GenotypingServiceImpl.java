@@ -80,6 +80,13 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
     @Inject
     private QuoteService quoteService;
 
+    public GenotypingServiceImpl() {}
+
+
+    public GenotypingServiceImpl( GAPConfig gapConfig ) {
+        this.gapConfig = gapConfig;
+    }
+
 
     public GapExperimentRequest populateQuotes(GapExperimentRequest gapExperimentRequest,
                                                QuoteService quoteService) {
