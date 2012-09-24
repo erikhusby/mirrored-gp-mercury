@@ -1,5 +1,5 @@
 
-# External system definitions.  These describe the various deployments of external systems with which SequeL might
+# External system definitions.  These describe the various deployments of external systems with which Mercury might
 # integrate.
 
 
@@ -112,11 +112,11 @@ thrift:
 
 
 
-# SequeL configuration, this describes how SequeL deployments are connected to external system deployments.
+# Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 
 
 
-sequel:
+mercury:
 
     DEV:
 

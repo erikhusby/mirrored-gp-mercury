@@ -20,7 +20,7 @@ jira:
 
 
 # qa and dev BSPs not working for me right now and I'm only doing light read-only stuff so just point to PROD
-sequel:
+mercury:
 
     TEST:
 
