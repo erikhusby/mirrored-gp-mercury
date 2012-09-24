@@ -4,8 +4,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>SequeL</groupId>
-    <artifactId>SequeL</artifactId>
+    <groupId>Mercury</groupId>
+    <artifactId>Mercury</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
@@ -23,7 +23,7 @@
     </parent>
     -->
 
-    <name>SequeL</name>
+    <name>Mercury</name>
     <description>The next generation Squid.</description>
 
     <url>${site.url}/${project.artifactId}</url>
@@ -173,9 +173,10 @@
         <jira.url>http://prodinfojira.broadinstitute.org:8080/jira</jira.url>
         <bamboo.url>http://prodinfobuild.broadinstitute.org:8085</bamboo.url>
 
-        <!-- git clone gitolite@git.broadinstitute.org:mercury -->
-        <git.url>gitolite@git.broadinstitute.org:sequel</git.url>
-        <git.browseUrl>https://crucible.broadinstitute.org/browse/sequel</git.browseUrl>
+        <!-- git clone ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git -->
+        <git.url>ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git</git.url>
+        <!-- 2012-09-23 MLC currently this is still pointed to the old Stash repo but Systems should be fixing this -->
+        <git.browseUrl>https://crucible.broadinstitute.org/browse/GPInformatics</git.browseUrl>
 
         <site.url>http://prodinfosvn.broadinstitute.org:8000/m2-projects</site.url>
         <site.path>/prodinfo/releng/m2-projects</site.path>
@@ -1556,7 +1557,7 @@
                 <version>2.2</version>
                 <executions>
                     <execution>
-                        <id>sequel-wsimport</id>
+                        <id>mercury-wsimport</id>
                         <goals>
                             <goal>wsimport</goal>
                         </goals>
