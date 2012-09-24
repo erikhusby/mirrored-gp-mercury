@@ -27,7 +27,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     public static WebArchive buildSequelWar() {
         // need TEST here for now because there's no STUBBY version of ThriftConfig
         // see ThriftServiceProducer.produce()
-        return DeploymentBuilder.buildSequelWar(TEST);
+        return DeploymentBuilder.buildMercuryWar(TEST);
     }
 
     @Override

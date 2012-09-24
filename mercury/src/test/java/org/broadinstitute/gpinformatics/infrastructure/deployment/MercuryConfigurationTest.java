@@ -15,11 +15,11 @@ import java.net.URL;
 import java.util.Map;
 
 @Test
-public class SequelConfigurationTest {
+public class MercuryConfigurationTest {
 
-    final String GLOBAL_YAML = "/config/test-sequel-config.yaml";
+    final String GLOBAL_YAML = "/config/test-mercury-config.yaml";
 
-    final String LOCAL_YAML = "/config/test-sequel-config-local.yaml";
+    final String LOCAL_YAML = "/config/test-mercury-config-local.yaml";
 
 
 
@@ -44,7 +44,7 @@ public class SequelConfigurationTest {
 
 
 
-        final SequelConfiguration configuration = SequelConfiguration.getInstance();
+        final MercuryConfiguration configuration = MercuryConfiguration.getInstance();
 
         configuration.clear();
         configuration.load(globalDoc, localDoc);

@@ -11,6 +11,6 @@ public class ContainerTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildSequelWar() {
-        return DeploymentBuilder.buildSequelWar();
+        return DeploymentBuilder.buildMercuryWar();
     }
 }

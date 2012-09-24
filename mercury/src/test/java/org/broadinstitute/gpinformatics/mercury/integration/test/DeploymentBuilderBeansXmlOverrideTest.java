@@ -21,7 +21,7 @@ public class DeploymentBuilderBeansXmlOverrideTest extends Arquillian {
 
     @Deployment
     public static WebArchive makeArchive() {
-        return DeploymentBuilder.buildSequelWarWithAlternatives(AlternativeSimpleServiceImpl.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(AlternativeSimpleServiceImpl.class);
     }
 
     @Test

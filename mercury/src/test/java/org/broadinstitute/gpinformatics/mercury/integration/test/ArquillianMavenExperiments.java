@@ -32,7 +32,7 @@ public class ArquillianMavenExperiments extends Arquillian {
 
 //    @Deployment
     public static Archive makeArchive() {
-        Archive archive = DeploymentBuilder.buildSequelWar(BEANS_XML);
+        Archive archive = DeploymentBuilder.buildMercuryWar(BEANS_XML);
         System.out.println(archive.toString(true));
         return archive;
     }

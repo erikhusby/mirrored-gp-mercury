@@ -15,7 +15,7 @@ public class RunEmbeddedSequel extends Arquillian {
 
     @Deployment(testable = false)
     public static WebArchive createDeployment() {
-        return DeploymentBuilder.buildSequelWar();
+        return DeploymentBuilder.buildMercuryWar();
     }
 
     @ArquillianResource

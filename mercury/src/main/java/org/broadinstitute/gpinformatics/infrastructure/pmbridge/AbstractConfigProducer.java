@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.pmbridge;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.SequelConfiguration;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 
 import java.lang.reflect.ParameterizedType;
 
@@ -26,6 +26,6 @@ public abstract class AbstractConfigProducer<C extends AbstractConfig> {
 
     public C produce( Deployment deployment ) {
 
-        return (C) SequelConfiguration.getInstance().getConfig(getTypeArgument(), deployment);
+        return (C) MercuryConfiguration.getInstance().getConfig(getTypeArgument(), deployment);
     }
 }

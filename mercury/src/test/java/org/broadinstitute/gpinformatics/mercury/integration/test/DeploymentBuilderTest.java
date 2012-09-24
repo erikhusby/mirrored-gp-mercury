@@ -20,7 +20,7 @@ public class DeploymentBuilderTest extends Arquillian {
 
     @Deployment
     public static WebArchive makeArchive() {
-        return DeploymentBuilder.buildSequelWar().addPackage("org.broadinstitute.gpinformatics.mercury.test.beans");
+        return DeploymentBuilder.buildMercuryWar().addPackage("org.broadinstitute.gpinformatics.mercury.test.beans");
     }
 
     @Test

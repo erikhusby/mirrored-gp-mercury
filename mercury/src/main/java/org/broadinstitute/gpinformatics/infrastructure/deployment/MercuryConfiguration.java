@@ -18,19 +18,19 @@ import java.util.Set;
 
 
 /**
- * Core class of SequeL configuration.  The two Maps in this class contain
+ * Core class of Mercury configuration.  The two Maps in this class contain
  *
  * <ol>
  *
  *     <li>Descriptions of external deployments.  These correspond to all stanzas except the "mercury" stanza in the
  *     configuration files.</li>
  *
- *     <li>Descriptions of how SequeL deployments connect to those external deployments.  This corresponds to the "mercury"
+ *     <li>Descriptions of how Mercury deployments connect to those external deployments.  This corresponds to the "mercury"
  *     stanza in the configuration file(s).</li>
  * </ol>
  *
  */
-public class SequelConfiguration {
+public class MercuryConfiguration {
 
     // Hopefully we can do something with portable extensions and @Observes ProcessAnnotatedType<T> to find these
     // automatically, and maybe something really sneaky to create qualified bean instances of these types to
@@ -46,11 +46,11 @@ public class SequelConfiguration {
     };
 
 
-    private static final String SEQUEL_CONFIG = "/sequel-config.yaml";
+    private static final String MERCURY_CONFIG = "/mercury-config.yaml";
 
-    private static final String SEQUEL_CONFIG_LOCAL = "/sequel-config-local.yaml";
+    private static final String MERCURY_CONFIG_LOCAL = "/mercury-config-local.yaml";
 
-    private static SequelConfiguration instance;
+    private static MercuryConfiguration instance;
 
     private class ExternalSystems {
 
@@ -84,9 +84,9 @@ public class SequelConfiguration {
     }
 
 
-    private class SequelConnections {
+    private class MercuryConnections {
 
-        // Map of system key ("bsp", "squid", "thrift") to a Map of *SequeL* Deployments to the corresponding external
+        // Map of system key ("bsp", "squid", "thrift") to a Map of *Mercury* Deployments to the corresponding external
         // system Deployment
         private Map<String, Map<Deployment, Deployment>> map =
                 new HashMap<String, Map<Deployment, Deployment>>();
@@ -97,25 +97,25 @@ public class SequelConfiguration {
             return map.size() != 0;
         }
 
-        public void set( String systemKey, Deployment sequelDeployment, Deployment externalDeployment ) {
+        public void set( String systemKey, Deployment mercuryDeployment, Deployment externalDeployment ) {
 
             if ( ! map.containsKey(systemKey) )
                 map.put(systemKey, new HashMap<Deployment, Deployment>());
 
-            map.get( systemKey ).put( sequelDeployment, externalDeployment );
+            map.get( systemKey ).put( mercuryDeployment, externalDeployment );
 
         }
 
 
-        public Deployment getExternalDeployment( String systemKey, Deployment sequelDeployment ) {
+        public Deployment getExternalDeployment( String systemKey, Deployment mercuryDeployment ) {
 
             if ( ! map.containsKey(systemKey) )
                 return null;
 
-            if ( ! map.get( systemKey ).containsKey( sequelDeployment ))
+            if ( ! map.get( systemKey ).containsKey( mercuryDeployment ))
                 return null;
 
-            return map.get( systemKey ).get( sequelDeployment );
+            return map.get( systemKey ).get( mercuryDeployment );
         }
 
     }
@@ -126,9 +126,9 @@ public class SequelConfiguration {
     private ExternalSystems externalSystems = new ExternalSystems();
 
 
-    // Map of system key ("bsp", "squid", "thrift") to *SequeL* Deployments to the corresponding external
+    // Map of system key ("bsp", "squid", "thrift") to *Mercury* Deployments to the corresponding external
     // system Deployment
-    private SequelConnections sequelConnections = new SequelConnections();
+    private MercuryConnections mercuryConnections = new MercuryConnections();
 
 
 
@@ -152,19 +152,19 @@ public class SequelConfiguration {
     /**
      * Private to force access through {@link #getInstance()}
      */
-    private SequelConfiguration() {}
+    private MercuryConfiguration() {}
 
 
-    public static SequelConfiguration getInstance() {
+    public static MercuryConfiguration getInstance() {
         if ( instance == null )
-            instance = new SequelConfiguration();
+            instance = new MercuryConfiguration();
 
         return instance;
     }
 
 
     /**
-     * Load the configuration of external systems only, not the SequeL connections to those systems
+     * Load the configuration of external systems only, not the Mercury connections to those systems
      *
      * @param doc Top-level YAML document
      */
@@ -176,7 +176,7 @@ public class SequelConfiguration {
             String systemKey = section.getKey();
 
             // this method doesn't deal with mercury connections
-            if ( "sequel".equals(systemKey) )
+            if ( "mercury".equals(systemKey) )
                 continue;
 
             final Class<? extends AbstractConfig> configClass = getConfigClass(systemKey);
@@ -217,31 +217,33 @@ public class SequelConfiguration {
 
 
     /**
-     * Load the SequeL connections to external system deployments
+     * Load the Mercury connections to external system deployments
      *
      * @param doc
      * @param globalConfig
      */
-    private void loadSequelConnections(Map<String, Map> doc, boolean globalConfig) {
+    private void loadMercuryConnections(Map<String, Map> doc, boolean globalConfig) {
 
-        if ( ! doc.containsKey("sequel") ) {
+        final String APP_KEY = "mercury";
+
+        if ( ! doc.containsKey(APP_KEY) ) {
             if ( globalConfig )
-                throw new RuntimeException("'sequel' key not found in global configuration file!");
+                throw new RuntimeException("'" + APP_KEY + "' key not found in global configuration file!");
             // for local config, there is nothing to do if there's no 'mercury' key
             return;
         }
 
 
-        Map<String, Map> deploymentsMap = doc.get("sequel");
+        Map<String, Map> deploymentsMap = doc.get(APP_KEY);
 
         for (Map.Entry<String, Map> deployments : deploymentsMap.entrySet()) {
 
-            String sequelDeploymentString = deployments.getKey();
-            if ( Deployment.valueOf( sequelDeploymentString ) == null )
-                throw new RuntimeException("Unrecognized deployment '" + sequelDeploymentString + "'");
+            String mercuryDeploymentString = deployments.getKey();
+            if ( Deployment.valueOf( mercuryDeploymentString ) == null )
+                throw new RuntimeException("Unrecognized deployment '" + mercuryDeploymentString + "'");
 
 
-            Deployment sequelDeployment = Deployment.valueOf(sequelDeploymentString);
+            Deployment mercuryDeployment = Deployment.valueOf(mercuryDeploymentString);
             Map<String, String> systemsMappings = ( Map<String, String>) deployments.getValue();
 
             for (Map.Entry<String, String> systemsMapping : systemsMappings.entrySet()) {
@@ -260,10 +262,10 @@ public class SequelConfiguration {
                 final AbstractConfig config = externalSystems.getConfig(systemKey, externalDeployment);
 
                 if ( config == null )
-                    throw new RuntimeException("Unrecognized external system in sequel connections: '" + systemKey + "'");
+                    throw new RuntimeException("Unrecognized external system in mercury connections: '" + systemKey + "'");
 
 
-                sequelConnections.set(systemKey, sequelDeployment, externalDeployment);
+                mercuryConnections.set(systemKey, mercuryDeployment, externalDeployment);
 
             }
 
@@ -294,7 +296,7 @@ public class SequelConfiguration {
      */
     /* package */ void clear() {
         externalSystems = new ExternalSystems();
-        sequelConnections = new SequelConnections();
+        mercuryConnections = new MercuryConnections();
     }
 
 
@@ -309,10 +311,10 @@ public class SequelConfiguration {
 
         // now process the mercury connections to those systems
         // second parameter indicates whether global or not.  global config must have "mercury" section.
-        loadSequelConnections(globalConfigDoc, true);
+        loadMercuryConnections(globalConfigDoc, true);
 
         if ( localConfigDoc != null )
-            loadSequelConnections(localConfigDoc, false);
+            loadMercuryConnections(localConfigDoc, false);
 
 
     }
@@ -320,25 +322,25 @@ public class SequelConfiguration {
 
     public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
 
-        if ( ! sequelConnections.isInitialized() ) {
+        if ( ! mercuryConnections.isInitialized() ) {
 
             synchronized (this) {
 
-                if ( ! sequelConnections.isInitialized() ) {
+                if ( ! mercuryConnections.isInitialized() ) {
 
                     InputStream is;
 
-                    is = getClass().getResourceAsStream(SEQUEL_CONFIG);
+                    is = getClass().getResourceAsStream(MERCURY_CONFIG);
 
                     if (is == null)
-                        throw new RuntimeException("Cannot find global config file '" + SEQUEL_CONFIG + "'");
+                        throw new RuntimeException("Cannot find global config file '" + MERCURY_CONFIG + "'");
 
                     Yaml yaml = new Yaml();
                     final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
 
                     // take local overrides if any
                     Map<String, Map> localConfigDoc = null;
-                    is = getClass().getResourceAsStream(SEQUEL_CONFIG_LOCAL);
+                    is = getClass().getResourceAsStream(MERCURY_CONFIG_LOCAL);
 
                     if (is != null)
                         localConfigDoc = (Map<String, Map>) yaml.load(is);
@@ -352,8 +354,8 @@ public class SequelConfiguration {
 
         String systemKey = getConfigKey(clazz);
 
-        // Find the external deployment for this system key and SequeL deployment
-        Deployment externalDeployment = sequelConnections.getExternalDeployment(systemKey, deployment);
+        // Find the external deployment for this system key and Mercury deployment
+        Deployment externalDeployment = mercuryConnections.getExternalDeployment(systemKey, deployment);
 
 
         // Look up the config for this system

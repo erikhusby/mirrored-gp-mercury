@@ -32,7 +32,7 @@ public class IlluminaRunQueryTest extends Arquillian {
 
     @Deployment(testable = false)
     public static WebArchive createDeployment() {
-        return DeploymentBuilder.buildSequelWarWithAlternatives(StubThriftService.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(StubThriftService.class);
     }
 
     @Drone

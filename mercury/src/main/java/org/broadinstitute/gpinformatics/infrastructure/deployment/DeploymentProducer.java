@@ -15,20 +15,22 @@ import java.io.Serializable;
 @Startup
 @Singleton
 /**
- * This class is responsible for looking up the value of <pre>SEQUEL_DEPLOYMENT</pre> from JNDI or the JNDI environment.
+ * This class is responsible for looking up the value of <pre>MERCURY_DEPLOYMENT</pre> from JNDI or the JNDI environment.
  * The former is set in Glassfish Custom JNDI resources (resource type is String, name = 'value', value is one of
  * DEV, TEST, QA, or PROD).  In Arquillian tests extending {@link ContainerTest}, a jndi.properties file is supplied in
  * the archive that
- * will set SEQUEL_DEPLOYMENT to the value of STUBBY in the JNDI environment.  This class is annotated as
+ * will set MERCURY_DEPLOYMENT to the value of STUBBY in the JNDI environment.  This class is annotated as
  * {@link Startup} and {@link Singleton}, so it will do this JNDI lookup on artifact deployment.  Failure to resolve
- * SEQUEL_DEPLOYMENT or have the value match one of DEV, TEST, QA, PROD, or STUBBY is a fatal error that will halt
+ * MERCURY_DEPLOYMENT or have the value match one of DEV, TEST, QA, PROD, or STUBBY is a fatal error that will halt
  * deployment.
  *
  */
 public class DeploymentProducer implements Serializable {
 
 
-    public static final String SEQUEL_DEPLOYMENT = "SEQUEL_DEPLOYMENT";
+    public static final String MERCURY_DEPLOYMENT = "MERCURY_DEPLOYMENT";
+
+
     @Inject
     private Log log;
 
@@ -48,11 +50,11 @@ public class DeploymentProducer implements Serializable {
 
         try {
 
-            // NamingException lookup failures checked below if SEQUEL_DEPLOYMENT is not found
-            deploymentString = jndiResolver.lookupProperty(SEQUEL_DEPLOYMENT);
+            // NamingException lookup failures checked below if MERCURY_DEPLOYMENT is not found
+            deploymentString = jndiResolver.lookupProperty(MERCURY_DEPLOYMENT);
 
             // NullPointerException or IllegalArgumentException from Enum#valueOf() checked below, exceptions propagated
-            // to abort deployment if we don't like the value of SEQUEL_DEPLOYMENT
+            // to abort deployment if we don't like the value of MERCURY_DEPLOYMENT
             deployment = Deployment.valueOf(deploymentString);
 
             log.info("SequeL deployment specified in JNDI, set to " + deploymentString);
@@ -64,18 +66,18 @@ public class DeploymentProducer implements Serializable {
 
             // This represents a failure to find the property in JNDI at all.  Per 2012-06-13 Exome Express meeting
             // we are treating this as a Big Deal and aborting the deployment by throwing a RuntimeException.
-            log.error("JNDI lookup of " + SEQUEL_DEPLOYMENT + " property failed! " + e);
+            log.error("JNDI lookup of " + MERCURY_DEPLOYMENT + " property failed! " + e);
             throw new RuntimeException(e);
         }
 
         catch (NullPointerException e) {
-            log.error("JNDI lookup of " + SEQUEL_DEPLOYMENT + " failed, found " + SEQUEL_DEPLOYMENT + "=" + deploymentString);
+            log.error("JNDI lookup of " + MERCURY_DEPLOYMENT + " failed, found " + MERCURY_DEPLOYMENT + "=" + deploymentString);
             log.error(e);
             throw e;
         }
 
         catch (IllegalArgumentException e) {
-            log.error("JNDI lookup of " + SEQUEL_DEPLOYMENT + " failed, found " + SEQUEL_DEPLOYMENT + "=" + deploymentString);
+            log.error("JNDI lookup of " + MERCURY_DEPLOYMENT + " failed, found " + MERCURY_DEPLOYMENT + "=" + deploymentString);
             log.error(e);
             throw e;
         }

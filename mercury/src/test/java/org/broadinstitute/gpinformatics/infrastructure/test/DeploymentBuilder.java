@@ -21,19 +21,19 @@ import java.util.Collection;
  */
 public class DeploymentBuilder {
 
-    private static final String SEQUEL_WAR = "SequeL-Arquillian.war";
+    private static final String MERCURY_WAR = "Mercury-Arquillian.war";
 
 
 
     /**
-     * Called by default {@link #buildSequelWar()}, and also useful explicitly in the rare case where you want an
+     * Called by default {@link #buildMercuryWar()}, and also useful explicitly in the rare case where you want an
      * in-container test to run as if it's really in another environment (for instance, to isolate a production bug).
      *
      * @param deployment
      * @return
      */
-    public static WebArchive buildSequelWar(Deployment deployment) {
-        WebArchive war = ShrinkWrap.create(ExplodedImporter.class, SEQUEL_WAR)
+    public static WebArchive buildMercuryWar(Deployment deployment) {
+        WebArchive war = ShrinkWrap.create(ExplodedImporter.class, MERCURY_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
                 .addAsWebInfResource(new File("src/test/resources/mercury-dev-ds.xml"))
@@ -45,7 +45,7 @@ public class DeploymentBuilder {
                 // .addPackages(true, "org.broadinstitute.gpinformatics.mercury")
                 // this is yielding weird duplicate definition errors probably due to all our weird duplicate definitions
                 .addPackages(true, "org.broadinstitute.gpinformatics")
-                .addAsWebInfResource(new StringAsset("SEQUEL_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
+                .addAsWebInfResource(new StringAsset("MERCURY_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
         addWebResourcesTo(war, "src/test/resources/testdata");
         war = addWarDependencies(war);
         return war;
@@ -62,20 +62,20 @@ public class DeploymentBuilder {
     }
 
 
-    public static WebArchive buildSequelWar() {
+    public static WebArchive buildMercuryWar() {
 
-        return buildSequelWar(Deployment.STUBBY);
+        return buildMercuryWar(Deployment.STUBBY);
     }
 
 
-    public static WebArchive buildSequelWar(String beansXml) {
-        WebArchive war = ShrinkWrap.create(WebArchive.class, SEQUEL_WAR)
+    public static WebArchive buildMercuryWar(String beansXml) {
+        WebArchive war = ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
                 .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
-                .merge(buildSequelWar());
+                .merge(buildMercuryWar());
         return war;
     }
 
-    public static WebArchive buildSequelWarWithAlternatives(String... alternatives) {
+    public static WebArchive buildMercuryWarWithAlternatives(String... alternatives) {
         StringBuilder sb = new StringBuilder();
         sb.append("<beans>\n")
                 .append("  <alternatives>\n");
@@ -84,10 +84,10 @@ public class DeploymentBuilder {
         }
         sb.append("  </alternatives>\n")
                 .append("</beans>");
-        return buildSequelWar(sb.toString());
+        return buildMercuryWar(sb.toString());
     }
 
-    public static WebArchive buildSequelWarWithAlternatives(Class... alternatives) {
+    public static WebArchive buildMercuryWarWithAlternatives(Class... alternatives) {
         StringBuilder sb = new StringBuilder();
         sb.append("<beans>\n")
                 .append("  <alternatives>\n");
@@ -100,7 +100,7 @@ public class DeploymentBuilder {
         }
         sb.append("  </alternatives>\n")
                 .append("</beans>");
-        return buildSequelWar(sb.toString());
+        return buildMercuryWar(sb.toString());
     }
 
     private static JavaArchive addTestHelpers(JavaArchive archive) {

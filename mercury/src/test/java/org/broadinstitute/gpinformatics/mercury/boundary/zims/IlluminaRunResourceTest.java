@@ -48,8 +48,8 @@ public class IlluminaRunResourceTest extends ContainerTest {
 
     @Deployment
     public static WebArchive buildSequelWar() {
-        return DeploymentBuilder.buildSequelWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class,
-                                                                MockThriftService.class)
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class,
+                MockThriftService.class)
                 .addAsResource(ThriftFileAccessor.RUN_FILE);
     }
 
