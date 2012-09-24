@@ -759,7 +759,7 @@
                     <testResource>
                         <directory>src/main/webapp/WEB-INF/classes</directory>
                         <includes>
-                            <include>sequel-config.yaml</include>
+                            <include>mercury-config.yaml</include>
                         </includes>
                     </testResource>
                 </testResources>
@@ -779,7 +779,7 @@
                     <testResource>
                         <directory>src/main/webapp/WEB-INF/classes</directory>
                         <includes>
-                            <include>sequel-config.yaml</include>
+                            <include>mercury-config.yaml</include>
                         </includes>
                     </testResource>
                 </testResources>
@@ -1659,7 +1659,7 @@
                             <!-- this is relative to the pom.xml directory -->
                             <directory>.</directory>
                             <includes>
-                                <include>sequel-config-local.yaml</include>
+                                <include>mercury-config-local.yaml</include>
                             </includes>
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
@@ -1719,7 +1719,7 @@
             <testResource>
                 <directory>src/main/webapp/WEB-INF/classes</directory>
                 <includes>
-                    <include>sequel-config.yaml</include>
+                    <include>mercury-config.yaml</include>
                 </includes>
             </testResource>
         </testResources>
