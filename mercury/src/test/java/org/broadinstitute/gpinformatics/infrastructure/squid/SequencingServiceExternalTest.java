@@ -6,15 +6,10 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.OrganismNa
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.ReferenceSequenceName;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.List;
 
 import static org.testng.Assert.assertNotNull;
@@ -27,28 +22,18 @@ import static org.testng.Assert.assertNotNull;
  * Time: 2:55 PM
  */
 @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
-public class SequencingServiceExternalTest extends Arquillian {
+public class SequencingServiceExternalTest  {
 
-    @Inject
     private PMBSequencingService sequencingService;
-
-    @Deployment
-    public static WebArchive buildBridgeWar() {
-//        WebArchive war = DeploymentBuilder.buildBridgeWar();
-        WebArchive war = DeploymentBuilder.buildMercuryWarWithAlternatives(
-                PMBSequencingServiceImpl.class
-        );
-        return war;
-    }
 
 
     @BeforeSuite(alwaysRun = true)
     public void setupSuite() {
         int i = 0;
+        sequencingService = PMBSequencingServiceProducer.qaInstance();
     }
 
 
-    @Test
     public void testGetPlatformPeople() throws Exception {
 
         List<Person> aList = sequencingService.getPlatformPeople();
@@ -58,7 +43,6 @@ public class SequencingServiceExternalTest extends Arquillian {
 
     }
 
-    @Test
     public void testGetOrganisms() throws Exception {
 
         List<OrganismName> aList = sequencingService.getOrganisms();
@@ -69,7 +53,6 @@ public class SequencingServiceExternalTest extends Arquillian {
 
     }
 
-    @Test
     public void testGetBaitSets() throws Exception {
         List<BaitSetName> aList = sequencingService.getBaitSets();
         assertNotNull(aList);
@@ -77,7 +60,6 @@ public class SequencingServiceExternalTest extends Arquillian {
         assertNotNull(baitSetName.name);
     }
 
-    @Test
     public void testGetReferenceSequences() throws Exception {
         List<ReferenceSequenceName> aList = sequencingService.getReferenceSequences();
         assertNotNull(aList);
@@ -86,7 +68,6 @@ public class SequencingServiceExternalTest extends Arquillian {
         assertNotNull(referenceSequenceName.getId());
     }
 
-    @Test
     public void testGetRequestSummariesByCreator() throws Exception {
 
         List<ExperimentRequestSummary> aList = sequencingService.getRequestSummariesByCreator(new Person("athena", RoleType.PROGRAM_PM));

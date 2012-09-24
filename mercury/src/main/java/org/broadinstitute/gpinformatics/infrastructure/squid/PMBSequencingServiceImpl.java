@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.*;
 
+import javax.inject.Inject;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import java.net.MalformedURLException;
@@ -43,23 +44,29 @@ public class PMBSequencingServiceImpl implements PMBSequencingService {
 
     private SquidTopicPortype squidServicePort;
     private boolean initialized = false;
-    private PMBSeqConnectionParameters seqConnectionParameters;
+
+
+    public final String SQUID_NAMESPACE = "urn:SquidTopic";
+    public final String SQUID_TOPIC = "SquidTopicService";
+    public final String SQUID_WSDL = "/services/SquidTopicService?WSDL";
+
+
+
+    @Inject
+    private SquidConfig squidConfig;
 
     public PMBSequencingServiceImpl() {
     }
 
-    /* TODO PMB JBoss rightly complains that it cannot find an implementation of PMBSeqConnectionParameters to inject here...
-    @Inject
-    public PMBSequencingServiceImpl(PMBSeqConnectionParameters seqConnectionParameters) throws MalformedURLException {
 
-        this.seqConnectionParameters = seqConnectionParameters;
-        init(seqConnectionParameters);
+    public PMBSequencingServiceImpl( SquidConfig squidConfig ) {
+        this.squidConfig = squidConfig;
     }
-    */
 
-    private void init(final PMBSeqConnectionParameters seqConnectionParameters) throws MalformedURLException {
-        QName serviceName = new QName(PMBSeqConnectionParameters.SQUID_NAMESPACE, PMBSeqConnectionParameters.SQUID_TOPIC);
-        String wsdlURL = seqConnectionParameters.getSquidRoot() + PMBSeqConnectionParameters.SQUID_WSDL;
+
+    private void init(final SquidConfig seqConnectionParameters) throws MalformedURLException {
+        QName serviceName = new QName(SQUID_NAMESPACE, SQUID_TOPIC);
+        String wsdlURL = seqConnectionParameters.getUrl() + SQUID_WSDL;
         URL url = new URL(wsdlURL);
         Service service = Service.create(url, serviceName);
         squidServicePort = service.getPort(serviceName, SquidTopicPortype.class);
@@ -72,7 +79,7 @@ public class PMBSequencingServiceImpl implements PMBSequencingService {
         try {
             // Try to initialize.
             if (!initialized) {
-                init(seqConnectionParameters);
+                init(squidConfig);
             }
 
             // Try to test connection.
@@ -81,7 +88,7 @@ public class PMBSequencingServiceImpl implements PMBSequencingService {
 
         } catch (Exception e) {
             initialized = false;
-            String squidRoot = (seqConnectionParameters != null ? seqConnectionParameters.getSquidRoot() : "Null SeqConnectionParameters.");
+            String squidRoot = (squidServicePort != null ? squidConfig.getUrl() : "Null SeqConnectionParameters.");
             String errMsg = "Could not connect to Sequencing platform. Squidroot : " + squidRoot;
             logger.error(errMsg);
             throw new RuntimeException(errMsg, e);
