@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 
 
-import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Alternative;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * Date: 5/17/12
  * Time: 11:26 AM
  */
-@Default
+@Alternative
 // TODO PMB review why extending impl
 public class MockPMBQuoteServiceImpl extends PMBQuoteServiceImpl {
 

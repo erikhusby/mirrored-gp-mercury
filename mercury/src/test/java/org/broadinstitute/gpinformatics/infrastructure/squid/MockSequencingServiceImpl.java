@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
+package org.broadinstitute.gpinformatics.infrastructure.squid;
 
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.BaitSetName;
@@ -18,8 +18,9 @@ import java.util.List;
  * Date: 5/11/12
  * Time: 1:54 PM
  */
+//TODO Needs refactor to remove it
 @Alternative
-public class MockSequencingServiceImpl implements SequencingService {
+public class MockSequencingServiceImpl implements PMBSequencingService {
 
     @Override
     public List<Person> getPlatformPeople() {

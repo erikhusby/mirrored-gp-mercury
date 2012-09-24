@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
+package org.broadinstitute.gpinformatics.infrastructure.squid;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentId;
@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.*;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.easymock.EasyMock;
 import org.testng.Assert;
@@ -17,7 +18,6 @@ import org.testng.annotations.Test;
 import java.math.BigInteger;
 import java.util.*;
 
-import static org.broadinstitute.gpinformatics.athena.TestGroups.UNIT;
 import static org.testng.Assert.*;
 
 /**
@@ -26,12 +26,12 @@ import static org.testng.Assert.*;
  * Date: 5/3/12
  * Time: 2:55 PM
  */
-@Test(groups = TestGroups.UNIT)
+@Test(groups = TestGroups.DATABASE_FREE)
 public class SequencingServiceTest {
 
     public static final String SHOULD_HAVE_THROWN_EXCEPTION = "Should have thrown exception ";
     private SquidTopicPortype mockSquidTopicPortype = null;
-    private SequencingServiceImpl sequencingService = null;
+    private PMBSequencingServiceImpl sequencingService = null;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -39,7 +39,7 @@ public class SequencingServiceTest {
         //Create and configure the mock
         mockSquidTopicPortype = EasyMock.createMock(SquidTopicPortype.class);
         EasyMock.expect(mockSquidTopicPortype.getGreeting()).andReturn("UnitTest Greeting").anyTimes();
-        sequencingService = new SequencingServiceImpl(mockSquidTopicPortype);
+        sequencingService = new PMBSequencingServiceImpl(mockSquidTopicPortype);
 
     }
 
@@ -75,10 +75,10 @@ public class SequencingServiceTest {
         List<Person> people = sequencingService.getPlatformPeople();
         Assert.assertNotNull(people);
         Assert.assertEquals(people.size(), 1);
-        Assert.assertEquals(people.get(0).getUsername(), "tester");
-        Assert.assertEquals(people.get(0).getLastName(), "Tester");
-        Assert.assertEquals(people.get(0).getPersonId().compareTo("100"), 0);
-        Assert.assertEquals(people.get(0).getRoleType(), RoleType.BROAD_SCIENTIST);
+        assertEquals(people.get(0).getUsername(), "tester");
+        assertEquals(people.get(0).getLastName(), "Tester");
+        assertEquals(people.get(0).getPersonId().compareTo("100"), 0);
+        assertEquals(people.get(0).getRoleType(), RoleType.BROAD_SCIENTIST);
 
     }
 
@@ -105,8 +105,8 @@ public class SequencingServiceTest {
         organismNames = sequencingService.getOrganisms();
         Assert.assertNotNull(organismNames);
         Assert.assertEquals(organismNames.size(), 1);
-        Assert.assertEquals(organismNames.get(0).getCommonName(), "velociraptor");
-        Assert.assertEquals(organismNames.get(0).getId(), 48L);
+        assertEquals(organismNames.get(0).getCommonName(), "velociraptor");
+        assertEquals(organismNames.get(0).getId(), 48L);
 
     }
 
@@ -133,8 +133,8 @@ public class SequencingServiceTest {
         baitSetNames = sequencingService.getBaitSets();
         Assert.assertNotNull(baitSetNames);
         Assert.assertEquals(baitSetNames.size(), 1);
-        Assert.assertEquals(baitSetNames.get(0).name, "aBaitSet");
-        Assert.assertEquals(baitSetNames.get(0).getId(), 12L);
+        assertEquals(baitSetNames.get(0).name, "aBaitSet");
+        assertEquals(baitSetNames.get(0).getId(), 12L);
 
     }
 
@@ -167,8 +167,8 @@ public class SequencingServiceTest {
         referenceSequenceNames = sequencingService.getReferenceSequences();
         Assert.assertNotNull(referenceSequenceNames);
         Assert.assertEquals(referenceSequenceNames.size(), 1);
-        Assert.assertEquals(referenceSequenceNames.get(0).name, "aReferenceSequence");
-        Assert.assertEquals(referenceSequenceNames.get(0).getId(), 99L);
+        assertEquals(referenceSequenceNames.get(0).name, "aReferenceSequence");
+        assertEquals(referenceSequenceNames.get(0).getId(), 99L);
 
     }
 
@@ -262,7 +262,7 @@ public class SequencingServiceTest {
 
         for (ExperimentRequestSummary experimentRequestSummary : aList) {
             assertNotNull(experimentRequestSummary);
-            Assert.assertEquals(experimentRequestSummary.getCreation().date, today.getTime());
+            assertEquals(experimentRequestSummary.getCreation().date, today.getTime());
             assertNotNull(experimentRequestSummary.getStatus());
             assertNotNull(experimentRequestSummary.getResearchProjectId());
             assertNotNull(experimentRequestSummary.getTitle());
@@ -334,7 +334,7 @@ public class SequencingServiceTest {
         Assert.assertNotNull(seqExperimentRequest);
         Assert.assertTrue(seqExperimentRequest instanceof WholeGenomeExperiment);
         WholeGenomeExperiment wholeGenomeExperiment = (WholeGenomeExperiment) seqExperimentRequest;
-        Assert.assertEquals(wholeGenomeExperiment.getPlatformProjectManagers().size(), 3);
+        assertEquals(wholeGenomeExperiment.getPlatformProjectManagers().size(), 3);
 //        for (Person person :  wholeGenomeExperiment.getProgramProjectManagers(). ) {
 //
 //        }

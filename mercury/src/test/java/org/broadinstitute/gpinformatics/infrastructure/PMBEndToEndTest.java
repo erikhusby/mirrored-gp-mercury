@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena;
+package org.broadinstitute.gpinformatics.infrastructure;
 
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResource;
@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.SeqExperim
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceImpl;
@@ -21,8 +22,9 @@ import org.broadinstitute.gpinformatics.infrastructure.gap.GenotypingService;
 import org.broadinstitute.gpinformatics.infrastructure.gap.GenotypingServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.gap.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.*;
-import org.broadinstitute.gpinformatics.athena.infrastructure.squid.SequencingService;
-import org.broadinstitute.gpinformatics.athena.infrastructure.squid.SequencingServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.squid.PMBSequencingService;
+import org.broadinstitute.gpinformatics.infrastructure.squid.PMBSequencingServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -36,8 +38,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.athena.TestGroups.EXTERNAL_INTEGRATION;
-import static org.testng.Assert.fail;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,9 +48,9 @@ import static org.testng.Assert.fail;
  * Time: 11:26 AM
  */
 @Test(groups = {EXTERNAL_INTEGRATION})
-public class EndToEndTest extends Arquillian {
+public class PMBEndToEndTest extends Arquillian {
 
-    private static final Logger LOG = Logger.getLogger(EndToEndTest.class);
+    private static final Logger LOG = Logger.getLogger(PMBEndToEndTest.class);
     private static final BSPSampleSearchColumn[] DefaultMetaDataColumns = BSPSampleSearchColumn.values();
 
     @Inject
@@ -59,17 +61,19 @@ public class EndToEndTest extends Arquillian {
     @Inject
     private BSPSampleSearchService bspService;
     @Inject
-    private SequencingService sequencingService;
+    private BSPCohortSearchService bspCohortService;
+    @Inject
+    private PMBSequencingService sequencingService;
     @Inject
     private GenotypingService genotypingService;
     @Inject
-    private QuoteService quoteService;
+    private PMBQuoteService quoteService;
 
     @Deployment
     public static WebArchive buildBridgeWar() {
 //        WebArchive war = DeploymentBuilder.buildBridgeWar();
-        WebArchive war = DeploymentBuilder.buildBridgeWarWithAlternatives(
-                SequencingServiceImpl.class,
+        WebArchive war = DeploymentBuilder.buildMercuryWarWithAlternatives(
+                PMBSequencingServiceImpl.class,
                 GenotypingServiceImpl.class,
                 BSPSampleSearchServiceImpl.class
         );
@@ -136,11 +140,10 @@ public class EndToEndTest extends Arquillian {
 
         // Get the samples for this cohort.
         BSPCollection bspCollection = myResearchProject.getSampleCohorts().iterator().next();
-        List<String> sampleList = bspService.runSampleSearchByCohort(bspCollection);
+        List<String> sampleList = bspCohortService.runSampleSearchByCohort(bspCollection);
 
         // Get sample meta data for all of these samples
         List<String[]> sampleMetaData = bspService.runSampleSearch(sampleList, DefaultMetaDataColumns);
-
 
         //Validate the experiment request with Squid.
         sequencingService.validatePlatformRequest(seqExperimentRequest);
@@ -245,7 +248,7 @@ public class EndToEndTest extends Arquillian {
                 new Name("MyResearchProject"), "To study stuff.");
 
         //COHORTS - Gets all cohorts from BSP for this program PM
-        Set<BSPCollection> cohorts = bspService.getCohortsByUser(programMgr);
+        Set<BSPCollection> cohorts = bspCohortService.getCohortsByUser(programMgr);
         for (BSPCollection bspCollection : cohorts) {
             System.out.println("Found BSP collection : " + bspCollection.name);
         }
@@ -255,7 +258,7 @@ public class EndToEndTest extends Arquillian {
         if (cohorts.size() > 0) {
             selectedSampleCollection = cohorts.iterator().next();
         } else {
-            fail("No elements found");
+            Assert.fail("No elements found");
         }
 
         // Add it to the research project.

@@ -154,11 +154,13 @@
             <url-pattern>/dummy-url/*</url-pattern>
         </web-resource-collection>
         <auth-constraint>
-            <role-name>Sequel-Admins</role-name>
-            <role-name>Sequel-LabUsers</role-name>
-            <role-name>Sequel-LabManagers</role-name>
-            <role-name>Sequel-ProjectManagers</role-name>
-            <role-name>Sequel-Developers</role-name>
+            <role-name>Mercury-Admins</role-name>
+            <role-name>Mercury-LabUsers</role-name>
+            <role-name>Mercury-LabManagers</role-name>
+            <role-name>Mercury-ProjectManagers</role-name>
+            <role-name>Mercury-Developers</role-name>
+            <role-name>PMBAdmins</role-name>
+            <role-name>PMBUsers</role-name>
         </auth-constraint>
     </security-constraint>
 
@@ -168,32 +170,38 @@
     </login-config>-->
 
     <security-role>
-        <role-name>Sequel-Admins</role-name>
+        <role-name>Mercury-Admins</role-name>
     </security-role>
     <security-role>
-        <role-name>Sequel-LabUsers</role-name>
+        <role-name>Mercury-LabUsers</role-name>
     </security-role>
     <security-role>
-        <role-name>Sequel-LabManagers</role-name>
+        <role-name>Mercury-LabManagers</role-name>
     </security-role>
     <security-role>
-        <role-name>Sequel-ProjectManagers</role-name>
+        <role-name>Mercury-ProjectManagers</role-name>
     </security-role>
     <security-role>
-        <role-name>Sequel-Developers</role-name>
+        <role-name>Mercury-Developers</role-name>
     </security-role>
-
+    <security-role>
+        <role-name>PMBAdmins</role-name>
+    </security-role>
+    <security-role>
+        <role-name>PMBUsers</role-name>
+    </security-role>
 
 
     <welcome-file-list>
-        <welcome-file>/index.xhtml</welcome-file>
+        <welcome-file>/summary/summary.xhtml</welcome-file>
+        <!--<welcome-file>/index.xhtml</welcome-file>-->
     </welcome-file-list>
     <login-config>
         <auth-method>FORM</auth-method>
         <realm-name>crowd_custom_realm</realm-name>
         <form-login-config>
             <form-login-page>/security/login.xhtml</form-login-page>
-            <form-error-page>/security/login_error.xhtml</form-error-page>
+            <form-error-page>/security/login.xhtml</form-error-page>
         </form-login-config>
     </login-config>
 
@@ -212,5 +220,20 @@
         <filter-name>AuthorizationFilter</filter-name>
         <url-pattern>/*</url-pattern>
     </filter-mapping>
+
+    <!--<filter-mapping>-->
+        <!--<filter-name>AuthorizationFilter</filter-name>-->
+        <!--<url-pattern>*.xhtml</url-pattern>-->
+        <!--<dispatcher>REQUEST</dispatcher>-->
+    <!--</filter-mapping>-->
+
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Dummy</web-resource-name>
+            <url-pattern>/Dummy/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+        </auth-constraint>
+    </security-constraint>
 
 </web-app>

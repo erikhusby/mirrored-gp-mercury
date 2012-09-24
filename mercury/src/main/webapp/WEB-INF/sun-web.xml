@@ -6,28 +6,28 @@
     <context-root>/SequeL</context-root>
 
     <security-role-mapping>
-        <role-name>Sequel-Admins</role-name>
-        <group-name>Sequel-Admins</group-name>
+        <role-name>Mercury-Admins</role-name>
+        <group-name>Mercury-Admins</group-name>
     </security-role-mapping>
 
     <security-role-mapping>
-        <role-name>Sequel-LabUsers</role-name>
-        <group-name>Sequel-LabUsers</group-name>
+        <role-name>Mercury-LabUsers</role-name>
+        <group-name>Mercury-LabUsers</group-name>
     </security-role-mapping>
 
     <security-role-mapping>
-        <role-name>Sequel-LabManagers</role-name>
-        <group-name>Sequel-LabManagers</group-name>
+        <role-name>Mercury-LabManagers</role-name>
+        <group-name>Mercury-LabManagers</group-name>
     </security-role-mapping>
 
     <security-role-mapping>
-        <role-name>Sequel-ProjectManagers</role-name>
-        <group-name>Sequel-ProjectManagers</group-name>
+        <role-name>Mercury-ProjectManagers</role-name>
+        <group-name>Mercury-ProjectManagers</group-name>
     </security-role-mapping>
 
     <security-role-mapping>
-        <role-name>Sequel-Developers</role-name>
-        <group-name>Sequel-Developers</group-name>
+        <role-name>Mercury-Developers</role-name>
+        <group-name>Mercury-Developers</group-name>
     </security-role-mapping>
 
     <parameter-encoding default-charset="UTF-8"/>

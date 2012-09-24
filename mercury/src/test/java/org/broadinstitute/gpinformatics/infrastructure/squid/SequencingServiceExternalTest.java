@@ -1,12 +1,13 @@
-package org.broadinstitute.gpinformatics.athena.infrastructure.squid;
+package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import org.broadinstitute.gpinformatics.athena.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.BaitSetName;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.OrganismName;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.ReferenceSequenceName;
 import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -16,7 +17,6 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.athena.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.assertNotNull;
 
 
@@ -30,13 +30,13 @@ import static org.testng.Assert.assertNotNull;
 public class SequencingServiceExternalTest extends Arquillian {
 
     @Inject
-    private SequencingService sequencingService;
+    private PMBSequencingService sequencingService;
 
     @Deployment
     public static WebArchive buildBridgeWar() {
 //        WebArchive war = DeploymentBuilder.buildBridgeWar();
-        WebArchive war = DeploymentBuilder.buildBridgeWarWithAlternatives(
-                SequencingServiceImpl.class
+        WebArchive war = DeploymentBuilder.buildMercuryWarWithAlternatives(
+                PMBSequencingServiceImpl.class
         );
         return war;
     }

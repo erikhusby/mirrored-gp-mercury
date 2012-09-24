@@ -88,8 +88,8 @@ public class DB implements Serializable {
 
         PageAuthorization page = new PageAuthorization("/projects/");
 
-        page.addRoleAccess(authorizedRoleMap.get("Sequel-Developers"));
-        page.addRoleAccess(authorizedRoleMap.get("Sequel-ProjectManagers"));
+        page.addRoleAccess(authorizedRoleMap.get("Mercury-Developers"));
+        page.addRoleAccess(authorizedRoleMap.get("Mercury-ProjectManagers"));
         addPageAuthorization(page);
 
     }
@@ -97,13 +97,13 @@ public class DB implements Serializable {
     private void initAuthorizedRoles() {
         AuthorizedRole roleAll = new AuthorizedRole("All");
         addAuthorizedRole(roleAll);
-        AuthorizedRole roleDev = new AuthorizedRole("Sequel-Developers");
+        AuthorizedRole roleDev = new AuthorizedRole("Mercury-Developers");
         addAuthorizedRole(roleDev);
-        AuthorizedRole rolePM = new AuthorizedRole("Sequel-ProjectManagers");
+        AuthorizedRole rolePM = new AuthorizedRole("Mercury-ProjectManagers");
         addAuthorizedRole(rolePM);
-        AuthorizedRole roleLabUser = new AuthorizedRole("Sequel-LabUsers");
+        AuthorizedRole roleLabUser = new AuthorizedRole("Mercury-LabUsers");
         addAuthorizedRole(roleLabUser);
-        AuthorizedRole roleLabManager = new AuthorizedRole("Sequel-LabManagers");
+        AuthorizedRole roleLabManager = new AuthorizedRole("Mercury-LabManagers");
         addAuthorizedRole(roleLabManager);
 
     }

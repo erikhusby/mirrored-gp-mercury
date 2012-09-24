@@ -23,10 +23,10 @@ public class AuthenticationServiceTest extends ContainerTest {
     final String testPath ="/testPath/";
 
     final String allRoleName ="All_test";
-    final String devRoleName ="Sequel-Developers_test";
-    final String pmRoleName ="Sequel-ProjectManagers_test";
-    final String luRoleName ="Sequel-LabUsers_test";
-    final String lmRoleName ="Sequel-LabManagers_test";
+    final String devRoleName ="Mercury-Developers_test";
+    final String pmRoleName ="Mercury-ProjectManagers_test";
+    final String luRoleName ="Mercury-LabUsers_test";
+    final String lmRoleName ="Mercury-LabManagers_test";
 
     PageAuthorization testPage ;
 

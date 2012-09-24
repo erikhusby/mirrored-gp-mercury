@@ -44,6 +44,10 @@
     <login-config>
         <auth-method>FORM</auth-method>
         <realm-name>crowd_custom_realm</realm-name>
+        <form-login-config>
+            <form-login-page>/security/login.xhtml</form-login-page>
+            <form-error-page>/security/login.xhtml</form-error-page>
+        </form-login-config>
     </login-config>
 
     <filter>
