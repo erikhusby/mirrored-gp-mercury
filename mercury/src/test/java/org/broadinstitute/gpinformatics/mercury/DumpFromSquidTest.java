@@ -70,7 +70,7 @@ public class DumpFromSquidTest extends WeldBooter {
         BSPSampleDataFetcher bspLookup = weldUtil.getFromContainer(BSPSampleDataFetcher.class);
         QuoteService quoteService = weldUtil.getFromContainer(QuoteService.class);
         JiraService jiraService = weldUtil.getFromContainer(JiraService.class);
-        EntityManager em = Persistence.createEntityManagerFactory("SquidSequeL").createEntityManager();
+        EntityManager em = Persistence.createEntityManagerFactory("SquidMercury").createEntityManager();
         WorkRequest wr = em.find(WorkRequest.class,25030L);
 
         LcsetCart cart = em.find(LcsetCart.class,1422L);
@@ -86,7 +86,7 @@ public class DumpFromSquidTest extends WeldBooter {
             
             if (!projectsByName.containsKey(cartProject.getName())) {
                 CreateIssueResponse jiraResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
-                        CreateIssueRequest.Fields.Issuetype.SequeL_Project,
+                        CreateIssueRequest.Fields.Issuetype.Mercury_Project,
                         cartProject.getInitiative().getInitiativeName(),
                         "Squid project " + cartProject.getProjectName());
 

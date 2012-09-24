@@ -219,7 +219,7 @@ public class LabEventHandler {
             else if (workQueueEntries.size() > 1) {
                 // todo ambiguous: how do we narrow down the exact queue that this
                 // vessel was placed in?
-                throw new RuntimeException("SequeL doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
+                throw new RuntimeException("Mercury doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
             }
             /** else this vessel wasn't place in a {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue} */
         }

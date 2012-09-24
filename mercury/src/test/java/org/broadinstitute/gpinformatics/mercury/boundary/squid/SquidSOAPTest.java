@@ -68,7 +68,7 @@ public class SquidSOAPTest extends ContainerTest {
     @Test(groups = {EXTERNAL_INTEGRATION})
     public void serviceTest() {
 
-        // this is actually the one method we can't do since SequeL does not proxy this
+        // this is actually the one method we can't do since Mercury does not proxy this
         // Assert.assertEquals(passService.getGreeting(), "Hello SquidTopic!");
 
         Assert.assertNotNull(passService.searchPasses());

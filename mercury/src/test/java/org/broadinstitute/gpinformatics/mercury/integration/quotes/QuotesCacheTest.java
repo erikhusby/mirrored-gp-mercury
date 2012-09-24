@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 /**
- * Modified from SequeL
+ * Modified from Mercury
  */
 
 public class QuotesCacheTest {

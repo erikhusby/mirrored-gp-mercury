@@ -8,7 +8,7 @@ import java.net.URL;
 
 /**
  *
- * AbstractSquidWSConnector defines the generic set of steps necessary for the SequeL application to connect to a known
+ * AbstractSquidWSConnector defines the generic set of steps necessary for the Mercury application to connect to a known
  * webservice port exposed by the Squid application.
  *
  * Since the portTypes are generated and do not extend a common class or interface, we are able to share the logic

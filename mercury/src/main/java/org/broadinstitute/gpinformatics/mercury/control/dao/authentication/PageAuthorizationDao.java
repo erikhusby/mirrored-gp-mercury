@@ -26,7 +26,7 @@ public class PageAuthorizationDao {
 //    private EntityManager entityManager;
 
     /**
-     * Temporary mock database for the initial phases of SequeL development
+     * Temporary mock database for the initial phases of Mercury development
      */
     @Inject
     private DB db;

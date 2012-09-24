@@ -86,7 +86,7 @@ public class MessageStore {
     public void recordError(String message, Date receivedDate, Exception exception) {
         String directoryName;
         if(exception instanceof UnmarshalException || message.contains("DetectorPlateLoaded")) {
-            // SequeL doesn't currently handle Coral messages or detector plates
+            // Mercury doesn't currently handle Coral messages or detector plates
             directoryName = IGNORE_DIR;
         } else {
             directoryName = ERROR_DIR;

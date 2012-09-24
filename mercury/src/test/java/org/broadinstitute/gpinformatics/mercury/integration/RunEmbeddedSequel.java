@@ -23,7 +23,7 @@ public class RunEmbeddedSequel extends Arquillian {
 
     //@Test
     public void run() throws InterruptedException {
-        System.out.println("Embedded SequeL started\n" + baseURL + "index.xhtml");
+        System.out.println("Embedded Mercury started\n" + baseURL + "index.xhtml");
         // run for a year!
         Thread.sleep(365 * 24 * 60 * 60 * 1000L);
     }

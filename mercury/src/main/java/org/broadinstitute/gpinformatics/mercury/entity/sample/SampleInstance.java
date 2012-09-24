@@ -244,7 +244,7 @@ public class SampleInstance  {
 
     /**
      * Based the entry/exit of a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel} into
-     * or out of a {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue}, SequeL has the
+     * or out of a {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue}, Mercury has the
      * ability to "override" the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan} for a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}
      * at a particular spot in the worklow.  This method is how
      * your override the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan}.

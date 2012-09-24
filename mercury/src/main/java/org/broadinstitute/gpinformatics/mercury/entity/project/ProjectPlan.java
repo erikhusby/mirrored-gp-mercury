@@ -197,7 +197,7 @@ public abstract class ProjectPlan {
      * Do the billing for the given {@link Starter}.  {@link LabBatch} is a temporary
      * stub so that we can have something to link back to from the quote server.
      * See {@link org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService#registerNewWork(org.broadinstitute.gpinformatics.infrastructure.quote.Quote, org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem, double, String, String, String)}, especially the callback
-     * url.  Eventually the callback will be the SequeL UI, but for the moment,
+     * url.  Eventually the callback will be the Mercury UI, but for the moment,
      * we'll just redirect to jira so we can demo this to sheila.
      * @param starter
      * @param labBatch

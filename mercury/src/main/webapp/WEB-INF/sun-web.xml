@@ -3,7 +3,7 @@
         "-//Sun Microsystems, Inc.//DTD GlassFish Application Server 3.0 Servlet 3.0//EN"
         "http://www.sun.com/software/appserver/dtds/sun-web-app_3_0-0.dtd">
 <sun-web-app>
-    <context-root>/SequeL</context-root>
+    <context-root>/Mercury</context-root>
 
     <security-role-mapping>
         <role-name>Mercury-Admins</role-name>

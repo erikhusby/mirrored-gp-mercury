@@ -90,7 +90,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
          * $ curl  -u squid:squid -X POST -d @curl -H "Content-Type: application/json" http://vsquid00.broadinstitute.org:8020/rest/api/2/issue/
          *
          * Where @curl is a file name and contains something like:
-         * {"fields":{"description":"Description created from SequeL","project":{"key":"LCSET"},"customfield_10020":"doofus","customfield_10011":"9999","summary":"Summary created from SequeL","issuetype":{"name":"Whole Exome (HybSel)"}}}
+         * {"fields":{"description":"Description created from Mercury","project":{"key":"LCSET"},"customfield_10020":"doofus","customfield_10011":"9999","summary":"Summary created from Mercury","issuetype":{"name":"Whole Exome (HybSel)"}}}
          */
 
         WebResource webResource = getJerseyClient().resource(urlString);

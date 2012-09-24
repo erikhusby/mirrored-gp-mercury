@@ -50,7 +50,7 @@
         <allow pkg="javax.management"/>
     </subpackage>
 
-    <!-- unit tests are allowed to import external SequeL interfaces, test frameworks, mock frameworks, etc. -->
+    <!-- unit tests are allowed to import external Mercury interfaces, test frameworks, mock frameworks, etc. -->
     <subpackage name="test">
         <allow pkg="edu.mit.broad.prodinfo.thrift.lims"/>
         <allow pkg="javax.xml"/>

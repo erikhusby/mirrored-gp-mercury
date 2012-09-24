@@ -57,7 +57,7 @@ public class DeploymentProducer implements Serializable {
             // to abort deployment if we don't like the value of MERCURY_DEPLOYMENT
             deployment = Deployment.valueOf(deploymentString);
 
-            log.info("SequeL deployment specified in JNDI, set to " + deploymentString);
+            log.info("Mercury deployment specified in JNDI, set to " + deploymentString);
 
 
         }

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 /**
- * Based on test from SequeL
+ * Based on test from Mercury
  */
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;

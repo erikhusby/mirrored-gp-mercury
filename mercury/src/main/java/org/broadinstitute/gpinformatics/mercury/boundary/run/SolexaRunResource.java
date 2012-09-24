@@ -53,7 +53,7 @@ public class SolexaRunResource {
     public IlluminaSequencingRun registerRun(SolexaRunBean solexaRunBean) {
         IlluminaSequencingRun illuminaSequencingRun;
         if(solexaRunBean.getReagentBlockBarcode() != null && !solexaRunBean.getReagentBlockBarcode().trim().isEmpty()) {
-            // todo jmt how does SequeL do Designations?
+            // todo jmt how does Mercury do Designations?
             throw new RuntimeException("MiSeq registration not implemented yet");
 //                solexaRun = solexaRunRegistrationService.createFlowcellAndRegisterRun(solexaRunBean.flowcellBarcode,
 //                        solexaRunBean.reagentBlockBarcode, solexaRunBean.machineName, solexaRunBean.runBarcode,

@@ -57,7 +57,7 @@ public class MercuryConfigurationTest {
         final ThriftConfig devThriftConfig = (ThriftConfig) configuration.getConfig(ThriftConfig.class, Deployment.DEV);
 
 
-        // The Deployments passed to configReader are SequeL-centric, and both QA and DEV SequeLs point to QA thrift,
+        // The Deployments passed to configReader are Mercury-centric, and both QA and DEV Mercurys point to QA thrift,
         // so these should actually be the same configs
         Assert.assertTrue(qaThriftConfig == devThriftConfig);
 

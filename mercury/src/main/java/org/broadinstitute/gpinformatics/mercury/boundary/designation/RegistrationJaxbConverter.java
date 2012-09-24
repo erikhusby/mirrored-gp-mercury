@@ -21,7 +21,7 @@ import java.util.Set;
 
 /**
  *
- * RegistrationJaxbConverter is a utility class intended to assist in translating entities defined in SequeL to JAXB
+ * RegistrationJaxbConverter is a utility class intended to assist in translating entities defined in Mercury to JAXB
  * DTO's used to
  *
  * @author Scott Matthews

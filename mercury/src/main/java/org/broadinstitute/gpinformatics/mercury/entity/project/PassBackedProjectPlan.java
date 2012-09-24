@@ -44,7 +44,7 @@ public class PassBackedProjectPlan extends ProjectPlan {
                                 BaitSetListResult baitsCache,
                                 PriceItem priceItem) {
         if (!(pass instanceof DirectedPass)) {
-            throw new RuntimeException("SequeL can only deal with HS passes");
+            throw new RuntimeException("Mercury can only deal with HS passes");
         }
         this.bspDataFetcher = bspDataFetcher;
         this.pass = pass;
@@ -62,7 +62,7 @@ public class PassBackedProjectPlan extends ProjectPlan {
         CoverageAndAnalysisInformation coverageAndAnalysis = pass.getCoverageAndAnalysisInformation();
         TargetCoverageModel targetCoverage = coverageAndAnalysis.getTargetCoverageModel();
         if (targetCoverage == null) {
-            throw new RuntimeException("Sorry, but SequeL only handles % @ xfold coverage.");
+            throw new RuntimeException("Sorry, but Mercury only handles % @ xfold coverage.");
         }
         BigInteger percentCoverage = targetCoverage.getCoveragePercentage();
         BigInteger depth = targetCoverage.getDepth();

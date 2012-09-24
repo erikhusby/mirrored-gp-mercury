@@ -81,7 +81,7 @@ public class PassBatchUtil {
         for (Starter starter : batch.getStarters()) {
             sampleNames.append(starter).append("\n");
         }
-        //jiraService.updateField(ticketName,"WorkRequestId","SequeL");
+        //jiraService.updateField(ticketName,"WorkRequestId","Mercury");
         //jiraService.updateField(ticketName,"Samples",sampleNames.toString());
     }
 }

@@ -141,7 +141,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
         // Use a web service, rather than just calling persist on a DAO, because a constraint
         // violation invalidates the EntityManager.  The web service gets a fresh EntityManager for
         // each request.
-        String label = Client.create().resource("http://localhost:8181/SequeL/rest/rackoftubes")
+        String label = Client.create().resource("http://localhost:8181/Mercury/rest/rackoftubes")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(sourceRackOfTubes)

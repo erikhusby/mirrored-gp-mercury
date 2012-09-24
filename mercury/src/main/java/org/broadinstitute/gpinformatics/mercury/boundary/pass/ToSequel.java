@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.*;
 
 /**
  * Utility class to map from Squid JAXB DTOs (classes in {@link org.broadinstitute.gpinformatics.mercury.boundary.squid}) to their
- * SequeL equivalents (classes in {@link org.broadinstitute.gpinformatics.mercury.boundary}).
+ * Mercury equivalents (classes in {@link org.broadinstitute.gpinformatics.mercury.boundary}).
  *
  */
 public class ToSequel {

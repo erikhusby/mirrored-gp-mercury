@@ -159,7 +159,7 @@ public class ImportFromSquidTest extends ContainerTest {
     }
 
     /**
-     * To prepare for sending past production BettaLIMS messages into SequeL, this method creates LC Sets and associated
+     * To prepare for sending past production BettaLIMS messages into Mercury, this method creates LC Sets and associated
      * batches of tubes that are stored in Squid.
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -227,7 +227,7 @@ public class ImportFromSquidTest extends ContainerTest {
                         // Use a web service, rather than just calling persist on a DAO, because a constraint
                         // violation invalidates the EntityManager.  The web service gets a fresh EntityManager for
                         // each request.
-                        response = Client.create().resource("http://localhost:8181/SequeL/rest/labbatch")
+                        response = Client.create().resource("http://localhost:8181/Mercury/rest/labbatch")
                                 .type(MediaType.APPLICATION_XML_TYPE)
                                 .accept(MediaType.APPLICATION_XML)
                                 .entity(labBatch)
@@ -245,7 +245,7 @@ public class ImportFromSquidTest extends ContainerTest {
     }
 
     /**
-     * To prepare for sending past production BettaLIMS messages into SequeL, this method creates bait tubes.
+     * To prepare for sending past production BettaLIMS messages into Mercury, this method creates bait tubes.
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateBaits() {

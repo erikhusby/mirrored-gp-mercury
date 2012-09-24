@@ -16,8 +16,8 @@ import java.net.URL;
 
 
 /**
- * <b>INTERNAL</b> integration test to connect to the PASS webservice in SequeL.  The test method calls the one
- * method in SequeL's PASS webservices that does not proxy the equivalent service in Squid.
+ * <b>INTERNAL</b> integration test to connect to the PASS webservice in Mercury.  The test method calls the one
+ * method in Mercury's PASS webservices that does not proxy the equivalent service in Squid.
  */
 public class PassServiceImplTest extends ContainerTest {
 
@@ -30,8 +30,8 @@ public class PassServiceImplTest extends ContainerTest {
 
 
     /**
-     * 'Topic' was one of the many names PMBridge had in its past.  I've transitioned SequeL's URL to PMBridge,
-     * but I'm keeping all the other stuff the same for now so PMBridge can try connecting to SequeL as if it were Squid
+     * 'Topic' was one of the many names PMBridge had in its past.  I've transitioned Mercury's URL to PMBridge,
+     * but I'm keeping all the other stuff the same for now so PMBridge can try connecting to Mercury as if it were Squid
      * with just a configuration change to the URL.
      *
      * @return

@@ -104,9 +104,9 @@ public class IlluminaRunQueryPage extends LoadableComponent<IlluminaRunQueryPage
     protected void load() {
         String url = baseUrl + "index.xhtml";
         driver.get(url);
-        wait.until(titleIs("SequeL : Home"));
+        wait.until(titleIs("Mercury : Home"));
         navigate("Illumina Run Query");
-        wait.until(titleIs("SequeL : Illumina Run Query"));
+        wait.until(titleIs("Mercury : Illumina Run Query"));
         initElements();
     }
 
@@ -117,7 +117,7 @@ public class IlluminaRunQueryPage extends LoadableComponent<IlluminaRunQueryPage
 
     @Override
     protected void isLoaded() throws Error {
-        assertEquals(driver.getTitle(), "SequeL : Illumina Run Query");
+        assertEquals(driver.getTitle(), "Mercury : Illumina Run Query");
     }
 
     public void enterRunName(String runName) {
@@ -313,7 +313,7 @@ public class IlluminaRunQueryPage extends LoadableComponent<IlluminaRunQueryPage
         driver.findElement(By.linkText(linkText)).click();
 /*
         try {
-            wait.until(titleIs("SequeL : " + linkText));
+            wait.until(titleIs("Mercury : " + linkText));
         } catch (TimeoutException e) {
             fail("Timeout waiting for page title: '" + linkText + "'. Current page title is: '" + driver.getTitle() + "'.", e);
         }

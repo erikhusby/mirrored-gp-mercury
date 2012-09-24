@@ -24,7 +24,7 @@ public class QuoteServiceTest {
         QuoteService service = QuoteServiceProducer.qaInstance();
         Quote fetchedQuote = service.getQuoteFromQuoteServer(quote.getAlphanumericId());
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
-        String workBatchId = service.registerNewWork(quote,priceItem,0.0001,"http://www.SequeLTesting","paramName","paramValue");
+        String workBatchId = service.registerNewWork(quote,priceItem,0.0001,"http://www.MercuryTesting","paramName","paramValue");
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
 
         Assert.assertNotNull(workBatchId);

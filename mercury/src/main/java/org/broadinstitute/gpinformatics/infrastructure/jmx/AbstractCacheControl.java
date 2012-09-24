@@ -25,7 +25,7 @@ public abstract class AbstractCacheControl implements CacheControlMXBean {
 
     private ObjectName objectName;
 
-    private static final String APP_NAME = "SequeL";
+    private static final String APP_NAME = "Mercury";
 
     public AbstractCacheControl() {}
 

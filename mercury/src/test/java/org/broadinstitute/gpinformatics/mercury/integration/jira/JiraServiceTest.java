@@ -33,7 +33,7 @@ public class JiraServiceTest {
         try {
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel, "Summary created from SequeL", "Description created from SequeL", null);
+                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel, "Summary created from Mercury", "Description created from Mercury", null);
 
             final String key = createIssueResponse.getTicketName();
 
@@ -50,7 +50,7 @@ public class JiraServiceTest {
 
         try {
 
-            service.addComment("LCSET-1678", "Publicly visible comment added from SequeL");
+            service.addComment("LCSET-1678", "Publicly visible comment added from Mercury");
         }
         catch (IOException iox) {
 
@@ -67,7 +67,7 @@ public class JiraServiceTest {
         
         try {
             
-            service.addComment("LCSET-1678", "jira-users only comment added from SequeL", Visibility.Type.role, Visibility.Value.Administrators );
+            service.addComment("LCSET-1678", "jira-users only comment added from Mercury", Visibility.Type.role, Visibility.Value.Administrators );
         }
         catch (IOException iox) {
 

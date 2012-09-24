@@ -24,10 +24,10 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.pass.ToSquid.squ
 
 /**
  * This class exposes a PASS SOAP interface that mimics that of Squid.  The implementations of the web service
- * methods all live in Squid, so SequeL just delegates all calls over to Squid (except for the trivial
+ * methods all live in Squid, so Mercury just delegates all calls over to Squid (except for the trivial
  * {@link #getGreeting()} method which is handled here).  Beginning with the Exome Express project we would like to
- * point PMBridge at SequeL instead of Squid.  Most calls would just pass through SequeL, but Exome Express
- * PASSes would kick off the pipeline in SequeL as well.
+ * point PMBridge at Mercury instead of Squid.  Most calls would just pass through Mercury, but Exome Express
+ * PASSes would kick off the pipeline in Mercury as well.
  *
  */
 @WebService(targetNamespace = "urn:SquidTopic",

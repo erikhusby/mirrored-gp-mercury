@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project name="SequeL">
+<project name="Mercury">
 
     <skin>
         <groupId>com.googlecode.fluido-skin</groupId>
@@ -8,7 +8,7 @@
     </skin>
 
 <bannerLeft>
-<name>SequeL</name>
+<name>Mercury</name>
 </bannerLeft>
 
     <bannerRight>

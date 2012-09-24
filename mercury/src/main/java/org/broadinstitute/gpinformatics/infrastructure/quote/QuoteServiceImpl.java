@@ -110,7 +110,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         if (!output.contains(WORK_ITEM_ID)) {
             StringBuilder builder = new StringBuilder();
-            builder.append("Quote server returned the following:\n").append(output).append("\n").append("This is not what SequeL expected, so we're not sure what the status of billing is.  This happened while registering work for " + numWorkUnits + " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() + ".");
+            builder.append("Quote server returned the following:\n").append(output).append("\n").append("This is not what Mercury expected, so we're not sure what the status of billing is.  This happened while registering work for " + numWorkUnits + " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() + ".");
             throw new RuntimeException(builder.toString());
         }
         else {

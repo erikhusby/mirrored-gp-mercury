@@ -97,7 +97,7 @@ public class ExomeExpressEndToEndTest {
         // unconditionally forward all PASSes to Squid for storage
         passService.storePass(directedPass);
 
-        // if this is an EE pass take it through the SequeL process:
+        // if this is an EE pass take it through the Mercury process:
         if (true /* R3_725 directedPass.isExomeExpress() */) {
             // PASS with quote IDs, price items (need PMBridge 2 for price items)
 
@@ -248,7 +248,7 @@ public class ExomeExpressEndToEndTest {
             // Receive plastic through kiosk
             // web service callable from Squid kiosk
             // Hybrid Selection Messaging (both systems?)  UPDATE:  SGM: plan to do Hybrid Selection Messaging to just
-            //SequeL for Exome Express
+            //Mercury for Exome Express
 
             // deck query for barcodes
             // (deck query for workflow)
@@ -406,7 +406,7 @@ public class ExomeExpressEndToEndTest {
 
             registrationSOAPService.registerForDesignation(registerLibrary.getLibraryName(), projectPlan, true);
 
-            // Designation in Squid (7 lanes Squid + 1 lane SequeL)
+            // Designation in Squid (7 lanes Squid + 1 lane Mercury)
             // Call Squid web service to add to queue (lanes, read length)
             // Register run
             IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();

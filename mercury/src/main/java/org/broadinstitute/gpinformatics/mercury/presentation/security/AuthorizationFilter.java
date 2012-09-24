@@ -11,7 +11,7 @@ import java.security.Principal;
 
 /**
  *
- * AuthorizationFilter is a ServletFilter used to assist the SequeL application with validating whether a users
+ * AuthorizationFilter is a ServletFilter used to assist the Mercury application with validating whether a users
  * is authorized to have access to a certain page.  The filter is executed based on the url-pattern filter
  * defined in the web deployment descriptor
  *
