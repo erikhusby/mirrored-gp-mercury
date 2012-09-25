@@ -1250,6 +1250,12 @@
             <version>1.4</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.atlassian.crowd</groupId>
+            <artifactId>crowd-core</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -1,13 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
+import com.atlassian.crowd.integration.soap.SOAPPrincipal;
+import com.atlassian.crowd.service.soap.client.SecurityServerClientFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.primefaces.util.ArrayUtils;
 
-import javax.inject.Inject;
 import javax.servlet.*;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.security.Principal;
 
 /**
  *
@@ -22,13 +24,15 @@ import java.security.Principal;
  */
 public class AuthorizationFilter implements Filter {
 
-    private Log logger = LogFactory.getLog(AuthorizationFilter.class);
+    private static final Log LOG = LogFactory.getLog(AuthorizationFilter.class);
     private FilterConfig filterConfig;
 
-    private String errorPage;
-    @Inject AuthorizationManager manager;
+    public static final String LOGIN_PAGE = "/security/login.xhtml";
 
-    private static final String LOGIN_PAGE = "/security/login.xhtml";
+    // All assets required by the Login page, minus JSF support files.
+    private static final String[] LOGIN_ASSETS = { LOGIN_PAGE, "/images/broad_logo.png", "/images/bridge.jpeg"};
+
+    private static final String CROWD_TOKEN_KEY_COOKIE_NAME = "crowd.token_key";
 
     /**
      * init is the default initialization method for this filter.  It grabs the filter config (defined in the
@@ -39,15 +43,30 @@ public class AuthorizationFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfigIn) throws ServletException {
         filterConfig = filterConfigIn;
-        if (filterConfigIn != null) {
-            errorPage = filterConfigIn.getInitParameter("error_page");
-        }
-
     }
 
     /**
+     * Gets the crowd token key from the cookie.
      *
-     * doFilter Defines the logic for Authorizing a given page.
+     * @param request
+     *                the request.
+     *
+     * @return the crowd token key.
+     */
+    private String getCrowdTokenKey(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals(CROWD_TOKEN_KEY_COOKIE_NAME)) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+	}
+
+    /**
+     * This method contains the logic for authorizing a given page.
      *
      * The logic within this method will determine if
      * <ul>
@@ -70,66 +89,53 @@ public class AuthorizationFilter implements Filter {
                          FilterChain filterChainIn)
             throws IOException, ServletException {
 
-        HttpServletRequest request =(HttpServletRequest)servletRequestIn;
+        HttpServletRequest request = (HttpServletRequest)servletRequestIn;
         String pageUri = request.getServletPath();
 
-        debug("Checking authentication for: " + pageUri);
+        if (!excludeFromFilter(pageUri)) {
+            LOG.info("Checking authentication for: " + pageUri);
+            String user = request.getRemoteUser();
+            if (user == null) {
+                LOG.info("User is not authenticated, checking for SSO token");
+                String token = getCrowdTokenKey(request);
+                if (token != null) {
+                    try {
+                        SOAPPrincipal principal =
+                                SecurityServerClientFactory.getSecurityServerClient().findPrincipalByToken(token);
+                        if (principal != null) {
+                            // ???
+                            LOG.info("Found principal " + principal.getName());
+                        }
+                    } catch (Exception e) {
+                        LOG.error("Error while validating SSO token", e);
 
-        if(manager.isPageProtected(pageUri, request) && !excludeFromFilter(pageUri)) {
-
-            Principal user = request.getUserPrincipal();
-            if(null == user ) {
-                debug("User is not authenticated, redirecting to login page");
-                if(!pageUri.equals(LOGIN_PAGE)) {
-                    servletRequestIn.setAttribute("targetted_page", pageUri);
+                    }
                 }
-                errorRedirect(servletRequestIn,servletResponseIn,LOGIN_PAGE);
+
+                LOG.info("User is not authenticated, redirecting to login page");
+                if (!pageUri.equals(LOGIN_PAGE)) {
+                    servletRequestIn.setAttribute("targeted_page", pageUri);
+                }
+                errorRedirect(servletRequestIn, servletResponseIn, LOGIN_PAGE);
                 return;
             }
 
-            boolean authorized = manager.isUserAuthorized(pageUri, request);
-
-            if(authorized) {
-                debug("User is authorized for this resource, continuing on");
-                continueProcessing(servletRequestIn, servletResponseIn, filterChainIn);
-                return;
-            } else  {
-                debug("User is not authorized for this resource, redirecting to authorization error page");
-                errorRedirect(servletRequestIn,servletResponseIn, errorPage);
-                return;
+            // User is now logged in, check for user role vs page authorization.
+            if (!request.isUserInRole("PMBAdmins")
+                && !request.isUserInRole("PMBUsers")
+                && !request.isUserInRole("PMBViewers")) {
+                LOG.info("User isn't in PMBridge groups");
+                // FIXME: need to report page access error back to user somehow.
+                String errorMessage = "The user '" + user +  "' doesn't have permission to log into PMBridge.";
+                errorRedirect(servletRequestIn, servletResponseIn, LOGIN_PAGE);
             }
-        } else{
-            debug("Current page: "+pageUri+" is not protected or excluded from filter.  Continuing on");
-            continueProcessing(servletRequestIn, servletResponseIn, filterChainIn);
-            return;
         }
-    }
-
-    /**
-     *
-     * continueProcessing is a simple helper method who's intention is to encapsulate the execution of the call
-     * to the doFilter method of the filter chain.
-     *
-     * It is intended to be called upon success.
-     *
-     * @param servletRequestIn
-     * @param servletResponseIn
-     * @param filterChainIn
-     * @throws IOException
-     * @throws ServletException
-     */
-    private void continueProcessing(ServletRequest servletRequestIn,
-                             ServletResponse servletResponseIn,
-                             FilterChain filterChainIn)
-            throws IOException, ServletException {
         filterChainIn.doFilter(servletRequestIn, servletResponseIn);
     }
 
-
     /**
      *
-     * errorRedirect is a simple helper method who's intention is to encapsulate the execution of redirecting
-     * the page upon a failure in the filter logic.
+     * errorRedirect is a helper method that redirects to a page upon failure in the filter
      *
      * @param requestIn
      * @param responseIn
@@ -139,28 +145,18 @@ public class AuthorizationFilter implements Filter {
      */
     private void errorRedirect(ServletRequest requestIn, ServletResponse responseIn,
                                String errorPageIn) throws IOException, ServletException{
-        filterConfig.getServletContext().getRequestDispatcher(errorPageIn).forward(requestIn,responseIn);
+        filterConfig.getServletContext().getRequestDispatcher(errorPageIn).forward(requestIn, responseIn);
     }
 
     private boolean excludeFromFilter(String path) {
-        if(path.startsWith("/javax.faces.resource") ||
-                path.startsWith("/rest") ||
-                path.startsWith("/ArquillianServletRunner")){
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private void debug(String debugStmtIn) {
-        logger.info(debugStmtIn);
+        return path.startsWith("/javax.faces.resource") ||
+               path.startsWith("/rest") ||
+               path.startsWith("/ArquillianServletRunner") ||
+               ArrayUtils.contains(LOGIN_ASSETS, path);
     }
 
 
     @Override
     public void destroy() {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
-
-
 }
