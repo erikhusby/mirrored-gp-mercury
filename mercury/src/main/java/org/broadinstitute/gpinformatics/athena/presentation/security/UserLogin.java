@@ -54,7 +54,7 @@ public class UserLogin extends AbstractJsfBean {
         } catch (ServletException le) {
             LOG.warn("Couldn't authenticate user '" + userName + "'", le);
             context.addMessage(null, new FacesMessage("The username and password combination entered couldn't be authenticated."));
-            targetPage = AuthorizationFilter.LOGIN_PAGE;
+            targetPage = org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter.LOGIN_PAGE;
         }
 
         return targetPage;
