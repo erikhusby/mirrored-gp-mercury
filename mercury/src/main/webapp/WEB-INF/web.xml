@@ -218,7 +218,8 @@
 
     <filter-mapping>
         <filter-name>AuthorizationFilter</filter-name>
-        <url-pattern>/*</url-pattern>
+        <url-pattern>*.xhtml</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
     <!--<filter-mapping>-->
