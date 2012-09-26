@@ -1,48 +1,79 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
-import org.broadinstitute.gpinformatics.athena.Namespaces;
-import org.broadinstitute.gpinformatics.athena.entity.orders.RiskContingency;
+import org.hibernate.envers.Audited;
 
-import javax.xml.bind.annotation.XmlType;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 8/28/12
- * Time: 10:26 AM
- */
-@XmlType(namespace = Namespaces.PRODUCT_NS)
+
+@Entity
+@Audited
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
 public class Product implements Serializable {
 
+    @Id
+    @SequenceGenerator(name = "SEQ_PRODUCT", sequenceName = "SEQ_PRODUCT")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT")
+    private Long id;
+
     private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    /**
+     * Not cascading anything here, assuming if there ever is a means to edit ProductFamilies that those
+     * ProductFamilies will be explicitly persisted and won't depend on a cascade from a referencing Product
+     */
     private ProductFamily productFamily;
+
     private String description;
     private String partNumber;
     private Date availabilityDate;
     private Date discontinuedDate;
-    private Integer expectedCycleTimeHours;
-    private Integer guaranteedCycleTimeHours;
+    private Integer expectedCycleTimeSeconds;
+    private Integer guaranteedCycleTimeSeconds;
     private Integer samplesPerWeek;
-    private List<String> inputRequirements;
-    private List<String> deliverables;
-    private PriceItem productPrice;
-    private String workflowName;
-    private List<CoverageModelType> availableCoverageModelTypes;
-    private List<AlignerType> availableAlignerTypes;
-    private CoverageAndAnalysisInformation selectedCoverageAndAnalysisInformation;
-    private GenomicsTechnology genomicsTechnology;
-    private List<RiskContingency> riskContingencies;
+    private String inputRequirements;
+    private String deliverables;
 
+    /**
+     * Whether this Product should show as a top-level product */
+    private boolean topLevelProduct;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private PriceItem defaultPriceItem;
+
+    @OneToMany(mappedBy = "product")
+    private List<PriceItem> priceItems;
+
+    /**
+     * May need to revisit cascade options for a Product editor
+     */
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    private List<Product> addOns;
+
+    private String workflowName;
+
+// MLC This reaches into Orderland and I don't want to step on what Hugh is working on in GPLIM-45
+//    @OneToMany
+//    private List<RiskContingency> riskContingencies;
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -50,15 +81,16 @@ public class Product implements Serializable {
         return productFamily;
     }
 
-    public void setProductFamily(final ProductFamily productFamily) {
+    public void setProductFamily(ProductFamily productFamily) {
         this.productFamily = productFamily;
     }
+
 
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(final String description) {
+    public void setDescription(String description) {
         this.description = description;
     }
 
@@ -66,7 +98,7 @@ public class Product implements Serializable {
         return partNumber;
     }
 
-    public void setPartNumber(final String partNumber) {
+    public void setPartNumber(String partNumber) {
         this.partNumber = partNumber;
     }
 
@@ -74,7 +106,7 @@ public class Product implements Serializable {
         return availabilityDate;
     }
 
-    public void setAvailabilityDate(final Date availabilityDate) {
+    public void setAvailabilityDate(Date availabilityDate) {
         this.availabilityDate = availabilityDate;
     }
 
@@ -82,103 +114,112 @@ public class Product implements Serializable {
         return discontinuedDate;
     }
 
-    public void setDiscontinuedDate(final Date discontinuedDate) {
+    public void setDiscontinuedDate(Date discontinuedDate) {
         this.discontinuedDate = discontinuedDate;
     }
 
-    public Integer getExpectedCycleTimeHours() {
-        return expectedCycleTimeHours;
+    public Integer getExpectedCycleTimeSeconds() {
+        return expectedCycleTimeSeconds;
     }
 
-    public void setExpectedCycleTimeHours(final Integer expectedCycleTimeHours) {
-        this.expectedCycleTimeHours = expectedCycleTimeHours;
+    public void setExpectedCycleTimeSeconds(Integer expectedCycleTimeSeconds) {
+        this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
     }
 
-    public Integer getGuaranteedCycleTimeHours() {
-        return guaranteedCycleTimeHours;
+    public Integer getGuaranteedCycleTimeSeconds() {
+        return guaranteedCycleTimeSeconds;
     }
 
-    public void setGuaranteedCycleTimeHours(final Integer guaranteedCycleTimeHours) {
-        this.guaranteedCycleTimeHours = guaranteedCycleTimeHours;
+    public void setGuaranteedCycleTimeSeconds(Integer guaranteedCycleTimeSeconds) {
+        this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
     }
 
     public Integer getSamplesPerWeek() {
         return samplesPerWeek;
     }
 
-    public void setSamplesPerWeek(final Integer samplesPerWeek) {
+    public void setSamplesPerWeek(Integer samplesPerWeek) {
         this.samplesPerWeek = samplesPerWeek;
     }
 
-    public List<String> getInputRequirements() {
+    public String getInputRequirements() {
         return inputRequirements;
     }
 
-    public void setInputRequirements(final List<String> inputRequirements) {
+    public void setInputRequirements(String inputRequirements) {
         this.inputRequirements = inputRequirements;
     }
 
-    public List<String> getDeliverables() {
+    public String getDeliverables() {
         return deliverables;
     }
 
-    public void setDeliverables(final List<String> deliverables) {
+    public void setDeliverables(String deliverables) {
         this.deliverables = deliverables;
     }
 
-    public PriceItem getProductPrice() {
-        return productPrice;
+    public boolean isTopLevelProduct() {
+        return topLevelProduct;
     }
 
-    public void setProductPrice(final PriceItem productPrice) {
-        this.productPrice = productPrice;
+    public void setTopLevelProduct(boolean topLevelProduct) {
+        this.topLevelProduct = topLevelProduct;
+    }
+
+    public PriceItem getDefaultPriceItem() {
+        return defaultPriceItem;
+    }
+
+    public void setDefaultPriceItem(PriceItem defaultPriceItem) {
+        this.defaultPriceItem = defaultPriceItem;
+    }
+
+    public List<PriceItem> getPriceItems() {
+        return priceItems;
+    }
+
+    public void setPriceItems(List<PriceItem> priceItems) {
+        this.priceItems = priceItems;
+    }
+
+    public List<Product> getAddOns() {
+        return addOns;
+    }
+
+    public void setAddOns(List<Product> addOns) {
+        this.addOns = addOns;
     }
 
     public String getWorkflowName() {
         return workflowName;
     }
 
-    public void setWorkflowName(final String workflowName) {
+    public void setWorkflowName(String workflowName) {
         this.workflowName = workflowName;
     }
 
-    public List<CoverageModelType> getAvailableCoverageModelTypes() {
-        return availableCoverageModelTypes;
+//    public List<RiskContingency> getRiskContingencies() {
+//        return riskContingencies;
+//    }
+//
+//    public void setRiskContingencies(List<RiskContingency> riskContingencies) {
+//        this.riskContingencies = riskContingencies;
+//    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Product)) return false;
+
+        Product product = (Product) o;
+
+        if (!name.equals(product.name)) return false;
+
+        return true;
     }
 
-    public void setAvailableCoverageModelTypes(final List<CoverageModelType> availableCoverageModelTypes) {
-        this.availableCoverageModelTypes = availableCoverageModelTypes;
-    }
-
-    public List<AlignerType> getAvailableAlignerTypes() {
-        return availableAlignerTypes;
-    }
-
-    public void setAvailableAlignerTypes(final List<AlignerType> availableAlignerTypes) {
-        this.availableAlignerTypes = availableAlignerTypes;
-    }
-
-    public CoverageAndAnalysisInformation getSelectedCoverageAndAnalysisInformation() {
-        return selectedCoverageAndAnalysisInformation;
-    }
-
-    public void setSelectedCoverageAndAnalysisInformation(final CoverageAndAnalysisInformation selectedCoverageAndAnalysisInformation) {
-        this.selectedCoverageAndAnalysisInformation = selectedCoverageAndAnalysisInformation;
-    }
-
-    public GenomicsTechnology getGenomicsTechnology() {
-        return genomicsTechnology;
-    }
-
-    public void setGenomicsTechnology(final GenomicsTechnology genomicsTechnology) {
-        this.genomicsTechnology = genomicsTechnology;
-    }
-
-    public List<RiskContingency> getRiskContingencies() {
-        return riskContingencies;
-    }
-
-    public void setRiskContingencies(final List<RiskContingency> riskContingencies) {
-        this.riskContingencies = riskContingencies;
+    @Override
+    public int hashCode() {
+        return name.hashCode();
     }
 }
