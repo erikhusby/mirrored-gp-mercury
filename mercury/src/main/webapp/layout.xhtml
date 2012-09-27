@@ -36,6 +36,7 @@
     <h:head>
         <!--<link href='http://fonts.googleapis.com/css?family=Lato|Arvo|PT+Sans|Cantarell|Open+Sans' rel='stylesheet' type='text/css'/>-->
         <h:outputStylesheet library="css" name="styles.css"/>
+        <h:outputStylesheet library="css" name="bootstrap.css"/>
         <title>Athena : <ui:insert name="title"/></title>
         <ui:insert name="head"/>
     </h:head>
@@ -57,24 +58,25 @@
                 <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&nbsp;wait..." />
             </p:outputPanel>
         </p:dialog>
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 5px;">
-            <tr>
-                <td style="vertical-align: middle;">
-                    <h1>Athena</h1>
-                </td>
-                <td>
-                    <img src="/images/broad_logo.png" alt="Broad Institute" align="right"/>
-                </td>
-                <td>
-                    <sqltg:isLoggedIn>
-                        <!--<h:link outcome="/logout">Logout" </h:link>-->
-                        <h:form>
-                            <h:commandLink action="#{securityBackingBean.logout}" value="Logout"/>
-                        </h:form>
-                    </sqltg:isLoggedIn>
-                </td>
-            </tr>
-        </table>
+
+        <div class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container-fluid">
+
+                    <div class="brand"><p:graphicImage url="/images/broad_logo.png" alt="Broad Institute"/> Athena</div>
+                    <div class="nav-collapse pull-right">
+                            <sqltg:isLoggedIn>
+                                <h:form>
+                                    <h:commandLink action="#{securityBackingBean.logout}" value="Logout"/>
+                                </h:form>
+                        </sqltg:isLoggedIn>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="well sidebar-nav">
+        </div>
 
         <table width="100%">
             <tr>
@@ -87,7 +89,9 @@
                             <f:facet name="header"><span id="panelTitle"><ui:insert name="title"/></span></f:facet>
 
                             <!-- show messages/errors -->
-                            <h:messages/>
+                            <p:messages severity="error" />
+                            <p:messages severity="warn" />
+                            <p:messages severity="info" />
 
                             <ui:insert name="body"/>
                         </p:panel>

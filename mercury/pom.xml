@@ -981,17 +981,27 @@
             <scope>provided</scope>
         </dependency>
 
+<!--
+	<dependency>
+	    <groupId>com.twitter.bootstrap</groupId>
+	    <artifactId>twitter-bootstrap</artifactId>
+	    <version>2.1.1</version>
+	    <type>zip</type>
+	    <scope>runtime</scope>
+	</dependency>
+-->
+
         <!-- BEGIN primefaces -->
         <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
-            <version>3.2</version>
+            <version>3.4.1</version>
         </dependency>
 
         <dependency>
             <groupId>org.primefaces.themes</groupId>
-            <artifactId>pepper-grinder</artifactId>
-            <version>1.0.4</version>
+            <artifactId>bootstrap</artifactId>
+            <version>1.0.8</version>
         </dependency>
         <!-- END primefaces -->
 

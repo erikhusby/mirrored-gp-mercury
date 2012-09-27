@@ -13,20 +13,19 @@ import javax.servlet.http.HttpServletRequest;
 @ManagedBean
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
-
     private static final Logger LOG = Logger.getLogger(UserLogin.class);
 
     private static final long serialVersionUID = 8696721679504370838L;
 
-    private String userName;
+    private String username;
     private String password;
 
     public String getUserName() {
-        return userName;
+        return username;
     }
 
-    public void setUserName(String userNameIn) {
-        userName = userNameIn;
+    public void setUserName(String usernameIn) {
+        username = usernameIn;
     }
 
     public String getPassword() {
@@ -38,22 +37,22 @@ public class UserLogin extends AbstractJsfBean {
     }
 
     public String authenticateUser() {
-
         String targetPage = "/index";
 
         FacesContext context = FacesContext.getCurrentInstance();
         try {
             HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
 
-            request.login(userName, password);
+            request.login(username, password);
+            context.addMessage(null,new FacesMessage(FacesMessage.SEVERITY_INFO, "Welcome back!", "Sign in successful"));
 
             String previouslyTargetedPage = (String)request.getAttribute("targeted_page");
             if (previouslyTargetedPage != null) {
                 targetPage = previouslyTargetedPage;
             }
         } catch (ServletException le) {
-            LOG.warn("Couldn't authenticate user '" + userName + "'", le);
-            context.addMessage(null, new FacesMessage("The username and password combination entered couldn't be authenticated."));
+            LOG.warn("Couldn't authenticate user '" + username + "'", le);
+            context.addMessage(null,new FacesMessage(FacesMessage.SEVERITY_ERROR, "The username and password you entered is incorrect.  Please try again.", "Authentication error"));
             targetPage = org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter.LOGIN_PAGE;
         }
 

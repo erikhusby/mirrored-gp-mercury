@@ -12,24 +12,23 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:cc="http://java.sun.com/jsf/composite">
+      xmlns:cc="http://java.sun.com/jsf/composite"
+      xmlns:p="http://primefaces.org/ui">
 
     <cc:interface/>
     <cc:implementation>
         Please enter your Broad Username and Password.
 
         <h:form>
-
             <h:panelGrid columns="2">
-
-                <h:outputText value="UserName:" />
+                <h:outputText value="Username:" />
                 <h:inputText label="Username:" value="#{userLogin.userName}" required="true" requiredMessage="Username is required"/>
 
                 <h:outputText value="Password:" />
                 <h:inputSecret label="Password:" value="#{userLogin.password}" required="true" requiredMessage="Password is required" />
 
                 <h:panelGroup />
-                <h:commandButton value="Login" action="#{userLogin.authenticateUser}" />
+                <h:commandButton value="Sign in" action="#{userLogin.authenticateUser}" />
             </h:panelGrid>
         </h:form>
 
