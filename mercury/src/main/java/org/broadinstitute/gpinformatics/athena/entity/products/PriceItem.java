@@ -5,6 +5,12 @@ import org.hibernate.envers.Audited;
 import javax.persistence.*;
 import java.io.Serializable;
 
+
+/**
+ * Core entity for PriceItems.
+ *
+ * @author mcovarr
+ */
 @Entity
 @Audited
 @Table(uniqueConstraints = {
@@ -17,16 +23,16 @@ public class PriceItem implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRICE_ITEM")
     private Long id;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     private Product product;
-
 
     private String platform;
 
     private String categoryName;
 
     private String name;
+
+    private String quoteServicePriceItemId;
 
 
     // The @Transient fields below are "owned" by the quote server, what we hold in this class are just cached copies
@@ -93,6 +99,14 @@ public class PriceItem implements Serializable {
         this.units = units;
     }
 
+    public String getQuoteServicePriceItemId() {
+        return quoteServicePriceItemId;
+    }
+
+    public void setQuoteServicePriceItemId(String quoteServicePriceItemId) {
+        this.quoteServicePriceItemId = quoteServicePriceItemId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -115,15 +129,18 @@ public class PriceItem implements Serializable {
         return result;
     }
 
-
+    /**
+     * Consciously excluding 'product' field to avoid infinitely recursing between Product and PriceItem on a toString
+     * invocation.
+     */
     @Override
     public String toString() {
         return "PriceItem{" +
                 "id=" + id +
-                ", product=" + product +
                 ", platform='" + platform + '\'' +
                 ", categoryName='" + categoryName + '\'' +
                 ", name='" + name + '\'' +
+                ", quoteServicePriceItemId='" + quoteServicePriceItemId + '\'' +
                 ", price='" + price + '\'' +
                 ", units='" + units + '\'' +
                 '}';

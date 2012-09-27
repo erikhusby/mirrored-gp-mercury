@@ -8,7 +8,12 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-
+/**
+ * Core entity for Products.
+ *
+ * @author mcovarr
+ *
+ */
 @Entity
 @Audited
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
@@ -56,9 +61,9 @@ public class Product implements Serializable {
 
     private String workflowName;
 
-// MLC This reaches into Orderland and I don't want to step on what Hugh is working on in GPLIM-45
-//    @OneToMany
-//    private List<RiskContingency> riskContingencies;
+    // MLC This reaches into Orders and I don't want to step on what Hugh is currently working on in GPLIM-45
+    // @OneToMany
+    // private List<RiskContingency> riskContingencies;
 
 
     public Long getId() {
