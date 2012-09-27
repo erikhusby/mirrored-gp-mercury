@@ -3,11 +3,14 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.io.Serializable;
 
 @Entity
 @Audited
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"quoteServerId"}))
-public class PriceItem {
+@Table(uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"platform", "categoryName", "name"})
+})
+public class PriceItem implements Serializable {
 
     @Id
     @SequenceGenerator(name = "SEQ_PRICE_ITEM", sequenceName = "SEQ_PRICE_ITEM")
@@ -19,19 +22,14 @@ public class PriceItem {
     private Product product;
 
 
-    private Long quoteServerId;
-
-    // The @Transient fields below are "owned" by the quote server, what we hold in this class are just cached copies
-
-    @Transient
     private String platform;
 
-    @Transient
     private String categoryName;
 
-    @Transient
     private String name;
 
+
+    // The @Transient fields below are "owned" by the quote server, what we hold in this class are just cached copies
     @Transient
     private String price;
 
@@ -53,14 +51,6 @@ public class PriceItem {
 
     public void setProduct(Product product) {
         this.product = product;
-    }
-
-    public Long getQuoteServerId() {
-        return quoteServerId;
-    }
-
-    public void setQuoteServerId(Long quoteServerId) {
-        this.quoteServerId = quoteServerId;
     }
 
     public String getPlatform() {
@@ -110,13 +100,32 @@ public class PriceItem {
 
         PriceItem priceItem = (PriceItem) o;
 
-        if (!quoteServerId.equals(priceItem.quoteServerId)) return false;
+        if (!categoryName.equals(priceItem.categoryName)) return false;
+        if (!name.equals(priceItem.name)) return false;
+        if (!platform.equals(priceItem.platform)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return quoteServerId.hashCode();
+        int result = platform.hashCode();
+        result = 31 * result + categoryName.hashCode();
+        result = 31 * result + name.hashCode();
+        return result;
+    }
+
+
+    @Override
+    public String toString() {
+        return "PriceItem{" +
+                "id=" + id +
+                ", product=" + product +
+                ", platform='" + platform + '\'' +
+                ", categoryName='" + categoryName + '\'' +
+                ", name='" + name + '\'' +
+                ", price='" + price + '\'' +
+                ", units='" + units + '\'' +
+                '}';
     }
 }
