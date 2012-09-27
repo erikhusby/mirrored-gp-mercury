@@ -4,9 +4,8 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequ
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.BaitSetName;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.OrganismName;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.ReferenceSequenceName;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -70,7 +69,7 @@ public class SequencingServiceExternalTest  {
 
     public void testGetRequestSummariesByCreator() throws Exception {
 
-        List<ExperimentRequestSummary> aList = sequencingService.getRequestSummariesByCreator(new Person("athena", RoleType.PROGRAM_PM));
+        List<ExperimentRequestSummary> aList = sequencingService.getRequestSummariesByCreator(new Person("athena"));
         assertNotNull(aList);
         // If there was any data on SQUID for the athena user then check it.
         if (aList.size() > 0) {

@@ -2,10 +2,8 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
-import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollectionID;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.testng.Assert;
@@ -30,15 +28,14 @@ public class ResearchProjectTest {
 
         Date start = new Date();
 
-        Person programMgr = new Person("Erica", "Shefler", "shefler@broad", "1", RoleType.PROGRAM_PM );
+        Person programMgr = new Person("shefler@broad", "Erica", "Shefler");
+
         ResearchProject researchProject = new ResearchProject( programMgr,
                 new Name("MyResearchProject"), "To study stuff."  );
 
         ResearchProject researchProject2 = new ResearchProject( programMgr,
                 new Name("MyResearchProject"), "To study stuff."  );
 
-
-        //assertReflectionEquals( researchProject, researchProject2);
 
         //Equal
         Assert.assertTrue(researchProject.equals(researchProject2));
@@ -48,7 +45,7 @@ public class ResearchProjectTest {
         Assert.assertTrue(researchProject.getCreation().equals(researchProject.getModification()));
 
         //Add a collection
-        BSPCollection collection1 = new BSPCollection(new BSPCollectionID("12345"), "AlxCollection1");
+        Cohort collection1 = new Cohort(new CohortID("12345"), "AlxCollection1");
         researchProject.addBSPCollection(collection1);
 
         //No longer equal
@@ -68,16 +65,16 @@ public class ResearchProjectTest {
         funding2.setGrantStartDate(stop);
         funding1.setGrantNumber("200");
         funding1.setInstitute("NHGRI");
-        researchProject.addFunding(funding1);
-        researchProject.addFunding(funding2);
+        researchProject.addFunding(funding1.getFundingID());
+        researchProject.addFunding(funding2.getFundingID());
 
         researchProject.addIrbNumber("irb123");
         researchProject.addIrbNumber("irb456");
 
-        Person scientist1 = new Person("Adam", "Bass", "bass@broadinstitute.org", "2", RoleType.BROAD_SCIENTIST );
-        Person scientist2 = new Person("Noel", "Burtt", "bass@broadinstitute.org", "3", RoleType.BROAD_SCIENTIST );
-        researchProject.addSponsoringScientist( scientist1 );
-        researchProject.addSponsoringScientist( scientist2 );
+        Person scientist1 = new Person("bass@broadinstitute.org", "Adam", "Bass" );
+        Person scientist2 = new Person("bass@broadinstitute.org", "Noel", "Burtt" );
+        researchProject.addPerson(RoleType.SCIENTIST, scientist1 );
+        researchProject.addPerson(RoleType.SCIENTIST, scientist2 );
 
     }
 

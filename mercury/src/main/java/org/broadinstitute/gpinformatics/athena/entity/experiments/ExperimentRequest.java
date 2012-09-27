@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.experiments;
 
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPSample;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import java.util.Collection;

@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments;
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -26,7 +24,7 @@ public class ExperimentRequestSummaryTest {
     @BeforeMethod
     public void setUp() throws Exception {
         experimentRequestSummary = new ExperimentRequestSummary(
-                "An Experiment Title", new Person("athena", RoleType.PROGRAM_PM),
+                "An Experiment Title", new Person("athena"),
                 new Date(),
                 ExperimentType.WholeGenomeSequencing
         );
@@ -46,7 +44,7 @@ public class ExperimentRequestSummaryTest {
     public void testCreation() throws Exception {
         Assert.assertNotNull(experimentRequestSummary.getCreation());
         Assert.assertNotNull(experimentRequestSummary.getCreation().date);
-        Assert.assertEquals(experimentRequestSummary.getCreation().person.getUsername(), "athena");
+        Assert.assertEquals(experimentRequestSummary.getCreation().person.getLogin(), "athena");
     }
 
     @Test
@@ -80,7 +78,7 @@ public class ExperimentRequestSummaryTest {
 
     @Test
     public void testGetResearchProjectId() throws Exception {
-        Assert.assertEquals(experimentRequestSummary.getResearchProjectId(), ResearchProject.UNSPECIFIED_ID);
+        Assert.assertNotNull(experimentRequestSummary.getResearchProjectID());
     }
 
     @Test

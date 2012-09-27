@@ -2,12 +2,11 @@ package org.broadinstitute.gpinformatics.athena.control.experiments;
 
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequest;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.infrastructure.squid.PMBSequencingService;
 import org.broadinstitute.gpinformatics.infrastructure.UserNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.gap.GenotypingService;
+import org.broadinstitute.gpinformatics.infrastructure.squid.PMBSequencingService;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -34,12 +33,12 @@ public class PMBExperimentRequestServiceImpl implements PMBExperimentRequestServ
 
         // Get experiments from Sequencing
         List<ExperimentRequestSummary> seqSummaryList = sequencingService.getRequestSummariesByCreator(
-                new Person(username, RoleType.PROGRAM_PM));
+                new Person(username));
         summaryList.addAll(seqSummaryList);
 
         // Get experiments from Gap
         List<ExperimentRequestSummary> gapSummaryList = genotypingService.getRequestSummariesByCreator(
-                new Person(username, RoleType.PROGRAM_PM));
+                new Person(username));
         summaryList.addAll(gapSummaryList);
 
         return summaryList;

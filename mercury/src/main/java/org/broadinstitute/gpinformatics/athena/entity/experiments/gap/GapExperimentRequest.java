@@ -6,8 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPSample;
 import org.broadinstitute.gpinformatics.athena.entity.common.EntityUtils;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.*;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.gap.ExperimentPlan;
 import org.broadinstitute.gpinformatics.infrastructure.gap.Product;
@@ -41,8 +40,8 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
         getExperimentPlanDTO().setPlanningStatus(experimentRequestSummary.getStatus().name);
         //TODO This dates need to be formatted such that GAp an handle it.
 //        getExperimentPlanDTO().setProjectStartDate(new Date());
-        getExperimentPlanDTO().setResearchProjectId("" + experimentRequestSummary.getResearchProjectId());
-        getExperimentPlanDTO().setProgramPm(experimentRequestSummary.getCreation().person.getUsername());
+        getExperimentPlanDTO().setResearchProjectID(experimentRequestSummary.getResearchProjectID());
+        getExperimentPlanDTO().setProgramPm(experimentRequestSummary.getCreation().person.getLogin());
 
     }
 
@@ -119,16 +118,12 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
     @Override
     public Set<Person> getPlatformProjectManagers() {
 
-        Set<Person> platformPeople = EntityUtils.extractPeopleFromUsernameList(getExperimentPlanDTO().getPlatformPm(),
-                RoleType.PLATFORM_PM);
-        return platformPeople;
+        return EntityUtils.extractPeopleFromUsernameList(getExperimentPlanDTO().getPlatformPm());
     }
 
     @Override
     public Set<Person> getProgramProjectManagers() {
-        Set<Person> programPeople = EntityUtils.extractPeopleFromUsernameList(getExperimentPlanDTO().getProgramPm(),
-                RoleType.PROGRAM_PM);
-        return programPeople;
+        return EntityUtils.extractPeopleFromUsernameList(getExperimentPlanDTO().getProgramPm());
     }
 
 
@@ -187,11 +182,9 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
     @Override
     public void associateWithResearchProject(final ResearchProject researchProject) {
         if (researchProject != null) {
-            // Add this experiment to the list referred to by the research Project
-            researchProject.addExperimentRequest(this);
 
             // Update the RP id that is associated with the research project.
-            getExperimentPlanDTO().setResearchProjectId("" + researchProject.getId().longValue());
+            getExperimentPlanDTO().setResearchProjectID(researchProject.getId());
 
             //Set irb number and info on the gap experiment.
             if (researchProject.getIrbNumbers() != null) {

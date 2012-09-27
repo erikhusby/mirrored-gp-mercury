@@ -3,8 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.common;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.testng.annotations.Test;
 
 import java.util.Date;
@@ -25,12 +24,12 @@ public class ChangeEventTest extends TestCase {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testDatePerson() throws Exception {
 
-        ChangeEvent changeEvent = new ChangeEvent(new Date(), new Person("person1", RoleType.BROAD_SCIENTIST));
-        ChangeEvent changeEvent2 = new ChangeEvent(changeEvent.getDate(), new Person("person1", RoleType.BROAD_SCIENTIST));
+        ChangeEvent changeEvent = new ChangeEvent(new Date(), new Person("person1"));
+        ChangeEvent changeEvent2 = new ChangeEvent(changeEvent.getDate(), new Person("person1"));
 
         Assert.assertEquals( changeEvent, changeEvent2);
         Assert.assertEquals( changeEvent.hashCode(), changeEvent2.hashCode());
-        Assert.assertTrue( changeEvent.getPerson().getUsername().equals(  changeEvent2.getPerson().getUsername() ));
+        Assert.assertTrue( changeEvent.getPerson().getLogin().equals(  changeEvent2.getPerson().getLogin() ));
 
     }
 

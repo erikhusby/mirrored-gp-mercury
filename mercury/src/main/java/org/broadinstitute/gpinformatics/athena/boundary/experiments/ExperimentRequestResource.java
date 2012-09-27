@@ -4,8 +4,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.experiments;
 import org.broadinstitute.gpinformatics.athena.control.experiments.PMBExperimentRequestService;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -38,7 +37,7 @@ public class ExperimentRequestResource {
         //TODO under construction !!  Need to get the summaries from the platforms.
         //TODO For now new up one experiment summary  !!
         ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary(
-                "An Experiment Title", new Person("someone", RoleType.PROGRAM_PM),
+                "An Experiment Title", new Person("someone"),
                 new Date(),
                 ExperimentType.Genotyping
         );

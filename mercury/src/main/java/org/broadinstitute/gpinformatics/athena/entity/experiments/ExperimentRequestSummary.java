@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.athena.entity.experiments;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectID;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.Date;
 
@@ -21,18 +21,18 @@ public class ExperimentRequestSummary {
     private Name title;
     private ChangeEvent modification;
     private ExperimentId experimentId;
-    private Long researchProjectId = ResearchProject.UNSPECIFIED_ID;
+    private ResearchProjectID researchProjectID;
     public static Name DRAFT_STATUS = new Name("DRAFT");
     public static IllegalArgumentException BLANK_CREATOR_EXCEPTION = new IllegalArgumentException("Creator username must not be blank.");
     private Name status = DRAFT_STATUS;
     private ExperimentType experimentType;
 
     public ExperimentRequestSummary(final String title, Person creator, Date createdDate, ExperimentType experimentType) {
-        if (creator == null || StringUtils.isBlank(creator.getUsername())) {
+        if (creator == null || StringUtils.isBlank(creator.getLogin())) {
             throw BLANK_CREATOR_EXCEPTION;
         }
         if (createdDate == null) {
-            throw new IllegalArgumentException("Creator date must not be null for creator " + creator.getUsername() );
+            throw new IllegalArgumentException("Creator date must not be null for creator " + creator.getLogin() );
         }
         if ( StringUtils.isBlank( title) ){
             throw new IllegalArgumentException("Experimnet title must not be blank." );
@@ -71,8 +71,8 @@ public class ExperimentRequestSummary {
         return status;
     }
 
-    public Long getResearchProjectId() {
-        return researchProjectId;
+    public ResearchProjectID getResearchProjectID() {
+        return researchProjectID;
     }
 
     //SETTERS
@@ -97,8 +97,8 @@ public class ExperimentRequestSummary {
         this.status = status;
     }
 
-    public void setResearchProjectId(final Long researchProjectId) {
-        this.researchProjectId = researchProjectId;
+    public void setResearchProjectID(final ResearchProjectID researchProjectID) {
+        this.researchProjectID = researchProjectID;
     }
 
     public void setExperimentType(final ExperimentType experimentType) {
@@ -116,7 +116,7 @@ public class ExperimentRequestSummary {
                 ", title=" + title +
                 ", modification=" + modification +
                 ", experimentId=" + experimentId +
-                ", researchProjectId=" + researchProjectId +
+                ", researchProjectId=" + researchProjectID.getValue() +
                 ", status=" + status +
                 ", experimentType=" + experimentType +
                 '}';

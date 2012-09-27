@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.common;
 
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.Date;
 

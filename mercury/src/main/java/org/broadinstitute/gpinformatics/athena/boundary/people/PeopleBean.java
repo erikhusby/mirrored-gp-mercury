@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.people;
 
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.infrastructure.squid.PMBSequencingService;
 import org.broadinstitute.gpinformatics.athena.presentation.AbstractJsfBean;
 
@@ -48,7 +48,7 @@ public class PeopleBean extends AbstractJsfBean {
 
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         for (Person p : list) {
-            result.put(p.getLastName() + ", " + p.getFirstName(), p.getUsername());
+            result.put(p.getLastName() + ", " + p.getFirstName(), p.getLogin());
         }
 
         return result;

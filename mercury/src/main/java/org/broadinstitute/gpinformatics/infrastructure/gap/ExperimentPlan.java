@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.gap;
 
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectID;
 import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -21,7 +22,7 @@ public class ExperimentPlan {
     private String broadPi;
     private String fundingPi;
     private String platformPm;
-    private String researchProjectId;
+    private ResearchProjectID researchProjectID;
     private Integer numberSamples;
     private String productName;
     private String notes;
@@ -102,12 +103,12 @@ public class ExperimentPlan {
     }
 
     @XmlElement(name = "researchProjectId")
-    public String getResearchProjectId() {
-        return researchProjectId;
+    public ResearchProjectID getResearchProjectId() {
+        return researchProjectID;
     }
 
-    public void setResearchProjectId(String researchProjectId) {
-        this.researchProjectId = researchProjectId;
+    public void setResearchProjectID(ResearchProjectID researchProjectID) {
+        this.researchProjectID = researchProjectID;
     }
 
     @XmlElement(name = "numberSamples")
