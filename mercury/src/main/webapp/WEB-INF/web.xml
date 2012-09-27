@@ -86,7 +86,7 @@
 
     <servlet>
         <servlet-name>PASSService</servlet-name>
-        <servlet-class>org.broadinstitute.sequel.boundary.pass.PassServiceImpl</servlet-class>
+        <servlet-class>org.broadinstitute.gpinformatics.mercury.boundary.pass.PassServiceImpl</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>PASSService</servlet-name>
@@ -95,7 +95,7 @@
 
     <servlet>
         <servlet-name>SampleKitService</servlet-name>
-        <servlet-class>org.broadinstitute.sequel.boundary.samplekit.SampleKitSOAPServiceImpl</servlet-class>
+        <servlet-class>org.broadinstitute.gpinformatics.mercury.boundary.samplekit.SampleKitSOAPServiceImpl</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>SampleKitService</servlet-name>
@@ -124,21 +124,21 @@
         <param-name>resteasy.resources</param-name>
         <!-- comma separated list of jax-rs resource classes -->
         <param-value>
-            org.broadinstitute.sequel.boundary.zims.IlluminaRunResource,
-            org.broadinstitute.sequel.boundary.lims.LimsQueryResource,
-            org.broadinstitute.sequel.boundary.lims.LimsQueryTypesResource,
-            org.broadinstitute.sequel.boundary.vessel.LabBatchResource,
-            org.broadinstitute.sequel.boundary.labevent.BettalimsMessageResource,
-            org.broadinstitute.sequel.boundary.labevent.LabEventResource,
-            org.broadinstitute.sequel.boundary.run.SolexaRunResource
+            org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryTypesResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource
         </param-value>
     </context-param>
     <context-param>
         <param-name>resteasy.providers</param-name>
         <param-value>
-            org.broadinstitute.sequel.infrastructure.jaxrs.JacksonConfigurator,
-            org.broadinstitute.sequel.infrastructure.jaxrs.CatchAllExceptionMapper,
-            org.broadinstitute.sequel.infrastructure.jaxrs.EJBExceptionMapper
+            org.broadinstitute.gpinformatics.infrastructure.jaxrs.JacksonConfigurator,
+            org.broadinstitute.gpinformatics.infrastructure.jaxrs.CatchAllExceptionMapper,
+            org.broadinstitute.gpinformatics.infrastructure.jaxrs.EJBExceptionMapper
         </param-value>
     </context-param>
 
@@ -154,11 +154,13 @@
             <url-pattern>/dummy-url/*</url-pattern>
         </web-resource-collection>
         <auth-constraint>
-            <role-name>Sequel-Admins</role-name>
-            <role-name>Sequel-LabUsers</role-name>
-            <role-name>Sequel-LabManagers</role-name>
-            <role-name>Sequel-ProjectManagers</role-name>
-            <role-name>Sequel-Developers</role-name>
+            <role-name>Mercury-Admins</role-name>
+            <role-name>Mercury-LabUsers</role-name>
+            <role-name>Mercury-LabManagers</role-name>
+            <role-name>Mercury-ProjectManagers</role-name>
+            <role-name>Mercury-Developers</role-name>
+            <role-name>PMBAdmins</role-name>
+            <role-name>PMBUsers</role-name>
         </auth-constraint>
     </security-constraint>
 
@@ -168,24 +170,30 @@
     </login-config>-->
 
     <security-role>
-        <role-name>Sequel-Admins</role-name>
+        <role-name>Mercury-Admins</role-name>
     </security-role>
     <security-role>
-        <role-name>Sequel-LabUsers</role-name>
+        <role-name>Mercury-LabUsers</role-name>
     </security-role>
     <security-role>
-        <role-name>Sequel-LabManagers</role-name>
+        <role-name>Mercury-LabManagers</role-name>
     </security-role>
     <security-role>
-        <role-name>Sequel-ProjectManagers</role-name>
+        <role-name>Mercury-ProjectManagers</role-name>
     </security-role>
     <security-role>
-        <role-name>Sequel-Developers</role-name>
+        <role-name>Mercury-Developers</role-name>
     </security-role>
-
+    <security-role>
+        <role-name>PMBAdmins</role-name>
+    </security-role>
+    <security-role>
+        <role-name>PMBUsers</role-name>
+    </security-role>
 
 
     <welcome-file-list>
+        <!--<welcome-file>/summary/summary.xhtml</welcome-file>-->
         <welcome-file>/index.xhtml</welcome-file>
     </welcome-file-list>
     <login-config>
@@ -193,14 +201,14 @@
         <realm-name>crowd_custom_realm</realm-name>
         <form-login-config>
             <form-login-page>/security/login.xhtml</form-login-page>
-            <form-error-page>/security/login_error.xhtml</form-error-page>
+            <form-error-page>/security/login.xhtml</form-error-page>
         </form-login-config>
     </login-config>
 
 
     <filter>
         <filter-name>AuthorizationFilter</filter-name>
-        <filter-class>org.broadinstitute.sequel.presentation.security.AuthorizationFilter</filter-class>
+        <filter-class>org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter</filter-class>
 
         <init-param>
             <param-name>error_page</param-name>
@@ -210,7 +218,23 @@
 
     <filter-mapping>
         <filter-name>AuthorizationFilter</filter-name>
-        <url-pattern>/*</url-pattern>
+        <url-pattern>*.xhtml</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
+
+    <!--<filter-mapping>-->
+        <!--<filter-name>AuthorizationFilter</filter-name>-->
+        <!--<url-pattern>*.xhtml</url-pattern>-->
+        <!--<dispatcher>REQUEST</dispatcher>-->
+    <!--</filter-mapping>-->
+
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Dummy</web-resource-name>
+            <url-pattern>/Dummy/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+        </auth-constraint>
+    </security-constraint>
 
 </web-app>

@@ -3,13 +3,13 @@
         "-//Puppy Crawl//DTD Import Control 1.1//EN"
         "http://www.puppycrawl.com/dtds/import_control_1_1.dtd">
 
-<import-control pkg="org.broadinstitute.sequel">
+<import-control pkg="org.broadinstitute.gpinformatics.mercury">
 
     <!--allow access to utility libraries -->
     <allow pkg="java"/>
     <allow pkg="sun"/>
     <allow pkg="org.apache.commons"/>
-    <allow pkg="org.broadinstitute.sequel"/>
+    <allow pkg="org.broadinstitute.gpinformatics.mercury"/>
 
     <subpackage name="bettalims">
         <subpackage name="jaxb">
@@ -50,7 +50,7 @@
         <allow pkg="javax.management"/>
     </subpackage>
 
-    <!-- unit tests are allowed to import external SequeL interfaces, test frameworks, mock frameworks, etc. -->
+    <!-- unit tests are allowed to import external Mercury interfaces, test frameworks, mock frameworks, etc. -->
     <subpackage name="test">
         <allow pkg="edu.mit.broad.prodinfo.thrift.lims"/>
         <allow pkg="javax.xml"/>

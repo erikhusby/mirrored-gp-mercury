@@ -4,15 +4,15 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>SequeL</groupId>
-    <artifactId>SequeL</artifactId>
+    <groupId>Mercury</groupId>
+    <artifactId>Mercury</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
 
     <!-- uncomment this to enable squid integration.
-    copy your local squid_app subdirs to the "sequel"
+    copy your local squid_app subdirs to the "mercury"
     directory -->
     <!--
     <parent>
@@ -23,7 +23,7 @@
     </parent>
     -->
 
-    <name>SequeL</name>
+    <name>Mercury</name>
     <description>The next generation Squid.</description>
 
     <url>${site.url}/${project.artifactId}</url>
@@ -173,9 +173,10 @@
         <jira.url>http://prodinfojira.broadinstitute.org:8080/jira</jira.url>
         <bamboo.url>http://prodinfobuild.broadinstitute.org:8085</bamboo.url>
 
-        <!-- git clone gitolite@git.broadinstitute.org:sequel -->
-        <git.url>gitolite@git.broadinstitute.org:sequel</git.url>
-        <git.browseUrl>https://crucible.broadinstitute.org/browse/sequel</git.browseUrl>
+        <!-- git clone ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git -->
+        <git.url>ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git</git.url>
+        <!-- 2012-09-23 MLC currently this is still pointed to the old Stash repo but Systems should be fixing this -->
+        <git.browseUrl>https://crucible.broadinstitute.org/browse/GPInformatics</git.browseUrl>
 
         <site.url>http://prodinfosvn.broadinstitute.org:8000/m2-projects</site.url>
         <site.path>/prodinfo/releng/m2-projects</site.path>
@@ -380,8 +381,8 @@
                                 </goals>
                                 <configuration>
                                     <includes>
-                                        <include>org/broadinstitute/sequel/boundary/Namespaces.java</include>
-                                        <include>org/broadinstitute/sequel/boundary/labevent/*Bean.java</include>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java</include>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/labevent/*Bean.java</include>
                                     </includes>
                                     <transformSchemas>
                                         <!--
@@ -406,7 +407,7 @@
                                                excluding the ".xsd" suffix (which will be added automatically).
                                         -->
                                         <transformSchema>
-                                            <uri>http://broadinstitute.org/sequel/labevent</uri>
+                                            <uri>http://broadinstitute.org/gpinformatics/mercury/labevent</uri>
                                             <!--
                                             <toPrefix>labevent</toPrefix>
                                             -->
@@ -422,12 +423,12 @@
                                 </goals>
                                 <configuration>
                                     <includes>
-                                        <include>org/broadinstitute/sequel/boundary/Namespaces.java</include>
-                                        <include>org/broadinstitute/sequel/boundary/vessel/*Bean.java</include>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java</include>
+                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/vessel/*Bean.java</include>
                                     </includes>
                                     <transformSchemas>
                                         <transformSchema>
-                                            <uri>http://broadinstitute.org/sequel/vessel</uri>
+                                            <uri>http://broadinstitute.org/gpinformatics/mercury/vessel</uri>
                                             <!--
                                             <toPrefix>labevent</toPrefix>
                                             -->
@@ -759,7 +760,7 @@
                     <testResource>
                         <directory>src/main/webapp/WEB-INF/classes</directory>
                         <includes>
-                            <include>sequel-config.yaml</include>
+                            <include>mercury-config.yaml</include>
                         </includes>
                     </testResource>
                 </testResources>
@@ -779,7 +780,7 @@
                     <testResource>
                         <directory>src/main/webapp/WEB-INF/classes</directory>
                         <includes>
-                            <include>sequel-config.yaml</include>
+                            <include>mercury-config.yaml</include>
                         </includes>
                     </testResource>
                 </testResources>
@@ -1249,6 +1250,12 @@
             <version>1.4</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.atlassian.crowd</groupId>
+            <artifactId>crowd-core</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -1313,6 +1320,14 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.3.2</version>
                 </plugin>
+
+                <plugin>
+                    <groupId>org.jboss.as.plugins</groupId>
+                    <artifactId>jboss-as-maven-plugin</artifactId>
+                    <version>7.1.1.Final</version>
+                </plugin>
+
+
                 <!--
                                 <plugin>
                                     <artifactId>maven-dependency-plugin</artifactId>
@@ -1339,6 +1354,7 @@
                                     </executions>
                                 </plugin>
                 -->
+
 
             </plugins>
 
@@ -1446,7 +1462,7 @@
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
                             <schemaFiles>bettalims.xsd</schemaFiles>
-                            <packageName>org.broadinstitute.sequel.bettalims.generated</packageName>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.bettalims.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.bettalimsXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
@@ -1461,7 +1477,7 @@
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
                             <schemaFiles>LimsQueryTypes.xsd</schemaFiles>
-                            <packageName>org.broadinstitute.sequel.limsquery.generated</packageName>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.limsquery.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.limsqueryXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
@@ -1505,7 +1521,7 @@
                             <goal>java</goal>
                         </goals>
                         <configuration>
-                            <mainClass>org.broadinstitute.sequel.infrastructure.jpa.EnversSchemaExport</mainClass>
+                            <mainClass>org.broadinstitute.gpinformatics.infrastructure.jpa.EnversSchemaExport</mainClass>
                             <arguments>
                                 <argument>--drop</argument>
                                 <argument>--create</argument>
@@ -1547,13 +1563,13 @@
                 <version>2.2</version>
                 <executions>
                     <execution>
-                        <id>sequel-wsimport</id>
+                        <id>mercury-wsimport</id>
                         <goals>
                             <goal>wsimport</goal>
                         </goals>
                         <configuration>
                             <!-- The name of your generated source package -->
-                            <packageName>org.broadinstitute.sequel.boundary</packageName>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary</packageName>
                             <wsdlDirectory>${basedir}/src/main/wsdl</wsdlDirectory>
                         </configuration>
                     </execution>
@@ -1564,7 +1580,7 @@
                         </goals>
                         <configuration>
                             <!-- The name of your generated source package -->
-                            <packageName>org.broadinstitute.sequel.boundary.squid</packageName>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.squid</packageName>
                             <wsdlDirectory>${basedir}/src/main/wsdl/squid</wsdlDirectory>
                         </configuration>
                     </execution>
@@ -1606,7 +1622,7 @@
                             <artifactId>maven-failsafe-plugin</artifactId>
                             <configuration>
                                 <includes>
-                                    <include>**/org/broadinstitute/sequel/integration/**/*Test.java</include>
+                                    <include>**/org/broadinstitute/mercury/integration/**/*Test.java</include>
                                 </includes>
                             </configuration>
                             <executions>
@@ -1650,7 +1666,7 @@
                             <!-- this is relative to the pom.xml directory -->
                             <directory>.</directory>
                             <includes>
-                                <include>sequel-config-local.yaml</include>
+                                <include>mercury-config-local.yaml</include>
                             </includes>
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
@@ -1696,6 +1712,11 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.jboss.as.plugins</groupId>
+                <artifactId>jboss-as-maven-plugin</artifactId>
+            </plugin>
+
         </plugins>
 
         <testResources>
@@ -1705,7 +1726,7 @@
             <testResource>
                 <directory>src/main/webapp/WEB-INF/classes</directory>
                 <includes>
-                    <include>sequel-config.yaml</include>
+                    <include>mercury-config.yaml</include>
                 </includes>
             </testResource>
         </testResources>

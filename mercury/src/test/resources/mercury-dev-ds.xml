@@ -13,7 +13,8 @@
         -->
         <security>
             <user-name>mercury</user-name>
-            <password>mercury_dev1</password>
+            <password>mercury_dev1</password> 
+            <!-- <password>mercury_local</password> -->
         </security>
     </datasource>
 </datasources>

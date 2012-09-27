@@ -6,12 +6,12 @@
 <!--
 <endpoint
         name='PASSService'
-        implementation='org.broadinstitute.sequel.boundary.pass.PassServiceImpl'
+        implementation='org.broadinstitute.gpinformatics.mercuryy.boundary.pass.PassServiceImpl'
         url-pattern='/PASS' />
 
 <endpoint
         name='SampleKit'
-        implementation='org.broadinstitute.sequel.boundary.samplekit.SampleKitSOAPServiceImpl'
+        implementation='org.broadinstitute.gpinformatics.mercuryy.boundary.samplekit.SampleKitSOAPServiceImpl'
         url-pattern='/SampleKit' />
 -->
 
