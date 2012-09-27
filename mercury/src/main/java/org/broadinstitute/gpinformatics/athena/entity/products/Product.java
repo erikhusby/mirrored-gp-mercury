@@ -11,7 +11,7 @@ import java.util.List;
 
 @Entity
 @Audited
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
 public class Product implements Serializable {
 
     @Id
@@ -206,6 +206,7 @@ public class Product implements Serializable {
 //        this.riskContingencies = riskContingencies;
 //    }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -213,13 +214,34 @@ public class Product implements Serializable {
 
         Product product = (Product) o;
 
-        if (!name.equals(product.name)) return false;
+        if (!partNumber.equals(product.partNumber)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return partNumber.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", productFamily=" + productFamily +
+                ", description='" + description + '\'' +
+                ", partNumber='" + partNumber + '\'' +
+                ", availabilityDate=" + availabilityDate +
+                ", discontinuedDate=" + discontinuedDate +
+                ", expectedCycleTimeSeconds=" + expectedCycleTimeSeconds +
+                ", guaranteedCycleTimeSeconds=" + guaranteedCycleTimeSeconds +
+                ", samplesPerWeek=" + samplesPerWeek +
+                ", inputRequirements='" + inputRequirements + '\'' +
+                ", deliverables='" + deliverables + '\'' +
+                ", topLevelProduct=" + topLevelProduct +
+                ", defaultPriceItem=" + defaultPriceItem +
+                ", workflowName='" + workflowName + '\'' +
+                '}';
     }
 }
