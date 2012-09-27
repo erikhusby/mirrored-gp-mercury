@@ -129,20 +129,4 @@ public class PriceItem implements Serializable {
         return result;
     }
 
-    /**
-     * Consciously excluding 'product' field to avoid infinitely recursing between Product and PriceItem on a toString
-     * invocation.
-     */
-    @Override
-    public String toString() {
-        return "PriceItem{" +
-                "id=" + id +
-                ", platform='" + platform + '\'' +
-                ", categoryName='" + categoryName + '\'' +
-                ", name='" + name + '\'' +
-                ", quoteServicePriceItemId='" + quoteServicePriceItemId + '\'' +
-                ", price='" + price + '\'' +
-                ", units='" + units + '\'' +
-                '}';
-    }
 }

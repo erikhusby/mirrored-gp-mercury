@@ -229,24 +229,4 @@ public class Product implements Serializable {
         return partNumber.hashCode();
     }
 
-    @Override
-    public String toString() {
-        return "Product{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", productFamily=" + productFamily +
-                ", description='" + description + '\'' +
-                ", partNumber='" + partNumber + '\'' +
-                ", availabilityDate=" + availabilityDate +
-                ", discontinuedDate=" + discontinuedDate +
-                ", expectedCycleTimeSeconds=" + expectedCycleTimeSeconds +
-                ", guaranteedCycleTimeSeconds=" + guaranteedCycleTimeSeconds +
-                ", samplesPerWeek=" + samplesPerWeek +
-                ", inputRequirements='" + inputRequirements + '\'' +
-                ", deliverables='" + deliverables + '\'' +
-                ", topLevelProduct=" + topLevelProduct +
-                ", defaultPriceItem=" + defaultPriceItem +
-                ", workflowName='" + workflowName + '\'' +
-                '}';
-    }
 }
