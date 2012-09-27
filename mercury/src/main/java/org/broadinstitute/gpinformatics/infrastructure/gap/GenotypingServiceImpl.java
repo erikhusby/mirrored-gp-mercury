@@ -6,7 +6,6 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentId;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
@@ -186,7 +185,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
             throw new IllegalArgumentException("Username was blank. Need a non-null username to save an experiment request.");
         }
         if ((gapExperimentRequest == null) || (gapExperimentRequest.getExperimentRequestSummary() == null) ||
-                (StringUtils.isBlank(gapExperimentRequest.getExperimentRequestSummary().getTitle().name))) {
+                (StringUtils.isBlank(gapExperimentRequest.getExperimentRequestSummary().getTitle()))) {
             throw new IllegalArgumentException("Title was blank. Need a non-null title to save an experiment request.");
         }
 
@@ -200,7 +199,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
             throw new IllegalArgumentException("Username was blank. Need a non-null username to submit an experiment request to GAP.");
         }
         if ((gapExperimentRequest == null) || (gapExperimentRequest.getExperimentRequestSummary() == null) ||
-                (StringUtils.isBlank(gapExperimentRequest.getExperimentRequestSummary().getTitle().name))) {
+                (StringUtils.isBlank(gapExperimentRequest.getExperimentRequestSummary().getTitle()))) {
             throw new IllegalArgumentException("Title was blank. Need a non-null title to submit an experiment request to GAP.");
         }
 
@@ -245,7 +244,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 //                        experimentRequestSummary.setCreation(new ChangeEvent(receivedExperimentPlan.getDateCreated(),
 //                                new Person(receivedExperimentPlan.getCreatedBy(), RoleType.PROGRAM_PM)));
                         experimentRequestSummary.setModification(new ChangeEvent(new Date(), programMgr));
-                        experimentRequestSummary.setStatus(new Name(receivedExperimentPlan.getPlanningStatus()));
+                        experimentRequestSummary.setStatus(receivedExperimentPlan.getPlanningStatus());
 
                         submittedExperimentRequest = new GapExperimentRequest(experimentRequestSummary, receivedExperimentPlan);
                         submittedExperimentRequest = populateQuotes(submittedExperimentRequest, quoteService);
@@ -306,10 +305,10 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
                             new Person(expPlan.getUpdatedBy())));
 
                     String status = expPlan.getPlanningStatus();
-                    experimentRequestSummary.setStatus(new Name(status));
+                    experimentRequestSummary.setStatus(status);
 
                     experimentRequestSummary.setResearchProjectID(expPlan.getResearchProjectId());
-                    experimentRequestSummary.setTitle(new Name(expPlan.getExperimentName()));
+                    experimentRequestSummary.setTitle(expPlan.getExperimentName());
                     experimentRequestSummaries.add(experimentRequestSummary);
                 }
             }

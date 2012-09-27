@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectID;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -38,7 +37,7 @@ public class ResearchProjectDAO {
 
     // TODO Temp method just to save an rp.
     public void saveProject(ResearchProject researchProject) {
-        String researchProjectTitle = researchProject.getTitle().name;
+        String researchProjectTitle = researchProject.getTitle();
         if ((researchProject != null) && StringUtils.isBlank(researchProjectTitle)) {
             throw new IllegalArgumentException("ResearchProject title must non be blank.");
         }
@@ -64,8 +63,8 @@ public class ResearchProjectDAO {
         //TODO hmc - hook up with the actual DB.
         // create a dummy research project with rpid appended to title.
         Person programMgr = new Person("shefler@broad", "Erica", "Shefler");
-        ResearchProject myResearchProject = new ResearchProject(programMgr,
-                new Name("FakeResearchProject" + rpID), "Research Stuff");
+        ResearchProject myResearchProject = new ResearchProject(
+                programMgr, "FakeResearchProject" + rpID, "Research Stuff");
         myResearchProject.addPerson(RoleType.PM, programMgr);
         myResearchProject.setId(rpID);
 

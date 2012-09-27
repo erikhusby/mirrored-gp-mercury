@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.entity.experiments;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectID;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
@@ -18,13 +17,13 @@ import java.util.Date;
 public class ExperimentRequestSummary {
 
     private ChangeEvent creation;
-    private Name title;
+    private String title;
     private ChangeEvent modification;
     private ExperimentId experimentId;
     private ResearchProjectID researchProjectID;
-    public static Name DRAFT_STATUS = new Name("DRAFT");
+    public static final String DRAFT_STATUS = "DRAFT";
     public static IllegalArgumentException BLANK_CREATOR_EXCEPTION = new IllegalArgumentException("Creator username must not be blank.");
-    private Name status = DRAFT_STATUS;
+    private String status = DRAFT_STATUS;
     private ExperimentType experimentType;
 
     public ExperimentRequestSummary(final String title, Person creator, Date createdDate, ExperimentType experimentType) {
@@ -42,12 +41,12 @@ public class ExperimentRequestSummary {
         this.experimentId = new ExperimentId("DRAFT_" + this.creation.date.getTime());
         this.modification = new ChangeEvent(new Date(this.creation.date.getTime()), creator);
         this.experimentType = experimentType;
-        this.title = new Name( title );
+        this.title = title;
 
     }
 
     //GETTERS
-    public Name getTitle() {
+    public String getTitle() {
         return title;
     }
 
@@ -67,7 +66,7 @@ public class ExperimentRequestSummary {
         return experimentType;
     }
 
-    public Name getStatus() {
+    public String getStatus() {
         return status;
     }
 
@@ -76,7 +75,7 @@ public class ExperimentRequestSummary {
     }
 
     //SETTERS
-    public void setTitle(final Name title) {
+    public void setTitle(final String title) {
         this.title = title;
     }
 
@@ -93,7 +92,7 @@ public class ExperimentRequestSummary {
 //        this.creation = creation;
 //    }
 
-    public void setStatus(final Name status) {
+    public void setStatus(final String status) {
         this.status = status;
     }
 

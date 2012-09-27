@@ -3,18 +3,17 @@ package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPSample;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.SampleId;
 import org.broadinstitute.gpinformatics.athena.entity.common.EntityUtils;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.common.QuoteId;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.*;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.mercury.boundary.*;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -122,9 +121,9 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
     }
 
     @Override
-    public void setTitle(final Name title) {
+    public void setTitle(final String title) {
         ProjectInformation projectInformation = getOrCreateProjectInformation();
-        projectInformation.setTitle(getExperimentRequestSummary().getTitle().name);
+        projectInformation.setTitle(getExperimentRequestSummary().getTitle());
         getConcretePass().setProjectInformation(projectInformation);
     }
 

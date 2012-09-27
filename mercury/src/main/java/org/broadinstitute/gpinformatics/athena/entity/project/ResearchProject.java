@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.orders.Order;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
@@ -27,7 +26,7 @@ public class ResearchProject {
 
     private ChangeEvent creation;
     private ChangeEvent modification;
-    private Name title;
+    private String title;
     private String synopsis;
 
     // People related to the project
@@ -42,7 +41,7 @@ public class ResearchProject {
 
     private final Set<Order> orders = new HashSet<Order>();
 
-    public ResearchProject(Person creator, Name title, String synopsis) {
+    public ResearchProject(Person creator, String title, String synopsis) {
         this.title = title;
         this.synopsis = synopsis;
         this.creation = new ChangeEvent(creator);
@@ -50,7 +49,7 @@ public class ResearchProject {
     }
 
     // Getters
-    public Name getTitle() {
+    public String getTitle() {
         return title;
     }
 
@@ -70,7 +69,7 @@ public class ResearchProject {
     }
 
     //Setters
-    public void setTitle(Name title) {
+    public void setTitle(String title) {
         this.title = title;
     }
 

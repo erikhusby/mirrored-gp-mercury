@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments;
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.testng.annotations.AfterMethod;
@@ -36,8 +35,8 @@ public class ExperimentRequestSummaryTest {
 
     @Test
     public void testGetTitle() throws Exception {
-        experimentRequestSummary.setTitle(new Name("ExpTitle"));
-        Assert.assertEquals(experimentRequestSummary.getTitle().name, "ExpTitle");
+        experimentRequestSummary.setTitle("ExpTitle");
+        Assert.assertEquals(experimentRequestSummary.getTitle(), "ExpTitle");
     }
 
     @Test

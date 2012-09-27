@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPSample;
 import org.broadinstitute.gpinformatics.athena.entity.common.EntityUtils;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.*;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -36,8 +35,8 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
     public GapExperimentRequest(ExperimentRequestSummary experimentRequestSummary) {
         super(experimentRequestSummary, ExperimentType.Genotyping);
         setExperimentPlanDTO(new ExperimentPlan());
-        getExperimentPlanDTO().setExperimentName(experimentRequestSummary.getTitle().name);
-        getExperimentPlanDTO().setPlanningStatus(experimentRequestSummary.getStatus().name);
+        getExperimentPlanDTO().setExperimentName(experimentRequestSummary.getTitle());
+        getExperimentPlanDTO().setPlanningStatus(experimentRequestSummary.getStatus());
         //TODO This dates need to be formatted such that GAp an handle it.
 //        getExperimentPlanDTO().setProjectStartDate(new Date());
         getExperimentPlanDTO().setResearchProjectID(experimentRequestSummary.getResearchProjectID());
@@ -54,7 +53,7 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
         }
     }
 
-    public Name getExperimentStatus() {
+    public String getExperimentStatus() {
         return getExperimentRequestSummary().getStatus();
     }
 
@@ -145,8 +144,8 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
     }
 
     @Override
-    public void setTitle(final Name title) {
-        getExperimentPlanDTO().setExperimentName(title.name);
+    public void setTitle(final String title) {
+        getExperimentPlanDTO().setExperimentName(title);
         getExperimentRequestSummary().setTitle(title);
     }
 

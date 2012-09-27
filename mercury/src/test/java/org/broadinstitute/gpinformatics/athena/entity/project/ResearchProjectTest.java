@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
@@ -29,12 +28,8 @@ public class ResearchProjectTest {
         Date start = new Date();
 
         Person programMgr = new Person("shefler@broad", "Erica", "Shefler");
-
-        ResearchProject researchProject = new ResearchProject( programMgr,
-                new Name("MyResearchProject"), "To study stuff."  );
-
-        ResearchProject researchProject2 = new ResearchProject( programMgr,
-                new Name("MyResearchProject"), "To study stuff."  );
+        ResearchProject researchProject = new ResearchProject( programMgr, "MyResearchProject", "To study stuff.");
+        ResearchProject researchProject2 = new ResearchProject( programMgr, "MyResearchProject", "To study stuff.");
 
 
         //Equal

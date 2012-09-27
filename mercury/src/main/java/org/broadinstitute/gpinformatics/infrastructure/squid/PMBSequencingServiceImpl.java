@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.squid;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentId;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
@@ -222,9 +221,9 @@ public class PMBSequencingServiceImpl implements PMBSequencingService {
                         ExperimentType.WholeGenomeSequencing
                 );
                 experimentRequestSummary.setExperimentId(new ExperimentId(summary.getPassNumber()));
-                experimentRequestSummary.setTitle(new Name(summary.getTitle()));
+                experimentRequestSummary.setTitle(summary.getTitle());
                 experimentRequestSummary.setModification(new ChangeEvent(updatedDate, new Person(summary.getUpdatedBy())));
-                experimentRequestSummary.setStatus(new Name(summary.getStatus().name()));
+                experimentRequestSummary.setStatus(summary.getStatus().name());
 
                 if (StringUtils.isNotBlank(summary.getResearchProject()) && Pattern.matches("[\\d]+", summary.getResearchProject().trim())) {
                     experimentRequestSummary.setResearchProjectID(new ResearchProjectID(summary.getResearchProject()));
