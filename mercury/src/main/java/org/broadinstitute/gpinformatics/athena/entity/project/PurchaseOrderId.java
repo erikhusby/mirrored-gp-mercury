@@ -1,13 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
 /**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 4/11/12
- * Time: 4:08 PM
+ * This holds the Purchase Order version of the
  */
-public class PurchaseOrderId extends FundingId {
-    public PurchaseOrderId(String id) {
+public class PurchaseOrderID extends FundingID {
+    public PurchaseOrderID(String id) {
         super(id);
     }
 }
