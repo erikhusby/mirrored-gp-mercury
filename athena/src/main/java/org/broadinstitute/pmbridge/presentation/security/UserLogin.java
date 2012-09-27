@@ -1,7 +1,8 @@
-package org.broadinstitute.pmbridge.presentation.security;
+package org.broadinstitute.gpinformatics.athena.presentation.security;
 
 import org.apache.log4j.Logger;
-import org.broadinstitute.pmbridge.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.athena.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
@@ -47,7 +48,7 @@ public class UserLogin extends AbstractJsfBean {
 
             request.login(userName, password);
 
-            String previouslyTargetedPage = (String)request.getAttribute("targeted_page");
+            String previouslyTargetedPage = (String)request.getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
             if (previouslyTargetedPage != null) {
                 targetPage = previouslyTargetedPage;
             }
