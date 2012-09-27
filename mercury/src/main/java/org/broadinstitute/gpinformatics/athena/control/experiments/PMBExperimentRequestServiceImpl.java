@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.experiments;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequest;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.infrastructure.UserNotFoundException;
@@ -48,12 +49,7 @@ public class PMBExperimentRequestServiceImpl implements PMBExperimentRequestServ
     public ExperimentRequest getPlatformRequest(final ExperimentRequestSummary experimentRequestSummary) {
 
         ExperimentRequest experimentRequest = null;
-
-        //TODO under construction !!!
-        if ((experimentRequestSummary != null ) &&
-            (experimentRequestSummary.getTitle() != null) &&
-            (experimentRequestSummary.getTitle().name != null) ) {
-
+        if ((experimentRequestSummary != null ) && StringUtils.isBlank(experimentRequestSummary.getTitle())) {
             if ( experimentRequestSummary.getExperimentId().value.startsWith("PASS")  ) {
                 experimentRequest = sequencingService.getPlatformRequest(experimentRequestSummary);
             }

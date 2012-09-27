@@ -56,14 +56,14 @@ public class SequencingServiceExternalTest  {
         List<BaitSetName> aList = sequencingService.getBaitSets();
         assertNotNull(aList);
         BaitSetName baitSetName = aList.get(0);
-        assertNotNull(baitSetName.name);
+        assertNotNull(baitSetName);
     }
 
     public void testGetReferenceSequences() throws Exception {
         List<ReferenceSequenceName> aList = sequencingService.getReferenceSequences();
         assertNotNull(aList);
         ReferenceSequenceName referenceSequenceName = aList.get(0);
-        assertNotNull(referenceSequenceName.name);
+        assertNotNull(referenceSequenceName);
         assertNotNull(referenceSequenceName.getId());
     }
 
@@ -76,7 +76,7 @@ public class SequencingServiceExternalTest  {
             ExperimentRequestSummary experimentRequestSummary = aList.get(0);
             assertNotNull(experimentRequestSummary.getTitle());
             assertNotNull(experimentRequestSummary.getExperimentId().value);
-            assertNotNull(experimentRequestSummary.getStatus().name);
+            assertNotNull(experimentRequestSummary.getStatus());
         }
 
     }

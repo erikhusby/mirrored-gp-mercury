@@ -5,9 +5,9 @@ import org.broadinstitute.gpinformatics.athena.entity.common.Id;
 /**
  * This is the typed id for the project person relationship
  */
-public class ResearchProjectID extends Id {
+public class ResearchProjectId extends Id {
 
-    public ResearchProjectID(String id) {
+    public ResearchProjectId(String id) {
         super(id);
     }
 }

@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.experiments;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectID;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.Date;
@@ -20,7 +20,7 @@ public class ExperimentRequestSummary {
     private String title;
     private ChangeEvent modification;
     private ExperimentId experimentId;
-    private ResearchProjectID researchProjectID;
+    private ResearchProjectId researchProjectId;
     public static final String DRAFT_STATUS = "DRAFT";
     public static IllegalArgumentException BLANK_CREATOR_EXCEPTION = new IllegalArgumentException("Creator username must not be blank.");
     private String status = DRAFT_STATUS;
@@ -70,8 +70,8 @@ public class ExperimentRequestSummary {
         return status;
     }
 
-    public ResearchProjectID getResearchProjectID() {
-        return researchProjectID;
+    public ResearchProjectId getResearchProjectId() {
+        return researchProjectId;
     }
 
     //SETTERS
@@ -96,8 +96,8 @@ public class ExperimentRequestSummary {
         this.status = status;
     }
 
-    public void setResearchProjectID(final ResearchProjectID researchProjectID) {
-        this.researchProjectID = researchProjectID;
+    public void setResearchProjectId(final ResearchProjectId researchProjectId) {
+        this.researchProjectId = researchProjectId;
     }
 
     public void setExperimentType(final ExperimentType experimentType) {
@@ -115,7 +115,7 @@ public class ExperimentRequestSummary {
                 ", title=" + title +
                 ", modification=" + modification +
                 ", experimentId=" + experimentId +
-                ", researchProjectId=" + researchProjectID.getValue() +
+                ", researchProjectId=" + researchProjectId.getValue() +
                 ", status=" + status +
                 ", experimentType=" + experimentType +
                 '}';

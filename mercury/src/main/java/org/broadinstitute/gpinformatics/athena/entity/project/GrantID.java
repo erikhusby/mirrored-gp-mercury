@@ -6,8 +6,8 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
  * Date: 4/11/12
  * Time: 4:08 PM
  */
-public class GrantID extends FundingID {
-    public GrantID(String id) {
+public class GrantId extends FundingId {
+    public GrantId(String id) {
         super(id);
     }
 }

@@ -22,7 +22,13 @@ import java.util.*;
  */
 public class ResearchProject {
 
-    private ResearchProjectID id;
+    public enum Status {
+        Open, Archived
+    }
+
+    private ResearchProjectId id;
+
+    private Status status;
 
     private ChangeEvent creation;
     private ChangeEvent modification;
@@ -34,7 +40,7 @@ public class ResearchProject {
 
     // Information about externally managed items
     private final Set<Cohort> sampleCohorts = new HashSet<Cohort>();
-    private final Set<FundingID> fundingIDs = new HashSet<FundingID>();
+    private final Set<FundingId> fundingIDs = new HashSet<FundingId>();
 
     private final Set<String> irbNumbers = new HashSet<String>();
     private String irbNotes;
@@ -53,7 +59,7 @@ public class ResearchProject {
         return title;
     }
 
-    public ResearchProjectID getId() {
+    public ResearchProjectId getId() {
         return id;
     }
 
@@ -73,7 +79,7 @@ public class ResearchProject {
         this.title = title;
     }
 
-    public void setId(ResearchProjectID id) {
+    public void setId(ResearchProjectId id) {
         this.id = id;
     }
 
@@ -104,22 +110,25 @@ public class ResearchProject {
     public Set<Cohort> getSampleCohorts() {
         return Collections.unmodifiableSet(sampleCohorts);
     }
-    public Set<Cohort> addBSPCollection(Cohort bspCollection ){
-        sampleCohorts.add(bspCollection);
+    public Set<Cohort> addCohort(Cohort sampleCohort ){
+        sampleCohorts.add(sampleCohort);
         return Collections.unmodifiableSet(sampleCohorts);
     }
-    public Set<Cohort> removeBSPCollection(Cohort bspCollection ){
-        sampleCohorts.remove(bspCollection);
+
+    public Set<Cohort> removeCohort(Cohort sampleCohort ){
+        sampleCohorts.remove(sampleCohort);
         return Collections.unmodifiableSet(sampleCohorts);
     }
 
     public Set<String> getIrbNumbers() {
         return Collections.unmodifiableSet(irbNumbers);
     }
+
     public Set<String> addIrbNumber(String irbNumber) {
         irbNumbers.add(irbNumber);
         return Collections.unmodifiableSet(irbNumbers);
     }
+
     public Set<String> removeIrbNumber(String irbNumber) {
         irbNumbers.remove(irbNumber);
         return Collections.unmodifiableSet(irbNumbers);
@@ -135,18 +144,38 @@ public class ResearchProject {
         peopleForRole.add(new ProjectPerson(role, person));
     }
 
-    public Set<FundingID> getFundingIds() {
+    public Set<Person> getPeople(RoleType role) {
+        Set<Person> people = new HashSet<Person> ();
+
+        if (associatedPeople.get(role) != null) {
+            for (ProjectPerson projectPerson : associatedPeople.get(role)) {
+                people.add(projectPerson.getPerson());
+            }
+        }
+
+        return people;
+    }
+
+    public Set<FundingId> getFundingIds() {
         return Collections.unmodifiableSet(fundingIDs);
     }
 
-    public Set<FundingID> addFunding(FundingID fundingId) {
+    public Set<FundingId> addFunding(FundingId fundingId) {
         fundingIDs.add(fundingId);
         return Collections.unmodifiableSet(fundingIDs);
     }
 
-    public Set<FundingID> removeFunding(FundingID fundingID) {
+    public Set<FundingId> removeFunding(FundingId fundingID) {
         fundingIDs.remove(fundingID);
         return Collections.unmodifiableSet(fundingIDs);
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     /**
@@ -159,7 +188,7 @@ public class ResearchProject {
         if ( (this == other ) ) return true;
         if ( !(other instanceof ResearchProject) ) return false;
         ResearchProject castOther = (ResearchProject) other;
-        return new EqualsBuilder().append(id, castOther.id).isEquals();
+        return new EqualsBuilder().append(title, castOther.title).isEquals();
     }
 
     /**
@@ -168,6 +197,6 @@ public class ResearchProject {
      */
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(id).toHashCode();
+        return new HashCodeBuilder().append(title).toHashCode();
     }
 }

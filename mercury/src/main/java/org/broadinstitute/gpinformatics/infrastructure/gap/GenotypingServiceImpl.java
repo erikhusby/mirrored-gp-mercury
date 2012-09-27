@@ -307,7 +307,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
                     String status = expPlan.getPlanningStatus();
                     experimentRequestSummary.setStatus(status);
 
-                    experimentRequestSummary.setResearchProjectID(expPlan.getResearchProjectId());
+                    experimentRequestSummary.setResearchProjectId(expPlan.getResearchProjectId());
                     experimentRequestSummary.setTitle(expPlan.getExperimentName());
                     experimentRequestSummaries.add(experimentRequestSummary);
                 }

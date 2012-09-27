@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentId;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.*;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectID;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
 import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
@@ -226,7 +226,7 @@ public class PMBSequencingServiceImpl implements PMBSequencingService {
                 experimentRequestSummary.setStatus(summary.getStatus().name());
 
                 if (StringUtils.isNotBlank(summary.getResearchProject()) && Pattern.matches("[\\d]+", summary.getResearchProject().trim())) {
-                    experimentRequestSummary.setResearchProjectID(new ResearchProjectID(summary.getResearchProject()));
+                    experimentRequestSummary.setResearchProjectId(new ResearchProjectId(summary.getResearchProject()));
                 }
                 requestSummaries.add(experimentRequestSummary);
             }

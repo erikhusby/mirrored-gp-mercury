@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectID;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -27,11 +27,11 @@ public class ResearchProjectDAO {
 
         //TODO hmc - hook up with the actual DB.
         // Save some dummy research projects
-        saveProject(this.findById(new ResearchProjectID("111")));
-        saveProject(this.findById(new ResearchProjectID("222")));
-        saveProject(this.findById(new ResearchProjectID("333")));
-        saveProject(this.findById(new ResearchProjectID("381")));
-        saveProject(this.findById(new ResearchProjectID("444")));
+        saveProject(this.findById(new ResearchProjectId("111")));
+        saveProject(this.findById(new ResearchProjectId("222")));
+        saveProject(this.findById(new ResearchProjectId("333")));
+        saveProject(this.findById(new ResearchProjectId("381")));
+        saveProject(this.findById(new ResearchProjectId("444")));
 
     }
 
@@ -52,21 +52,21 @@ public class ResearchProjectDAO {
         ArrayList<ResearchProject> result = new ArrayList<ResearchProject>();
 
         //TODO hmc - hook up with the actual DB. Just return some dummy data. Always returns project 222
-        result.add(this.findById(new ResearchProjectID("222")));
+        result.add(this.findById(new ResearchProjectId("222")));
 
         return result;
     }
 
 
-    public ResearchProject findById(ResearchProjectID rpID) {
+    public ResearchProject findById(ResearchProjectId rpId) {
 
         //TODO hmc - hook up with the actual DB.
         // create a dummy research project with rpid appended to title.
         Person programMgr = new Person("shefler@broad", "Erica", "Shefler");
         ResearchProject myResearchProject = new ResearchProject(
-                programMgr, "FakeResearchProject" + rpID, "Research Stuff");
+                programMgr, "FakeResearchProject" + rpId, "Research Stuff");
         myResearchProject.addPerson(RoleType.PM, programMgr);
-        myResearchProject.setId(rpID);
+        myResearchProject.setId(rpId);
 
         return myResearchProject;
     }

@@ -39,7 +39,7 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
         getExperimentPlanDTO().setPlanningStatus(experimentRequestSummary.getStatus());
         //TODO This dates need to be formatted such that GAp an handle it.
 //        getExperimentPlanDTO().setProjectStartDate(new Date());
-        getExperimentPlanDTO().setResearchProjectID(experimentRequestSummary.getResearchProjectID());
+        getExperimentPlanDTO().setResearchProjectId(experimentRequestSummary.getResearchProjectId());
         getExperimentPlanDTO().setProgramPm(experimentRequestSummary.getCreation().person.getLogin());
 
     }
@@ -183,7 +183,7 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
         if (researchProject != null) {
 
             // Update the RP id that is associated with the research project.
-            getExperimentPlanDTO().setResearchProjectID(researchProject.getId());
+            getExperimentPlanDTO().setResearchProjectId(researchProject.getId());
 
             //Set irb number and info on the gap experiment.
             if (researchProject.getIrbNumbers() != null) {

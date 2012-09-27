@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.projects;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDAO;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectID;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -51,7 +51,7 @@ public class ResearchProjectResource {
         }
 
         // Try to find research project by number
-        ResearchProject researchProject = researchProjectDAO.findById(new ResearchProjectID(researchProjectId));
+        ResearchProject researchProject = researchProjectDAO.findById(new ResearchProjectId(researchProjectId));
 
         if (researchProject == null) {
             throw new RuntimeException("Could not retrieve research project with id " + researchProjectId);

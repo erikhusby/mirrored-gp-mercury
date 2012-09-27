@@ -77,7 +77,7 @@ public class ExperimentRequestSummaryTest {
 
     @Test
     public void testGetResearchProjectId() throws Exception {
-        Assert.assertNotNull(experimentRequestSummary.getResearchProjectID());
+        Assert.assertNotNull(experimentRequestSummary.getResearchProjectId());
     }
 
     @Test
