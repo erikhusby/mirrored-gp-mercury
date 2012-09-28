@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.experiments;
 
-import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequest;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.infrastructure.UserNotFoundException;

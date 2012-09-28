@@ -74,9 +74,9 @@ public class SequencingServiceTest {
         List<Person> people = sequencingService.getPlatformPeople();
         Assert.assertNotNull(people);
         Assert.assertEquals(people.size(), 1);
-        assertEquals(people.get(0).getFirstName(), "tester");
+        assertEquals(people.get(0).getFirstName(), "Jon");
         assertEquals(people.get(0).getLastName(), "Tester");
-        assertEquals(people.get(0).getLogin().compareTo("100"), 0);
+        assertEquals(people.get(0).getLogin().compareTo("tester"), 0);
 
     }
 
@@ -131,7 +131,7 @@ public class SequencingServiceTest {
         baitSetNames = sequencingService.getBaitSets();
         Assert.assertNotNull(baitSetNames);
         Assert.assertEquals(baitSetNames.size(), 1);
-        assertEquals(baitSetNames.get(0), "aBaitSet");
+        assertEquals(baitSetNames.get(0).getName(), "aBaitSet");
         assertEquals(baitSetNames.get(0).getId(), 12L);
     }
 
@@ -164,7 +164,7 @@ public class SequencingServiceTest {
         referenceSequenceNames = sequencingService.getReferenceSequences();
         Assert.assertNotNull(referenceSequenceNames);
         Assert.assertEquals(referenceSequenceNames.size(), 1);
-        assertEquals(referenceSequenceNames.get(0), "aReferenceSequence");
+        assertEquals(referenceSequenceNames.get(0).getName(), "aReferenceSequence");
         assertEquals(referenceSequenceNames.get(0).getId(), 99L);
 
     }
@@ -261,7 +261,6 @@ public class SequencingServiceTest {
             assertNotNull(experimentRequestSummary);
             assertEquals(experimentRequestSummary.getCreation().date, today.getTime());
             assertNotNull(experimentRequestSummary.getStatus());
-            assertNotNull(experimentRequestSummary.getResearchProjectId());
             assertNotNull(experimentRequestSummary.getTitle());
             assertNotNull(experimentRequestSummary.getExperimentId());
             assertTrue(expectedExperimentTypes.contains(experimentRequestSummary.getExperimentType()));

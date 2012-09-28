@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.person;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -92,6 +94,23 @@ public class Person {
      */
     public Iterable<PageAccess> getPageAccess() {
         throw new RuntimeException("Method not yet implemented.");
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if ( (this == other ) ) return true;
+        if ( !(other instanceof Person) ) return false;
+        Person castOther = (Person) other;
+        return new EqualsBuilder().append(username, castOther.username).isEquals();
+    }
+
+    /**
+     *
+     * @return int
+     */
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(username).toHashCode();
     }
 
 }

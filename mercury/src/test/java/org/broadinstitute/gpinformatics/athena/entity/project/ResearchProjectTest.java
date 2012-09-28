@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -55,7 +55,7 @@ public class ResearchProjectTest {
         researchProject.addPerson(RoleType.SCIENTIST, scientist2 );
     }
 
-    @Test
+    @Test(groups = {TestGroups.DATABASE_FREE})
     public void manageRPTest() {
         Assert.assertNotNull(researchProject.getPeople(RoleType.SCIENTIST));
         Assert.assertTrue(researchProject.getPeople(RoleType.PM).isEmpty());

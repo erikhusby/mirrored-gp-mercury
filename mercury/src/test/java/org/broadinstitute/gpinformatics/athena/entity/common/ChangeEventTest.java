@@ -28,9 +28,6 @@ public class ChangeEventTest extends TestCase {
         ChangeEvent changeEvent2 = new ChangeEvent(changeEvent.getDate(), new Person("person1"));
 
         Assert.assertEquals( changeEvent, changeEvent2);
-        Assert.assertEquals( changeEvent.hashCode(), changeEvent2.hashCode());
-        Assert.assertTrue( changeEvent.getPerson().getLogin().equals(  changeEvent2.getPerson().getLogin() ));
-
     }
 
 }

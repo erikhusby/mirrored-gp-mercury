@@ -140,7 +140,7 @@ public class WholeGenomeExperimentTest {
     @Test
     public void testToString() throws Exception {
         WholeGenomeExperiment wholeGenomeExperiment2 = new WholeGenomeExperiment(experimentRequestSummary);
-        Assert.assertEquals("SeqExperimentRequest{seqCoverageModel=null, organism=null, referenceSequenceName=null, experimentRequestSummary=Name{name='An Experiment Title'}, samples=[], experimentType=WholeGenomeSequencing}",
+        Assert.assertEquals("SeqExperimentRequest{seqCoverageModel=null, organism=null, referenceSequenceName=null, experimentRequestSummary=An Experiment Title, samples=[], experimentType=WholeGenomeSequencing}",
                 wholeGenomeExperiment2.toString());
     }
 

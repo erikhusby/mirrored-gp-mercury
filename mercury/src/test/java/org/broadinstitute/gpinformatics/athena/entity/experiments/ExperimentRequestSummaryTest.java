@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments;
 
 import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.testng.annotations.AfterMethod;
@@ -23,10 +24,8 @@ public class ExperimentRequestSummaryTest {
     @BeforeMethod
     public void setUp() throws Exception {
         experimentRequestSummary = new ExperimentRequestSummary(
-                "An Experiment Title", new Person("athena"),
-                new Date(),
-                ExperimentType.WholeGenomeSequencing
-        );
+                "An Experiment Title", new Person("athena"), new Date(), ExperimentType.WholeGenomeSequencing);
+        experimentRequestSummary.setResearchProjectId(new ResearchProjectId("testResearchProject"));
     }
 
     @AfterMethod
