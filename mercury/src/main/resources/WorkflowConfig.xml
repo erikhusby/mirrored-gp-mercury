@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workflowConfig>
+    <workflowProcessDefs>
+        <name>Preflight</name>
+        <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+            <name>Preflight Bucket</name>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+            <entryMaterialType>GENOMIC_DNA</entryMaterialType>
+        </workflowStepDefs>
+        <workflowStepDefs>
+            <name>Preflight Pico Setup</name>
+            <labEventTypes>PREFLIGHT_PICO_SETUP</labEventTypes>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+            <quantType>PICO</quantType>
+        </workflowStepDefs>
+        <workflowStepDefs>
+            <name>Preflight Normalization</name>
+            <labEventTypes>PREFLIGHT_NORMALIZATION</labEventTypes>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+        </workflowStepDefs>
+        <workflowStepDefs>
+            <name>Preflight Post Norm Pico Setup</name>
+            <labEventTypes>PREFLIGHT_POST_NORM_PICO_SETUP</labEventTypes>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+        </workflowStepDefs>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Shearing</name>
+        <workflowStepDefs>
+            <name>Shearing Transfer</name>
+            <labEventTypes>SHEARING_TRANSFER</labEventTypes>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+        </workflowStepDefs>
+        <workflowStepDefs>
+            <name>Post Shearing Transfer Cleanup</name>
+            <labEventTypes>POST_SHEARING_TRANSFER_CLEANUP</labEventTypes>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+        </workflowStepDefs>
+        <workflowStepDefs>
+            <name>Shearing QC</name>
+            <labEventTypes>SHEARING_QC</labEventTypes>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+        </workflowStepDefs>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Library Construction</name>
+        <workflowStepDefs>
+            <name>EndRepair</name>
+            <labEventTypes>END_REPAIR</labEventTypes>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+        </workflowStepDefs>
+        <workflowStepDefs>
+            <name>EndRepairCleanup</name>
+            <labEventTypes>END_REPAIR_CLEANUP</labEventTypes>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+        </workflowStepDefs>
+        <workflowStepDefs>
+            <name>ABase</name>
+            <labEventTypes>A_BASE</labEventTypes>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+        </workflowStepDefs>
+        <workflowStepDefs>
+            <name>ABaseCleanup</name>
+            <labEventTypes>A_BASE_CLEANUP</labEventTypes>
+            <optional>false</optional>
+            <entryPoint>false</entryPoint>
+            <reEntryPoint>false</reEntryPoint>
+        </workflowStepDefs>
+    </workflowProcessDefs>
+    <productWorkflowDefs>
+        <name>Exome Express</name>
+        <workflowProcessDefs>Preflight</workflowProcessDefs>
+        <workflowProcessDefs>Shearing</workflowProcessDefs>
+        <workflowProcessDefs>Library Construction</workflowProcessDefs>
+    </productWorkflowDefs>
+</workflowConfig>
