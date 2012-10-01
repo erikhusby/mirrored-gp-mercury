@@ -3,17 +3,16 @@ package org.broadinstitute.gpinformatics.infrastructure.squid;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentId;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.*;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
 import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.*;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.inject.Inject;
 import javax.xml.namespace.QName;
@@ -111,9 +110,7 @@ public class PMBSequencingServiceImpl implements PMBSequencingService {
 
         for (SquidPerson squidPerson : squidPeople) {
             if ((squidPerson != null) && (squidPerson.getPersonID() != null)) {
-                Person person = new Person(squidPerson.getLogin(), squidPerson.getFirstName(), squidPerson.getLastName(),
-                        "" + squidPerson.getPersonID().intValue(),
-                        RoleType.BROAD_SCIENTIST);
+                Person person = new Person(squidPerson.getLogin(), squidPerson.getFirstName(), squidPerson.getLastName());
                 persons.add(person);
             }
         }
@@ -196,11 +193,11 @@ public class PMBSequencingServiceImpl implements PMBSequencingService {
 
         // Sanity checks.
         if ((creator == null) ||
-                (creator.getUsername() == null) ||
-                StringUtils.isBlank(creator.getUsername())) {
+                (creator.getLogin() == null) ||
+                StringUtils.isBlank(creator.getLogin())) {
             throw ILLEGAL_USER_ARG_EXCEPTION;
         }
-        String userName = creator.getUsername();
+        String userName = creator.getLogin();
 
         List<SummarizedPass> summarizedPassList = null;
         try {
@@ -224,12 +221,12 @@ public class PMBSequencingServiceImpl implements PMBSequencingService {
                         ExperimentType.WholeGenomeSequencing
                 );
                 experimentRequestSummary.setExperimentId(new ExperimentId(summary.getPassNumber()));
-                experimentRequestSummary.setTitle(new Name(summary.getTitle()));
-                experimentRequestSummary.setModification(new ChangeEvent(updatedDate, new Person(summary.getUpdatedBy(), RoleType.PROGRAM_PM)));
-                experimentRequestSummary.setStatus(new Name(summary.getStatus().name()));
+                experimentRequestSummary.setTitle(summary.getTitle());
+                experimentRequestSummary.setModification(new ChangeEvent(updatedDate, new Person(summary.getUpdatedBy())));
+                experimentRequestSummary.setStatus(summary.getStatus().name());
 
                 if (StringUtils.isNotBlank(summary.getResearchProject()) && Pattern.matches("[\\d]+", summary.getResearchProject().trim())) {
-                    experimentRequestSummary.setResearchProjectId(new Long(summary.getResearchProject().trim()));
+                    experimentRequestSummary.setResearchProjectId(new ResearchProjectId(summary.getResearchProject()));
                 }
                 requestSummaries.add(experimentRequestSummary);
             }

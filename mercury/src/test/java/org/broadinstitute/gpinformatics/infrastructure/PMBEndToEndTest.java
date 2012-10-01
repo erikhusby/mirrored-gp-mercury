@@ -101,7 +101,7 @@ public class PMBEndToEndTest extends Arquillian {
 //
 //
 //        // Get the samples for this cohort.
-//        BSPCollection bspCollection = myResearchProject.getSampleCohorts().iterator().next();
+//        Cohort bspCollection = myResearchProject.getSampleCohorts().iterator().next();
 //        List<String> sampleList = bspCohortService.runSampleSearchByCohort(bspCollection);
 //
 //        // Get sample meta data for all of these samples
@@ -210,13 +210,13 @@ public class PMBEndToEndTest extends Arquillian {
 //                new Name("MyResearchProject"), "To study stuff.");
 //
 //        //COHORTS - Gets all cohorts from BSP for this program PM
-//        Set<BSPCollection> cohorts = bspCohortService.getCohortsByUser(programMgr);
-//        for (BSPCollection bspCollection : cohorts) {
+//        Set<Cohort> cohorts = bspCohortService.getCohortsByUser(programMgr);
+//        for (Cohort bspCollection : cohorts) {
 //            System.out.println("Found BSP collection : " + bspCollection.name);
 //        }
 //
 //        // User chooses first BSP collection/cohort for test purposes.
-//        BSPCollection selectedSampleCollection = null;
+//        Cohort selectedSampleCollection = null;
 //        if (cohorts.size() > 0) {
 //            selectedSampleCollection = cohorts.iterator().next();
 //        } else {

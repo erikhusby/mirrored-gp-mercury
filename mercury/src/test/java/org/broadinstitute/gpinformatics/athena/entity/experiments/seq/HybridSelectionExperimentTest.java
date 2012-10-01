@@ -1,14 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 
 import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
+import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.AlignerType;
 import org.broadinstitute.gpinformatics.mercury.boundary.CoverageAndAnalysisInformation;
 import org.broadinstitute.gpinformatics.mercury.boundary.DirectedPass;
-import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
-import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -35,7 +34,7 @@ public class HybridSelectionExperimentTest {
     @BeforeMethod
     public void setUp() throws Exception {
         experimentRequestSummary = new ExperimentRequestSummary(
-                "An Experiment Title", new Person("athena", RoleType.PROGRAM_PM),
+                "An Experiment Title", new Person("athena"),
                 new Date(),
                 ExperimentType.HybridSelection
         );

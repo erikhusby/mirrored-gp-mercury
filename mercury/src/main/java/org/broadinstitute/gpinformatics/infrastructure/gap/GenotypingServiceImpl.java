@@ -6,13 +6,10 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentId;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.gap.GapExperimentRequest;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.infrastructure.UserNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
@@ -22,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -183,11 +181,11 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 
     @Override
     public GapExperimentRequest saveExperimentRequest(final Person programMgr, final GapExperimentRequest gapExperimentRequest) throws ValidationException, SubmissionException {
-        if ((programMgr == null) || (StringUtils.isBlank(programMgr.getUsername()))) {
+        if ((programMgr == null) || (StringUtils.isBlank(programMgr.getLogin()))) {
             throw new IllegalArgumentException("Username was blank. Need a non-null username to save an experiment request.");
         }
         if ((gapExperimentRequest == null) || (gapExperimentRequest.getExperimentRequestSummary() == null) ||
-                (StringUtils.isBlank(gapExperimentRequest.getExperimentRequestSummary().getTitle().name))) {
+                (StringUtils.isBlank(gapExperimentRequest.getExperimentRequestSummary().getTitle()))) {
             throw new IllegalArgumentException("Title was blank. Need a non-null title to save an experiment request.");
         }
 
@@ -197,11 +195,11 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
     @Override
     public GapExperimentRequest submitExperimentRequest(final Person programMgr, final GapExperimentRequest gapExperimentRequest) throws ValidationException, SubmissionException {
 
-        if ((programMgr == null) || (StringUtils.isBlank(programMgr.getUsername()))) {
+        if ((programMgr == null) || (StringUtils.isBlank(programMgr.getLogin()))) {
             throw new IllegalArgumentException("Username was blank. Need a non-null username to submit an experiment request to GAP.");
         }
         if ((gapExperimentRequest == null) || (gapExperimentRequest.getExperimentRequestSummary() == null) ||
-                (StringUtils.isBlank(gapExperimentRequest.getExperimentRequestSummary().getTitle().name))) {
+                (StringUtils.isBlank(gapExperimentRequest.getExperimentRequestSummary().getTitle()))) {
             throw new IllegalArgumentException("Title was blank. Need a non-null title to submit an experiment request to GAP.");
         }
 
@@ -216,8 +214,8 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 
         ExperimentPlan experimentPlan = gapExperimentRequest.getExperimentPlanDTO();
         experimentPlan.setPlanningStatus(status);
-        experimentPlan.setUpdatedBy(programMgr.getUsername().trim());
-        experimentPlan.setProgramPm(programMgr.getUsername().trim());
+        experimentPlan.setUpdatedBy(programMgr.getLogin().trim());
+        experimentPlan.setProgramPm(programMgr.getLogin().trim());
 
         try {
             String planXmlStr = ObjectMarshaller.marshall(experimentPlan);
@@ -246,7 +244,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 //                        experimentRequestSummary.setCreation(new ChangeEvent(receivedExperimentPlan.getDateCreated(),
 //                                new Person(receivedExperimentPlan.getCreatedBy(), RoleType.PROGRAM_PM)));
                         experimentRequestSummary.setModification(new ChangeEvent(new Date(), programMgr));
-                        experimentRequestSummary.setStatus(new Name(receivedExperimentPlan.getPlanningStatus()));
+                        experimentRequestSummary.setStatus(receivedExperimentPlan.getPlanningStatus());
 
                         submittedExperimentRequest = new GapExperimentRequest(experimentRequestSummary, receivedExperimentPlan);
                         submittedExperimentRequest = populateQuotes(submittedExperimentRequest, quoteService);
@@ -263,24 +261,24 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
                 }
             } catch (UniformInterfaceException e) {
                 String errMsg = "Could not submit GAP experiment titled <" + gapExperimentRequest.getExperimentRequestSummary().getTitle() + "> for user " +
-                        programMgr.getUsername();
+                        programMgr.getLogin();
                 logger.error(errMsg + " at " + fullUrl);
                 throw new RuntimeException(errMsg);
             } catch (ClientHandlerException e) {
                 String errMsg = "Could not communicate with GAP server to submit experiment request titled <" +
                         gapExperimentRequest.getExperimentRequestSummary().getTitle() + "> for user " +
-                        programMgr.getUsername();
+                        programMgr.getLogin();
                 logger.error(errMsg + " at " + fullUrl);
                 throw new RuntimeException(errMsg);
             }
         } catch (Exception exp) {
-            if (exp.getMessage().contains("Exception occurred for user " + programMgr.getUsername())) {
+            if (exp.getMessage().contains("Exception occurred for user " + programMgr.getLogin())) {
                 // Can ignore this exception as the user does not exist in in GAP.
-                logger.info("User " + programMgr.getUsername() + " not found in GAP. " + exp.getMessage());
+                logger.info("User " + programMgr.getLogin() + " not found in GAP. " + exp.getMessage());
             } else {
-                logger.error("Exception occurred trying to retrieve experimentRequests from GAP for user " + programMgr.getUsername(), exp);
+                logger.error("Exception occurred trying to retrieve experimentRequests from GAP for user " + programMgr.getLogin(), exp);
             }
-            throw new RuntimeException("Problem retrieving Gap Experiments from GAP for user : " + programMgr.getUsername());
+            throw new RuntimeException("Problem retrieving Gap Experiments from GAP for user : " + programMgr.getLogin());
         }
         return submittedExperimentRequest;
     }
@@ -291,7 +289,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
         List<ExperimentRequestSummary> experimentRequestSummaries = new ArrayList<ExperimentRequestSummary>();
 
         ExperimentPlan requiredExperimentPlan = new ExperimentPlan();
-        requiredExperimentPlan.setProgramPm(user.getUsername());
+        requiredExperimentPlan.setProgramPm(user.getLogin());
         Response response = retrieveExperimentByUser(user, requiredExperimentPlan);
 
         if (response != null) {
@@ -304,13 +302,13 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 //                    experimentRequestSummary.setCreation(new ChangeEvent(expPlan.getDateCreated(),
 //                            new Person(expPlan.getCreatedBy(), RoleType.PROGRAM_PM)));
                     experimentRequestSummary.setModification(new ChangeEvent(expPlan.getProjectStartDate(),
-                            new Person(expPlan.getUpdatedBy(), RoleType.PROGRAM_PM)));
+                            new Person(expPlan.getUpdatedBy())));
 
                     String status = expPlan.getPlanningStatus();
-                    experimentRequestSummary.setStatus(new Name(status));
+                    experimentRequestSummary.setStatus(status);
 
-                    experimentRequestSummary.setResearchProjectId(new Long(expPlan.getResearchProjectId()));
-                    experimentRequestSummary.setTitle(new Name(expPlan.getExperimentName()));
+                    experimentRequestSummary.setResearchProjectId(expPlan.getResearchProjectId());
+                    experimentRequestSummary.setTitle(expPlan.getExperimentName());
                     experimentRequestSummaries.add(experimentRequestSummary);
                 }
             }
@@ -341,18 +339,18 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
                     logger.info(errMsg + " at " + baseUrl);
                     throw new UserNotFoundException(errMsg);
                 } else {
-                    errMsg = "Exception occurred trying to retrieve experimentRequests from GAP for user " + user.getUsername();
+                    errMsg = "Exception occurred trying to retrieve experimentRequests from GAP for user " + user.getLogin();
                     logger.error(errMsg + " at " + baseUrl, e);
                     throw new RuntimeException(errMsg);
                 }
             } catch (ClientHandlerException e) {
-                String errMsg = "Could not communicate with GAP server for user " + user.getUsername();
+                String errMsg = "Could not communicate with GAP server for user " + user.getLogin();
                 logger.error(errMsg + " at " + baseUrl, e);
                 throw new RuntimeException(errMsg);
             }
         }
         catch (UnsupportedEncodingException exp) {
-            throw new RuntimeException("Problem retrieving Gap Experiments from GAP for user : " + user.getUsername(), exp);
+            throw new RuntimeException("Problem retrieving Gap Experiments from GAP for user : " + user.getLogin(), exp);
         }
         return response;
     }

@@ -3,13 +3,11 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.broadinstitute.gpinformatics.athena.entity.common.Id;
 
 /**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 4/11/12
- * Time: 4:08 PM
+ * This is the typed id for the project person relationship
  */
-public class GrantId extends Id {
-    public GrantId(String id) {
+public class ProjectPersonId extends Id {
+
+    public ProjectPersonId(String id) {
         super(id);
     }
 }

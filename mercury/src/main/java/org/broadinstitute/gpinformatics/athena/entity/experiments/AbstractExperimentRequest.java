@@ -1,8 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.experiments;
 
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPSample;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.HashSet;
 import java.util.List;
@@ -27,18 +26,9 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
 
     protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary, ExperimentType experimentType) {
         this.experimentRequestSummary = experimentRequestSummary;
-//        this.platformProjectManagers = new HashSet<Person>();
         this.samples = new HashSet<BSPSample>();
         this.experimentType = experimentType;
     }
-
-//    protected AbstractExperimentRequest(ExperimentRequestSummary experimentRequestSummary,
-//                                        Set<Person> platformProjectManagers,
-//                                        Set<BSPSample> samples) {
-//        this.experimentRequestSummary = experimentRequestSummary;
-//        this.platformProjectManagers = platformProjectManagers;
-//        this.samples = samples;
-//    }
 
     //Getters
     public ExperimentRequestSummary getExperimentRequestSummary() {
@@ -51,7 +41,7 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
 
     public abstract List<BSPSample> getSamples();
 
-    public Name getTitle() {
+    public String getTitle() {
         return getExperimentRequestSummary().getTitle();
     }
 
@@ -60,7 +50,7 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
         return experimentType;
     }
 
-    public abstract void setTitle(final Name title);
+    public abstract void setTitle(final String title);
 
 
     public ExperimentId getRemoteId() {
@@ -71,7 +61,7 @@ public abstract class AbstractExperimentRequest implements ExperimentRequest {
         this.experimentRequestSummary.setExperimentId(remoteId);
     }
 
-    public Name getExperimentStatus() {
+    public String getExperimentStatus() {
         return this.experimentRequestSummary.getStatus();
     }
 

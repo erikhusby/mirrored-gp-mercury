@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.broadinstitute.gpinformatics.athena.entity.project.FundingId;
+import org.broadinstitute.gpinformatics.athena.entity.project.GrantId;
+import org.broadinstitute.gpinformatics.athena.entity.project.PurchaseOrderId;
 import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -44,6 +47,12 @@ public class Funding {
                    String grantDescription) {
         this.fundingType = fundingType;
         this.grantDescription = grantDescription;
+    }
+
+    public FundingId getFundingID() {
+        return FUNDS_RESERVATION.equals(getFundingType()) ?
+                new GrantId(grantNumber) :
+                new PurchaseOrderId(purchaseOrderNumber);
     }
 
     @XmlAttribute(name = "costObject")

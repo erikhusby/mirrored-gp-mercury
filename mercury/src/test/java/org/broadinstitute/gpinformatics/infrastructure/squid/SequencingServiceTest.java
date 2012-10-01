@@ -5,10 +5,9 @@ import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentId;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentType;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.*;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.*;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -75,10 +74,9 @@ public class SequencingServiceTest {
         List<Person> people = sequencingService.getPlatformPeople();
         Assert.assertNotNull(people);
         Assert.assertEquals(people.size(), 1);
-        assertEquals(people.get(0).getUsername(), "tester");
+        assertEquals(people.get(0).getFirstName(), "Jon");
         assertEquals(people.get(0).getLastName(), "Tester");
-        assertEquals(people.get(0).getPersonId().compareTo("100"), 0);
-        assertEquals(people.get(0).getRoleType(), RoleType.BROAD_SCIENTIST);
+        assertEquals(people.get(0).getLogin().compareTo("tester"), 0);
 
     }
 
@@ -133,9 +131,8 @@ public class SequencingServiceTest {
         baitSetNames = sequencingService.getBaitSets();
         Assert.assertNotNull(baitSetNames);
         Assert.assertEquals(baitSetNames.size(), 1);
-        assertEquals(baitSetNames.get(0).name, "aBaitSet");
+        assertEquals(baitSetNames.get(0).getName(), "aBaitSet");
         assertEquals(baitSetNames.get(0).getId(), 12L);
-
     }
 
     @Test
@@ -167,7 +164,7 @@ public class SequencingServiceTest {
         referenceSequenceNames = sequencingService.getReferenceSequences();
         Assert.assertNotNull(referenceSequenceNames);
         Assert.assertEquals(referenceSequenceNames.size(), 1);
-        assertEquals(referenceSequenceNames.get(0).name, "aReferenceSequence");
+        assertEquals(referenceSequenceNames.get(0).getName(), "aReferenceSequence");
         assertEquals(referenceSequenceNames.get(0).getId(), 99L);
 
     }
@@ -189,7 +186,7 @@ public class SequencingServiceTest {
         assertNull(aList0);
         // Call the getRequestSummariesByCreator with a user with no username
         try {
-            aList0 = sequencingService.getRequestSummariesByCreator(new Person("", RoleType.PROGRAM_PM));
+            aList0 = sequencingService.getRequestSummariesByCreator(new Person(""));
             fail("should have thrown exception.");
         } catch (Exception exp) {
             assertTrue(exp instanceof IllegalArgumentException);
@@ -250,7 +247,7 @@ public class SequencingServiceTest {
         EasyMock.expect(mockSquidTopicPortype.searchPassesByCreator((String) EasyMock.anyObject())).andReturn(summarizedPassListResult).once();
         EasyMock.replay(mockSquidTopicPortype);
 
-        List<ExperimentRequestSummary> aList = sequencingService.getRequestSummariesByCreator(new Person("athena", RoleType.PROGRAM_PM));
+        List<ExperimentRequestSummary> aList = sequencingService.getRequestSummariesByCreator(new Person("athena"));
 
         assertNotNull(aList);
         Assert.assertEquals(aList.size(), 4);
@@ -264,7 +261,6 @@ public class SequencingServiceTest {
             assertNotNull(experimentRequestSummary);
             assertEquals(experimentRequestSummary.getCreation().date, today.getTime());
             assertNotNull(experimentRequestSummary.getStatus());
-            assertNotNull(experimentRequestSummary.getResearchProjectId());
             assertNotNull(experimentRequestSummary.getTitle());
             assertNotNull(experimentRequestSummary.getExperimentId());
             assertTrue(expectedExperimentTypes.contains(experimentRequestSummary.getExperimentType()));
@@ -325,7 +321,7 @@ public class SequencingServiceTest {
         EasyMock.expect(mockSquidTopicPortype.loadPassByNumber((String) EasyMock.anyObject())).andReturn(aPass).once();
         EasyMock.replay(mockSquidTopicPortype);
 
-        ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary("An Experiment Title", new Person("athena", RoleType.PROGRAM_PM),
+        ExperimentRequestSummary experimentRequestSummary = new ExperimentRequestSummary("An Experiment Title", new Person("athena"),
                 new Date(), ExperimentType.WholeGenomeSequencing);
         experimentRequestSummary.setExperimentId(new ExperimentId(projectInformation.getPassNumber()));
 
@@ -339,9 +335,9 @@ public class SequencingServiceTest {
 //
 //        }
 
-        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains(new Person("Bashful", RoleType.PROGRAM_PM)));
-        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains(new Person("Sneezey", RoleType.PROGRAM_PM)));
-        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains(new Person("Happy", RoleType.PROGRAM_PM)));
+        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains(new Person("Bashful")));
+        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains(new Person("Sneezey")));
+        Assert.assertTrue(wholeGenomeExperiment.getProgramProjectManagers().contains(new Person("Happy")));
 
     }
 //

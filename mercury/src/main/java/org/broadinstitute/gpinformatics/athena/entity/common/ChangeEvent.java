@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.common;
 
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.Date;
 
@@ -28,31 +30,26 @@ public class ChangeEvent {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ChangeEvent)) return false;
-
-        final ChangeEvent that = (ChangeEvent) o;
-
-        if (date != null ? !date.equals(that.date) : that.date != null) return false;
-        if (person != null ? !person.equals(that.person) : that.person != null) return false;
-
-        return true;
+    public boolean equals(Object other) {
+        if ( (this == other ) ) return true;
+        if ( !(other instanceof ChangeEvent) ) return false;
+        ChangeEvent castOther = (ChangeEvent) other;
+        return new EqualsBuilder().append(date, castOther.date)
+                                  .append(person.getLogin(), castOther.person.getLogin()).isEquals();
     }
 
+    /**
+     *
+     * @return int
+     */
     @Override
     public int hashCode() {
-        int result = date != null ? date.hashCode() : 0;
-        result = 31 * result + (person != null ? person.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder().append(date).append(person.getLogin()).toHashCode();
     }
 
     @Override
     public String toString() {
-        return "ChangeEvent{" +
-                "date=" + date +
-                ", person=" + person +
-                '}';
+        return "ChangeEvent{" + "date=" + date + ", person=" + person + '}';
     }
 
 }

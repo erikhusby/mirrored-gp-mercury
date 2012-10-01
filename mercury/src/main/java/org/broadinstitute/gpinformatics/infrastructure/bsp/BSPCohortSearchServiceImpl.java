@@ -8,9 +8,9 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
-import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollectionID;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.athena.entity.project.CohortID;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
@@ -159,16 +159,16 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
 //    }
 
 
-    private Set<BSPCollection> runCollectionSearch(Person bspUser ) {
+    private Set<Cohort> runCollectionSearch(Person bspUser ) {
 
         String urlString = "http://%s:%d%s";
 
-        if ((bspUser == null) || (StringUtils.isBlank(bspUser.getUsername())) )  {
+        if ((bspUser == null) || (StringUtils.isBlank(bspUser.getLogin())) )  {
             throw new IllegalArgumentException( "Cannot lookup cohorts for user without a valid username." );
         }
 
-        HashSet<BSPCollection> usersCohorts = new HashSet<BSPCollection>();
-        urlString = url(Endpoint.USERS_COHORT)  + bspUser.getUsername().trim();
+        HashSet<Cohort> usersCohorts = new HashSet<Cohort>();
+        urlString = url(Endpoint.USERS_COHORT)  + bspUser.getLogin().trim();
         logger.info(String.format("url string is '%s'", urlString));
         WebResource webResource = getJerseyClient().resource(urlString);
 
@@ -183,7 +183,7 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
 
             // Check for 200
             if (clientResponse.getStatus() != ClientResponse.Status.OK.getStatusCode()) {
-                String errMsg = "Cannot retrieve cohorts from BSP platform for user " + bspUser.getUsername() + ". Received response code : " + clientResponse.getStatus();
+                String errMsg = "Cannot retrieve cohorts from BSP platform for user " + bspUser.getLogin() + ". Received response code : " + clientResponse.getStatus();
                 logger.error(errMsg + " : " + rdr.readLine());
                 throw new RuntimeException(errMsg);
             }
@@ -203,17 +203,17 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
                      * Collection ID Collection Name	          Collection Category Group Name   PI Lastname	PI Firstname Collaborator Lastname	                Collaborator Firstname
                      * SC-912	      Cell Line Samples - Coriell		              1000 Genomes Gabriel	    Stacey	     Coriell Institute for Medical Research	Institute:
                      */
-                    BSPCollectionID bspCollectionID = new BSPCollectionID(rawBSPData[0]);
-                    BSPCollection bspCollection = new BSPCollection ( bspCollectionID, rawBSPData[1] );
+                    CohortID bspCollectionID = new CohortID(rawBSPData[0]);
+                    Cohort bspCollection = new Cohort( bspCollectionID, rawBSPData[1] );
                     usersCohorts.add( bspCollection );
                 } else {
-                    logger.error("Found a line from BSP Cohort for user " + bspUser.getUsername() + " which had less than two fields of real data. Ignoring this line  <" + readLine + ">");
+                    logger.error("Found a line from BSP Cohort for user " + bspUser.getLogin() + " which had less than two fields of real data. Ignoring this line  <" + readLine + ">");
                 }
                 readLine = rdr.readLine();
             }
             is.close();
         } catch(ClientHandlerException e) {
-            String errMsg = "Could not communicate with BSP platform for user " + bspUser.getUsername();
+            String errMsg = "Could not communicate with BSP platform for user " + bspUser.getLogin();
             logger.error(errMsg + " at " + urlString, e);
             throw e;
         } catch (Exception exp) {
@@ -242,20 +242,20 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
      * Collaborator Firstname
      */
     @Override
-    public Set<BSPCollection> getCohortsByUser(Person bspUser) {
+    public Set<Cohort> getCohortsByUser(Person bspUser) {
 
-        if ((bspUser == null ) || (StringUtils.isBlank(bspUser.getUsername()))) {
+        if ((bspUser == null ) || (StringUtils.isBlank(bspUser.getLogin()))) {
             throw new IllegalArgumentException("Bsp Username is not valid. Canot retrieve list of cohorts from BSP.");
         }
 
-        Set<BSPCollection> bspCollections = runCollectionSearch(bspUser);
+        Set<Cohort> bspCollections = runCollectionSearch(bspUser);
 
         return bspCollections;
 
     }
 
     @Override
-    public List<String> runSampleSearchByCohort(BSPCollection cohort) {
+    public List<String> runSampleSearchByCohort(Cohort cohort) {
 
         if ((cohort == null) ) {
             throw new IllegalArgumentException("Cohort param was null. Cannot retrieve list of samples from BSP.");

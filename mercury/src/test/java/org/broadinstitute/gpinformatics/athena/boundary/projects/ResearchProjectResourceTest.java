@@ -1,15 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjects;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.util.List;
 
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertNull;
@@ -31,7 +28,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         ResearchProject researchProject = researchProjectResource.findResearchProjectById("111");
         Assert.assertNotNull(researchProject);
         Assert.assertNotNull(researchProject.getTitle());
-        Assert.assertEquals(researchProject.getTitle().name, "FakeResearchProject111");
+        Assert.assertEquals(researchProject.getTitle(), "FakeResearchProjectId(value=111)");
 
         researchProject = null;
         // Try to get rp using an invalid rpid - empty string
@@ -57,18 +54,8 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
     @Test
     public void testFindAllResearchProjects() throws Exception {
-        ResearchProjects researchProjects = researchProjectResource.findAllResearchProjects("");
+        List<ResearchProject> researchProjects = researchProjectResource.findAllResearchProjects("");
         Assert.assertNotNull(researchProjects);
-        Assert.assertNotNull(researchProjects.getProjects());
-        Assert.assertEquals(5, researchProjects.getProjects().size());
-//        Assert.assertEquals(researchProjects.getProjects().get(0).getTitle().name + " " +
-//                researchProjects.getProjects().get(0).getId().longValue()
-//                , "FakeResearchProject 111" );
-//
-//        Assert.assertEquals(researchProjects.getProjects().get(3).getTitle().name + " " +
-//                researchProjects.getProjects().get(3).getId().longValue()
-//                , "FakeResearchProject 444" );
-
-
+        Assert.assertEquals(5, researchProjects.size());
     }
 }

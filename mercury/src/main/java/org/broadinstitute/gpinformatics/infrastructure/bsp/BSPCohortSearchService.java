@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +16,7 @@ public interface BSPCohortSearchService {
      * @param bspUser
      * @return
      */
-    Set<BSPCollection> getCohortsByUser(Person bspUser);
+    Set<Cohort> getCohortsByUser(Person bspUser);
 
     //TODO PMB Remove the comments
 //
@@ -65,7 +65,7 @@ public interface BSPCohortSearchService {
      * @param cohort
      * @return
      */
-    List<String> runSampleSearchByCohort(BSPCollection cohort) ;
+    List<String> runSampleSearchByCohort(Cohort cohort) ;
 
 
 

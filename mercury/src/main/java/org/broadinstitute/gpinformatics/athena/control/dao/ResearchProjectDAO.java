@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
@@ -27,17 +27,17 @@ public class ResearchProjectDAO {
 
         //TODO hmc - hook up with the actual DB.
         // Save some dummy research projects
-        saveProject(this.findById(111L));
-        saveProject(this.findById(222L));
-        saveProject(this.findById(333L));
-        saveProject(this.findById(381L));
-        saveProject(this.findById(444L));
+        saveProject(this.findById(new ResearchProjectId("111")));
+        saveProject(this.findById(new ResearchProjectId("222")));
+        saveProject(this.findById(new ResearchProjectId("333")));
+        saveProject(this.findById(new ResearchProjectId("381")));
+        saveProject(this.findById(new ResearchProjectId("444")));
 
     }
 
     // TODO Temp method just to save an rp.
     public void saveProject(ResearchProject researchProject) {
-        String researchProjectTitle = researchProject.getTitle().name;
+        String researchProjectTitle = researchProject.getTitle();
         if ((researchProject != null) && StringUtils.isBlank(researchProjectTitle)) {
             throw new IllegalArgumentException("ResearchProject title must non be blank.");
         }
@@ -52,20 +52,21 @@ public class ResearchProjectDAO {
         ArrayList<ResearchProject> result = new ArrayList<ResearchProject>();
 
         //TODO hmc - hook up with the actual DB. Just return some dummy data. Always returns project 222
-        result.add(this.findById(222L));
+        result.add(this.findById(new ResearchProjectId("222")));
 
         return result;
     }
 
 
-    public ResearchProject findById(Long researchProjectId) {
+    public ResearchProject findById(ResearchProjectId rpId) {
 
         //TODO hmc - hook up with the actual DB.
         // create a dummy research project with rpid appended to title.
-        Person programMgr = new Person("shefler@broad", "Erica", "Shefler", "1", RoleType.PROGRAM_PM);
-        ResearchProject myResearchProject = new ResearchProject(programMgr,
-                new Name("FakeResearchProject" + researchProjectId), "Research Stuff");
-        myResearchProject.setId(researchProjectId);
+        Person programMgr = new Person("shefler@broad", "Erica", "Shefler");
+        ResearchProject myResearchProject = new ResearchProject(
+                programMgr, "FakeResearchProject" + rpId, "Research Stuff");
+        myResearchProject.addPerson(RoleType.PM, programMgr);
+        myResearchProject.setId(rpId);
 
         return myResearchProject;
     }

@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.entity.bsp;
+package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
 
@@ -8,13 +8,13 @@ import org.apache.commons.lang.builder.ToStringBuilder;
  * Date: 4/2/12
  * Time: 5:25 PM
  */
-public class BSPCollection {
+public class Cohort {
 
 
-    public final BSPCollectionID id;
+    public final CohortID id;
     public final String name;
 
-    public BSPCollection(BSPCollectionID id, String name) {
+    public Cohort(CohortID id, String name) {
         this.id = id;
         this.name = name;
     }

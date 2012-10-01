@@ -1,14 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.apache.log4j.Logger;
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
-import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollectionID;
-import org.broadinstitute.gpinformatics.athena.entity.common.Name;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Date;
@@ -23,68 +20,58 @@ import java.util.Date;
 @Test(groups = {TestGroups.DATABASE_FREE})
 public class ResearchProjectTest {
 
-    private static final Logger LOG = Logger.getLogger(ResearchProjectTest.class);
+    private final Person programMgr = new Person("shefler@broad", "Erica", "Shefler");
+    private ResearchProject researchProject;
 
-
-    public void testResearchProject() throws Exception {
+    @BeforeMethod
+    public void setUp() throws Exception {
 
         Date start = new Date();
 
-        Person programMgr = new Person("Erica", "Shefler", "shefler@broad", "1", RoleType.PROGRAM_PM );
-        ResearchProject researchProject = new ResearchProject( programMgr,
-                new Name("MyResearchProject"), "To study stuff."  );
-
-        ResearchProject researchProject2 = new ResearchProject( programMgr,
-                new Name("MyResearchProject"), "To study stuff."  );
-
-
-        //assertReflectionEquals( researchProject, researchProject2);
-
-        //Equal
-        Assert.assertTrue(researchProject.equals(researchProject2));
-        Assert.assertEquals(researchProject.hashCode(), researchProject2.hashCode());
-
-        // test modification is same as creation
-        Assert.assertTrue(researchProject.getCreation().equals(researchProject.getModification()));
-
-        //Add a collection
-        BSPCollection collection1 = new BSPCollection(new BSPCollectionID("12345"), "AlxCollection1");
-        researchProject.addBSPCollection(collection1);
-
-        //No longer equal
-        Assert.assertFalse(researchProject.equals(researchProject2));
-        Assert.assertNotEquals(researchProject.hashCode(), researchProject2.hashCode());
+        researchProject = new ResearchProject( programMgr, "MyResearchProject", "To study stuff.");
 
         Date stop = new Date();
-        Funding funding1 = new Funding(Funding.FUNDS_RESERVATION, "SmallGrant");
-        // TODO PMB this looks like a bug, there is no grant stop setter
+        Funding funding1 = new Funding(Funding.FUNDS_RESERVATION, "TheGrant");
         funding1.setGrantStartDate(start);
-        funding1.setGrantStartDate(stop);
+        funding1.setGrantEndDate(stop);
         funding1.setGrantNumber("100");
         funding1.setInstitute("NIH");
+        researchProject.addFunding(funding1.getFundingID());
 
-        Funding funding2 = new Funding(Funding.FUNDS_RESERVATION, "LargeGrant");
+        Funding funding2 = new Funding(Funding.PURCHASE_ORDER, "ThePO");
+        funding2.setBroadName("BroadNameOfPO");
         funding2.setGrantStartDate(start);
-        funding2.setGrantStartDate(stop);
-        funding1.setGrantNumber("200");
-        funding1.setInstitute("NHGRI");
-        researchProject.addFunding(funding1);
-        researchProject.addFunding(funding2);
+        funding2.setGrantEndDate(stop);
+        funding2.setPurchaseOrderNumber("200");
+        funding2.setInstitute("NHGRI");
+        researchProject.addFunding(funding2.getFundingID());
 
         researchProject.addIrbNumber("irb123");
         researchProject.addIrbNumber("irb456");
 
-        Person scientist1 = new Person("Adam", "Bass", "bass@broadinstitute.org", "2", RoleType.BROAD_SCIENTIST );
-        Person scientist2 = new Person("Noel", "Burtt", "bass@broadinstitute.org", "3", RoleType.BROAD_SCIENTIST );
-        researchProject.addSponsoringScientist( scientist1 );
-        researchProject.addSponsoringScientist( scientist2 );
-
+        Person scientist1 = new Person("bass@broadinstitute.org", "Adam", "Bass" );
+        Person scientist2 = new Person("bass@broadinstitute.org", "Noel", "Burtt" );
+        researchProject.addPerson(RoleType.SCIENTIST, scientist1 );
+        researchProject.addPerson(RoleType.SCIENTIST, scientist2 );
     }
 
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void manageRPTest() {
+        Assert.assertNotNull(researchProject.getPeople(RoleType.SCIENTIST));
+        Assert.assertTrue(researchProject.getPeople(RoleType.PM).isEmpty());
 
-    @Test
-    public void testGettersSetters() throws Exception {
+        Person scientist = new Person("bass@broadinstitute.org", "Noel", "Burtt" );
+        researchProject.addPerson(RoleType.PM, scientist );
+        Assert.assertNotNull(researchProject.getPeople(RoleType.PM));
 
+        //Add a collection
+        Cohort collection = new Cohort(new CohortID("12345"), "AlxCollection1");
+        researchProject.addCohort(collection);
+        Assert.assertTrue(researchProject.getSampleCohorts().size() == 1);
+        collection = new Cohort(new CohortID("123456"), "AlxCollection2");
+        researchProject.addCohort(collection);
+        Assert.assertTrue(researchProject.getSampleCohorts().size() == 2);
+        researchProject.removeCohort(collection);
+        Assert.assertTrue(researchProject.getSampleCohorts().size() == 1);
     }
-
 }

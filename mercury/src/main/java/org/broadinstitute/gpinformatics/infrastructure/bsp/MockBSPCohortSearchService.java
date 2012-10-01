@@ -3,9 +3,9 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollection;
-import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPCollectionID;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.athena.entity.project.CohortID;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.enterprise.inject.Default;
 import java.util.*;
@@ -69,19 +69,19 @@ public class MockBSPCohortSearchService implements BSPCohortSearchService {
 
 
     @Override
-    public Set<BSPCollection> getCohortsByUser(final Person bspUser) {
+    public Set<Cohort> getCohortsByUser(final Person bspUser) {
 
-        if ((bspUser == null ) || (StringUtils.isBlank(bspUser.getUsername()))) {
+        if ((bspUser == null ) || (StringUtils.isBlank(bspUser.getLogin()))) {
             throw new IllegalArgumentException("Bsp Username is not valid. Canot retrieve list of cohorts from BSP.");
         }
         // Mocked out
-        Set<BSPCollection> cohortSet =  getFakeCollections();
+        Set<Cohort> cohortSet =  getFakeCollections();
         return cohortSet;
     }
 
 
     @Override
-    public List<String> runSampleSearchByCohort(final BSPCollection cohort) {
+    public List<String> runSampleSearchByCohort(final Cohort cohort) {
 
         if ((cohort == null) ) {
             throw new IllegalArgumentException("Cohort param was null. Cannot retrieve list of samples from BSP.");
@@ -111,10 +111,10 @@ public class MockBSPCohortSearchService implements BSPCohortSearchService {
     }
 
     // Fake up a retrieved collection.
-    private Set<BSPCollection> getFakeCollections() {
+    private Set<Cohort> getFakeCollections() {
 
-        HashSet<BSPCollection> fakeCohorts = new HashSet<BSPCollection>();
-        fakeCohorts.add( new BSPCollection(new BSPCollectionID("12345"), "AlxCollection1"));
+        HashSet<Cohort> fakeCohorts = new HashSet<Cohort>();
+        fakeCohorts.add( new Cohort(new CohortID("12345"), "AlxCollection1"));
         return fakeCohorts;
 
     }
