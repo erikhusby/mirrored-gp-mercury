@@ -28,7 +28,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         ResearchProject researchProject = researchProjectResource.findResearchProjectById("111");
         Assert.assertNotNull(researchProject);
         Assert.assertNotNull(researchProject.getTitle());
-        Assert.assertEquals(researchProject.getTitle(), "FakeResearchProjectId(value='111')");
+        Assert.assertEquals(researchProject.getTitle(), "FakeResearchProjectId{value='111'}");
 
         researchProject = null;
         // Try to get rp using an invalid rpid - empty string
