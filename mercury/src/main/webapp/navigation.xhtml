@@ -5,21 +5,31 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:sqltg="http://sequel.broadinstitute.org/tags">
 <body>
-    <ui:composition>
-        <h:link outcome="/index">Home</h:link>
-        <ul>
-            <li><h:link outcome="/projects/list">Projects</h:link></li>
-            <li><h:link outcome="/zims/illuminaRunQuery">Illumina Run Query</h:link></li>
-            <li><h:link outcome="/pass/dashboard">PASS Dashboard</h:link></li>
-        </ul>
-        <sqltg:AuthorizeBlock roles="Sequel-Developers">
-        <ul>
-            <li><h:link outcome="/administration/page_administration.xhtml">Page Administration</h:link> </li>
-        </ul>
-        </sqltg:AuthorizeBlock>
-    </ui:composition>
+<ui:composition>
+    <p:commandButton id="menuButton" value="Menu" type="button" styleClass="btn btn-mini" icon="ui-icon-carat-1-s"/>
+
+    <h:form>
+        <p:menu overlay="true" trigger="menuButton" my="left top" at="left bottom" >
+            <p:submenu label="Athena">
+                <p:menuitem value="Projects" outcome="/projects/list" icon="ui-icon-home"/>
+                <p:menuitem value="Illumina Run Query" outcome="/zims/illuminaRunQuery" />
+                <p:menuitem value="PASS Dashboard" outcome="/pass/dashboard" />
+                <sqltg:AuthorizeBlock roles="Sequel-Developers">
+                    <ul>
+                        <p:menuitem value="Page Administration" outcome="/administration/page_administration" icon="ui-icon-gear"/>
+                    </ul>
+                </sqltg:AuthorizeBlock>
+            </p:submenu>
+
+            <p:submenu label="Mercury">
+            </p:submenu>
+        </p:menu>
+    </h:form>
+
+</ui:composition>
 </body>
 </html>
