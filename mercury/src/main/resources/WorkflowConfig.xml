@@ -2,95 +2,398 @@
 <workflowConfig>
     <workflowProcessDefs>
         <name>Preflight</name>
-        <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
-            <name>Preflight Bucket</name>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-            <entryMaterialType>GENOMIC_DNA</entryMaterialType>
-        </workflowStepDefs>
-        <workflowStepDefs>
-            <name>Preflight Pico Setup</name>
-            <labEventTypes>PREFLIGHT_PICO_SETUP</labEventTypes>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-            <quantType>PICO</quantType>
-        </workflowStepDefs>
-        <workflowStepDefs>
-            <name>Preflight Normalization</name>
-            <labEventTypes>PREFLIGHT_NORMALIZATION</labEventTypes>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-        </workflowStepDefs>
-        <workflowStepDefs>
-            <name>Preflight Post Norm Pico Setup</name>
-            <labEventTypes>PREFLIGHT_POST_NORM_PICO_SETUP</labEventTypes>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-        </workflowStepDefs>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Preflight Bucket</name>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <entryMaterialType>GENOMIC_DNA</entryMaterialType>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Preflight Cleanup</name>
+                <labEventTypes>PREFLIGHT_CLEANUP</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <quantType>PICO</quantType>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Preflight Pico Setup</name>
+                <labEventTypes>PREFLIGHT_PICO_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <quantType>PICO</quantType>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Preflight Normalization</name>
+                <labEventTypes>PREFLIGHT_NORMALIZATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Preflight Post Norm Pico Setup</name>
+                <labEventTypes>PREFLIGHT_POST_NORM_PICO_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
         <name>Shearing</name>
-        <workflowStepDefs>
-            <name>Shearing Transfer</name>
-            <labEventTypes>SHEARING_TRANSFER</labEventTypes>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-        </workflowStepDefs>
-        <workflowStepDefs>
-            <name>Post Shearing Transfer Cleanup</name>
-            <labEventTypes>POST_SHEARING_TRANSFER_CLEANUP</labEventTypes>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-        </workflowStepDefs>
-        <workflowStepDefs>
-            <name>Shearing QC</name>
-            <labEventTypes>SHEARING_QC</labEventTypes>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-        </workflowStepDefs>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Shearing Transfer</name>
+                <labEventTypes>SHEARING_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Covaris Loaded</name>
+                <labEventTypes>COVARIS_LOADED</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Post Shearing Transfer Cleanup</name>
+                <labEventTypes>POST_SHEARING_TRANSFER_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Shearing QC</name>
+                <labEventTypes>SHEARING_QC</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
         <name>Library Construction</name>
-        <workflowStepDefs>
-            <name>EndRepair</name>
-            <labEventTypes>END_REPAIR</labEventTypes>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-        </workflowStepDefs>
-        <workflowStepDefs>
-            <name>EndRepairCleanup</name>
-            <labEventTypes>END_REPAIR_CLEANUP</labEventTypes>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-        </workflowStepDefs>
-        <workflowStepDefs>
-            <name>ABase</name>
-            <labEventTypes>A_BASE</labEventTypes>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-        </workflowStepDefs>
-        <workflowStepDefs>
-            <name>ABaseCleanup</name>
-            <labEventTypes>A_BASE_CLEANUP</labEventTypes>
-            <optional>false</optional>
-            <entryPoint>false</entryPoint>
-            <reEntryPoint>false</reEntryPoint>
-        </workflowStepDefs>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>EndRepair</name>
+                <labEventTypes>END_REPAIR</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>EndRepairCleanup</name>
+                <labEventTypes>END_REPAIR_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>ABase</name>
+                <labEventTypes>A_BASE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>ABaseCleanup</name>
+                <labEventTypes>A_BASE_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Indexed Adaptor Ligation</name>
+                <labEventTypes>INDEXED_ADAPTER_LIGATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Adaptor Ligation Cleanup</name>
+                <labEventTypes>ADAPTER_LIGATION_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Enrichment</name>
+                <labEventTypes>POND_ENRICHMENT</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Enrichment Cleanup</name>
+                <labEventTypes>POND_ENRICHMENT_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pond Registration</name>
+                <labEventTypes>POND_REGISTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Hybrid Selection</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Pre-Selection Pool</name>
+                <labEventTypes>PRE_SELECTION_POOL</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Hybridization</name>
+                <labEventTypes>HYBRIDIZATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <!--
+                    <workflowStepDefs>
+                        <name>BaitSetup</name>
+                        <labEventTypes>BAIT_SETUP</labEventTypes>
+                        <optional>false</optional>
+                        <entryPoint>false</entryPoint>
+                        <reEntryPoint>false</reEntryPoint>
+                    </workflowStepDefs>
+            -->
+            <workflowStepDefs>
+                <name>Bait Addition</name>
+                <labEventTypes>BAIT_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Bead Addition</name>
+                <labEventTypes>BEAD_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Capture</name>
+                <labEventTypes>AP_WASH</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash 1</name>
+                <labEventTypes>GS_WASH_1</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash 2</name>
+                <labEventTypes>GS_WASH_2</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash 3</name>
+                <labEventTypes>GS_WASH_3</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash 4</name>
+                <labEventTypes>GS_WASH_4</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash 5</name>
+                <labEventTypes>GS_WASH_5</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>GS Wash 6</name>
+                <labEventTypes>GS_WASH_6</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Catch Enrichment Setup</name>
+                <labEventTypes>CATCH_ENRICHMENT_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Catch Enrichment Cleanup</name>
+                <labEventTypes>CATCH_ENRICHMENT_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Normalized Catch Registration</name>
+                <labEventTypes>NORMALIZED_CATCH_REGISTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>SAGE</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Sage Loading</name>
+                <labEventTypes>SAGE_LOADING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Sage Loaded</name>
+                <labEventTypes>SAGE_LOADED</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Sage Unloading</name>
+                <labEventTypes>SAGE_UNLOADING</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Sage Cleanup</name>
+                <labEventTypes>SAGE_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>QTP</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <!--
+                    <workflowStepDefs>
+                        <name>Catch Pico?</name>
+                        <labEventTypes></labEventTypes>
+                        <optional>false</optional>
+                        <entryPoint>false</entryPoint>
+                        <reEntryPoint>false</reEntryPoint>
+                    </workflowStepDefs>
+            -->
+            <workflowStepDefs>
+                <name>Pooling Transfer</name>
+                <labEventTypes>POOLING_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <!--
+                    <workflowStepDefs>
+                        <name>EcoTransfer?</name>
+                        <labEventTypes></labEventTypes>
+                        <optional>false</optional>
+                        <entryPoint>false</entryPoint>
+                        <reEntryPoint>false</reEntryPoint>
+                    </workflowStepDefs>
+            -->
+            <workflowStepDefs>
+                <name>Normalization Transfer</name>
+                <labEventTypes>NORMALIZATION_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Denature Transfer</name>
+                <labEventTypes>DENATURE_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Strip Tube B Transfer</name>
+                <labEventTypes>STRIP_TUBE_B_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>HiSEQ</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Flowcell Transfer</name>
+                <labEventTypes>FLOWCELL_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Flowcell Loaded</name>
+                <labEventTypes>FLOWCELL_LOADED</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
     </workflowProcessDefs>
     <productWorkflowDefs>
         <name>Exome Express</name>
-        <workflowProcessDefs>Preflight</workflowProcessDefs>
-        <workflowProcessDefs>Shearing</workflowProcessDefs>
-        <workflowProcessDefs>Library Construction</workflowProcessDefs>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
+            <workflowProcessDefs>Library Construction</workflowProcessDefs>
+            <workflowProcessDefs>Hybrid Selection</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+        <name>Hybrid Selection</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
+            <workflowProcessDefs>Preflight</workflowProcessDefs>
+            <workflowProcessDefs>Shearing</workflowProcessDefs>
+            <workflowProcessDefs>Library Construction</workflowProcessDefs>
+            <workflowProcessDefs>Hybrid Selection</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+        </productWorkflowDefVersions>
     </productWorkflowDefs>
 </workflowConfig>

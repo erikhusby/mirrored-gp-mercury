@@ -9,6 +9,9 @@ import java.util.Map;
  * Properties common to all events of a particular message type
  */
 public enum LabEventType {
+    PREFLIGHT_CLEANUP ("PreflightCleanup", true, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
     PREFLIGHT_PICO_SETUP ("PreflightPicoSetup", true, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
@@ -19,6 +22,9 @@ public enum LabEventType {
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     SHEARING_TRANSFER("ShearingTransfer", false, true,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    COVARIS_LOADED("CovarisLoaded", false, true,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     POST_SHEARING_TRANSFER_CLEANUP("PostShearingTransferCleanup", false, true,
@@ -122,7 +128,13 @@ public enum LabEventType {
     FLOWCELL_TRANSFER ("FlowcellTransfer", true, false,
             MolecularState.STRANDEDNESS.SINGLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
+    FLOWCELL_LOADED ("FlowcellLoaded", true, false,
+            MolecularState.STRANDEDNESS.SINGLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
     SAGE_LOADING ("SageLoading", true, false,
+            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+
+    SAGE_LOADED ("SageLoaded", true, false,
             MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
 
     SAGE_UNLOADING ("SageUnloading", true, false,

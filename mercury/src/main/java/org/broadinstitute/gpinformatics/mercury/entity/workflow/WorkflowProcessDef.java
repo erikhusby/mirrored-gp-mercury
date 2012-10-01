@@ -16,11 +16,7 @@ public class WorkflowProcessDef {
 
     @XmlID
     private String name;
-    /** Process graphs tend to be straight lines, with one or two optional steps (e.g. Normalization is optional in QTP,
-     * because the concentration may be fine as is).  (In Squid workflow, new transitions are often initially optional,
-     * to allow the automation to be rolled out, but this could be addressed in Mercury by versioning.)
-     * Treating steps as lists would simplify visualization and editing. */
-    private List<WorkflowStepDef> workflowStepDefs = new ArrayList<WorkflowStepDef>();
+    private List<WorkflowProcessDefVersion> workflowProcessDefVersions = new ArrayList<WorkflowProcessDefVersion>();
 
     /** For JAXB */
     WorkflowProcessDef() {
@@ -30,36 +26,15 @@ public class WorkflowProcessDef {
         this.name = name;
     }
 
-    public void addStep(WorkflowStepDef workflowStepDef) {
-        workflowStepDefs.add(workflowStepDef);
-    }
-
     public String getName() {
         return name;
     }
 
-    public List<WorkflowStepDef> getWorkflowStepDefs() {
-        return workflowStepDefs;
+    public void addWorkflowProcessDefVersion(WorkflowProcessDefVersion workflowProcessDefVersion) {
+        this.workflowProcessDefVersions.add(workflowProcessDefVersion);
     }
 
-    /** At a QC review, the user needs to know the options for re-entry */
-    public List<WorkflowStepDef> getReEntryPoints() {
-        List<WorkflowStepDef> reEntryPoints = new ArrayList<WorkflowStepDef>();
-        for (WorkflowStepDef workflowStepDef : workflowStepDefs) {
-            if(workflowStepDef.isReEntryPoint()) {
-                reEntryPoints.add(workflowStepDef);
-            }
-        }
-        return reEntryPoints;
-    }
-
-    public List<WorkflowBucketDef> getBuckets() {
-        List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<WorkflowBucketDef>();
-        for (WorkflowStepDef workflowStepDef : workflowStepDefs) {
-            if(OrmUtil.proxySafeIsInstance(workflowStepDef, WorkflowBucketDef.class)) {
-                workflowBucketDefs.add(OrmUtil.proxySafeCast(workflowStepDef, WorkflowBucketDef.class));
-            }
-        }
-        return workflowBucketDefs;
+    public WorkflowProcessDefVersion getCurrentVersion() {
+        return workflowProcessDefVersions.get(0);
     }
 }
