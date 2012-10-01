@@ -17,21 +17,20 @@
 
     <cc:interface/>
     <cc:implementation>
-        Please enter your Broad Username and Password.
+            Please enter your Broad Username and Password.
 
-        <h:form>
-            <h:panelGrid columns="2">
-                <h:outputText value="Username:" />
-                <h:inputText label="Username:" value="#{userLogin.userName}" required="true" requiredMessage="Username is required"/>
+            <h:form>
+                <h:panelGrid columns="2">
+                    <h:outputText value="Username:" />
+                    <h:inputText label="Username:" value="#{userLogin.userName}" required="true" requiredMessage="Username is required"/>
 
-                <h:outputText value="Password:" />
-                <h:inputSecret label="Password:" value="#{userLogin.password}" required="true" requiredMessage="Password is required" />
+                    <h:outputText value="Password:" />
+                    <h:inputSecret label="Password:" value="#{userLogin.password}" required="true" requiredMessage="Password is required" />
 
-                <h:panelGroup />
-                <h:commandButton value="Sign in" action="#{userLogin.authenticateUser}" />
-            </h:panelGrid>
-        </h:form>
-
+                    <h:panelGroup />
+                    <h:commandButton value="Sign in" action="#{userLogin.authenticateUser}" class="btn btn-primary"/>
+                </h:panelGrid>
+            </h:form>
     </cc:implementation>
 
 </html>
