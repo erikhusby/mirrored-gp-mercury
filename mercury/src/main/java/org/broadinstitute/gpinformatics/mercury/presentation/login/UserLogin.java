@@ -6,8 +6,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
  *         Time: 1:35 PM
  */
 
-//import com.atlassian.crowd.application.jaas.CrowdLoginModule;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -23,19 +21,18 @@ import javax.servlet.http.HttpServletRequest;
 @ManagedBean
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
-
-    private String userName;
+    private String username;
     private String password;
 
     private Log loginLogger = LogFactory.getLog(UserLogin.class);
 
 
     public String getUserName() {
-        return userName;
+        return username;
     }
 
-    public void setUserName(String userNameIn) {
-        userName = userNameIn;
+    public void setUserName(String usernameIn) {
+        username = usernameIn;
     }
 
     public String getPassword() {
@@ -47,41 +44,35 @@ public class UserLogin extends AbstractJsfBean {
     }
 
     public String authenticateUser() {
-
         String targetPage = "/index";
+        FacesContext context = FacesContext.getCurrentInstance();
 
         try {
-
             authenticate();
-            FacesContext context = FacesContext.getCurrentInstance();
+            context.addMessage(null,new FacesMessage(FacesMessage.SEVERITY_INFO, "Welcome back!", "Sign in successful"));
+
             HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
-            String previouslyTargettedPage = (String)request.getAttribute("targetted_page");
-            if(null != previouslyTargettedPage ) {
-                targetPage =previouslyTargettedPage;
+            String previouslyTargetedPage = (String)request.getAttribute("targetted_page");
+
+            if(null != previouslyTargetedPage ) {
+                targetPage = previouslyTargetedPage;
             }
         } catch (LoginException le) {
-
             loginLogger.error("LoginException Retrieved: ",le);
-            FacesContext.getCurrentInstance()
-                        .addMessage(null, new FacesMessage("The username and password combination entered was not able to be authenticated."));
+            context.addMessage(null,new FacesMessage(FacesMessage.SEVERITY_ERROR, "The username and password you entered is incorrect.  Please try again.", "Authentication error"));
             targetPage = "/security/login";
         } catch (ServletException le) {
-            loginLogger.error("ServletExcpetion Retrieved: ",le);
-            FacesContext.getCurrentInstance()
-                        .addMessage(null, new FacesMessage("The username and password combination entered was not able to be authenticated."));
+            loginLogger.error("ServletException Retrieved: ",le);
+            context.addMessage(null,new FacesMessage(FacesMessage.SEVERITY_ERROR, "The username and password you entered is incorrect.  Please try again.", "Authentication error"));
             targetPage = "/security/login";
         }
 
         return targetPage;
     }
 
-
     private void authenticate() throws LoginException, ServletException {
-
         HttpServletRequest request = (HttpServletRequest )FacesContext.getCurrentInstance().getExternalContext().getRequest();
 
-        request.login(userName, password);
-
+        request.login(username, password);
     }
-
 }

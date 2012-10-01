@@ -17,7 +17,7 @@
 
     <context-param>
         <param-name>primefaces.THEME</param-name>
-        <param-value>#{theme.theme}</param-value>
+        <param-value>bootstrap</param-value>
     </context-param>
 
     <servlet>
