@@ -26,7 +26,7 @@ public class ResearchProject {
         Open, Archived
     }
 
-    private ResearchProjectId id;
+    private Long id;
 
     private Status status;
 
@@ -59,7 +59,7 @@ public class ResearchProject {
         return title;
     }
 
-    public ResearchProjectId getId() {
+    public Long getId() {
         return id;
     }
 
@@ -79,7 +79,7 @@ public class ResearchProject {
         this.title = title;
     }
 
-    public void setId(ResearchProjectId id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

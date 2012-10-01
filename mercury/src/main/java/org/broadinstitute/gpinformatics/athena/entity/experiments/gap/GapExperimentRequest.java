@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPSample;
 import org.broadinstitute.gpinformatics.athena.entity.common.EntityUtils;
 import org.broadinstitute.gpinformatics.athena.entity.experiments.*;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.gap.ExperimentPlan;
@@ -183,7 +184,7 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
         if (researchProject != null) {
 
             // Update the RP id that is associated with the research project.
-            getExperimentPlanDTO().setResearchProjectId(researchProject.getId());
+            getExperimentPlanDTO().setResearchProjectId(new ResearchProjectId(Long.toString(researchProject.getId())));
 
             //Set irb number and info on the gap experiment.
             if (researchProject.getIrbNumbers() != null) {

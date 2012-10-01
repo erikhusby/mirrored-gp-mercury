@@ -1,10 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.control.dao;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.enterprise.inject.Default;
 import java.util.ArrayList;
@@ -27,11 +26,11 @@ public class ResearchProjectDAO {
 
         //TODO hmc - hook up with the actual DB.
         // Save some dummy research projects
-        saveProject(this.findById(new ResearchProjectId("111")));
-        saveProject(this.findById(new ResearchProjectId("222")));
-        saveProject(this.findById(new ResearchProjectId("333")));
-        saveProject(this.findById(new ResearchProjectId("381")));
-        saveProject(this.findById(new ResearchProjectId("444")));
+        saveProject(this.findById(111L));
+        saveProject(this.findById(222L));
+        saveProject(this.findById(333L));
+        saveProject(this.findById(381L));
+        saveProject(this.findById(444L));
 
     }
 
@@ -52,13 +51,13 @@ public class ResearchProjectDAO {
         ArrayList<ResearchProject> result = new ArrayList<ResearchProject>();
 
         //TODO hmc - hook up with the actual DB. Just return some dummy data. Always returns project 222
-        result.add(this.findById(new ResearchProjectId("222")));
+        result.add(this.findById(222L));
 
         return result;
     }
 
 
-    public ResearchProject findById(ResearchProjectId rpId) {
+    public ResearchProject findById(Long rpId) {
 
         //TODO hmc - hook up with the actual DB.
         // create a dummy research project with rpid appended to title.
