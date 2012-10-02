@@ -5,8 +5,10 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
 import org.broadinstitute.gpinformatics.athena.entity.orders.Order;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
+import javax.persistence.Transient;
 import java.util.*;
 
 /**
@@ -46,6 +48,8 @@ public class ResearchProject {
     private String irbNotes;
 
     private final Set<Order> orders = new HashSet<Order>();
+
+    private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
     public ResearchProject(Person creator, String title, String synopsis) {
         this.title = title;
@@ -105,6 +109,27 @@ public class ResearchProject {
 
     public void setIrbNotes(String irbNotes) {
         this.irbNotes = irbNotes;
+    }
+
+    /**
+     * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
+     * which this Research project is associated
+     *
+     * @return a {@link String} that represents the unique Jira Ticket key
+     */
+    public String getJiraTicketKey() {
+        return this.jiraTicketKey;
+    }
+
+    /**
+     * setJiraTicketKey allows a user of this class to associate the key for the Jira Ticket which was created
+     * for this Research Project
+     *
+     * @param jiraTicketKeyIn a {@link String} that represents the unique key to the Jira Ticket to which the current
+     *                        Research Project is associated
+     */
+    public void setJiraTicketKey(String jiraTicketKeyIn) {
+        this.jiraTicketKey = jiraTicketKeyIn;
     }
 
     public Set<Cohort> getSampleCohorts() {
@@ -199,4 +224,33 @@ public class ResearchProject {
     public int hashCode() {
         return new HashCodeBuilder().append(title).toHashCode();
     }
+
+    /**
+     * fetchJiraProject is a helper method that binds a specific Jira project to a ResearchProject entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity
+     *
+     * @return An enum of type
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     * represents the Jira Project for Research Projects
+     */
+    @Transient
+    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
+        return CreateIssueRequest.Fields.ProjectType.Research_Projects;
+    }
+
+    /**
+     *
+     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to a ResearchProject entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity
+     *
+     * @return An enum of type
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     * represents the Jira Issue Type for Research Projects
+     */
+    @Transient
+    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
+        return CreateIssueRequest.Fields.Issuetype.Research_Project;
+    }
+
+
 }

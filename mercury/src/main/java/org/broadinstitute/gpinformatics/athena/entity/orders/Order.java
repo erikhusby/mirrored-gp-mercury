@@ -167,11 +167,28 @@ public class Order implements Serializable {
         return sampleSheet.getGenderCount();
     }
 
+    /**
+     * fetchJiraProject is a helper method that binds a specific Jira project to an Order entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity
+     *
+     * @return An enum of type
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     * represents the Jira Project for Product Orders
+     */
     @Transient
     public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
         return CreateIssueRequest.Fields.ProjectType.Product_Ordering;
     }
 
+    /**
+     *
+     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to an Order entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity
+     *
+     * @return An enum of type
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     * represents the Jira Issue Type for Product Orders
+     */
     @Transient
     public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
         return CreateIssueRequest.Fields.Issuetype.Product_Order;
