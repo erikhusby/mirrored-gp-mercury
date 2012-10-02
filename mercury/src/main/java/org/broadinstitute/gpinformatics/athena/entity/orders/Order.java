@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.gpinformatics.athena.Namespaces;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
@@ -29,6 +31,7 @@ public class Order implements Serializable {
     private String quoteId;                     // Alphanumeric Id
     private String comments;                    // Additional comments of the order
     private SampleSheet sampleSheet;
+    private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitteds
 
 
     public Order() {
@@ -104,6 +107,30 @@ public class Order implements Serializable {
         this.sampleSheet = sampleSheet;
     }
 
+    /**
+     * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
+     * which this Product Order is associated
+     *
+     * @return a {@link String} that represents the unique Jira Ticket key
+     */
+    public String getJiraTicketKey() {
+        return this.jiraTicketKey;
+    }
+
+    /**
+     * setJiraTicketKey allows a user of this class to associate the key for the Jira Ticket which was created when the
+     * related ProductOrder was officially submitted
+     *
+     * @param jiraTicketKeyIn a {@link String} that represents the unique key to the Jira Ticket to which the current
+     *                        Product Order is associated
+     */
+    public void setJiraTicketKey(String jiraTicketKeyIn) {
+        if(jiraTicketKeyIn == null) {
+            throw new NullPointerException("Jira Ticket Key cannot be null");
+        }
+        this.jiraTicketKey = jiraTicketKeyIn;
+    }
+
     public int getUniqueParticipantCount() {
         //TODO
         //        return 0;
@@ -138,6 +165,16 @@ public class Order implements Serializable {
          //TODO
         //         return 0;
         return sampleSheet.getGenderCount();
+    }
+
+    @Transient
+    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
+        return CreateIssueRequest.Fields.ProjectType.Product_Ordering;
+    }
+
+    @Transient
+    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
+        return CreateIssueRequest.Fields.Issuetype.Product_Order;
     }
 
 }
