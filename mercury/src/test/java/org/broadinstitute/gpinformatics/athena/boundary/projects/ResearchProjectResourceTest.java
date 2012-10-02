@@ -7,11 +7,13 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFun
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,7 +24,8 @@ import java.util.List;
 public class ResearchProjectResourceTest extends ContainerTest {
 
     private static final Long TEST_CREATOR = 10L;
-    private static final String TEST_TITLE = "MyResearchProject";
+    private static final Long TestScientist1 = 111L;
+    private static final Long TestScientist2 = 222L;
 
     @Inject
     ResearchProjectResource researchProjectResource;
@@ -31,23 +34,32 @@ public class ResearchProjectResourceTest extends ContainerTest {
     private ResearchProjectDAO researchProjectDAO;
 
     private Long testResearchProjectId;
+    private String testTitle;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        ResearchProject researchProject = new ResearchProject(TEST_CREATOR, TEST_TITLE, "To study stuff.");
+        testTitle = "MyResearchProject_" + UUID.randomUUID();
+        ResearchProject researchProject =
+            new ResearchProject(TEST_CREATOR, testTitle, "To study stuff.");
 
-        researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant"));
-        researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO"));
+        researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant_" + UUID.randomUUID()));
+        researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO_" + UUID.randomUUID()));
 
-        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, "irb123"));
-        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, "irb456"));
+        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, "irb123_" + UUID.randomUUID()));
+        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, "irb456_" + UUID.randomUUID()));
 
-        researchProject.addPerson(RoleType.SCIENTIST, 111L);
-        researchProject.addPerson(RoleType.SCIENTIST, 222L);
+        researchProject.addPerson(RoleType.SCIENTIST, TestScientist1);
+        researchProject.addPerson(RoleType.SCIENTIST, TestScientist2);
 
         researchProjectDAO.persist(researchProject);
 
         testResearchProjectId = researchProject.getId();
+    }
+
+    @AfterMethod
+    public void tearDown() throws Exception {
+        ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
+        researchProjectDAO.delete(researchProject);
     }
 
     @Test
@@ -55,7 +67,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
         Assert.assertNotNull(researchProject);
         Assert.assertNotNull(researchProject.getTitle());
-        Assert.assertEquals(researchProject.getTitle(), TEST_TITLE);
+        Assert.assertEquals(researchProject.getTitle(), testTitle);
     }
 
     @Test

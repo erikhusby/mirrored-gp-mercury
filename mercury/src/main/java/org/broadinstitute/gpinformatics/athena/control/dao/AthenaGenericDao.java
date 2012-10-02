@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao;
 
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -32,9 +34,14 @@ public class AthenaGenericDao {
     }
 
     public void persistAll(List<?> entities) {
-        EntityManager entityManager = this.threadEntityManager.getEntityManager();
+        EntityManager entityManager = threadEntityManager.getEntityManager();
         for (Object entity : entities) {
             entityManager.persist(entity);
         }
+    }
+
+    public void delete(ResearchProject researchProject) {
+        EntityManager entityManager = threadEntityManager.getEntityManager();
+        entityManager.remove(researchProject);
     }
 }
