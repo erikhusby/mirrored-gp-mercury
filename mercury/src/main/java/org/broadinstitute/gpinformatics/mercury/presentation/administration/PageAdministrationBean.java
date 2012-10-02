@@ -26,14 +26,12 @@ public class PageAdministrationBean extends AbstractJsfBean {
     private List<String> newroleAuth = new LinkedList<String>();
 
     public Collection<PageAuthorization> getAllPageAuthorizations() {
-
         List<PageAuthorization> allPgs = new LinkedList<PageAuthorization>();
         allPgs.addAll(authSvc.getAllAuthorizedPages());
         return allPgs;
     }
 
     public Collection<String> getRoleList() {
-
         Collection<String> fullRoleList = null;
         if(null != pagePath) {
             Collection<String> roleList = authSvc.retrieveAuthorizedRoles(pagePath);
@@ -52,10 +50,7 @@ public class PageAdministrationBean extends AbstractJsfBean {
         return tempList;
     }
 
-
-
     public String addNewRole() {
-
         authSvc.addRolesToPage(pagePath, newroleAuth);
 
         newroleAuth = new LinkedList<String>();

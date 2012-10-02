@@ -9,7 +9,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 
-import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -21,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 @RequestScoped
 public class UserLogin {
     private String username;
+
     private String password;
 
     @Inject
@@ -50,7 +50,7 @@ public class UserLogin {
             HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
 
             request.login(username, password);
-            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Welcome back!", "Sign in successful"));
+            addInfoMessage("Welcome back!", "Sign in successful");
 
             String previouslyTargetedPage = (String)request.getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
 
@@ -59,8 +59,7 @@ public class UserLogin {
             }
         } catch (ServletException le) {
             logger.error("ServletException Retrieved: ", le);
-            context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                    "The username and password you entered is incorrect.  Please try again.", "Authentication error"));
+            addErrorMessage("The username and password you entered is incorrect.  Please try again.", "Authentication error");
             targetPage = AuthorizationFilter.LOGIN_PAGE;
         }
 

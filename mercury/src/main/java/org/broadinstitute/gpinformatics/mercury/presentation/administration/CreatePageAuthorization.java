@@ -26,11 +26,9 @@ public class CreatePageAuthorization extends AbstractJsfBean {
 
 
     public String createNewPage() {
-
         String direction = "/administration/page_administration.xhtml";
 
         if(null != pagePath) {
-
             authSvc.addNewPageAuthorization(pagePath, assignedRole);
         }
 

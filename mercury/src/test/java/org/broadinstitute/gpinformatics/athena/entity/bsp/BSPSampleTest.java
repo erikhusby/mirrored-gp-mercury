@@ -9,8 +9,8 @@ import java.beans.IntrospectionException;
 
 public class BSPSampleTest {
 
-    public static final String SM_12_CO4 = "SM-12CO4";
-    public static final String PT_2_LK3 = "PT-2LK3";
+//    public static final String SM_12_CO4 = "SM-12CO4";
+//    public static final String PT_2_LK3 = "PT-2LK3";
 
     //TODO PMB remove
 //    @Test(groups = {UNIT})
@@ -18,11 +18,11 @@ public class BSPSampleTest {
 //        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(new MockBSPCohortSearchService());
 //        String sampleName = SM_12_CO4;
 //        final BSPSampleDTO bspDTO = fetcher.fetchSingleSampleFromBSP(sampleName);
-//        BSPSample bspSample = new BSPSample( new SampleId(sampleName), bspDTO);
+//        BSPSample bspSample = new BSPSample( sampleName, bspDTO);
 //        Assert.assertEquals(PT_2_LK3, bspSample.getPatientId());
 //
 //        // other ctr
-//        BSPSample bspSample2 = new BSPSample( new SampleId(sampleName) );
+//        BSPSample bspSample2 = new BSPSample( sampleName );
 //        Assert.assertFalse( bspSample2.hasBSPDTOBeenInitialized());
 //        bspSample2.setBspDTO(bspDTO);
 //        Assert.assertTrue( bspSample2.hasBSPDTOBeenInitialized());

@@ -14,18 +14,14 @@ import java.util.Collection;
  * {@link AuthenticationService} in order to perform authorization and authentication logic on the pages accessed
  *
  * @author Scott Matthews
- *         Date: 5/2/12
- *         Time: 12:03 PM
  */
 
 @ManagedBean
 @RequestScoped
 public class AuthorizationManager {
-
     @Inject private AuthenticationService authSvc;
 
     /**
-     *
      * isUserAuthorized will determine if the user that us currently logged into the application is authorized to
      * access the current page.
      *
@@ -34,13 +30,12 @@ public class AuthorizationManager {
      * @return
      */
     public boolean isUserAuthorized(String pageUri, HttpServletRequest requestIn) {
-
         boolean authorized = false;
 
         if (authSvc.isPageProtected(pageUri)) {
-            Collection<String> authorizationGrps = authSvc.retrieveAuthorizedRoles(pageUri);
-            for (String currGrp:authorizationGrps) {
-                if (requestIn.isUserInRole(currGrp) || currGrp.equals("All")) {
+            Collection<String> authorizationGroups = authSvc.retrieveAuthorizedRoles(pageUri);
+            for (String currentGroup : authorizationGroups) {
+                if (requestIn.isUserInRole(currentGroup) || currentGroup.equals("All")) {
                     authorized = true;
                     break;
                 }
