@@ -123,9 +123,9 @@ public class AuthorizationFilter implements Filter {
             if (!request.isUserInRole("PMBAdmins")
                 && !request.isUserInRole("PMBUsers")
                 && !request.isUserInRole("PMBViewers")) {
-                LOG.info("User isn't in PMBridge groups");
+                LOG.info("User isn't in  groups");
                 // FIXME: need to report page access error back to user somehow.
-                String errorMessage = "The user '" + user +  "' doesn't have permission to log into PMBridge.";
+                String errorMessage = "The user '" + user +  "' doesn't have permission to log into .";
                 errorRedirect(servletRequestIn, servletResponseIn, LOGIN_PAGE);
             }
         }
