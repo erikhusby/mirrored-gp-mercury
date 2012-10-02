@@ -17,6 +17,8 @@ public class JiraConfig extends AbstractConfig implements LoginAndPassword, Seri
 
     private String password;
 
+    private String urlBase;
+
 
     public JiraConfig() {}
 
@@ -51,5 +53,13 @@ public class JiraConfig extends AbstractConfig implements LoginAndPassword, Seri
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getUrlBase() {
+        return urlBase;
+    }
+
+    public void setUrlBase(String urlBaseIn) {
+        urlBase = urlBaseIn;
     }
 }

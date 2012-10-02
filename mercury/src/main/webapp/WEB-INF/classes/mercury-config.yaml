@@ -55,13 +55,15 @@ jira:
       password: squid
       host:     vsquid00.broadinstitute.org
       port:     8020
+      urlBase:      http://vsquid00.broadinstitute.org:8020
 
     PROD:
 
       login:    squid
       password: squid
-      host:     labopsjira
+      host:     labopsjira.broadinstitute.org
 #      port:     8020
+      urlBase:      https://labopsjira.broadinstitute.org
 
     # not defining the PROD instance for now since we will not be referencing it yet
 
