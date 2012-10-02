@@ -129,6 +129,9 @@ public class ResearchProject {
      *                        Research Project is associated
      */
     public void setJiraTicketKey(String jiraTicketKeyIn) {
+        if(jiraTicketKeyIn == null) {
+            throw new NullPointerException("Jira Ticket Key cannot be null");
+        }
         this.jiraTicketKey = jiraTicketKeyIn;
     }
 

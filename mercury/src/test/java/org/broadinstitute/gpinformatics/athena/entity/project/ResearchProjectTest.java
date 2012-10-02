@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
@@ -20,6 +21,7 @@ import java.util.Date;
 @Test(groups = {TestGroups.DATABASE_FREE})
 public class ResearchProjectTest {
 
+    private final static String RESEARCH_PROJ_JIRA_KEY = "RP-1";
     private final Person programMgr = new Person("shefler@broad", "Erica", "Shefler");
     private ResearchProject researchProject;
 
@@ -73,5 +75,28 @@ public class ResearchProjectTest {
         Assert.assertTrue(researchProject.getSampleCohorts().size() == 2);
         researchProject.removeCohort(collection);
         Assert.assertTrue(researchProject.getSampleCohorts().size() == 1);
+
+        Assert.assertNull(researchProject.getJiraTicketKey());
+
+        Assert.assertEquals(researchProject.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.Research_Project);
+
+        Assert.assertEquals(researchProject.fetchJiraProject(), CreateIssueRequest.Fields.ProjectType.Research_Projects);
+
+        try {
+            researchProject.setJiraTicketKey(null);
+            Assert.fail();
+        } catch(NullPointerException npe) {
+            /*
+            Ensuring Null is thrown for setting null
+             */
+        } finally {
+            researchProject.setJiraTicketKey(RESEARCH_PROJ_JIRA_KEY);
+        }
+
+        Assert.assertNotNull(researchProject.getJiraTicketKey());
+
+        Assert.assertEquals(researchProject.getJiraTicketKey(),RESEARCH_PROJ_JIRA_KEY);
+
+
     }
 }
