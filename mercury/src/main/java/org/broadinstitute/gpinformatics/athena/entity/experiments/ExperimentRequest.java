@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Interface for experiment requests in PMBridge outlining
+ * Interface for experiment requests  outlining
  * some of the expected functionality that the concrete class
  * are expected to support.
  * <p/>

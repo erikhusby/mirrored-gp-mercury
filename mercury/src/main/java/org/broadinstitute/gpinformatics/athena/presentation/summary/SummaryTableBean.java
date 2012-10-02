@@ -221,7 +221,7 @@ public class SummaryTableBean extends AbstractJsfBean {
             if ( bspSampleList.size() > 0 ) {
                 List<String> sampleList = new ArrayList<String>();
                 for (BSPSample bspSample: bspSampleList) {
-                    sampleList.add(bspSample.getId().value);
+                    sampleList.add(bspSample.getId());
                 }
 
                 List<String[]>  sampleData = bspSampleSearchService.runSampleSearch(sampleList,

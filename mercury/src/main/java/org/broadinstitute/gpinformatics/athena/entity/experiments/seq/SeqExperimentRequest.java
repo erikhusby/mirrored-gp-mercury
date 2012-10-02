@@ -3,9 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.experiments.seq;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.*;
 import org.broadinstitute.gpinformatics.athena.entity.bsp.BSPSample;
-import org.broadinstitute.gpinformatics.athena.entity.bsp.SampleId;
 import org.broadinstitute.gpinformatics.athena.entity.common.EntityUtils;
 import org.broadinstitute.gpinformatics.athena.entity.common.Name;
 import org.broadinstitute.gpinformatics.athena.entity.common.QuoteId;
@@ -15,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.mercury.boundary.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -408,7 +407,7 @@ public abstract class SeqExperimentRequest extends AbstractExperimentRequest {
 
         if (! getConcretePass().getSampleDetailsInformation().getSample().isEmpty()) {
             for ( Sample sample : getConcretePass().getSampleDetailsInformation().getSample() ) {
-                BSPSample bspSample = new BSPSample(new SampleId( sample.getBspSampleID()) );
+                BSPSample bspSample = new BSPSample( sample.getBspSampleID() );
                 bspSamples.add(bspSample);
             }
         }

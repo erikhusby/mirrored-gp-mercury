@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
 import org.broadinstitute.gpinformatics.athena.Namespaces;
-import org.broadinstitute.gpinformatics.athena.entity.orders.RiskContingency;
 
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
@@ -35,7 +34,6 @@ public class Product implements Serializable {
     private List<AlignerType> availableAlignerTypes;
     private CoverageAndAnalysisInformation selectedCoverageAndAnalysisInformation;
     private GenomicsTechnology genomicsTechnology;
-    private List<RiskContingency> riskContingencies;
 
 
     public String getName() {
@@ -174,11 +172,4 @@ public class Product implements Serializable {
         this.genomicsTechnology = genomicsTechnology;
     }
 
-    public List<RiskContingency> getRiskContingencies() {
-        return riskContingencies;
-    }
-
-    public void setRiskContingencies(final List<RiskContingency> riskContingencies) {
-        this.riskContingencies = riskContingencies;
-    }
 }

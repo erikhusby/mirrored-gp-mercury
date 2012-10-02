@@ -1,16 +1,15 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.gpinformatics.athena.Namespaces;
 
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
-import java.util.List;
 
 /**
- * Class to model the concept of a Order that be be created in PMBridge
+ * Class to model the concept of a Product Order that can be created
  * by the Program PM and subsequently submitted to a lims system.
- * Currently supports the concept of more than one OrderItem per Order but initially it
- * is assumed that this list may only contain one item.
+ * Currently supports the concept associating a product with a set of samples withe a quote.
  * For more detail on the purpose of the Order, see the user stories listed on
  *
  * @see <a href="	https://confluence.broadinstitute.org/x/kwPGAg</a>
@@ -20,21 +19,64 @@ import java.util.List;
  *      Date: 8/28/12
  *      Time: 10:25 AM
  */
-@XmlType(namespace = Namespaces.ORDER_NS, propOrder = {"name", "barcode", "orderItems", "comments"})
+@XmlType(namespace = Namespaces.ORDER_NS)
 public class Order implements Serializable {
 
-    private String name;       // Unique name/title for the order
-    private String barcode;    // Unique barcode for the order. Eg. PDO-ABDR
-    private List<OrderItem> orderItems;  // list of items contained in the order. Should just be a list on 1 for now.
-    private String comments;  // Additional comments of the order
+    private String title;                       // Unique title for the order
+    private String researchProjectName;
+    private String barcode;                     // Unique barcode for the order. Eg. PDO-ABDR
+    private OrderStatus orderStatus;
+    private String quoteId;                     // Alphanumeric Id
+    private String comments;                    // Additional comments of the order
+    private SampleSheet sampleSheet;
 
 
-    public String getName() {
-        return name;
+    public Order() {
     }
 
-    public void setName(final String name) {
-        this.name = name;
+    public Order(final String title, final String researchProjectName, final String barcode,
+                 final OrderStatus orderStatus, final String quoteId, final String comments,
+                 final SampleSheet sampleSheet) {
+        this.title = title;
+        this.researchProjectName = researchProjectName;
+        this.barcode = barcode;
+        this.orderStatus = orderStatus;
+        this.quoteId = quoteId;
+        this.comments = comments;
+        this.sampleSheet = sampleSheet;
+    }
+
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(final String title) {
+        this.title = title;
+    }
+
+    public String getResearchProjectName() {
+        return researchProjectName;
+    }
+
+    public void setResearchProjectName(final String researchProjectName) {
+        this.researchProjectName = researchProjectName;
+    }
+
+    public String getQuoteId() {
+        return quoteId;
+    }
+
+    public void setQuoteId(final String quoteId) {
+        this.quoteId = quoteId;
+    }
+
+    public OrderStatus getOrderStatus() {
+        return orderStatus;
+    }
+
+    public void setOrderStatus(final OrderStatus orderStatus) {
+        this.orderStatus = orderStatus;
     }
 
     public String getBarcode() {
@@ -45,13 +87,6 @@ public class Order implements Serializable {
         this.barcode = barcode;
     }
 
-    public List<OrderItem> getOrderItems() {
-        return orderItems;
-    }
-
-    public void setOrderItems(final List<OrderItem> orderItems) {
-        this.orderItems = orderItems;
-    }
 
     public String getComments() {
         return comments;
@@ -60,4 +95,49 @@ public class Order implements Serializable {
     public void setComments(final String comments) {
         this.comments = comments;
     }
+
+    public SampleSheet getSampleSheet() {
+        return sampleSheet;
+    }
+
+    public void setSampleSheet(final SampleSheet sampleSheet) {
+        this.sampleSheet = sampleSheet;
+    }
+
+    public int getUniqueParticipantCount() {
+        //TODO
+        //        return 0;
+        return sampleSheet.getUniqueParticipantCount();
+    }
+
+    public int getUniqueSampleCount() {
+        //TODO
+        //        return 0;
+        return sampleSheet.getUniqueSampleCount();
+    }
+
+    public int getTotalSampleCount() {
+        //TODO
+        //        return 0;
+        return sampleSheet.getTotalSampleCount();
+    }
+
+    public int getDuplicateCount() {
+         //TODO
+        //         return 0;
+        return sampleSheet.getDuplicateCount();
+    }
+
+    public ImmutablePair getDiseaseNormalCounts() {
+            //TODO
+        //            return 0;
+        return sampleSheet.getDiseaseNormalCounts();
+    }
+
+    public ImmutablePair getGenderCount() {
+         //TODO
+        //         return 0;
+        return sampleSheet.getGenderCount();
+    }
+
 }
