@@ -31,13 +31,24 @@ public class ProductFamily implements Serializable {
      * of one of these ProductFamilies if there was business logic that wanted to call out a specific ProductFamily.
      */
     public enum Name {
-        EXOME_EXPRESS,
-        EXOME_SEQUENCING,
-        EXOME_CHIP,
-        WHOLE_GENOME_SEQUENCING,
-        RNA_SEQUENCING,
-        DENOVO_ASSEMBLY,
-        FLUIDIGM;
+        GENERAL_PRODUCTS("General Products"),
+        EXOME_SEQUENCING_ANALYSIS("Exome Sequencing Analysis"),
+        WHOLE_GENOME_SEQUENCING_ANALYSIS("Whole Genome Sequencing Analysis"),
+        WHOLE_GENOME_ARRAY_ANALYSIS("Whole Genome Array Analysis"),
+        RNA_ANALYSIS("RNA Analysis"),
+        ASSEMBLY_ANALYSIS("Assembly Analysis"),
+        METAGENOMIC_ANALYSIS("Metagenomic Analysis"),
+        EPIGENOMIC_ANALYSIS("Epigenomic Analysis"),
+        ILLUMINA_SEQUENCING_ONLY("Illumina Sequencing Only"),
+        ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
+        CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing");
+
+        private String name;
+
+
+        Name(String name) {
+            this.name = name;
+        }
     }
 
     @Id
