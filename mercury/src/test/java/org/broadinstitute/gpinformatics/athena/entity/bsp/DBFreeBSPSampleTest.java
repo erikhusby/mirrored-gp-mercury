@@ -14,7 +14,7 @@ public class DBFreeBSPSampleTest {
 //        List<String[]> resultColumns = new ArrayList<String[]>(1);
 //        resultColumns.add(new String[] {"1","2","3","4","5","6","7","8"});
 //        BSPSampleSearchService service = EasyMock.createMock(BSPSampleSearchService.class);
-//        SampleId sampleId = new SampleId("Sample1");
+//        String sampleId = "Sample1";
 //        EasyMock.expect(service.runSampleSearch(
 //                (Collection<String>) EasyMock.anyObject(),
 //                (BSPSampleSearchColumn)EasyMock.anyObject(),
