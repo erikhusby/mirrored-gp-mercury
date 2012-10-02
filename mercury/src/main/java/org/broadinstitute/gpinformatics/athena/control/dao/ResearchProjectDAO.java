@@ -1,82 +1,41 @@
 package org.broadinstitute.gpinformatics.athena.control.dao;
 
-import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
+import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
 
-import javax.enterprise.inject.Default;
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
+import javax.persistence.Query;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 5/2/12
- * Time: 12:02 PM
+ * Queries for the research project.
  */
-@Default
-public class ResearchProjectDAO {
+@Stateful
+@RequestScoped
+public class ResearchProjectDAO extends GenericDao {
 
-    // TODO Temp map just for phase 1 until we have persistence.
-    private Map<String, ResearchProject> researchProjectsMap = new HashMap<String, ResearchProject>();
-
-    public ResearchProjectDAO() {
-
-        //TODO hmc - hook up with the actual DB.
-        // Save some dummy research projects
-        saveProject(this.findById(111L));
-        saveProject(this.findById(222L));
-        saveProject(this.findById(333L));
-        saveProject(this.findById(381L));
-        saveProject(this.findById(444L));
-
-    }
-
-    // TODO Temp method just to save an rp.
-    public void saveProject(ResearchProject researchProject) {
-        String researchProjectTitle = researchProject.getTitle();
-        if ((researchProject != null) && StringUtils.isBlank(researchProjectTitle)) {
-            throw new IllegalArgumentException("ResearchProject title must non be blank.");
-        }
-        if (researchProjectsMap.containsKey(researchProjectTitle)) {
-            throw new IllegalArgumentException("Research Project title must be unique. Research project title " +
-                    researchProjectTitle + " already exists.");
-        }
-        researchProjectsMap.put(researchProjectTitle, researchProject);
-    }
-
+    @SuppressWarnings("unchecked")
     public ArrayList<ResearchProject> findResearchProjectsByOwner(String username) {
-        ArrayList<ResearchProject> result = new ArrayList<ResearchProject>();
-
-        //TODO hmc - hook up with the actual DB. Just return some dummy data. Always returns project 222
-        result.add(this.findById(222L));
-
-        return result;
+        Query query = getThreadEntityManager().getEntityManager().createNamedQuery("ResearchProject.fetchByOwner");
+        return (ArrayList<ResearchProject>) query.setParameter("owner", username).getResultList();
     }
 
+    @SuppressWarnings("unchecked")
+    public ResearchProject findResearchProjectsByName(String name) {
+        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery("ResearchProject.fetchByName");
+        return (ResearchProject) query.setParameter("name", name).getSingleResult();
+    }
+
+    @SuppressWarnings("unchecked")
+    public ArrayList<ResearchProject> findAllResearchProjects() {
+        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery("ResearchProject.fetchAll");
+        return (ArrayList<ResearchProject>) query.getResultList();
+    }
 
     public ResearchProject findById(Long rpId) {
-
-        //TODO hmc - hook up with the actual DB.
-        // create a dummy research project with rpid appended to title.
-        Person programMgr = new Person("shefler@broad", "Erica", "Shefler");
-        ResearchProject myResearchProject = new ResearchProject(
-                programMgr, "FakeResearchProject" + rpId, "Research Stuff");
-        myResearchProject.addPerson(RoleType.PM, programMgr);
-        myResearchProject.setId(rpId);
-
-        return myResearchProject;
-    }
-
-    public ArrayList<ResearchProject> findAllResearchProjects() {
-        ArrayList<ResearchProject> result = new ArrayList<ResearchProject>();
-
-        result.addAll(researchProjectsMap.values());
-
-        return result;
-
+        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery("ResearchProject.findById");
+        return (ResearchProject) query.setParameter("id", rpId).getSingleResult();
     }
 
 }

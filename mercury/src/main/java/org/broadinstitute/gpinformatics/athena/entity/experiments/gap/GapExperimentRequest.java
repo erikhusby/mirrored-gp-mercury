@@ -188,7 +188,7 @@ public class GapExperimentRequest extends AbstractExperimentRequest {
 
             //Set irb number and info on the gap experiment.
             if (researchProject.getIrbNumbers() != null) {
-                String irbNumbersStr = EntityUtils.flattenSetOfStrings(researchProject.getIrbNumbers());
+                String irbNumbersStr = researchProject.getIrbNumberString();
                 this.getExperimentPlanDTO().setIrbNumbers(irbNumbersStr);
                 this.getExperimentPlanDTO().setIrbEngaged(true);
             } else {
