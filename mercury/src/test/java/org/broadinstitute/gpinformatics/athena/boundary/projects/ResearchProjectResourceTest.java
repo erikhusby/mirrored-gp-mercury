@@ -13,9 +13,6 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.List;
 
-import static org.testng.Assert.fail;
-import static org.testng.AssertJUnit.assertNull;
-
 /**
  * Created by IntelliJ IDEA.
  * User: mccrory
@@ -59,15 +56,6 @@ public class ResearchProjectResourceTest extends ContainerTest {
         Assert.assertNotNull(researchProject);
         Assert.assertNotNull(researchProject.getTitle());
         Assert.assertEquals(researchProject.getTitle(), TEST_TITLE);
-
-        // Try to get rp using an invalid rpid - empty string
-        try {
-            researchProject = researchProjectResource.findResearchProjectById(null);
-            fail("Should throw exception");
-        } catch ( Exception e ) {
-            // pass
-            assertNull(researchProject);
-        }
     }
 
     @Test

@@ -12,21 +12,6 @@ import java.util.*;
 /**
  * Research Projects hold all the information about a research project
  */
-
-@NamedQueries({
-        @NamedQuery(
-                name = "ResearchProject.fetchByOwner",
-                query = "from ResearchProject rp where rp.createdBy = :owner"),
-        @NamedQuery(
-                name = "ResearchProject.fetchByName",
-                query = "from ResearchProject rp where rp.title = :name"),
-        @NamedQuery(
-                name = "ResearchProject.fetchAll",
-                query = "from ResearchProject rp"),
-        @NamedQuery(
-                name = "ResearchProject.findById",
-                query = "from ResearchProject rp where rp.id = :id")
-})
 @Entity
 public class ResearchProject {
 
@@ -78,7 +63,7 @@ public class ResearchProject {
         this.modifiedDate = this.createdDate;
     }
 
-    public ResearchProject() {}
+    protected ResearchProject() {}
 
     // Getters
     public String getTitle() {

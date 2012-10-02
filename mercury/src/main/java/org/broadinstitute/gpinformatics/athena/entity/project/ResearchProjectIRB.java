@@ -18,7 +18,7 @@ public class ResearchProjectIRB {
 
     private String irb;
 
-    public ResearchProjectIRB() { }
+    protected ResearchProjectIRB() { }
 
     public ResearchProjectIRB(ResearchProject researchProject, String irb) {
         this.researchProject = researchProject;

@@ -15,8 +15,6 @@ import javax.persistence.ManyToOne;
 @Entity
 public class ProjectPerson {
 
-    public ProjectPerson() { }
-
     @Id
     private Long id;
 
@@ -25,6 +23,8 @@ public class ProjectPerson {
 
     private RoleType role;
     private Long personId;
+
+    protected ProjectPerson() { }
 
     public ProjectPerson(RoleType role, Long personId) {
         this.role = role;
