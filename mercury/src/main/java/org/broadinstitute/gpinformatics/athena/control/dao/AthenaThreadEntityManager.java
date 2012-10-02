@@ -14,7 +14,7 @@ import javax.persistence.PersistenceContextType;
  */
 @Stateful
 @RequestScoped
-public class ThreadEntityManager {
+public class AthenaThreadEntityManager {
     /** To avoid LazyInitialization exceptions in JSF pages, the persistence context is extended */
     @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "mercury_pu")
     private EntityManager entityManager;

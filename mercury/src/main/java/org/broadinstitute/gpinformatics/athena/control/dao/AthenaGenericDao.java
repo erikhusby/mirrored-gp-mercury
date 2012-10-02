@@ -15,33 +15,33 @@ import java.util.List;
 @RequestScoped
 public class AthenaGenericDao {
     @Inject
-    private ThreadEntityManager threadEntityManager;
+    private AthenaThreadEntityManager AthenaThreadEntityManager;
 
-    public ThreadEntityManager getThreadEntityManager() {
-        return threadEntityManager;
+    public AthenaThreadEntityManager getAthenaThreadEntityManager() {
+        return AthenaThreadEntityManager;
     }
 
     public void flush() {
-        this.threadEntityManager.getEntityManager().flush();
+        this.AthenaThreadEntityManager.getEntityManager().flush();
     }
 
     public void clear() {
-        this.threadEntityManager.getEntityManager().clear();
+        this.AthenaThreadEntityManager.getEntityManager().clear();
     }
 
     public void persist(Object entity) {
-        this.threadEntityManager.getEntityManager().persist(entity);
+        this.AthenaThreadEntityManager.getEntityManager().persist(entity);
     }
 
     public void persistAll(List<?> entities) {
-        EntityManager entityManager = threadEntityManager.getEntityManager();
+        EntityManager entityManager = AthenaThreadEntityManager.getEntityManager();
         for (Object entity : entities) {
             entityManager.persist(entity);
         }
     }
 
     public void delete(ResearchProject researchProject) {
-        EntityManager entityManager = threadEntityManager.getEntityManager();
+        EntityManager entityManager = AthenaThreadEntityManager.getEntityManager();
         entityManager.remove(researchProject);
     }
 }

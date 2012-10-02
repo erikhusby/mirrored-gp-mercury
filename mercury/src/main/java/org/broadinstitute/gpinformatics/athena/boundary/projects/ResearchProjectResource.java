@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDAO;
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.ejb.Stateless;
@@ -17,7 +17,7 @@ import java.util.List;
 public class ResearchProjectResource {
 
     @Inject
-    private ResearchProjectDAO researchProjectDAO;
+    private ResearchProjectDao researchProjectDao;
 
     @GET
     @Path("{researchProjectId}")
@@ -33,7 +33,7 @@ public class ResearchProjectResource {
         }
 
         // Try to find research project by number
-        ResearchProject researchProject = researchProjectDAO.findById(researchProjectId);
+        ResearchProject researchProject = researchProjectDao.findById(researchProjectId);
         if (researchProject == null) {
             throw new RuntimeException("Could not retrieve research project with id " + researchProjectId);
         }
@@ -64,9 +64,9 @@ public class ResearchProjectResource {
         List<ResearchProject> foundProjects;
 
         if ((creatorId != null) && (creatorId > 0)) {
-            foundProjects = researchProjectDAO.findResearchProjectsByOwner(creatorId);
+            foundProjects = researchProjectDao.findResearchProjectsByOwner(creatorId);
         } else {
-            foundProjects = researchProjectDAO.findAllResearchProjects();
+            foundProjects = researchProjectDao.findAllResearchProjects();
         }
 
         return foundProjects;

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDAO;
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
@@ -31,7 +31,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
     ResearchProjectResource researchProjectResource;
 
     @Inject
-    private ResearchProjectDAO researchProjectDAO;
+    private ResearchProjectDao researchProjectDao;
 
     private Long testResearchProjectId;
     private String testTitle;
@@ -51,7 +51,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         researchProject.addPerson(RoleType.SCIENTIST, TestScientist1);
         researchProject.addPerson(RoleType.SCIENTIST, TestScientist2);
 
-        researchProjectDAO.persist(researchProject);
+        researchProjectDao.persist(researchProject);
 
         testResearchProjectId = researchProject.getId();
     }
@@ -59,7 +59,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
     @AfterMethod
     public void tearDown() throws Exception {
         ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
-        researchProjectDAO.delete(researchProject);
+        researchProjectDao.delete(researchProject);
     }
 
     @Test
