@@ -7,6 +7,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
  */
 
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 
 import javax.faces.bean.ManagedBean;
@@ -18,7 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @ManagedBean
 @RequestScoped
-public class UserLogin {
+public class UserLogin extends AbstractJsfBean {
     private String username;
 
     private String password;
