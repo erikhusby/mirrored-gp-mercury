@@ -10,7 +10,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
-import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -22,16 +21,16 @@ import javax.servlet.http.HttpServletRequest;
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
     private String username;
+
     private String password;
 
     private Log loginLogger = LogFactory.getLog(UserLogin.class);
 
-
-    public String getUserName() {
+    public String getUsername() {
         return username;
     }
 
-    public void setUserName(String usernameIn) {
+    public void setUsername(String usernameIn) {
         username = usernameIn;
     }
 
@@ -49,7 +48,7 @@ public class UserLogin extends AbstractJsfBean {
 
         try {
             authenticate();
-            context.addMessage(null,new FacesMessage(FacesMessage.SEVERITY_INFO, "Welcome back!", "Sign in successful"));
+            addInfoMessage("Welcome back!", "Sign in successful");
 
             HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
             String previouslyTargetedPage = (String)request.getAttribute("targetted_page");
@@ -59,11 +58,11 @@ public class UserLogin extends AbstractJsfBean {
             }
         } catch (LoginException le) {
             loginLogger.error("LoginException Retrieved: ",le);
-            context.addMessage(null,new FacesMessage(FacesMessage.SEVERITY_ERROR, "The username and password you entered is incorrect.  Please try again.", "Authentication error"));
+            addErrorMessage("The username and password you entered is incorrect.  Please try again.", "Authentication error");
             targetPage = "/security/login";
         } catch (ServletException le) {
             loginLogger.error("ServletException Retrieved: ",le);
-            context.addMessage(null,new FacesMessage(FacesMessage.SEVERITY_ERROR, "The username and password you entered is incorrect.  Please try again.", "Authentication error"));
+            addErrorMessage("The username and password you entered is incorrect.  Please try again.", "Authentication error");
             targetPage = "/security/login";
         }
 

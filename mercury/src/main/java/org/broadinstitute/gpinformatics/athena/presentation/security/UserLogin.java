@@ -19,13 +19,14 @@ public class UserLogin extends AbstractJsfBean {
     private static final long serialVersionUID = 8696721679504370838L;
 
     private String username;
+
     private String password;
 
-    public String getUserName() {
+    public String getUsername() {
         return username;
     }
 
-    public void setUserName(String usernameIn) {
+    public void setUsername(String usernameIn) {
         username = usernameIn;
     }
 

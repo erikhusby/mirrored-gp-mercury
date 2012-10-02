@@ -34,7 +34,6 @@ public class LogoutServlet extends HttpServlet {
 
     private void performLogout(HttpServletRequest requestIn, HttpServletResponse responseIn)
             throws ServletException, IOException {
-
         logoutLogger.info("contextPath is: " + requestIn.getContextPath());
 
         logoutLogger.info("Attempting to logout user");

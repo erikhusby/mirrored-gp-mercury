@@ -19,7 +19,6 @@ import java.util.List;
  *         Time: 4:37 PM
  */
 public class AuthenticationServiceTest extends ContainerTest {
-
     final String testPath ="/testPath/";
 
     final String allRoleName ="All_test";
@@ -42,7 +41,6 @@ public class AuthenticationServiceTest extends ContainerTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-
         testPage = new PageAuthorization(testPath);
 
         roleAll = new AuthorizedRole(allRoleName);
@@ -68,7 +66,6 @@ public class AuthenticationServiceTest extends ContainerTest {
 
     @AfterMethod
     public void tearDown() throws Exception {
-
         if(null != authSvc) {
             authSvc.removeRole(roleAll);
             authSvc.removeRole(roleDev);
@@ -80,7 +77,6 @@ public class AuthenticationServiceTest extends ContainerTest {
 
     @Test
     public void test_retrieve_authorized_roles() throws Exception {
-
         Collection<String> roleList =authSvc.retrieveAuthorizedRoles(testPage.getPagePath());
 
         Assert.assertTrue(roleList.contains(allRoleName));
@@ -88,12 +84,10 @@ public class AuthenticationServiceTest extends ContainerTest {
         Assert.assertFalse(roleList.contains(pmRoleName));
         Assert.assertFalse(roleList.contains(luRoleName));
         Assert.assertFalse(roleList.contains(devRoleName));
-
     }
 
     @Test
     public void test_add_new_authorization() throws Exception {
-
         List<String> roleList = new LinkedList<String>();
         roleList.add(pmRoleName);
         roleList.add(luRoleName);
@@ -107,7 +101,6 @@ public class AuthenticationServiceTest extends ContainerTest {
 
         Assert.assertTrue(roleList.contains(pmRoleName));
         Assert.assertTrue(roleList.contains(luRoleName));
-
     }
 
     @Test
@@ -119,7 +112,6 @@ public class AuthenticationServiceTest extends ContainerTest {
 
     @Test
     public void test_get_all_authorized_pages() throws Exception {
-
         Assert.assertFalse(authSvc.getAllAuthorizedPages().isEmpty());
         Assert.assertEquals(authSvc.getAllAuthorizedPages().size(), 1);
 
@@ -130,14 +122,10 @@ public class AuthenticationServiceTest extends ContainerTest {
         authSvc.addNewPageAuthorization("/testpath2/", roleList);
         Assert.assertFalse(authSvc.getAllAuthorizedPages().isEmpty());
         Assert.assertEquals(authSvc.getAllAuthorizedPages().size(), 2);
-
-
     }
 
     @Test
     public void test_find_by_page_name() throws Exception {
-
-
         PageAuthorization foundPage = authSvc.findByPage(testPath);
 
         Assert.assertNotNull(foundPage);
@@ -146,8 +134,6 @@ public class AuthenticationServiceTest extends ContainerTest {
 
     @Test
     public void test_add_roles_to_page() throws Exception {
-
-
         PageAuthorization foundPage = authSvc.findByPage(testPath);
 
         Assert.assertEquals(foundPage.getRoleAccess().size(), 2);
@@ -167,13 +153,10 @@ public class AuthenticationServiceTest extends ContainerTest {
         Assert.assertTrue(foundPage.getRoleAccess().contains(roleAll));
         Assert.assertTrue(foundPage.getRoleAccess().contains(roleLabManager));
         Assert.assertFalse(foundPage.getRoleAccess().contains(roleDev));
-
     }
 
     @Test
     public void test_retrieve_all_roles_names() throws Exception {
-
-
         Collection<String> registeredRoleNames = authSvc.retrieveAllRolesNames();
 
         Assert.assertEquals(registeredRoleNames.size(), 5);
@@ -187,7 +170,6 @@ public class AuthenticationServiceTest extends ContainerTest {
 
     @Test
     public void test_retrieve_all_roles() throws Exception {
-
         Collection<AuthorizedRole> registeredRoleNames = authSvc.retrieveAllRoles();
 
         Assert.assertEquals(registeredRoleNames.size(), 5);
