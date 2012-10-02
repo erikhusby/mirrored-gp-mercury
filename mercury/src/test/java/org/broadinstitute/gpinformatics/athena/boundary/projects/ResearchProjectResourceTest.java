@@ -25,7 +25,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
     @Test
     public void testFindResearchProjectById() throws Exception {
-        ResearchProject researchProject = researchProjectResource.findResearchProjectById("111");
+        ResearchProject researchProject = researchProjectResource.findResearchProjectById(111L);
         Assert.assertNotNull(researchProject);
         Assert.assertNotNull(researchProject.getTitle());
         Assert.assertEquals(researchProject.getTitle(), "FakeResearchProjectId(value=111)");
@@ -33,23 +33,12 @@ public class ResearchProjectResourceTest extends ContainerTest {
         researchProject = null;
         // Try to get rp using an invalid rpid - empty string
         try {
-            researchProject = researchProjectResource.findResearchProjectById(" ");
+            researchProject = researchProjectResource.findResearchProjectById(null);
             fail("Should throw exception");
         } catch ( Exception e ) {
             // pass
             assertNull(researchProject);
         }
-
-        researchProject = null;
-        // Try to get rp using an invalid rpid - non-numeric
-        try {
-            researchProject = researchProjectResource.findResearchProjectById("abc");
-            fail("Should throw exception");
-        } catch ( Exception e ) {
-            // pass
-            assertNull(researchProject);
-        }
-
     }
 
     @Test
