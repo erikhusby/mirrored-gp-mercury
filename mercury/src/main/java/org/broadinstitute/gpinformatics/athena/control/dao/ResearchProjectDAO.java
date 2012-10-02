@@ -16,7 +16,7 @@ import java.util.ArrayList;
 public class ResearchProjectDAO extends GenericDao {
 
     @SuppressWarnings("unchecked")
-    public ArrayList<ResearchProject> findResearchProjectsByOwner(String username) {
+    public ArrayList<ResearchProject> findResearchProjectsByOwner(Long username) {
         Query query = getThreadEntityManager().getEntityManager().createNamedQuery("ResearchProject.fetchByOwner");
         return (ArrayList<ResearchProject>) query.setParameter("owner", username).getResultList();
     }

@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDAO;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
@@ -58,18 +57,18 @@ public class ResearchProjectResource {
      * Method to GET the list of research projects. Optionally filter this by the user who created them if the creator
      * param is supplied.
      *
-     * @param creator The creator to look up
+     * @param creatorId The createdBy to look up
      *
      * @return The research projects that match
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public List<ResearchProject> findAllResearchProjects(@MatrixParam("creator") String creator) {
+    public List<ResearchProject> findAllResearchProjects(@MatrixParam("creator") Long creatorId) {
 
         ArrayList<ResearchProject> foundProjects;
 
-        if (StringUtils.isNotBlank(creator)) {
-            foundProjects = researchProjectDAO.findResearchProjectsByOwner(creator);
+        if ((creatorId != null) && (creatorId > 0)) {
+            foundProjects = researchProjectDAO.findResearchProjectsByOwner(creatorId);
         } else {
             foundProjects = researchProjectDAO.findAllResearchProjects();
         }

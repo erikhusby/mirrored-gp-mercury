@@ -21,7 +21,7 @@ public class ResearchProjectFunding {
 
     public ResearchProjectFunding() { }
 
-    ResearchProjectFunding(ResearchProject researchProject, String fundingId) {
+    public ResearchProjectFunding(ResearchProject researchProject, String fundingId) {
         this.researchProject = researchProject;
         this.fundingId =fundingId;
     }
