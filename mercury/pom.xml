@@ -803,7 +803,7 @@
         </profile>
 
         <profile>
-            <id>liquibase</id>
+            <id>Liquibase</id>
             <build>
                 <plugins>
                     <plugin>
