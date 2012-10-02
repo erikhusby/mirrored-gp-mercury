@@ -11,7 +11,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
-public class GenericDao {
+public class AthenaGenericDao {
     @Inject
     private ThreadEntityManager threadEntityManager;
 

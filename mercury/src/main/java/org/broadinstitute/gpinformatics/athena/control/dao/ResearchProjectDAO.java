@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
-public class ResearchProjectDAO extends GenericDao {
+public class ResearchProjectDAO extends AthenaGenericDao {
 
     @SuppressWarnings("unchecked")
     public List<ResearchProject> findResearchProjectsByOwner(long username) {
