@@ -802,6 +802,41 @@
 
         </profile>
 
+        <profile>
+            <id>Liquibase</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.liquibase</groupId>
+                        <artifactId>liquibase-maven-plugin</artifactId>
+                        <version>2.0.1</version>
+                        <executions>
+                            <execution>
+                                <phase>process-resources</phase>
+                                <configuration>
+                                    <changeLogFile>src/main/db/db.changelog-1.0.xml</changeLogFile>
+                                    <!-- todo jmt decide how best to have different parameters for different databases -->
+<!--
+                                    <driver>org.postgresql.Driver</driver>
+                                    <url>jdbc:postgresql://localhost/postgres</url>
+-->
+                                    <driver>oracle.jdbc.driver.OracleDriver</driver>
+                                    <url>jdbc:oracle:thin:@seqdev1:1521:seqdev1</url>
+                                    <username>mercury</username>
+                                    <password>mercury_dev1</password>
+                                    <defaultSchemaName>mercury</defaultSchemaName>
+                                    <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
+                                </configuration>
+                                <goals>
+                                    <goal>update</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 
     <dependencyManagement>
@@ -990,6 +1025,12 @@
 	    <scope>runtime</scope>
 	</dependency>
 -->
+
+        <dependency>
+        	<groupId>org.apache.commons</groupId>
+        	<artifactId>commons-lang3</artifactId>
+        	<version>3.1</version>
+        </dependency>
 
         <!-- BEGIN primefaces -->
         <dependency>

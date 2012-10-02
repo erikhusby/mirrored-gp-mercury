@@ -8,14 +8,14 @@ import java.util.List;
 @XmlRootElement(name="samples")
 public class Samples {
 
-    private List<Sample> samples = new ArrayList<Sample>();
+    private List<GapSample> samples = new ArrayList<GapSample>();
 
     @XmlElement(name="sample")
-    public List<Sample> getSamples() {
+    public List<GapSample> getSamples() {
         return samples;
     }
 
-    public void setSamples(List<Sample> samples) {
+    public void setSamples(List<GapSample> samples) {
         this.samples = samples;
     }
 
