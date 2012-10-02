@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.logout;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthenticationService;
-import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
@@ -20,13 +17,10 @@ import javax.servlet.http.HttpServletRequest;
 
 @ManagedBean
 @RequestScoped
-public class SecurityBackingBean extends AbstractJsfBean {
+public class SecurityBackingBean {
 
     @Inject
-    private AuthenticationService authSvc;
-
-
-    private Log securityLogger = LogFactory.getLog(this.getClass());
+    private Log logger;
 
     public String logout() {
 
@@ -37,17 +31,13 @@ public class SecurityBackingBean extends AbstractJsfBean {
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
 
         try {
-            securityLogger.info("Attempting Logout");
+            logger.info("Attempting Logout");
             request.logout();
         } catch (ServletException ex) {
-            securityLogger.error("Logout Failed");
+            logger.error("Logout Failed");
             result = request.getRequestURI();
         }
 
         return result;
-
     }
-
-
-
 }

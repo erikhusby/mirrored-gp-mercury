@@ -154,20 +154,8 @@
             <url-pattern>/dummy-url/*</url-pattern>
         </web-resource-collection>
         <auth-constraint>
-            <role-name>Mercury-Admins</role-name>
-            <role-name>Mercury-LabUsers</role-name>
-            <role-name>Mercury-LabManagers</role-name>
-            <role-name>Mercury-ProjectManagers</role-name>
-            <role-name>Mercury-Developers</role-name>
-            <role-name>PMBAdmins</role-name>
-            <role-name>PMBUsers</role-name>
         </auth-constraint>
     </security-constraint>
-
-<!--    <login-config>
-        <auth-method>BASIC</auth-method>
-        <realm-name>other</realm-name>
-    </login-config>-->
 
     <security-role>
         <role-name>Mercury-Admins</role-name>
@@ -184,18 +172,11 @@
     <security-role>
         <role-name>Mercury-Developers</role-name>
     </security-role>
-    <security-role>
-        <role-name>PMBAdmins</role-name>
-    </security-role>
-    <security-role>
-        <role-name>PMBUsers</role-name>
-    </security-role>
-
 
     <welcome-file-list>
-        <!--<welcome-file>/summary/summary.xhtml</welcome-file>-->
         <welcome-file>/index.xhtml</welcome-file>
     </welcome-file-list>
+
     <login-config>
         <auth-method>FORM</auth-method>
         <realm-name>crowd_custom_realm</realm-name>
@@ -221,20 +202,5 @@
         <url-pattern>*.xhtml</url-pattern>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
-
-    <!--<filter-mapping>-->
-        <!--<filter-name>AuthorizationFilter</filter-name>-->
-        <!--<url-pattern>*.xhtml</url-pattern>-->
-        <!--<dispatcher>REQUEST</dispatcher>-->
-    <!--</filter-mapping>-->
-
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>Dummy</web-resource-name>
-            <url-pattern>/Dummy/*</url-pattern>
-        </web-resource-collection>
-        <auth-constraint>
-        </auth-constraint>
-    </security-constraint>
 
 </web-app>
