@@ -1,9 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO_PMB;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 
 import javax.persistence.Transient;
-import java.math.BigDecimal;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,27 +12,23 @@ import java.math.BigDecimal;
  */
 public class BSPSample {
 
-    private final SampleId id;
-    private BSPSampleDTO_PMB bspDTO;
+    private final String id;
+    private BSPSampleDTO bspDTO;
 
-    public BSPSample(SampleId id) {
+    public BSPSample(String id) {
         this.id = id;
     }
 
-    public BSPSample(SampleId id, BSPSampleDTO_PMB bspDTO) {
-        this.id = id;
-        this.bspDTO = bspDTO;
-    }
 
-    public SampleId getId() {
+    public String getId() {
         return id;
     }
 
-    public BSPSampleDTO_PMB getBspDTO() {
+    public BSPSampleDTO getBspDTO() {
         return bspDTO;
     }
 
-    public void setBspDTO(BSPSampleDTO_PMB bspDTO) {
+    public void setBspDTO(BSPSampleDTO bspDTO) {
         this.bspDTO = bspDTO;
     }
 
@@ -79,7 +74,7 @@ public class BSPSample {
      * Gets the volume from the
      * underlying BSP DTO.
      */
-    public BigDecimal getVolume() {
+    public String getVolume() {
         return bspDTO.getVolume();
     }
 
@@ -88,7 +83,7 @@ public class BSPSample {
      * Gets the conc from the
      * underlying BSP DTO.
      */
-    public BigDecimal getConcentration() {
+    public String getConcentration() {
         return bspDTO.getConcentration();
     }
 

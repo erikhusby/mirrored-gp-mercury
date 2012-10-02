@@ -10,7 +10,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * Time: 4:06 PM
  */
 @XmlRootElement(name="sample")
-public class Sample {
+public class GapSample {
     
     private String name;
     private String plateName;
