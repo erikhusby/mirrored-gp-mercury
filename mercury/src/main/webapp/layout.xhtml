@@ -10,9 +10,7 @@
   ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
   ~ use, misuse, or functionality.
   -->
-<!DOCTYPE html
-        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -34,33 +32,29 @@
 <f:view contentType="text/html">
     <ui:insert name="metadata"/>
     <h:head>
-        <!--<link href='http://fonts.googleapis.com/css?family=Lato|Arvo|PT+Sans|Cantarell|Open+Sans' rel='stylesheet' type='text/css'/>-->
-        <h:outputStylesheet library="css" name="styles.css"/>
         <h:outputStylesheet library="css" name="bootstrap.css"/>
+        <h:outputStylesheet library="css" name="styles.css"/>
+        <link rel="shortcut icon" type="image/x-icon" href="#{request.contextPath}/favicon.ico"/>
         <title>Athena : <ui:insert name="title"/></title>
         <ui:insert name="head"/>
-        <style type="text/css">
-            body {
-                padding-top: 60px;
-                padding-bottom: 40px;
-                font-size: 12px;
-            }
-        </style>
     </h:head>
     <h:body>
 
         <div class="navbar navbar-fixed-top">
             <div class="navbar-inner">
                 <div class="container-fluid">
-
-                    <div class="brand"><p:graphicImage url="/images/broad_logo.png" alt="Broad Institute"/> <h:link outcome="/index" style="padding-left: 20px;">Athena</h:link></div>
-                    <div class="nav-collapse pull-right">
-                        <sqltg:isLoggedIn>
-                            <h:form>
-                                <h:commandLink action="#{securityBackingBean.logout}" value="Logout"/>
-                            </h:form>
-                        </sqltg:isLoggedIn>
+                    <div class="brand">
+                        <p:graphicImage url="/images/broad_logo.png" alt="Broad Institute"/> <h:link outcome="/index" style="padding-left: 20px;">Athena</h:link>
                     </div>
+
+                    <sqltg:isLoggedIn>
+                        <h:form styleClass="navbar-form pull-right">
+                            <h:commandLink action="#{securityBackingBean.logout}" value="Logout">
+                                <span class="ui-icon ui-icon-power"></span>
+                            </h:commandLink>
+                        </h:form>
+                    </sqltg:isLoggedIn>
+
                 </div>
             </div>
         </div>
@@ -101,13 +95,15 @@
                     </p:panel>
             </div>
 
-            <footer>
-                Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.
-            </footer>
 
         </div>
 
+        <footer>
+            <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.</p>
+        </footer>
+
         <ui:debug/>
+
     </h:body>
 </f:view>
 </html>
