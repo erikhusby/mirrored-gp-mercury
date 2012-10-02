@@ -23,7 +23,9 @@ public class JiraCustomFieldsUtil {
      * Returns a map of Field name (from {@link #REQUIRED_FIELD_NAMES}) to actual field definition {@link CustomFieldDefinition}.
      */
     public static Map<String,CustomFieldDefinition> getRequiredLcSetFieldDefinitions(JiraService jiraService) throws IOException {
-        final Collection<CustomFieldDefinition> allCustomFields = jiraService.getCustomFields(new CreateIssueRequest.Fields.Project(LabBatch.LCSET_PROJECT_PREFIX),CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        final Collection<CustomFieldDefinition> allCustomFields =
+                jiraService.getCustomFields(new CreateIssueRequest.Fields.Project(LabBatch.LCSET_PROJECT_PREFIX),
+                                            CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 
         final Map<String,CustomFieldDefinition> requiredCustomFieldDefinitions = new HashMap<String,CustomFieldDefinition>();
 
@@ -37,7 +39,9 @@ public class JiraCustomFieldsUtil {
                 }
             }
             if (!foundIt) {
-                throw new RuntimeException("Could not find required field '" + requiredFieldName + "' from jira service " + jiraService.getClass().getCanonicalName());
+                throw new RuntimeException("Could not find required field '" +
+                                           requiredFieldName + "' from jira service " +
+                                           jiraService.getClass().getCanonicalName());
             }
         }
 

@@ -78,7 +78,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
 
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issueType, String summary, String description, Collection<CustomField> customFields) throws IOException {
+    public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issueType,
+                                           String summary, String description,
+                                           Collection<CustomField> customFields) throws IOException {
 
         CreateIssueRequest issueRequest = CreateIssueRequest.create(projectPrefix, issueType, summary, description,customFields);
 
@@ -139,12 +141,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
             throw new NullPointerException("issueType cannot be null");
         }
 
-        String urlString = getBaseUrl() + "/issue/createmeta";
+        String urlString = getBaseUrl() + "/field";
 
         String jsonResponse = getJerseyClient().resource(urlString)
-                .queryParam("projectKeys",project.getKey())
-                .queryParam("issueTypeNames",issueType.getJiraName())
-                .queryParam("expand","projects.issuetypes.fields")
                 .get(String.class);
 
         return CustomFieldJsonParser.parseCustomFields(jsonResponse);

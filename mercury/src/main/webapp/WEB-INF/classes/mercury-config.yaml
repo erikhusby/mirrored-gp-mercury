@@ -56,6 +56,13 @@ jira:
       host:     vsquid00.broadinstitute.org
       port:     8020
 
+    PROD:
+
+      login:    squid
+      password: squid
+      host:     labopsjira
+#      port:     8020
+
     # not defining the PROD instance for now since we will not be referencing it yet
 
 

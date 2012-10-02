@@ -47,11 +47,35 @@ public class CreateIssueRequest  {
             }
         }
 
+        public enum ProjectType {
+
+            Product_Ordering("Product Ordering", "PDO"),
+            Research_Projects("Research Projects", "RP");
+
+            private final String projectName;
+            private final String keyPrefix;
+
+            private ProjectType(String projectNameIn, String keyPrefixIn) {
+                projectName = projectNameIn;
+                this.keyPrefix = keyPrefixIn;
+            }
+
+            public String getProjectName() {
+                return projectName;
+            }
+
+            public String getKeyPrefix() {
+                return keyPrefix;
+            }
+        }
+
 
         @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
         public enum Issuetype  {
 
-            Whole_Exome_HybSel("Whole Exome (HybSel)");
+            Whole_Exome_HybSel("Whole Exome (HybSel)"),
+            Product_Order("Product Order"),
+            Research_Project("Reasearch Project");
 
             private final String jiraName;
 
