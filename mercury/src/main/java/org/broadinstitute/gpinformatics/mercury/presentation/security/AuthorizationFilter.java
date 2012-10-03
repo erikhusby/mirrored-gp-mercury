@@ -84,7 +84,7 @@ public class AuthorizationFilter implements Filter {
             boolean authorized = manager.isUserAuthorized(pageUri, request);
 
             if (!authorized) {
-                String errorMessage = "The user '" + user +  "' doesn't have permission to log into PMBridge.";
+                String errorMessage = "The user '" + user +  "' doesn't have permission to log in.";
                 logger.info(errorMessage);
                 errorRedirect(servletRequestIn, servletResponseIn, LOGIN_PAGE);
                 return;
