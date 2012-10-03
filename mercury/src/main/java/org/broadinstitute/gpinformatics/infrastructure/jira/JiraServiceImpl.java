@@ -20,7 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCom
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
 
 @Impl
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
@@ -133,7 +133,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
 
     @Override
-    public List<CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project, CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+    public Map<String, CustomFieldDefinition> getRequiredFields(CreateIssueRequest.Fields.Project project,
+                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
         if (project == null) {
             throw new NullPointerException("project cannot be null");
         }
@@ -141,16 +142,39 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
             throw new NullPointerException("issueType cannot be null");
         }
 
-        String urlString = getBaseUrl() + "/field";
+        String urlString = getBaseUrl() + "/issue/createmeta";
 
         String jsonResponse = getJerseyClient().resource(urlString)
+                .queryParam("projectKeys",project.getKey())
+                .queryParam("issueTypeNames",issueType.getJiraName())
+                .queryParam("expand","projects.issuetypes.fields")
                 .get(String.class);
+
+        return CustomFieldJsonParser.parseRequiredFields(jsonResponse);
+    }
+
+    @Override
+    public Map<String, CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,
+                                                              CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+        if (project == null) {
+            throw new NullPointerException("project cannot be null");
+        }
+        if (issueType == null) {
+            throw new NullPointerException("issueType cannot be null");
+        }
+
+        String urlString = getBaseUrl() + "/issue/field";
+
+        String jsonResponse =
+                getJerseyClient().resource(urlString).get(String.class);
 
         return CustomFieldJsonParser.parseCustomFields(jsonResponse);
     }
 
     @Override
     public String createTicketUrl(String jiraTicketName) {
-        return "http://" + jiraConfig.getHost() + ":" + jiraConfig.getPort() + "/browse/" + jiraTicketName;
+
+        //Untill such a time as I can remove this method, its delegated to Jira Config
+        return jiraConfig.createTicketUrl(jiraTicketName);
     }
 }

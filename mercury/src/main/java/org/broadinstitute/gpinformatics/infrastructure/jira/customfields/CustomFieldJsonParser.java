@@ -4,6 +4,9 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +16,8 @@ import java.util.Map;
 public class CustomFieldJsonParser {
 
     private static final String CUSTOMFIELD = "customfield";
+
+    private static final String CUSTOM_FIELD_INDICATOR = "custom";
 
     private static final String PROJECTS = "projects";
 
@@ -24,15 +29,18 @@ public class CustomFieldJsonParser {
 
     private static final String REQUIRED = "required";
 
+    private static final String FIELD_ID = "id";
+
     /**
      * Parses the custom fields from the given json response
+     *
      * @param jsonResponse
      * @return
      * @throws IOException
      */
-    public static List<CustomFieldDefinition> parseCustomFields(String jsonResponse)
+    public static Map<String, CustomFieldDefinition> parseRequiredFields(String jsonResponse)
             throws IOException {
-        final List<CustomFieldDefinition> customFields = new ArrayList<CustomFieldDefinition>();
+        final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
         final Map root = new ObjectMapper().readValue(jsonResponse,Map.class);
         final List projects  = (List)root.get(PROJECTS);
         final List issueTypes = (List)((Map)projects.iterator().next()).get(ISSUETYPES);
@@ -45,9 +53,43 @@ public class CustomFieldJsonParser {
             String fieldName = (String)fieldProperties.get(NAME);
             Boolean required = (Boolean)fieldProperties.get(REQUIRED);
 
-            if (fieldId.startsWith(CUSTOMFIELD)) {
-                customFields.add(new CustomFieldDefinition(fieldId,fieldName,required));
+//            if (fieldId.startsWith(CUSTOMFIELD)) {
+                customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required));
+//            }
+        }
+        return customFields;
+    }
+    /**
+     * Parses the custom fields from the given json response
+     *
+     * @param jsonResponse
+     * @return
+     * @throws IOException
+     */
+    public static Map<String, CustomFieldDefinition> parseCustomFields(String jsonResponse)
+            throws IOException {
+
+        final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
+
+        final ArrayList<Map> root = new ObjectMapper().readValue(jsonResponse,ArrayList.class);
+
+        Iterator<Map> values = root.iterator();
+
+        while(values.hasNext()) {
+            Map<String, Object> field = (Map<String, Object>)values.next();
+
+            String fieldId = (String)field.get(FIELD_ID);
+            String fieldName = (String)field.get(NAME);
+            Boolean required = false;  //Leaving false for now until can better come up with a solution.
+
+            if (((String)field.get(CUSTOM_FIELD_INDICATOR)).equals(String.valueOf(true).toLowerCase())) {
+                customFields.put(fieldName, new CustomFieldDefinition(fieldId,fieldName,required));
             }
+
+            /*
+            This needs a good way to account for different types (String, textfield, multi-select, etc.)
+             */
+
         }
         return customFields;
     }

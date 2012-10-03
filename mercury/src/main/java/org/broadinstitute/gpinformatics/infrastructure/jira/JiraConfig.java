@@ -62,4 +62,8 @@ public class JiraConfig extends AbstractConfig implements LoginAndPassword, Seri
     public void setUrlBase(String urlBaseIn) {
         urlBase = urlBaseIn;
     }
+
+    public String createTicketUrl(String jiraTicketName) {
+        return getUrlBase() + "/browse/" + jiraTicketName;
+    }
 }

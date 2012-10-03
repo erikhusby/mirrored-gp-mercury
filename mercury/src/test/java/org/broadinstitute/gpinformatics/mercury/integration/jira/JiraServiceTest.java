@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -78,17 +79,18 @@ public class JiraServiceTest {
     }
 
     public void test_custom_fields() throws IOException {
-        Collection<CustomFieldDefinition> customFields = null;
-        customFields = service.getCustomFields(new CreateIssueRequest.Fields.Project(LabBatch.LCSET_PROJECT_PREFIX),CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        Map<String, CustomFieldDefinition> customFields = null;
+        customFields = service.getRequiredFields(new CreateIssueRequest.Fields.Project(
+                CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
+                                                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;
-        for (CustomFieldDefinition customField : customFields) {
+        for (CustomFieldDefinition customField : customFields.values()) {
             System.out.println(customField.getName() + " id " + customField.getJiraCustomFieldId());
             if (customField.getName().equals("Lanes Requested")) {
                 foundLanesRequestedField = true;
             }
         }
         Assert.assertTrue(foundLanesRequestedField);
-
     }
 }

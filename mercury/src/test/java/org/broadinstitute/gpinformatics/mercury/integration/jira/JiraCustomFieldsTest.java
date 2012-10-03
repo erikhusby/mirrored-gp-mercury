@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.testng.annotations.Test;
 
 import java.util.Collection;
+import java.util.Map;
 
 import static org.testng.Assert.*;
 
@@ -16,12 +17,13 @@ public class JiraCustomFieldsTest {
 
     @Test(groups = DATABASE_FREE)
     public void test_canned_json()  throws Exception {
-        final Collection<CustomFieldDefinition> customFields = CustomFieldJsonParser.parseCustomFields(FIELDS_RESPONSE_JSON);
+        final Map<String, CustomFieldDefinition> customFields = CustomFieldJsonParser.parseRequiredFields(
+                FIELDS_RESPONSE_JSON);
         assertFalse(customFields.isEmpty());
 
         final String WORK_REQUEST_IDS = "Work Request ID(s)";
         boolean foundWorkRequestIds = true;
-        for (CustomFieldDefinition customField : customFields) {
+        for (CustomFieldDefinition customField : customFields.values()) {
             if (WORK_REQUEST_IDS.equals(customField.getName()))  {
                 if (customField.isRequired()) {
                     foundWorkRequestIds = true;

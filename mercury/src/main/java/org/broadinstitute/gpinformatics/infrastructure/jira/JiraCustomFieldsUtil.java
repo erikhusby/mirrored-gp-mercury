@@ -23,15 +23,15 @@ public class JiraCustomFieldsUtil {
      * Returns a map of Field name (from {@link #REQUIRED_FIELD_NAMES}) to actual field definition {@link CustomFieldDefinition}.
      */
     public static Map<String,CustomFieldDefinition> getRequiredLcSetFieldDefinitions(JiraService jiraService) throws IOException {
-        final Collection<CustomFieldDefinition> allCustomFields =
-                jiraService.getCustomFields(new CreateIssueRequest.Fields.Project(LabBatch.LCSET_PROJECT_PREFIX),
-                                            CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        final Map<String, CustomFieldDefinition> allCustomFields =
+                jiraService.getRequiredFields(new CreateIssueRequest.Fields.Project(LabBatch.LCSET_PROJECT_PREFIX),
+                                              CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 
         final Map<String,CustomFieldDefinition> requiredCustomFieldDefinitions = new HashMap<String,CustomFieldDefinition>();
 
         for (String requiredFieldName : REQUIRED_FIELD_NAMES) {
             boolean foundIt = false;
-            for (CustomFieldDefinition customFieldDefinition : allCustomFields) {
+            for (CustomFieldDefinition customFieldDefinition : allCustomFields.values()) {
                 if (requiredFieldName.equals(customFieldDefinition.getName())) {
                     foundIt = true;
                     requiredCustomFieldDefinitions.put(requiredFieldName,customFieldDefinition);

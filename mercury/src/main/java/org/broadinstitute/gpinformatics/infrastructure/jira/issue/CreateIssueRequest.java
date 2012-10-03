@@ -47,8 +47,10 @@ public class CreateIssueRequest  {
             }
         }
 
+        @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
         public enum ProjectType {
 
+            LCSET_PROJECT_PREFIX("Illumina Library Construction Tracking", "LCSET"),
             Product_Ordering("Product Ordering", "PDO"),
             Research_Projects("Research Projects", "RP");
 
@@ -158,8 +160,8 @@ public class CreateIssueRequest  {
     public CreateIssueRequest() {
         this.fields = new Fields();
         // todo arz move these out to JiraService params
-        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
-        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
+//        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
+//        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
     }
 
     public CreateIssueRequest(Collection<CustomField> customFields) {
