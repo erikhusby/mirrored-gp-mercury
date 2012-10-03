@@ -15,11 +15,11 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
-public class ResearchProjectDAO extends AthenaGenericDao {
+public class ResearchProjectDao extends AthenaGenericDao {
 
     @SuppressWarnings("unchecked")
     public List<ResearchProject> findResearchProjectsByOwner(long username) {
-        EntityManager entityManager = getThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
@@ -29,7 +29,7 @@ public class ResearchProjectDAO extends AthenaGenericDao {
 
     @SuppressWarnings("unchecked")
     public ResearchProject findResearchProjectsByName(String name) {
-        EntityManager entityManager = getThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
@@ -39,14 +39,14 @@ public class ResearchProjectDAO extends AthenaGenericDao {
 
     @SuppressWarnings("unchecked")
     public List<ResearchProject> findAllResearchProjects() {
-        EntityManager entityManager = getThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 
     public ResearchProject findById(Long rpId) {
-        EntityManager entityManager = getThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
