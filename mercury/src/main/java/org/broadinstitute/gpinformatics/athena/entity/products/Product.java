@@ -7,7 +7,6 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -26,13 +25,9 @@ public class Product implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT")
     private Long id;
 
-    private String name;
+    private String productName;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    /**
-     * Not cascading anything here, assuming if there ever is a means to edit ProductFamilies that those
-     * ProductFamilies will be explicitly persisted and won't depend on a cascade from a referencing Product
-     */
     private ProductFamily productFamily;
 
     private String description;
@@ -59,7 +54,7 @@ public class Product implements Serializable {
      * May need to revisit cascade options for a Product editor
      */
     @ManyToMany(cascade = CascadeType.PERSIST)
-    private List<Product> addOns;
+    private Set<Product> addOns;
 
     private String workflowName;
 
@@ -68,106 +63,92 @@ public class Product implements Serializable {
     // private List<RiskContingency> riskContingencies;
 
 
+    /**
+     * JPA package visible no arg constructor
+     *
+     * @return
+     */
+    Product() {}
+
+    public Product(String productName,
+                   ProductFamily productFamily,
+                   String description,
+                   String partNumber,
+                   Date availabilityDate,
+                   Date discontinuedDate,
+                   Integer expectedCycleTimeSeconds,
+                   Integer guaranteedCycleTimeSeconds,
+                   Integer samplesPerWeek,
+                   String inputRequirements,
+                   String deliverables,
+                   boolean topLevelProduct,
+                   String workflowName) {
+
+        this.productName = productName;
+        this.productFamily = productFamily;
+        this.description = description;
+        this.partNumber = partNumber;
+        this.availabilityDate = availabilityDate;
+        this.discontinuedDate = discontinuedDate;
+        this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
+        this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
+        this.samplesPerWeek = samplesPerWeek;
+        this.inputRequirements = inputRequirements;
+        this.deliverables = deliverables;
+        this.topLevelProduct = topLevelProduct;
+        this.workflowName = workflowName;
+    }
+
     public Long getId() {
         return id;
     }
 
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public String getProductName() {
+        return productName;
     }
 
     public ProductFamily getProductFamily() {
         return productFamily;
     }
 
-    public void setProductFamily(ProductFamily productFamily) {
-        this.productFamily = productFamily;
-    }
-
-
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public String getPartNumber() {
         return partNumber;
     }
 
-    public void setPartNumber(String partNumber) {
-        this.partNumber = partNumber;
-    }
-
     public Date getAvailabilityDate() {
         return availabilityDate;
-    }
-
-    public void setAvailabilityDate(Date availabilityDate) {
-        this.availabilityDate = availabilityDate;
     }
 
     public Date getDiscontinuedDate() {
         return discontinuedDate;
     }
 
-    public void setDiscontinuedDate(Date discontinuedDate) {
-        this.discontinuedDate = discontinuedDate;
-    }
-
     public Integer getExpectedCycleTimeSeconds() {
         return expectedCycleTimeSeconds;
-    }
-
-    public void setExpectedCycleTimeSeconds(Integer expectedCycleTimeSeconds) {
-        this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
     }
 
     public Integer getGuaranteedCycleTimeSeconds() {
         return guaranteedCycleTimeSeconds;
     }
 
-    public void setGuaranteedCycleTimeSeconds(Integer guaranteedCycleTimeSeconds) {
-        this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
-    }
-
     public Integer getSamplesPerWeek() {
         return samplesPerWeek;
-    }
-
-    public void setSamplesPerWeek(Integer samplesPerWeek) {
-        this.samplesPerWeek = samplesPerWeek;
     }
 
     public String getInputRequirements() {
         return inputRequirements;
     }
 
-    public void setInputRequirements(String inputRequirements) {
-        this.inputRequirements = inputRequirements;
-    }
-
     public String getDeliverables() {
         return deliverables;
     }
 
-    public void setDeliverables(String deliverables) {
-        this.deliverables = deliverables;
-    }
-
     public boolean isTopLevelProduct() {
         return topLevelProduct;
-    }
-
-    public void setTopLevelProduct(boolean topLevelProduct) {
-        this.topLevelProduct = topLevelProduct;
     }
 
     public PriceItem getDefaultPriceItem() {
@@ -192,8 +173,18 @@ public class Product implements Serializable {
 
     }
 
-    public List<Product> getAddOns() {
+    public Set<Product> getAddOns() {
         return addOns;
+    }
+
+
+    public void addAddOn(Product addOn) {
+
+        if ( addOns == null )
+            addOns = new HashSet<Product>();
+
+        addOns.add(addOn);
+
     }
 
     public String getWorkflowName() {

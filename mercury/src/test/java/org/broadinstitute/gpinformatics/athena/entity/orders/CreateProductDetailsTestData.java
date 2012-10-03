@@ -19,6 +19,11 @@ import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Platform.GP;
 
 
+/**
+ * "Test" to create basic {@link ProductFamily}s, {@link PriceItem}s, and {@link Product}s.  This will probably
+ * need to be turned into a Liquibase equivalent as well.
+ *
+ */
 public class CreateProductDetailsTestData extends ContainerTest {
 
     @Inject
@@ -31,8 +36,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
     private void createProductFamilies() {
 
         for (Enum<ProductFamily.ProductFamilyName> e : ProductFamily.ProductFamilyName.values()) {
-            ProductFamily pf = new ProductFamily();
-            pf.setName(e.name());
+            ProductFamily pf = new ProductFamily(e.name());
             productFamilyDao.persist(pf);
         }
     }
@@ -51,184 +55,233 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         createProductFamilies();
 
-        Product exex = new Product();
+        ProductFamily exomeSequencingAnalysisProductFamily =
+                findProductFamily(ProductFamily.ProductFamilyName.EXOME_SEQUENCING_ANALYSIS);
 
-        exex.setPartNumber("EXOME_EXPRESS-2012.11.01");
+        ProductFamily generalProductsProductFamily =
+                findProductFamily(ProductFamily.ProductFamilyName.GENERAL_PRODUCTS);
 
-        exex.setProductFamily(findProductFamily(ProductFamily.ProductFamilyName.EXOME_SEQUENCING_ANALYSIS));
+        ProductFamily illuminaSequencingOnlyProductFamily =
+                findProductFamily(ProductFamily.ProductFamilyName.ILLUMINA_SEQUENCING_ONLY);
+
 
         final int DAYS = 24 * 60 * 60;
-        // say expected time is 17 days
-        exex.setExpectedCycleTimeSeconds(17 * DAYS);
 
-        // guaranteed time is 21 days
-        exex.setGuaranteedCycleTimeSeconds(21 * DAYS);
+        Product exex = new Product(
 
-        exex.setAvailabilityDate(Calendar.getInstance().getTime());
-        exex.setDiscontinuedDate(null);
+                "Exome Express",                       // product name
 
-        exex.setDescription(
+                exomeSequencingAnalysisProductFamily,  // product family
+
+                                                       // description
                 "The Exome Express combines the quality and best practices of the Genomics Platform Exome pipeline " +
                 "with a uniquely designed workflow optimized for speed.  Our in-solution hybrid selection libraries " +
                 "utilizing the Agilent Sure-Select Human All Exon v2.0, 44Mb baited target region meet or exceed " +
-                "80% of targets at 20x and a mean target coverage >80x."
-        );
+                "80% of targets at 20x and a mean target coverage >80x.",
 
-        exex.setInputRequirements(
+                "EXOME_EXPRESS-2012.11.01",            // part number
+
+                Calendar.getInstance().getTime(),      // availability date
+
+                null,                                  // discontinued date
+
+                17 * DAYS,                             // expected cycle time
+
+                21 * DAYS,                             // guaranteed cycle time
+
+                188,                                   // samples per week
+
+                                                       // input requirements
                 "Funding and compliance requirements must be in place - this includes a valid IRB or letter of " +
                 "non-engagement where needed\n" +
                 "Minimum Sample data including - Collaborator Participant ID, Collaborator Sample ID, Gender\n" +
                 "Genomic DNA, Tissue, Blood, Slides and FFPE that preferably yield >500ng of DNA (note extra cost " +
                 "will be applied for extractions). Samples below 200ng and FFPE will be accepted at risk.\n" +
                 "Tumor/Normal  or Case/Control pairs must be received together\n" +
-                "Samples will be proceed on risk unless DNA QC yield is zero\n"
-        );
+                "Samples will be proceed on risk unless DNA QC yield is zero\n",
 
-        exex.setDeliverables(
+                                                       // deliverables
                 "Data delivery will include a de-multiplexed, aggregated BAM file which will be accessed via " +
                 "the BASS file server system.  Turnaround time from verified* sample receipt to aggregated BAM file " +
                 "generation is 21 calendar days or less. Samples that fail to meet this deliverable will be charged " +
-                "at the lower standard exome rate");
+                "at the lower standard exome rate",
 
-        exex.setSamplesPerWeek(188);
+                true,                                  // top level product
 
-        exex.setTopLevelProduct(true);
+                "EXEX-WF-2012.11.01"                   // workflow name
+        );
 
 
         PriceItem priceItem;
 
-        priceItem = new PriceItem(exex, GP, EXOME_SEQUENCING_ANALYSIS, EXOME_EXPRESS, "GP-EXOME_ANALYSIS-EXEX-2012.11.01");
+        priceItem = new PriceItem(
+                exex,                                 // product
+                GP,                                   // platform
+                EXOME_SEQUENCING_ANALYSIS,            // category name
+                EXOME_EXPRESS,                        // price item name
+                "GP-EXOME_ANALYSIS-EXEX-2012.11.01"   // quote server price item id
+        );
 
         exex.addPriceItem(priceItem);
         exex.setDefaultPriceItem(priceItem);
 
-        priceItem = new PriceItem(exex, GP, EXOME_SEQUENCING_ANALYSIS, STANDARD_EXOME_SEQUENCING, "GP-EXOME_ANALYSIS-STDEX-2012.11.01");
+        priceItem = new PriceItem(
+                exex,                                  // product
+                GP,                                    // platform
+                EXOME_SEQUENCING_ANALYSIS,             // category name
+                STANDARD_EXOME_SEQUENCING,             // price item name
+                "GP-EXOME_ANALYSIS-STDEX-2012.11.01"   // quote server price item id
+        );
+
 
         exex.addPriceItem(priceItem);
 
 
-        Product tissueExtraction = new Product();
+        Product tissueExtraction = new Product(
 
-        exex.getAddOns().add(tissueExtraction);
+                "Tissue DNA Extraction",                // product name
 
-        tissueExtraction.setPartNumber("TISSUE_DNA_EXTRACTION-2012.11.01");
+                generalProductsProductFamily,           // product family
 
-        tissueExtraction.setProductFamily(findProductFamily(ProductFamily.ProductFamilyName.GENERAL_PRODUCTS));
-
-        // total guesses on time
-        tissueExtraction.setExpectedCycleTimeSeconds(2 * DAYS);
-        tissueExtraction.setGuaranteedCycleTimeSeconds(3 * DAYS);
-
-        tissueExtraction.setAvailabilityDate(Calendar.getInstance().getTime());
-        tissueExtraction.setDiscontinuedDate(null);
-        tissueExtraction.setDescription(
+                                                        // description
                 "The Genomics Platform performs high quality DNA extractions from a variety of sample types:  blood " +
                 "(fresh or frozen), cells, and tissue (fresh, snap-frozen, Formalin-Fixed-Paraffin-Embedded, PAXgene " +
                 "Preserved), etc.  DNA is extracted using a column-based DNeasy Kit.  The samples are first lysed " +
                 "with Proteinase K.  Buffering conditions are adjusted so to provide optimal DNA binding conditions " +
                 "to the DNeasy spin column.  Once the lysed sample is added to the column, DNA is selectively bound " +
                 "to the column membrane as contaminants and enzyme inhibitors pass through in the wash steps.  " +
-                "The DNA is then eluted off the column with TE buffer and is ready to be quantified via picogreen.");
+                "The DNA is then eluted off the column with TE buffer and is ready to be quantified via picogreen.",
 
+                "TISSUE_DNA_EXTRACTION-2012.11.01",     // part number
 
-        tissueExtraction.setInputRequirements(
+                Calendar.getInstance().getTime(),      // availability date
+
+                null,                                  // discontinued date
+
+                2 * DAYS,                              // expected cycle time
+
+                3 * DAYS,                              // guaranteed cycle time
+
+                360,                                   // samples per week
+
+                                                       // input requirements
                 "Funding and compliance requirements must be in place - this includes a valid IRB or letter of " +
                 "non-engagement where needed\n" +
-                "Minimum Sample data including - Collaborator Participant ID, Collaborator Sample ID, Gender\n"
-        );
+                "Minimum Sample data including - Collaborator Participant ID, Collaborator Sample ID, Gender\n",
 
-
-        tissueExtraction.setDeliverables(
+                                                       // deliverables
                 "High quality DNA (A260/A280 range of 1.7-1.9).  DNA is quantified in triplicate using a standardized " +
                 "picogreen assay.  Sample yields is dependent on multiple factors such as:   the original material " +
-                "type provided (blood, cells, tissue, etc), amount of material provided, and tissue site."
+                "type provided (blood, cells, tissue, etc), amount of material provided, and tissue site.",
+
+                true,                                  // top level product
+
+                "TISSUE_DNA_EXTRACT-WF-2012.11.01"     // workflow name
 
         );
 
-        tissueExtraction.setSamplesPerWeek(360);
-        tissueExtraction.setTopLevelProduct(true);
+        exex.addAddOn(tissueExtraction);
 
-        priceItem = new PriceItem(tissueExtraction, GP, GENERAL_PRODUCTS, TISSUE_DNA_EXTRACTION, "GP-GENERAL_PRODUCTS-TISSUE_DNA_EXTRACTION_2012.11.01");
+
+        priceItem = new PriceItem(
+                tissueExtraction,                                        // product
+                GP,                                                      // platform
+                GENERAL_PRODUCTS,                                        // category name
+                TISSUE_DNA_EXTRACTION,                                   // price item name
+                "GP-GENERAL_PRODUCTS-TISSUE_DNA_EXTRACTION_2012.11.01"   // quote server price item id
+        );
         tissueExtraction.addPriceItem(priceItem);
 
 
-        Product bloodExtraction = new Product();
-        exex.getAddOns().add(bloodExtraction);
-        bloodExtraction.setPartNumber("WHOLE_BLOOD_DNA_EXTRACTION-2012.11.01");
+        Product bloodExtraction = new Product(
 
-        bloodExtraction.setProductFamily(findProductFamily(ProductFamily.ProductFamilyName.GENERAL_PRODUCTS));
+                "Blood DNA Extraction",                // product name
 
-        // total guesses on time
-        bloodExtraction.setExpectedCycleTimeSeconds(1 * DAYS);
-        bloodExtraction.setGuaranteedCycleTimeSeconds(2 * DAYS);
+                generalProductsProductFamily,          // product family
 
-        bloodExtraction.setAvailabilityDate(Calendar.getInstance().getTime());
-        bloodExtraction.setDiscontinuedDate(null);
-        bloodExtraction.setDescription(
+                                                       // description
                 "The Genomics Platform performs high quality DNA extractions from a variety of sample types:  blood " +
                 "(fresh or frozen), cells, and tissue (fresh, snap-frozen, Formalin-Fixed-Paraffin-Embedded, PAXgene " +
                 "Preserved), etc.  DNA is extracted using a column-based DNeasy Kit.  The samples are first lysed " +
                 "with Proteinase K.  Buffering conditions are adjusted so to provide optimal DNA binding conditions " +
                 "to the DNeasy spin column.  Once the lysed sample is added to the column, DNA is selectively bound " +
                 "to the column membrane as contaminants and enzyme inhibitors pass through in the wash steps.  " +
-                "The DNA is then eluted off the column with TE buffer and is ready to be quantified via picogreen.");
+                "The DNA is then eluted off the column with TE buffer and is ready to be quantified via picogreen.",
 
+                "BLOOD_DNA_EXTRACTION-2012.11.01",     // part number
 
-        bloodExtraction.setInputRequirements(
+                Calendar.getInstance().getTime(),      // availability date
+
+                null,                                  // discontinued date
+
+                2 * DAYS,                              // expected cycle time
+
+                3 * DAYS,                              // guaranteed cycle time
+
+                360,                                   // samples per week
+
+                                                       // input requirements
                 "Funding and compliance requirements must be in place - this includes a valid IRB or letter of " +
                 "non-engagement where needed\n" +
-                "Minimum Sample data including - Collaborator Participant ID, Collaborator Sample ID, Gender\n"
-        );
+                "Minimum Sample data including - Collaborator Participant ID, Collaborator Sample ID, Gender\n",
 
-
-        bloodExtraction.setDeliverables(
+                                                       // deliverables
                 "High quality DNA (A260/A280 range of 1.7-1.9).  DNA is quantified in triplicate using a standardized " +
                 "picogreen assay.  Sample yields is dependent on multiple factors such as:   the original material " +
-                "type provided (blood, cells, tissue, etc), amount of material provided, and tissue site."
+                "type provided (blood, cells, tissue, etc), amount of material provided, and tissue site.",
+
+                true,                                  // top level product
+
+                "BLOOD_DNA_EXTRACT-WF-2012.11.01"      // workflow name
 
         );
 
-        bloodExtraction.setSamplesPerWeek(360);
-        bloodExtraction.setTopLevelProduct(true);
 
-        priceItem = new PriceItem(bloodExtraction, GP, GENERAL_PRODUCTS, BLOOD_DNA_EXTRACTION, "GP-GENERAL_PRODUCTS-BLOOD_DNA_EXTRACTION_2012.11.01");
+        exex.addAddOn(bloodExtraction);
+
+        priceItem = new PriceItem(
+                bloodExtraction,                                          // product
+                GP,                                                       // platform
+                GENERAL_PRODUCTS,                                         // category name
+                BLOOD_DNA_EXTRACTION,                                     // price item name
+                "GP-GENERAL_PRODUCTS-BLOOD_DNA_EXTRACTION_2012.11.01"     // quote server price item id
+        );
+
         bloodExtraction.addPriceItem(priceItem);
+        bloodExtraction.setDefaultPriceItem(priceItem);
 
 
-        Product extraCoverage = new Product();
 
-        exex.getAddOns().add(extraCoverage);
+        Product extraCoverage = new Product(
+            "Extra HiSeq Coverage",                     // product name
+             illuminaSequencingOnlyProductFamily,       // product family
+             "More seq data",                           // description
+             "EXTRA_HISEQ_COVERAGE-2012.11.01",         // part number
+             Calendar.getInstance().getTime(),          // availability date
+             null,                                      // discontinued date
+             3 * DAYS,                                  // expected cycle time
+             4 * DAYS,                                  // guaranteed cycle time
+             192,                                       // samples per week
+             "Same as before",                          // input requirements
+             "Bigger BAM file",                         // deliverables
+             false,                                     // top level product
+             "GP-ILLUMINA_SEQUENCING_ONLY-EXTRA_HISEQ_COVERAGE_2012.11.01" // quote server price item id
 
-        extraCoverage.setPartNumber("EXTRA_HISEQ_COVERAGE-2012.11.01");
-
-        extraCoverage.setProductFamily(findProductFamily(ProductFamily.ProductFamilyName.ILLUMINA_SEQUENCING_ONLY));
-
-        // total guesses on time
-        extraCoverage.setExpectedCycleTimeSeconds(3 * DAYS);
-        extraCoverage.setGuaranteedCycleTimeSeconds(4 * DAYS);
-        extraCoverage.setAvailabilityDate(Calendar.getInstance().getTime());
-        extraCoverage.setDiscontinuedDate(null);
-
-        extraCoverage.setDescription(
-                "More seq data"
         );
 
+        exex.addAddOn(extraCoverage);
 
-        extraCoverage.setInputRequirements(
-                "Same as before"
+
+        priceItem = new PriceItem(
+                extraCoverage,                                                   // product
+                GP,                                                              // platform
+                ILLUMINA_SEQUENCING_ONLY,                                        // category name
+                EXTRA_HISEQ_COVERAGE,                                            // price item name
+                "GP-ILLUMINA_SEQUENCING_ONLY-EXTRA_HISEQ_COVERAGE_2012.11.01"    // quote server price item id
         );
-
-
-        extraCoverage.setDeliverables(
-                "Bigger BAM file"
-        );
-
-        extraCoverage.setSamplesPerWeek(192);
-        extraCoverage.setTopLevelProduct(false);
-
-        priceItem = new PriceItem(extraCoverage, GP, ILLUMINA_SEQUENCING_ONLY, EXTRA_HISEQ_COVERAGE, "GP-ILLUMINA_SEQUENCING_ONLY-EXTRA_HISEQ_COVERAGE_2012.11.01");
 
         extraCoverage.addPriceItem(priceItem);
+        extraCoverage.setDefaultPriceItem(priceItem);
 
 
         productDao.persist(exex);

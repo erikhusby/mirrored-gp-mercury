@@ -123,6 +123,23 @@ public class PriceItem implements Serializable {
 
 
     public PriceItem(Product product, Platform platform, Category categoryName, PriceItemName priceItemName, String quoteServicePriceItemId) {
+
+        if ( product ==  null )
+            throw new NullPointerException( "Null product specified!" );
+
+        if ( platform == null )
+            throw new NullPointerException( "Null platform specified!" );
+
+        if ( priceItemName == null )
+            throw new NullPointerException( "Null price item name specified!" );
+
+        if ( quoteServicePriceItemId == null )
+            throw new NullPointerException( "Null quote server price item id specified!" );
+
+        // don't currently know how to validate this other than against emptiness...
+        if ( "".equals(quoteServicePriceItemId.trim()) )
+            throw new RuntimeException( "Empty quote server price item id specified!" );
+
         this.product = product;
         this.platform = platform.getQuoteServerPlatform();
         this.categoryName = categoryName.getQuoteServerCategory();
@@ -155,6 +172,11 @@ public class PriceItem implements Serializable {
         return price;
     }
 
+    /**
+     * Quote server holds price data, we would set this into the entity as a transient property
+     *
+     * @param price
+     */
     public void setPrice(String price) {
         this.price = price;
     }
@@ -163,6 +185,12 @@ public class PriceItem implements Serializable {
         return units;
     }
 
+
+    /**
+     * Quote server holds units data, we would set this into the entity as a transient property
+     *
+     * @param units
+     */
     public void setUnits(String units) {
         this.units = units;
     }

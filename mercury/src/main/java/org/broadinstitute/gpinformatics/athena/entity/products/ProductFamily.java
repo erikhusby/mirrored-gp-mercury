@@ -55,6 +55,7 @@ public class ProductFamily implements Serializable {
         }
     }
 
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_FAMILY", sequenceName = "SEQ_PRODUCT_FAMILY")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_FAMILY")
@@ -62,20 +63,30 @@ public class ProductFamily implements Serializable {
 
     private String name;
 
+
+    /**
+     * JPA package visible constructor
+     * @return
+     */
+    ProductFamily() {
+    }
+
+
+    public ProductFamily(String name) {
+
+        if ( name == null )
+            throw new NullPointerException( "Null name!" );
+
+        this.name = name;
+    }
+
+
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @Override
