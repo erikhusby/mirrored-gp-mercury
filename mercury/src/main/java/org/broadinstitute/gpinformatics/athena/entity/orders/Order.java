@@ -19,33 +19,28 @@ import java.io.Serializable;
  *      Date: 8/28/12
  *      Time: 10:25 AM
  */
-@XmlType(namespace = Namespaces.ORDER_NS)
 public class Order implements Serializable {
 
     private String title;                       // Unique title for the order
     private String researchProjectName;
-    private String barcode;                     // Unique barcode for the order. Eg. PDO-ABDR
     private OrderStatus orderStatus;
     private String quoteId;                     // Alphanumeric Id
     private String comments;                    // Additional comments of the order
     private SampleSheet sampleSheet;
 
-
-    public Order() {
+    public Order(final String title, final String researchProjectName, final String quoteId ) {
+        this(title, researchProjectName, quoteId, new SampleSheet());
     }
 
-    public Order(final String title, final String researchProjectName, final String barcode,
-                 final OrderStatus orderStatus, final String quoteId, final String comments,
-                 final SampleSheet sampleSheet) {
+    public Order(final String title, final String researchProjectName, final String quoteId,
+                 final SampleSheet sampleSheet ) {
         this.title = title;
         this.researchProjectName = researchProjectName;
-        this.barcode = barcode;
-        this.orderStatus = orderStatus;
+        this.orderStatus = OrderStatus.Draft;
         this.quoteId = quoteId;
-        this.comments = comments;
+        this.comments = "";
         this.sampleSheet = sampleSheet;
     }
-
 
     public String getTitle() {
         return title;
@@ -79,15 +74,6 @@ public class Order implements Serializable {
         this.orderStatus = orderStatus;
     }
 
-    public String getBarcode() {
-        return barcode;
-    }
-
-    public void setBarcode(final String barcode) {
-        this.barcode = barcode;
-    }
-
-
     public String getComments() {
         return comments;
     }
@@ -105,39 +91,27 @@ public class Order implements Serializable {
     }
 
     public int getUniqueParticipantCount() {
-        //TODO
-        //        return 0;
         return sampleSheet.getUniqueParticipantCount();
     }
 
     public int getUniqueSampleCount() {
-        //TODO
-        //        return 0;
         return sampleSheet.getUniqueSampleCount();
     }
 
     public int getTotalSampleCount() {
-        //TODO
-        //        return 0;
         return sampleSheet.getTotalSampleCount();
     }
 
     public int getDuplicateCount() {
-         //TODO
-        //         return 0;
         return sampleSheet.getDuplicateCount();
     }
 
-    public ImmutablePair getDiseaseNormalCounts() {
-            //TODO
-        //            return 0;
-        return sampleSheet.getDiseaseNormalCounts();
+    public ImmutablePair getTumorNormalCounts() {
+        return sampleSheet.getTumorNormalCounts();
     }
 
-    public ImmutablePair getGenderCount() {
-         //TODO
-        //         return 0;
-        return sampleSheet.getGenderCount();
+    public ImmutablePair getMaleFemaleCount() {
+        return sampleSheet.getMaleFemaleCount();
     }
 
 }

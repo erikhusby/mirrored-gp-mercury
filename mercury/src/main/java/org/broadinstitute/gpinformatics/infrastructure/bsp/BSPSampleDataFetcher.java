@@ -94,6 +94,7 @@ public class BSPSampleDataFetcher {
         String concentration = null;
         String organism = null;
         String sampleLsid = null;
+        String gender = null;
 
         if (bspColumns.length > 0) {
             patientId = bspColumns[0];
