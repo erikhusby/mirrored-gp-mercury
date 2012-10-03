@@ -42,16 +42,13 @@ public class CreateProductDetailsTestData extends ContainerTest {
     }
 
 
-
     private ProductFamily findProductFamily(ProductFamily.ProductFamilyName productFamilyName) {
         return productFamilyDao.find(productFamilyName);
     }
 
 
-
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void createTestData() {
-
 
         createProductFamilies();
 
@@ -63,7 +60,6 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         ProductFamily illuminaSequencingOnlyProductFamily =
                 findProductFamily(ProductFamily.ProductFamilyName.ILLUMINA_SEQUENCING_ONLY);
-
 
         final int DAYS = 24 * 60 * 60;
 
@@ -111,7 +107,6 @@ public class CreateProductDetailsTestData extends ContainerTest {
                 "EXEX-WF-2012.11.01"                   // workflow name
         );
 
-
         PriceItem priceItem;
 
         priceItem = new PriceItem(
@@ -133,9 +128,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
                 "GP-EXOME_ANALYSIS-STDEX-2012.11.01"   // quote server price item id
         );
 
-
         exex.addPriceItem(priceItem);
-
 
         Product tissueExtraction = new Product(
 
@@ -182,7 +175,6 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         exex.addAddOn(tissueExtraction);
 
-
         priceItem = new PriceItem(
                 tissueExtraction,                                        // product
                 GP,                                                      // platform
@@ -191,7 +183,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
                 "GP-GENERAL_PRODUCTS-TISSUE_DNA_EXTRACTION_2012.11.01"   // quote server price item id
         );
         tissueExtraction.addPriceItem(priceItem);
-
+        tissueExtraction.setDefaultPriceItem(priceItem);
 
         Product bloodExtraction = new Product(
 
@@ -236,7 +228,6 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         );
 
-
         exex.addAddOn(bloodExtraction);
 
         priceItem = new PriceItem(
@@ -249,8 +240,6 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         bloodExtraction.addPriceItem(priceItem);
         bloodExtraction.setDefaultPriceItem(priceItem);
-
-
 
         Product extraCoverage = new Product(
             "Extra HiSeq Coverage",                     // product name
@@ -271,7 +260,6 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         exex.addAddOn(extraCoverage);
 
-
         priceItem = new PriceItem(
                 extraCoverage,                                                   // product
                 GP,                                                              // platform
@@ -283,10 +271,8 @@ public class CreateProductDetailsTestData extends ContainerTest {
         extraCoverage.addPriceItem(priceItem);
         extraCoverage.setDefaultPriceItem(priceItem);
 
-
         productDao.persist(exex);
 
     }
-
 
 }

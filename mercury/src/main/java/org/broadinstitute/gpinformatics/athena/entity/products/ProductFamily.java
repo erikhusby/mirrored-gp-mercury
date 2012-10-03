@@ -45,7 +45,6 @@ public class ProductFamily implements Serializable {
 
         private final String displayName;
 
-
         ProductFamilyName(String displayName) {
             this.displayName = displayName;
         }
