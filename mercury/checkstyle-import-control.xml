@@ -13,12 +13,22 @@
     <subpackage name="athena">
 
         <subpackage name="boundary">
+            <allow pkg="org.broadinstitute.gpinformatics.athena.boundary"/>
+            <allow pkg="org.broadinstitute.gpinformatics.athena.control"/>
+            <allow pkg="org.broadinstitute.gpinformatics.athena.entity"/>
+            <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
+
             <allow pkg="javax.enterprise.context"/>
             <allow pkg="javax.enterprise.inject"/>
             <allow pkg="javax.xml"/>
         </subpackage>
 
         <subpackage name="control">
+            <allow pkg="org.broadinstitute.gpinformatics.athena.boundary"/>
+            <allow pkg="org.broadinstitute.gpinformatics.athena.control"/>
+            <allow pkg="org.broadinstitute.gpinformatics.athena.entity"/>
+            <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
+
             <allow pkg="com.sun.jersey"/>
             <allow pkg="javax.enterprise.context"/>
             <allow pkg="javax.enterprise.inject"/>
@@ -28,21 +38,36 @@
             <allow pkg="javax.xml.bind"/>
             <allow pkg="org.codehaus.jackson"/>
             <subpackage name="dao">
+                <allow pkg="javax.ejb"/>
                 <allow pkg="javax.persistence"/>
             </subpackage>
         </subpackage>
 
         <subpackage name="entity">
             <allow pkg="org.broadinstitute.gpinformatics.athena.entity"/>
+            <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
+
             <allow pkg="javax.persistence"/>
+            <allow pkg="javax.xml.bind"/>
             <!-- Only DAOs are allowed to access the EntityManager -->
             <disallow class="javax.persistence.EntityManager"/>
             <disallow class="javax.persistence.EntityManagerFactory"/>
         </subpackage>
 
+        <subpackage name="presentation">
+            <allow pkg="org.broadinstitute.gpinformatics.athena.boundary"/>
+            <allow pkg="org.broadinstitute.gpinformatics.athena.entity"/>
+            <allow pkg="org.broadinstitute.gpinformatics.athena.presentation"/>
+
+            <allow pkg="javax.faces"/>
+            <allow pkg="javax.inject"/>
+            <allow pkg="org.primefaces"/>
+        </subpackage>
+
         <!-- unit tests are allowed to import external Mercury interfaces, test frameworks, mock frameworks, etc. -->
         <subpackage name="test">
             <allow pkg="edu.mit.broad.prodinfo.thrift.lims"/>
+
             <allow pkg="javax.xml"/>
             <allow pkg="org.apache.thrift"/>
             <allow pkg="org.easymock"/>
@@ -66,10 +91,17 @@
 
     <subpackage name="infrastructure">
         <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
+
+        <allow pkg="com.sun.jersey"/>
         <allow pkg="javax.annotation"/>
         <allow pkg="javax.inject"/>
+        <allow pkg="javax.enterprise.inject"/>
         <allow pkg="javax.management"/>
         <allow pkg="javax.xml"/>
+        <subpackage name="thrift">
+            <allow pkg="edu.mit.broad.prodinfo.thrift"/>
+            <allow pkg="org.apache.thrift"/>
+        </subpackage>
     </subpackage>
 
     <subpackage name="mercury">
@@ -85,8 +117,10 @@
             <allow pkg="org.broadinstitute.gpinformatics.mercury.control"/>
             <allow pkg="org.broadinstitute.gpinformatics.mercury.entity"/>
             <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
+
             <allow pkg="javax.enterprise.context"/>
             <allow pkg="javax.enterprise.inject"/>
+            <allow pkg="javax.jws"/>
             <allow pkg="javax.xml"/>
         </subpackage>
 
@@ -95,6 +129,7 @@
             <allow pkg="org.broadinstitute.gpinformatics.mercury.control"/>
             <allow pkg="org.broadinstitute.gpinformatics.mercury.entity"/>
             <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
+
             <allow pkg="com.sun.jersey"/>
             <allow pkg="javax.enterprise.context"/>
             <allow pkg="javax.enterprise.inject"/>
@@ -102,7 +137,10 @@
             <allow pkg="javax.inject"/>
             <allow pkg="javax.ws"/>
             <allow pkg="javax.xml.bind"/>
+            <allow pkg="javax.xml.parsers"/>
+            <allow pkg="javax.xml.xpath"/>
             <allow pkg="org.codehaus.jackson"/>
+            <allow pkg="org.w3c.dom"/>
             <subpackage name="dao">
                 <allow pkg="javax.persistence"/>
             </subpackage>
@@ -111,10 +149,25 @@
         <subpackage name="entity">
             <allow pkg="org.broadinstitute.gpinformatics.mercury.entity"/>
             <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
+
+            <allow pkg="javax.annotation"/>
             <allow pkg="javax.persistence"/>
+            <allow pkg="javax.xml.bind"/>
+            <allow pkg="org.hibernate.annotations"/>
+            <allow pkg="org.hibernate.envers"/>
             <!-- Only DAOs are allowed to access the EntityManager -->
             <disallow class="javax.persistence.EntityManager"/>
             <disallow class="javax.persistence.EntityManagerFactory"/>
+        </subpackage>
+
+        <subpackage name="presentation">
+            <allow pkg="org.broadinstitute.gpinformatics.mercury.boundary"/>
+            <allow pkg="org.broadinstitute.gpinformatics.mercury.entity"/>
+            <allow pkg="org.broadinstitute.gpinformatics.mercury.presentation"/>
+
+            <allow pkg="javax.faces"/>
+            <allow pkg="javax.inject"/>
+            <allow pkg="org.primefaces"/>
         </subpackage>
 
         <!-- unit tests are allowed to import external Mercury interfaces, test frameworks, mock frameworks, etc. -->
