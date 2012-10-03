@@ -20,6 +20,8 @@ public class ResearchProject {
     }
 
     @Id
+    @SequenceGenerator(name="seq_research_project_index", sequenceName="seq_research_project_index", allocationSize = 1)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
     private Long id;
 
     private Status status;

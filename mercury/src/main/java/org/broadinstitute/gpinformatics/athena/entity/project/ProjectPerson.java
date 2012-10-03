@@ -4,9 +4,7 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 
 /**
  * This class associates a person with a project. Each person has roles in a project and this object
@@ -16,6 +14,8 @@ import javax.persistence.ManyToOne;
 public class ProjectPerson {
 
     @Id
+    @SequenceGenerator(name="seq_project_person_index", sequenceName="seq_project_person_index", allocationSize = 1)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_project_person_index")
     private Long id;
 
     @ManyToOne

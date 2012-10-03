@@ -6,9 +6,8 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -16,10 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 5/9/12
- * Time: 1:56 PM
+ *
  */
 public class ResearchProjectResourceTest extends ContainerTest {
 
@@ -36,7 +32,6 @@ public class ResearchProjectResourceTest extends ContainerTest {
     private Long testResearchProjectId;
     private String testTitle;
 
-    @BeforeMethod
     public void setUp() throws Exception {
         testTitle = "MyResearchProject_" + UUID.randomUUID();
         ResearchProject researchProject =
@@ -56,24 +51,32 @@ public class ResearchProjectResourceTest extends ContainerTest {
         testResearchProjectId = researchProject.getId();
     }
 
-    @AfterMethod
     public void tearDown() throws Exception {
         ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
         researchProjectDao.delete(researchProject);
     }
 
-    @Test
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindResearchProjectById() throws Exception {
+        setUp();
         ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
         Assert.assertNotNull(researchProject);
         Assert.assertNotNull(researchProject.getTitle());
         Assert.assertEquals(researchProject.getTitle(), testTitle);
+        tearDown();
     }
 
-    @Test
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindAllResearchProjects() throws Exception {
-        List<ResearchProject> researchProjects = researchProjectResource.findAllResearchProjects(TEST_CREATOR);
-        Assert.assertNotNull(researchProjects);
-        Assert.assertEquals(5, researchProjects.size());
+        setUp();
+
+        try {
+            List<ResearchProject> researchProjects =
+                researchProjectResource.findAllResearchProjectsByCreator(TEST_CREATOR);
+            Assert.assertNotNull(researchProjects);
+            Assert.assertEquals(researchProjects.size(), 1);
+        } finally {
+            tearDown();
+        }
     }
 }

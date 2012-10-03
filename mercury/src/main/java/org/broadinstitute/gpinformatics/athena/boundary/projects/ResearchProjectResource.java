@@ -22,13 +22,13 @@ public class ResearchProjectResource {
     @GET
     @Path("{researchProjectId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ResearchProject findResearchProjectById(@PathParam("researchProjectId") long researchProjectId) {
+    public ResearchProject findResearchProjectById(@PathParam("researchProjectId") Long researchProjectId) {
         return findRPById(researchProjectId);
     }
 
-    private ResearchProject findRPById(final long researchProjectId) {
+    private ResearchProject findRPById(Long researchProjectId) {
         // Check for content
-        if (researchProjectId < 1) {
+        if (researchProjectId == null) {
             throw new RuntimeException("ResearchProject Id is invalid.");
         }
 
@@ -41,14 +41,6 @@ public class ResearchProjectResource {
         return researchProject;
     }
 
-    // For testing in a browser - dev only !!
-    @GET
-    @Path("{researchProjectId}")
-    @Produces({MediaType.TEXT_HTML})
-    public ResearchProject findResearchProjectByIdHtml(@PathParam("researchProjectId") long researchProjectId) {
-        return findRPById(researchProjectId);
-    }
-
     /**
      * Method to GET the list of research projects. Optionally filter this by the user who created them if the creator
      * param is supplied.
@@ -59,7 +51,7 @@ public class ResearchProjectResource {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public List<ResearchProject> findAllResearchProjects(@MatrixParam("creator") Long creatorId) {
+    public List<ResearchProject> findAllResearchProjectsByCreator(@MatrixParam("creator") Long creatorId) {
 
         List<ResearchProject> foundProjects;
 
@@ -73,4 +65,15 @@ public class ResearchProjectResource {
 
     }
 
+    /**
+     * Method to GET the list of research projects. Optionally filter this by the user who created them if the creator
+     * param is supplied.
+     *
+     * @return The research projects that match
+     */
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public List<ResearchProject> findAllResearchProjects() {
+        return researchProjectDao.findAllResearchProjects();
+    }
 }

@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 
 /**
  * The funding for research projects
@@ -11,6 +9,8 @@ import javax.persistence.ManyToOne;
 public class ResearchProjectFunding {
 
     @Id
+    @SequenceGenerator(name="seq_rp_funding_index", sequenceName="seq_rp_funding_index", allocationSize = 1)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_funding_index")
     private Long id;
 
     @ManyToOne
