@@ -2,12 +2,15 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.common.EntityUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.Order;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.experiments.EntityUtils;
 
 import javax.persistence.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Research Projects hold all the information about a research project
