@@ -7,7 +7,6 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Root;
 import java.util.List;
 
@@ -19,21 +18,23 @@ import java.util.List;
 public class ResearchProjectDao extends AthenaGenericDao {
 
     @SuppressWarnings("unchecked")
-    public List<ResearchProject> findResearchProjectsByOwner(Long username) {
+    public List<ResearchProject> findResearchProjectsByOwner(long username) {
         EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
-
-        Expression expression;
-        if (username == null) {
-            expression = entityManager.getCriteriaBuilder().isNull(root.get(ResearchProject_.createdBy));
-        } else {
-            expression = entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.createdBy), username);
-        }
-
-        criteriaQuery.where(expression);
+        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.createdBy), username));
         return entityManager.createQuery(criteriaQuery).getResultList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public ResearchProject findResearchProjectsByName(String name) {
+        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
+        CriteriaQuery<ResearchProject> criteriaQuery =
+                entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
+        Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
+        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.title), name));
+        return entityManager.createQuery(criteriaQuery).getSingleResult();
     }
 
     @SuppressWarnings("unchecked")
