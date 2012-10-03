@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily_;
 import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
@@ -23,17 +24,21 @@ public class ProductFamilyDao extends GenericDao {
      */
     public ProductFamily find(ProductFamily.ProductFamilyName productFamilyName) {
 
-        EntityManager em = getThreadEntityManager().getEntityManager();
+        try {
 
+            EntityManager em = getThreadEntityManager().getEntityManager();
 
-        CriteriaQuery<ProductFamily> criteriaQuery =
-                em.getCriteriaBuilder().createQuery(ProductFamily.class);
+            CriteriaQuery<ProductFamily> criteriaQuery =
+                    em.getCriteriaBuilder().createQuery(ProductFamily.class);
 
-        Root<ProductFamily> root = criteriaQuery.from(ProductFamily.class);
-        criteriaQuery.where(em.getCriteriaBuilder().equal(root.get(ProductFamily_.name), productFamilyName.name()));
+            Root<ProductFamily> root = criteriaQuery.from(ProductFamily.class);
+            criteriaQuery.where(em.getCriteriaBuilder().equal(root.get(ProductFamily_.name), productFamilyName.name()));
 
-
-        return em.createQuery(criteriaQuery).getSingleResult();
+            return em.createQuery(criteriaQuery).getSingleResult();
+        }
+        catch (NoResultException nrx) {
+            return null;
+        }
 
     }
 }

@@ -30,14 +30,20 @@ public class Product implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private ProductFamily productFamily;
 
+    @Column(length = 2000)
     private String description;
+
     private String partNumber;
     private Date availabilityDate;
     private Date discontinuedDate;
     private Integer expectedCycleTimeSeconds;
     private Integer guaranteedCycleTimeSeconds;
     private Integer samplesPerWeek;
+
+    @Column(length = 2000)
     private String inputRequirements;
+
+    @Column(length = 2000)
     private String deliverables;
 
     /**

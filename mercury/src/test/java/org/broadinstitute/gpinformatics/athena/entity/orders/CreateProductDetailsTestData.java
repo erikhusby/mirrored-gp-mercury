@@ -35,9 +35,13 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
     private void createProductFamilies() {
 
-        for (Enum<ProductFamily.ProductFamilyName> e : ProductFamily.ProductFamilyName.values()) {
-            ProductFamily pf = new ProductFamily(e.name());
-            productFamilyDao.persist(pf);
+        for (ProductFamily.ProductFamilyName productFamilyName : ProductFamily.ProductFamilyName.values()) {
+
+            if ( productFamilyDao.find(productFamilyName) == null ) {
+
+                ProductFamily pf = new ProductFamily(productFamilyName.name());
+                productFamilyDao.persist(pf);
+            }
         }
     }
 
@@ -242,7 +246,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
         bloodExtraction.setDefaultPriceItem(priceItem);
 
         Product extraCoverage = new Product(
-            "Extra HiSeq Coverage",                     // product name
+             "Extra HiSeq Coverage",                    // product name
              illuminaSequencingOnlyProductFamily,       // product family
              "More seq data",                           // description
              "EXTRA_HISEQ_COVERAGE-2012.11.01",         // part number
@@ -272,6 +276,12 @@ public class CreateProductDetailsTestData extends ContainerTest {
         extraCoverage.setDefaultPriceItem(priceItem);
 
         productDao.persist(exex);
+
+        // this #clear seems to act like a #flush except it doesn't require a transaction.  which is good, since
+        // we don't seem to have a transaction.  if i call #flush here my data does get written out, but then
+        // i get an exception due to the lack of transaction.  if i don't have a #flush or #clear, none of the
+        // Product or PriceItem data will be written out.
+        productDao.clear();
 
     }
 
