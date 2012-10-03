@@ -18,6 +18,77 @@ import java.io.Serializable;
 })
 public class PriceItem implements Serializable {
 
+
+    /**
+     * GP is the only platform referenced by Athena?
+     */
+    public enum Platform {
+        GP("GP");
+
+        private String quoteServerPlatform;
+
+        private Platform(String quoteServerPlatform) {
+            this.quoteServerPlatform = quoteServerPlatform;
+        }
+
+        public String getQuoteServerPlatform() {
+            return quoteServerPlatform;
+        }
+    }
+
+
+    /**
+     * For my dummy test data I am making Category essentially synonymous with {@link ProductFamily}
+     */
+    public enum Category {
+        GENERAL_PRODUCTS("General Products"),
+        EXOME_SEQUENCING_ANALYSIS("Exome Sequencing Analysis"),
+        WHOLE_GENOME_SEQUENCING_ANALYSIS("Whole Genome Sequencing Analysis"),
+        WHOLE_GENOME_ARRAY_ANALYSIS("Whole Genome Array Analysis"),
+        RNA_ANALYSIS("RNA Analysis"),
+        ASSEMBLY_ANALYSIS("Assembly Analysis"),
+        METAGENOMIC_ANALYSIS("Metagenomic Analysis"),
+        EPIGENOMIC_ANALYSIS("Epigenomic Analysis"),
+        ILLUMINA_SEQUENCING_ONLY("Illumina Sequencing Only"),
+        ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
+        CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing");
+
+        private String quoteServerCategory;
+
+
+        Category(String quoteServerCategory) {
+            this.quoteServerCategory = quoteServerCategory;
+        }
+
+
+        public String getQuoteServerCategory() {
+            return quoteServerCategory;
+        }
+    }
+
+
+
+    public enum Name {
+
+        EXOME_EXPRESS("Exome Express"),
+        STANDARD_EXOME_SEQUENCING("Standard Exome Sequencing"),
+        TISSUE_DNA_EXTRACTION("Tissue DNA Extraction"),
+        BLOOD_DNA_EXTRACTION("Blood DNA Extraction"),
+        EXTRA_HISEQ_COVERAGE("Extra HiSeq Coverage");
+
+        private String quoteServerName;
+
+        private Name(String quoteServerName) {
+            this.quoteServerName = quoteServerName;
+        }
+
+        public String getQuoteServerName() {
+            return quoteServerName;
+        }
+    }
+
+
+
     @Id
     @SequenceGenerator(name = "SEQ_PRICE_ITEM", sequenceName = "SEQ_PRICE_ITEM")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRICE_ITEM")
@@ -47,10 +118,6 @@ public class PriceItem implements Serializable {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Product getProduct() {
         return product;
     }
@@ -63,48 +130,36 @@ public class PriceItem implements Serializable {
         return platform;
     }
 
-    public void setPlatform(String platform) {
-        this.platform = platform;
+    public void setPlatform(Platform platform) {
+        this.platform = platform.name();
     }
 
     public String getCategoryName() {
         return categoryName;
     }
 
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
+    public void setCategoryName(Category category) {
+        this.categoryName = category.name();
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setName(Name name) {
+        this.name = name.name();
     }
 
     public String getPrice() {
         return price;
     }
 
-    public void setPrice(String price) {
-        this.price = price;
-    }
-
     public String getUnits() {
         return units;
     }
 
-    public void setUnits(String units) {
-        this.units = units;
-    }
-
     public String getQuoteServicePriceItemId() {
         return quoteServicePriceItemId;
-    }
-
-    public void setQuoteServicePriceItemId(String quoteServicePriceItemId) {
-        this.quoteServicePriceItemId = quoteServicePriceItemId;
     }
 
     @Override

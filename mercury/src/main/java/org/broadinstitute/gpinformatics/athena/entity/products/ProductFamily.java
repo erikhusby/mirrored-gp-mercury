@@ -43,11 +43,15 @@ public class ProductFamily implements Serializable {
         ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
         CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing");
 
-        private String name;
+        private String displayName;
 
 
-        Name(String name) {
-            this.name = name;
+        Name(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
         }
     }
 
