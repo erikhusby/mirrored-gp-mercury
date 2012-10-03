@@ -114,9 +114,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         AddCommentRequest addCommentRequest;
         
         if (visibilityType != null && visibilityValue != null)
-            addCommentRequest = AddCommentRequest.create(key, body, visibilityType, visibilityValue);
+            addCommentRequest = AddCommentRequest.create(body, visibilityType, visibilityValue);
         else
-            addCommentRequest = AddCommentRequest.create(key, body);
+            addCommentRequest = AddCommentRequest.create(body);
 
 
         String urlString = getBaseUrl() + "/issue/" + key + "/comment";
