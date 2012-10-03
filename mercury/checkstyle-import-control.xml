@@ -3,74 +3,143 @@
         "-//Puppy Crawl//DTD Import Control 1.1//EN"
         "http://www.puppycrawl.com/dtds/import_control_1_1.dtd">
 
-<import-control pkg="org.broadinstitute.gpinformatics.mercury">
+<import-control pkg="org.broadinstitute.gpinformatics">
 
     <!--allow access to utility libraries -->
     <allow pkg="java"/>
     <allow pkg="sun"/>
     <allow pkg="org.apache.commons"/>
-    <allow pkg="org.broadinstitute.gpinformatics.mercury"/>
 
-    <subpackage name="bettalims">
-        <subpackage name="jaxb">
+    <subpackage name="athena">
+
+        <subpackage name="boundary">
+            <allow pkg="javax.enterprise.context"/>
+            <allow pkg="javax.enterprise.inject"/>
+            <allow pkg="javax.xml"/>
+        </subpackage>
+
+        <subpackage name="control">
+            <allow pkg="com.sun.jersey"/>
+            <allow pkg="javax.enterprise.context"/>
+            <allow pkg="javax.enterprise.inject"/>
+            <allow pkg="javax.net"/>
+            <allow pkg="javax.inject"/>
+            <allow pkg="javax.ws"/>
             <allow pkg="javax.xml.bind"/>
-            <allow pkg="javax.xml.datatype"/>
+            <allow pkg="org.codehaus.jackson"/>
+            <subpackage name="dao">
+                <allow pkg="javax.persistence"/>
+            </subpackage>
         </subpackage>
-    </subpackage>
 
-    <subpackage name="boundary">
-        <allow pkg="javax.enterprise.context"/>
-        <allow pkg="javax.enterprise.inject"/>
-        <allow pkg="javax.xml"/>
-    </subpackage>
-
-    <subpackage name="control">
-        <allow pkg="com.sun.jersey"/>
-        <allow pkg="javax.enterprise.context"/>
-        <allow pkg="javax.enterprise.inject"/>
-        <allow pkg="javax.net"/>
-        <allow pkg="javax.inject"/>
-        <allow pkg="javax.ws"/>
-        <allow pkg="javax.xml.bind"/>
-        <allow pkg="org.codehaus.jackson"/>
-        <subpackage name="dao">
+        <subpackage name="entity">
+            <allow pkg="org.broadinstitute.gpinformatics.athena.entity"/>
             <allow pkg="javax.persistence"/>
+            <!-- Only DAOs are allowed to access the EntityManager -->
+            <disallow class="javax.persistence.EntityManager"/>
+            <disallow class="javax.persistence.EntityManagerFactory"/>
         </subpackage>
-    </subpackage>
 
-    <subpackage name="entity">
-        <allow pkg="javax.persistence"/>
-        <!-- Only DAOs are allowed to access the EntityManager -->
-        <disallow class="javax.persistence.EntityManager"/>
-        <disallow class="javax.persistence.EntityManagerFactory"/>
+        <!-- unit tests are allowed to import external Mercury interfaces, test frameworks, mock frameworks, etc. -->
+        <subpackage name="test">
+            <allow pkg="edu.mit.broad.prodinfo.thrift.lims"/>
+            <allow pkg="javax.xml"/>
+            <allow pkg="org.apache.thrift"/>
+            <allow pkg="org.easymock"/>
+            <allow pkg="org.testng"/>
+        </subpackage>
+
+        <!-- integration tests are allowed to import most of what unit tests can plus web service client classes, Arquillian, etc. -->
+        <subpackage name="integration">
+            <allow pkg="com.sun.jersey"/>
+            <allow pkg="javax.enterprise.inject"/>
+            <allow pkg="javax.inject"/>
+            <allow pkg="javax.persistence.EntityManager"/>
+            <allow pkg="javax.persistence.EntityManagerFactory"/>
+            <allow pkg="javax.ws.rs"/>
+            <allow pkg="org.hibernate"/>
+            <allow pkg="org.jboss.arquillian"/>
+            <allow pkg="org.jboss.shrinkwrap"/>
+            <allow pkg="org.testng"/>
+        </subpackage>
     </subpackage>
 
     <subpackage name="infrastructure">
+        <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
         <allow pkg="javax.annotation"/>
-        <allow pkg="javax.management"/>
-    </subpackage>
-
-    <!-- unit tests are allowed to import external Mercury interfaces, test frameworks, mock frameworks, etc. -->
-    <subpackage name="test">
-        <allow pkg="edu.mit.broad.prodinfo.thrift.lims"/>
-        <allow pkg="javax.xml"/>
-        <allow pkg="org.apache.thrift"/>
-        <allow pkg="org.easymock"/>
-        <allow pkg="org.testng"/>
-    </subpackage>
-
-    <!-- integration tests are allowed to import most of what unit tests can plus web service client classes, Arquillian, etc. -->
-    <subpackage name="integration">
-        <allow pkg="com.sun.jersey"/>
-        <allow pkg="javax.enterprise.inject"/>
         <allow pkg="javax.inject"/>
-        <allow pkg="javax.persistence.EntityManager"/>
-        <allow pkg="javax.persistence.EntityManagerFactory"/>
-        <allow pkg="javax.ws.rs"/>
-        <allow pkg="org.hibernate"/>
-        <allow pkg="org.jboss.arquillian"/>
-        <allow pkg="org.jboss.shrinkwrap"/>
-        <allow pkg="org.testng"/>
+        <allow pkg="javax.management"/>
+        <allow pkg="javax.xml"/>
     </subpackage>
+
+    <subpackage name="mercury">
+        <subpackage name="bettalims">
+            <subpackage name="generated">
+                <allow pkg="javax.xml.bind"/>
+                <allow pkg="javax.xml.datatype"/>
+            </subpackage>
+        </subpackage>
+
+        <subpackage name="boundary">
+            <allow pkg="org.broadinstitute.gpinformatics.mercury.boundary"/>
+            <allow pkg="org.broadinstitute.gpinformatics.mercury.control"/>
+            <allow pkg="org.broadinstitute.gpinformatics.mercury.entity"/>
+            <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
+            <allow pkg="javax.enterprise.context"/>
+            <allow pkg="javax.enterprise.inject"/>
+            <allow pkg="javax.xml"/>
+        </subpackage>
+
+        <subpackage name="control">
+            <allow pkg="org.broadinstitute.gpinformatics.mercury.boundary"/>
+            <allow pkg="org.broadinstitute.gpinformatics.mercury.control"/>
+            <allow pkg="org.broadinstitute.gpinformatics.mercury.entity"/>
+            <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
+            <allow pkg="com.sun.jersey"/>
+            <allow pkg="javax.enterprise.context"/>
+            <allow pkg="javax.enterprise.inject"/>
+            <allow pkg="javax.net"/>
+            <allow pkg="javax.inject"/>
+            <allow pkg="javax.ws"/>
+            <allow pkg="javax.xml.bind"/>
+            <allow pkg="org.codehaus.jackson"/>
+            <subpackage name="dao">
+                <allow pkg="javax.persistence"/>
+            </subpackage>
+        </subpackage>
+
+        <subpackage name="entity">
+            <allow pkg="org.broadinstitute.gpinformatics.mercury.entity"/>
+            <allow pkg="org.broadinstitute.gpinformatics.infrastructure"/>
+            <allow pkg="javax.persistence"/>
+            <!-- Only DAOs are allowed to access the EntityManager -->
+            <disallow class="javax.persistence.EntityManager"/>
+            <disallow class="javax.persistence.EntityManagerFactory"/>
+        </subpackage>
+
+        <!-- unit tests are allowed to import external Mercury interfaces, test frameworks, mock frameworks, etc. -->
+        <subpackage name="test">
+            <allow pkg="edu.mit.broad.prodinfo.thrift.lims"/>
+            <allow pkg="javax.xml"/>
+            <allow pkg="org.apache.thrift"/>
+            <allow pkg="org.easymock"/>
+            <allow pkg="org.testng"/>
+        </subpackage>
+
+        <!-- integration tests are allowed to import most of what unit tests can plus web service client classes, Arquillian, etc. -->
+        <subpackage name="integration">
+            <allow pkg="com.sun.jersey"/>
+            <allow pkg="javax.enterprise.inject"/>
+            <allow pkg="javax.inject"/>
+            <allow pkg="javax.persistence.EntityManager"/>
+            <allow pkg="javax.persistence.EntityManagerFactory"/>
+            <allow pkg="javax.ws.rs"/>
+            <allow pkg="org.hibernate"/>
+            <allow pkg="org.jboss.arquillian"/>
+            <allow pkg="org.jboss.shrinkwrap"/>
+            <allow pkg="org.testng"/>
+        </subpackage>
+    </subpackage>
+
 
 </import-control>

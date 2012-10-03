@@ -125,6 +125,8 @@ public class LabEventTest {
         workflowDescription.initFromFile("HybridSelectionV2.bpmn");
         BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
 
+        // Bucket entry has Sample, Vessel and ProductOrder.  ProductOrder has workflow.
+
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
