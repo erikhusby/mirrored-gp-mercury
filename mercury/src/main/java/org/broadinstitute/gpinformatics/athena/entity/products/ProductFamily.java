@@ -30,7 +30,7 @@ public class ProductFamily implements Serializable {
      * Known product families, a DAO method might accept one of these to return a persistent or detached instance
      * of one of these ProductFamilies if there was business logic that wanted to call out a specific ProductFamily.
      */
-    public enum Name {
+    public enum ProductFamilyName {
         GENERAL_PRODUCTS("General Products"),
         EXOME_SEQUENCING_ANALYSIS("Exome Sequencing Analysis"),
         WHOLE_GENOME_SEQUENCING_ANALYSIS("Whole Genome Sequencing Analysis"),
@@ -43,10 +43,10 @@ public class ProductFamily implements Serializable {
         ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
         CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing");
 
-        private String displayName;
+        private final String displayName;
 
 
-        Name(String displayName) {
+        ProductFamilyName(String displayName) {
             this.displayName = displayName;
         }
 

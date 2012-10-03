@@ -6,7 +6,9 @@ import org.hibernate.envers.Audited;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Core entity for Products.
@@ -51,7 +53,7 @@ public class Product implements Serializable {
     private PriceItem defaultPriceItem;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
-    private List<PriceItem> priceItems;
+    private Set<PriceItem> priceItems;
 
     /**
      * May need to revisit cascade options for a Product editor
@@ -70,9 +72,6 @@ public class Product implements Serializable {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getName() {
         return name;
@@ -179,28 +178,26 @@ public class Product implements Serializable {
         this.defaultPriceItem = defaultPriceItem;
     }
 
-    public List<PriceItem> getPriceItems() {
+    public Set<PriceItem> getPriceItems() {
         return priceItems;
     }
 
-    public void setPriceItems(List<PriceItem> priceItems) {
-        this.priceItems = priceItems;
+
+    public void addPriceItem(PriceItem priceItem) {
+
+        if ( priceItems == null )
+            priceItems = new HashSet<PriceItem>();
+
+        priceItems.add(priceItem);
+
     }
 
     public List<Product> getAddOns() {
         return addOns;
     }
 
-    public void setAddOns(List<Product> addOns) {
-        this.addOns = addOns;
-    }
-
     public String getWorkflowName() {
         return workflowName;
-    }
-
-    public void setWorkflowName(String workflowName) {
-        this.workflowName = workflowName;
     }
 
 //    public List<RiskContingency> getRiskContingencies() {

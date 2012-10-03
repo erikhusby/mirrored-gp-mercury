@@ -14,7 +14,7 @@ import java.io.Serializable;
 @Entity
 @Audited
 @Table(uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"platform", "categoryName", "name"})
+        @UniqueConstraint(columnNames = {"platform", "categoryName", "priceItemName"})
 })
 public class PriceItem implements Serializable {
 
@@ -23,6 +23,7 @@ public class PriceItem implements Serializable {
      * GP is the only platform referenced by Athena?
      */
     public enum Platform {
+
         GP("GP");
 
         private String quoteServerPlatform;
@@ -41,6 +42,7 @@ public class PriceItem implements Serializable {
      * For my dummy test data I am making Category essentially synonymous with {@link ProductFamily}
      */
     public enum Category {
+
         GENERAL_PRODUCTS("General Products"),
         EXOME_SEQUENCING_ANALYSIS("Exome Sequencing Analysis"),
         WHOLE_GENOME_SEQUENCING_ANALYSIS("Whole Genome Sequencing Analysis"),
@@ -68,7 +70,7 @@ public class PriceItem implements Serializable {
 
 
 
-    public enum Name {
+    public enum PriceItemName {
 
         EXOME_EXPRESS("Exome Express"),
         STANDARD_EXOME_SEQUENCING("Standard Exome Sequencing"),
@@ -78,7 +80,7 @@ public class PriceItem implements Serializable {
 
         private String quoteServerName;
 
-        private Name(String quoteServerName) {
+        private PriceItemName(String quoteServerName) {
             this.quoteServerName = quoteServerName;
         }
 
@@ -101,7 +103,7 @@ public class PriceItem implements Serializable {
 
     private String categoryName;
 
-    private String name;
+    private String priceItemName;
 
     private String quoteServicePriceItemId;
 
@@ -114,6 +116,21 @@ public class PriceItem implements Serializable {
     private String units;
 
 
+    /**
+     * Package visibile constructor for JPA
+     */
+    PriceItem() {}
+
+
+    public PriceItem(Product product, Platform platform, Category categoryName, PriceItemName priceItemName, String quoteServicePriceItemId) {
+        this.product = product;
+        this.platform = platform.getQuoteServerPlatform();
+        this.categoryName = categoryName.getQuoteServerCategory();
+        this.priceItemName = priceItemName.getQuoteServerName();
+        this.quoteServicePriceItemId = quoteServicePriceItemId;
+    }
+
+
     public Long getId() {
         return id;
     }
@@ -122,40 +139,32 @@ public class PriceItem implements Serializable {
         return product;
     }
 
-    public void setProduct(Product product) {
-        this.product = product;
-    }
-
     public String getPlatform() {
         return platform;
-    }
-
-    public void setPlatform(Platform platform) {
-        this.platform = platform.name();
     }
 
     public String getCategoryName() {
         return categoryName;
     }
 
-    public void setCategoryName(Category category) {
-        this.categoryName = category.name();
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(Name name) {
-        this.name = name.name();
+    public String getPriceItemName() {
+        return priceItemName;
     }
 
     public String getPrice() {
         return price;
     }
 
+    public void setPrice(String price) {
+        this.price = price;
+    }
+
     public String getUnits() {
         return units;
+    }
+
+    public void setUnits(String units) {
+        this.units = units;
     }
 
     public String getQuoteServicePriceItemId() {
@@ -170,7 +179,7 @@ public class PriceItem implements Serializable {
         PriceItem priceItem = (PriceItem) o;
 
         if (!categoryName.equals(priceItem.categoryName)) return false;
-        if (!name.equals(priceItem.name)) return false;
+        if (!priceItemName.equals(priceItem.priceItemName)) return false;
         if (!platform.equals(priceItem.platform)) return false;
 
         return true;
@@ -180,7 +189,7 @@ public class PriceItem implements Serializable {
     public int hashCode() {
         int result = platform.hashCode();
         result = 31 * result + categoryName.hashCode();
-        result = 31 * result + name.hashCode();
+        result = 31 * result + priceItemName.hashCode();
         return result;
     }
 

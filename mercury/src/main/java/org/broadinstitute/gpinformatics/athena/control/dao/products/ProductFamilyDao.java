@@ -21,7 +21,7 @@ public class ProductFamilyDao extends GenericDao {
      * @param productFamilyName
      * @return
      */
-    public ProductFamily find(ProductFamily.Name productFamilyName) {
+    public ProductFamily find(ProductFamily.ProductFamilyName productFamilyName) {
 
         EntityManager em = getThreadEntityManager().getEntityManager();
 

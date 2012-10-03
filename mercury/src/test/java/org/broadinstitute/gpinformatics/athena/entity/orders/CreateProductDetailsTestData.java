@@ -15,7 +15,7 @@ import java.util.Calendar;
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.EXOME_SEQUENCING_ANALYSIS;
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.GENERAL_PRODUCTS;
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.ILLUMINA_SEQUENCING_ONLY;
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Name.*;
+import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.PriceItemName.*;
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Platform.GP;
 
 
@@ -30,7 +30,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
     private void createProductFamilies() {
 
-        for (Enum<ProductFamily.Name> e : ProductFamily.Name.values()) {
+        for (Enum<ProductFamily.ProductFamilyName> e : ProductFamily.ProductFamilyName.values()) {
             ProductFamily pf = new ProductFamily();
             pf.setName(e.name());
             productFamilyDao.persist(pf);
@@ -39,7 +39,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
 
 
-    private ProductFamily findProductFamily(ProductFamily.Name productFamilyName) {
+    private ProductFamily findProductFamily(ProductFamily.ProductFamilyName productFamilyName) {
         return productFamilyDao.find(productFamilyName);
     }
 
@@ -53,9 +53,9 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         Product exex = new Product();
 
-        exex.setPartNumber("EXOME_EXPRESS-2012-11-01");
+        exex.setPartNumber("EXOME_EXPRESS-2012.11.01");
 
-        exex.setProductFamily(findProductFamily(ProductFamily.Name.EXOME_SEQUENCING_ANALYSIS));
+        exex.setProductFamily(findProductFamily(ProductFamily.ProductFamilyName.EXOME_SEQUENCING_ANALYSIS));
 
         final int DAYS = 24 * 60 * 60;
         // say expected time is 17 days
@@ -97,32 +97,23 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         PriceItem priceItem;
 
-        priceItem = new PriceItem();
-        priceItem.setProduct(exex);
-        priceItem.setPlatform(GP);
-        priceItem.setCategoryName(EXOME_SEQUENCING_ANALYSIS);
-        priceItem.setName(EXOME_EXPRESS);
+        priceItem = new PriceItem(exex, GP, EXOME_SEQUENCING_ANALYSIS, EXOME_EXPRESS, "GP-EXOME_ANALYSIS-EXEX-2012.11.01");
 
-        exex.getPriceItems().add(priceItem);
+        exex.addPriceItem(priceItem);
         exex.setDefaultPriceItem(priceItem);
 
-        priceItem = new PriceItem();
-        priceItem.setProduct(exex);
-        priceItem.setPlatform(GP);
-        priceItem.setCategoryName(EXOME_SEQUENCING_ANALYSIS);
-        priceItem.setName(STANDARD_EXOME_SEQUENCING);
+        priceItem = new PriceItem(exex, GP, EXOME_SEQUENCING_ANALYSIS, STANDARD_EXOME_SEQUENCING, "GP-EXOME_ANALYSIS-STDEX-2012.11.01");
 
-        exex.getPriceItems().add(priceItem);
-
+        exex.addPriceItem(priceItem);
 
 
         Product tissueExtraction = new Product();
 
         exex.getAddOns().add(tissueExtraction);
 
-        tissueExtraction.setPartNumber("TISSUE_DNA_EXTRACTION-2012-11-01");
+        tissueExtraction.setPartNumber("TISSUE_DNA_EXTRACTION-2012.11.01");
 
-        tissueExtraction.setProductFamily(findProductFamily(ProductFamily.Name.GENERAL_PRODUCTS));
+        tissueExtraction.setProductFamily(findProductFamily(ProductFamily.ProductFamilyName.GENERAL_PRODUCTS));
 
         // total guesses on time
         tissueExtraction.setExpectedCycleTimeSeconds(2 * DAYS);
@@ -157,19 +148,15 @@ public class CreateProductDetailsTestData extends ContainerTest {
         tissueExtraction.setSamplesPerWeek(360);
         tissueExtraction.setTopLevelProduct(true);
 
-        priceItem = new PriceItem();
-        priceItem.setProduct(tissueExtraction);
-        priceItem.setPlatform(GP);
-        priceItem.setCategoryName(GENERAL_PRODUCTS);
-        priceItem.setName(TISSUE_DNA_EXTRACTION);
-        tissueExtraction.getPriceItems().add(priceItem);
+        priceItem = new PriceItem(tissueExtraction, GP, GENERAL_PRODUCTS, TISSUE_DNA_EXTRACTION, "GP-GENERAL_PRODUCTS-TISSUE_DNA_EXTRACTION_2012.11.01");
+        tissueExtraction.addPriceItem(priceItem);
 
 
         Product bloodExtraction = new Product();
         exex.getAddOns().add(bloodExtraction);
-        bloodExtraction.setPartNumber("WHOLE_BLOOD_DNA_EXTRACTION-2012-11-01");
+        bloodExtraction.setPartNumber("WHOLE_BLOOD_DNA_EXTRACTION-2012.11.01");
 
-        bloodExtraction.setProductFamily(findProductFamily(ProductFamily.Name.GENERAL_PRODUCTS));
+        bloodExtraction.setProductFamily(findProductFamily(ProductFamily.ProductFamilyName.GENERAL_PRODUCTS));
 
         // total guesses on time
         bloodExtraction.setExpectedCycleTimeSeconds(1 * DAYS);
@@ -204,22 +191,17 @@ public class CreateProductDetailsTestData extends ContainerTest {
         bloodExtraction.setSamplesPerWeek(360);
         bloodExtraction.setTopLevelProduct(true);
 
-        priceItem = new PriceItem();
-        priceItem.setPlatform(GP);
-        priceItem.setCategoryName(GENERAL_PRODUCTS);
-        priceItem.setName(BLOOD_DNA_EXTRACTION);
-        priceItem.setProduct(bloodExtraction);
-
-        bloodExtraction.getPriceItems().add(priceItem);
+        priceItem = new PriceItem(bloodExtraction, GP, GENERAL_PRODUCTS, BLOOD_DNA_EXTRACTION, "GP-GENERAL_PRODUCTS-BLOOD_DNA_EXTRACTION_2012.11.01");
+        bloodExtraction.addPriceItem(priceItem);
 
 
         Product extraCoverage = new Product();
 
         exex.getAddOns().add(extraCoverage);
 
-        extraCoverage.setPartNumber("EXTRA_HISEQ_COVERAGE-2012-11-01");
+        extraCoverage.setPartNumber("EXTRA_HISEQ_COVERAGE-2012.11.01");
 
-        extraCoverage.setProductFamily(findProductFamily(ProductFamily.Name.ILLUMINA_SEQUENCING_ONLY));
+        extraCoverage.setProductFamily(findProductFamily(ProductFamily.ProductFamilyName.ILLUMINA_SEQUENCING_ONLY));
 
         // total guesses on time
         extraCoverage.setExpectedCycleTimeSeconds(3 * DAYS);
@@ -244,13 +226,12 @@ public class CreateProductDetailsTestData extends ContainerTest {
         extraCoverage.setSamplesPerWeek(192);
         extraCoverage.setTopLevelProduct(false);
 
-        priceItem = new PriceItem();
-        priceItem.setPlatform(GP);
-        priceItem.setCategoryName(ILLUMINA_SEQUENCING_ONLY);
-        priceItem.setName(EXTRA_HISEQ_COVERAGE);
-        priceItem.setProduct(extraCoverage);
+        priceItem = new PriceItem(extraCoverage, GP, ILLUMINA_SEQUENCING_ONLY, EXTRA_HISEQ_COVERAGE, "GP-ILLUMINA_SEQUENCING_ONLY-EXTRA_HISEQ_COVERAGE_2012.11.01");
 
-        extraCoverage.getPriceItems().add(priceItem);
+        extraCoverage.addPriceItem(priceItem);
+
+
+        productDao.persist(exex);
 
     }
 
