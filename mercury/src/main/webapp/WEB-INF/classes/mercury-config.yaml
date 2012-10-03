@@ -65,8 +65,6 @@ jira:
 #      port:     8020
       urlBase:      https://labopsjira.broadinstitute.org
 
-    # not defining the PROD instance for now since we will not be referencing it yet
-
 
 
 

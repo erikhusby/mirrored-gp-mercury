@@ -65,8 +65,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         if (baseUrl == null) {
 
-            String urlString = "http://%s:%d/rest/api/2";
-            baseUrl = String.format(urlString, jiraConfig.getHost(), jiraConfig.getPort());
+            String urlString = "%s/rest/api/2";
+            baseUrl = String.format(urlString, jiraConfig.getUrlBase());
 
         }
 
