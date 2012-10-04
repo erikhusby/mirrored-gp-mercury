@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-@Test
+@Test(enabled = false)
 public class ProductFamilyDaoTest extends ContainerTest {
 
     @Inject
