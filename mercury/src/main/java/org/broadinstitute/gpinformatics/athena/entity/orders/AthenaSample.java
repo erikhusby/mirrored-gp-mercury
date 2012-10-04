@@ -141,14 +141,17 @@ public class AthenaSample implements Serializable {
     }
 
     public String getGender() {
+        //TODO hmc
         throw new RuntimeException("Not yet Implemented.");
     }
 
     public String getDisease() {
+        //TODO hmc
         throw new RuntimeException("Not yet Implemented.");
     }
 
     public String getSampleType() {
+        //TODO hmc
         // Normal or Tumor
         throw new RuntimeException("Not yet Implemented.");
     }

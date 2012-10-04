@@ -128,15 +128,4 @@ public class SampleSheet implements Serializable {
         return needed;
     }
 
-
-    private boolean allSamplesMetaDataAvailable() {
-        boolean result = true;
-        if (! isSheetEmpty() ) {
-
-
-        }
-        return result;
-    }
-
-
 }
