@@ -145,7 +145,7 @@ public class ResearchProject {
             associatedPeople = new HashSet<ProjectPerson>();
         }
 
-        associatedPeople.add(new ProjectPerson(role, personId));
+        associatedPeople.add(new ProjectPerson(this, role, personId));
     }
 
     public Set<Long> getPeople(RoleType role) {

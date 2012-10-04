@@ -26,7 +26,8 @@ public class ProjectPerson {
 
     protected ProjectPerson() { }
 
-    public ProjectPerson(RoleType role, Long personId) {
+    public ProjectPerson(ResearchProject researchProject, RoleType role, Long personId) {
+        this.researchProject = researchProject;
         this.role = role;
         this.personId = personId;
     }
@@ -43,24 +44,12 @@ public class ProjectPerson {
         return researchProject;
     }
 
-    public void setResearchProject(ResearchProject researchProject) {
-        this.researchProject = researchProject;
-    }
-
     public RoleType getRole() {
         return role;
     }
 
-    public void setRole(RoleType role) {
-        this.role = role;
-    }
-
     public Long getPersonId() {
         return personId;
-    }
-
-    public void setPersonId(Long personId) {
-        this.personId = personId;
     }
 
     /**
