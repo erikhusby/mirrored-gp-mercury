@@ -8,6 +8,8 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -34,53 +36,53 @@ public class ResearchProjectResourceTest extends ContainerTest {
     private Long testResearchProjectId;
     private String testTitle;
 
+    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
-        testTitle = "MyResearchProject_" + UUID.randomUUID();
-        ResearchProject researchProject =
-                new ResearchProject(TEST_CREATOR, testTitle, "To study stuff.");
+        // Only do this if the server is calling this and thus, injection worked
+        if (researchProjectResource != null) {
+            testTitle = "MyResearchProject_" + UUID.randomUUID();
+            ResearchProject researchProject =
+                    new ResearchProject(TEST_CREATOR, testTitle, "To study stuff.");
 
-        researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant_" + UUID.randomUUID()));
-        researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO_" + UUID.randomUUID()));
+            researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant_" + UUID.randomUUID()));
+            researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO_" + UUID.randomUUID()));
 
-        researchProject.addIrbNumber(
-            new ResearchProjectIRB(researchProject, FARBER, "irb123_" + UUID.randomUUID()));
-        researchProject.addIrbNumber(
-            new ResearchProjectIRB(researchProject, BROAD, "irb456_" + UUID.randomUUID()));
+            researchProject.addIrbNumber(
+                new ResearchProjectIRB(researchProject, FARBER, "irb123_" + UUID.randomUUID()));
+            researchProject.addIrbNumber(
+                new ResearchProjectIRB(researchProject, BROAD, "irb456_" + UUID.randomUUID()));
 
-        researchProject.addPerson(RoleType.SCIENTIST, TestScientist1);
-        researchProject.addPerson(RoleType.SCIENTIST, TestScientist2);
+            researchProject.addPerson(RoleType.SCIENTIST, TestScientist1);
+            researchProject.addPerson(RoleType.SCIENTIST, TestScientist2);
 
-        researchProjectDao.persist(researchProject);
+            researchProjectDao.persist(researchProject);
 
-        testResearchProjectId = researchProject.getId();
+            testResearchProjectId = researchProject.getId();
+        }
     }
 
+    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
-        researchProjectDao.delete(researchProject);
+        // Only do this if the server is calling this and thus, injection worked
+        if (researchProjectResource != null) {
+            ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
+            researchProjectDao.delete(researchProject);
+        }
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindResearchProjectById() throws Exception {
-        setUp();
         ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
         Assert.assertNotNull(researchProject);
         Assert.assertNotNull(researchProject.getTitle());
         Assert.assertEquals(researchProject.getTitle(), testTitle);
-        tearDown();
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindAllResearchProjects() throws Exception {
-        setUp();
-
-        try {
-            List<ResearchProject> researchProjects =
-                    researchProjectResource.findAllResearchProjectsByCreator(TEST_CREATOR);
-            Assert.assertNotNull(researchProjects);
-            Assert.assertEquals(researchProjects.size(), 1);
-        } finally {
-            tearDown();
-        }
+        List<ResearchProject> researchProjects =
+                researchProjectResource.findAllResearchProjectsByCreator(TEST_CREATOR);
+        Assert.assertNotNull(researchProjects);
+        Assert.assertEquals(researchProjects.size(), 1);
     }
 }
