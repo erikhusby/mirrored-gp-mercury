@@ -32,11 +32,10 @@ public class AuthorizationManager {
     public boolean isUserAuthorized(String pageUri, HttpServletRequest requestIn) {
         boolean authorized = false;
 
-        HttpServletRequest request =requestIn;
-        if(authSvc.isPageProtected(pageUri)) {
+        if (authSvc.isPageProtected(pageUri)) {
             Collection<String> authorizationGroups = authSvc.retrieveAuthorizedRoles(pageUri);
-            for(String currGroup:authorizationGroups) {
-                if(request.isUserInRole(currGroup) || currGroup.equals("All")) {
+            for (String currentGroup : authorizationGroups) {
+                if (requestIn.isUserInRole(currentGroup) || currentGroup.equals("All")) {
                     authorized = true;
                     break;
                 }

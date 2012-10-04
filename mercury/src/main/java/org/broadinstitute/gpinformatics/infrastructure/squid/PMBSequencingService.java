@@ -1,13 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
-import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.BaitSetName;
-import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.OrganismName;
-import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.ReferenceSequenceName;
-import org.broadinstitute.gpinformatics.athena.entity.experiments.seq.SeqExperimentRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
-import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 
 import java.io.Serializable;
 import java.util.List;
@@ -23,25 +16,5 @@ public interface PMBSequencingService extends Serializable {
     // Sequencing people
     List<Person> getPlatformPeople();
 
-    // Organisms
-    List<OrganismName> getOrganisms();
-
-    //BaitSets
-    List<BaitSetName> getBaitSets();
-
-    //reference sets
-    List<ReferenceSequenceName> getReferenceSequences();
-
-    //Passes
-    List<ExperimentRequestSummary> getRequestSummariesByCreator(Person programMgr);
-
-    //load pass
-    SeqExperimentRequest getPlatformRequest(ExperimentRequestSummary experimentRequestSummary);
-
-    //validate pass
-    void validatePlatformRequest(SeqExperimentRequest seqExperimentRequest) throws ValidationException;
-
-    //submit pass
-    SeqExperimentRequest submitRequestToPlatform(Person programMgr, SeqExperimentRequest seqExperimentRequest) throws ValidationException, SubmissionException;
 
 }

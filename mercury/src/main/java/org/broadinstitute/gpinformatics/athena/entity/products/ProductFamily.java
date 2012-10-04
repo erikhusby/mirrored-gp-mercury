@@ -30,15 +30,30 @@ public class ProductFamily implements Serializable {
      * Known product families, a DAO method might accept one of these to return a persistent or detached instance
      * of one of these ProductFamilies if there was business logic that wanted to call out a specific ProductFamily.
      */
-    public enum Name {
-        EXOME_EXPRESS,
-        EXOME_SEQUENCING,
-        EXOME_CHIP,
-        WHOLE_GENOME_SEQUENCING,
-        RNA_SEQUENCING,
-        DENOVO_ASSEMBLY,
-        FLUIDIGM;
+    public enum ProductFamilyName {
+        GENERAL_PRODUCTS("General Products"),
+        EXOME_SEQUENCING_ANALYSIS("Exome Sequencing Analysis"),
+        WHOLE_GENOME_SEQUENCING_ANALYSIS("Whole Genome Sequencing Analysis"),
+        WHOLE_GENOME_ARRAY_ANALYSIS("Whole Genome Array Analysis"),
+        RNA_ANALYSIS("RNA Analysis"),
+        ASSEMBLY_ANALYSIS("Assembly Analysis"),
+        METAGENOMIC_ANALYSIS("Metagenomic Analysis"),
+        EPIGENOMIC_ANALYSIS("Epigenomic Analysis"),
+        ILLUMINA_SEQUENCING_ONLY("Illumina Sequencing Only"),
+        ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
+        CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing");
+
+        private final String displayName;
+
+        ProductFamilyName(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
+
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_FAMILY", sequenceName = "SEQ_PRODUCT_FAMILY")
@@ -47,20 +62,30 @@ public class ProductFamily implements Serializable {
 
     private String name;
 
+
+    /**
+     * JPA package visible constructor
+     * @return
+     */
+    ProductFamily() {
+    }
+
+
+    public ProductFamily(String name) {
+
+        if ( name == null )
+            throw new NullPointerException( "Null name!" );
+
+        this.name = name;
+    }
+
+
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @Override
