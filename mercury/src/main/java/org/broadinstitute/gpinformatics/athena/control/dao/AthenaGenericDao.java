@@ -21,6 +21,10 @@ public class AthenaGenericDao {
         return AthenaThreadEntityManager;
     }
 
+    protected EntityManager em() {
+        return getAthenaThreadEntityManager().getEntityManager();
+    }
+
     public void flush() {
         this.AthenaThreadEntityManager.getEntityManager().flush();
     }
