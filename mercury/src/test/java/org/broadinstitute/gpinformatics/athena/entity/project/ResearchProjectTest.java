@@ -22,8 +22,8 @@ public class ResearchProjectTest {
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant"));
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO"));
 
-        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, "irb123"));
-        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, "irb456"));
+        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, ResearchProjectIRB.IrbType.BROAD, "irb123"));
+        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, ResearchProjectIRB.IrbType.OTHER, "irb456"));
 
         researchProject.addPerson(RoleType.SCIENTIST, 111L);
         researchProject.addPerson(RoleType.SCIENTIST, 222L);
