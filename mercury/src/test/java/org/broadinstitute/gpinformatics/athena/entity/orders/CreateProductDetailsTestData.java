@@ -12,11 +12,9 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.Calendar;
 
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.EXOME_SEQUENCING_ANALYSIS;
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.GENERAL_PRODUCTS;
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.ILLUMINA_SEQUENCING_ONLY;
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.PriceItemName.*;
+import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.*;
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Platform.GP;
+import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.PriceItemName.*;
 
 
 /**
@@ -276,12 +274,6 @@ public class CreateProductDetailsTestData extends ContainerTest {
         extraCoverage.setDefaultPriceItem(priceItem);
 
         productDao.persist(exex);
-
-        // this #clear seems to act like a #flush except it doesn't require a transaction.  which is good, since
-        // we don't seem to have a transaction.  if i call #flush here my data does get written out, but then
-        // i get an exception due to the lack of transaction.  if i don't have a #flush or #clear, none of the
-        // Product or PriceItem data will be written out.
-        productDao.clear();
 
     }
 
