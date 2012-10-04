@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -17,6 +18,9 @@ import java.util.List;
  */
 @Test(groups = {TestGroups.DATABASE_FREE})
 public class OrderTest {
+
+    private static final String PDO_JIRA_KEY = "PDO-1";
+
     @BeforeMethod
     public void setUp() throws Exception {
     }
@@ -45,6 +49,27 @@ public class OrderTest {
         //TODO hmc Under construction
         Assert.assertEquals(order.getSampleSheet().getSamples().size(), 6);
         Assert.assertTrue(order.getSampleSheet().getSamples().get(0).getBillableItems().size() == 2);
+
+        Assert.assertNull(order.getJiraTicketKey());
+
+        Assert.assertEquals(order.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.Product_Order);
+
+        Assert.assertEquals(order.fetchJiraProject(), CreateIssueRequest.Fields.ProjectType.Product_Ordering);
+
+        try {
+            order.setJiraTicketKey(null);
+            Assert.fail();
+        } catch(NullPointerException npe) {
+            /*
+            Ensuring Null is thrown for setting null
+             */
+        } finally {
+            order.setJiraTicketKey(PDO_JIRA_KEY);
+        }
+
+        Assert.assertNotNull(order.getJiraTicketKey());
+
+        Assert.assertEquals(order.getJiraTicketKey(),PDO_JIRA_KEY);
 
     }
 

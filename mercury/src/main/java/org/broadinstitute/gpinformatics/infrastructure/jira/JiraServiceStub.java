@@ -12,7 +12,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Dummy implementation that writes calls
@@ -41,10 +43,21 @@ public class JiraServiceStub implements JiraService {
     }
 
     @Override
-    public List<CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project, CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
-        final List<CustomFieldDefinition> customFields = new ArrayList<CustomFieldDefinition>();
+    public Map<String, CustomFieldDefinition> getRequiredFields(CreateIssueRequest.Fields.Project project,
+                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+        final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
-            customFields.add(new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,requiredFieldName,true));
+            customFields.put(requiredFieldName,new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,requiredFieldName,true));
+        }
+        return customFields;
+    }
+
+    @Override
+    public Map<String, CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,
+                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+        final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
+        for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
+            customFields.put(requiredFieldName,new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,requiredFieldName,true));
         }
         return customFields;
     }

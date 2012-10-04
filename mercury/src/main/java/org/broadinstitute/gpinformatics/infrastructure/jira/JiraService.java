@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 
 public interface JiraService extends Serializable {
@@ -55,11 +56,16 @@ public interface JiraService extends Serializable {
 
     /**
      * Finds all the custom fields for the given project and issue type
+     *
      * @param project
      * @param issueType
      * @return
      */
-    public List<CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
+    public Map<String, CustomFieldDefinition> getRequiredFields(CreateIssueRequest.Fields.Project project,
+                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
 
     public String createTicketUrl(String jiraTicketName);
+
+    public Map<String, CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,
+                                                              CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
 }
