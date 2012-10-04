@@ -19,7 +19,7 @@ public class PMBEndToEndTest extends Arquillian {
 //    private ResearchProjectResource researchProjectResource;
 //    // Just for now can later be replaced by ResearchProjectResource
 //    @Inject
-//    private ResearchProjectDAO researchProjectDAO;
+//    private ResearchProjectDao researchProjectDAO;
 //    @Inject
 //    private BSPSampleSearchService bspService;
 //    @Inject

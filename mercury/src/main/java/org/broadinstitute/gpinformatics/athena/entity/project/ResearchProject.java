@@ -2,56 +2,73 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
 import org.broadinstitute.gpinformatics.athena.entity.orders.Order;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
+import org.broadinstitute.gpinformatics.infrastructure.experiments.EntityUtils;
 
-import java.util.*;
+import javax.persistence.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * Concrete class for a Research project.
- * Note the collection members are sets as we we shouldn't have dupe values in these collections
- * There will only be small numbers of scientists, funding-sources, sample-cohorts, IrbNumbers and
- * experiment  requests per research project but there could be many many samples per research project.
- *
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 4/12/12
- * Time: 12:21 PM
+ * Research Projects hold all the information about a research project
  */
+@Entity
 public class ResearchProject {
 
     public enum Status {
         Open, Archived
     }
 
-    private ResearchProjectId id;
+    @Id
+    @SequenceGenerator(name="seq_research_project_index", sequenceName="seq_research_project_index", allocationSize = 1)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
+    private Long id;
 
     private Status status;
 
-    private ChangeEvent creation;
-    private ChangeEvent modification;
+    // creation/modification information
+    private Date createdDate;
+    private Long createdBy;
+    private Date modifiedDate;
+    private Long modifiedBy;
+
+    @Column(unique = true)
     private String title;
+
     private String synopsis;
 
     // People related to the project
-    private final Map<RoleType, Set<ProjectPerson>> associatedPeople = new HashMap<RoleType, Set<ProjectPerson>> ();
+    @OneToMany(cascade = CascadeType.PERSIST)
+    private Set<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
-    private final Set<Cohort> sampleCohorts = new HashSet<Cohort>();
-    private final Set<FundingId> fundingIDs = new HashSet<FundingId>();
+    @OneToMany(mappedBy = "researchProject")
+    private Set<ResearchProjectCohort> sampleCohorts;
 
-    private final Set<String> irbNumbers = new HashSet<String>();
+    @OneToMany(mappedBy = "researchProject")
+    private Set<ResearchProjectFunding> fundingIDs;
+
+    @OneToMany(mappedBy = "researchProject")
+    private Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
+
     private String irbNotes;
 
+    @Transient
     private final Set<Order> orders = new HashSet<Order>();
 
-    public ResearchProject(Person creator, String title, String synopsis) {
+    protected ResearchProject() {}
+
+    public ResearchProject(Long creator, String title, String synopsis) {
         this.title = title;
         this.synopsis = synopsis;
-        this.creation = new ChangeEvent(creator);
-        this.modification = new ChangeEvent(new Date(this.creation.date.getTime()), creator);
+        this.createdBy = creator;
+        this.createdDate = new Date();
+        this.modifiedBy = creator;
+        this.modifiedDate = this.createdDate;
+        this.irbNotes = "";
     }
 
     // Getters
@@ -59,115 +76,106 @@ public class ResearchProject {
         return title;
     }
 
-    public ResearchProjectId getId() {
-        return id;
-    }
-
-    public ChangeEvent getCreation() {
-        return creation;
-    }
-
     public String getSynopsis() {
         return synopsis;
     }
-    public ChangeEvent getModification() {
-        return modification;
+
+    public Long getId() {
+        return id;
     }
 
-    //Setters
-    public void setTitle(String title) {
-        this.title = title;
+    public Date getCreatedDate() {
+        return createdDate;
     }
 
-    public void setId(ResearchProjectId id) {
-        this.id = id;
+    public Long getCreatedBy() {
+        return createdBy;
     }
 
-    public void setCreation(ChangeEvent creation) {
-        this.creation = creation;
+    public Date getModifiedDate() {
+        return modifiedDate;
     }
 
-    public Set<Order> getOrders() {
-        return orders;
-    }
-
-    public void setSynopsis(String synopsis) {
-        this.synopsis = synopsis;
-    }
-
-    public void setModification(ChangeEvent modification) {
-        this.modification = modification;
+    public Long getModifiedBy() {
+        return modifiedBy;
     }
 
     public String getIrbNotes() {
         return irbNotes;
     }
 
-    public void setIrbNotes(String irbNotes) {
-        this.irbNotes = irbNotes;
+    public void addIrbNotes(String irbNotes) {
+        this.irbNotes += "\n" + irbNotes;
     }
 
-    public Set<Cohort> getSampleCohorts() {
-        return Collections.unmodifiableSet(sampleCohorts);
-    }
-    public Set<Cohort> addCohort(Cohort sampleCohort ){
-        sampleCohorts.add(sampleCohort);
+    public Set<ResearchProjectCohort> getSampleCohorts() {
         return Collections.unmodifiableSet(sampleCohorts);
     }
 
-    public Set<Cohort> removeCohort(Cohort sampleCohort ){
-        sampleCohorts.remove(sampleCohort);
-        return Collections.unmodifiableSet(sampleCohorts);
-    }
-
-    public Set<String> getIrbNumbers() {
-        return Collections.unmodifiableSet(irbNumbers);
-    }
-
-    public Set<String> addIrbNumber(String irbNumber) {
-        irbNumbers.add(irbNumber);
-        return Collections.unmodifiableSet(irbNumbers);
-    }
-
-    public Set<String> removeIrbNumber(String irbNumber) {
-        irbNumbers.remove(irbNumber);
-        return Collections.unmodifiableSet(irbNumbers);
-    }
-
-    public void addPerson(RoleType role, Person person) {
-        Set<ProjectPerson> peopleForRole = associatedPeople.get(role);
-        if (peopleForRole == null) {
-            peopleForRole = new HashSet<ProjectPerson>();
-            associatedPeople.put(role, peopleForRole);
+    public void addCohort(ResearchProjectCohort sampleCohort ){
+        if (sampleCohorts == null) {
+            sampleCohorts = new HashSet<ResearchProjectCohort>();
         }
 
-        peopleForRole.add(new ProjectPerson(role, person));
+        sampleCohorts.add(sampleCohort);
     }
 
-    public Set<Person> getPeople(RoleType role) {
-        Set<Person> people = new HashSet<Person> ();
+    public void removeCohort(ResearchProjectCohort sampleCohort ){
+        sampleCohorts.remove(sampleCohort);
+    }
 
-        if (associatedPeople.get(role) != null) {
-            for (ProjectPerson projectPerson : associatedPeople.get(role)) {
-                people.add(projectPerson.getPerson());
+    public Set<ResearchProjectIRB> getIrbNumbers() {
+        return Collections.unmodifiableSet(irbNumbers);
+    }
+
+    public void addIrbNumber(ResearchProjectIRB irbNumber) {
+        if (irbNumbers == null) {
+            irbNumbers = new HashSet<ResearchProjectIRB>();
+        }
+
+        irbNumbers.add(irbNumber);
+    }
+
+    public void removeIrbNumber(ResearchProjectIRB irbNumber) {
+        irbNumbers.remove(irbNumber);
+    }
+
+    public void addPerson(RoleType role, Long personId) {
+        if (associatedPeople == null) {
+            associatedPeople = new HashSet<ProjectPerson>();
+        }
+
+        associatedPeople.add(new ProjectPerson(this, role, personId));
+    }
+
+    public Set<Long> getPeople(RoleType role) {
+        Set<Long> people = new HashSet<Long> ();
+
+        if (associatedPeople != null) {
+            for (ProjectPerson projectPerson : associatedPeople) {
+                if (role == projectPerson.getRole()) {
+                    people.add(projectPerson.getPersonId());
+                }
             }
         }
 
         return people;
     }
 
-    public Set<FundingId> getFundingIds() {
+    public Set<ResearchProjectFunding> getFundingIds() {
         return Collections.unmodifiableSet(fundingIDs);
     }
 
-    public Set<FundingId> addFunding(FundingId fundingId) {
-        fundingIDs.add(fundingId);
-        return Collections.unmodifiableSet(fundingIDs);
+    public void addFunding(ResearchProjectFunding funding) {
+        if (fundingIDs == null) {
+            fundingIDs = new HashSet<ResearchProjectFunding>();
+        }
+
+        fundingIDs.add(funding);
     }
 
-    public Set<FundingId> removeFunding(FundingId fundingID) {
-        fundingIDs.remove(fundingID);
-        return Collections.unmodifiableSet(fundingIDs);
+    public void removeFunding(ResearchProjectFunding funding) {
+        fundingIDs.remove(funding);
     }
 
     public Status getStatus() {
@@ -176,6 +184,15 @@ public class ResearchProject {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public String getIrbNumberString() {
+        Set<String> irbNumberString = new HashSet<String> ();
+        for (ResearchProjectIRB irb : getIrbNumbers()) {
+            irbNumberString.add(irb.getIrb());
+        }
+
+        return EntityUtils.flattenSetOfStrings(irbNumberString);
     }
 
     /**
@@ -191,10 +208,6 @@ public class ResearchProject {
         return new EqualsBuilder().append(title, castOther.title).isEquals();
     }
 
-    /**
-     *
-     * @return int
-     */
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(title).toHashCode();

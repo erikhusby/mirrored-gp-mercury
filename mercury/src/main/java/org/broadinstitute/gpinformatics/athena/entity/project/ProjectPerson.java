@@ -3,54 +3,53 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
+
+import javax.persistence.*;
 
 /**
  * This class associates a person with a project. Each person has roles in a project and this object
  * stores a single role for a person in a project. The person/project/role should be unique within this
  */
+@Entity
 public class ProjectPerson {
-    private ProjectPersonId id;
 
-    private ResearchProject project;
+    @Id
+    @SequenceGenerator(name="seq_project_person_index", sequenceName="seq_project_person_index", allocationSize = 1)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_project_person_index")
+    private Long id;
+
+    @ManyToOne
+    private ResearchProject researchProject;
+
     private RoleType role;
-    private Person person;
+    private Long personId;
 
-    public ProjectPerson(RoleType role, Person person) {
+    protected ProjectPerson() { }
+
+    public ProjectPerson(ResearchProject researchProject, RoleType role, Long personId) {
+        this.researchProject = researchProject;
         this.role = role;
-        this.person = person;
+        this.personId = personId;
     }
 
-    public ProjectPersonId getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(ProjectPersonId id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public ResearchProject getProject() {
-        return project;
-    }
-
-    public void setProject(ResearchProject project) {
-        this.project = project;
+    public ResearchProject getResearchProject() {
+        return researchProject;
     }
 
     public RoleType getRole() {
         return role;
     }
 
-    public void setRole(RoleType role) {
-        this.role = role;
-    }
-
-    public Person getPerson() {
-        return person;
-    }
-
-    public void setPerson(Person person) {
-        this.person = person;
+    public Long getPersonId() {
+        return personId;
     }
 
     /**
@@ -63,7 +62,9 @@ public class ProjectPerson {
         if ( (this == other ) ) return true;
         if ( !(other instanceof ProjectPerson) ) return false;
         ProjectPerson castOther = (ProjectPerson) other;
-        return new EqualsBuilder().append(project, castOther.project).append(person, castOther.person).isEquals();
+        return new EqualsBuilder()
+                .append(role, castOther.role)
+                .append(personId, castOther.personId).isEquals();
     }
 
     /**
@@ -72,6 +73,8 @@ public class ProjectPerson {
      */
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(project).append(person).toHashCode();
+        return new HashCodeBuilder()
+                .append(role)
+                .append(personId).toHashCode();
     }
 }
