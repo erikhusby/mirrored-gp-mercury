@@ -29,23 +29,11 @@ public class ResearchProjectIRB {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public ResearchProject getResearchProject() {
         return researchProject;
     }
 
-    public void setResearchProject(ResearchProject researchProject) {
-        this.researchProject = researchProject;
-    }
-
     public String getIrb() {
         return irb;
-    }
-
-    public void setIrb(String irb) {
-        this.irb = irb;
     }
 }

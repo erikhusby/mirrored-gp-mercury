@@ -19,7 +19,6 @@ public class ResearchProjectCohort {
     // The BSP cohort Identifier
     private String cohortId;
 
-
     protected ResearchProjectCohort() { }
 
     ResearchProjectCohort(ResearchProject researchProject, String cohortId) {
@@ -31,24 +30,12 @@ public class ResearchProjectCohort {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public ResearchProject getResearchProject() {
         return researchProject;
     }
 
-    public void setResearchProject(ResearchProject researchProject) {
-        this.researchProject = researchProject;
-    }
-
     public String getCohortId() {
         return cohortId;
-    }
-
-    public void setCohortId(String cohortId) {
-        this.cohortId = cohortId;
     }
 }
 

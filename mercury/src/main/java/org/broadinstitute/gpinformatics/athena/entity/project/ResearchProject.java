@@ -59,6 +59,8 @@ public class ResearchProject {
     @Transient
     private final Set<Order> orders = new HashSet<Order>();
 
+    protected ResearchProject() {}
+
     public ResearchProject(Long creator, String title, String synopsis) {
         this.title = title;
         this.synopsis = synopsis;
@@ -66,9 +68,8 @@ public class ResearchProject {
         this.createdDate = new Date();
         this.modifiedBy = creator;
         this.modifiedDate = this.createdDate;
+        this.irbNotes = "";
     }
-
-    protected ResearchProject() {}
 
     // Getters
     public String getTitle() {
@@ -99,45 +100,12 @@ public class ResearchProject {
         return modifiedBy;
     }
 
-    //Setters
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    public void setCreatedBy(Long createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public void setModifiedDate(Date modifiedDate) {
-        this.modifiedDate = modifiedDate;
-    }
-
-    public void setModifiedBy(Long modifiedBy) {
-        this.modifiedBy = modifiedBy;
-    }
-
-    public Set<Order> getOrders() {
-        return orders;
-    }
-
-    public void setSynopsis(String synopsis) {
-        this.synopsis = synopsis;
-    }
-
     public String getIrbNotes() {
         return irbNotes;
     }
 
-    public void setIrbNotes(String irbNotes) {
-        this.irbNotes = irbNotes;
+    public void addIrbNotes(String irbNotes) {
+        this.irbNotes += "\n" + irbNotes;
     }
 
     public Set<ResearchProjectCohort> getSampleCohorts() {

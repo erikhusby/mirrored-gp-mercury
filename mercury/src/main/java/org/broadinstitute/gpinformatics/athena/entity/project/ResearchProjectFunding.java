@@ -30,23 +30,11 @@ public class ResearchProjectFunding {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public ResearchProject getResearchProject() {
         return researchProject;
     }
 
-    public void setResearchProject(ResearchProject researchProject) {
-        this.researchProject = researchProject;
-    }
-
     public String getFundingId() {
         return fundingId;
-    }
-
-    public void setFundingId(String fundingId) {
-        this.fundingId = fundingId;
     }
 }
