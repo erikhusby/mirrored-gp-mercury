@@ -14,6 +14,8 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.UUID;
 
+import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.*;
+
 /**
  *
  */
@@ -40,8 +42,10 @@ public class ResearchProjectResourceTest extends ContainerTest {
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant_" + UUID.randomUUID()));
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO_" + UUID.randomUUID()));
 
-        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, "irb123_" + UUID.randomUUID()));
-        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, "irb456_" + UUID.randomUUID()));
+        researchProject.addIrbNumber(
+            new ResearchProjectIRB(researchProject, FARBER, "irb123_" + UUID.randomUUID()));
+        researchProject.addIrbNumber(
+            new ResearchProjectIRB(researchProject, BROAD, "irb456_" + UUID.randomUUID()));
 
         researchProject.addPerson(RoleType.SCIENTIST, TestScientist1);
         researchProject.addPerson(RoleType.SCIENTIST, TestScientist2);
