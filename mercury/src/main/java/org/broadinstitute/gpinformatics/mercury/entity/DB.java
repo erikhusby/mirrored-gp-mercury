@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.AuthorizedRole;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.PageAuthorization;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
@@ -21,10 +22,16 @@ import java.util.Map;
 @ApplicationScoped
 public class DB implements Serializable {
 
-    private Map<String, Project> projects = new HashMap<String, Project>();
-    private Map<String, WorkflowDescription> workflowDescriptions = new HashMap<String, WorkflowDescription>();
-    private Map<String, PageAuthorization> pageAuthorizationMap = new HashMap<String, PageAuthorization>();
-    private Map<String, AuthorizedRole> authorizedRoleMap = new HashMap<String, AuthorizedRole>();
+    private static final String DEVELOPER_ROLE = "Mercury-Developers";
+    private static final String PROJECT_MANAGER_ROLE = "Mercury-ProjectManagers";
+    private static final String LAB_USER_ROLE = "Mercury-LabUsers";
+    private static final String LAB_MANAGER_ROLE = "Mercury-LabManagers";
+    private static final long serialVersionUID = 3344014380008589366L;
+
+    private final Map<String, Project> projects = new HashMap<String, Project>();
+    private final Map<String, WorkflowDescription> workflowDescriptions = new HashMap<String, WorkflowDescription>();
+    private final Map<String, PageAuthorization> pageAuthorizationMap = new HashMap<String, PageAuthorization>();
+    private final Map<String, AuthorizedRole> authorizedRoleMap = new HashMap<String, AuthorizedRole>();
 
     public DB() {
         addWorkflowDescription(new WorkflowDescription("Hybrid Selection", null, null));
@@ -36,7 +43,7 @@ public class DB implements Serializable {
     // Project
 
     public void addProject(Project project) {
-        if (project.getProjectName() == null || project.getProjectName().equals("")) {
+        if (StringUtils.isBlank(project.getProjectName())) {
             throw new IllegalArgumentException("Non-null constraint violation: Project.projectName");
         }
         if (projects.containsKey(project.getProjectName())) {
@@ -85,36 +92,34 @@ public class DB implements Serializable {
     }
 
     public void initPageAuthorizations() {
-
         PageAuthorization page = new PageAuthorization("/projects/");
 
-        page.addRoleAccess(authorizedRoleMap.get("Mercury-Developers"));
-        page.addRoleAccess(authorizedRoleMap.get("Mercury-ProjectManagers"));
+        page.addRoleAccess(authorizedRoleMap.get(DEVELOPER_ROLE));
+        page.addRoleAccess(authorizedRoleMap.get(PROJECT_MANAGER_ROLE));
         addPageAuthorization(page);
-
     }
 
     private void initAuthorizedRoles() {
         AuthorizedRole roleAll = new AuthorizedRole("All");
         addAuthorizedRole(roleAll);
-        AuthorizedRole roleDev = new AuthorizedRole("Mercury-Developers");
+        AuthorizedRole roleDev = new AuthorizedRole(DEVELOPER_ROLE);
         addAuthorizedRole(roleDev);
-        AuthorizedRole rolePM = new AuthorizedRole("Mercury-ProjectManagers");
+        AuthorizedRole rolePM = new AuthorizedRole(PROJECT_MANAGER_ROLE);
         addAuthorizedRole(rolePM);
-        AuthorizedRole roleLabUser = new AuthorizedRole("Mercury-LabUsers");
+        AuthorizedRole roleLabUser = new AuthorizedRole(LAB_USER_ROLE);
         addAuthorizedRole(roleLabUser);
-        AuthorizedRole roleLabManager = new AuthorizedRole("Mercury-LabManagers");
+        AuthorizedRole roleLabManager = new AuthorizedRole(LAB_MANAGER_ROLE);
         addAuthorizedRole(roleLabManager);
 
     }
 
 
-    public void addAuthorizedRole(AuthorizedRole RoleIn) {
-        this.authorizedRoleMap.put(RoleIn.getRoleName(), RoleIn);
+    public void addAuthorizedRole(AuthorizedRole roleIn) {
+        authorizedRoleMap.put(roleIn.getRoleName(), roleIn);
     }
 
     public void removeAuthorizedRole(AuthorizedRole roleIn) {
-        this.authorizedRoleMap.remove(roleIn);
+        authorizedRoleMap.remove(roleIn.getRoleName());
     }
 
     public Map<String, AuthorizedRole> getAuthorizedRoleMap() {
@@ -122,12 +127,11 @@ public class DB implements Serializable {
     }
 
     public void addPageAuthorization(PageAuthorization newAuthorizationIn) {
-
-        this.pageAuthorizationMap.put(newAuthorizationIn.getPagePath(), newAuthorizationIn);
+        pageAuthorizationMap.put(newAuthorizationIn.getPagePath(), newAuthorizationIn);
     }
 
     public void removePageAuthorization(PageAuthorization newAuthorizationIn) {
-        this.pageAuthorizationMap.remove(newAuthorizationIn);
+        pageAuthorizationMap.remove(newAuthorizationIn.getPagePath());
     }
 
     public Map<String, PageAuthorization> getPageAuthorizationMap() {

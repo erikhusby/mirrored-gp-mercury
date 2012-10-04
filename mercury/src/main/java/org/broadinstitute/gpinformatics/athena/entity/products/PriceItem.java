@@ -14,9 +14,82 @@ import java.io.Serializable;
 @Entity
 @Audited
 @Table(uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"platform", "categoryName", "name"})
+        @UniqueConstraint(columnNames = {"platform", "categoryName", "priceItemName"})
 })
 public class PriceItem implements Serializable {
+
+
+    /**
+     * GP is the only platform referenced by Athena?
+     */
+    public enum Platform {
+
+        GP("GP");
+
+        private String quoteServerPlatform;
+
+        private Platform(String quoteServerPlatform) {
+            this.quoteServerPlatform = quoteServerPlatform;
+        }
+
+        public String getQuoteServerPlatform() {
+            return quoteServerPlatform;
+        }
+    }
+
+
+    /**
+     * For my dummy test data I am making Category essentially synonymous with {@link ProductFamily}
+     */
+    public enum Category {
+
+        GENERAL_PRODUCTS("General Products"),
+        EXOME_SEQUENCING_ANALYSIS("Exome Sequencing Analysis"),
+        WHOLE_GENOME_SEQUENCING_ANALYSIS("Whole Genome Sequencing Analysis"),
+        WHOLE_GENOME_ARRAY_ANALYSIS("Whole Genome Array Analysis"),
+        RNA_ANALYSIS("RNA Analysis"),
+        ASSEMBLY_ANALYSIS("Assembly Analysis"),
+        METAGENOMIC_ANALYSIS("Metagenomic Analysis"),
+        EPIGENOMIC_ANALYSIS("Epigenomic Analysis"),
+        ILLUMINA_SEQUENCING_ONLY("Illumina Sequencing Only"),
+        ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
+        CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing");
+
+        private String quoteServerCategory;
+
+
+        Category(String quoteServerCategory) {
+            this.quoteServerCategory = quoteServerCategory;
+        }
+
+
+        public String getQuoteServerCategory() {
+            return quoteServerCategory;
+        }
+    }
+
+
+
+    public enum PriceItemName {
+
+        EXOME_EXPRESS("Exome Express"),
+        STANDARD_EXOME_SEQUENCING("Standard Exome Sequencing"),
+        TISSUE_DNA_EXTRACTION("Tissue DNA Extraction"),
+        BLOOD_DNA_EXTRACTION("Blood DNA Extraction"),
+        EXTRA_HISEQ_COVERAGE("Extra HiSeq Coverage");
+
+        private String quoteServerName;
+
+        private PriceItemName(String quoteServerName) {
+            this.quoteServerName = quoteServerName;
+        }
+
+        public String getQuoteServerName() {
+            return quoteServerName;
+        }
+    }
+
+
 
     @Id
     @SequenceGenerator(name = "SEQ_PRICE_ITEM", sequenceName = "SEQ_PRICE_ITEM")
@@ -30,7 +103,7 @@ public class PriceItem implements Serializable {
 
     private String categoryName;
 
-    private String name;
+    private String priceItemName;
 
     private String quoteServicePriceItemId;
 
@@ -43,50 +116,67 @@ public class PriceItem implements Serializable {
     private String units;
 
 
-    public Long getId() {
-        return id;
+    /**
+     * Package visibile constructor for JPA
+     */
+    PriceItem() {}
+
+
+    public PriceItem(Product product, Platform platform, Category categoryName, PriceItemName priceItemName, String quoteServicePriceItemId) {
+
+        if ( product ==  null )
+            throw new NullPointerException( "Null product specified!" );
+
+        if ( platform == null )
+            throw new NullPointerException( "Null platform specified!" );
+
+        if ( priceItemName == null )
+            throw new NullPointerException( "Null price item name specified!" );
+
+        if ( quoteServicePriceItemId == null )
+            throw new NullPointerException( "Null quote server price item id specified!" );
+
+        // don't currently know how to validate this other than against emptiness...
+        if ( "".equals(quoteServicePriceItemId.trim()) )
+            throw new RuntimeException( "Empty quote server price item id specified!" );
+
+        this.product = product;
+        this.platform = platform.getQuoteServerPlatform();
+        this.categoryName = categoryName.getQuoteServerCategory();
+        this.priceItemName = priceItemName.getQuoteServerName();
+        this.quoteServicePriceItemId = quoteServicePriceItemId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+
+    public Long getId() {
+        return id;
     }
 
     public Product getProduct() {
         return product;
     }
 
-    public void setProduct(Product product) {
-        this.product = product;
-    }
-
     public String getPlatform() {
         return platform;
-    }
-
-    public void setPlatform(String platform) {
-        this.platform = platform;
     }
 
     public String getCategoryName() {
         return categoryName;
     }
 
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public String getPriceItemName() {
+        return priceItemName;
     }
 
     public String getPrice() {
         return price;
     }
 
+    /**
+     * Quote server holds price data, we would set this into the entity as a transient property
+     *
+     * @param price
+     */
     public void setPrice(String price) {
         this.price = price;
     }
@@ -95,16 +185,18 @@ public class PriceItem implements Serializable {
         return units;
     }
 
+
+    /**
+     * Quote server holds units data, we would set this into the entity as a transient property
+     *
+     * @param units
+     */
     public void setUnits(String units) {
         this.units = units;
     }
 
     public String getQuoteServicePriceItemId() {
         return quoteServicePriceItemId;
-    }
-
-    public void setQuoteServicePriceItemId(String quoteServicePriceItemId) {
-        this.quoteServicePriceItemId = quoteServicePriceItemId;
     }
 
     @Override
@@ -115,7 +207,7 @@ public class PriceItem implements Serializable {
         PriceItem priceItem = (PriceItem) o;
 
         if (!categoryName.equals(priceItem.categoryName)) return false;
-        if (!name.equals(priceItem.name)) return false;
+        if (!priceItemName.equals(priceItem.priceItemName)) return false;
         if (!platform.equals(priceItem.platform)) return false;
 
         return true;
@@ -125,7 +217,7 @@ public class PriceItem implements Serializable {
     public int hashCode() {
         int result = platform.hashCode();
         result = 31 * result + categoryName.hashCode();
-        result = 31 * result + name.hashCode();
+        result = 31 * result + priceItemName.hashCode();
         return result;
     }
 

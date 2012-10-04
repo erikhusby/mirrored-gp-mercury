@@ -7,13 +7,13 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
  */
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 import javax.faces.context.FacesContext;
-import javax.security.auth.login.LoginException;
+import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,22 +24,23 @@ public class UserLogin extends AbstractJsfBean {
 
     private String password;
 
-    private Log loginLogger = LogFactory.getLog(UserLogin.class);
+    @Inject
+    private Log logger;
 
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String usernameIn) {
-        username = usernameIn;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {
         return password;
     }
 
-    public void setPassword(String passwordIn) {
-        password = passwordIn;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String authenticateUser() {
@@ -47,31 +48,22 @@ public class UserLogin extends AbstractJsfBean {
         FacesContext context = FacesContext.getCurrentInstance();
 
         try {
-            authenticate();
+            HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
+
+            request.login(username, password);
             addInfoMessage("Welcome back!", "Sign in successful");
 
-            HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
-            String previouslyTargetedPage = (String)request.getAttribute("targetted_page");
+            String previouslyTargetedPage = (String)request.getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
 
-            if(null != previouslyTargetedPage ) {
+            if (previouslyTargetedPage != null) {
                 targetPage = previouslyTargetedPage;
             }
-        } catch (LoginException le) {
-            loginLogger.error("LoginException Retrieved: ",le);
-            addErrorMessage("The username and password you entered is incorrect.  Please try again.", "Authentication error");
-            targetPage = "/security/login";
         } catch (ServletException le) {
-            loginLogger.error("ServletException Retrieved: ",le);
+            logger.error("ServletException Retrieved: ", le);
             addErrorMessage("The username and password you entered is incorrect.  Please try again.", "Authentication error");
-            targetPage = "/security/login";
+            targetPage = AuthorizationFilter.LOGIN_PAGE;
         }
 
         return targetPage;
-    }
-
-    private void authenticate() throws LoginException, ServletException {
-        HttpServletRequest request = (HttpServletRequest )FacesContext.getCurrentInstance().getExternalContext().getRequest();
-
-        request.login(username, password);
     }
 }

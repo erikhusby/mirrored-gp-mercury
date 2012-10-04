@@ -1,12 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
-import com.atlassian.crowd.integration.soap.SOAPPrincipal;
-import com.atlassian.crowd.service.soap.client.SecurityServerClientFactory;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
 import org.primefaces.util.ArrayUtils;
 
+import javax.inject.Inject;
 import javax.servlet.*;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
@@ -22,16 +20,17 @@ import java.io.IOException;
  */
 public class AuthorizationFilter implements Filter {
 
-    private static final Logger LOG = Logger.getLogger(AuthorizationFilter.class);
-    public static final String TARGET_PAGE_ATTRIBUTE = "targeted_page";
+    @Inject
+    private Log logger;
     private FilterConfig filterConfig;
 
+    @Inject AuthorizationManager manager;
+
     public static final String LOGIN_PAGE = "/security/login.xhtml";
+    public static final String TARGET_PAGE_ATTRIBUTE = "targeted_page";
 
     // All assets required by the Login page, minus JSF support files.
-    private static final String[] LOGIN_ASSETS = { LOGIN_PAGE, "/images/broad_logo.png", "/images/bridge.jpeg"};
-
-    private static final String CROWD_TOKEN_KEY_COOKIE_NAME = "crowd.token_key";
+    private static final String[] LOGIN_ASSETS = { LOGIN_PAGE, "/images/broad_logo.png", "/images/pmb_broad-logo.jpg"};
 
     /**
      * init is the default initialization method for this filter.  It grabs the filter config (defined in the
@@ -43,26 +42,6 @@ public class AuthorizationFilter implements Filter {
     public void init(FilterConfig filterConfigIn) throws ServletException {
         filterConfig = filterConfigIn;
     }
-
-    /**
-     * Gets the crowd token key from the cookie.
-     *
-     * @param request
-     *                the request.
-     *
-     * @return the crowd token key.
-     */
-    private static String getCrowdTokenKey(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals(CROWD_TOKEN_KEY_COOKIE_NAME)) {
-                    return cookie.getValue();
-                }
-            }
-        }
-        return null;
-	}
 
     /**
      * This method contains the logic for authorizing a given page.
@@ -92,41 +71,23 @@ public class AuthorizationFilter implements Filter {
         String pageUri = request.getServletPath();
 
         if (!excludeFromFilter(pageUri)) {
-            LOG.info("Checking authentication for: " + pageUri);
+            logger.info("Checking authentication for: " + pageUri);
             String user = request.getRemoteUser();
             if (user == null) {
-                LOG.info("User is not authenticated, checking for SSO token");
-                String token = getCrowdTokenKey(request);
-                if (token != null) {
-                    try {
-                        SOAPPrincipal principal =
-                                SecurityServerClientFactory.getSecurityServerClient().findPrincipalByToken(token);
-                        if (principal != null) {
-                            // ???
-                            LOG.info("Found principal " + principal.getName());
-                        }
-                    } catch (Exception e) {
-                        LOG.error("Error while validating SSO token", e);
-
-                    }
-                }
-
-                LOG.info("User is not authenticated, redirecting to login page");
+                logger.info("User is not authenticated, redirecting to login page");
                 if (!pageUri.equals(LOGIN_PAGE)) {
                     servletRequestIn.setAttribute(TARGET_PAGE_ATTRIBUTE, pageUri);
                 }
                 errorRedirect(servletRequestIn, servletResponseIn, LOGIN_PAGE);
                 return;
             }
+            boolean authorized = manager.isUserAuthorized(pageUri, request);
 
-            // User is now logged in, check for user role vs page authorization.
-            if (!request.isUserInRole("PMBAdmins")
-                && !request.isUserInRole("PMBUsers")
-                && !request.isUserInRole("PMBViewers")) {
-                LOG.info("User isn't in  groups");
-                // FIXME: need to report page access error back to user somehow.
-                String errorMessage = "The user '" + user +  "' doesn't have permission to log into .";
+            if (!authorized) {
+                String errorMessage = "The user '" + user +  "' doesn't have permission to log in.";
+                logger.info(errorMessage);
                 errorRedirect(servletRequestIn, servletResponseIn, LOGIN_PAGE);
+                return;
             }
         }
         filterChainIn.doFilter(servletRequestIn, servletResponseIn);
