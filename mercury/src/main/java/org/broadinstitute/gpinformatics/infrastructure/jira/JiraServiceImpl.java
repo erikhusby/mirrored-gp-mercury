@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCom
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -134,13 +135,19 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     }
 
-    public void addLink(AddIssueLinkRequest.LinkType type,String sourceIssueIn, String targetIssueIn) throws IOException {
+    @Override
+    public void addLink(AddIssueLinkRequest.LinkType type,
+                        String sourceIssueIn,
+                        String targetIssueIn) throws IOException {
         addLink(type, sourceIssueIn, targetIssueIn, null, null, null);
     }
 
-    public void addLink(AddIssueLinkRequest.LinkType type,String sourceIssueIn, String targetIssueIn,
-                                                 String commentBody, Visibility.Type availabilityType,
-                                                 Visibility.Value availabilityValue) throws IOException {
+    @Override
+    public void addLink(AddIssueLinkRequest.LinkType type, String sourceIssueIn,
+                        String targetIssueIn,
+                        String commentBody,
+                        Visibility.Type availabilityType,
+                        Visibility.Value availabilityValue) throws IOException {
 
         AddIssueLinkRequest linkRequest;
 
@@ -155,16 +162,16 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         log.debug("addLink Url is " + urlString);
 
         WebResource webResource = getJerseyClient().resource(urlString);
-
-        post(webResource, linkRequest, new GenericType<Object>(){
-
-        });
+//        getJerseyClient().resource(urlString).type(MediaType.APPLICATION_JSON_TYPE)
+//                .accept(MediaType.APPLICATION_JSON_TYPE).entity(linkRequest).post();
+        post(webResource, linkRequest);
     }
 
 
+    @Override
     public void addWatcher(String key, String watcherId) throws IOException{
         StringBuilder urlString = new StringBuilder(getBaseUrl());
-        urlString.append("/");
+        urlString.append("/issue/");
         urlString.append(key);
         urlString.append("/watchers");
 
@@ -172,9 +179,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         WebResource webResource = getJerseyClient().resource(urlString.toString());
 
-        post(webResource, watcherId, new GenericType<Object>(){
-
-        });
+        post(webResource, watcherId);
 
     }
 

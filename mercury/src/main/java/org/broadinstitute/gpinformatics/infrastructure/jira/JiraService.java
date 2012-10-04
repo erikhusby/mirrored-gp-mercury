@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -68,4 +69,11 @@ public interface JiraService extends Serializable {
 
     public Map<String, CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,
                                                               CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
+
+    void addLink(AddIssueLinkRequest.LinkType type, String sourceIssueIn, String targetIssueIn) throws IOException;
+
+    void addLink(AddIssueLinkRequest.LinkType type, String sourceIssueIn, String targetIssueIn, String commentBody,
+                 Visibility.Type availabilityType, Visibility.Value availabilityValue) throws IOException;
+
+    void addWatcher(String key, String watcherId) throws IOException;
 }

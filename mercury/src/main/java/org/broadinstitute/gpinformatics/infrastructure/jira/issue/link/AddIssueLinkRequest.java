@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue.link;
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraLinkTypeSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraVisibilitySerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.GetCommentsResponse;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 /**
@@ -11,7 +14,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
  *         Date: 10/3/12
  *         Time: 2:51 PM
  */
-@JsonSerialize(using = JsonLabopsJiraVisibilitySerializer.class)
+@JsonPropertyOrder({"type", "inwardIssue", "outwardIssue","comment"})
 public class AddIssueLinkRequest {
 
     private LinkType type;
@@ -68,6 +71,9 @@ public class AddIssueLinkRequest {
         linkRequest.addInwardIssue(sourceIssueIn);
         linkRequest.addOutwardIssue(targetIssueIn);
 
+        GetCommentsResponse.Comment comment = new GetCommentsResponse.Comment();
+        comment.setBody("");
+
         return linkRequest;
     }
 
@@ -88,7 +94,7 @@ public class AddIssueLinkRequest {
         return linkRequest;
     }
 
-    @JsonSerialize(using = JsonLabopsJiraVisibilitySerializer.class)
+    @JsonSerialize(using = JsonLabopsJiraLinkTypeSerializer.class)
     public enum LinkType {
 
         Cloners("Cloners"),
@@ -112,7 +118,6 @@ public class AddIssueLinkRequest {
         }
     }
 
-    @JsonSerialize(using = JsonLabopsJiraVisibilitySerializer.class)
     public class IssueKey {
         private String key;
 

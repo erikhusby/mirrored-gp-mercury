@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,6 +44,25 @@ public class JiraServiceStub implements JiraService {
     }
 
     @Override
+    public void addLink(AddIssueLinkRequest.LinkType type, String sourceIssueIn, String targetIssueIn)
+            throws IOException {
+        logger.info("Dummy jira service! " + type + " Link from " + sourceIssueIn + " to " + targetIssueIn);
+    }
+
+    @Override
+    public void addLink(AddIssueLinkRequest.LinkType type, String sourceIssueIn, String targetIssueIn,
+                        String commentBody, Visibility.Type availabilityType, Visibility.Value availabilityValue)
+            throws IOException {
+        logger.info("Dummy jira service! " + type + " Link from " + sourceIssueIn + " to " +
+                            targetIssueIn + " with comments " + commentBody);
+    }
+
+    @Override
+    public void addWatcher(String key, String watcherId) throws IOException {
+        logger.info("Dummy jira service! Add watcher " + watcherId + " for " + key);
+    }
+
+    @Override
     public Map<String, CustomFieldDefinition> getRequiredFields(CreateIssueRequest.Fields.Project project,
                                                                 CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
         final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
@@ -57,7 +77,8 @@ public class JiraServiceStub implements JiraService {
                                                                 CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
         final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
-            customFields.put(requiredFieldName,new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,requiredFieldName,true));
+            customFields.put(requiredFieldName, new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,
+                                                                          requiredFieldName, true));
         }
         return customFields;
     }

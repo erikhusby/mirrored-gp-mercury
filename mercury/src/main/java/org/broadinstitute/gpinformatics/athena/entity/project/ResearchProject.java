@@ -270,5 +270,21 @@ public class ResearchProject {
         return CreateIssueRequest.Fields.Issuetype.Research_Project;
     }
 
+    public enum RequiredSubmissionFields {
+
+        Sponsoring_Scientist("Sponsoring Scientist");
+
+        private String fieldName;
+
+        private RequiredSubmissionFields(String fieldNameIn) {
+            fieldName = fieldNameIn;
+        }
+
+        public String getFieldName() {
+            return fieldName;
+        }
+    }
+
+
 
 }

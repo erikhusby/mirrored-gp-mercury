@@ -168,4 +168,19 @@ public class Order implements Serializable {
         return CreateIssueRequest.Fields.Issuetype.Product_Order;
     }
 
+    public enum RequiredSubmissionFields {
+
+        PRODUCT_FAMILY("Product Family");
+
+        private String fieldName;
+
+        private RequiredSubmissionFields(String fieldNameIn) {
+            fieldName = fieldNameIn;
+        }
+
+        public String getFieldName() {
+            return fieldName;
+        }
+    }
+
 }
