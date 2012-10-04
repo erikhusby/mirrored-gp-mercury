@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +18,6 @@ import java.util.List;
 @Named
 @RequestScoped
 public class ProjectDetail extends AbstractJsfBean {
-
     @Inject private DB db;
 
     private String projectName;

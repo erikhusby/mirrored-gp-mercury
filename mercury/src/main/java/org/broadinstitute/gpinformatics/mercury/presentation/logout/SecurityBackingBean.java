@@ -21,15 +21,12 @@ import javax.servlet.http.HttpServletRequest;
 @ManagedBean
 @RequestScoped
 public class SecurityBackingBean extends AbstractJsfBean {
-
     @Inject
     private AuthenticationService authSvc;
-
 
     private Log securityLogger = LogFactory.getLog(this.getClass());
 
     public String logout() {
-
         String result = "/index?faces-redirect=true";
 
         FacesContext context = FacesContext.getCurrentInstance();
@@ -45,9 +42,5 @@ public class SecurityBackingBean extends AbstractJsfBean {
         }
 
         return result;
-
     }
-
-
-
 }

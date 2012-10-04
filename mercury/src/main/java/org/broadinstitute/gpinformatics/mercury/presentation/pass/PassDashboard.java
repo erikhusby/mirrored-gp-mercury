@@ -12,6 +12,7 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -21,8 +22,7 @@ import java.util.List;
 
 @ManagedBean
 @SessionScoped
-public class PassDashboard extends AbstractJsfBean {
-
+public class PassDashboard extends AbstractJsfBean  implements Serializable {
     @Inject
     private PassService service;
 
