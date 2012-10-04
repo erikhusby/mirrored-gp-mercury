@@ -2,8 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.project;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket_;
 
-import javax.persistence.Query;
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.util.List;
 
 /**
@@ -11,15 +15,21 @@ import java.util.List;
  */
 public class JiraTicketDao extends GenericDao{
     public List<JiraTicket> fetchAll(int first, int max) {
-        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery("JiraTicket.fetchAllOrderByName");
-        query.setFirstResult(first);
-        query.setMaxResults(max);
-        //noinspection unchecked
-        return query.getResultList();
+        EntityManager entityManager = getThreadEntityManager().getEntityManager();
+        CriteriaQuery<JiraTicket> criteriaQuery =
+                entityManager.getCriteriaBuilder().createQuery(JiraTicket.class);
+        TypedQuery<JiraTicket> typedQuery = entityManager.createQuery(criteriaQuery);
+        typedQuery.setFirstResult(first);
+        typedQuery.setMaxResults(max);
+        return typedQuery.getResultList();
     }
 
     public JiraTicket fetchByName(String ticketName) {
-        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery("JiraTicket.fetchByName");
-        return (JiraTicket) query.setParameter("ticketName", ticketName).getSingleResult();
+        EntityManager entityManager = getThreadEntityManager().getEntityManager();
+        CriteriaQuery<JiraTicket> criteriaQuery =
+                entityManager.getCriteriaBuilder().createQuery(JiraTicket.class);
+        Root<JiraTicket> root = criteriaQuery.from(JiraTicket.class);
+        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(JiraTicket_.ticketName), ticketName));
+        return entityManager.createQuery(criteriaQuery).getSingleResult();
     }
 }

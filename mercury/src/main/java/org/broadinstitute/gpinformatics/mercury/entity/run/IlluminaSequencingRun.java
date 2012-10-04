@@ -4,17 +4,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import java.util.Date;
 import java.util.HashSet;
 
-@NamedQueries({
-        @NamedQuery(
-                name = "IlluminaSequencingRun.findByRunName",
-                query = "select r from IlluminaSequencingRun r where runName = :runName"
-        )
-})
 @Entity
 @Audited
 public class IlluminaSequencingRun extends SequencingRun {

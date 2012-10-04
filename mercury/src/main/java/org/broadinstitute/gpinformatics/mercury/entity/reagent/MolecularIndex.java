@@ -22,12 +22,6 @@ import java.util.Map;
  */
 @Entity
 @Audited
-@NamedQueries({
-        @NamedQuery(
-                name="MolecularIndex.findBySequence",
-                query="FROM MolecularIndex WHERE sequence = :sequence"
-        )
-})
 public class MolecularIndex implements Serializable {
     public static final long serialVersionUID = 2011122101l;
 

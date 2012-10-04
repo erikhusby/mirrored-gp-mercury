@@ -10,8 +10,6 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -28,16 +26,6 @@ import java.util.Set;
 /**
  * A rack of tubes
  */
-@NamedQueries({
-        @NamedQuery(
-                name = "RackOfTubes.fetchByDigest",
-                query = "select r from RackOfTubes r where digest = :digest"
-        ),
-        @NamedQuery(
-                name = "RackOfTubes.fetchByLabel",
-                query = "select r from RackOfTubes r where label = :label"
-        )
-})
 @Entity
 @Audited
 public class RackOfTubes extends LabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
