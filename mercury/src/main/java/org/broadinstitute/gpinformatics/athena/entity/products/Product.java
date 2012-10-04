@@ -54,13 +54,10 @@ public class Product implements Serializable {
     private PriceItem defaultPriceItem;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
-    private Set<PriceItem> priceItems;
+    private Set<PriceItem> priceItems = new HashSet<PriceItem>();
 
-    /**
-     * May need to revisit cascade options for a Product editor
-     */
     @ManyToMany(cascade = CascadeType.PERSIST)
-    private Set<Product> addOns;
+    private Set<Product> addOns = new HashSet<Product>();
 
     private String workflowName;
 
@@ -172,9 +169,6 @@ public class Product implements Serializable {
 
     public void addPriceItem(PriceItem priceItem) {
 
-        if ( priceItems == null )
-            priceItems = new HashSet<PriceItem>();
-
         priceItems.add(priceItem);
 
     }
@@ -185,9 +179,6 @@ public class Product implements Serializable {
 
 
     public void addAddOn(Product addOn) {
-
-        if ( addOns == null )
-            addOns = new HashSet<Product>();
 
         addOns.add(addOn);
 
