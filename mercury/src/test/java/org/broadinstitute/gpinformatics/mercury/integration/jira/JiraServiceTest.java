@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -15,6 +16,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
@@ -33,8 +35,26 @@ public class JiraServiceTest {
 
         try {
 
+            Map<String, CustomFieldDefinition> requiredFields=
+                    service.getRequiredFields(new CreateIssueRequest.Fields.Project(CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
+                                              CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+
+            Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+
+            customFieldList.add(new CustomField(requiredFields.get("Protocol"),"test protocol"));
+            customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"),"WR 1 Billion!"));
+
+
+                    //        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
+                    //        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
+
+
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel, "Summary created from Mercury", "Description created from Mercury", null);
+                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX,
+                                        CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
+                                        "Summary created from Mercury", "Description created from Mercury",
+                                        customFieldList);
+
 
             final String key = createIssueResponse.getTicketName();
 

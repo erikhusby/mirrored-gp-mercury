@@ -6,6 +6,8 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.watchers.GetWatcherResponse;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -109,7 +111,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     
     @Override
-    public void addComment(String key, String body, Visibility.Type visibilityType, Visibility.Value visibilityValue) throws IOException {
+    public void addComment(String key, String body, Visibility.Type visibilityType,
+                           Visibility.Value visibilityValue) throws IOException {
 
         AddCommentRequest addCommentRequest;
         
@@ -130,6 +133,51 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         });
 
     }
+
+    public void addLink(AddIssueLinkRequest.LinkType type,String sourceIssueIn, String targetIssueIn) throws IOException {
+        addLink(type, sourceIssueIn, targetIssueIn, null, null, null);
+    }
+
+    public void addLink(AddIssueLinkRequest.LinkType type,String sourceIssueIn, String targetIssueIn,
+                                                 String commentBody, Visibility.Type availabilityType,
+                                                 Visibility.Value availabilityValue) throws IOException {
+
+        AddIssueLinkRequest linkRequest;
+
+        if(commentBody != null && availabilityType != null && availabilityValue != null) {
+            linkRequest = AddIssueLinkRequest.create(type, sourceIssueIn, targetIssueIn,
+                                                     commentBody, availabilityType, availabilityValue);
+        } else {
+            linkRequest = AddIssueLinkRequest.create(type, sourceIssueIn, targetIssueIn);
+        }
+
+        String urlString = getBaseUrl() + "/issueLink";
+        log.debug("addLink Url is " + urlString);
+
+        WebResource webResource = getJerseyClient().resource(urlString);
+
+        post(webResource, linkRequest, new GenericType<Object>(){
+
+        });
+    }
+
+
+    public void addWatcher(String key, String watcherId) throws IOException{
+        StringBuilder urlString = new StringBuilder(getBaseUrl());
+        urlString.append("/");
+        urlString.append(key);
+        urlString.append("/watchers");
+
+        log.debug("addWatcher Url is " + urlString);
+
+        WebResource webResource = getJerseyClient().resource(urlString.toString());
+
+        post(webResource, watcherId, new GenericType<Object>(){
+
+        });
+
+    }
+
 
 
     @Override
