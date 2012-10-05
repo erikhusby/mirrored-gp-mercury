@@ -6,10 +6,11 @@ import javax.persistence.*;
  * This holds the cohorts for a research project
  */
 @Entity
+@Table(schema = "athena")
 public class ResearchProjectCohort {
 
     @Id
-    @SequenceGenerator(name="seq_rp_cohort_index", sequenceName="seq_rp_cohort_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_rp_cohort_index", schema = "athena", sequenceName="seq_rp_cohort_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_cohort_index")
     private Long id;
 

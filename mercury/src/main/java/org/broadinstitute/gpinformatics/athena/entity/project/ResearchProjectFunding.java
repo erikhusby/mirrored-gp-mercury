@@ -6,10 +6,12 @@ import javax.persistence.*;
  * The funding for research projects
  */
 @Entity
+@Table(schema = "athena")
 public class ResearchProjectFunding {
 
+    // todo jmt why is allocationSize 1?
     @Id
-    @SequenceGenerator(name="seq_rp_funding_index", sequenceName="seq_rp_funding_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_rp_funding_index", schema = "athena", sequenceName="seq_rp_funding_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_funding_index")
     private Long id;
 

@@ -16,6 +16,7 @@ import java.util.Set;
  * Research Projects hold all the information about a research project
  */
 @Entity
+@Table(schema = "athena")
 public class ResearchProject {
 
     public enum Status {
@@ -23,7 +24,7 @@ public class ResearchProject {
     }
 
     @Id
-    @SequenceGenerator(name="seq_research_project_index", sequenceName="seq_research_project_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_research_project_index", schema = "athena", sequenceName="seq_research_project_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
     private Long id;
 

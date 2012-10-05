@@ -16,11 +16,12 @@ import java.util.List;
  */
 @Entity
 @Audited
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
+@Table(schema = "athena",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
 public class Product implements Serializable {
 
     @Id
-    @SequenceGenerator(name = "SEQ_PRODUCT", sequenceName = "SEQ_PRODUCT")
+    @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT")
     private Long id;
 
@@ -57,6 +58,7 @@ public class Product implements Serializable {
      * May need to revisit cascade options for a Product editor
      */
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "athena")
     private List<Product> addOns;
 
     private String workflowName;

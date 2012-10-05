@@ -7,9 +7,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularEnvelope;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.Table;
 
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class IndexEnvelope  extends MolecularEnvelope {
 
     private String threePrimeSeq;

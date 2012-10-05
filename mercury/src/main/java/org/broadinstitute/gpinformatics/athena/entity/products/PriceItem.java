@@ -13,13 +13,14 @@ import java.io.Serializable;
  */
 @Entity
 @Audited
-@Table(uniqueConstraints = {
+@Table(schema = "athena",
+        uniqueConstraints = {
         @UniqueConstraint(columnNames = {"platform", "categoryName", "name"})
 })
 public class PriceItem implements Serializable {
 
     @Id
-    @SequenceGenerator(name = "SEQ_PRICE_ITEM", sequenceName = "SEQ_PRICE_ITEM")
+    @SequenceGenerator(name = "SEQ_PRICE_ITEM", schema = "athena", sequenceName = "SEQ_PRICE_ITEM")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRICE_ITEM")
     private Long id;
 

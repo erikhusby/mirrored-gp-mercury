@@ -13,15 +13,17 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class SequencingRun {
 
-    @SequenceGenerator(name = "SEQ_SEQUENCING_RUN", sequenceName = "SEQ_SEQUENCING_RUN")
+    @SequenceGenerator(name = "SEQ_SEQUENCING_RUN", schema = "mercury", sequenceName = "SEQ_SEQUENCING_RUN")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SEQUENCING_RUN")
     @Id
     private Long sequencingRunId;

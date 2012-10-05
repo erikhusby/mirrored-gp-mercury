@@ -11,6 +11,7 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.IOException;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import java.util.Set;
 
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class JiraTicket {
 
     public static final String TEST_PROJECT_PREFIX = "LCSET";

@@ -10,6 +10,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Table;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -28,6 +29,7 @@ import java.util.Set;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class RackOfTubes extends LabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
 
     public enum RackType {

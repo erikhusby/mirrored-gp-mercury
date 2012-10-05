@@ -11,10 +11,11 @@ import javax.persistence.*;
  * stores a single role for a person in a project. The person/project/role should be unique within this
  */
 @Entity
+@Table(schema = "athena")
 public class ProjectPerson {
 
     @Id
-    @SequenceGenerator(name="seq_project_person_index", sequenceName="seq_project_person_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_project_person_index", schema = "athena", sequenceName="seq_project_person_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_project_person_index")
     private Long id;
 

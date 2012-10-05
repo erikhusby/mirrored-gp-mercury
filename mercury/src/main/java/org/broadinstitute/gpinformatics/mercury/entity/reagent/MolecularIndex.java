@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import java.util.Map;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class MolecularIndex implements Serializable {
     public static final long serialVersionUID = 2011122101l;
 
@@ -54,7 +56,7 @@ public class MolecularIndex implements Serializable {
 
     // todo jmt why allocationSize = 1?
     @Id
-    @SequenceGenerator(name="seq_molecular_index", sequenceName="seq_molecular_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_molecular_index", schema = "mercury", sequenceName="seq_molecular_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_index")
     @Column(name = "id")
     @SuppressWarnings("unused")

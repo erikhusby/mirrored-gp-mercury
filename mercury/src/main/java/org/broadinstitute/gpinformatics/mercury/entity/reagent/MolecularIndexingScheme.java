@@ -27,6 +27,7 @@ import java.util.TreeMap;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 @NamedNativeQueries({
         @NamedNativeQuery(
                 name="MolecularIndexingScheme.findSingleIndexScheme",
@@ -423,7 +424,7 @@ public class MolecularIndexingScheme {
 
     // todo jmt why allocationSize = 1?
     @Id
-    @SequenceGenerator(name="seq_molecular_indexing_scheme", sequenceName="seq_molecular_indexing_scheme", allocationSize = 1)
+    @SequenceGenerator(name="seq_molecular_indexing_scheme", schema = "mercury", sequenceName="seq_molecular_indexing_scheme", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_indexing_scheme")
     @Column(name = "id")
     @SuppressWarnings("unused")
@@ -443,6 +444,7 @@ public class MolecularIndexingScheme {
      */
     @ManyToMany(cascade = {CascadeType.PERSIST}, fetch= FetchType.LAZY)
     @JoinTable(
+            schema = "mercury",
             name="MOLECULAR_INDEX_POSITION",
             joinColumns=@JoinColumn(name="scheme_id", referencedColumnName = "id"),
             inverseJoinColumns=@JoinColumn(name="index_id", referencedColumnName = "id")

@@ -10,6 +10,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 import java.util.Collection;
 import java.util.Set;
 
@@ -25,6 +26,7 @@ import java.util.Set;
 })
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class StripTube extends LabVessel implements VesselContainerEmbedder<StripTubeWell> {
 
     protected StripTube() {

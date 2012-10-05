@@ -6,10 +6,11 @@ import javax.persistence.*;
  * IRBs for a research project
  */
 @Entity
+@Table(schema = "athena")
 public class ResearchProjectIRB {
 
     @Id
-    @SequenceGenerator(name="seq_rp_irb_index", sequenceName="seq_rp_irb_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_rp_irb_index", schema = "athena", sequenceName="seq_rp_irb_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_irb_index")
     private Long id;
 
