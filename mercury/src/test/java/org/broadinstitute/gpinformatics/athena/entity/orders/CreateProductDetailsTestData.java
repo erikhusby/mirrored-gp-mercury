@@ -14,12 +14,12 @@ import java.util.Calendar;
 
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.*;
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Platform.GP;
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.PriceItemName.*;
+import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Name.*;
 
 
 /**
- * "Test" to create basic {@link ProductFamily}s, {@link PriceItem}s, and {@link Product}s.  This will probably
- * need to be turned into a Liquibase equivalent as well.
+ * "Test" to create some basic {@link ProductFamily}, {@link PriceItem}, and {@link Product} test fixture data.
+ * This will probably need to be turned into a Liquibase equivalent as well.
  *
  */
 public class CreateProductDetailsTestData extends ContainerTest {
