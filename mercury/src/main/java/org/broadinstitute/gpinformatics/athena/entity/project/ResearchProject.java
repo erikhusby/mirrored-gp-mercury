@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.Order;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.infrastructure.experiments.EntityUtils;
 
 import javax.persistence.*;
 import java.util.Collections;
@@ -17,6 +17,9 @@ import java.util.Set;
  */
 @Entity
 public class ResearchProject {
+
+    public static final boolean IRB_ENGAGED = true;
+    public static final boolean IRB_NOT_ENGAGED = false;
 
     public enum Status {
         Open, Archived
@@ -39,6 +42,8 @@ public class ResearchProject {
     private String title;
 
     private String synopsis;
+
+    private boolean irbEngaged = IRB_NOT_ENGAGED;
 
     // People related to the project
     @OneToMany(cascade = CascadeType.PERSIST)
@@ -124,6 +129,14 @@ public class ResearchProject {
         sampleCohorts.remove(sampleCohort);
     }
 
+    public boolean isIrbEngaged() {
+        return irbEngaged;
+    }
+
+    public void setIrbEngaged(boolean irbEngaged) {
+        this.irbEngaged = irbEngaged;
+    }
+
     public Set<ResearchProjectIRB> getIrbNumbers() {
         return Collections.unmodifiableSet(irbNumbers);
     }
@@ -162,8 +175,22 @@ public class ResearchProject {
         return people;
     }
 
-    public Set<ResearchProjectFunding> getFundingIds() {
-        return Collections.unmodifiableSet(fundingIDs);
+    public Set<String> getFundingIds() {
+        Set<String> fundingIdSet = new HashSet<String> ();
+        for (ResearchProjectFunding funding : fundingIDs) {
+            fundingIdSet.add(funding.getFundingId());
+        }
+
+        return fundingIdSet;
+    }
+
+    public Set<String> getCohortIds() {
+        Set<String> fundingIdSet = new HashSet<String> ();
+        for (ResearchProjectCohort cohort : sampleCohorts) {
+            fundingIdSet.add(cohort.getCohortId());
+        }
+
+        return fundingIdSet;
     }
 
     public void addFunding(ResearchProjectFunding funding) {
@@ -187,12 +214,21 @@ public class ResearchProject {
     }
 
     public String getIrbNumberString() {
-        Set<String> irbNumberString = new HashSet<String> ();
+        String[] irbNumbers = new String[getIrbNumbers().size()];
+        int i = 0;
         for (ResearchProjectIRB irb : getIrbNumbers()) {
-            irbNumberString.add(irb.getIrb());
+            irbNumbers[i++] = irb.getIrb();
         }
 
-        return EntityUtils.flattenSetOfStrings(irbNumberString);
+        return StringUtils.join(irbNumbers, ", ");
+    }
+
+    public Set<Order> getOrders() {
+        return orders;
+    }
+
+    public RoleType[] getRoleTypes() {
+        return RoleType.values();
     }
 
     /**

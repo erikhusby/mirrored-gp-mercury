@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<body>
+
+    <h:link outcome="/security/login" value="Athena"/>
+    &gt;
+    <h:link outcome="list" value="Research Projects"/>
+    &gt;
+    #{researchProjectDetail.project.title}
+
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">View Research Project</ui:define>
+        <ui:define name="body">
+            <h:form>
+                <h:panelGrid columns="2">
+                    <div>Project Id:</div>
+                    <div>#{researchProjectDetail.project.title}</div>
+
+                    <div>Synopsis:</div>
+                    <div>#{researchProjectDetail.project.synopsis}</div>
+
+                    <div>Sponsoring Scientists: </div>
+                    <div>#{researchProjectDetail.sponsoredScientists}</div>
+
+                    <div>Created:</div>
+                    <div>
+                        By #{researchProjectDetail.project.createdBy}
+                        on #{researchProjectDetail.project.createdDate}
+                    </div>
+
+                    <div>Funding Sources:</div>
+                    <div>#{researchProjectDetail.fundingSources}</div>
+
+                    <div>Sample Cohorts:</div>
+                    <div>#{researchProjectDetail.cohorts}</div>
+
+                    <div>IRB/IACUC:</div>
+                    <div>#{researchProjectDetail.project.irbNumberString}</div>
+
+                    <div>IRB/IACUC Notes::</div>
+                    <div>#{researchProjectDetail.project.irbNotes}</div>
+                </h:panelGrid>
+
+                <p:selectOneMenu value="">
+                    <f:selectItem itemLabel="Select One" itemValue="" />
+                    <f:selectItems value="#{OrdetS}" />
+                </p:selectOneMenu>
+
+                <p:dataTable value="#{researchProjectDetail.project.orders}" var="product">
+                    <p:column headerText="Product ID">
+                        <h:link outcome="product/detail" value="DMY-1">
+                            <f:param name="orderId" value="#{product.title}"/>
+                        </h:link>
+                    </p:column>
+                    <p:column headerText="Name">
+                        #{product.title}
+                    </p:column>
+                    <p:column headerText="Product">
+                        #{product.title}
+                    </p:column>
+                    <p:column headerText="Status" filterBy="#{product.orderStatus}">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Date Created">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Date Updated">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Samples">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Program PM">
+                        #{product.orderStatus}
+                    </p:column>
+                </p:dataTable>
+
+                <h:link outcome="/product/create" value="New Product Order"/>
+
+                <p:commandButton value="Edit Project" action="#{researchProjectDetail.edit}" ajax="false"/>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+</body>
+</html>
