@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.entity.sample;
+package org.broadinstitute.gpinformatics.infrastructure;
 
 /**
  * Root-ish level sample information required for

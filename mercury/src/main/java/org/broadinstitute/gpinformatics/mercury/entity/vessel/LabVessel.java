@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleMetadata;
+import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StateChange;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingLibraryAnnotation;
@@ -114,6 +114,14 @@ public abstract class LabVessel implements Starter {
     @Transient
     /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
     private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
+
+    @Transient
+    /** in reality, for most things there is no set here...it's computed on the fly
+     * from a walk back to BSP.  But for other special containers for walk up
+     * sequencing, a particular subclass might have different behavior
+     * to lookup sample metadat from somewhere besides bsp...like a spreadsheet.
+     */
+    private Set<SampleMetadata> samples = new HashSet<SampleMetadata>();
 
     protected LabVessel(String label) {
         this.label = label;
@@ -531,6 +539,14 @@ public abstract class LabVessel implements Starter {
         return labBatches;
     }
 
+    /**
+     * Does this container know what it's sample metadata is?
+     * Or does it need to look back in the event graph?
+     * @return
+     */
+    public boolean hasSampleMetadata() {
+        throw new RuntimeException("not implemented");
+    }
 
 
     /**
@@ -560,7 +576,16 @@ public abstract class LabVessel implements Starter {
      * @return
      */
     public Set<SampleMetadata> getSamples() {
-        throw new RuntimeException("not implemented");
+        // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
+        // in reality, the implementation would walk back to all roots,
+        // detecting vessels along the way where hasSampleMetadata is true.
+        return samples;
+    }
+
+    public void setSamples(Set<SampleMetadata> samples) {
+        // todo this is just for experimental GPLIM-64...this method shouldn't ever
+        // be here in production.
+        this.samples = samples;
     }
 }
 

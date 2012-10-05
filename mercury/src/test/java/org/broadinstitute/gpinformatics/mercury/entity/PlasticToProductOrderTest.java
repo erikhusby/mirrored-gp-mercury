@@ -3,16 +3,15 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 
 import static junit.framework.Assert.*;
 
+import org.broadinstitute.gpinformatics.infrastructure.StubSampleMetadata;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleMetadata;
+import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.testng.annotations.Test;
@@ -24,11 +23,15 @@ public class PlasticToProductOrderTest {
 
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void test_simple_tube_in_rack_maps_to_pdo() {
+        Set<SampleMetadata> rootSamples = new HashSet<SampleMetadata>();
+        rootSamples.add(new StubSampleMetadata("TCGA123","Human",null));
         BettaLimsMessageFactory messageFactory = new BettaLimsMessageFactory();
         LabEventFactory eventFactory = new LabEventFactory(new PersonDAO());
         Map<String,TwoDBarcodedTube> barcodeToTubeMap = new HashMap<String, TwoDBarcodedTube>();
         String destinationPlateBarcode = "Plate0000";
-        barcodeToTubeMap.put("0000",new TwoDBarcodedTube("0000"));
+        TwoDBarcodedTube tube = new TwoDBarcodedTube("0000");
+        tube.setSamples(rootSamples);
+        barcodeToTubeMap.put(tube.getLabel(),tube);
 
 
         PlateTransferEventType plateXfer = messageFactory.buildRackToPlate(LabEventType.POND_REGISTRATION.getName(),"RackBarcode",barcodeToTubeMap.keySet(),destinationPlateBarcode);
@@ -38,8 +41,9 @@ public class PlasticToProductOrderTest {
 
         ProductOrderId productOrder = new ProductOrderId("PO1");
 
-        // create product order...use boundary that athena uses to push a PO into mercury
+        // create product order...in reality, use boundary that athena uses to push a PO into mercury
         final Map<LabVessel,ProductOrderId> samplePOMapFromAthena = new HashMap<LabVessel, ProductOrderId>();
+        samplePOMapFromAthena.put(tube,productOrder);
 
         // pull tubes from bucket: this creates a LabEvent for every
         // container pulled from the bucket, and the LabEvent calls out
@@ -60,6 +64,11 @@ public class PlasticToProductOrderTest {
 
         LabVessel targetVessel = rackToPlateTransfer.getTargetLabVessels().iterator().next();
         targetVessel.setChainOfCustodyRoots(barcodeToTubeMap.values());
+        targetVessel.setSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
+        // todo I'm setting this on the rack here, but it should just work on the tube
+        LabVessel source = rackToPlateTransfer.getSourceLabVessels().iterator().next();
+        source.setChainOfCustodyRoots(barcodeToTubeMap.values());
+        source.setSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
 
         Map<LabVessel,ProductOrderId> vesselPOMap = poResolver.findProductOrders(targetVessel);
 

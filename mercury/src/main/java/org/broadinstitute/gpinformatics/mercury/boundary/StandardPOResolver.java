@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.ProductOrderResolver;
 import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
@@ -62,23 +60,35 @@ public class StandardPOResolver extends ProductOrderResolver {
 
     @Override
     public Map<LabVessel, WorkflowStepDef> getStatus(ProductOrderId productOrder, LabVessel root) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        throw new RuntimeException("not implemented");
     }
 
     private  class LabVesselPOHopCount {
 
-        public LabVesselPOHopCount(LabVessel vessel,ProductOrderId productOrderId,int hopCount) {}
+        private LabVessel vessel;
+
+        private ProductOrderId po;
+
+        private int hopCount;
+
+        public LabVesselPOHopCount(LabVessel vessel,ProductOrderId productOrderId,int hopCount) {
+            this.vessel = vessel;
+            this.po = productOrderId;
+            this.hopCount = hopCount;
+        }
 
         private LabVessel getVessel() {
-            throw new UnsupportedOperationException("I haven't been written yet");
+            return vessel;
         }
 
         private int getHopCount() {
-            throw new UnsupportedOperationException("I haven't been written yet");
+            return hopCount;
         }
 
+
         private ProductOrderId getProductOrderId() {
-            throw new UnsupportedOperationException("I haven't been written yet");
+            return po;
         }
+
     }
 }
