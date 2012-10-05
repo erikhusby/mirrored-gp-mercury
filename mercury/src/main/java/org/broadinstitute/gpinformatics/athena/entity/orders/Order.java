@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import javax.persistence.Transient;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
@@ -22,16 +24,29 @@ import java.util.Set;
  *      Date: 8/28/12
  *      Time: 10:25 AM
  */
+@Entity
 public class Order implements Serializable {
 
+    @Id
+    @SequenceGenerator(name="PRODUCT_ORDER_INDEX", sequenceName="PRODUCT_ORDER_INDEX", allocationSize = 1)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="PRODUCT_ORDER_INDEX")
+    private Long id;
+
+    @Column(unique = true)
     private String title;                       // Unique title for the order
-    private String researchProjectName;
+
+    @ManyToOne
+    private ResearchProject researchProject;
+
+    @OneToOne
     private Product product;
     private OrderStatus orderStatus = OrderStatus.Draft;
     private String quoteId;                     // Alphanumeric Id
+    @Column(length = 2000)
     private String comments;                    // Additional comments of the order
-    private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitteds
-    private List<ProductOrderSample> samples;
+    private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
+    @OneToMany(cascade = CascadeType.PERSIST)
+    private List<OrderSample> samples;
 
 
     /**
@@ -46,14 +61,14 @@ public class Order implements Serializable {
      * @param samples
      * @param quoteId
      * @param product
-     * @param researchProjectName
+     * @param researchProject
      */
-    public Order(String title, List<ProductOrderSample> samples, String quoteId, Product product, String researchProjectName) {
+    public Order(String title, List<OrderSample> samples, String quoteId, Product product, ResearchProject researchProject) {
         this.title = title;
         this.samples = samples;
         this.quoteId = quoteId;
         this.product = product;
-        this.researchProjectName = researchProjectName;
+        this.researchProject = researchProject;
     }
 
     public String getTitle() {
@@ -64,12 +79,12 @@ public class Order implements Serializable {
         this.title = title;
     }
 
-    public String getResearchProjectName() {
-        return researchProjectName;
+    public ResearchProject getResearchProject() {
+        return researchProject;
     }
 
-    public void setResearchProjectName(String researchProjectName) {
-        this.researchProjectName = researchProjectName;
+    public void setResearchProjectName(ResearchProject researchProject) {
+        this.researchProject = researchProject;
     }
 
     public Product getProduct() {
@@ -104,11 +119,11 @@ public class Order implements Serializable {
         this.comments = comments;
     }
 
-    public List<ProductOrderSample> getSamples() {
+    public List<OrderSample> getSamples() {
         return samples;
     }
 
-    public void addSample(ProductOrderSample sample) {
+    public void addSample(OrderSample sample) {
         samples.add(sample);
     }
 
@@ -145,8 +160,8 @@ public class Order implements Serializable {
                 throw new IllegalStateException("Not Yet Implemented");
             }
 
-            for ( ProductOrderSample productOrderSample : samples ) {
-                String participantId = productOrderSample.getParticipantId();
+            for ( OrderSample orderSample : samples ) {
+                String participantId = orderSample.getParticipantId();
                 if (StringUtils.isNotBlank(participantId)) {
                     uniqueParticipants.add(participantId);
                 }
@@ -167,8 +182,8 @@ public class Order implements Serializable {
 
     private Set<String> getUniqueSampleNames() {
         Set<String> uniqueSamples = new HashSet<String>();
-        for ( ProductOrderSample productOrderSample : samples ) {
-            String sampleName = productOrderSample.getSampleName();
+        for ( OrderSample orderSample : samples ) {
+            String sampleName = orderSample.getSampleName();
             if (StringUtils.isNotBlank(sampleName)) {
                 uniqueSamples.add(sampleName);
             }
@@ -202,8 +217,8 @@ public class Order implements Serializable {
     public boolean areAllSampleBSPFormat() {
         boolean result = true;
         if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : samples) {
-                if (! productOrderSample.isInBspFormat() ) {
+            for ( OrderSample orderSample : samples) {
+                if (! orderSample.isInBspFormat() ) {
                     result = false;
                     break;
                 }
@@ -221,9 +236,9 @@ public class Order implements Serializable {
     private boolean needsBspMetaData() {
         boolean needed = false;
         if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : samples ) {
-                if ( productOrderSample.isInBspFormat() &&
-                     ! productOrderSample.hasBSPDTOBeenInitialized() ) {
+            for ( OrderSample orderSample : samples ) {
+                if ( orderSample.isInBspFormat() &&
+                     ! orderSample.hasBSPDTOBeenInitialized() ) {
                     needed = true;
                     break;
                 }
@@ -278,4 +293,35 @@ public class Order implements Serializable {
         }
     }
 
+    /**
+     * Created by IntelliJ IDEA.
+     * User: mccrory
+     * Date: 9/26/12
+     * Time: 11:56 AM
+     */
+    public static enum OrderStatus {
+        Draft,
+        Submitted,
+        Closed
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Order)) return false;
+
+        final Order order = (Order) o;
+
+        if (!researchProject.equals(order.researchProject)) return false;
+        if (!title.equals(order.title)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = title.hashCode();
+        result = 31 * result + researchProject.hashCode();
+        return result;
+    }
 }
