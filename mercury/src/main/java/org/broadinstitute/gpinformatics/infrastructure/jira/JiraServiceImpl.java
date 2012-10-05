@@ -6,6 +6,8 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.watchers.GetWatcherResponse;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -18,9 +20,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCom
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
+import java.util.Map;
 
 @Impl
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
@@ -65,8 +68,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         if (baseUrl == null) {
 
-            String urlString = "http://%s:%d/rest/api/2";
-            baseUrl = String.format(urlString, jiraConfig.getHost(), jiraConfig.getPort());
+            String urlString = "%s/rest/api/2";
+            baseUrl = String.format(urlString, jiraConfig.getUrlBase());
 
         }
 
@@ -78,7 +81,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
 
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issueType, String summary, String description, Collection<CustomField> customFields) throws IOException {
+    public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issueType,
+                                           String summary, String description,
+                                           Collection<CustomField> customFields) throws IOException {
 
         CreateIssueRequest issueRequest = CreateIssueRequest.create(projectPrefix, issueType, summary, description,customFields);
 
@@ -107,14 +112,15 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     
     @Override
-    public void addComment(String key, String body, Visibility.Type visibilityType, Visibility.Value visibilityValue) throws IOException {
+    public void addComment(String key, String body, Visibility.Type visibilityType,
+                           Visibility.Value visibilityValue) throws IOException {
 
         AddCommentRequest addCommentRequest;
         
         if (visibilityType != null && visibilityValue != null)
-            addCommentRequest = AddCommentRequest.create(key, body, visibilityType, visibilityValue);
+            addCommentRequest = AddCommentRequest.create(body, visibilityType, visibilityValue);
         else
-            addCommentRequest = AddCommentRequest.create(key, body);
+            addCommentRequest = AddCommentRequest.create(body);
 
 
         String urlString = getBaseUrl() + "/issue/" + key + "/comment";
@@ -129,9 +135,59 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     }
 
+    @Override
+    public void addLink(AddIssueLinkRequest.LinkType type,
+                        String sourceIssueIn,
+                        String targetIssueIn) throws IOException {
+        addLink(type, sourceIssueIn, targetIssueIn, null, null, null);
+    }
 
     @Override
-    public List<CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project, CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+    public void addLink(AddIssueLinkRequest.LinkType type, String sourceIssueIn,
+                        String targetIssueIn,
+                        String commentBody,
+                        Visibility.Type availabilityType,
+                        Visibility.Value availabilityValue) throws IOException {
+
+        AddIssueLinkRequest linkRequest;
+
+        if(commentBody != null && availabilityType != null && availabilityValue != null) {
+            linkRequest = AddIssueLinkRequest.create(type, sourceIssueIn, targetIssueIn,
+                                                     commentBody, availabilityType, availabilityValue);
+        } else {
+            linkRequest = AddIssueLinkRequest.create(type, sourceIssueIn, targetIssueIn);
+        }
+
+        String urlString = getBaseUrl() + "/issueLink";
+        log.debug("addLink Url is " + urlString);
+
+        WebResource webResource = getJerseyClient().resource(urlString);
+//        getJerseyClient().resource(urlString).type(MediaType.APPLICATION_JSON_TYPE)
+//                .accept(MediaType.APPLICATION_JSON_TYPE).entity(linkRequest).post();
+        post(webResource, linkRequest);
+    }
+
+
+    @Override
+    public void addWatcher(String key, String watcherId) throws IOException{
+        StringBuilder urlString = new StringBuilder(getBaseUrl());
+        urlString.append("/issue/");
+        urlString.append(key);
+        urlString.append("/watchers");
+
+        log.debug("addWatcher Url is " + urlString);
+
+        WebResource webResource = getJerseyClient().resource(urlString.toString());
+
+        post(webResource, watcherId);
+
+    }
+
+
+
+    @Override
+    public Map<String, CustomFieldDefinition> getRequiredFields(CreateIssueRequest.Fields.Project project,
+                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
         if (project == null) {
             throw new NullPointerException("project cannot be null");
         }
@@ -147,11 +203,31 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
                 .queryParam("expand","projects.issuetypes.fields")
                 .get(String.class);
 
+        return CustomFieldJsonParser.parseRequiredFields(jsonResponse);
+    }
+
+    @Override
+    public Map<String, CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,
+                                                              CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+        if (project == null) {
+            throw new NullPointerException("project cannot be null");
+        }
+        if (issueType == null) {
+            throw new NullPointerException("issueType cannot be null");
+        }
+
+        String urlString = getBaseUrl() + "/issue/field";
+
+        String jsonResponse =
+                getJerseyClient().resource(urlString).get(String.class);
+
         return CustomFieldJsonParser.parseCustomFields(jsonResponse);
     }
 
     @Override
     public String createTicketUrl(String jiraTicketName) {
-        return "http://" + jiraConfig.getHost() + ":" + jiraConfig.getPort() + "/browse/" + jiraTicketName;
+
+        //Untill such a time as I can remove this method, its delegated to Jira Config
+        return jiraConfig.createTicketUrl(jiraTicketName);
     }
 }

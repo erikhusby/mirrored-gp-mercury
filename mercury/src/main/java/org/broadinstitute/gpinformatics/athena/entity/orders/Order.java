@@ -1,8 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import javax.persistence.Transient;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +30,7 @@ public class Order implements Serializable {
     private OrderStatus orderStatus = OrderStatus.Draft;
     private String quoteId;                     // Alphanumeric Id
     private String comments;                    // Additional comments of the order
+    private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitteds
     private List<ProductOrderSample> samples;
 
 
@@ -108,6 +110,30 @@ public class Order implements Serializable {
 
     public void addSample(ProductOrderSample sample) {
         samples.add(sample);
+    }
+
+    /**
+     * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
+     * which this Product Order is associated
+     *
+     * @return a {@link String} that represents the unique Jira Ticket key
+     */
+    public String getJiraTicketKey() {
+        return this.jiraTicketKey;
+    }
+
+    /**
+     * setJiraTicketKey allows a user of this class to associate the key for the Jira Ticket which was created when the
+     * related ProductOrder was officially submitted
+     *
+     * @param jiraTicketKeyIn a {@link String} that represents the unique key to the Jira Ticket to which the current
+     *                        Product Order is associated
+     */
+    public void setJiraTicketKey(String jiraTicketKeyIn) {
+        if(jiraTicketKeyIn == null) {
+            throw new NullPointerException("Jira Ticket Key cannot be null");
+        }
+        this.jiraTicketKey = jiraTicketKeyIn;
     }
 
     public int getUniqueParticipantCount() {
@@ -204,6 +230,52 @@ public class Order implements Serializable {
             }
         }
         return needed;
+    }
+
+    /**
+     * fetchJiraProject is a helper method that binds a specific Jira project to an Order entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity
+     *
+     * @return An enum of type
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     * represents the Jira Project for Product Orders
+     */
+    @Transient
+    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
+        return CreateIssueRequest.Fields.ProjectType.Product_Ordering;
+    }
+
+    /**
+     *
+     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to an Order entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity
+     *
+     * @return An enum of type
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     * represents the Jira Issue Type for Product Orders
+     */
+    @Transient
+    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
+        return CreateIssueRequest.Fields.Issuetype.Product_Order;
+    }
+
+    /**
+     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
+     * for Product orders
+     */
+    public enum RequiredSubmissionFields {
+
+        PRODUCT_FAMILY("Product Family");
+
+        private String fieldName;
+
+        private RequiredSubmissionFields(String fieldNameIn) {
+            fieldName = fieldNameIn;
+        }
+
+        public String getFieldName() {
+            return fieldName;
+        }
     }
 
 }

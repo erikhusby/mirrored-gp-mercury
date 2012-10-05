@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.AthenaGenericDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily_;
-import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaQuery;
@@ -11,9 +13,11 @@ import javax.persistence.criteria.Root;
 
 
 /**
- * DAO for {@link ProductFamily}s
+ * Dao for {@link ProductFamily}s
  */
-public class ProductFamilyDao extends GenericDao {
+@Stateful
+@RequestScoped
+public class ProductFamilyDao extends AthenaGenericDao {
 
 
     /**
@@ -26,7 +30,7 @@ public class ProductFamilyDao extends GenericDao {
 
         try {
 
-            EntityManager em = getThreadEntityManager().getEntityManager();
+            EntityManager em = em();
 
             CriteriaQuery<ProductFamily> criteriaQuery =
                     em.getCriteriaBuilder().createQuery(ProductFamily.class);

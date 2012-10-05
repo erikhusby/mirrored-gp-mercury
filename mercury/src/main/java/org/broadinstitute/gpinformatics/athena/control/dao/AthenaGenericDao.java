@@ -6,6 +6,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.criteria.CriteriaBuilder;
 import java.util.List;
 
 /**
@@ -19,6 +20,15 @@ public class AthenaGenericDao {
 
     public AthenaThreadEntityManager getAthenaThreadEntityManager() {
         return AthenaThreadEntityManager;
+    }
+
+    protected EntityManager em() {
+        return getAthenaThreadEntityManager().getEntityManager();
+    }
+
+
+    protected CriteriaBuilder getCriteriaBuilder() {
+        return em().getCriteriaBuilder();
     }
 
     public void flush() {

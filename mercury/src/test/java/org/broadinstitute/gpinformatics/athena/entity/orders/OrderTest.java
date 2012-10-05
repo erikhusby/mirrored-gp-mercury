@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -24,6 +25,7 @@ import java.util.List;
 @Test(groups = {TestGroups.DATABASE_FREE})
 public class OrderTest {
 
+    private static final String PDO_JIRA_KEY = "PDO-1";
     private  Order order ;
 
     @BeforeMethod
@@ -43,8 +45,8 @@ public class OrderTest {
                 "partNumber", new Date(), new Date(), 12345678, 123456, 100, "inputRequirements", "deliverables",
                 true, "workflowName");
 
-        PriceItem priceItem1 = new PriceItem(product, PriceItem.Platform.GP, PriceItem.Category.EXOME_SEQUENCING_ANALYSIS,
-                            PriceItem.PriceItemName.EXOME_EXPRESS, "quoteServicePriceItemId");
+        PriceItem priceItem1 = new PriceItem(PriceItem.Platform.GP, PriceItem.Category.EXOME_SEQUENCING_ANALYSIS,
+                            PriceItem.Name.EXOME_EXPRESS, "testQuoteId");
 
         HashSet<BillableItem> billableItems = new HashSet<BillableItem>();
         BillableItem billableItem1 = new BillableItem( priceItem1, new BigDecimal("1") );
@@ -62,6 +64,29 @@ public class OrderTest {
         Assert.assertTrue(order.getSamples().get(0).getBillableItems().size() == 1);
 
          **/
+
+
+        Assert.assertNull(order.getJiraTicketKey());
+
+        Assert.assertEquals(order.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.Product_Order);
+
+        Assert.assertEquals(order.fetchJiraProject(), CreateIssueRequest.Fields.ProjectType.Product_Ordering);
+
+        try {
+            order.setJiraTicketKey(null);
+            Assert.fail();
+        } catch(NullPointerException npe) {
+            /*
+            Ensuring Null is thrown for setting null
+             */
+        } finally {
+            order.setJiraTicketKey(PDO_JIRA_KEY);
+        }
+
+        Assert.assertNotNull(order.getJiraTicketKey());
+
+        Assert.assertEquals(order.getJiraTicketKey(),PDO_JIRA_KEY);
+
 
     }
 
