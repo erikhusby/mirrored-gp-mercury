@@ -1,0 +1,23 @@
+package org.broadinstitute.gpinformatics.mercury.entity.sample;
+
+/**
+ * Root-ish level sample information required for
+ * analysis, access control, etc.  BSP-ish sample
+ * metadata goes here.  Walk up sequencing would
+ * also implement this, backed by a spreadsheet
+ * upload of some sort.
+ */
+public interface SampleMetadata {
+
+    /**
+     * What does the collaborator call this sample?
+     * @return
+     */
+    public String getSampleAlias();
+
+    public String getOrganism();
+
+    public String getStrain();
+
+
+}

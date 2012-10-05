@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StateChange;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingLibraryAnnotation;
@@ -525,4 +526,27 @@ public abstract class LabVessel implements Starter {
     public Set<LabBatch> getLabBatches() {
         return labBatches;
     }
+
+
+
+    /**
+     * Walk the chain of custody back until it can be
+     * walked no further.  What you get are the roots
+     * of the transfer graph.
+     * @return
+     */
+    public abstract Set<LabVessel> getChainOfCustodyRoots();
+
+    /**
+     * What {@link SampleMetadata samples} are contained in
+     * this container?  Implementations are expected to
+     * walk the transfer graph back to a point where
+     * they can lookup {@link SampleMetadata} from
+     * an external source like BSP or a spreadsheet
+     * uploaded for "walk up" sequencing.
+     * @return
+     */
+    public abstract Set<SampleMetadata> getSamples();
 }
+
+
