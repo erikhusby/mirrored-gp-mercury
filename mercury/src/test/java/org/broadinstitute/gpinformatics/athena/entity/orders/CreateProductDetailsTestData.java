@@ -63,6 +63,23 @@ public class CreateProductDetailsTestData extends ContainerTest {
         ProductFamily illuminaSequencingOnlyProductFamily =
                 findProductFamily(ProductFamily.ProductFamilyName.ILLUMINA_SEQUENCING_ONLY);
 
+        PriceItem labTimePriceItem = new PriceItem(
+                GP,
+                GENERAL_PRODUCTS,
+                TIME_AND_MATERIALS_LAB,
+                "GP-TIME_AND_MATERIALS_LAB-2012.11.01"
+        );
+
+
+        PriceItem ifxTimePriceItem = new PriceItem(
+                GP,
+                GENERAL_PRODUCTS,
+                TIME_AND_MATERIALS_IFX,
+                "GP-TIME_AND_MATERIALS_IFX-2012.11.01"
+        );
+
+
+
         final int DAYS = 24 * 60 * 60;
 
         Product exex = new Product(
@@ -109,10 +126,14 @@ public class CreateProductDetailsTestData extends ContainerTest {
                 "EXEX-WF-2012.11.01"                   // workflow name
         );
 
+
+        exex.addPriceItem(labTimePriceItem);
+        exex.addPriceItem(ifxTimePriceItem);
+
+
         PriceItem priceItem;
 
         priceItem = new PriceItem(
-                exex,                                 // product
                 GP,                                   // platform
                 EXOME_SEQUENCING_ANALYSIS,            // category name
                 EXOME_EXPRESS,                        // price item name
@@ -123,7 +144,6 @@ public class CreateProductDetailsTestData extends ContainerTest {
         exex.setDefaultPriceItem(priceItem);
 
         priceItem = new PriceItem(
-                exex,                                  // product
                 GP,                                    // platform
                 EXOME_SEQUENCING_ANALYSIS,             // category name
                 STANDARD_EXOME_SEQUENCING,             // price item name
@@ -175,10 +195,12 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         );
 
+        dnaExtraction.addPriceItem(labTimePriceItem);
+        dnaExtraction.addPriceItem(ifxTimePriceItem);
+
         exex.addAddOn(dnaExtraction);
 
         priceItem = new PriceItem(
-                dnaExtraction,                                           // product
                 GP,                                                      // platform
                 GENERAL_PRODUCTS,                                        // category name
                 DNA_EXTRACTION,                                          // price item name
@@ -204,10 +226,12 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         );
 
+        extraCoverage.addPriceItem(labTimePriceItem);
+        extraCoverage.addPriceItem(ifxTimePriceItem);
+
         exex.addAddOn(extraCoverage);
 
         priceItem = new PriceItem(
-                extraCoverage,                                                   // product
                 GP,                                                              // platform
                 ILLUMINA_SEQUENCING_ONLY,                                        // category name
                 EXTRA_HISEQ_COVERAGE,                                            // price item name

@@ -53,7 +53,7 @@ public class Product implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private PriceItem defaultPriceItem;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.PERSIST)
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<PriceItem> priceItems = new HashSet<PriceItem>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
