@@ -50,7 +50,7 @@ public class ProductDao extends AthenaGenericDao {
      *
      * @return
      */
-    public Product findProductByPartNumber(String partNumber) {
+    public Product findByPartNumber(String partNumber) {
 
         EntityManager em = em();
 

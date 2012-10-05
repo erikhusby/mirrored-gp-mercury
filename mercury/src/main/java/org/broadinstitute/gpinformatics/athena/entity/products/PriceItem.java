@@ -14,7 +14,7 @@ import java.io.Serializable;
 @Entity
 @Audited
 @Table(uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"platform", "categoryName", "priceItemName"})
+        @UniqueConstraint(columnNames = {"platform", "category", "name"})
 })
 public class PriceItem implements Serializable {
 
@@ -24,7 +24,7 @@ public class PriceItem implements Serializable {
      */
     public enum Platform {
 
-        GP("GP");
+        GP("Genomics Platform");
 
         private String quoteServerPlatform;
 
@@ -70,18 +70,18 @@ public class PriceItem implements Serializable {
 
 
 
-    public enum PriceItemName {
+    public enum Name {
 
         EXOME_EXPRESS("Exome Express"),
         STANDARD_EXOME_SEQUENCING("Standard Exome Sequencing"),
         DNA_EXTRACTION("DNA Extraction"),
         EXTRA_HISEQ_COVERAGE("Extra HiSeq Coverage"),
         TIME_AND_MATERIALS_LAB("Time and Materials - Laboratory"),
-        TIME_AND_MATERIALS_IFX("Time nad Materials - Informatics");
+        TIME_AND_MATERIALS_IFX("Time and Materials - Informatics");
 
         private String quoteServerName;
 
-        private PriceItemName(String quoteServerName) {
+        private Name(String quoteServerName) {
             this.quoteServerName = quoteServerName;
         }
 
@@ -99,11 +99,11 @@ public class PriceItem implements Serializable {
 
     private String platform;
 
-    private String categoryName;
+    private String category;
 
-    private String priceItemName;
+    private String name;
 
-    private String quoteServicePriceItemId;
+    private String quoteServerId;
 
 
     // The @Transient fields below are "owned" by the quote server, what we hold in this class are just cached copies
@@ -115,30 +115,30 @@ public class PriceItem implements Serializable {
 
 
     /**
-     * Package visibile constructor for JPA
+     * Package visible constructor for JPA
      */
     PriceItem() {}
 
 
-    public PriceItem(Platform platform, Category categoryName, PriceItemName priceItemName, String quoteServicePriceItemId) {
+    public PriceItem(Platform platform, Category category, Name name, String quoteServerId) {
 
         if ( platform == null )
             throw new NullPointerException( "Null platform specified!" );
 
-        if ( priceItemName == null )
+        if ( name == null )
             throw new NullPointerException( "Null price item name specified!" );
 
-        if ( quoteServicePriceItemId == null )
+        if ( quoteServerId == null )
             throw new NullPointerException( "Null quote server price item id specified!" );
 
         // don't currently know how to validate this other than against emptiness...
-        if ( "".equals(quoteServicePriceItemId.trim()) )
+        if ( "".equals(quoteServerId.trim()) )
             throw new RuntimeException( "Empty quote server price item id specified!" );
 
         this.platform = platform.getQuoteServerPlatform();
-        this.categoryName = categoryName.getQuoteServerCategory();
-        this.priceItemName = priceItemName.getQuoteServerName();
-        this.quoteServicePriceItemId = quoteServicePriceItemId;
+        this.category = category.getQuoteServerCategory();
+        this.name = name.getQuoteServerName();
+        this.quoteServerId = quoteServerId;
     }
 
 
@@ -150,12 +150,12 @@ public class PriceItem implements Serializable {
         return platform;
     }
 
-    public String getCategoryName() {
-        return categoryName;
+    public String getCategory() {
+        return category;
     }
 
-    public String getPriceItemName() {
-        return priceItemName;
+    public String getName() {
+        return name;
     }
 
     public String getPrice() {
@@ -185,8 +185,8 @@ public class PriceItem implements Serializable {
         this.units = units;
     }
 
-    public String getQuoteServicePriceItemId() {
-        return quoteServicePriceItemId;
+    public String getQuoteServerId() {
+        return quoteServerId;
     }
 
     @Override
@@ -196,8 +196,8 @@ public class PriceItem implements Serializable {
 
         PriceItem priceItem = (PriceItem) o;
 
-        if (!categoryName.equals(priceItem.categoryName)) return false;
-        if (!priceItemName.equals(priceItem.priceItemName)) return false;
+        if (!category.equals(priceItem.category)) return false;
+        if (!name.equals(priceItem.name)) return false;
         if (!platform.equals(priceItem.platform)) return false;
 
         return true;
@@ -206,8 +206,8 @@ public class PriceItem implements Serializable {
     @Override
     public int hashCode() {
         int result = platform.hashCode();
-        result = 31 * result + categoryName.hashCode();
-        result = 31 * result + priceItemName.hashCode();
+        result = 31 * result + category.hashCode();
+        result = 31 * result + name.hashCode();
         return result;
     }
 
