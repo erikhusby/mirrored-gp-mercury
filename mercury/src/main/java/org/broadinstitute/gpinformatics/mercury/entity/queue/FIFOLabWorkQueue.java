@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
@@ -94,10 +97,26 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> extends FullAcce
         CreateIssueResponse jiraTicketCreationResponse =  null;
 
         try {
+
+            /**
+             * todo SGM.  Temporarily putting this in to support more generic approach to creating Jira Tickets.
+             *
+             */
+
+            Map<String, CustomFieldDefinition> requiredFields=
+                    jiraService.getRequiredFields(new CreateIssueRequest.Fields.Project(
+                            CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
+                                              CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+
+            Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+
+            customFieldList.add(new CustomField(requiredFields.get("Protocol"),"test protocol"));
+            customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"),"WR 1 Billion!"));
+
             jiraTicketCreationResponse = jiraService.createIssue(workflowDescription.getJiraProjectPrefix(),
                     workflowDescription.getJiraIssueType(),
                     ticketTitle,
-                    ticketDetails.toString(), null);
+                    ticketDetails.toString(), customFieldList);
             // todo use #lcSetParameters to add more details to the ticket
 
         }
