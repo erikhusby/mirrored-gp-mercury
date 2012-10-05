@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  * Time: 10:26 AM
  */
 @Entity
-public class OrderSample implements Serializable {
+public class ProductOrderSample implements Serializable {
 
     @Id
     @SequenceGenerator(name="ORDER_SAMPLE_INDEX", sequenceName="ORDER_SAMPLE_INDEX", allocationSize = 1)
@@ -37,15 +37,15 @@ public class OrderSample implements Serializable {
     private Set<BillableItem> billableItems;
 
     @ManyToOne
-    private Order order;
+    private ProductOrder productOrder;
 
     @Transient
     private BSPSampleDTO bspDTO;
 
-    OrderSample() {
+    ProductOrderSample() {
     }
 
-    public OrderSample(String sampleName) {
+    public ProductOrderSample(String sampleName) {
         this.sampleName = sampleName;
     }
 
@@ -55,10 +55,10 @@ public class OrderSample implements Serializable {
 //    }
 
 
-    public OrderSample(final String sampleName, final BSPSampleDTO bspDTO, final Order order) {
+    public ProductOrderSample(final String sampleName, final BSPSampleDTO bspDTO, final ProductOrder productOrder) {
         this.sampleName = sampleName;
         this.bspDTO = bspDTO;
-        this.order = order;
+        this.productOrder = productOrder;
     }
 
     public String getSampleName() {
@@ -114,7 +114,7 @@ public class OrderSample implements Serializable {
         if (StringUtils.isBlank(sampleName)) {
             return false;
         }
-        return Pattern.matches(OrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
+        return Pattern.matches(ProductOrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
     }
 
     // Methods delegated to the DTO
@@ -228,16 +228,16 @@ public class OrderSample implements Serializable {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof OrderSample)) return false;
+        if (!(o instanceof ProductOrderSample)) return false;
 
-        final OrderSample that = (OrderSample) o;
+        final ProductOrderSample that = (ProductOrderSample) o;
 
         if (billableItems != null ? !billableItems.equals(that.billableItems) : that.billableItems != null)
             return false;
         if (billingStatus != that.billingStatus) return false;
         if (bspDTO != null ? !bspDTO.equals(that.bspDTO) : that.bspDTO != null) return false;
         if (comment != null ? !comment.equals(that.comment) : that.comment != null) return false;
-        if (!order.equals(that.order)) return false;
+        if (!productOrder.equals(that.productOrder)) return false;
         if (!sampleName.equals(that.sampleName)) return false;
 
         return true;
@@ -249,7 +249,7 @@ public class OrderSample implements Serializable {
         result = 31 * result + billingStatus.hashCode();
         result = 31 * result + (comment != null ? comment.hashCode() : 0);
         result = 31 * result + (billableItems != null ? billableItems.hashCode() : 0);
-        result = 31 * result + order.hashCode();
+        result = 31 * result + productOrder.hashCode();
         result = 31 * result + (bspDTO != null ? bspDTO.hashCode() : 0);
         return result;
     }

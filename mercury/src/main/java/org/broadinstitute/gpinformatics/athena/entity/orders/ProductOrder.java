@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Class to model the concept of a Product Order that can be created
+ * Class to model the concept of a Product ProductOrder that can be created
  * by the Program PM and subsequently submitted to a lims system.
  * Currently supports the concept associating a product with a set of samples withe a quote.
- * For more detail on the purpose of the Order, see the user stories listed on
+ * For more detail on the purpose of the ProductOrder, see the user stories listed on
  *
  * @see <a href="	https://confluence.broadinstitute.org/x/kwPGAg</a>
  *      <p/>
@@ -25,7 +25,7 @@ import java.util.Set;
  *      Time: 10:25 AM
  */
 @Entity
-public class Order implements Serializable {
+public class ProductOrder implements Serializable {
 
     @Id
     @SequenceGenerator(name="PRODUCT_ORDER_INDEX", sequenceName="PRODUCT_ORDER_INDEX", allocationSize = 1)
@@ -46,26 +46,26 @@ public class Order implements Serializable {
     private String comments;                    // Additional comments of the order
     private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
     @OneToMany(cascade = CascadeType.PERSIST)
-    private List<OrderSample> samples;
+    private List<ProductOrderSample> sampleProducts;
 
 
     /**
      * Default no-arg constructor
      */
-    Order() {
+    ProductOrder() {
     }
 
     /**
      * Constructor with mandatory fields
      * @param title
-     * @param samples
+     * @param sampleProducts
      * @param quoteId
      * @param product
      * @param researchProject
      */
-    public Order(String title, List<OrderSample> samples, String quoteId, Product product, ResearchProject researchProject) {
+    public ProductOrder(String title, List<ProductOrderSample> sampleProducts, String quoteId, Product product, ResearchProject researchProject) {
         this.title = title;
-        this.samples = samples;
+        this.sampleProducts = sampleProducts;
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
@@ -119,17 +119,17 @@ public class Order implements Serializable {
         this.comments = comments;
     }
 
-    public List<OrderSample> getSamples() {
-        return samples;
+    public List<ProductOrderSample> getSampleProducts() {
+        return sampleProducts;
     }
 
-    public void addSample(OrderSample sample) {
-        samples.add(sample);
+    public void addSample(ProductOrderSample sampleProduct) {
+        sampleProducts.add(sampleProduct);
     }
 
     /**
      * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
-     * which this Product Order is associated
+     * which this Product ProductOrder is associated
      *
      * @return a {@link String} that represents the unique Jira Ticket key
      */
@@ -160,8 +160,8 @@ public class Order implements Serializable {
                 throw new IllegalStateException("Not Yet Implemented");
             }
 
-            for ( OrderSample orderSample : samples ) {
-                String participantId = orderSample.getParticipantId();
+            for ( ProductOrderSample productOrderSample : sampleProducts) {
+                String participantId = productOrderSample.getParticipantId();
                 if (StringUtils.isNotBlank(participantId)) {
                     uniqueParticipants.add(participantId);
                 }
@@ -182,8 +182,8 @@ public class Order implements Serializable {
 
     private Set<String> getUniqueSampleNames() {
         Set<String> uniqueSamples = new HashSet<String>();
-        for ( OrderSample orderSample : samples ) {
-            String sampleName = orderSample.getSampleName();
+        for ( ProductOrderSample productOrderSample : sampleProducts) {
+            String sampleName = productOrderSample.getSampleName();
             if (StringUtils.isNotBlank(sampleName)) {
                 uniqueSamples.add(sampleName);
             }
@@ -192,7 +192,7 @@ public class Order implements Serializable {
     }
 
     public int getTotalSampleCount() {
-        return samples.size();
+        return sampleProducts.size();
     }
 
     public int getDuplicateCount() {
@@ -217,8 +217,8 @@ public class Order implements Serializable {
     public boolean areAllSampleBSPFormat() {
         boolean result = true;
         if (! isSheetEmpty() ) {
-            for ( OrderSample orderSample : samples) {
-                if (! orderSample.isInBspFormat() ) {
+            for ( ProductOrderSample productOrderSample : sampleProducts) {
+                if (! productOrderSample.isInBspFormat() ) {
                     result = false;
                     break;
                 }
@@ -230,15 +230,15 @@ public class Order implements Serializable {
     }
 
     private boolean isSheetEmpty() {
-        return (samples == null ) ||  samples.isEmpty();
+        return (sampleProducts == null ) ||  sampleProducts.isEmpty();
     }
 
     private boolean needsBspMetaData() {
         boolean needed = false;
         if (! isSheetEmpty() ) {
-            for ( OrderSample orderSample : samples ) {
-                if ( orderSample.isInBspFormat() &&
-                     ! orderSample.hasBSPDTOBeenInitialized() ) {
+            for ( ProductOrderSample productOrderSample : sampleProducts) {
+                if ( productOrderSample.isInBspFormat() &&
+                     ! productOrderSample.hasBSPDTOBeenInitialized() ) {
                     needed = true;
                     break;
                 }
@@ -248,7 +248,7 @@ public class Order implements Serializable {
     }
 
     /**
-     * fetchJiraProject is a helper method that binds a specific Jira project to an Order entity.  This
+     * fetchJiraProject is a helper method that binds a specific Jira project to an ProductOrder entity.  This
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
@@ -262,7 +262,7 @@ public class Order implements Serializable {
 
     /**
      *
-     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to an Order entity.  This
+     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to an ProductOrder entity.  This
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
@@ -308,12 +308,12 @@ public class Order implements Serializable {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof Order)) return false;
+        if (!(o instanceof ProductOrder)) return false;
 
-        final Order order = (Order) o;
+        final ProductOrder productOrder = (ProductOrder) o;
 
-        if (!researchProject.equals(order.researchProject)) return false;
-        if (!title.equals(order.title)) return false;
+        if (!researchProject.equals(productOrder.researchProject)) return false;
+        if (!title.equals(productOrder.title)) return false;
 
         return true;
     }

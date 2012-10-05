@@ -7,7 +7,7 @@ import javax.enterprise.context.RequestScoped;
 
 
 /**
- * Dao for {@link org.broadinstitute.gpinformatics.athena.entity.orders.OrderSample}s
+ * Dao for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample}s
  * Created by IntelliJ IDEA.
  * User: mccrory
  * Date: 10/5/12

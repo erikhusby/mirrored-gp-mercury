@@ -2,7 +2,8 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.Order;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.experiments.EntityUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
@@ -58,7 +59,7 @@ public class ResearchProject {
     private String irbNotes;
 
     @OneToMany(mappedBy = "researchProject")
-    private final Set<Order> orders = new HashSet<Order>();
+    private final Set<ProductOrder> productOrders = new HashSet<ProductOrder>();
 
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
@@ -214,8 +215,8 @@ public class ResearchProject {
         this.status = status;
     }
 
-    public Set<Order> getOrders() {
-        return orders;
+    public Set<ProductOrder> getProductOrders() {
+        return productOrders;
     }
 
     public String getIrbNumberString() {
