@@ -74,9 +74,10 @@ public class PriceItem implements Serializable {
 
         EXOME_EXPRESS("Exome Express"),
         STANDARD_EXOME_SEQUENCING("Standard Exome Sequencing"),
-        TISSUE_DNA_EXTRACTION("Tissue DNA Extraction"),
-        BLOOD_DNA_EXTRACTION("Blood DNA Extraction"),
-        EXTRA_HISEQ_COVERAGE("Extra HiSeq Coverage");
+        DNA_EXTRACTION("DNA Extraction"),
+        EXTRA_HISEQ_COVERAGE("Extra HiSeq Coverage"),
+        TIME_AND_MATERIALS_LAB("Time and Materials - Laboratory"),
+        TIME_AND_MATERIALS_IFX("Time nad Materials - Informatics");
 
         private String quoteServerName;
 
@@ -95,9 +96,6 @@ public class PriceItem implements Serializable {
     @SequenceGenerator(name = "SEQ_PRICE_ITEM", sequenceName = "SEQ_PRICE_ITEM")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRICE_ITEM")
     private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Product product;
 
     private String platform;
 
@@ -122,10 +120,7 @@ public class PriceItem implements Serializable {
     PriceItem() {}
 
 
-    public PriceItem(Product product, Platform platform, Category categoryName, PriceItemName priceItemName, String quoteServicePriceItemId) {
-
-        if ( product ==  null )
-            throw new NullPointerException( "Null product specified!" );
+    public PriceItem(Platform platform, Category categoryName, PriceItemName priceItemName, String quoteServicePriceItemId) {
 
         if ( platform == null )
             throw new NullPointerException( "Null platform specified!" );
@@ -140,7 +135,6 @@ public class PriceItem implements Serializable {
         if ( "".equals(quoteServicePriceItemId.trim()) )
             throw new RuntimeException( "Empty quote server price item id specified!" );
 
-        this.product = product;
         this.platform = platform.getQuoteServerPlatform();
         this.categoryName = categoryName.getQuoteServerCategory();
         this.priceItemName = priceItemName.getQuoteServerName();
@@ -150,10 +144,6 @@ public class PriceItem implements Serializable {
 
     public Long getId() {
         return id;
-    }
-
-    public Product getProduct() {
-        return product;
     }
 
     public String getPlatform() {
