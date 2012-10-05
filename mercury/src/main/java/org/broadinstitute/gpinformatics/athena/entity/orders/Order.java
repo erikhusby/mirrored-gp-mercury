@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.broadinstitute.gpinformatics.athena.Namespaces;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
@@ -19,33 +21,29 @@ import java.io.Serializable;
  *      Date: 8/28/12
  *      Time: 10:25 AM
  */
-@XmlType(namespace = Namespaces.ORDER_NS)
 public class Order implements Serializable {
 
     private String title;                       // Unique title for the order
     private String researchProjectName;
-    private String barcode;                     // Unique barcode for the order. Eg. PDO-ABDR
     private OrderStatus orderStatus;
     private String quoteId;                     // Alphanumeric Id
     private String comments;                    // Additional comments of the order
     private SampleSheet sampleSheet;
+    private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitteds
 
-
-    public Order() {
+    public Order(final String title, final String researchProjectName, final String quoteId ) {
+        this(title, researchProjectName, quoteId, new SampleSheet());
     }
 
-    public Order(final String title, final String researchProjectName, final String barcode,
-                 final OrderStatus orderStatus, final String quoteId, final String comments,
-                 final SampleSheet sampleSheet) {
+    public Order(final String title, final String researchProjectName, final String quoteId,
+                 final SampleSheet sampleSheet ) {
         this.title = title;
         this.researchProjectName = researchProjectName;
-        this.barcode = barcode;
-        this.orderStatus = orderStatus;
+        this.orderStatus = OrderStatus.Draft;
         this.quoteId = quoteId;
-        this.comments = comments;
+        this.comments = "";
         this.sampleSheet = sampleSheet;
     }
-
 
     public String getTitle() {
         return title;
@@ -79,15 +77,6 @@ public class Order implements Serializable {
         this.orderStatus = orderStatus;
     }
 
-    public String getBarcode() {
-        return barcode;
-    }
-
-    public void setBarcode(final String barcode) {
-        this.barcode = barcode;
-    }
-
-
     public String getComments() {
         return comments;
     }
@@ -104,40 +93,98 @@ public class Order implements Serializable {
         this.sampleSheet = sampleSheet;
     }
 
+    /**
+     * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
+     * which this Product Order is associated
+     *
+     * @return a {@link String} that represents the unique Jira Ticket key
+     */
+    public String getJiraTicketKey() {
+        return this.jiraTicketKey;
+    }
+
+    /**
+     * setJiraTicketKey allows a user of this class to associate the key for the Jira Ticket which was created when the
+     * related ProductOrder was officially submitted
+     *
+     * @param jiraTicketKeyIn a {@link String} that represents the unique key to the Jira Ticket to which the current
+     *                        Product Order is associated
+     */
+    public void setJiraTicketKey(String jiraTicketKeyIn) {
+        if(jiraTicketKeyIn == null) {
+            throw new NullPointerException("Jira Ticket Key cannot be null");
+        }
+        this.jiraTicketKey = jiraTicketKeyIn;
+    }
+
     public int getUniqueParticipantCount() {
-        //TODO
-        //        return 0;
         return sampleSheet.getUniqueParticipantCount();
     }
 
     public int getUniqueSampleCount() {
-        //TODO
-        //        return 0;
         return sampleSheet.getUniqueSampleCount();
     }
 
     public int getTotalSampleCount() {
-        //TODO
-        //        return 0;
         return sampleSheet.getTotalSampleCount();
     }
 
     public int getDuplicateCount() {
-         //TODO
-        //         return 0;
         return sampleSheet.getDuplicateCount();
     }
 
-    public ImmutablePair getDiseaseNormalCounts() {
-            //TODO
-        //            return 0;
-        return sampleSheet.getDiseaseNormalCounts();
+    public ImmutablePair getTumorNormalCounts() {
+        return sampleSheet.getTumorNormalCounts();
     }
 
-    public ImmutablePair getGenderCount() {
-         //TODO
-        //         return 0;
-        return sampleSheet.getGenderCount();
+    public ImmutablePair getMaleFemaleCount() {
+        return sampleSheet.getMaleFemaleCount();
+    }
+
+    /**
+     * fetchJiraProject is a helper method that binds a specific Jira project to an Order entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity
+     *
+     * @return An enum of type
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     * represents the Jira Project for Product Orders
+     */
+    @Transient
+    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
+        return CreateIssueRequest.Fields.ProjectType.Product_Ordering;
+    }
+
+    /**
+     *
+     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to an Order entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity
+     *
+     * @return An enum of type
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     * represents the Jira Issue Type for Product Orders
+     */
+    @Transient
+    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
+        return CreateIssueRequest.Fields.Issuetype.Product_Order;
+    }
+
+    /**
+     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
+     * for Product orders
+     */
+    public enum RequiredSubmissionFields {
+
+        PRODUCT_FAMILY("Product Family");
+
+        private String fieldName;
+
+        private RequiredSubmissionFields(String fieldNameIn) {
+            fieldName = fieldNameIn;
+        }
+
+        public String getFieldName() {
+            return fieldName;
+        }
     }
 
 }

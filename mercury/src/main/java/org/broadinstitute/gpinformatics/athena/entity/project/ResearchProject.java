@@ -11,6 +11,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+
+import javax.persistence.Transient;
 
 /**
  * Research Projects hold all the information about a research project
@@ -60,16 +63,20 @@ public class ResearchProject {
     @Transient
     private final Set<Order> orders = new HashSet<Order>();
 
+    private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
+
+    protected ResearchProject() {}
+
     public ResearchProject(Long creator, String title, String synopsis) {
+
         this.title = title;
         this.synopsis = synopsis;
         this.createdBy = creator;
         this.createdDate = new Date();
         this.modifiedBy = creator;
         this.modifiedDate = this.createdDate;
+        this.irbNotes = "";
     }
-
-    protected ResearchProject() {}
 
     // Getters
     public String getTitle() {
@@ -100,45 +107,36 @@ public class ResearchProject {
         return modifiedBy;
     }
 
-    //Setters
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    public void setCreatedBy(Long createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public void setModifiedDate(Date modifiedDate) {
-        this.modifiedDate = modifiedDate;
-    }
-
-    public void setModifiedBy(Long modifiedBy) {
-        this.modifiedBy = modifiedBy;
-    }
-
-    public Set<Order> getOrders() {
-        return orders;
-    }
-
-    public void setSynopsis(String synopsis) {
-        this.synopsis = synopsis;
-    }
-
     public String getIrbNotes() {
         return irbNotes;
     }
 
-    public void setIrbNotes(String irbNotes) {
-        this.irbNotes = irbNotes;
+    public void addIrbNotes(String irbNotes) {
+        this.irbNotes += "\n" + irbNotes;
+    }
+
+    /**
+     * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
+     * which this Research project is associated
+     *
+     * @return a {@link String} that represents the unique Jira Ticket key
+     */
+    public String getJiraTicketKey() {
+        return this.jiraTicketKey;
+    }
+
+    /**
+     * setJiraTicketKey allows a user of this class to associate the key for the Jira Ticket which was created
+     * for this Research Project
+     *
+     * @param jiraTicketKeyIn a {@link String} that represents the unique key to the Jira Ticket to which the current
+     *                        Research Project is associated
+     */
+    public void setJiraTicketKey(String jiraTicketKeyIn) {
+        if(jiraTicketKeyIn == null) {
+            throw new NullPointerException("Jira Ticket Key cannot be null");
+        }
+        this.jiraTicketKey = jiraTicketKeyIn;
     }
 
     public Set<ResearchProjectCohort> getSampleCohorts() {
@@ -178,7 +176,7 @@ public class ResearchProject {
             associatedPeople = new HashSet<ProjectPerson>();
         }
 
-        associatedPeople.add(new ProjectPerson(role, personId));
+        associatedPeople.add(new ProjectPerson(this, role, personId));
     }
 
     public Set<Long> getPeople(RoleType role) {
@@ -219,6 +217,10 @@ public class ResearchProject {
         this.status = status;
     }
 
+    public Set<Order> getOrders() {
+        return orders;
+    }
+
     public String getIrbNumberString() {
         Set<String> irbNumberString = new HashSet<String> ();
         for (ResearchProjectIRB irb : getIrbNumbers()) {
@@ -245,4 +247,53 @@ public class ResearchProject {
     public int hashCode() {
         return new HashCodeBuilder().append(title).toHashCode();
     }
+
+    /**
+     * fetchJiraProject is a helper method that binds a specific Jira project to a ResearchProject entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity
+     *
+     * @return An enum of type
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     * represents the Jira Project for Research Projects
+     */
+    @Transient
+    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
+        return CreateIssueRequest.Fields.ProjectType.Research_Projects;
+    }
+
+    /**
+     *
+     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to a ResearchProject entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity
+     *
+     * @return An enum of type
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     * represents the Jira Issue Type for Research Projects
+     */
+    @Transient
+    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
+        return CreateIssueRequest.Fields.Issuetype.Research_Project;
+    }
+
+    /**
+     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
+     * for Research Projects
+     */
+    public enum RequiredSubmissionFields {
+
+        Sponsoring_Scientist("Sponsoring Scientist");
+
+        private String fieldName;
+
+        private RequiredSubmissionFields(String fieldNameIn) {
+            fieldName = fieldNameIn;
+        }
+
+        public String getFieldName() {
+            return fieldName;
+        }
+    }
+
+
+
 }
