@@ -11,15 +11,15 @@ import org.testng.annotations.Test;
  * Time: 5:59 PM
  */
 @Test(groups = {TestGroups.DATABASE_FREE})
-public class BillableSampleTest {
+public class ProductOrderSampleTest {
 
     @Test
     public void testIsInBspFormat() throws Exception {
 
-        Assert.assertTrue(BillableSample.isInBspFormat("SM-2ACG"));
-        Assert.assertTrue(BillableSample.isInBspFormat("SM-2ACG5"));
-        Assert.assertTrue(BillableSample.isInBspFormat("SM-2ACG6"));
-        Assert.assertFalse(BillableSample.isInBspFormat(null));
+        Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG"));
+        Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG5"));
+        Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG6"));
+        Assert.assertFalse(ProductOrderSample.isInBspFormat(null));
 
     }
 

@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * Date: 8/28/12
  * Time: 10:26 AM
  */
-public class BillableSample implements Serializable {
+public class ProductOrderSample implements Serializable {
 
     public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
     static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
@@ -29,14 +29,14 @@ public class BillableSample implements Serializable {
     //TODO hmc Annotate the DTO as transient when hibernating this class
     private BSPSampleDTO bspDTO;
 
-    BillableSample() {
+    ProductOrderSample() {
     }
 
-    public BillableSample(final String sampleName) {
+    public ProductOrderSample(String sampleName) {
         this.sampleName = sampleName;
     }
 
-    public BillableSample(final String sampleName, final BSPSampleDTO bspDTO) {
+    public ProductOrderSample(String sampleName, BSPSampleDTO bspDTO) {
         this.sampleName = sampleName;
         this.bspDTO = bspDTO;
     }
@@ -49,7 +49,7 @@ public class BillableSample implements Serializable {
         return billingStatus;
     }
 
-    public void setBillingStatus(final BillingStatus billingStatus) {
+    public void setBillingStatus(BillingStatus billingStatus) {
         this.billingStatus = billingStatus;
     }
 
@@ -57,7 +57,7 @@ public class BillableSample implements Serializable {
         return comment;
     }
 
-    public void setComment(final String comment) {
+    public void setComment(String comment) {
         this.comment = comment;
     }
 
@@ -78,11 +78,11 @@ public class BillableSample implements Serializable {
         return billableItems;
     }
 
-    public void addBillableItem(final BillableItem billableItem) {
+    public void addBillableItem(BillableItem billableItem) {
         billableItems.add(billableItem);
     }
 
-    public void setBspDTO(final BSPSampleDTO bspDTO) {
+    public void setBspDTO(BSPSampleDTO bspDTO) {
         this.bspDTO = bspDTO;
     }
 
@@ -90,12 +90,11 @@ public class BillableSample implements Serializable {
         return isInBspFormat( getSampleName() );
     }
 
-    public static boolean isInBspFormat(final String sampleName) {
+    public static boolean isInBspFormat(String sampleName) {
         if (StringUtils.isBlank(sampleName)) {
             return false;
         }
-
-        return Pattern.matches(BillableSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
+        return Pattern.matches(ProductOrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
     }
 
     // Methods delegated to the DTO
@@ -202,7 +201,6 @@ public class BillableSample implements Serializable {
 
     public String getSampleType() {
         //TODO hmc
-        // Normal or Tumor
         throw new RuntimeException("Not yet Implemented.");
     }
 
