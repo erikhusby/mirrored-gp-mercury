@@ -132,9 +132,9 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         exex.addPriceItem(priceItem);
 
-        Product tissueExtraction = new Product(
+        Product dnaExtraction = new Product(
 
-                "Tissue DNA Extraction",                // product name
+                "DNA Extraction",                       // product name
 
                 generalProductsProductFamily,           // product family
 
@@ -147,7 +147,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
                 "to the column membrane as contaminants and enzyme inhibitors pass through in the wash steps.  " +
                 "The DNA is then eluted off the column with TE buffer and is ready to be quantified via picogreen.",
 
-                "TISSUE_DNA_EXTRACTION-2012.11.01",     // part number
+                "DNA_EXTRACTION-2012.11.01",           // part number
 
                 Calendar.getInstance().getTime(),      // availability date
 
@@ -171,77 +171,21 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
                 true,                                  // top level product
 
-                "TISSUE_DNA_EXTRACT-WF-2012.11.01"     // workflow name
+                "DNA_EXTRACT-WF-2012.11.01"            // workflow name
 
         );
 
-        exex.addAddOn(tissueExtraction);
+        exex.addAddOn(dnaExtraction);
 
         priceItem = new PriceItem(
-                tissueExtraction,                                        // product
+                dnaExtraction,                                           // product
                 GP,                                                      // platform
                 GENERAL_PRODUCTS,                                        // category name
-                TISSUE_DNA_EXTRACTION,                                   // price item name
-                "GP-GENERAL_PRODUCTS-TISSUE_DNA_EXTRACTION_2012.11.01"   // quote server price item id
+                DNA_EXTRACTION,                                          // price item name
+                "GP-GENERAL_PRODUCTS-DNA_EXTRACTION_2012.11.01"          // quote server price item id
         );
-        tissueExtraction.addPriceItem(priceItem);
-        tissueExtraction.setDefaultPriceItem(priceItem);
-
-        Product bloodExtraction = new Product(
-
-                "Blood DNA Extraction",                // product name
-
-                generalProductsProductFamily,          // product family
-
-                                                       // description
-                "The Genomics Platform performs high quality DNA extractions from a variety of sample types:  blood " +
-                "(fresh or frozen), cells, and tissue (fresh, snap-frozen, Formalin-Fixed-Paraffin-Embedded, PAXgene " +
-                "Preserved), etc.  DNA is extracted using a column-based DNeasy Kit.  The samples are first lysed " +
-                "with Proteinase K.  Buffering conditions are adjusted so to provide optimal DNA binding conditions " +
-                "to the DNeasy spin column.  Once the lysed sample is added to the column, DNA is selectively bound " +
-                "to the column membrane as contaminants and enzyme inhibitors pass through in the wash steps.  " +
-                "The DNA is then eluted off the column with TE buffer and is ready to be quantified via picogreen.",
-
-                "BLOOD_DNA_EXTRACTION-2012.11.01",     // part number
-
-                Calendar.getInstance().getTime(),      // availability date
-
-                null,                                  // discontinued date
-
-                2 * DAYS,                              // expected cycle time
-
-                3 * DAYS,                              // guaranteed cycle time
-
-                360,                                   // samples per week
-
-                                                       // input requirements
-                "Funding and compliance requirements must be in place - this includes a valid IRB or letter of " +
-                "non-engagement where needed\n" +
-                "Minimum Sample data including - Collaborator Participant ID, Collaborator Sample ID, Gender\n",
-
-                                                       // deliverables
-                "High quality DNA (A260/A280 range of 1.7-1.9).  DNA is quantified in triplicate using a standardized " +
-                "picogreen assay.  Sample yields is dependent on multiple factors such as:   the original material " +
-                "type provided (blood, cells, tissue, etc), amount of material provided, and tissue site.",
-
-                true,                                  // top level product
-
-                "BLOOD_DNA_EXTRACT-WF-2012.11.01"      // workflow name
-
-        );
-
-        exex.addAddOn(bloodExtraction);
-
-        priceItem = new PriceItem(
-                bloodExtraction,                                          // product
-                GP,                                                       // platform
-                GENERAL_PRODUCTS,                                         // category name
-                BLOOD_DNA_EXTRACTION,                                     // price item name
-                "GP-GENERAL_PRODUCTS-BLOOD_DNA_EXTRACTION_2012.11.01"     // quote server price item id
-        );
-
-        bloodExtraction.addPriceItem(priceItem);
-        bloodExtraction.setDefaultPriceItem(priceItem);
+        dnaExtraction.addPriceItem(priceItem);
+        dnaExtraction.setDefaultPriceItem(priceItem);
 
         Product extraCoverage = new Product(
              "Extra HiSeq Coverage",                    // product name

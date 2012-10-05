@@ -74,8 +74,7 @@ public class PriceItem implements Serializable {
 
         EXOME_EXPRESS("Exome Express"),
         STANDARD_EXOME_SEQUENCING("Standard Exome Sequencing"),
-        TISSUE_DNA_EXTRACTION("Tissue DNA Extraction"),
-        BLOOD_DNA_EXTRACTION("Blood DNA Extraction"),
+        DNA_EXTRACTION("DNA Extraction"),
         EXTRA_HISEQ_COVERAGE("Extra HiSeq Coverage");
 
         private String quoteServerName;
