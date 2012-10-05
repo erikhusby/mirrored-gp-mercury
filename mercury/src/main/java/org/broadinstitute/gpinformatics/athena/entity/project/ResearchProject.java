@@ -5,15 +5,13 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.Order;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
 import javax.persistence.*;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-
-import javax.persistence.Transient;
 
 /**
  * Research Projects hold all the information about a research project
@@ -241,10 +239,6 @@ public class ResearchProject {
 
     public void setStatus(Status status) {
         this.status = status;
-    }
-
-    public Set<Order> getOrders() {
-        return orders;
     }
 
     public String getIrbNumberString() {
