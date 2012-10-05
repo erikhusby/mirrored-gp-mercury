@@ -81,6 +81,24 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
     }
 
     /**
+     * POST a JSON representation of the requestPojo to the specified {@link WebResource} This method is used when a
+     * a post does not expect a response (HTTP Status code in the 200 range)
+     *
+     * @param webResource
+     * @param requestPojo
+     * @return
+     * @throws IOException
+     */
+    protected void post(WebResource webResource, Object requestPojo) throws IOException {
+
+        final ByteArrayOutputStream baos = writeValue(requestPojo);
+
+        logger.warn("POST request: " + baos.toString());
+
+        setJsonMimeTypes(webResource).post(baos.toString());
+    }
+
+    /**
      * PUT a JSON representation of the requestPojo to the specified {@link WebResource} and return a POJO
      * representation of the response.
      *
