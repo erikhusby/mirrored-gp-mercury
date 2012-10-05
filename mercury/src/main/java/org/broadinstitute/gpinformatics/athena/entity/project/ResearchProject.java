@@ -186,6 +186,10 @@ public class ResearchProject {
         this.status = status;
     }
 
+    public Set<Order> getOrders() {
+        return orders;
+    }
+
     public String getIrbNumberString() {
         Set<String> irbNumberString = new HashSet<String> ();
         for (ResearchProjectIRB irb : getIrbNumbers()) {
