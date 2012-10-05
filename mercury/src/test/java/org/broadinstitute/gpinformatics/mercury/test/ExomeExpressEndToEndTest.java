@@ -424,7 +424,8 @@ public class ExomeExpressEndToEndTest {
             for (Starter starter : projectPlan.getStarters()) {
                 BSPSampleAuthorityTwoDTube aliquot = (BSPSampleAuthorityTwoDTube) projectPlan.getAliquotForStarter(starter);
                 BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
-                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName()));
+                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
+                                                             "", "", "","", "", "", "",""));
             }
 
             // ZIMS

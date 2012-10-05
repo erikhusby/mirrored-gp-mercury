@@ -8,6 +8,15 @@ import java.io.Serializable;
  */
 public class BSPSampleDTO implements Serializable {
 
+    public final static String TUMOR_IND = "Tumor";
+    public final static String NORMAL_IND = "Normal";
+
+    public final static String FEMALE_IND = "FEMALE";
+    public final static String MALE_IND = "MALE";
+
+    public final static String ACTIVE_IND = "Active Stock";
+
+
     private final String patientId;
 
     private final String stockSample;
@@ -32,22 +41,33 @@ public class BSPSampleDTO implements Serializable {
 
     private final String sampleLsid;
 
+    private final String collaboratorParticipantId;
+
+    private final String materialType;
+
+    private final String total;
+
+    private final String sampleType;
+
+    private final String primaryDisease;
+
+    private final String gender;
+
+    private final String stockType;
+
+    private final String fingerprint;
+
+
     // collaborator?
     // species vs organism?
     // strain?
     // tissueType?
 
-    public BSPSampleDTO(String containerId,
-                        String stockSample,
-                        String rootSample,
-                        String aliquotSample,
-                        String patientId,
-                        String organism,
-                        String collaboratorsSampleName,
-                        String collection,
-                        String volume,
-                        String concentration,
-                        String sampleLsid) {
+    public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
+                        String patientId, String organism, String collaboratorsSampleName, String collection,
+                        String volume, String concentration, String sampleLsid, String collaboratorParticipantIdIn,
+                        String materialTypeIn, String totalIn, String sampleTypeIn, String primaryDiseaseIn,
+                        String genderIn, String stockTypeIn, String fingerprintIn) {
         this.stockSample = stockSample;
         this.rootSample = rootSample;
         this.patientId = patientId;
@@ -57,6 +77,14 @@ public class BSPSampleDTO implements Serializable {
         this.concentration = concentration;
         this.organism = organism;
         this.sampleLsid = sampleLsid;
+        this.collaboratorParticipantId = collaboratorParticipantIdIn;
+        this.materialType = materialTypeIn;
+        this.total = totalIn;
+        this.sampleType = sampleTypeIn;
+        this.primaryDisease = primaryDiseaseIn;
+        this.gender = genderIn;
+        this.stockType = stockTypeIn;
+        this.fingerprint = fingerprintIn;
         this.stockAtExport = null;
         this.positiveControl = false;
         this.negativeControl = false;
@@ -155,4 +183,49 @@ public class BSPSampleDTO implements Serializable {
     public String getSampleLsid() {
         return sampleLsid;
     }
+
+    public Boolean getPositiveControl() {
+        return positiveControl;
+    }
+
+    public Boolean getNegativeControl() {
+        return negativeControl;
+    }
+
+    public String getCollaboratorParticipantId() {
+        return collaboratorParticipantId;
+    }
+
+    public String getMaterialType() {
+        return materialType;
+    }
+
+    public String getTotal() {
+        return total;
+    }
+
+    public String getSampleType() {
+        return sampleType;
+    }
+
+    public String getPrimaryDisease() {
+        return primaryDisease;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public String getStockType() {
+        return stockType;
+    }
+
+    public String getFingerprint() {
+        return fingerprint;
+    }
+
+    public boolean isTumor() {
+        return TUMOR_IND.equals(sampleType);
+    }
+
 }
