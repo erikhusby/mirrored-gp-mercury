@@ -1,9 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.broadinstitute.gpinformatics.athena.Namespaces;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
-import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 /**
@@ -23,23 +22,32 @@ public class Order implements Serializable {
 
     private String title;                       // Unique title for the order
     private String researchProjectName;
-    private OrderStatus orderStatus;
+    private Product product;
+    private OrderStatus orderStatus = OrderStatus.Draft;
     private String quoteId;                     // Alphanumeric Id
     private String comments;                    // Additional comments of the order
     private SampleSheet sampleSheet;
 
-    public Order(final String title, final String researchProjectName, final String quoteId ) {
-        this(title, researchProjectName, quoteId, new SampleSheet());
+    /**
+     * Default no-arg constructor
+     */
+    Order() {
     }
 
-    public Order(final String title, final String researchProjectName, final String quoteId,
-                 final SampleSheet sampleSheet ) {
+    /**
+     * Constructor with mandatory fields
+     * @param title
+     * @param sampleSheet
+     * @param quoteId
+     * @param product
+     * @param researchProjectName
+     */
+    public Order(final String title, final SampleSheet sampleSheet, final String quoteId, final Product product, final String researchProjectName) {
         this.title = title;
-        this.researchProjectName = researchProjectName;
-        this.orderStatus = OrderStatus.Draft;
-        this.quoteId = quoteId;
-        this.comments = "";
         this.sampleSheet = sampleSheet;
+        this.quoteId = quoteId;
+        this.product = product;
+        this.researchProjectName = researchProjectName;
     }
 
     public String getTitle() {
@@ -56,6 +64,14 @@ public class Order implements Serializable {
 
     public void setResearchProjectName(final String researchProjectName) {
         this.researchProjectName = researchProjectName;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(final Product product) {
+        this.product = product;
     }
 
     public String getQuoteId() {
@@ -110,8 +126,8 @@ public class Order implements Serializable {
         return sampleSheet.getTumorNormalCounts();
     }
 
-    public ImmutablePair getMaleFemaleCount() {
-        return sampleSheet.getMaleFemaleCount();
+    public ImmutablePair getMaleFemaleCounts() {
+        return sampleSheet.getMaleFemaleCounts();
     }
 
 }

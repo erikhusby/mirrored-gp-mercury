@@ -18,18 +18,22 @@ import java.util.Set;
 
 public class SampleSheet implements Serializable {
 
-    private List<AthenaSample> samples;
+    private List<BillableSample> samples;
 
-    public SampleSheet() {
-        samples = new ArrayList<AthenaSample>();
+    SampleSheet() {
+        samples = new ArrayList<BillableSample>();
     }
 
-    public List<AthenaSample> getSamples() {
+    public SampleSheet(final List<BillableSample> samples) {
+        this.samples = samples;
+    }
+
+    public List<BillableSample> getSamples() {
         return samples;
     }
 
-    public void setSamples(final List<AthenaSample> samples) {
-        this.samples = samples;
+    public void addSample(final BillableSample sample) {
+        samples.add(sample);
     }
 
     public int getUniqueParticipantCount() {
@@ -41,8 +45,8 @@ public class SampleSheet implements Serializable {
                 throw new IllegalStateException("Not Yet Implemented");
             }
 
-            for ( AthenaSample athenaSample : samples ) {
-                String participantId = athenaSample.getParticipantId();
+            for ( BillableSample billableSample : samples ) {
+                String participantId = billableSample.getParticipantId();
                 if (StringUtils.isNotBlank(participantId)) {
                     uniqueParticipants.add(participantId);
                 }
@@ -63,8 +67,8 @@ public class SampleSheet implements Serializable {
 
     private Set<String> getUniqueSampleNames() {
         Set<String> uniqueSamples = new HashSet<String>();
-        for ( AthenaSample athenaSample : samples ) {
-            String sampleName = athenaSample.getSampleName();
+        for ( BillableSample billableSample : samples ) {
+            String sampleName = billableSample.getSampleName();
             if (StringUtils.isNotBlank(sampleName)) {
                 uniqueSamples.add(sampleName);
             }
@@ -85,7 +89,7 @@ public class SampleSheet implements Serializable {
         throw new RuntimeException("Not Yet Implemented.");
     }
 
-    public ImmutablePair getMaleFemaleCount() {
+    public ImmutablePair getMaleFemaleCounts() {
         //TODO
         throw new RuntimeException("Not Yet Implemented.");
     }
@@ -98,8 +102,8 @@ public class SampleSheet implements Serializable {
     public boolean areAllSampleBSPFormat() {
         boolean result = true;
         if (! isSheetEmpty() ) {
-            for ( AthenaSample athenaSample : samples) {
-                if (! athenaSample.isInBspFormat() ) {
+            for ( BillableSample billableSample : samples) {
+                if (! billableSample.isInBspFormat() ) {
                     result = false;
                     break;
                 }
@@ -117,9 +121,9 @@ public class SampleSheet implements Serializable {
     private boolean needsBspMetaData() {
         boolean needed = false;
         if (! isSheetEmpty() ) {
-            for ( AthenaSample athenaSample : samples ) {
-                if ( athenaSample.isInBspFormat() &&
-                     ! athenaSample.hasBSPDTOBeenInitialized() ) {
+            for ( BillableSample billableSample : samples ) {
+                if ( billableSample.isInBspFormat() &&
+                     ! billableSample.hasBSPDTOBeenInitialized() ) {
                     needed = true;
                     break;
                 }

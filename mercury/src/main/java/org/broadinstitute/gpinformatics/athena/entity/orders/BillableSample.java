@@ -18,27 +18,39 @@ import java.util.regex.Pattern;
  * Date: 8/28/12
  * Time: 10:26 AM
  */
-public class AthenaSample implements Serializable {
+public class BillableSample implements Serializable {
 
-    public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-\\w{4,6}";
-    private String sampleName;         // This is the name of the sample. It could be a BSP or Non-BSP sample name but it is assume
+    public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
+    static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
+    private String sampleName;      // This is the name of the BSP or Non-BSP sample.
+    private BillingStatus billingStatus = BillingStatus.NotYetBilled;
     private String comment;
     private Set<BillableItem> billableItems;
-
     //TODO hmc Annotate the DTO as transient when hibernating this class
     private BSPSampleDTO bspDTO;
 
-    public AthenaSample(final String sampleName) {
+    BillableSample() {
+    }
+
+    public BillableSample(final String sampleName) {
         this.sampleName = sampleName;
     }
 
-    public AthenaSample(final String sampleName, final BSPSampleDTO bspDTO) {
+    public BillableSample(final String sampleName, final BSPSampleDTO bspDTO) {
         this.sampleName = sampleName;
         this.bspDTO = bspDTO;
     }
 
     public String getSampleName() {
         return sampleName;
+    }
+
+    public BillingStatus getBillingStatus() {
+        return billingStatus;
+    }
+
+    public void setBillingStatus(final BillingStatus billingStatus) {
+        this.billingStatus = billingStatus;
     }
 
     public String getComment() {
@@ -49,9 +61,8 @@ public class AthenaSample implements Serializable {
         this.comment = comment;
     }
 
-
     private BSPSampleDTO getBspDTO() {
-        if ( ! hasBSPDTOBeenInitialized() ) {
+        if ( isInBspFormat() && ! hasBSPDTOBeenInitialized() ) {
             //TODO
             // initialize DTO ?
             throw new RuntimeException("Not yet Implemented.");
@@ -67,8 +78,8 @@ public class AthenaSample implements Serializable {
         return billableItems;
     }
 
-    public void setBillableItems(final Set<BillableItem> billableItems) {
-        this.billableItems = billableItems;
+    public void addBillableItem(final BillableItem billableItem) {
+        billableItems.add(billableItem);
     }
 
     public void setBspDTO(final BSPSampleDTO bspDTO) {
@@ -84,59 +95,98 @@ public class AthenaSample implements Serializable {
             return false;
         }
 
-        return Pattern.matches(AthenaSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
+        return Pattern.matches(BillableSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
     }
 
-    //Methods delegated to
-    public String getVolume() {
+    // Methods delegated to the DTO
+    public String getVolume() throws IllegalStateException {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getVolume();
     }
 
     public String getConcentration() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getConcentration();
     }
 
     public String getRootSample() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getRootSample();
     }
 
     public String getStockSample() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getStockSample();
     }
 
     public String getCollection() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getCollection();
     }
 
     public String getCollaboratorsSampleName() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getCollaboratorsSampleName();
     }
 
     public String getContainerId() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getContainerId();
     }
 
     public String getParticipantId() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getPatientId();
     }
 
     public String getOrganism() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getOrganism();
     }
 
     public String getStockAtExport() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getStockAtExport();
     }
 
     public Boolean isPositiveControl() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().isPositiveControl();
     }
 
     public Boolean isNegativeControl() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().isNegativeControl();
     }
 
     public String getSampleLsid() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
         return getBspDTO().getSampleLsid();
     }
 
@@ -155,6 +205,5 @@ public class AthenaSample implements Serializable {
         // Normal or Tumor
         throw new RuntimeException("Not yet Implemented.");
     }
-
 
 }

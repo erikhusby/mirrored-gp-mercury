@@ -19,16 +19,16 @@ import java.util.List;
 @Test(groups = {TestGroups.DATABASE_FREE})
 public class SampleSheetTest {
 
-    private List<AthenaSample> sixBspSamplesNoDupes = createSampleList("SM-2ACGC,SM-2ABDD,SM-2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D",
+    private List<BillableSample> sixBspSamplesNoDupes = createSampleList("SM-2ACGC,SM-2ABDD,SM-2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D",
                     new HashSet<BillableItem>() ) ;
 
-    private List<AthenaSample> fourBspSamplesWithDupes = createSampleList("SM-2ACGC,SM-2ABDD,SM-2ACGC,SM-2AB1B,SM-2ACJC,SM-2ACGC",
+    private List<BillableSample> fourBspSamplesWithDupes = createSampleList("SM-2ACGC,SM-2ABDD,SM-2ACGC,SM-2AB1B,SM-2ACJC,SM-2ACGC",
                     new HashSet<BillableItem>() ) ;
 
-    private List<AthenaSample> sixMixedSamples = createSampleList("SM-2ACGC,SM2ABDD,SM2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D",
+    private List<BillableSample> sixMixedSamples = createSampleList("SM-2ACGC,SM2ABDD,SM2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D",
                     new HashSet<BillableItem>() ) ;
 
-    private List<AthenaSample> nonBspSamples = createSampleList("SSM-2ACGC1,SM--2ABDDD,SM-2AB,SM-2AB1B,SM-2ACJCACB,SM-SM-SM",
+    private List<BillableSample> nonBspSamples = createSampleList("SSM-2ACGC1,SM--2ABDDD,SM-2AB,SM-2AB1B,SM-2ACJCACB,SM-SM-SM",
                     new HashSet<BillableItem>() ) ;
 
     @BeforeMethod
@@ -50,12 +50,10 @@ public class SampleSheetTest {
     @Test
     public void testGetUniqueSampleCount() throws Exception {
 
-        SampleSheet sampleSheet = new SampleSheet();
-
-        sampleSheet.setSamples(sixBspSamplesNoDupes);
+        SampleSheet sampleSheet = new SampleSheet(sixBspSamplesNoDupes);
         Assert.assertEquals(sampleSheet.getUniqueSampleCount(), 6);
 
-        sampleSheet.setSamples(fourBspSamplesWithDupes);
+        sampleSheet = new SampleSheet(fourBspSamplesWithDupes);
         Assert.assertEquals(sampleSheet.getUniqueSampleCount(), 4);
 
     }
@@ -63,19 +61,16 @@ public class SampleSheetTest {
     @Test
     public void testGetTotalSampleCount() throws Exception {
 
-        SampleSheet sampleSheet = new SampleSheet();
-
-        sampleSheet.setSamples(sixBspSamplesNoDupes);
+        SampleSheet sampleSheet = new SampleSheet(sixBspSamplesNoDupes);
         Assert.assertEquals(sampleSheet.getTotalSampleCount(), 6);
 
-        sampleSheet.setSamples(fourBspSamplesWithDupes);
+        sampleSheet = new SampleSheet(fourBspSamplesWithDupes);
         Assert.assertEquals(sampleSheet.getTotalSampleCount(), 6);
     }
 
     @Test
     public void testGetDuplicateCount() throws Exception {
-        SampleSheet sampleSheet = new SampleSheet();
-        sampleSheet.setSamples(fourBspSamplesWithDupes);
+        SampleSheet sampleSheet = new SampleSheet(fourBspSamplesWithDupes);
         Assert.assertEquals(sampleSheet.getDuplicateCount(), 2);
     }
 
@@ -93,31 +88,31 @@ public class SampleSheetTest {
 
     @Test
     public void testAreAllSampleBSPFormat() throws Exception {
-        SampleSheet sampleSheet = new SampleSheet();
-
-        sampleSheet.setSamples(fourBspSamplesWithDupes);
+        SampleSheet sampleSheet = new SampleSheet(fourBspSamplesWithDupes);
         Assert.assertTrue(sampleSheet.areAllSampleBSPFormat());
 
-        sampleSheet.setSamples(sixBspSamplesNoDupes);
+        sampleSheet = new SampleSheet(sixBspSamplesNoDupes);
         Assert.assertTrue(sampleSheet.areAllSampleBSPFormat());
 
-        sampleSheet.setSamples(nonBspSamples);
+        sampleSheet = new SampleSheet(nonBspSamples);
         Assert.assertFalse(sampleSheet.areAllSampleBSPFormat());
 
-        sampleSheet.setSamples(sixMixedSamples);
+        sampleSheet = new SampleSheet(sixMixedSamples);
         Assert.assertFalse(sampleSheet.areAllSampleBSPFormat());
 
     }
 
 
-    public static List<AthenaSample>  createSampleList( String sampleListStr, HashSet<BillableItem> billableItems) {
-        List<AthenaSample> orderSamples = new ArrayList<AthenaSample>();
+    public static List<BillableSample>  createSampleList( String sampleListStr, HashSet<BillableItem> billableItems) {
+        List<BillableSample> orderSamples = new ArrayList<BillableSample>();
         String [] sampleArray = sampleListStr.split(",");
         for ( String sampleName : sampleArray) {
-            AthenaSample athenaSample = new AthenaSample(sampleName);
-            athenaSample.setComment("athenaComment");
-            athenaSample.setBillableItems( billableItems );
-            orderSamples.add(athenaSample);
+            BillableSample billableSample = new BillableSample(sampleName);
+            billableSample.setComment("athenaComment");
+            for ( BillableItem billableItem : billableItems ) {
+                billableSample.addBillableItem(billableItem);
+            }
+            orderSamples.add(billableSample);
         }
         return orderSamples;
     }
