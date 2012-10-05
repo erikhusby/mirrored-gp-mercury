@@ -188,6 +188,10 @@ public class PassBackedProjectPlan extends ProjectPlan {
         // todo arz when database enabled, make double billing impossible
         Quote quote = getQuoteDTO(quoteService);
         PriceItem priceItem = getWorkflowDescription().getPriceItem();
+        /*
+        SGM -- Doesn't make sense to store the URL.  Can be derived on the front end using the Jira config
+        */
+
         String jiraUrl = labBatch.getJiraTicket().getBrowserUrl();
         // todo instead of linking back to jira, link back to mercury app that shows relationship
         // between the price item and the sample.

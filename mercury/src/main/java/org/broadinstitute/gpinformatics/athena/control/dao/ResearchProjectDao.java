@@ -42,6 +42,7 @@ public class ResearchProjectDao extends AthenaGenericDao {
         EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
+        criteriaQuery.from(ResearchProject.class);
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 

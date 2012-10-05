@@ -10,23 +10,43 @@
       xmlns:p="http://primefaces.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">Projects</ui:define>
+        <ui:define name="title">Research Projects</ui:define>
         <ui:define name="body">
-            <p:dataTable value="#{projectList.allProjects}" var="project">
-                <p:column headerText="Project Name">
-                    <h:link outcome="detail" value="#{project.projectName}">
-                        <f:param name="projectName" value="#{project.projectName}"/>
+            <p:dataTable value="#{researchProjectBean.allResearchProjects}" var="project">
+                <p:column headerText="Name">
+                    <h:link outcome="detail" value="#{project.title}">
+                        <f:param name="title" value="#{project.title}"/>
                     </h:link>
                 </p:column>
-                <p:column headerText="Active Status">
-                    #{project.active ? 'Active' : 'Inactive'}
+
+                <p:column headerText="ID">
+                    <!-- TODO: JIRA ID -->
+                    #{project.id}
                 </p:column>
-                <p:column headerText="Priority">
-                    #{project.priority}
+
+                <p:column headerText="Owner" filterBy="#{project.createdBy}" filterOptions="#{researchProjectBean.allProjectOwners}" filterMatchMode="exact">
+                    <!-- TODO: owner name -->
+                    #{project.createdBy}
+                </p:column>
+
+                <p:column headerText="Status" filterBy="#{project.status}" filterOptions="#{researchProjectBean.allProjectStatuses}" filterMatchMode="exact">
+                    #{project.status}
+                </p:column>
+
+                <p:column headerText="# of Orders">
+                    #{project.orders.size()}
+                </p:column>
+
+                <p:column headerText="Synopsis">
+                    #{project.synopsis}
                 </p:column>
             </p:dataTable>
 
-            <p><h:link outcome="create">Start a New Project...</h:link></p>
+            <h:form>
+                <p><p:commandButton value="New Research Project..." action="create?faces-redirect=true" ajax="false"/></p>
+                <!-- TODO: fill in action for new product order view -->
+                <p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>
+            </h:form>
         </ui:define>
     </ui:composition>
 </body>
