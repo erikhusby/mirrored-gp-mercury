@@ -1,8 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+
+import java.math.BigDecimal;
+
 /**
  * Class to contain billing info. It encapsulates
- * the productName, a billing status and the number of times to bill for this billable item.
+ * the priceItem and the number of times to bill for this billable item.
  *
  * Created by IntelliJ IDEA.
  * User: mccrory
@@ -11,38 +15,27 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
  */
 public class BillableItem {
 
-    private String productName;
-    private BillingStatus billingStatus = BillingStatus.NotYetBilled;
-    private Integer count;
+    private PriceItem priceItem;
+    private BigDecimal count;
 
-
-    public BillableItem(final String productName, final BillingStatus billingStatus, final Integer count) {
-        this.productName = productName;
-        this.billingStatus = billingStatus;
+    public BillableItem(final PriceItem priceItem, final BigDecimal count) {
+        this.priceItem = priceItem;
         this.count = count;
     }
 
-    public String getProductName() {
-        return productName;
+    public PriceItem getPriceItem() {
+        return priceItem;
     }
 
-    public void setProductName(final String productName) {
-        this.productName = productName;
+    public void setPriceItem(final PriceItem priceItem) {
+        this.priceItem = priceItem;
     }
 
-    public BillingStatus getBillingStatus() {
-        return billingStatus;
-    }
-
-    public void setBillingStatus(final BillingStatus billingStatus) {
-        this.billingStatus = billingStatus;
-    }
-
-    public Integer getCount() {
+    public BigDecimal getCount() {
         return count;
     }
 
-    public void setCount(final Integer count) {
+    public void BigDecimal(final BigDecimal count) {
         this.count = count;
     }
 }
