@@ -46,6 +46,9 @@ public class JiraTicket {
     @Transient // todo arz make real hibernate relationship
     private JiraService jiraService;
 
+    /*
+    SGM -- Doesn't make sense to store the URL.  Can be derived on the front end using the Jira config
+     */
     private String browserUrl;
 
     public JiraTicket() {}
