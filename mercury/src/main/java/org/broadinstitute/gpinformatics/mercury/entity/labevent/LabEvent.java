@@ -379,4 +379,6 @@ todo jmt adder methods
      * @return
      */
     public abstract ProductOrderId getProductOrderId();
+
+    public abstract void setProductOrderId(ProductOrderId productOrder);
 }
