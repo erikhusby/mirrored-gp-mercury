@@ -3,7 +3,15 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 /**
  * An identifier for a ProductOrder in Athena.
  */
-public abstract class ProductOrderId {
+public class ProductOrderId {
 
-    public abstract String getName();
+    private String name;
+
+    public ProductOrderId(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

@@ -1,5 +1,6 @@
-package org.broadinstitute.gpinformatics.mercury.entity;
+package org.broadinstitute.gpinformatics.mercury.boundary;
 
+import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
@@ -9,7 +10,7 @@ import java.util.Set;
 /**
  * This class is the brains the figures out the "why"
  * for a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}.
- * If you want to know the {@link ProductOrderId} for a given
+ * If you want to know the {@link org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId} for a given
  * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel},
  * this is your man.
  *
@@ -22,19 +23,19 @@ public abstract class ProductOrderResolver {
     // todo distinction between "root" and
 
     /**
-     * What are all the {@link ProductOrderId product orders}
+     * What are all the {@link org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId product orders}
      * for the given {@link LabVessel}?  This will return <b>all</b>
      * product orders.  If you want to filter out only the "active"
      * product orders, take the result and then hit athena for product
      * details and narrow the list.
      *
-     * A Map is returned instead of a single {@link ProductOrderId product order} because
+     * A Map is returned instead of a single {@link org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId product order} because
      * it's often the case that in a pool of samples, each sample comes from a different
      * product order.
      *
      * The keys of the map are the {@link LabVessel root lab vessels}.  Some clients
      * may need to know the mapping between a root sample and its product orders, while
-     * others might only flatten the list of {@link ProductOrderId product orders}.
+     * others might only flatten the list of {@link org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId product orders}.
      * @param labVessel
      * @return
      */

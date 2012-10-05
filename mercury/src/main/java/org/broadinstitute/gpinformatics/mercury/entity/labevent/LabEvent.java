@@ -7,18 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import org.hibernate.envers.Audited;
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
+
+import javax.persistence.*;
 import java.util.*;
 
 /**
@@ -112,6 +102,9 @@ public abstract class LabEvent {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private BasicProjectPlan projectPlanOverride;
+
+    @Transient
+    private ProductOrderId productOrder;
 
     public abstract LabEventName getEventName();
 
@@ -378,7 +371,11 @@ todo jmt adder methods
      * Most events will return null.
      * @return
      */
-    public abstract ProductOrderId getProductOrderId();
+    public ProductOrderId getProductOrderId() {
+        return productOrder;
+    }
 
-    public abstract void setProductOrderId(ProductOrderId productOrder);
+    public void setProductOrderId(ProductOrderId productOrder) {
+        this.productOrder = productOrder;
+    }
 }

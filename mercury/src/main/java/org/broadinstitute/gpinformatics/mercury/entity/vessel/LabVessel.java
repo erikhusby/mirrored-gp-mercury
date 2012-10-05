@@ -111,6 +111,10 @@ public abstract class LabVessel implements Starter {
     @Embedded
     private UserRemarks userRemarks;
 
+    @Transient
+    /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
+    private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
+
     protected LabVessel(String label) {
         this.label = label;
     }
@@ -535,7 +539,16 @@ public abstract class LabVessel implements Starter {
      * of the transfer graph.
      * @return
      */
-    public abstract Set<LabVessel> getChainOfCustodyRoots();
+    public Collection<? extends LabVessel> getChainOfCustodyRoots() {
+        // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
+        return chainOfCustodyRoots;
+    }
+
+    public void setChainOfCustodyRoots(Collection<? extends LabVessel> roots) {
+        // todo this is just for experimental GPLIM-64...this method shouldn't ever
+        // be here in production.
+        this.chainOfCustodyRoots = roots;
+    }
 
     /**
      * What {@link SampleMetadata samples} are contained in
@@ -546,7 +559,9 @@ public abstract class LabVessel implements Starter {
      * uploaded for "walk up" sequencing.
      * @return
      */
-    public abstract Set<SampleMetadata> getSamples();
+    public Set<SampleMetadata> getSamples() {
+        throw new RuntimeException("not implemented");
+    }
 }
 
 
