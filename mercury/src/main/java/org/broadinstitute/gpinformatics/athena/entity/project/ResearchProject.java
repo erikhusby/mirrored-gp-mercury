@@ -270,6 +270,10 @@ public class ResearchProject {
         return CreateIssueRequest.Fields.Issuetype.Research_Project;
     }
 
+    /**
+     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
+     * for Research Projects
+     */
     public enum RequiredSubmissionFields {
 
         Sponsoring_Scientist("Sponsoring Scientist");

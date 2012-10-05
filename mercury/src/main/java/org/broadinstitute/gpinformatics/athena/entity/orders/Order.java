@@ -168,6 +168,10 @@ public class Order implements Serializable {
         return CreateIssueRequest.Fields.Issuetype.Product_Order;
     }
 
+    /**
+     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
+     * for Product orders
+     */
     public enum RequiredSubmissionFields {
 
         PRODUCT_FAMILY("Product Family");
