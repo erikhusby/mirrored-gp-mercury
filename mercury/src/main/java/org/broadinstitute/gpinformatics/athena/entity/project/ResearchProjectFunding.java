@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.hibernate.envers.Audited;
+
 import javax.persistence.*;
 
 /**
  * The funding for research projects
  */
 @Entity
+@Audited
 @Table(schema = "athena")
 public class ResearchProjectFunding {
 

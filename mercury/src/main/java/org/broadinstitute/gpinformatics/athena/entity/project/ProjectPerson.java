@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 
@@ -11,6 +12,7 @@ import javax.persistence.*;
  * stores a single role for a person in a project. The person/project/role should be unique within this
  */
 @Entity
+@Audited
 @Table(schema = "athena")
 public class ProjectPerson {
 

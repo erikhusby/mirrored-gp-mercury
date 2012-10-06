@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.experiments.EntityUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.Collections;
@@ -18,6 +19,7 @@ import java.util.Set;
  * Research Projects hold all the information about a research project
  */
 @Entity
+@Audited
 @Table(schema = "athena")
 public class ResearchProject {
 

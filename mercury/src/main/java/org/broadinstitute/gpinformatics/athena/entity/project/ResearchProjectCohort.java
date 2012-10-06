@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.hibernate.envers.Audited;
+
 import javax.persistence.*;
 
 /**
  * This holds the cohorts for a research project
  */
 @Entity
+@Audited
 @Table(schema = "athena")
 public class ResearchProjectCohort {
 
