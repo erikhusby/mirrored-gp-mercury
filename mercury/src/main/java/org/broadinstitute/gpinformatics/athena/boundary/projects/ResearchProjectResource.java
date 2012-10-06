@@ -10,7 +10,8 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 /**
- * Restful webservice to list the athena research project info.
+ * Restful webservice to
+ * list the athena research project info.
  */
 @Path("/researchProjects")
 @Stateless

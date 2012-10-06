@@ -449,8 +449,9 @@
                         <plugin>
                             <groupId>org.apache.maven.plugins</groupId>
                             <artifactId>maven-surefire-plugin</artifactId>
+                            <!-- "arquillian" test group is used by Arquillian itself and needs to be active to run Arquillian tests -->
                             <configuration>
-                                <groups>ExternalIntegration</groups>
+                                <groups>arquillian, ExternalIntegration</groups>
                             </configuration>
                         </plugin>
 

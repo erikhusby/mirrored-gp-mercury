@@ -3,7 +3,8 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.Order;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
@@ -68,8 +69,8 @@ public class ResearchProject {
 
     private String irbNotes;
 
-    @Transient
-    private final Set<Order> orders = new HashSet<Order>();
+    @OneToMany(mappedBy = "researchProject")
+    private final List<ProductOrder> productOrders = new ArrayList<ProductOrder>();
 
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
@@ -215,12 +216,12 @@ public class ResearchProject {
     }
 
     public Set<String> getCohortIds() {
-        Set<String> fundingIdSet = new HashSet<String> ();
+        Set<String> cohortIdSet = new HashSet<String> ();
         for (ResearchProjectCohort cohort : sampleCohorts) {
-            fundingIdSet.add(cohort.getCohortId());
+            cohortIdSet.add(cohort.getCohortId());
         }
 
-        return fundingIdSet;
+        return cohortIdSet;
     }
 
     public void addFunding(ResearchProjectFunding funding) {
@@ -253,8 +254,8 @@ public class ResearchProject {
         return StringUtils.join(irbNumbers, ", ");
     }
 
-    public List<Order> getOrders() {
-        return new ArrayList<Order>(orders);
+    public List<ProductOrder> getProductOrders() {
+        return productOrders;
     }
 
     public RoleType[] getRoleTypes() {
