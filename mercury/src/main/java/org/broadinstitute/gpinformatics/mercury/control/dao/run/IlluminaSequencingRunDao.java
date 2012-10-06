@@ -6,10 +6,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 
 /**
  * Data Access Object for sequencing runs
@@ -19,16 +15,6 @@ import javax.persistence.criteria.Root;
 public class IlluminaSequencingRunDao extends GenericDao{
 
     public IlluminaSequencingRun findByRunName(String runName) {
-        EntityManager entityManager = getThreadEntityManager().getEntityManager();
-        CriteriaQuery<IlluminaSequencingRun> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(IlluminaSequencingRun.class);
-        Root<IlluminaSequencingRun> root = criteriaQuery.from(IlluminaSequencingRun.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(IlluminaSequencingRun_.runName), runName));
-        IlluminaSequencingRun illuminaSequencingRun = null;
-        try {
-            illuminaSequencingRun = entityManager.createQuery(criteriaQuery).getSingleResult();
-        } catch (NoResultException ignored) {
-        }
-        return illuminaSequencingRun;
+        return findSingle(IlluminaSequencingRun.class, IlluminaSequencingRun_.runName, runName);
     }
 }

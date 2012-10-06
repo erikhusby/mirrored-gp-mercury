@@ -18,21 +18,11 @@ import java.util.List;
 @RequestScoped
 public class RackOfTubesDao extends GenericDao {
 
-    public List<RackOfTubes> findByDigest(String digest) {
-        EntityManager entityManager = getThreadEntityManager().getEntityManager();
-        CriteriaQuery<RackOfTubes> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(RackOfTubes.class);
-        Root<RackOfTubes> root = criteriaQuery.from(RackOfTubes.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(RackOfTubes_.digest), digest));
-        return entityManager.createQuery(criteriaQuery).getResultList();
+    public RackOfTubes findByDigest(String digest) {
+        return findSingle(RackOfTubes.class, RackOfTubes_.digest, digest);
     }
 
     public RackOfTubes getByLabel(String rackLabel) {
-        EntityManager entityManager = getThreadEntityManager().getEntityManager();
-        CriteriaQuery<RackOfTubes> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(RackOfTubes.class);
-        Root<RackOfTubes> root = criteriaQuery.from(RackOfTubes.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(RackOfTubes_.label), rackLabel));
-        return entityManager.createQuery(criteriaQuery).getSingleResult();
+        return findSingle(RackOfTubes.class, RackOfTubes_.label, rackLabel);
     }
 }
