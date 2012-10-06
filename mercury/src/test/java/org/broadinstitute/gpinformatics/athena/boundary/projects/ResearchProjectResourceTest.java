@@ -33,7 +33,6 @@ public class ResearchProjectResourceTest extends ContainerTest {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
-    private Long testResearchProjectId;
     private String testTitle;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -56,8 +55,6 @@ public class ResearchProjectResourceTest extends ContainerTest {
             researchProject.addPerson(RoleType.SCIENTIST, TestScientist2);
 
             researchProjectDao.persist(researchProject);
-
-            testResearchProjectId = researchProject.getId();
         }
     }
 
@@ -65,14 +62,14 @@ public class ResearchProjectResourceTest extends ContainerTest {
     public void tearDown() throws Exception {
         // Only do this if the server is calling this and thus, injection worked
         if (researchProjectResource != null) {
-            ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
+            ResearchProject researchProject = researchProjectResource.findResearchProjectByTitle(testTitle);
             researchProjectDao.delete(researchProject);
         }
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindResearchProjectById() throws Exception {
-        ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
+        ResearchProject researchProject = researchProjectResource.findResearchProjectByTitle(testTitle);
         Assert.assertNotNull(researchProject);
         Assert.assertNotNull(researchProject.getTitle());
         Assert.assertEquals(researchProject.getTitle(), testTitle);

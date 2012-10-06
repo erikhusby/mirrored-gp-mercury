@@ -8,10 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
 import javax.persistence.*;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Research Projects hold all the information about a research project
@@ -23,7 +20,16 @@ public class ResearchProject {
     public static final boolean IRB_NOT_ENGAGED = false;
 
     public enum Status {
-        Open, Archived
+        Open, Archived;
+
+        public static List<String> getNames() {
+            List<String> names = new ArrayList<String>();
+            for (Status status : Status.values()) {
+                names.add(status.name());
+            }
+
+            return names;
+        }
     }
 
     @Id
@@ -87,10 +93,6 @@ public class ResearchProject {
 
     public String getSynopsis() {
         return synopsis;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public Date getCreatedDate() {
@@ -251,8 +253,8 @@ public class ResearchProject {
         return StringUtils.join(irbNumbers, ", ");
     }
 
-    public Set<Order> getOrders() {
-        return orders;
+    public List<Order> getOrders() {
+        return new ArrayList<Order>(orders);
     }
 
     public RoleType[] getRoleTypes() {

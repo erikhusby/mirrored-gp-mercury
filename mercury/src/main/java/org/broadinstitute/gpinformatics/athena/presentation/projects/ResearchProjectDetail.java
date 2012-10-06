@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -22,13 +23,21 @@ public class ResearchProjectDetail extends AbstractJsfBean {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
-    private Long researchProjectId;
+    private String researchProjectTitle;
     private ResearchProject project;
 
     public void loadProject() {
         if (project == null) {
-            project = researchProjectDao.findById(researchProjectId);
+            project = researchProjectDao.findByTitle(researchProjectTitle);
         }
+    }
+
+    public String getResearchProjectTitle() {
+        return researchProjectTitle;
+    }
+
+    public void setResearchProjectTitle(String researchProjectTitle) {
+        this.researchProjectTitle = researchProjectTitle;
     }
 
     public ResearchProject getProject() {
@@ -48,5 +57,9 @@ public class ResearchProjectDetail extends AbstractJsfBean {
     public String getCohorts() {
         Set<String> cohortIds = project.getCohortIds();
         return "waiting for web service for cohorts";
+    }
+
+    public List<String> getStatuses() {
+        return ResearchProject.Status.getNames();
     }
 }

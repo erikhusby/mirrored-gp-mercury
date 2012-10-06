@@ -18,41 +18,67 @@
 
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">View Research Project</ui:define>
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
+                <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
+            </f:metadata>
+        </ui:define>
         <ui:define name="body">
-            <h:form>
-                <h:panelGrid columns="2">
-                    <div>Project Id:</div>
-                    <div>#{researchProjectDetail.project.title}</div>
 
-                    <div>Synopsis:</div>
-                    <div>#{researchProjectDetail.project.synopsis}</div>
+            <h:form styleClass="form-horizontal">
+                <div class="control-group">
+                    <span class="control-label">Project Id:</span>
+                    <span>#{researchProjectDetail.project.title}</span>
+                </div>
 
-                    <div>Sponsoring Scientists: </div>
-                    <div>#{researchProjectDetail.sponsoredScientists}</div>
+                <div class="control-group">
+                    <span class="control-label">Synopsis:</span>
+                    <span class="controls">#{researchProjectDetail.project.synopsis}</span>
+                </div>
 
-                    <div>Created:</div>
-                    <div>
+                <div class="control-group">
+                    <span class="control-label">Sponsoring Scientists: </span>
+                    <span class="controls">#{researchProjectDetail.sponsoredScientists}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">Created:</span>
+                    <span class="controls">
                         By #{researchProjectDetail.project.createdBy}
                         on #{researchProjectDetail.project.createdDate}
-                    </div>
+                    </span>
+                </div>
 
-                    <div>Funding Sources:</div>
-                    <div>#{researchProjectDetail.fundingSources}</div>
+                <div class="control-group">
+                    <span class="control-label">Funding Sources:</span>
+                    <span class="controls">#{researchProjectDetail.fundingSources}</span>
+                </div>
 
-                    <div>Sample Cohorts:</div>
-                    <div>#{researchProjectDetail.cohorts}</div>
+                <div class="control-group">
+                    <span class="control-label">Sample Cohorts:</span>
+                    <span class="controls">#{researchProjectDetail.cohorts}</span>
+                </div>
 
-                    <div>IRB/IACUC:</div>
-                    <div>#{researchProjectDetail.project.irbNumberString}</div>
+                <div class="control-group">
+                    <span class="control-label">IRB/IACUC:</span>
+                    <span class="controls">#{researchProjectDetail.project.irbNumberString}</span>
+                </div>
 
-                    <div>IRB/IACUC Notes::</div>
-                    <div>#{researchProjectDetail.project.irbNotes}</div>
-                </h:panelGrid>
+                <div class="control-group">
+                    <span class="control-label">IRB/IACUC Notes:</span>
+                    <span class="controls">#{researchProjectDetail.project.irbNotes}</span>
+                </div>
 
-                <p:selectOneMenu value="">
-                    <f:selectItem itemLabel="Select One" itemValue="" />
-                    <f:selectItems value="#{OrdetS}" />
-                </p:selectOneMenu>
+                <br/>
+
+                <div style="vertical-align: baseline;">
+                    Status:
+                    <p:selectOneMenu id="selectedStatus" styleClass="controls" value="">
+                        <f:selectItem itemLabel="Select One" itemValue="" />
+                        <f:selectItems value="#{researchProjectDetail.statuses}" />
+                    </p:selectOneMenu>
+                </div>
 
                 <p:dataTable value="#{researchProjectDetail.project.orders}" var="product">
                     <p:column headerText="Product ID">
@@ -83,9 +109,8 @@
                     </p:column>
                 </p:dataTable>
 
-                <h:link outcome="/product/create" value="New Product Order"/>
-
-                <p:commandButton value="Edit Project" action="#{researchProjectDetail.edit}" ajax="false"/>
+                <!-- todo: add when product UI exists - h:link outcome="/product/create" value="New Product Order"/-->
+                <p:commandButton value="Edit Project" action="list" ajax="false"/>
             </h:form>
         </ui:define>
     </ui:composition>
