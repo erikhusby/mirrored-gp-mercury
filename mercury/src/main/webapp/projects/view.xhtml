@@ -28,8 +28,13 @@
 
             <h:form styleClass="form-horizontal">
                 <div class="control-group">
-                    <span class="control-label">Project Id:</span>
-                    <span>#{researchProjectDetail.project.title}</span>
+                    <span class="control-label">Project:</span>
+                    <span class="controls">#{researchProjectDetail.project.title}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">ID:</span>
+                    <span class="controls">#{researchProjectDetail.project.jiraTicketKey}</span>
                 </div>
 
                 <div class="control-group">
@@ -72,13 +77,10 @@
 
                 <br/>
 
-                <div style="vertical-align: baseline;">
-                    Status:
-                    <p:selectOneMenu id="selectedStatus" styleClass="controls" value="">
-                        <f:selectItem itemLabel="Select One" itemValue="" />
-                        <f:selectItems value="#{researchProjectDetail.statuses}" />
-                    </p:selectOneMenu>
-                </div>
+                <p:selectOneMenu id="selectedStatus" value="">
+                    <f:selectItem itemLabel="Filter By Status" itemValue="" />
+                    <f:selectItems value="#{researchProjectDetail.statuses}" />
+                </p:selectOneMenu>
 
                 <p:dataTable value="#{researchProjectDetail.project.orders}" var="product">
                     <p:column headerText="Product ID">
@@ -92,7 +94,7 @@
                     <p:column headerText="Product">
                         #{product.title}
                     </p:column>
-                    <p:column headerText="Status" filterBy="#{product.orderStatus}">
+                    <p:column headerText="Status">
                         #{product.orderStatus}
                     </p:column>
                     <p:column headerText="Date Created">
