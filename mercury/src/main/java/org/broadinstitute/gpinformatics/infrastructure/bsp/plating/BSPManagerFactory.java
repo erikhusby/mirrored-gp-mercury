@@ -4,9 +4,7 @@ import org.broadinstitute.bsp.client.container.ContainerManager;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 
-import java.io.Serializable;
-
-public interface BSPManagerFactory extends Serializable {
+public interface BSPManagerFactory {
 
     public WorkRequestManager createWorkRequestManager();
 
