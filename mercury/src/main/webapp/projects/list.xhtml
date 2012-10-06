@@ -14,14 +14,13 @@
         <ui:define name="body">
             <p:dataTable value="#{researchProjectBean.allResearchProjects}" var="project">
                 <p:column headerText="Name">
-                    <h:link outcome="detail" value="#{project.title}">
-                        <f:param name="title" value="#{project.title}"/>
+                    <h:link outcome="view" value="#{project.title}">
+                        <f:param name="researchProjectTitle" value="#{project.title}"/>
                     </h:link>
                 </p:column>
 
                 <p:column headerText="ID">
-                    <!-- TODO: JIRA ID -->
-                    #{project.id}
+                    #{project.jiraTicketKey}
                 </p:column>
 
                 <p:column headerText="Owner" filterBy="#{project.createdBy}" filterOptions="#{researchProjectBean.allProjectOwners}" filterMatchMode="exact">
@@ -34,7 +33,7 @@
                 </p:column>
 
                 <p:column headerText="# of Orders">
-                    #{project.orders.size()}
+                    #{project.productOrders.size()}
                 </p:column>
 
                 <p:column headerText="Synopsis">

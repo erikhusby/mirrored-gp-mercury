@@ -31,10 +31,20 @@ public class ResearchProjectDetail extends AbstractJsfBean {
 
     private String[] selectedPersonnel;
 
+    private String researchProjectTitle;
+
     public void loadProject() {
         if (project == null) {
-            project = researchProjectDao.findById(researchProjectId);
+            project = researchProjectDao.findByTitle(researchProjectTitle);
         }
+    }
+
+    public String getResearchProjectTitle() {
+        return researchProjectTitle;
+    }
+
+    public void setResearchProjectTitle(String researchProjectTitle) {
+        this.researchProjectTitle = researchProjectTitle;
     }
 
     public ResearchProject getProject() {
@@ -54,6 +64,10 @@ public class ResearchProjectDetail extends AbstractJsfBean {
     public String getCohorts() {
         Set<String> cohortIds = project.getCohortIds();
         return "waiting for web service for cohorts";
+    }
+
+    public List<String> getStatuses() {
+        return ResearchProject.Status.getNames();
     }
 
     public List<String> getPersonnel() {

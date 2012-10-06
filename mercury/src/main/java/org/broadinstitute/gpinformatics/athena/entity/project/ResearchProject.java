@@ -3,15 +3,13 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.Order;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
 import javax.persistence.*;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Research Projects hold all the information about a research project
@@ -23,7 +21,16 @@ public class ResearchProject {
     public static final boolean IRB_NOT_ENGAGED = false;
 
     public enum Status {
-        Open, Archived
+        Open, Archived;
+
+        public static List<String> getNames() {
+            List<String> names = new ArrayList<String>();
+            for (Status status : Status.values()) {
+                names.add(status.name());
+            }
+
+            return names;
+        }
     }
 
     @Id
@@ -48,22 +55,22 @@ public class ResearchProject {
 
     // People related to the project
     @OneToMany(cascade = CascadeType.PERSIST)
-    private Set<ProjectPerson> associatedPeople;
+    private List<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
     @OneToMany(mappedBy = "researchProject")
-    private Set<ResearchProjectCohort> sampleCohorts;
+    private List<ResearchProjectCohort> sampleCohorts;
 
     @OneToMany(mappedBy = "researchProject")
-    private Set<ResearchProjectFunding> fundingIDs;
+    private List<ResearchProjectFunding> fundingIDs;
 
     @OneToMany(mappedBy = "researchProject")
-    private Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
+    private List<ResearchProjectIRB> irbNumbers = new ArrayList<ResearchProjectIRB>();
 
     private String irbNotes;
 
-    @Transient
-    private final Set<Order> orders = new HashSet<Order>();
+    @OneToMany(mappedBy = "researchProject")
+    private final List<ProductOrder> productOrders = new ArrayList<ProductOrder>();
 
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
@@ -87,10 +94,6 @@ public class ResearchProject {
 
     public String getSynopsis() {
         return synopsis;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public Date getCreatedDate() {
@@ -141,13 +144,13 @@ public class ResearchProject {
         this.jiraTicketKey = jiraTicketKeyIn;
     }
 
-    public Set<ResearchProjectCohort> getSampleCohorts() {
-        return Collections.unmodifiableSet(sampleCohorts);
+    public List<ResearchProjectCohort> getSampleCohorts() {
+        return Collections.unmodifiableList(sampleCohorts);
     }
 
     public void addCohort(ResearchProjectCohort sampleCohort ){
         if (sampleCohorts == null) {
-            sampleCohorts = new HashSet<ResearchProjectCohort>();
+            sampleCohorts = new ArrayList<ResearchProjectCohort>();
         }
 
         sampleCohorts.add(sampleCohort);
@@ -165,13 +168,13 @@ public class ResearchProject {
         this.irbEngaged = irbEngaged;
     }
 
-    public Set<ResearchProjectIRB> getIrbNumbers() {
-        return Collections.unmodifiableSet(irbNumbers);
+    public List<ResearchProjectIRB> getIrbNumbers() {
+        return Collections.unmodifiableList(irbNumbers);
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {
         if (irbNumbers == null) {
-            irbNumbers = new HashSet<ResearchProjectIRB>();
+            irbNumbers = new ArrayList<ResearchProjectIRB>();
         }
 
         irbNumbers.add(irbNumber);
@@ -183,7 +186,7 @@ public class ResearchProject {
 
     public void addPerson(RoleType role, Long personId) {
         if (associatedPeople == null) {
-            associatedPeople = new HashSet<ProjectPerson>();
+            associatedPeople = new ArrayList<ProjectPerson>();
         }
 
         associatedPeople.add(new ProjectPerson(this, role, personId));
@@ -213,17 +216,17 @@ public class ResearchProject {
     }
 
     public Set<String> getCohortIds() {
-        Set<String> fundingIdSet = new HashSet<String> ();
+        Set<String> cohortIdSet = new HashSet<String> ();
         for (ResearchProjectCohort cohort : sampleCohorts) {
-            fundingIdSet.add(cohort.getCohortId());
+            cohortIdSet.add(cohort.getCohortId());
         }
 
-        return fundingIdSet;
+        return cohortIdSet;
     }
 
     public void addFunding(ResearchProjectFunding funding) {
         if (fundingIDs == null) {
-            fundingIDs = new HashSet<ResearchProjectFunding>();
+            fundingIDs = new ArrayList<ResearchProjectFunding>();
         }
 
         fundingIDs.add(funding);
@@ -251,8 +254,8 @@ public class ResearchProject {
         return StringUtils.join(irbNumbers, ", ");
     }
 
-    public Set<Order> getOrders() {
-        return orders;
+    public List<ProductOrder> getProductOrders() {
+        return productOrders;
     }
 
     public RoleType[] getRoleTypes() {

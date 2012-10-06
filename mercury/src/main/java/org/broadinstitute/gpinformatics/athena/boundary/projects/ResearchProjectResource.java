@@ -10,7 +10,8 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 /**
- * Restful webservice to list the athena research project info.
+ * Restful webservice to
+ * list the athena research project info.
  */
 @Path("/researchProjects")
 @Stateless
@@ -20,22 +21,22 @@ public class ResearchProjectResource {
     private ResearchProjectDao researchProjectDao;
 
     @GET
-    @Path("{researchProjectId}")
+    @Path("{researchProjectTitle}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ResearchProject findResearchProjectById(@PathParam("researchProjectId") Long researchProjectId) {
-        return findRPById(researchProjectId);
+    public ResearchProject findResearchProjectByTitle(@PathParam("researchProjectTitle") String researchProjectTitle) {
+        return findRPByTitle(researchProjectTitle);
     }
 
-    private ResearchProject findRPById(Long researchProjectId) {
+    private ResearchProject findRPByTitle(String researchProjectTitle) {
         // Check for content
-        if (researchProjectId == null) {
+        if (researchProjectTitle == null) {
             throw new RuntimeException("ResearchProject Id is invalid.");
         }
 
         // Try to find research project by number
-        ResearchProject researchProject = researchProjectDao.findById(researchProjectId);
+        ResearchProject researchProject = researchProjectDao.findByTitle(researchProjectTitle);
         if (researchProject == null) {
-            throw new RuntimeException("Could not retrieve research project with id " + researchProjectId);
+            throw new RuntimeException("Could not retrieve research project with id " + researchProjectTitle);
         }
 
         return researchProject;

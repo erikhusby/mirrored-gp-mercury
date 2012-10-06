@@ -28,12 +28,12 @@ public class ResearchProjectDao extends AthenaGenericDao {
     }
 
     @SuppressWarnings("unchecked")
-    public ResearchProject findResearchProjectsByName(String name) {
+    public ResearchProject findByTitle(String title) {
         EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.title), name));
+        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.title), title));
         return entityManager.createQuery(criteriaQuery).getSingleResult();
     }
 
@@ -45,14 +45,4 @@ public class ResearchProjectDao extends AthenaGenericDao {
         criteriaQuery.from(ResearchProject.class);
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
-
-    public ResearchProject findById(Long rpId) {
-        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
-        CriteriaQuery<ResearchProject> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
-        Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.id), rpId));
-        return entityManager.createQuery(criteriaQuery).getSingleResult();
-    }
-
 }
