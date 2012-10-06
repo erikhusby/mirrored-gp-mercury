@@ -54,17 +54,17 @@ public class ResearchProject {
 
     // People related to the project
     @OneToMany(cascade = CascadeType.PERSIST)
-    private Set<ProjectPerson> associatedPeople;
+    private List<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
     @OneToMany(mappedBy = "researchProject")
-    private Set<ResearchProjectCohort> sampleCohorts;
+    private List<ResearchProjectCohort> sampleCohorts;
 
     @OneToMany(mappedBy = "researchProject")
-    private Set<ResearchProjectFunding> fundingIDs;
+    private List<ResearchProjectFunding> fundingIDs;
 
     @OneToMany(mappedBy = "researchProject")
-    private Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
+    private List<ResearchProjectIRB> irbNumbers = new ArrayList<ResearchProjectIRB>();
 
     private String irbNotes;
 
@@ -143,13 +143,13 @@ public class ResearchProject {
         this.jiraTicketKey = jiraTicketKeyIn;
     }
 
-    public Set<ResearchProjectCohort> getSampleCohorts() {
-        return Collections.unmodifiableSet(sampleCohorts);
+    public List<ResearchProjectCohort> getSampleCohorts() {
+        return Collections.unmodifiableList(sampleCohorts);
     }
 
     public void addCohort(ResearchProjectCohort sampleCohort ){
         if (sampleCohorts == null) {
-            sampleCohorts = new HashSet<ResearchProjectCohort>();
+            sampleCohorts = new ArrayList<ResearchProjectCohort>();
         }
 
         sampleCohorts.add(sampleCohort);
@@ -167,13 +167,13 @@ public class ResearchProject {
         this.irbEngaged = irbEngaged;
     }
 
-    public Set<ResearchProjectIRB> getIrbNumbers() {
-        return Collections.unmodifiableSet(irbNumbers);
+    public List<ResearchProjectIRB> getIrbNumbers() {
+        return Collections.unmodifiableList(irbNumbers);
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {
         if (irbNumbers == null) {
-            irbNumbers = new HashSet<ResearchProjectIRB>();
+            irbNumbers = new ArrayList<ResearchProjectIRB>();
         }
 
         irbNumbers.add(irbNumber);
@@ -185,7 +185,7 @@ public class ResearchProject {
 
     public void addPerson(RoleType role, Long personId) {
         if (associatedPeople == null) {
-            associatedPeople = new HashSet<ProjectPerson>();
+            associatedPeople = new ArrayList<ProjectPerson>();
         }
 
         associatedPeople.add(new ProjectPerson(this, role, personId));
@@ -225,7 +225,7 @@ public class ResearchProject {
 
     public void addFunding(ResearchProjectFunding funding) {
         if (fundingIDs == null) {
-            fundingIDs = new HashSet<ResearchProjectFunding>();
+            fundingIDs = new ArrayList<ResearchProjectFunding>();
         }
 
         fundingIDs.add(funding);
