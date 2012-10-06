@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -15,11 +16,13 @@ import java.math.BigDecimal;
  * Time: 11:31 AM
  */
 @Entity
+@Audited
+@Table(schema = "athena")
 public class BillableItem {
 
     @Id
-    @SequenceGenerator(name="BILLABLE_ITEM_INDEX", sequenceName="BILLABLE_ITEM_INDEX", allocationSize = 1)
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="BILLABLE_ITEM_INDEX")
+    @SequenceGenerator(name="SEQ_BILLABLE_ITEM", sequenceName="SEQ_BILLABLE_ITEM")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_BILLABLE_ITEM")
     private Long id;
 
     @OneToOne

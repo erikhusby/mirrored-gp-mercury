@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -20,11 +21,13 @@ import java.util.regex.Pattern;
  * Time: 10:26 AM
  */
 @Entity
+@Audited
+@Table(schema = "athena")
 public class ProductOrderSample implements Serializable {
 
     @Id
-    @SequenceGenerator(name="ORDER_SAMPLE_INDEX", sequenceName="ORDER_SAMPLE_INDEX", allocationSize = 1)
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="ORDER_SAMPLE_INDEX")
+    @SequenceGenerator(name="SEQ_ORDER_SAMPLE", sequenceName="SEQ_ORDER_SAMPLE")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_ORDER_SAMPLE")
     private Long id;
 
     public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
