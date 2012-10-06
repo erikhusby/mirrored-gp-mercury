@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.JoinTable;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
@@ -43,7 +44,8 @@ public class TwoDBarcodedTube extends LabVessel {
 
     private static Log gLog = LogFactory.getLog(TwoDBarcodedTube.class);
     
-    @OneToMany
+    @OneToMany // todo jmt should this have mappedBy?
+    @JoinTable(schema = "mercury")
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
 
     // todo jmt why is this never assigned?

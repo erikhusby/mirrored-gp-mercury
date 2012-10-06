@@ -21,7 +21,7 @@ import java.math.BigDecimal;
 public class BillableItem {
 
     @Id
-    @SequenceGenerator(name="SEQ_BILLABLE_ITEM", sequenceName="SEQ_BILLABLE_ITEM")
+    @SequenceGenerator(name="SEQ_BILLABLE_ITEM", schema = "athena", sequenceName="SEQ_BILLABLE_ITEM")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_BILLABLE_ITEM")
     private Long id;
 

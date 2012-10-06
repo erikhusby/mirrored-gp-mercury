@@ -46,7 +46,7 @@ public class ResearchProject {
     private String synopsis;
 
     // People related to the project
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "researchProject")
     private Set<ProjectPerson> associatedPeople;
 
     // Information about externally managed items

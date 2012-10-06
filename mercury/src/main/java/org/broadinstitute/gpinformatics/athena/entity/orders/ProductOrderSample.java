@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 public class ProductOrderSample implements Serializable {
 
     @Id
-    @SequenceGenerator(name="SEQ_ORDER_SAMPLE", sequenceName="SEQ_ORDER_SAMPLE")
+    @SequenceGenerator(name="SEQ_ORDER_SAMPLE", schema = "athena", sequenceName="SEQ_ORDER_SAMPLE")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_ORDER_SAMPLE")
     private Long id;
 
@@ -36,7 +36,7 @@ public class ProductOrderSample implements Serializable {
     private BillingStatus billingStatus = BillingStatus.NotYetBilled;
     private String comment;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have a mappedBy?
     private Set<BillableItem> billableItems;
 
     @ManyToOne

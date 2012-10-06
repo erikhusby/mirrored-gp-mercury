@@ -66,7 +66,8 @@ public abstract class LabVessel implements Starter {
 
     private Date createdOn;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
+    @JoinTable(schema = "mercury")
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
 
     @ManyToOne(fetch = FetchType.LAZY)

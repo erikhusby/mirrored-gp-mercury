@@ -55,6 +55,7 @@ public class Product implements Serializable {
     private PriceItem defaultPriceItem;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "athena")
     private Set<PriceItem> priceItems = new HashSet<PriceItem>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)

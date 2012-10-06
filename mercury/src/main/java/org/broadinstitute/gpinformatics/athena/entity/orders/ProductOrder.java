@@ -31,7 +31,7 @@ import java.util.Set;
 public class ProductOrder implements Serializable {
 
     @Id
-    @SequenceGenerator(name="SEQ_PRODUCT_ORDER", sequenceName="SEQ_PRODUCT_ORDER")
+    @SequenceGenerator(name="SEQ_PRODUCT_ORDER", schema = "athena", sequenceName="SEQ_PRODUCT_ORDER")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_PRODUCT_ORDER")
     private Long id;
 
@@ -48,7 +48,7 @@ public class ProductOrder implements Serializable {
     @Column(length = 2000)
     private String comments;                    // Additional comments of the order
     private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrder")
     private List<ProductOrderSample> sampleProducts;
 
 

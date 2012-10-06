@@ -41,9 +41,9 @@ public class SequencingRun {
 
     private Date runDate;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(name = "seq_run_run_cartridges")
+    @JoinTable(schema = "mercury", name = "seq_run_run_cartridges")
     private Set<RunCartridge> runCartridges = new HashSet<RunCartridge>();
 
     public SequencingRun(String runName, String runBarcode, String machineName, Person operator, Boolean testRun,
