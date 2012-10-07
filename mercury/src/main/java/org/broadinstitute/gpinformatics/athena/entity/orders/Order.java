@@ -1,12 +1,18 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+
+import javax.inject.Inject;
 import javax.persistence.Transient;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import java.io.Serializable;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -23,6 +29,10 @@ import java.util.Set;
  *      Time: 10:25 AM
  */
 public class Order implements Serializable {
+
+    @Inject
+    @Transient
+    private BSPSampleDataFetcher bspFetcher;
 
     private String title;                       // Unique title for the order
     private String researchProjectName;
@@ -141,8 +151,11 @@ public class Order implements Serializable {
 
         if (! isSheetEmpty() ) {
             if ( needsBspMetaData() ) {
-                //TODO hmc fetch list of sample meta data from bsp via the fetcher
-                throw new IllegalStateException("Not Yet Implemented");
+
+                Map<String, BSPSampleDTO> bspSampleMetaData = bspFetcher.fetchSamplesFromBSP(getUniqueSampleNames());
+
+                //todo SGM Test cases
+                updateBspMetaData(bspSampleMetaData);
             }
 
             for ( ProductOrderSample productOrderSample : samples ) {
@@ -185,13 +198,44 @@ public class Order implements Serializable {
     }
 
     public TumorNormalCount getTumorNormalCounts() {
-        //TODO
-        throw new RuntimeException("Not Yet Implemented.");
+
+        TumorNormalCount counts =
+                new TumorNormalCount(
+                        getGenderCount(BSPSampleDTO.TUMOR_IND),
+                        getGenderCount(BSPSampleDTO.NORMAL_IND)
+                );
+        return counts;
     }
 
     public MaleFemaleCount getMaleFemaleCounts() {
-        //TODO
-        throw new RuntimeException("Not Yet Implemented.");
+
+        MaleFemaleCount counts =
+                new MaleFemaleCount(
+                        getGenderCount(BSPSampleDTO.MALE_IND),
+                        getGenderCount(BSPSampleDTO.FEMALE_IND)
+                );
+        return counts;
+    }
+
+    private Integer getGenderCount(final String gender) {
+
+        int counter = 0;
+        for(ProductOrderSample sample:samples) {
+            if(gender.equals(sample.getGender())) {
+                counter++;
+            }
+        }
+        return counter;
+    }
+
+    private Integer getSampleTypeCount(final String sampleTypeInd) {
+        int counter = 0;
+        for(ProductOrderSample sample:samples) {
+            if(sampleTypeInd.equals(sample.getSampleType())) {
+                counter++;
+            }
+        }
+        return counter;
     }
 
     /**
@@ -230,6 +274,14 @@ public class Order implements Serializable {
             }
         }
         return needed;
+    }
+
+    private void updateBspMetaData(Map<String, BSPSampleDTO> derivedMetaData) {
+        for(ProductOrderSample sample:getSamples()) {
+            if(derivedMetaData.containsKey(sample.getSampleName())) {
+                sample.setBspDTO(derivedMetaData.get(sample.getSampleName()));
+            }
+        }
     }
 
     /**
@@ -277,5 +329,7 @@ public class Order implements Serializable {
             return fieldName;
         }
     }
+
+
 
 }

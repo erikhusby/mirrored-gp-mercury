@@ -2,7 +2,10 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 
+import javax.inject.Inject;
+import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -19,6 +22,10 @@ import java.util.regex.Pattern;
  * Time: 10:26 AM
  */
 public class ProductOrderSample implements Serializable {
+
+    @Inject
+    @Transient
+    private BSPSampleDataFetcher bspFetcher;
 
     public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
     static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
@@ -63,9 +70,10 @@ public class ProductOrderSample implements Serializable {
 
     private BSPSampleDTO getBspDTO() {
         if ( isInBspFormat() && ! hasBSPDTOBeenInitialized() ) {
-            //TODO
-            // initialize DTO ?
-            throw new RuntimeException("Not yet Implemented.");
+            //TODO SGM Test Cases
+            // TODO SGM initialize DTO ?  Verify from Team
+
+            bspDTO = bspFetcher.fetchSingleSampleFromBSP(sampleName);
         }
         return bspDTO;
     }
@@ -95,6 +103,23 @@ public class ProductOrderSample implements Serializable {
             return false;
         }
         return Pattern.matches(ProductOrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
+    }
+
+    public boolean isSampleReceived() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return ((null != getBspDTO().getRootSample()) &&(!getBspDTO().getRootSample().isEmpty()));
+    }
+
+    public boolean isActiveStock() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
+
+        return  ((null != getBspDTO().getStockType()) &&
+                (getBspDTO().getStockType().equals(BSPSampleDTO.ACTIVE_IND)));
+
     }
 
     // Methods delegated to the DTO
@@ -190,18 +215,52 @@ public class ProductOrderSample implements Serializable {
     }
 
     public String getGender() {
-        //TODO hmc
-        throw new RuntimeException("Not yet Implemented.");
+        if (! isInBspFormat() ) {
+           throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return getBspDTO().getGender();
     }
 
     public String getDisease() {
-        //TODO hmc
-        throw new RuntimeException("Not yet Implemented.");
+        if (! isInBspFormat() ) {
+           throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return getBspDTO().getPrimaryDisease();
     }
 
     public String getSampleType() {
-        //TODO hmc
-        throw new RuntimeException("Not yet Implemented.");
+        if (! isInBspFormat() ) {
+           throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return getBspDTO().getSampleType();
+    }
+
+    public String getTotal() {
+        if (! isInBspFormat() ) {
+           throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return getBspDTO().getTotal();
+    }
+
+    public String getFingerprint() {
+        if (! isInBspFormat() ) {
+           throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return getBspDTO().getFingerprint();
+    }
+
+    public String getMaterialType() {
+        if (! isInBspFormat() ) {
+           throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return getBspDTO().getMaterialType();
+    }
+
+    public String getCollaboratorParticipantId() {
+        if (! isInBspFormat() ) {
+           throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return getBspDTO().getCollaboratorParticipantId();
     }
 
 }
