@@ -4,7 +4,6 @@ import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
@@ -262,15 +261,16 @@ public class ResearchProject {
         return RoleType.values();
     }
 
-    /**
-     *
-     * @param other The other object
-     * @return boolean
-     */
     @Override
     public boolean equals(Object other) {
-        if ( (this == other ) ) return true;
-        if ( !(other instanceof ResearchProject) ) return false;
+        if ( (this == other ) ) {
+            return true;
+        }
+
+        if ( !(other instanceof ResearchProject) ) {
+            return false;
+        }
+
         ResearchProject castOther = (ResearchProject) other;
         return new EqualsBuilder().append(title, castOther.title).isEquals();
     }
