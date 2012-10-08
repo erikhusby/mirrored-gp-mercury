@@ -22,12 +22,6 @@ import java.util.Set;
 /**
  * A traditional plate.
  */
-@NamedQueries(
-        @NamedQuery(
-                name = "StaticPlate.findByBarcode",
-                query = "select p from StaticPlate p where label = :barcode"
-        )
-)
 @Entity
 @Audited
 @Table(schema = "mercury")

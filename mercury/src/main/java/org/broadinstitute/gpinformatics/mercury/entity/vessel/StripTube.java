@@ -18,12 +18,6 @@ import java.util.Set;
  * Represents a strip tube, several tubes molded into a single piece of plasticware, e.g. 8 tubes in the same formation
  * as a rack column.  The Strip tube has a barcode, but each constituent tube does not.
  */
-@NamedQueries({
-        @NamedQuery(
-                name = "StripTube.findByBarcode",
-                query = "select s from StripTube s where label = :barcode"
-        )
-})
 @Entity
 @Audited
 @Table(schema = "mercury")

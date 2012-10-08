@@ -6,10 +6,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-import java.util.List;
 
 /**
  * Data Access Object for racks of tubes

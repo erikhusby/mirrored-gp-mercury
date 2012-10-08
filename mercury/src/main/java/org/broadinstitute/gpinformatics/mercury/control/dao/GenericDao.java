@@ -9,6 +9,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.SingularAttribute;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -53,7 +54,7 @@ public class GenericDao {
 
     /**
      * Returns a single entity that matches a specified value for a specified property.
-     * @param entity the entity to return
+     * @param entity the class of entity to return
      * @param singularAttribute the metadata field for the property to query
      * @param value the value to query
      * @param <VALUE_TYPE> the type of the value in the query, e.g. String
@@ -72,6 +73,30 @@ public class GenericDao {
             return getEntityManager().createQuery(criteriaQuery).getSingleResult();
         } catch (NoResultException ignored) {
             return null;
+        }
+    }
+
+    /**
+     * Returns a list of entities that matches a list of values for a specified property.
+     * @param entity the class of entity to return
+     * @param singularAttribute the metadata field for the property to query
+     * @param values list of values to query
+     * @param <VALUE_TYPE> the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
+     *                       there is inheritance
+     * @param <ENTITY_TYPE> the type of the entity to return
+     * @return list of entities that match the value, or empty list if not found
+     */
+    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
+            Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values) {
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
+        Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
+        criteriaQuery.where(root.get(singularAttribute).in(values));
+        try {
+            return getEntityManager().createQuery(criteriaQuery).getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
         }
     }
 }
