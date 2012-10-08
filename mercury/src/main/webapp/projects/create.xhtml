@@ -6,19 +6,68 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">Start New Project</ui:define>
+        <ui:define name="title">New Research Project</ui:define>
         <ui:define name="body">
-            <h:form>
-                <h:panelGrid columns="2">
-                    <h:outputLabel for="projectName">Projcet Name: </h:outputLabel>
-                    <p:inputText id="projectName" value="#{projectForm.projectName}"/>
+            <h:form> <!--styleClass="form-horizontal">-->
+                <!--<div class="control-group">-->
+                <div class="row-fluid">
+                    <div class="span2">
+                    <p:outputLabel for="name" value="Name:" styleClass="control-label"/>
+                    </div>
+                    <div class="span10">
+                    <!--<div class="controls">-->
+                        <p:inputText id="name" value="#{researchProjectDetail.project.title}"/>
+                    </div>
+                </div>
 
-                    <h:link outcome="list" value="Cancel"/>
-                    <p:commandButton value="Save" action="#{projectForm.create}" ajax="false"/>
-                </h:panelGrid>
+                <!--<div class="control-group">-->
+                <div class="row-fluid">
+                    <div class="span2">
+                    <p:outputLabel for="synopsis" value="Synopsis:" styleClass="control-label"/>
+                    </div>
+                    <div class="span10">
+                    <!--<div class="controls">-->
+                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}"/>
+                    <!--</div>-->
+                    </div>
+                </div>
+
+                <!--<div class="control-group">-->
+                <div class="row-fluid">
+                    <div class="span2">
+                    <label class="control-label">Personnel:</label>
+                    <!--<p:outputLabel for="personnel" value="Personnel:" styleClass="control-label"/>-->
+                    </div>
+                    <div class="span4">
+                    <!--<div class="controls">-->
+                        <!--<p:inputText id="personnel" />-->
+                        <p:dataTable id="personnel" value="#{researchProjectDetail.personnel}" var="person" selection="#{researchProjectDetail.selectedPersonnel}" selectionMode="multiple" rowKey="#{person}">
+                            <p:column>
+                                <f:facet name="header">Name</f:facet>
+                                #{person}
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                    <div class="span6">
+                        <p><p:commandButton value="Add Scientist.."/></p>
+                        <p><p:commandButton value="Add PM.."/></p>
+                        <p><p:commandButton value="Remove"/></p>
+                    <!--</div>-->
+                    </div>
+                </div>
+
+                <div class="row-fluid">
+                <!--<div class="control-group">-->
+                    <div class="span10 offset2">
+                    <!--<div class="controls">-->
+                        <h:link outcome="list" value="Cancel"/>
+                        <p:commandButton value="Save" action="#{projectForm.create}" ajax="false"/>
+                    </div>
+                </div>
             </h:form>
         </ui:define>
     </ui:composition>
