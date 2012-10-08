@@ -24,14 +24,13 @@ public class ResearchProjectDetail extends AbstractJsfBean {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
-    private Long researchProjectId;
-    private ResearchProject project = new ResearchProject(null, null, null);
+    private String researchProjectTitle;
+
+    private ResearchProject project;
 
     private List<String> personnel = Arrays.asList("Person1", "Person2", "Person3");
 
     private String[] selectedPersonnel;
-
-    private String researchProjectTitle;
 
     public void loadProject() {
         if (project == null) {

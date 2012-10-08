@@ -58,10 +58,10 @@ public class ResearchProject {
 
     // Information about externally managed items
     @OneToMany(mappedBy = "researchProject")
-    private List<ResearchProjectCohort> sampleCohorts;
+    private List<ResearchProjectCohort> sampleCohorts = new ArrayList<ResearchProjectCohort>();
 
     @OneToMany(mappedBy = "researchProject")
-    private List<ResearchProjectFunding> fundingIDs;
+    private List<ResearchProjectFunding> fundingIDs = new ArrayList<ResearchProjectFunding>();
 
     @OneToMany(mappedBy = "researchProject")
     private List<ResearchProjectIRB> irbNumbers = new ArrayList<ResearchProjectIRB>();
@@ -148,10 +148,6 @@ public class ResearchProject {
     }
 
     public void addCohort(ResearchProjectCohort sampleCohort ){
-        if (sampleCohorts == null) {
-            sampleCohorts = new ArrayList<ResearchProjectCohort>();
-        }
-
         sampleCohorts.add(sampleCohort);
     }
 
@@ -224,10 +220,6 @@ public class ResearchProject {
     }
 
     public void addFunding(ResearchProjectFunding funding) {
-        if (fundingIDs == null) {
-            fundingIDs = new ArrayList<ResearchProjectFunding>();
-        }
-
         fundingIDs.add(funding);
     }
 
