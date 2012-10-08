@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -9,7 +10,6 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This is the UI backing for the research project.
@@ -45,21 +45,22 @@ public class ResearchProjectDetail extends AbstractJsfBean {
     }
 
     public String getSponsoredScientists() {
-        Set<Long> scientistIds = project.getPeople(RoleType.SCIENTIST);
-        return "waiting for web service for people";
+        return StringUtils.join(project.getPeople(RoleType.SCIENTIST), ", ");
     }
 
     public String getFundingSources() {
-        Set<String> fundingIds = project.getFundingIds();
-        return "waiting for web service for funding";
+        return StringUtils.join(project.getFundingIds(), ", ");
     }
 
     public String getCohorts() {
-        Set<String> cohortIds = project.getCohortIds();
-        return "waiting for web service for cohorts";
+        return StringUtils.join(project.getCohortIds(), ", ");
     }
 
     public List<String> getStatuses() {
         return ResearchProject.Status.getNames();
+    }
+
+    public String getIrbNumberString() {
+        return StringUtils.join(project.getIrbNumbers(), ", ");
     }
 }

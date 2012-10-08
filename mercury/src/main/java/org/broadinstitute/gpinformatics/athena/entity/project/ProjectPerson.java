@@ -52,29 +52,20 @@ public class ProjectPerson {
         return personId;
     }
 
-    /**
-     *
-     * @param other The other object
-     * @return boolean
-     */
     @Override
     public boolean equals(Object other) {
         if ( (this == other ) ) return true;
         if ( !(other instanceof ProjectPerson) ) return false;
         ProjectPerson castOther = (ProjectPerson) other;
         return new EqualsBuilder()
-                .append(role, castOther.role)
-                .append(personId, castOther.personId).isEquals();
+                .append(getRole(), castOther.getRole())
+                .append(getPersonId(), castOther.getPersonId()).isEquals();
     }
 
-    /**
-     *
-     * @return int
-     */
     @Override
     public int hashCode() {
         return new HashCodeBuilder()
-                .append(role)
-                .append(personId).toHashCode();
+                .append(getRole())
+                .append(getPersonId()).toHashCode();
     }
 }

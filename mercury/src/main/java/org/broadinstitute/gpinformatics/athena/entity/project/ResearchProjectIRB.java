@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
 import javax.persistence.*;
 
 /**
@@ -63,5 +66,24 @@ public class ResearchProjectIRB {
 
     public IrbType getIrbType() {
         return irbType;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if ( (this == other ) ) return true;
+        if ( !(other instanceof ResearchProjectIRB) ) return false;
+        ResearchProjectIRB castOther = (ResearchProjectIRB) other;
+        return new EqualsBuilder()
+                .append(getIrb(), castOther.getIrb())
+                .append(getIrbType(), castOther.getIrbType())
+                .append(getResearchProject(), castOther.getResearchProject()).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+                .append(getIrb())
+                .append(getIrbType())
+                .append(getResearchProject()).toHashCode();
     }
 }

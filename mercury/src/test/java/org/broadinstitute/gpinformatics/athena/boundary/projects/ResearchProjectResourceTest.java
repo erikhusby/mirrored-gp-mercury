@@ -41,7 +41,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         if (researchProjectResource != null) {
             testTitle = "MyResearchProject_" + UUID.randomUUID();
             ResearchProject researchProject =
-                    new ResearchProject(TEST_CREATOR, testTitle, "To study stuff.");
+                    new ResearchProject(TEST_CREATOR, testTitle, "To study stuff.", ResearchProject.IRB_NOT_ENGAGED);
 
             researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant_" + UUID.randomUUID()));
             researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO_" + UUID.randomUUID()));
