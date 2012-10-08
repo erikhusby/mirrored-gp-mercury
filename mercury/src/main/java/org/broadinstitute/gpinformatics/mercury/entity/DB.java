@@ -92,11 +92,13 @@ public class DB implements Serializable {
     }
 
     public void initPageAuthorizations() {
+/* Leaving here as a code example, but we currently don't want to enforce any page authorizations.
         PageAuthorization page = new PageAuthorization("/projects/");
 
         page.addRoleAccess(authorizedRoleMap.get(DEVELOPER_ROLE));
         page.addRoleAccess(authorizedRoleMap.get(PROJECT_MANAGER_ROLE));
         addPageAuthorization(page);
+*/
     }
 
     private void initAuthorizedRoles() {

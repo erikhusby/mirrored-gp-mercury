@@ -26,7 +26,7 @@
         </ui:define>
         <ui:define name="body">
 
-            <h:form styleClass="form-horizontal">
+            <h:form styleClass="view-horizontal">
                 <div class="control-group">
                     <span class="control-label">Project:</span>
                     <span class="controls">#{researchProjectDetail.project.title}</span>
@@ -82,7 +82,7 @@
                     <f:selectItems value="#{researchProjectDetail.statuses}" />
                 </p:selectOneMenu>
 
-                <p:dataTable value="#{researchProjectDetail.project.orders}" var="product">
+                <p:dataTable value="#{researchProjectDetail.project.productOrders}" var="product">
                     <p:column headerText="Product ID">
                         <h:link outcome="product/detail" value="DMY-1">
                             <f:param name="orderId" value="#{product.title}"/>
