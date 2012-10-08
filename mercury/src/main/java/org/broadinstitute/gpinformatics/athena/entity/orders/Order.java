@@ -10,7 +10,9 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import java.io.Serializable;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -215,6 +217,44 @@ public class Order implements Serializable {
                         getGenderCount(BSPSampleDTO.FEMALE_IND)
                 );
         return counts;
+    }
+
+    public Integer getFingerprintCount() {
+
+        int fpCount = 0;
+
+        for ( ProductOrderSample productOrderSample : samples ) {
+            if (productOrderSample.hasFootprint()) {
+                fpCount++;
+            }
+        }
+        return fpCount;
+    }
+
+    public Map<String, Integer> getCountsByStockType() {
+
+        Map<String, Integer> stockTypeCounts = new HashMap<String, Integer>();
+
+        for(ProductOrderSample sample : samples) {
+            if(!stockTypeCounts.containsKey(sample.getStockType())) {
+                stockTypeCounts.put(sample.getStockType(), 0);
+            }
+            stockTypeCounts.put(sample.getStockType(), stockTypeCounts.get(sample.getStockType() + 1));
+        }
+
+        return stockTypeCounts;
+    }
+
+    public Integer getPrimaryDiseaseCount() {
+        List<String> uniqueDiseases = new LinkedList<String>();
+
+        for(ProductOrderSample sample: samples) {
+            if(!uniqueDiseases.contains(sample.getDisease())) {
+                uniqueDiseases.add(sample.getDisease());
+            }
+        }
+
+        return uniqueDiseases.size();
     }
 
     private Integer getGenderCount(final String gender) {

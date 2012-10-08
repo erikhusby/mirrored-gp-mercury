@@ -122,6 +122,16 @@ public class ProductOrderSample implements Serializable {
 
     }
 
+    public boolean hasFootprint() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
+
+        return ((null != this.getBspDTO().getFingerprint()) &&
+                (!this.getBspDTO().getFingerprint().isEmpty()));
+
+    }
+
     // Methods delegated to the DTO
     public String getVolume() throws IllegalStateException {
         if (! isInBspFormat() ) {
@@ -261,6 +271,14 @@ public class ProductOrderSample implements Serializable {
            throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getCollaboratorParticipantId();
+    }
+
+    public String getStockType() {
+
+        if (! isInBspFormat() ) {
+           throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return getBspDTO().getStockType();
     }
 
 }
