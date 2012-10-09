@@ -12,36 +12,32 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
-public class BSPUserCacheTest extends Arquillian {
-
-
+public class BSPUserListTest extends Arquillian {
     @Deployment
     public static WebArchive deployment() {
-        // QA BSP config not working for me, yaml parameters might be off
-        return DeploymentBuilder.buildMercuryWar(PROD);
+        return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
     @Inject
-    BSPUserCache bspUserCache;
+    BSPUserList bspUserList;
 
     @Test
     public void testGetAllUsers() throws Exception {
-        List<BspUser> users = bspUserCache.getUsers();
+        List<BspUser> users = bspUserList.getUsers();
         Assert.assertNotNull(users);
         Assert.assertTrue(!users.isEmpty());
         // This is an arbitrary sanity check; the actual database has about 2.5k users.
-        Assert.assertTrue(users.size() > 10);
+        Assert.assertTrue(users.size() > 1000);
     }
 
     @Test
-    // test currently works but the method name seems a tad off
-    public void testFindResearchProjectById() throws Exception {
-        List<BspUser> users = bspUserCache.getUsers();
+    public void testFindUserById() throws Exception {
+        List<BspUser> users = bspUserList.getUsers();
         BspUser user1 = users.get(0);
-        BspUser user2 = bspUserCache.getById(user1.getUserId());
+        BspUser user2 = bspUserList.getById(user1.getUserId());
         Assert.assertTrue(user1.equals(user2));
     }
 }

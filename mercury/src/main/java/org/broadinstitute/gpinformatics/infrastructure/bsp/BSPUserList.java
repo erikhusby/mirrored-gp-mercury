@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 
 import javax.inject.Inject;
@@ -13,16 +13,16 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Application wide cache of BSP's user list.
+ * Application wide access to BSP's user list. The list is currently cached once at application startup. In the
+ * future, we may want to rebuild the list regularly to account for changes to the user database.
  */
 @Named
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
 @Singleton
-public class BSPUserCache {
+public class BSPUserList {
 
     private final List<BspUser> users;
-
 
     /**
      * @return list of bsp users, sorted by username.
@@ -48,34 +48,18 @@ public class BSPUserCache {
 
     @Inject
     // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
-    public BSPUserCache(BSPManagerFactory bspManagerFactory) {
-
-        // FIXME: Update to use correct BSP API call once it's present.
-        UserManager userManager = bspManagerFactory.createUserManager();
-        List<BspUser> rawUsers = userManager.getPrimaryInvestigators();
+    public BSPUserList(BSPManagerFactory bspManagerFactory) {
+        List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
         Collections.sort(rawUsers, new Comparator<BspUser>() {
             @Override
             public int compare(BspUser o1, BspUser o2) {
                 // FIXME: need to figure out what the correct sort criteria are.
-
-                String u1 = o1.getUsername();
-                String u2 = o2.getUsername();
-
-                // MLC these null checks proved to be necessary, though that definitely doesn't seem right.
-                // Need to talk to Jason
-                if (u1 == null && u2 == null) {
-                    return 0;
-                }
-
-                if (u1 == null) {
-                    return -1;
-                }
-
-                if (u2 == null) {
-                    return 1;
-                }
-
-                return u1.compareTo(u2);
+                CompareToBuilder builder = new CompareToBuilder();
+                builder.append(o1.getLastName(), o2.getLastName());
+                builder.append(o1.getFirstName(), o2.getFirstName());
+                builder.append(o1.getUsername(), o2.getUsername());
+                builder.append(o1.getEmail(), o2.getEmail());
+                return builder.build();
             }
         });
         users = ImmutableList.copyOf(rawUsers);

@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 
 @Test(enabled = false)
@@ -24,13 +24,10 @@ public class BSPManagerFactoryTest extends Arquillian {
 
     @Deployment
     public static WebArchive deployment() {
-        // QA BSP config not working for me, yaml parameters might be off
-        return DeploymentBuilder.buildMercuryWar(PROD);
+        return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-
     public void testGetProjectManagers() {
-
         Assert.assertNotNull(bspManagerFactory);
 
         UserManager userManager = bspManagerFactory.createUserManager();
@@ -40,7 +37,5 @@ public class BSPManagerFactoryTest extends Arquillian {
         Assert.assertNotNull(projectManagers);
 
         Assert.assertTrue(projectManagers.size() > 10);
-
     }
-
 }
