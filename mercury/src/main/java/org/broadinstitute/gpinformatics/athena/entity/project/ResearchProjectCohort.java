@@ -13,7 +13,7 @@ import javax.persistence.*;
 public class ResearchProjectCohort {
 
     @Id
-    @SequenceGenerator(name="seq_rp_cohort_index", schema = "athena", sequenceName="seq_rp_cohort_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_rp_cohort_index", schema = "athena", sequenceName="seq_rp_cohort_index")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_cohort_index")
     private Long researchProjectCohortId;
 

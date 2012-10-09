@@ -17,7 +17,7 @@ import javax.persistence.*;
 public class ProjectPerson {
 
     @Id
-    @SequenceGenerator(name="seq_project_person_index", schema = "athena", sequenceName="seq_project_person_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_project_person_index", schema = "athena", sequenceName="seq_project_person_index")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_project_person_index")
     private Long projectPersonId;
 
