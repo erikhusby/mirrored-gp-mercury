@@ -221,6 +221,14 @@ public class ResearchProject {
         return people.toArray(new Long[people.size()]);
     }
 
+    public Long[] getProjectManagers() {
+        return getPeople(RoleType.PM);
+    }
+
+    public Long[] getScientists() {
+        return getPeople(RoleType.SCIENTIST);
+    }
+
     public String[] getFundingIds() {
 
         if (projectFunding != null) {

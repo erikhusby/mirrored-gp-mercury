@@ -24,8 +24,7 @@
                 </p:column>
 
                 <p:column headerText="Owner" filterBy="#{project.createdBy}" filterOptions="#{researchProjectBean.allProjectOwners}" filterMatchMode="exact">
-                    <!-- TODO: owner name -->
-                    #{project.createdBy}
+                    #{userListBean.getUser(project.createdBy)}
                 </p:column>
 
                 <p:column headerText="Status" filterBy="#{project.status}" filterOptions="#{researchProjectBean.allProjectStatuses}" filterMatchMode="exact">
