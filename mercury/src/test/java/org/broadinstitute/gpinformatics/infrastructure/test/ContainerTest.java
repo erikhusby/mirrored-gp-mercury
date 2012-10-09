@@ -10,7 +10,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 public class ContainerTest extends Arquillian {
 
     @Deployment
-    public static WebArchive buildSequelWar() {
+    public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar();
     }
 }

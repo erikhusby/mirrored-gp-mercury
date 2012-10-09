@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.*;
 public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Deployment
-    public static WebArchive buildSequelWar() {
+    public static WebArchive buildMercuryWar() {
         // need TEST here for now because there's no STUBBY version of ThriftConfig
         // see ThriftServiceProducer.produce()
         return DeploymentBuilder.buildMercuryWar(TEST);
