@@ -28,12 +28,10 @@ public class ResearchProjectDetail extends AbstractJsfBean {
 
     private ResearchProject project;
 
-    private List<String> personnel = Arrays.asList("Person1", "Person2", "Person3");
-
     private String[] selectedPersonnel;
 
     public void initEmptyProject() {
-        project = new ResearchProject(null, null, null);
+        project = new ResearchProject(null, null, null, true);
     }
 
     public void loadProject() {
@@ -72,14 +70,6 @@ public class ResearchProjectDetail extends AbstractJsfBean {
 
     public String getIrbNumberString() {
         return StringUtils.join(project.getIrbNumbers(), ", ");
-    }
-
-    public List<String> getPersonnel() {
-        return personnel;
-    }
-
-    public void setPersonnel(List<String> personnel) {
-        this.personnel = personnel;
     }
 
     public String[] getSelectedPersonnel() {
