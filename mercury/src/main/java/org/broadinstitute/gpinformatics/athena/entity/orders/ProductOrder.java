@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -46,7 +47,7 @@ public class ProductOrder implements Serializable {
     private String comments;                    // Additional comments of the order
     private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
     @OneToMany(cascade = CascadeType.PERSIST)
-    private List<ProductOrderSample> sampleProducts;
+    private List<ProductOrderSample> samples;
 
 
     /**
@@ -58,14 +59,14 @@ public class ProductOrder implements Serializable {
     /**
      * Constructor with mandatory fields
      * @param title
-     * @param sampleProducts
+     * @param samples
      * @param quoteId
      * @param product
      * @param researchProject
      */
-    public ProductOrder(String title, List<ProductOrderSample> sampleProducts, String quoteId, Product product, ResearchProject researchProject) {
+    public ProductOrder(String title, List<ProductOrderSample> samples, String quoteId, Product product, ResearchProject researchProject) {
         this.title = title;
-        this.sampleProducts = sampleProducts;
+        this.samples = samples;
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
@@ -119,12 +120,12 @@ public class ProductOrder implements Serializable {
         this.comments = comments;
     }
 
-    public List<ProductOrderSample> getSampleProducts() {
-        return sampleProducts;
+    public List<ProductOrderSample> getSamples() {
+        return samples;
     }
 
     public void addSample(ProductOrderSample sampleProduct) {
-        sampleProducts.add(sampleProduct);
+        samples.add(sampleProduct);
     }
 
     /**
@@ -134,7 +135,7 @@ public class ProductOrder implements Serializable {
      * @return a {@link String} that represents the unique Jira Ticket key
      */
     public String getJiraTicketKey() {
-        return this.jiraTicketKey;
+        return jiraTicketKey;
     }
 
     /**
@@ -144,11 +145,11 @@ public class ProductOrder implements Serializable {
      * @param jiraTicketKeyIn a {@link String} that represents the unique key to the Jira Ticket to which the current
      *                        Product Order is associated
      */
-    public void setJiraTicketKey(String jiraTicketKeyIn) {
-        if(jiraTicketKeyIn == null) {
+    public void setJiraTicketKey(@NotNull String jiraTicketKeyIn) {
+        if (jiraTicketKeyIn == null) {
             throw new NullPointerException("Jira Ticket Key cannot be null");
         }
-        this.jiraTicketKey = jiraTicketKeyIn;
+        jiraTicketKey = jiraTicketKeyIn;
     }
 
     public int getUniqueParticipantCount() {
@@ -160,7 +161,7 @@ public class ProductOrder implements Serializable {
                 throw new IllegalStateException("Not Yet Implemented");
             }
 
-            for ( ProductOrderSample productOrderSample : sampleProducts) {
+            for ( ProductOrderSample productOrderSample : samples) {
                 String participantId = productOrderSample.getParticipantId();
                 if (StringUtils.isNotBlank(participantId)) {
                     uniqueParticipants.add(participantId);
@@ -171,19 +172,16 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * returns the number of unique participants
-     * @return
+     * @return the number of unique samples, as determined by the sample name
      */
     public int getUniqueSampleCount() {
-        int result = 0;
-        Set<String> uniqueSamples = getUniqueSampleNames();
-        return uniqueSamples.size();
+        return getUniqueSampleNames().size();
     }
 
     private Set<String> getUniqueSampleNames() {
         Set<String> uniqueSamples = new HashSet<String>();
-        for ( ProductOrderSample productOrderSample : sampleProducts) {
-            String sampleName = productOrderSample.getSampleName();
+        for (ProductOrderSample sample : samples) {
+            String sampleName = sample.getSampleName();
             if (StringUtils.isNotBlank(sampleName)) {
                 uniqueSamples.add(sampleName);
             }
@@ -192,11 +190,11 @@ public class ProductOrder implements Serializable {
     }
 
     public int getTotalSampleCount() {
-        return sampleProducts.size();
+        return samples.size();
     }
 
     public int getDuplicateCount() {
-        return ( getTotalSampleCount() - getUniqueSampleCount());
+        return (getTotalSampleCount() - getUniqueSampleCount());
     }
 
     public TumorNormalCount getTumorNormalCounts() {
@@ -210,14 +208,14 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * Returns true is any and all samples are of BSP Format.
-     * Note will return false if there are no samples on the sheet.
-     * @return
+     * @return true if all samples are of BSP Format.
+     * Will return false if there are no samples on the sheet.
+     *
      */
     public boolean areAllSampleBSPFormat() {
         boolean result = true;
         if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : sampleProducts) {
+            for ( ProductOrderSample productOrderSample : samples) {
                 if (! productOrderSample.isInBspFormat() ) {
                     result = false;
                     break;
@@ -230,13 +228,13 @@ public class ProductOrder implements Serializable {
     }
 
     private boolean isSheetEmpty() {
-        return (sampleProducts == null ) ||  sampleProducts.isEmpty();
+        return (samples == null ) ||  samples.isEmpty();
     }
 
     private boolean needsBspMetaData() {
         boolean needed = false;
         if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : sampleProducts) {
+            for ( ProductOrderSample productOrderSample : samples) {
                 if ( productOrderSample.isInBspFormat() &&
                      ! productOrderSample.hasBSPDTOBeenInitialized() ) {
                     needed = true;
@@ -282,7 +280,7 @@ public class ProductOrder implements Serializable {
 
         PRODUCT_FAMILY("Product Family");
 
-        private String fieldName;
+        private final String fieldName;
 
         private RequiredSubmissionFields(String fieldNameIn) {
             fieldName = fieldNameIn;
