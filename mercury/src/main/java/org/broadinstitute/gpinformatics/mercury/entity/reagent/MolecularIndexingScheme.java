@@ -360,7 +360,7 @@ public class MolecularIndexingScheme {
         }
     }
 
-    private Long id;
+    private Long molecularIndexingSchemeId;
 
     private String name;
 
@@ -426,15 +426,15 @@ public class MolecularIndexingScheme {
     @Id
     @SequenceGenerator(name="seq_molecular_indexing_scheme", schema = "mercury", sequenceName="seq_molecular_indexing_scheme", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_indexing_scheme")
-    @Column(name = "id")
+    @Column(name = "molecular_indexing_scheme_id")
     @SuppressWarnings("unused")
-    private Long getId() {
-        return id;
+    private Long getMolecularIndexingSchemeId() {
+        return molecularIndexingSchemeId;
     }
 
     @SuppressWarnings("unused")
-    private void setId(final Long id) {
-        this.id = id;
+    private void setMolecularIndexingSchemeId(final Long molecularIndexingSchemeId) {
+        this.molecularIndexingSchemeId = molecularIndexingSchemeId;
     }
 
     /**
