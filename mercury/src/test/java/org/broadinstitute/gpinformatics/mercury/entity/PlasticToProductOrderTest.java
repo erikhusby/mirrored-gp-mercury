@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -25,6 +26,7 @@ public class PlasticToProductOrderTest {
 
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void test_simple_tube_in_rack_maps_to_pdo() {
+        Bucket bucket = new Bucket();
         BucketResource bucketResource = new BucketResource();
         Set<SampleMetadata> rootSamples = new HashSet<SampleMetadata>();
         rootSamples.add(new StubSampleMetadata("TCGA123","Human",null));
@@ -44,15 +46,31 @@ public class PlasticToProductOrderTest {
 
         ProductOrderId productOrder = new ProductOrderId("PO1");
 
-        BucketEntry bucketEntry = bucketResource.add(tube, productOrder);
+        BucketEntry bucketEntry = bucketResource.add(tube, productOrder,bucket);
+        assertTrue(bucket.contains(bucketEntry));
 
-        // create product order...in reality, use boundary that athena uses to push a PO into mercury
         final Map<LabVessel,ProductOrderId> samplePOMapFromAthena = new HashMap<LabVessel, ProductOrderId>();
         samplePOMapFromAthena.put(bucketEntry.getLabVessel(),bucketEntry.getProductOrderId());
 
+        bucketResource.start(bucketEntry);
+
+        boolean doesEventHavePDO = false;
+        for (LabEvent labEvent : bucketEntry.getLabVessel().getEvents()) {
+            if (labEvent.getProductOrderId()!= null) {
+                if (productOrder.equals(labEvent.getProductOrderId())) {
+                    doesEventHavePDO = true;
+                }
+            }
+            // make sure that adding the vessel to the bucket created
+            // a new event and tagged it with the appropriate PDO
+            assertTrue(doesEventHavePDO);
+        }
+
+        assertFalse(bucket.contains(bucketEntry));
         // pull tubes from bucket: this creates a LabEvent for every
         // container pulled from the bucket, and the LabEvent calls out
         // a PDO for each sample
+        // here we set the order explicitly, but this should be done by bucketResource.start()
         rackToPlateTransfer.setProductOrderId(productOrder);
 
         // put the tubes in a rack

@@ -562,7 +562,7 @@ public abstract class LabVessel implements Starter {
 
     public void setChainOfCustodyRoots(Collection<? extends LabVessel> roots) {
         // todo this is just for experimental GPLIM-64...this method shouldn't ever
-        // be here in production.
+        // be in production.
         this.chainOfCustodyRoots = roots;
     }
 
@@ -579,12 +579,21 @@ public abstract class LabVessel implements Starter {
         // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
         // in reality, the implementation would walk back to all roots,
         // detecting vessels along the way where hasSampleMetadata is true.
-        return samples;
+        if (!samples.isEmpty()) {
+            return samples;
+        }
+        // else walk transfers
+        throw new RuntimeException("history traversal for empty samples list not implemented");
+
     }
 
+    /**
+     * For vessels that have been pushed over from BSP, we set
+     * the list of samples.  Otherwise, the list of samples
+     * is empty and is derived from a walk through event history.
+     * @param samples
+     */
     public void setSamples(Set<SampleMetadata> samples) {
-        // todo this is just for experimental GPLIM-64...this method shouldn't ever
-        // be here in production.
         this.samples = samples;
     }
 }

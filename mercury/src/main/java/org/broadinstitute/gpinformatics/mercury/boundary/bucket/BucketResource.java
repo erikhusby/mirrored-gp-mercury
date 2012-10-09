@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -14,8 +15,8 @@ public class BucketResource {
      * @param productOrder
      * @return
      */
-    public BucketEntry add(LabVessel vessel,ProductOrderId productOrder) {
-
+    public BucketEntry add(LabVessel vessel,ProductOrderId productOrder,Bucket bucket) {
+        throw new RuntimeException("not implemeted yet");
     }
 
     /**
@@ -25,7 +26,12 @@ public class BucketResource {
      * @param bucketEntry
      */
     public void start(BucketEntry bucketEntry) {
-
+        /**
+         * Side effect: create a {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent} and
+         * set {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent#setProductOrderId(org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId)
+         * the product order} based on what's in the {@link BucketEntry}
+         */
+        throw new RuntimeException("not implemeted yet");
     }
 
     /**
@@ -39,6 +45,6 @@ public class BucketResource {
      *               being cancelled.
      */
     public void cancel(BucketEntry bucketEntry,Person user,String reason) {
-
+        throw new RuntimeException("not implemeted yet");
     }
 }

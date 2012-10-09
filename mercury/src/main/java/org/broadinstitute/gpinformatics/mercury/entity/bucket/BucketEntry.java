@@ -16,11 +16,11 @@ public class BucketEntry {
     private ProductOrderId productOrder;
 
     public LabVessel getLabVessel() {
-        return labVessel;
+        throw new RuntimeException("not implemented yet");
     }
 
     public ProductOrderId getProductOrderId() {
-        return productOrder;
+        throw new RuntimeException("not implemented yet");
     }
 
 }
