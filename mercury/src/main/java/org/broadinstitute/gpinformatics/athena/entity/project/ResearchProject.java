@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -54,17 +53,17 @@ public class ResearchProject {
 
     // People related to the project
     @OneToMany(cascade = CascadeType.PERSIST)
-    private List<ProjectPerson> associatedPeople;
+    private Set<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
     @OneToMany(mappedBy = "researchProject")
-    private List<ResearchProjectCohort> sampleCohorts = new ArrayList<ResearchProjectCohort>();
+    private Set<ResearchProjectCohort> sampleCohorts;
 
     @OneToMany(mappedBy = "researchProject")
-    private List<ResearchProjectFunding> fundingIDs = new ArrayList<ResearchProjectFunding>();
+    private Set<ResearchProjectFunding> projectFunding;
 
     @OneToMany(mappedBy = "researchProject")
-    private List<ResearchProjectIRB> irbNumbers = new ArrayList<ResearchProjectIRB>();
+    private Set<ResearchProjectIRB> irbNumbers;
 
     private String irbNotes;
 
@@ -75,7 +74,7 @@ public class ResearchProject {
 
     protected ResearchProject() {}
 
-    public ResearchProject(Long creator, String title, String synopsis) {
+    public ResearchProject(Long creator, String title, String synopsis, boolean irbEngaged) {
 
         this.title = title;
         this.synopsis = synopsis;
@@ -84,6 +83,7 @@ public class ResearchProject {
         this.modifiedBy = creator;
         this.modifiedDate = this.createdDate;
         this.irbNotes = "";
+        this.irbEngaged = irbEngaged;
     }
 
     // Getters
@@ -143,11 +143,25 @@ public class ResearchProject {
         this.jiraTicketKey = jiraTicketKeyIn;
     }
 
-    public List<ResearchProjectCohort> getSampleCohorts() {
-        return Collections.unmodifiableList(sampleCohorts);
+    public String[] getCohortIds() {
+        if (sampleCohorts != null) {
+            int i = 0;
+            String[] cohorts = new String[sampleCohorts.size()];
+            for (ResearchProjectCohort cohort : sampleCohorts) {
+                cohorts[i++] = cohort.getCohortId();
+            }
+
+            return cohorts;
+        }
+
+        return new String[0];
     }
 
-    public void addCohort(ResearchProjectCohort sampleCohort ){
+    public void addCohort(ResearchProjectCohort sampleCohort ) {
+        if (sampleCohorts == null) {
+            sampleCohorts = new HashSet<ResearchProjectCohort>();
+        }
+
         sampleCohorts.add(sampleCohort);
     }
 
@@ -159,17 +173,23 @@ public class ResearchProject {
         return irbEngaged;
     }
 
-    public void setIrbEngaged(boolean irbEngaged) {
-        this.irbEngaged = irbEngaged;
-    }
+    public String[] getIrbNumbers() {
+        int i = 0;
+        if (sampleCohorts != null) {
+            String[] irbNumberList = new String[irbNumbers.size()];
+            for (ResearchProjectIRB irb : irbNumbers) {
+                irbNumberList[i++] = irb.getIrb();
+            }
 
-    public List<ResearchProjectIRB> getIrbNumbers() {
-        return Collections.unmodifiableList(irbNumbers);
+            return irbNumberList;
+        }
+
+        return new String[0];
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {
         if (irbNumbers == null) {
-            irbNumbers = new ArrayList<ResearchProjectIRB>();
+            irbNumbers = new HashSet<ResearchProjectIRB>();
         }
 
         irbNumbers.add(irbNumber);
@@ -181,14 +201,14 @@ public class ResearchProject {
 
     public void addPerson(RoleType role, Long personId) {
         if (associatedPeople == null) {
-            associatedPeople = new ArrayList<ProjectPerson>();
+            associatedPeople = new HashSet<ProjectPerson>();
         }
 
         associatedPeople.add(new ProjectPerson(this, role, personId));
     }
 
-    public Set<Long> getPeople(RoleType role) {
-        Set<Long> people = new HashSet<Long> ();
+    public Long[] getPeople(RoleType role) {
+        List<Long> people = new ArrayList<Long> ();
 
         if (associatedPeople != null) {
             for (ProjectPerson projectPerson : associatedPeople) {
@@ -198,33 +218,35 @@ public class ResearchProject {
             }
         }
 
-        return people;
+        return people.toArray(new Long[people.size()]);
     }
 
-    public Set<String> getFundingIds() {
-        Set<String> fundingIdSet = new HashSet<String> ();
-        for (ResearchProjectFunding funding : fundingIDs) {
-            fundingIdSet.add(funding.getFundingId());
+    public String[] getFundingIds() {
+
+        if (projectFunding != null) {
+            String[] fundingIds = new String[projectFunding.size()];
+
+            int i=0;
+            for (ResearchProjectFunding fundingItem : projectFunding) {
+                fundingIds[i++] = fundingItem.getFundingId();
+            }
+
+            return fundingIds;
         }
 
-        return fundingIdSet;
-    }
-
-    public Set<String> getCohortIds() {
-        Set<String> cohortIdSet = new HashSet<String> ();
-        for (ResearchProjectCohort cohort : sampleCohorts) {
-            cohortIdSet.add(cohort.getCohortId());
-        }
-
-        return cohortIdSet;
+        return new String[0];
     }
 
     public void addFunding(ResearchProjectFunding funding) {
-        fundingIDs.add(funding);
+        if (projectFunding == null) {
+            projectFunding = new HashSet<ResearchProjectFunding>();
+        }
+
+        projectFunding.add(funding);
     }
 
     public void removeFunding(ResearchProjectFunding funding) {
-        fundingIDs.remove(funding);
+        projectFunding.remove(funding);
     }
 
     public Status getStatus() {
@@ -235,41 +257,12 @@ public class ResearchProject {
         this.status = status;
     }
 
-    public String getIrbNumberString() {
-        String[] irbNumbers = new String[getIrbNumbers().size()];
-        int i = 0;
-        for (ResearchProjectIRB irb : getIrbNumbers()) {
-            irbNumbers[i++] = irb.getIrb();
-        }
-
-        return StringUtils.join(irbNumbers, ", ");
-    }
-
     public List<ProductOrder> getProductOrders() {
         return productOrders;
     }
 
     public RoleType[] getRoleTypes() {
         return RoleType.values();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if ( (this == other ) ) {
-            return true;
-        }
-
-        if ( !(other instanceof ResearchProject) ) {
-            return false;
-        }
-
-        ResearchProject castOther = (ResearchProject) other;
-        return new EqualsBuilder().append(title, castOther.title).isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder().append(title).toHashCode();
     }
 
     /**
@@ -318,6 +311,22 @@ public class ResearchProject {
         }
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if ( (this == other ) ) {
+            return true;
+        }
 
+        if ( !(other instanceof ResearchProject) ) {
+            return false;
+        }
 
+        ResearchProject castOther = (ResearchProject) other;
+        return new EqualsBuilder().append(getTitle(), castOther.getTitle()).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(getTitle()).toHashCode();
+    }
 }

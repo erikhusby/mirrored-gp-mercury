@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
 import javax.persistence.*;
 
 /**
@@ -36,5 +39,22 @@ public class ResearchProjectFunding {
 
     public String getFundingId() {
         return fundingId;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if ( (this == other ) ) return true;
+        if ( !(other instanceof ResearchProjectFunding) ) return false;
+        ResearchProjectFunding castOther = (ResearchProjectFunding) other;
+        return new EqualsBuilder()
+                .append(getFundingId(), castOther.getFundingId())
+                .append(getResearchProject(), castOther.getResearchProject()).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+                .append(getFundingId())
+                .append(getResearchProject()).toHashCode();
     }
 }

@@ -66,8 +66,13 @@
                 </div>
 
                 <div class="control-group">
+                    <span class="control-label">IRB Engaged:</span>
+                    <span class="controls">#{researchProjectDetail.project.irbEngaged}</span>
+                </div>
+
+                <div class="control-group">
                     <span class="control-label">IRB/IACUC:</span>
-                    <span class="controls">#{researchProjectDetail.project.irbNumberString}</span>
+                    <span class="controls">#{researchProjectDetail.irbNumberString}</span>
                 </div>
 
                 <div class="control-group">
@@ -110,9 +115,12 @@
                         #{product.orderStatus}
                     </p:column>
                 </p:dataTable>
+            </h:form>
 
-                <!-- todo: add when product UI exists - h:link outcome="/product/create" value="New Product Order"/-->
-                <p:commandButton value="Edit Project" action="list" ajax="false"/>
+            <h:form>
+                <p:commandButton value="Edit Project" action="create" ajax="false">
+                    <f:param name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}"/>
+                </p:commandButton>
             </h:form>
         </ui:define>
     </ui:composition>

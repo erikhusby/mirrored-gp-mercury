@@ -20,7 +20,7 @@ public class ResearchProjectTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        researchProject = new ResearchProject(1111L, "MyResearchProject", "To study stuff.");
+        researchProject = new ResearchProject(1111L, "MyResearchProject", "To study stuff.", ResearchProject.IRB_ENGAGED);
 
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant"));
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO"));
@@ -35,7 +35,7 @@ public class ResearchProjectTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void manageRPTest() {
         Assert.assertNotNull(researchProject.getPeople(RoleType.SCIENTIST));
-        Assert.assertTrue(researchProject.getPeople(RoleType.PM).isEmpty());
+        Assert.assertTrue(researchProject.getPeople(RoleType.PM).length == 0);
 
         researchProject.addPerson(RoleType.PM, 333L);
         Assert.assertNotNull(researchProject.getPeople(RoleType.PM));
@@ -43,16 +43,16 @@ public class ResearchProjectTest {
         //Add a collection
         ResearchProjectCohort collection = new ResearchProjectCohort(researchProject, "BSPCollection");
         researchProject.addCohort(collection);
-        Assert.assertTrue(researchProject.getSampleCohorts().size() == 1);
+        Assert.assertTrue(researchProject.getCohortIds().length == 1);
 
         // Add a second and check size
         collection = new ResearchProjectCohort(researchProject, "AlxCollection2");
         researchProject.addCohort(collection);
-        Assert.assertTrue(researchProject.getSampleCohorts().size() == 2);
+        Assert.assertTrue(researchProject.getCohortIds().length == 2);
 
         // remove second and check size
         researchProject.removeCohort(collection);
-        Assert.assertTrue(researchProject.getSampleCohorts().size() == 1);
+        Assert.assertTrue(researchProject.getCohortIds().length == 1);
 
         Assert.assertNull(researchProject.getJiraTicketKey());
 
