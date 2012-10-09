@@ -13,9 +13,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.JoinTable;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,16 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 @Entity
 @Audited
-@NamedQueries({
-        @NamedQuery(
-                name = "TwoDBarcodedTube.fetchByBarcodes",
-                query = "select t from TwoDBarcodedTube t where label in (:barcodes)"
-        ),
-        @NamedQuery(
-                name = "TwoDBarcodedTube.fetchByBarcode",
-                query = "select t from TwoDBarcodedTube t where label = :barcode"
-        )
-})
+@Table(schema = "mercury")
 /**
  * Represents a tube with a two dimensional barcode on its bottom.  These tubes are usually stored in racks.
  */
@@ -41,7 +34,8 @@ public class TwoDBarcodedTube extends LabVessel {
 
     private static Log gLog = LogFactory.getLog(TwoDBarcodedTube.class);
     
-    @OneToMany
+    @OneToMany // todo jmt should this have mappedBy?
+    @JoinTable(schema = "mercury")
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
 
     // todo jmt why is this never assigned?

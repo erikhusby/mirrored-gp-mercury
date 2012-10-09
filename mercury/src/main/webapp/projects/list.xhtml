@@ -21,7 +21,7 @@
 
                 <p:column headerText="ID">
                     <!-- TODO: JIRA ID -->
-                    #{project.id}
+                    #{project.researchProjectId}
                 </p:column>
 
                 <p:column headerText="Owner" filterBy="#{project.createdBy}" filterOptions="#{researchProjectBean.allProjectOwners}" filterMatchMode="exact">

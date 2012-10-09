@@ -8,6 +8,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 /**
  * Represents a transfer from one tube to another, with no racks.  Compare to CherryPickTransfer,
@@ -15,6 +16,7 @@ import javax.persistence.ManyToOne;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class VesselToVesselTransfer extends VesselTransfer{
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)

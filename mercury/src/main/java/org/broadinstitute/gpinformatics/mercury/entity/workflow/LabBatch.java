@@ -33,22 +33,23 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
 public class LabBatch {
 
     @Id
-    @SequenceGenerator(name = "SEQ_LAB_BATCH", sequenceName = "SEQ_LAB_BATCH")
+    @SequenceGenerator(name = "SEQ_LAB_BATCH", schema = "mercury", sequenceName = "SEQ_LAB_BATCH")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_BATCH")
     private Long labBatchId;
 
     public static final String LCSET_PROJECT_PREFIX = "LCSET";
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury")
     private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(name = "lb_starting_lab_vessels")
+    @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels")
     private Set<LabVessel> startingLabVessels = new HashSet<LabVessel>();
 
     private boolean isActive = true;

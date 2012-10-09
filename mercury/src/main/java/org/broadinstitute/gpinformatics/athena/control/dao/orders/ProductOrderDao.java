@@ -59,7 +59,7 @@ public class ProductOrderDao extends AthenaGenericDao {
         CriteriaQuery<ProductOrder> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ProductOrder.class);
         Root<ProductOrder> root = criteriaQuery.from(ProductOrder.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ProductOrder_.id), orderId));
+        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ProductOrder_.productOrderId), orderId));
         return entityManager.createQuery(criteriaQuery).getSingleResult();
     }
 }

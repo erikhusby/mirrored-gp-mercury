@@ -1,17 +1,21 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.hibernate.envers.Audited;
+
 import javax.persistence.*;
 
 /**
  * The funding for research projects
  */
 @Entity
+@Audited
+@Table(schema = "athena")
 public class ResearchProjectFunding {
 
     @Id
-    @SequenceGenerator(name="seq_rp_funding_index", sequenceName="seq_rp_funding_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_rp_funding_index", schema = "athena", sequenceName="seq_rp_funding_index")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_funding_index")
-    private Long id;
+    private Long researchProjectFundingId;
 
     @ManyToOne
     private ResearchProject researchProject;
@@ -26,8 +30,8 @@ public class ResearchProjectFunding {
         this.fundingId =fundingId;
     }
 
-    public Long getId() {
-        return id;
+    public Long getResearchProjectFundingId() {
+        return researchProjectFundingId;
     }
 
     public ResearchProject getResearchProject() {

@@ -17,13 +17,14 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
+@Table(schema = "athena",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
 public class Product implements Serializable {
 
     @Id
-    @SequenceGenerator(name = "SEQ_PRODUCT", sequenceName = "SEQ_PRODUCT")
+    @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT")
-    private Long id;
+    private Long productId;
 
     private String productName;
 
@@ -54,9 +55,11 @@ public class Product implements Serializable {
     private PriceItem defaultPriceItem;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "athena")
     private Set<PriceItem> priceItems = new HashSet<PriceItem>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "athena")
     private Set<Product> addOns = new HashSet<Product>();
 
     private String workflowName;
@@ -102,8 +105,8 @@ public class Product implements Serializable {
         this.workflowName = workflowName;
     }
 
-    public Long getId() {
-        return id;
+    public Long getProductId() {
+        return productId;
     }
 
     public String getProductName() {

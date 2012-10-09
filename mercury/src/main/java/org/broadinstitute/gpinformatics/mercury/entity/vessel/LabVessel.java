@@ -13,12 +13,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StateChange;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
+import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
@@ -50,13 +52,13 @@ import java.util.logging.Logger;
  */
 @Entity
 @Audited
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
 @BatchSize(size = 50)
 public abstract class LabVessel implements Starter {
 
     private final static Logger logger = Logger.getLogger(LabVessel.class.getName());
 
-    @SequenceGenerator(name = "SEQ_LAB_VESSEL", sequenceName = "SEQ_LAB_VESSEL")
+    @SequenceGenerator(name = "SEQ_LAB_VESSEL", schema = "mercury",  sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
     @Id
     private Long labVesselId;
@@ -65,7 +67,8 @@ public abstract class LabVessel implements Starter {
 
     private Date createdOn;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
+    @JoinTable(schema = "mercury")
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -78,6 +81,7 @@ public abstract class LabVessel implements Starter {
     private LabVessel projectAuthority;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury")
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -86,7 +90,7 @@ public abstract class LabVessel implements Starter {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(name = "lv_reagent_contents")
+    @JoinTable(schema = "mercury", name = "lv_reagent_contents")
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
     /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
@@ -96,6 +100,7 @@ public abstract class LabVessel implements Starter {
     private Integer reagentContentsCount = 0;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury")
     private Set<LabVessel> containers = new HashSet<LabVessel>();
 
     /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
@@ -109,6 +114,16 @@ public abstract class LabVessel implements Starter {
 
     @Embedded
     private UserRemarks userRemarks;
+
+    @Transient
+    /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
+    private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
+
+    @Transient
+    /**
+     * marked transient because arz hasn't gotten far enough to turn on db for this
+     */
+    private Set<SampleMetadata> samples = new HashSet<SampleMetadata>();
 
     protected LabVessel(String label) {
         this.label = label;
@@ -525,4 +540,64 @@ public abstract class LabVessel implements Starter {
     public Set<LabBatch> getLabBatches() {
         return labBatches;
     }
+
+    /**
+     * Does this container know what it's sample metadata is?
+     * Or does it need to look back in the event graph?
+     * @return
+     */
+    public boolean hasSampleMetadata() {
+        throw new RuntimeException("not implemented");
+    }
+
+
+    /**
+     * Walk the chain of custody back until it can be
+     * walked no further.  What you get are the roots
+     * of the transfer graph.
+     * @return
+     */
+    public Collection<? extends LabVessel> getChainOfCustodyRoots() {
+        // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
+        return chainOfCustodyRoots;
+    }
+
+    public void setChainOfCustodyRoots(Collection<? extends LabVessel> roots) {
+        // todo this is just for experimental GPLIM-64...this method shouldn't ever
+        // be in production.
+        this.chainOfCustodyRoots = roots;
+    }
+
+    /**
+     * What {@link SampleMetadata samples} are contained in
+     * this container?  Implementations are expected to
+     * walk the transfer graph back to a point where
+     * they can lookup {@link SampleMetadata} from
+     * an external source like BSP or a spreadsheet
+     * uploaded for "walk up" sequencing.
+     * @return
+     */
+    public Set<SampleMetadata> getSamples() {
+        // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
+        // in reality, the implementation would walk back to all roots,
+        // detecting vessels along the way where hasSampleMetadata is true.
+        if (!samples.isEmpty()) {
+            return samples;
+        }
+        // else walk transfers
+        throw new RuntimeException("history traversal for empty samples list not implemented");
+
+    }
+
+    /**
+     * For vessels that have been pushed over from BSP, we set
+     * the list of samples.  Otherwise, the list of samples
+     * is empty and is derived from a walk through event history.
+     * @param samples
+     */
+    public void setSamples(Set<SampleMetadata> samples) {
+        this.samples = samples;
+    }
 }
+
+

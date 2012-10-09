@@ -38,11 +38,6 @@ public class LabBatchDAO extends GenericDao {
     }
 
     public LabBatch findByName(String batchName) {
-        EntityManager entityManager = this.getThreadEntityManager().getEntityManager();
-        CriteriaQuery<LabBatch> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(LabBatch.class);
-        Root<LabBatch> root = criteriaQuery.from(LabBatch.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(LabBatch_.batchName), batchName));
-        return entityManager.createQuery(criteriaQuery).getSingleResult();
+        return findSingle(LabBatch.class, LabBatch_.batchName, batchName);
     }
 }

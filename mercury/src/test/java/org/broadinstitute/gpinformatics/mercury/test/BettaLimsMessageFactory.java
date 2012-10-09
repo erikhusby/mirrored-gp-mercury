@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class BettaLimsMessageFactory {
         return row + columnString;
     }
 
-    public PlateTransferEventType buildRackToPlate(String eventType, String rackBarcode, List<String> tubeBarcodes,
+    public PlateTransferEventType buildRackToPlate(String eventType, String rackBarcode, Collection<String> tubeBarcodes,
             String plateBarcode) {
         try {
             PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
@@ -307,7 +308,7 @@ public class BettaLimsMessageFactory {
         return rack;
     }
 
-    private PositionMapType buildPositionMap(String rackBarcode, List<String> tubeBarcodes) {
+    private PositionMapType buildPositionMap(String rackBarcode, Collection<String> tubeBarcodes) {
         PositionMapType positionMap = new PositionMapType();
         int rackPosition = 1;
         for (String barcode : tubeBarcodes) {

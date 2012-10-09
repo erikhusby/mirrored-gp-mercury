@@ -3,10 +3,10 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.experiments.EntityUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.Collections;
@@ -18,6 +18,8 @@ import java.util.Set;
  * Research Projects hold all the information about a research project
  */
 @Entity
+@Audited
+@Table(schema = "athena")
 public class ResearchProject {
 
     public enum Status {
@@ -25,9 +27,9 @@ public class ResearchProject {
     }
 
     @Id
-    @SequenceGenerator(name="seq_research_project_index", sequenceName="seq_research_project_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_research_project_index", schema = "athena", sequenceName="seq_research_project_index")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
-    private Long id;
+    private Long researchProjectId;
 
     private Status status;
 
@@ -43,7 +45,7 @@ public class ResearchProject {
     private String synopsis;
 
     // People related to the project
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "researchProject")
     private Set<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
@@ -85,8 +87,8 @@ public class ResearchProject {
         return synopsis;
     }
 
-    public Long getId() {
-        return id;
+    public Long getResearchProjectId() {
+        return researchProjectId;
     }
 
     public Date getCreatedDate() {

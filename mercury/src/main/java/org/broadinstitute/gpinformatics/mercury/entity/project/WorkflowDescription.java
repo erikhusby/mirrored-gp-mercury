@@ -16,6 +16,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.InputStream;
 import java.util.*;
@@ -27,10 +28,11 @@ import java.util.*;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class WorkflowDescription {
 
     @Id
-    @SequenceGenerator(name = "SEQ_WORKFLOW_DESCRIPTION", sequenceName = "SEQ_WORKFLOW_DESCRIPTION")
+    @SequenceGenerator(name = "SEQ_WORKFLOW_DESCRIPTION", schema = "mercury", sequenceName = "SEQ_WORKFLOW_DESCRIPTION")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_WORKFLOW_DESCRIPTION")
     private Long workflowDescriptionId;
 

@@ -90,6 +90,12 @@ public class LabEventFactory {
     @Inject
     private LabBatchDAO labBatchDAO;
 
+    public LabEventFactory() {}
+
+    public LabEventFactory(PersonDAO personDAO) {
+        this.personDAO = personDAO;
+    }
+
     public interface LabEventRefDataFetcher {
         Person getOperator(String userId);
         LabBatch getLabBatch(String labBatchName);
@@ -271,13 +277,7 @@ public class LabEventFactory {
                     VesselPosition.getByName(receptacleType.getPosition()), receptacleType.getBarcode()));
         }
         String digest = RackOfTubes.makeDigest(positionBarcodeList);
-        List<RackOfTubes> racksOfTubes = rackOfTubesDao.findByDigest(digest);
-        RackOfTubes rackOfTubes = null;
-        // todo jmt handle digest collision
-        if(!racksOfTubes.isEmpty()) {
-            rackOfTubes = racksOfTubes.get(0);
-        }
-        return rackOfTubes;
+        return rackOfTubesDao.findByDigest(digest);
     }
 
     /**

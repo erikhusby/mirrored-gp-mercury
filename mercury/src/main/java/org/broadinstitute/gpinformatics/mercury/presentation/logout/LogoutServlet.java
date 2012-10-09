@@ -19,7 +19,8 @@ import java.io.IOException;
 @WebServlet(urlPatterns = {"/logout"})
 public class LogoutServlet extends HttpServlet {
 
-    private Log logoutLogger = LogFactory.getLog(LogoutServlet.class);
+    private static final Log logoutLogger = LogFactory.getLog(LogoutServlet.class);
+
     @Override
     protected void doGet(HttpServletRequest requestIn, HttpServletResponse responseIn)
             throws ServletException, IOException {
@@ -32,7 +33,7 @@ public class LogoutServlet extends HttpServlet {
         performLogout(httpServletRequestIn, httpServletResponseIn);
     }
 
-    private void performLogout(HttpServletRequest requestIn, HttpServletResponse responseIn)
+    private static void performLogout(HttpServletRequest requestIn, HttpServletResponse responseIn)
             throws ServletException, IOException {
         logoutLogger.info("contextPath is: " + requestIn.getContextPath());
 

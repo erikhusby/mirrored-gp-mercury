@@ -14,12 +14,14 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 /**
  * Represents a transfer between two sections.
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 @SuppressWarnings("rawtypes")
 public class SectionTransfer extends VesselTransfer {
 

@@ -2,22 +2,18 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex_;
 
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 
 /**
  * Data Access Object for Molecular Index
  */
+@Stateful
+@RequestScoped
 public class MolecularIndexDao extends GenericDao {
     public MolecularIndex findBySequence(String sequence) {
-        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery("MolecularIndex.findBySequence");
-        query.setParameter("sequence", sequence);
-        MolecularIndex molecularIndex = null;
-        try {
-            molecularIndex = (MolecularIndex) query.getSingleResult();
-        } catch (NoResultException ignored) {
-        }
-        return molecularIndex;
+        return findSingle(MolecularIndex.class, MolecularIndex_.sequence, sequence);
     }
 }
