@@ -117,8 +117,10 @@ public class SampleLedgerExport {
             currentRow = sheet.createRow(rowNum++);
             currentCell = currentRow.createCell(cellNum++);
             currentCell.setCellValue(sample.getSampleName());
-            Map<PriceItem, BigDecimal> billCounts = getBillCounts(sample);
+            currentCell = currentRow.createCell(cellNum++);
+            currentCell.setCellValue(sample.getBillingStatus().getDisplayName());
 
+            Map<PriceItem, BigDecimal> billCounts = getBillCounts(sample);
             for (PriceItem item : priceItems) {
                 currentCell = currentRow.createCell(cellNum++);
                 BigDecimal count = billCounts.get(item);
