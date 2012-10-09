@@ -7,8 +7,10 @@ import org.broadinstitute.gpinformatics.infrastructure.StubSampleMetadata;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
@@ -23,6 +25,7 @@ public class PlasticToProductOrderTest {
 
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void test_simple_tube_in_rack_maps_to_pdo() {
+        BucketResource bucketResource = new BucketResource();
         Set<SampleMetadata> rootSamples = new HashSet<SampleMetadata>();
         rootSamples.add(new StubSampleMetadata("TCGA123","Human",null));
         BettaLimsMessageFactory messageFactory = new BettaLimsMessageFactory();
@@ -41,9 +44,11 @@ public class PlasticToProductOrderTest {
 
         ProductOrderId productOrder = new ProductOrderId("PO1");
 
+        BucketEntry bucketEntry = bucketResource.add(tube, productOrder);
+
         // create product order...in reality, use boundary that athena uses to push a PO into mercury
         final Map<LabVessel,ProductOrderId> samplePOMapFromAthena = new HashMap<LabVessel, ProductOrderId>();
-        samplePOMapFromAthena.put(tube,productOrder);
+        samplePOMapFromAthena.put(bucketEntry.getLabVessel(),bucketEntry.getProductOrderId());
 
         // pull tubes from bucket: this creates a LabEvent for every
         // container pulled from the bucket, and the LabEvent calls out
