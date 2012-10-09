@@ -90,6 +90,12 @@ public class LabEventFactory {
     @Inject
     private LabBatchDAO labBatchDAO;
 
+    public LabEventFactory() {}
+
+    public LabEventFactory(PersonDAO personDAO) {
+        this.personDAO = personDAO;
+    }
+
     public interface LabEventRefDataFetcher {
         Person getOperator(String userId);
         LabBatch getLabBatch(String labBatchName);
