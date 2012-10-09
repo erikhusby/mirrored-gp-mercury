@@ -10,60 +10,91 @@
       xmlns:f="http://java.sun.com/jsf/core">
 <body>
     <ui:composition template="/layout.xhtml">
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:event type="preRenderView" listener="#{researchProjectDetail.initEmptyProject}"/>
+                <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
+            </f:metadata>
+        </ui:define>
         <ui:define name="title">New Research Project</ui:define>
         <ui:define name="body">
-            <h:form> <!--styleClass="form-horizontal">-->
-                <!--<div class="control-group">-->
-                <div class="row-fluid">
-                    <div class="span2">
+            <h:form styleClass="form-horizontal">
+                <div class="control-group">
+                <!--<div class="row-fluid">-->
+                    <!--<div class="span2">-->
                     <p:outputLabel for="name" value="Name:" styleClass="control-label"/>
-                    </div>
-                    <div class="span10">
-                    <!--<div class="controls">-->
-                        <p:inputText id="name" value="#{researchProjectDetail.project.title}"/>
+                    <!--</div>-->
+                    <!--<div class="span10">-->
+                    <div class="controls">
+                        <p:inputText id="name" value="#{researchProjectDetail.project.title}" size="50"/>
+                        <p:watermark for="name" value="Enter the name of the research project"/>
                     </div>
                 </div>
 
-                <!--<div class="control-group">-->
-                <div class="row-fluid">
-                    <div class="span2">
+                <div class="control-group">
+                <!--<div class="row-fluid">-->
+                    <!--<div class="span2">-->
                     <p:outputLabel for="synopsis" value="Synopsis:" styleClass="control-label"/>
-                    </div>
-                    <div class="span10">
-                    <!--<div class="controls">-->
-                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}"/>
                     <!--</div>-->
+                    <!--<div class="span10">-->
+                    <div class="controls">
+                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="50" rows="3"/>
+                        <p:watermark for="synopsis" value="Enter scientific background of the research project in this space"/>
                     </div>
                 </div>
 
-                <!--<div class="control-group">-->
-                <div class="row-fluid">
-                    <div class="span2">
-                    <label class="control-label">Personnel:</label>
-                    <!--<p:outputLabel for="personnel" value="Personnel:" styleClass="control-label"/>-->
-                    </div>
-                    <div class="span4">
-                    <!--<div class="controls">-->
-                        <!--<p:inputText id="personnel" />-->
-                        <p:dataTable id="personnel" value="#{researchProjectDetail.personnel}" var="person" selection="#{researchProjectDetail.selectedPersonnel}" selectionMode="multiple" rowKey="#{person}">
-                            <p:column>
-                                <f:facet name="header">Name</f:facet>
-                                #{person}
-                            </p:column>
-                        </p:dataTable>
-                    </div>
-                    <div class="span6">
-                        <p><p:commandButton value="Add Scientist.."/></p>
-                        <p><p:commandButton value="Add PM.."/></p>
-                        <p><p:commandButton value="Remove"/></p>
-                    <!--</div>-->
+                <!-- TODO: fix styling of p:autoComplete in the context of Bootstrap -->
+                <div class="control-group">
+                    <p:outputLabel for="scientists" value="Scientists:" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}" completeMethod="#{researchProjectForm.completePerson}" multiple="true"/>
                     </div>
                 </div>
 
-                <div class="row-fluid">
-                <!--<div class="control-group">-->
-                    <div class="span10 offset2">
-                    <!--<div class="controls">-->
+                <div class="control-group">
+                    <p:outputLabel for="projectManagers" value="Project Managers:" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}" completeMethod="#{researchProjectForm.completePerson}" multiple="true"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="fundingSources" value="Funding Sources:" styleClass="control-label"/>
+                    <div class="controls">
+                        <!-- TODO: tie into funding source service -->
+                        <p:autoComplete id="fundingSources" value="#{researchProjectForm.fundingSources}" completeMethod="#{researchProjectForm.completeFundingSource}" multiple="true"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="sampleCohorts" value="Sample Cohorts:" styleClass="control-label"/>
+                    <div class="controls">
+                        <!-- TODO: tie into sample service -->
+                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}" completeMethod="#{researchProjectForm.completeSampleCohorts}" multiple="true"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="irbs" value="IRB/IACUC Numbers:" styleClass="control-label"/>
+                    <div class="controls">
+                        <!-- TODO: tie into real IRBs? -->
+                        <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}" completeMethod="#{researchProjectForm.completeIrbs}" multiple="true"/>
+                        <p:selectBooleanCheckbox id="irbEngaged"  value="#{researchProjectForm.irbNotEngaged}"/> <p:outputLabel for="irbEngaged" value="IRB Not Engaged" style="display: inline-block"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="irbNotes" value="IRB Notes:" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50"/>
+                        <p:watermark for="irbNotes" value="Enter notes about the above IRBs"/>
+                    </div>
+                </div>
+
+                <!--<div class="row-fluid">-->
+                <div class="control-group">
+                    <!--<div class="span10 offset2">-->
+                    <div class="controls">
                         <h:link outcome="list" value="Cancel"/>
                         <p:commandButton value="Save" action="#{projectForm.create}" ajax="false"/>
                     </div>
