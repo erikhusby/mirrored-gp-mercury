@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -18,15 +19,27 @@ import java.util.regex.Pattern;
  * Date: 8/28/12
  * Time: 10:26 AM
  */
+@Entity
 public class ProductOrderSample implements Serializable {
+
+    @Id
+    @SequenceGenerator(name="ORDER_SAMPLE_INDEX", sequenceName="ORDER_SAMPLE_INDEX", allocationSize = 1)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="ORDER_SAMPLE_INDEX")
+    private Long id;
 
     public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
     static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
     private BillingStatus billingStatus = BillingStatus.NotYetBilled;
     private String comment;
+
+    @OneToMany(cascade = CascadeType.PERSIST)
     private Set<BillableItem> billableItems;
-    //TODO hmc Annotate the DTO as transient when hibernating this class
+
+    @ManyToOne
+    private ProductOrder productOrder;
+
+    @Transient
     private BSPSampleDTO bspDTO;
 
     ProductOrderSample() {
@@ -36,9 +49,16 @@ public class ProductOrderSample implements Serializable {
         this.sampleName = sampleName;
     }
 
-    public ProductOrderSample(String sampleName, BSPSampleDTO bspDTO) {
+//    public OrderSample(String sampleName, BSPSampleDTO bspDTO) {
+//        this.sampleName = sampleName;
+//        this.bspDTO = bspDTO;
+//    }
+
+
+    public ProductOrderSample(final String sampleName, final BSPSampleDTO bspDTO, final ProductOrder productOrder) {
         this.sampleName = sampleName;
         this.bspDTO = bspDTO;
+        this.productOrder = productOrder;
     }
 
     public String getSampleName() {
@@ -204,4 +224,33 @@ public class ProductOrderSample implements Serializable {
         throw new RuntimeException("Not yet Implemented.");
     }
 
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ProductOrderSample)) return false;
+
+        final ProductOrderSample that = (ProductOrderSample) o;
+
+        if (billableItems != null ? !billableItems.equals(that.billableItems) : that.billableItems != null)
+            return false;
+        if (billingStatus != that.billingStatus) return false;
+        if (bspDTO != null ? !bspDTO.equals(that.bspDTO) : that.bspDTO != null) return false;
+        if (comment != null ? !comment.equals(that.comment) : that.comment != null) return false;
+        if (!productOrder.equals(that.productOrder)) return false;
+        if (!sampleName.equals(that.sampleName)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = sampleName.hashCode();
+        result = 31 * result + billingStatus.hashCode();
+        result = 31 * result + (comment != null ? comment.hashCode() : 0);
+        result = 31 * result + (billableItems != null ? billableItems.hashCode() : 0);
+        result = 31 * result + productOrder.hashCode();
+        result = 31 * result + (bspDTO != null ? bspDTO.hashCode() : 0);
+        return result;
+    }
 }

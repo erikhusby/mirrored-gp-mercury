@@ -1,19 +1,21 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import javax.persistence.Transient;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Class to model the concept of a Product Order that can be created
+ * Class to model the concept of a Product ProductOrder that can be created
  * by the Program PM and subsequently submitted to a lims system.
  * Currently supports the concept associating a product with a set of samples withe a quote.
- * For more detail on the purpose of the Order, see the user stories listed on
+ * For more detail on the purpose of the ProductOrder, see the user stories listed on
  *
  * @see <a href="	https://confluence.broadinstitute.org/x/kwPGAg</a>
  *      <p/>
@@ -22,38 +24,51 @@ import java.util.Set;
  *      Date: 8/28/12
  *      Time: 10:25 AM
  */
-public class Order implements Serializable {
+@Entity
+public class ProductOrder implements Serializable {
 
+    @Id
+    @SequenceGenerator(name="PRODUCT_ORDER_INDEX", sequenceName="PRODUCT_ORDER_INDEX", allocationSize = 1)
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="PRODUCT_ORDER_INDEX")
+    private Long id;
+
+    @Column(unique = true)
     private String title;                       // Unique title for the order
-    private String researchProjectName;
+
+    @ManyToOne
+    private ResearchProject researchProject;
+
+    @OneToOne
     private Product product;
     private OrderStatus orderStatus = OrderStatus.Draft;
     private String quoteId;                     // Alphanumeric Id
+    @Column(length = 2000)
     private String comments;                    // Additional comments of the order
-    private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitteds
-    private List<ProductOrderSample> samples;
+    private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
+    @OneToMany(cascade = CascadeType.PERSIST)
+    private List<ProductOrderSample> sampleProducts;
 
 
     /**
      * Default no-arg constructor
      */
-    Order() {
+    ProductOrder() {
     }
 
     /**
      * Constructor with mandatory fields
      * @param title
-     * @param samples
+     * @param sampleProducts
      * @param quoteId
      * @param product
-     * @param researchProjectName
+     * @param researchProject
      */
-    public Order(String title, List<ProductOrderSample> samples, String quoteId, Product product, String researchProjectName) {
+    public ProductOrder(String title, List<ProductOrderSample> sampleProducts, String quoteId, Product product, ResearchProject researchProject) {
         this.title = title;
-        this.samples = samples;
+        this.sampleProducts = sampleProducts;
         this.quoteId = quoteId;
         this.product = product;
-        this.researchProjectName = researchProjectName;
+        this.researchProject = researchProject;
     }
 
     public String getTitle() {
@@ -64,12 +79,12 @@ public class Order implements Serializable {
         this.title = title;
     }
 
-    public String getResearchProjectName() {
-        return researchProjectName;
+    public ResearchProject getResearchProject() {
+        return researchProject;
     }
 
-    public void setResearchProjectName(String researchProjectName) {
-        this.researchProjectName = researchProjectName;
+    public void setResearchProjectName(ResearchProject researchProject) {
+        this.researchProject = researchProject;
     }
 
     public Product getProduct() {
@@ -104,17 +119,17 @@ public class Order implements Serializable {
         this.comments = comments;
     }
 
-    public List<ProductOrderSample> getSamples() {
-        return samples;
+    public List<ProductOrderSample> getSampleProducts() {
+        return sampleProducts;
     }
 
-    public void addSample(ProductOrderSample sample) {
-        samples.add(sample);
+    public void addSample(ProductOrderSample sampleProduct) {
+        sampleProducts.add(sampleProduct);
     }
 
     /**
      * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
-     * which this Product Order is associated
+     * which this Product ProductOrder is associated
      *
      * @return a {@link String} that represents the unique Jira Ticket key
      */
@@ -145,7 +160,7 @@ public class Order implements Serializable {
                 throw new IllegalStateException("Not Yet Implemented");
             }
 
-            for ( ProductOrderSample productOrderSample : samples ) {
+            for ( ProductOrderSample productOrderSample : sampleProducts) {
                 String participantId = productOrderSample.getParticipantId();
                 if (StringUtils.isNotBlank(participantId)) {
                     uniqueParticipants.add(participantId);
@@ -167,7 +182,7 @@ public class Order implements Serializable {
 
     private Set<String> getUniqueSampleNames() {
         Set<String> uniqueSamples = new HashSet<String>();
-        for ( ProductOrderSample productOrderSample : samples ) {
+        for ( ProductOrderSample productOrderSample : sampleProducts) {
             String sampleName = productOrderSample.getSampleName();
             if (StringUtils.isNotBlank(sampleName)) {
                 uniqueSamples.add(sampleName);
@@ -177,7 +192,7 @@ public class Order implements Serializable {
     }
 
     public int getTotalSampleCount() {
-        return samples.size();
+        return sampleProducts.size();
     }
 
     public int getDuplicateCount() {
@@ -202,7 +217,7 @@ public class Order implements Serializable {
     public boolean areAllSampleBSPFormat() {
         boolean result = true;
         if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : samples) {
+            for ( ProductOrderSample productOrderSample : sampleProducts) {
                 if (! productOrderSample.isInBspFormat() ) {
                     result = false;
                     break;
@@ -215,13 +230,13 @@ public class Order implements Serializable {
     }
 
     private boolean isSheetEmpty() {
-        return (samples == null ) ||  samples.isEmpty();
+        return (sampleProducts == null ) ||  sampleProducts.isEmpty();
     }
 
     private boolean needsBspMetaData() {
         boolean needed = false;
         if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : samples ) {
+            for ( ProductOrderSample productOrderSample : sampleProducts) {
                 if ( productOrderSample.isInBspFormat() &&
                      ! productOrderSample.hasBSPDTOBeenInitialized() ) {
                     needed = true;
@@ -233,7 +248,7 @@ public class Order implements Serializable {
     }
 
     /**
-     * fetchJiraProject is a helper method that binds a specific Jira project to an Order entity.  This
+     * fetchJiraProject is a helper method that binds a specific Jira project to an ProductOrder entity.  This
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
@@ -247,7 +262,7 @@ public class Order implements Serializable {
 
     /**
      *
-     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to an Order entity.  This
+     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to an ProductOrder entity.  This
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
@@ -278,4 +293,35 @@ public class Order implements Serializable {
         }
     }
 
+    /**
+     * Created by IntelliJ IDEA.
+     * User: mccrory
+     * Date: 9/26/12
+     * Time: 11:56 AM
+     */
+    public static enum OrderStatus {
+        Draft,
+        Submitted,
+        Closed
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ProductOrder)) return false;
+
+        final ProductOrder productOrder = (ProductOrder) o;
+
+        if (!researchProject.equals(productOrder.researchProject)) return false;
+        if (!title.equals(productOrder.title)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = title.hashCode();
+        result = 31 * result + researchProject.hashCode();
+        return result;
+    }
 }
