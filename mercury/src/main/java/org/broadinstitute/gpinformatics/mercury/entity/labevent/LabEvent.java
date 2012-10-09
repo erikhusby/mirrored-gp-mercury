@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -12,11 +13,13 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.util.Collection;
 import java.util.Comparator;
