@@ -379,8 +379,11 @@ public class ProductOrder implements Serializable {
         jiraService.createIssue(fetchJiraProject().getKeyPrefix(),
                                 fetchJiraIssueType(),
                                 title,
-                                AthenaUtilities.flattenCollectionOfStrings(getUniqueSampleNames()),
+                                comments,
                                 listOfFields);
+
+
+        addPublicComment("Sample List: "+AthenaUtilities.flattenCollectionOfStrings(getUniqueSampleNames()));
 
         StringBuilder buildValidationComments = new StringBuilder();
 
