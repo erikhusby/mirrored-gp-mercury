@@ -21,10 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 @ManagedBean
 @RequestScoped
 public class SecurityBackingBean extends AbstractJsfBean {
-
     @Inject
     private AuthenticationService authSvc;
-
 
     private Log securityLogger = LogFactory.getLog(this.getClass());
 
