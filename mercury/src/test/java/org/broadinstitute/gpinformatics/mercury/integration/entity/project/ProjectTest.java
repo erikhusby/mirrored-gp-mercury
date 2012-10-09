@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.entity.project;
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mercury.entity.billing.Quote;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
@@ -26,6 +28,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
@@ -40,10 +44,21 @@ public class ProjectTest  {
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_project_jira() throws Exception {
+
+        Map<String, CustomFieldDefinition> requiredFields=
+                jiraService.getRequiredFields(new CreateIssueRequest.Fields.Project(
+                        CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
+                                          CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+
+        Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+
+        customFieldList.add(new CustomField(requiredFields.get("Protocol"),"test protocol"));
+        customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"),"WR 1 Billion!"));
+
         CreateIssueResponse response = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                 "Test run by " + System.getProperty("user.name") + " on " + new SimpleDateFormat("yyyy/MM/dd").format(new Date(System.currentTimeMillis())),
-                "Do lots of sequencing", null);
+                "Do lots of sequencing", customFieldList);
         assertNotNull(response);
         JiraTicket ticket = new JiraTicket(jiraService,response.getTicketName(),response.getId());
         Project project = new BasicProject(ticket.getTicketName(),ticket);
@@ -233,10 +248,22 @@ public class ProjectTest  {
         CreateIssueResponse jiraResponse = null;
 
         try {
+
+            Map<String, CustomFieldDefinition> requiredFields=
+                    jiraService.getRequiredFields(new CreateIssueRequest.Fields.Project(
+                            CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
+                                              CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+
+            Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+
+            customFieldList.add(new CustomField(requiredFields.get("Protocol"),"test protocol"));
+            customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"),"WR 1 Billion!"));
+
+
             jiraResponse = jiraService.createIssue(Project.JIRA_PROJECT_PREFIX,
                     CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                     projectName,
-                    "Created by " + getClass().getCanonicalName(), null);
+                    "Created by " + getClass().getCanonicalName(), customFieldList);
         }
         catch(IOException e ) {
             throw new RuntimeException("Cannot create jira ticket",e);

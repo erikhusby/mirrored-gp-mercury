@@ -28,7 +28,7 @@ public class AddCommentRequest implements Serializable {
     }
     
     
-    public static AddCommentRequest create(String key, String body, Visibility.Type type, Visibility.Value value) {
+    public static AddCommentRequest create(String body, Visibility.Type type, Visibility.Value value) {
 
         AddCommentRequest ret = new AddCommentRequest();
 
@@ -42,7 +42,7 @@ public class AddCommentRequest implements Serializable {
     }
     
     
-    public static AddCommentRequest create(String key, String body) {
+    public static AddCommentRequest create(String body) {
         
         AddCommentRequest ret = new AddCommentRequest();
         
