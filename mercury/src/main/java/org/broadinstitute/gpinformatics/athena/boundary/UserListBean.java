@@ -24,6 +24,10 @@ public class UserListBean {
         String fullName = "";
         if (userId != null) {
             BspUser bspUser = userList.getById(userId);
+            if (bspUser == null) {
+                return "unrecognized user";
+            }
+
             return bspUser.getFirstName() + " " + bspUser.getLastName();
         }
 
