@@ -104,6 +104,7 @@ public abstract class LabEvent {
     private BasicProjectPlan projectPlanOverride;
 
     @Transient
+    // transient because ARZ hasn't figured out the tests for this.  work in progress.
     private ProductOrderId productOrder;
 
     public abstract LabEventName getEventName();

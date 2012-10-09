@@ -20,8 +20,6 @@ import java.util.Set;
  */
 public abstract class ProductOrderResolver {
 
-    // todo distinction between "root" and
-
     /**
      * What are all the {@link org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId product orders}
      * for the given {@link LabVessel}?  This will return <b>all</b>

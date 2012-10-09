@@ -24,7 +24,7 @@ import java.util.*;
 public class PlasticToProductOrderTest {
 
 
-    @Test(groups = {TestGroups.DATABASE_FREE})
+    @Test(groups = {TestGroups.DATABASE_FREE},enabled = false)
     public void test_simple_tube_in_rack_maps_to_pdo() {
         Bucket bucket = new Bucket();
         BucketResource bucketResource = new BucketResource();

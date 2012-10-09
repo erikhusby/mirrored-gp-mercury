@@ -116,10 +116,8 @@ public abstract class LabVessel implements Starter {
     private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
 
     @Transient
-    /** in reality, for most things there is no set here...it's computed on the fly
-     * from a walk back to BSP.  But for other special containers for walk up
-     * sequencing, a particular subclass might have different behavior
-     * to lookup sample metadat from somewhere besides bsp...like a spreadsheet.
+    /**
+     * marked transient because arz hasn't gotten far enough to turn on db for this
      */
     private Set<SampleMetadata> samples = new HashSet<SampleMetadata>();
 
