@@ -28,6 +28,8 @@ public class BillableItem {
     @OneToOne
     private PriceItem priceItem;
     private BigDecimal count = new BigDecimal("0");    //initialize to zero.
+    @ManyToOne
+    private ProductOrderSample productOrderSample;
 
     BillableItem() {
     }

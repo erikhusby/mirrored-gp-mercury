@@ -36,7 +36,7 @@ public class ProductOrderSample implements Serializable {
     private BillingStatus billingStatus = BillingStatus.NotYetBilled;
     private String sampleComment;
 
-    @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have a mappedBy?
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrderSample")
     private Set<BillableItem> billableItems;
 
     @ManyToOne
