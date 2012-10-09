@@ -25,7 +25,7 @@ public class BSPUserList {
     private final List<BspUser> users;
 
     /**
-     * @return list of bsp users, sorted by username.
+     * @return list of bsp users, sorted by lastname, firstname, username, email.
      */
     public List<BspUser> getUsers() {
         return users;
