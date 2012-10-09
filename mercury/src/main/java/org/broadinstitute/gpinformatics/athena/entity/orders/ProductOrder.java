@@ -1,9 +1,14 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.common.AthenaUtilities;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
+import javax.enterprise.inject.New;
 import javax.inject.Inject;
 import javax.persistence.Transient;
 import org.apache.commons.lang.StringUtils;
@@ -12,8 +17,11 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
 import javax.persistence.*;
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -37,14 +45,26 @@ import java.util.Set;
 @Entity
 public class ProductOrder implements Serializable {
 
+    private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
+
     @Inject
     @Transient
     private BSPSampleDataFetcher bspFetcher;
+
+    @Inject
+    @Transient
+    private JiraService jiraService;
 
     @Id
     @SequenceGenerator(name="PRODUCT_ORDER_INDEX", sequenceName="PRODUCT_ORDER_INDEX", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="PRODUCT_ORDER_INDEX")
     private Long id;
+
+    private Date createdDate;
+    private Long createdBy;
+    private Date modifiedDate;
+    private Long modifiedBy;
+
 
     @Column(unique = true)
     private String title;                       // Unique title for the order
@@ -216,6 +236,18 @@ public class ProductOrder implements Serializable {
         return ( getTotalSampleCount() - getUniqueSampleCount());
     }
 
+    public int getBspSampleCount() {
+        int count = 0;
+
+        for(ProductOrderSample sample : sampleProducts) {
+            if(sample.isInBspFormat()) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     public TumorNormalCount getTumorNormalCounts() {
 
         TumorNormalCount counts =
@@ -232,6 +264,15 @@ public class ProductOrder implements Serializable {
                 new MaleFemaleCount(
                         getGenderCount(BSPSampleDTO.MALE_IND),
                         getGenderCount(BSPSampleDTO.FEMALE_IND)
+                );
+        return counts;
+    }
+
+    public BspNonBspSampleCount getBspNonBspSampleCounts() {
+        BspNonBspSampleCount counts =
+                new BspNonBspSampleCount(
+                        getBspSampleCount(),
+                        getTotalSampleCount() - getBspSampleCount()
                 );
         return counts;
     }
@@ -295,6 +336,88 @@ public class ProductOrder implements Serializable {
         return counter;
     }
 
+    public Integer getReceivedSampleCount() {
+        int counter = 0;
+
+        for(ProductOrderSample sample:sampleProducts) {
+            if(sample.isSampleReceived()) {
+                counter++;
+            }
+        }
+
+        return counter;
+    }
+
+    public Integer getActiveSampleCount() {
+        int counter = 0;
+        for(ProductOrderSample sample:sampleProducts) {
+            if(sample.isActiveStock()) {
+                counter++;
+            }
+        }
+
+        return counter;
+    }
+
+    public void submitProductOrder() throws IOException{
+
+        Map<String, CustomFieldDefinition> submissionFields =
+                jiraService.getCustomFields(new CreateIssueRequest.Fields.Project(fetchJiraProject().getKeyPrefix()),
+                                            fetchJiraIssueType());
+
+        List<CustomField> listOfFields = new ArrayList<CustomField>();
+
+        listOfFields.add(
+                new CustomField(submissionFields.get(RequiredSubmissionFields.PRODUCT_FAMILY),
+                                this.product.getProductFamily()));
+
+        if(quoteId != null && !quoteId.isEmpty()) {
+            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.QUOTE_ID),
+                            this.quoteId));
+        }
+
+        jiraService.createIssue(fetchJiraProject().getKeyPrefix(),
+                                fetchJiraIssueType(),
+                                title,
+                                AthenaUtilities.flattenCollectionOfStrings(getUniqueSampleNames()),
+                                listOfFields);
+
+        StringBuilder buildValidationComments = new StringBuilder();
+
+
+        /**
+         * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
+         */
+        addWatcher(createdBy.toString());
+
+        if(getBspNonBspSampleCounts().getBspSampleCount() == getTotalSampleCount()) {
+            buildValidationComments.append("All Samples are BSP Samples");
+            buildValidationComments.append("\n");
+            buildValidationComments.append(String.format("%i of %i Samples are in RECEIVED state",
+                                                         getReceivedSampleCount(), getTotalSampleCount()));
+            buildValidationComments.append("\n");
+            buildValidationComments.append(String.format("%i of %i Samples are Active stock",
+                                                         getActiveSampleCount(), getTotalSampleCount()));
+        } else if(getBspNonBspSampleCounts().getBspSampleCount() != 0 &&
+                getBspNonBspSampleCounts().getNonBspSampleCount() != 0) {
+            buildValidationComments.append(String.format("Of %i Samples, %i are BSP samples and %i are non-BSP",
+                                                         getTotalSampleCount(),getBspNonBspSampleCounts().getBspSampleCount(),
+                                                         getBspNonBspSampleCounts().getNonBspSampleCount()));
+        } else {
+            buildValidationComments.append("None of the samples come from BSP") ;
+        }
+
+        addPublicComment(buildValidationComments.toString());
+    }
+
+    public void addPublicComment(String comment) throws IOException{
+        jiraService.addComment(this.jiraTicketKey, comment);
+    }
+
+    public void addWatcher(String personLoginId) throws IOException {
+        jiraService.addWatcher(this.jiraTicketKey, personLoginId);
+    }
+
     /**
      * Returns true is any and all samples are of BSP Format.
      * Note will return false if there are no samples on the sheet.
@@ -341,6 +464,8 @@ public class ProductOrder implements Serializable {
         }
     }
 
+
+
     /**
      * fetchJiraProject is a helper method that binds a specific Jira project to an ProductOrder entity.  This
      * makes it easier for a user of this object to interact with Jira for this entity
@@ -374,7 +499,8 @@ public class ProductOrder implements Serializable {
      */
     public enum RequiredSubmissionFields {
 
-        PRODUCT_FAMILY("Product Family");
+        PRODUCT_FAMILY("Product Family"),
+        QUOTE_ID("Quote ID");
 
         private String fieldName;
 
