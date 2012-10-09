@@ -35,8 +35,6 @@ a { text-decoration: underline; }
 }
 
 .view-horizontal .controls {
-    border-style: dotted;
-    border-color: #ccc;
     padding-left: 3px;
     padding-right: 3px;
     border-width: 1px;
