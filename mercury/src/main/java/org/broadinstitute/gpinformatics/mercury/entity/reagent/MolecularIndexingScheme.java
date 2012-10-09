@@ -31,19 +31,19 @@ import java.util.TreeMap;
 @NamedNativeQueries({
         @NamedNativeQuery(
                 name="MolecularIndexingScheme.findSingleIndexScheme",
-                query="SELECT mis.id AS id, mis.name AS name " +
+                query="SELECT mis.molecular_indexing_scheme_id, mis.name " +
                         "FROM molecular_indexing_scheme mis, molecular_index mi, molecular_index_position mip1, " +
                         "(SELECT scheme_id FROM molecular_index_position GROUP BY scheme_id HAVING count(*) = 1) scheme_count " +
                         "WHERE mi.sequence = :indexSequence " +
                         "  AND mip1.mapkey = :indexPosition " +
-                        "  AND mi.id = mip1.index_id " +
+                        "  AND mi.molecular_index_id = mip1.index_id " +
                         "  AND mip1.scheme_id = scheme_count.scheme_id " +
-                        "  AND mip1.scheme_id = mis.id",
+                        "  AND mip1.scheme_id = mis.molecular_indexing_scheme_id",
                 resultClass=MolecularIndexingScheme.class
         ),
         @NamedNativeQuery(
                 name="MolecularIndexingScheme.findDualIndexScheme",
-                query="SELECT mis.id AS id, mis.name AS name " +
+                query="SELECT mis.molecular_indexing_scheme_id, mis.name " +
                         "FROM molecular_indexing_scheme mis, " +
                         "molecular_index mi1, molecular_index mi2, " +
                         "molecular_index_position mip1, molecular_index_position mip2, " +
@@ -52,16 +52,16 @@ import java.util.TreeMap;
                         "  AND mip1.mapkey = :indexPosition1 " +
                         "  AND mi2.sequence = :indexSequence2 " +
                         "  AND mip2.mapkey = :indexPosition2 " +
-                        "  AND mi1.id = mip1.index_id " +
-                        "  AND mi2.id = mip2.index_id " +
+                        "  AND mi1.molecular_index_id = mip1.index_id " +
+                        "  AND mi2.molecular_index_id = mip2.index_id " +
                         "  AND mip1.scheme_id = scheme_count.scheme_id " +
                         "  AND mip1.scheme_id = mip2.scheme_id " +
-                        "  AND mip1.scheme_id = mis.id",
+                        "  AND mip1.scheme_id = mis.molecular_indexing_scheme_id",
                 resultClass=MolecularIndexingScheme.class
         ),
         @NamedNativeQuery(
                 name="MolecularIndexingScheme.findTripleIndexScheme",
-                query="SELECT mis.id AS id, mis.name AS name " +
+                query="SELECT mis.molecular_indexing_scheme_id, mis.name " +
                         "FROM molecular_indexing_scheme mis, " +
                         "molecular_index mi1, molecular_index mi2, molecular_index mi3, " +
                         "molecular_index_position mip1, molecular_index_position mip2, molecular_index_position mip3, " +
@@ -72,24 +72,24 @@ import java.util.TreeMap;
                         "  AND mip2.mapkey = :indexPosition2 " +
                         "  AND mi3.sequence = :indexSequence3 " +
                         "  AND mip3.mapkey = :indexPosition3 " +
-                        "  AND mi1.id = mip1.index_id " +
-                        "  AND mi2.id = mip2.index_id " +
-                        "  AND mi3.id = mip3.index_id " +
+                        "  AND mi1.molecular_index_id = mip1.index_id " +
+                        "  AND mi2.molecular_index_id = mip2.index_id " +
+                        "  AND mi3.molecular_index_id = mip3.index_id " +
                         "  AND mip1.scheme_id = scheme_count.scheme_id " +
                         "  AND mip1.scheme_id = mip2.scheme_id " +
                         "  AND mip2.scheme_id = mip3.scheme_id " +
-                        "  AND mip1.scheme_id = mis.id",
+                        "  AND mip1.scheme_id = mis.molecular_indexing_scheme_id",
                 resultClass=MolecularIndexingScheme.class
         ),
         @NamedNativeQuery(
                 name="MolecularIndexingScheme.findAllIlluminaSchemes",
-                query = "SELECT mis.id AS id, mis.name AS name " +
+                query = "SELECT mis.molecular_indexing_scheme_id, mis.name " +
                         "FROM molecular_indexing_scheme mis, molecular_index mi, molecular_index_position mip1, " +
                         "(SELECT scheme_id FROM molecular_index_position GROUP BY scheme_id HAVING count(*) = 1) scheme_count " +
                         "WHERE mip1.mapkey like 'ILLUMINA_%'" +
-                        "  AND mi.id = mip1.index_id " +
+                        "  AND mi.molecular_index_id = mip1.index_id " +
                         "  AND mip1.scheme_id = scheme_count.scheme_id " +
-                        "  AND mip1.scheme_id = mis.id",
+                        "  AND mip1.scheme_id = mis.molecular_indexing_scheme_id",
                 resultClass=MolecularIndexingScheme.class
         )
 })
@@ -422,9 +422,8 @@ public class MolecularIndexingScheme {
         this.setName(this.generateName());
     }
 
-    // todo jmt why allocationSize = 1?
     @Id
-    @SequenceGenerator(name="seq_molecular_indexing_scheme", schema = "mercury", sequenceName="seq_molecular_indexing_scheme", allocationSize = 1)
+    @SequenceGenerator(name="seq_molecular_indexing_scheme", schema = "mercury", sequenceName="seq_molecular_indexing_scheme")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_indexing_scheme")
     @Column(name = "molecular_indexing_scheme_id")
     @SuppressWarnings("unused")
@@ -446,8 +445,8 @@ public class MolecularIndexingScheme {
     @JoinTable(
             schema = "mercury",
             name="MOLECULAR_INDEX_POSITION",
-            joinColumns=@JoinColumn(name="scheme_id", referencedColumnName = "id"),
-            inverseJoinColumns=@JoinColumn(name="index_id", referencedColumnName = "id")
+            joinColumns=@JoinColumn(name="scheme_id", referencedColumnName = "molecular_indexing_scheme_id"),
+            inverseJoinColumns=@JoinColumn(name="index_id", referencedColumnName = "molecular_index_id")
     )
     @MapKeyJoinColumn(table="MOLECULAR_INDEX_POSITION", name="scheme_id")
     @MapKeyEnumerated(EnumType.STRING)
