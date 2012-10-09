@@ -19,7 +19,7 @@ public class ProjectPerson {
     @Id
     @SequenceGenerator(name="seq_project_person_index", schema = "athena", sequenceName="seq_project_person_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_project_person_index")
-    private Long id;
+    private Long projectPersonId;
 
     @ManyToOne
     private ResearchProject researchProject;
@@ -35,12 +35,12 @@ public class ProjectPerson {
         this.personId = personId;
     }
 
-    public Long getId() {
-        return id;
+    public Long getProjectPersonId() {
+        return projectPersonId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setProjectPersonId(Long id) {
+        this.projectPersonId = id;
     }
 
     public ResearchProject getResearchProject() {

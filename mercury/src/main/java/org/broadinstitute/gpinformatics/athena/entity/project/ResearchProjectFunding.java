@@ -16,7 +16,7 @@ public class ResearchProjectFunding {
     @Id
     @SequenceGenerator(name="seq_rp_funding_index", schema = "athena", sequenceName="seq_rp_funding_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_funding_index")
-    private Long id;
+    private Long researchProjectFundingId;
 
     @ManyToOne
     private ResearchProject researchProject;
@@ -31,8 +31,8 @@ public class ResearchProjectFunding {
         this.fundingId =fundingId;
     }
 
-    public Long getId() {
-        return id;
+    public Long getResearchProjectFundingId() {
+        return researchProjectFundingId;
     }
 
     public ResearchProject getResearchProject() {

@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.experiments.EntityUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
@@ -30,7 +29,7 @@ public class ResearchProject {
     @Id
     @SequenceGenerator(name="seq_research_project_index", schema = "athena", sequenceName="seq_research_project_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
-    private Long id;
+    private Long researchProjectId;
 
     private Status status;
 
@@ -88,8 +87,8 @@ public class ResearchProject {
         return synopsis;
     }
 
-    public Long getId() {
-        return id;
+    public Long getResearchProjectId() {
+        return researchProjectId;
     }
 
     public Date getCreatedDate() {

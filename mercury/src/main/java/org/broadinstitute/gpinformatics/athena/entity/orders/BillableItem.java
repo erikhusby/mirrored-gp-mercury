@@ -23,7 +23,7 @@ public class BillableItem {
     @Id
     @SequenceGenerator(name="SEQ_BILLABLE_ITEM", schema = "athena", sequenceName="SEQ_BILLABLE_ITEM")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_BILLABLE_ITEM")
-    private Long id;
+    private Long billableItemId;
 
     @OneToOne
     private PriceItem priceItem;

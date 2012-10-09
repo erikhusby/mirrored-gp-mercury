@@ -58,7 +58,7 @@ public class ProductFamily implements Serializable {
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_FAMILY", schema = "athena", sequenceName = "SEQ_PRODUCT_FAMILY")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_FAMILY")
-    private Long id;
+    private Long productFamilyId;
 
     private String name;
 
@@ -80,8 +80,8 @@ public class ProductFamily implements Serializable {
     }
 
 
-    public Long getId() {
-        return id;
+    public Long getProductFamilyId() {
+        return productFamilyId;
     }
 
     public String getName() {

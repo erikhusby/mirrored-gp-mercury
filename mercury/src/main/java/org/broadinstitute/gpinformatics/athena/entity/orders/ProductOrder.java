@@ -33,7 +33,7 @@ public class ProductOrder implements Serializable {
     @Id
     @SequenceGenerator(name="SEQ_PRODUCT_ORDER", schema = "athena", sequenceName="SEQ_PRODUCT_ORDER")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_PRODUCT_ORDER")
-    private Long id;
+    private Long productOrderId;
 
     @Column(unique = true)
     private String title;                       // Unique title for the order

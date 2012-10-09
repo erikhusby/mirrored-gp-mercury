@@ -24,7 +24,7 @@ public class Product implements Serializable {
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT")
-    private Long id;
+    private Long productId;
 
     private String productName;
 
@@ -105,8 +105,8 @@ public class Product implements Serializable {
         this.workflowName = workflowName;
     }
 
-    public Long getId() {
-        return id;
+    public Long getProductId() {
+        return productId;
     }
 
     public String getProductName() {

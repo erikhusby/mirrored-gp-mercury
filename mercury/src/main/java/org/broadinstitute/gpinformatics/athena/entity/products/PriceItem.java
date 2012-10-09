@@ -96,7 +96,7 @@ public class PriceItem implements Serializable {
     @Id
     @SequenceGenerator(name = "SEQ_PRICE_ITEM", schema = "athena", sequenceName = "SEQ_PRICE_ITEM")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRICE_ITEM")
-    private Long id;
+    private Long priceItemId;
 
     private String platform;
 
@@ -143,8 +143,8 @@ public class PriceItem implements Serializable {
     }
 
 
-    public Long getId() {
-        return id;
+    public Long getPriceItemId() {
+        return priceItemId;
     }
 
     public String getPlatform() {

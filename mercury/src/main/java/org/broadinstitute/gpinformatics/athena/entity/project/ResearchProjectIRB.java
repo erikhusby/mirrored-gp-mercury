@@ -37,7 +37,7 @@ public class ResearchProjectIRB {
     @Id
     @SequenceGenerator(name="seq_rp_irb_index", schema = "athena", sequenceName="seq_rp_irb_index", allocationSize = 1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_irb_index")
-    private Long id;
+    private Long researchProjectIRBId;
 
     @ManyToOne
     private ResearchProject researchProject;
@@ -53,8 +53,8 @@ public class ResearchProjectIRB {
         this.irb = irb;
     }
 
-    public Long getId() {
-        return id;
+    public Long getResearchProjectIRBId() {
+        return researchProjectIRBId;
     }
 
     public ResearchProject getResearchProject() {

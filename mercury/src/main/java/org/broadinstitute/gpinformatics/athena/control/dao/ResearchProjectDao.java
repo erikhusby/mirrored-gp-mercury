@@ -51,7 +51,7 @@ public class ResearchProjectDao extends AthenaGenericDao {
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.id), rpId));
+        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.researchProjectId), rpId));
         return entityManager.createQuery(criteriaQuery).getSingleResult();
     }
 

@@ -57,7 +57,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
             researchProjectDao.persist(researchProject);
 
-            testResearchProjectId = researchProject.getId();
+            testResearchProjectId = researchProject.getResearchProjectId();
         }
     }
 
