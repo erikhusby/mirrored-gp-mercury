@@ -199,6 +199,13 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
         this.vesselContainer = vesselContainer;
     }
 
+    public void addTube(TwoDBarcodedTube tube,VesselPosition wellLocation) {
+        if (vesselContainer.getVesselAtPosition(wellLocation) != null) {
+            throw new RuntimeException(vesselContainer.getVesselAtPosition(wellLocation) + " is already in position " + wellLocation + " on rack " + getLabel());
+        }
+        vesselContainer.addContainedVessel(tube,wellLocation);
+    }
+
 /*
     @Override
     public boolean equals(Object o) {

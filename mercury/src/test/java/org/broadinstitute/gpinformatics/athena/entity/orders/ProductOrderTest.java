@@ -23,15 +23,15 @@ import java.util.List;
  * Time: 4:37 PM
  */
 @Test(groups = {TestGroups.DATABASE_FREE})
-public class OrderTest {
+public class ProductOrderTest {
 
     private static final String PDO_JIRA_KEY = "PDO-1";
-    private  Order order ;
+    private ProductOrder productOrder;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
-        order = new Order("title", samples, "quote", null, "rpName");
+        List<ProductOrderSample> sampleProducts = new ArrayList<ProductOrderSample>();
+        productOrder = new ProductOrder("title", sampleProducts, "quote", null, null);
     }
 
     @AfterMethod
@@ -54,44 +54,39 @@ public class OrderTest {
 
         //TODO hmc To be completed commented out now for change of priority.
         /**
-        List<ProductOrderSample> orderSamples = orderTest.createSampleList(
+        List<OrderSample> orderSamples = orderTest.createSampleList(
                 "SM-2ACGC,SM-2ABDD,SM-2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D", billableItems ) ;
 
-        Order order = new Order("title", orderSamples, "quoteId", product, "researchProjectName" );
+        ProductOrder productOrder = new ProductOrder("title", orderSamples, "quoteId", product, "researchProjectName" );
 
         //TODO hmc Under construction
-        Assert.assertEquals(order.getSamples().size(), 6);
-        Assert.assertTrue(order.getSamples().get(0).getBillableItems().size() == 1);
+        Assert.assertEquals(productOrder.getSamples().size(), 6);
+        Assert.assertTrue(productOrder.getSamples().get(0).getBillableItems().size() == 1);
 
          **/
 
 
-        Assert.assertNull(order.getJiraTicketKey());
+        Assert.assertNull(productOrder.getJiraTicketKey());
 
-        Assert.assertEquals(order.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.Product_Order);
+        Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.Product_Order);
 
-        Assert.assertEquals(order.fetchJiraProject(), CreateIssueRequest.Fields.ProjectType.Product_Ordering);
+        Assert.assertEquals(productOrder.fetchJiraProject(), CreateIssueRequest.Fields.ProjectType.Product_Ordering);
 
         try {
-            order.setJiraTicketKey(null);
+            productOrder.setJiraTicketKey(null);
             Assert.fail();
         } catch(NullPointerException npe) {
             /*
             Ensuring Null is thrown for setting null
              */
         } finally {
-            order.setJiraTicketKey(PDO_JIRA_KEY);
+            productOrder.setJiraTicketKey(PDO_JIRA_KEY);
         }
 
-        Assert.assertNotNull(order.getJiraTicketKey());
+        Assert.assertNotNull(productOrder.getJiraTicketKey());
 
-        Assert.assertEquals(order.getJiraTicketKey(),PDO_JIRA_KEY);
-
-
+        Assert.assertEquals(productOrder.getJiraTicketKey(),PDO_JIRA_KEY);
     }
-
-
-
 
 
     private List<ProductOrderSample> sixBspSamplesNoDupes = createSampleList("SM-2ACGC,SM-2ABDD,SM-2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D",
@@ -100,62 +95,62 @@ public class OrderTest {
     private List<ProductOrderSample> fourBspSamplesWithDupes = createSampleList("SM-2ACGC,SM-2ABDD,SM-2ACGC,SM-2AB1B,SM-2ACJC,SM-2ACGC",
                     new HashSet<BillableItem>() ) ;
 
-    private List<ProductOrderSample> sixMixedSamples = createSampleList("SM-2ACGC,SM2ABDD,SM2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D",
+    private List<ProductOrderSample> sixMixedSampleProducts = createSampleList("SM-2ACGC,SM2ABDD,SM2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D",
                     new HashSet<BillableItem>() ) ;
 
-    private List<ProductOrderSample> nonBspSamples = createSampleList("SSM-2ACGC1,SM--2ABDDD,SM-2AB,SM-2AB1B,SM-2ACJCACB,SM-SM-SM",
+    private List<ProductOrderSample> nonBspSampleProducts = createSampleList("SSM-2ACGC1,SM--2ABDDD,SM-2AB,SM-2AB1B,SM-2ACJCACB,SM-SM-SM",
                     new HashSet<BillableItem>() ) ;
 
 
     @Test
     public void testGetUniqueSampleCount() throws Exception {
 
-        order = new Order("title", sixBspSamplesNoDupes, "quote", null, "rpName");
-        Assert.assertEquals(order.getUniqueSampleCount(), 6);
+        productOrder = new ProductOrder("title", sixBspSamplesNoDupes, "quote", null, null);
+        Assert.assertEquals(productOrder.getUniqueSampleCount(), 6);
 
-        order = new Order("title", fourBspSamplesWithDupes, "quote", null, "rpName");
-        Assert.assertEquals(order.getUniqueSampleCount(), 4);
+        productOrder = new ProductOrder("title", fourBspSamplesWithDupes, "quote", null, null);
+        Assert.assertEquals(productOrder.getUniqueSampleCount(), 4);
 
     }
 
     @Test
     public void testGetTotalSampleCount() throws Exception {
 
-        order = new Order("title", sixBspSamplesNoDupes, "quote", null, "rpName");
-        Assert.assertEquals(order.getTotalSampleCount(), 6);
+        productOrder = new ProductOrder("title", sixBspSamplesNoDupes, "quote", null, null);
+        Assert.assertEquals(productOrder.getTotalSampleCount(), 6);
 
-        order = new Order("title", fourBspSamplesWithDupes, "quote", null, "rpName");
-        Assert.assertEquals(order.getTotalSampleCount(), 6);
+        productOrder = new ProductOrder("title", fourBspSamplesWithDupes, "quote", null, null);
+        Assert.assertEquals(productOrder.getTotalSampleCount(), 6);
     }
 
     @Test
     public void testGetDuplicateCount() throws Exception {
 
-        order = new Order("title", fourBspSamplesWithDupes, "quote", null, "rpName");
-        Assert.assertEquals(order.getDuplicateCount(), 2);
+        productOrder = new ProductOrder("title", fourBspSamplesWithDupes, "quote", null, null);
+        Assert.assertEquals(productOrder.getDuplicateCount(), 2);
     }
 
 
     @Test
     public void testAreAllSampleBSPFormat() throws Exception {
 
-        order = new Order("title", fourBspSamplesWithDupes, "quote", null, "rpName");
-        Assert.assertTrue(order.areAllSampleBSPFormat());
+        productOrder = new ProductOrder("title", fourBspSamplesWithDupes, "quote", null, null);
+        Assert.assertTrue(productOrder.areAllSampleBSPFormat());
 
-        order = new Order("title", sixBspSamplesNoDupes, "quote", null, "rpName");
-        Assert.assertTrue(order.areAllSampleBSPFormat());
+        productOrder = new ProductOrder("title", sixBspSamplesNoDupes, "quote", null, null);
+        Assert.assertTrue(productOrder.areAllSampleBSPFormat());
 
-        order = new Order("title", nonBspSamples, "quote", null, "rpName");
-        Assert.assertFalse(order.areAllSampleBSPFormat());
+        productOrder = new ProductOrder("title", nonBspSampleProducts, "quote", null, null);
+        Assert.assertFalse(productOrder.areAllSampleBSPFormat());
 
-        order = new Order("title", sixMixedSamples, "quote", null, "rpName");
-        Assert.assertFalse(order.areAllSampleBSPFormat());
+        productOrder = new ProductOrder("title", sixMixedSampleProducts, "quote", null, null);
+        Assert.assertFalse(productOrder.areAllSampleBSPFormat());
 
     }
 
 
     public static List<ProductOrderSample>  createSampleList( String sampleListStr, HashSet<BillableItem> billableItems) {
-        List<ProductOrderSample> orderSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         String [] sampleArray = sampleListStr.split(",");
         for ( String sampleName : sampleArray) {
             ProductOrderSample productOrderSample = new ProductOrderSample(sampleName);
@@ -163,9 +158,9 @@ public class OrderTest {
             for ( BillableItem billableItem : billableItems ) {
                 productOrderSample.addBillableItem(billableItem);
             }
-            orderSamples.add(productOrderSample);
+            productOrderSamples.add(productOrderSample);
         }
-        return orderSamples;
+        return productOrderSamples;
     }
 
 

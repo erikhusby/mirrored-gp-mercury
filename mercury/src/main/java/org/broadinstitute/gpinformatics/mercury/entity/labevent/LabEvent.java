@@ -1,28 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import org.hibernate.envers.Audited;
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+
+import javax.persistence.*;
+import java.util.*;
 
 /**
  * A lab event isn't just at the granularity
@@ -116,6 +103,9 @@ public abstract class LabEvent {
     @ManyToOne(fetch = FetchType.LAZY)
     private BasicProjectPlan projectPlanOverride;
 
+    @Transient
+    // transient because ARZ hasn't figured out the tests for this.  work in progress.
+    private ProductOrderId productOrder;
 
     public abstract LabEventName getEventName();
 
@@ -367,5 +357,26 @@ todo jmt adder methods
      */
     public void setIsSingleSampleLibrary(boolean isSingleSampleLibrary) {
 
+    }
+
+    /**
+     * When vessels are placed in a bucket, an association is made
+     * between the vessel and the PO that is driving the work.  When
+     * vessels are pulled out of a bucket, we record an event.  That
+     * event associates zero or one {@link ProductOrderId product orders}.
+     *
+     * This method is the way to mark the transfer graph such that all
+     * downstream nodes are considered to be "for" the product order
+     * returned here.
+     *
+     * Most events will return null.
+     * @return
+     */
+    public ProductOrderId getProductOrderId() {
+        return productOrder;
+    }
+
+    public void setProductOrderId(ProductOrderId productOrder) {
+        this.productOrder = productOrder;
     }
 }

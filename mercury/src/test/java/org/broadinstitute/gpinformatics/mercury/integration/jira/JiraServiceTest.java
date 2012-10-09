@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.Order;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -81,10 +82,10 @@ public class JiraServiceTest {
                 service.getRequiredFields(new CreateIssueRequest.Fields.Project(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix()),
                                                               CreateIssueRequest.Fields.Issuetype.Product_Order);
 
-            Assert.assertTrue(requiredFields.keySet().contains(Order.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()));
+            Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()));
 
 
-            customFieldList.add(new CustomField(requiredFields.get(Order.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()),
+            customFieldList.add(new CustomField(requiredFields.get(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()),
                                                 "Test Exome Express"));
 
             final CreateIssueResponse createIssueResponse =
