@@ -33,7 +33,7 @@ public class ResearchProjectDetail extends AbstractJsfBean {
     private String[] selectedPersonnel;
 
     public void loadProject() {
-        if (project == null) {
+        if ((project == null) && !StringUtils.isBlank(researchProjectTitle)) {
             project = researchProjectDao.findByTitle(researchProjectTitle);
         }
     }

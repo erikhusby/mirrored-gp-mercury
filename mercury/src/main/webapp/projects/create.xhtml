@@ -11,6 +11,14 @@
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">New Research Project</ui:define>
+
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
+                <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
+            </f:metadata>
+        </ui:define>
+
         <ui:define name="body">
             <h:form> <!--styleClass="form-horizontal">-->
                 <!--<div class="control-group">-->
