@@ -17,32 +17,25 @@ import java.util.Set;
  * Time: 1:20 PM
  */
 public class EntityUtils {
-    private static Log logger = LogFactory.getLog(EntityUtils.class);
+    private static final Log logger = LogFactory.getLog(EntityUtils.class);
 
-    public static String flattenSetOfStrings(final Set<String> stringSet ) {
-        StringBuilder stringBuilder = new StringBuilder();
-        if ( stringSet != null ) {
-            int i = 0;
-            for ( String str :  stringSet ) {
-                if (i > 0) stringBuilder.append(", ");
-                stringBuilder.append(str);
-                i++;
-            }
-        }
-        return stringBuilder.toString();
+    public static String flattenSetOfStrings(Set<String> stringSet ) {
+        return StringUtils.join(stringSet, ", ");
     }
 
-    public static String flattenSetOfPersonUsernames(final Set<Person> personSet ) {
+    public static String flattenSetOfPersonUsernames(Set<Person> personSet ) {
         StringBuilder stringBuilder = new StringBuilder();
-        if ( personSet != null ) {
+        if (personSet != null) {
             int i = 0;
-            for ( Person person :  personSet ) {
-                if ((person != null) && StringUtils.isNotBlank(person.getLogin()) ) {
-                    if (i > 0) stringBuilder.append(", ");
+            for (Person person :  personSet) {
+                if ((person != null) && StringUtils.isNotBlank(person.getLogin())) {
+                    if (i > 0) {
+                        stringBuilder.append(", ");
+                    }
                     stringBuilder.append(person.getLogin());
                     i++;
                 } else {
-                    String msg = ( person != null ? person.getFirstName() + " " + person.getLastName() : "Null username");
+                    String msg = (person != null ? person.getFirstName() + " " + person.getLastName() : "Null username");
                     logger.error("Person has no username : " + msg );
                 }
             }
@@ -50,13 +43,13 @@ public class EntityUtils {
         return stringBuilder.toString();
     }
 
-    public static Set<Person> extractPeopleFromUsernameList(final String peopleStr) {
+    public static Set<Person> extractPeopleFromUsernameList(String peopleStr) {
         Set<Person> personSet  = new HashSet<Person>();
-        if ( StringUtils.isNotBlank( peopleStr )) {
+        if (StringUtils.isNotBlank(peopleStr)) {
             String [] userNames = peopleStr.split(",");
             List<String> nameList = Arrays.asList(userNames);
-            for ( String name : nameList ) {
-                if ( StringUtils.isNotBlank( name ) ) {
+            for (String name : nameList) {
+                if (StringUtils.isNotBlank(name)) {
                     Person person = new Person(name);
                     personSet.add(person);
                 }
@@ -64,5 +57,4 @@ public class EntityUtils {
         }
         return personSet;
     }
-
 }

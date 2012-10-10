@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -91,17 +93,17 @@ public class ProductFamily implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+
         if (!(o instanceof ProductFamily)) return false;
 
         ProductFamily that = (ProductFamily) o;
 
-        if (!name.equals(that.name)) return false;
+        return new EqualsBuilder().append(getName(), that.getName()).isEquals();
 
-        return true;
     }
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return new HashCodeBuilder().append(getName()).toHashCode();
     }
 }

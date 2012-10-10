@@ -10,6 +10,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.List;
 
 
 /**
@@ -18,6 +19,20 @@ import javax.persistence.criteria.Root;
 @Stateful
 @RequestScoped
 public class ProductFamilyDao extends GenericDao {
+
+
+    public List<ProductFamily> findAll() {
+
+        EntityManager em = em();
+
+        CriteriaQuery<ProductFamily> criteriaQuery =
+                em.getCriteriaBuilder().createQuery(ProductFamily.class);
+
+        Root<ProductFamily> root = criteriaQuery.from(ProductFamily.class);
+
+        return em.createQuery(criteriaQuery).getResultList();
+    }
+
 
 
     /**
