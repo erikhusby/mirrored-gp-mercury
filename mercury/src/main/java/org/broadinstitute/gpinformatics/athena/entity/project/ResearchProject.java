@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.*;
