@@ -24,8 +24,11 @@ import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchPro
 public class ResearchProjectResourceTest extends ContainerTest {
 
     private static final Long TEST_CREATOR = 10L;
-    private static final Long TestScientist1 = 111L;
-    private static final Long TestScientist2 = 222L;
+    // This is a test number, useful for populating the DB
+    // private static final Long TEST_CREATOR = 10524L;
+
+    private static final Long TestScientist1 = 14567L;
+    private static final Long TestScientist2 = 11908L;
 
     @Inject
     ResearchProjectResource researchProjectResource;

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -50,18 +51,24 @@ public class BSPUserList {
     // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
         List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
-        Collections.sort(rawUsers, new Comparator<BspUser>() {
-            @Override
-            public int compare(BspUser o1, BspUser o2) {
-                // FIXME: need to figure out what the correct sort criteria are.
-                CompareToBuilder builder = new CompareToBuilder();
-                builder.append(o1.getLastName(), o2.getLastName());
-                builder.append(o1.getFirstName(), o2.getFirstName());
-                builder.append(o1.getUsername(), o2.getUsername());
-                builder.append(o1.getEmail(), o2.getEmail());
-                return builder.build();
-            }
-        });
-        users = ImmutableList.copyOf(rawUsers);
+
+        if (rawUsers != null) {
+            Collections.sort(rawUsers, new Comparator<BspUser>() {
+                @Override
+                public int compare(BspUser o1, BspUser o2) {
+                    // FIXME: need to figure out what the correct sort criteria are.
+                    CompareToBuilder builder = new CompareToBuilder();
+                    builder.append(o1.getLastName(), o2.getLastName());
+                    builder.append(o1.getFirstName(), o2.getFirstName());
+                    builder.append(o1.getUsername(), o2.getUsername());
+                    builder.append(o1.getEmail(), o2.getEmail());
+                    return builder.build();
+                }
+            });
+
+            users = ImmutableList.copyOf(rawUsers);
+        } else {
+            users = new ArrayList<BspUser>();
+        }
     }
 }
