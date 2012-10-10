@@ -12,14 +12,14 @@
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">Research Projects</ui:define>
         <ui:define name="body">
-            <p:dataTable value="#{researchProjectBean.allResearchProjects}" var="project">
-                <p:column headerText="Name">
+            <p:dataTable value="#{researchProjectBean.allResearchProjects}" var="project" sortBy="#{project.createdDate}" sortOrder="descending">
+                <p:column headerText="Name" sortBy="#{project.title}">
                     <h:link outcome="view" value="#{project.title}">
                         <f:param name="researchProjectTitle" value="#{project.title}"/>
                     </h:link>
                 </p:column>
 
-                <p:column headerText="ID">
+                <p:column headerText="ID" sortBy="#{project.jiraTicketKey}">
                     #{project.jiraTicketKey}
                 </p:column>
 
@@ -31,12 +31,18 @@
                     #{project.status}
                 </p:column>
 
-                <p:column headerText="# of Orders">
-                    #{project.productOrders.size()}
+                <p:column headerText="# of&lt;br&gt;Orders">
+                    <h:outputText value="#{project.productOrders.size()}" styleClass="align-right"/>
                 </p:column>
 
                 <p:column headerText="Synopsis">
                     #{project.synopsis}
+                </p:column>
+
+                <p:column headerText="Created Date" sortBy="#{project.createdDate}">
+                    <h:outputText value="#{project.createdDate}">
+                        <f:convertDateTime type="date"/>
+                    </h:outputText>
                 </p:column>
             </p:dataTable>
 

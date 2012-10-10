@@ -37,6 +37,11 @@ a { text-decoration: underline; }
     margin-bottom: 12px;
 }
 
+/* Right-justify p:dataTable content. E.g.: <h:outputText value="..." styleClass="dataTable-align-right" */
+.ui-datatable-data td .align-right {
+    float: right;
+}
+
 .pass-section { font-weight: bold; }
 .pass-label { font-style: italic; padding-right: 10px; }
 .pass-data { }

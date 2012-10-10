@@ -16,7 +16,10 @@
             <f:metadata>
                 <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
                 <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
+                <!-- TODO: figure out if this is really the right way to do this -->
                 <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
+                <f:event type="preRenderView" listener="#{researchProjectDetail.initEmptyProject}"/>
+                <!-- TODO: remove this event listener once irbEngaged becomes irbNotEngaged (and also update selectBooleanCheckbox value binding) -->
                 <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
             </f:metadata>
         </ui:define>
