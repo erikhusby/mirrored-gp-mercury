@@ -9,14 +9,28 @@
  * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
  * use, misuse, or functionality.
  */
-body { padding-top: 60px; padding-bottom: 40px; font-size: 12px; }
+body { padding-bottom: 40px; font-size: 12px; }
 footer { font-size: 0.75em; text-align: center; padding-top: 20px; }
+
+#ajaxStatus_start {
+    background-color: #004478;
+    color: #ffffff;
+    left: 0;
+    padding: 5px;
+    position: fixed;
+    top: 0;
+}
 
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; }
 
 /* Override PrimeFaces's Bootstrap theme opinion that links in widgets should be default text color. */
 .ui-widget-content a { color: #08C; }
+
+/* Tighten vertical spacing of Bootstrap horizontal forms. */
+.form-horizontal .control-group {
+    margin-bottom: 12px;
+}
 
 .pass-section { font-weight: bold; }
 .pass-label { font-style: italic; padding-right: 10px; }

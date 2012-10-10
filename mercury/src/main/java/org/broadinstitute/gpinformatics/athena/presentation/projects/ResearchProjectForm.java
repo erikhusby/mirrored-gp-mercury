@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import org.broadinstitute.bsp.client.users.BspUser;
+
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -16,26 +18,23 @@ public class ResearchProjectForm {
     @Inject
     private ResearchProjectDetail detail;
 
-    private Long addPersonId;
+    private List<BspUser> projectManagers = new ArrayList<BspUser>();
 
-    private List<Long> scientists = new ArrayList<Long>();
+    private List<BspUser> scientists = new ArrayList<BspUser>();
 
-    private List<Long> projectManagers = new ArrayList<Long>();
-
+    // TODO: integrate with real quotes
     private List<Long> fundingSources = new ArrayList<Long>();
 
+    // TODO: integrate with real sample cohorts
     private List<Long> sampleCohorts = new ArrayList<Long>();
 
+    // TODO: integrate with real IRBs (?)
     private List<Long> irbs = new ArrayList<Long>();
 
     private boolean irbNotEngaged;
 
     public void initForm() {
         irbNotEngaged = !detail.getProject().isIrbEngaged();
-    }
-
-    public List<Long> completePerson(String query) {
-        return generateIds(query, 5);
     }
 
     public List<Long> completeFundingSource(String query) {
@@ -58,28 +57,20 @@ public class ResearchProjectForm {
         return ids;
     }
 
-    public List<Long> getScientists() {
+    public List<BspUser> getScientists() {
         return scientists;
     }
 
-    public void setScientists(List<Long> scientists) {
+    public void setScientists(List<BspUser> scientists) {
         this.scientists = scientists;
     }
 
-    public List<Long> getProjectManagers() {
+    public List<BspUser> getProjectManagers() {
         return projectManagers;
     }
 
-    public void setProjectManagers(List<Long> projectManagers) {
+    public void setProjectManagers(List<BspUser> projectManagers) {
         this.projectManagers = projectManagers;
-    }
-
-    public Long getAddPersonId() {
-        return addPersonId;
-    }
-
-    public void setAddPersonId(Long addPersonId) {
-        this.addPersonId = addPersonId;
     }
 
     public List<Long> getFundingSources() {

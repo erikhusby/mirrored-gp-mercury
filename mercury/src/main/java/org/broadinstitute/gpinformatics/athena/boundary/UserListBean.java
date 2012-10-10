@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.List;
 
 /**
  * Could not seem to inject the BSPUserList directly into the xhtml file, so this is a wrapper that does
@@ -24,6 +25,10 @@ public class UserListBean {
         String fullName = "";
         if (userId != null) {
             BspUser bspUser = userList.getById(userId);
+            // TODO: handle this situation differently?
+            if (bspUser == null) {
+                return "(Unknown user: " + userId + ")";
+            }
             return bspUser.getFirstName() + " " + bspUser.getLastName();
         }
 
@@ -42,6 +47,11 @@ public class UserListBean {
 
             return users;
         }
+    }
+
+    public List<BspUser> searchUser(String query) {
+        // TODO: filter by query
+        return userList.getUsers();
     }
 
     public String getUserListString(Long[] userIds) {
