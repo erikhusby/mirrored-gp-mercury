@@ -19,8 +19,8 @@ import java.util.*;
 @Table(schema = "athena")
 public class ResearchProject {
 
-    public static final boolean IRB_ENGAGED = true;
-    public static final boolean IRB_NOT_ENGAGED = false;
+    public static final boolean IRB_ENGAGED = false;
+    public static final boolean IRB_NOT_ENGAGED = true;
 
     public enum Status {
         Open, Archived;
@@ -54,7 +54,7 @@ public class ResearchProject {
 
     private String synopsis;
 
-    private boolean irbEngaged = IRB_NOT_ENGAGED;
+    private boolean irbNotEngaged = IRB_ENGAGED;
 
     // People related to the project
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "researchProject")
@@ -90,9 +90,9 @@ public class ResearchProject {
      * @param creator The user creating the project
      * @param title The title (name) of the project
      * @param synopsis A description of the project
-     * @param irbEngaged Is this project set up for IRB or ignoring that
+     * @param irbNotEngaged Is this project set up for NO IRB?
      */
-    public ResearchProject(Long creator, String title, String synopsis, boolean irbEngaged) {
+    public ResearchProject(Long creator, String title, String synopsis, boolean irbNotEngaged) {
         sampleCohorts = new HashSet<ResearchProjectCohort>();
         productOrders = new ArrayList<ProductOrder>();
         createdDate = new Date();
@@ -103,7 +103,7 @@ public class ResearchProject {
         this.synopsis = synopsis;
         this.createdBy = creator;
         this.modifiedBy = creator;
-        this.irbEngaged = irbEngaged;
+        this.irbNotEngaged = irbNotEngaged;
     }
 
     // Getters
@@ -157,8 +157,8 @@ public class ResearchProject {
         this.synopsis = synopsis;
     }
 
-    public void setIrbEngaged(boolean irbEngaged) {
-        this.irbEngaged = irbEngaged;
+    public void setIrbNotEngaged(boolean irbNotEngaged) {
+        this.irbNotEngaged = irbNotEngaged;
     }
 
     public void setIrbNotes(String irbNotes) {
@@ -211,8 +211,8 @@ public class ResearchProject {
         sampleCohorts.remove(sampleCohort);
     }
 
-    public boolean isIrbEngaged() {
-        return irbEngaged;
+    public boolean isIrbNotEngaged() {
+        return irbNotEngaged;
     }
 
     public String[] getIrbNumbers() {

@@ -16,13 +16,13 @@
             <f:metadata>
                 <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
                 <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
+                <!-- TODO: figure out if this is really the right way to do this -->
                 <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
-                <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
             </f:metadata>
         </ui:define>
 
         <ui:define name="body">
-            <h:form styleClass="form-horizontal">
+            <h:form id="form" prependId="false" styleClass="form-horizontal">
                 <div class="control-group">
                     <p:outputLabel for="name" value="Name" styleClass="control-label"/>
                     <div class="controls">
@@ -80,7 +80,7 @@
                         <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}" completeMethod="#{researchProjectForm.completeIrbs}" multiple="true"/>
                         <p:watermark for="irbs" value="Type number to search"/>
                         <p>
-                            <p:selectBooleanCheckbox id="irbEngaged" value="#{researchProjectForm.irbNotEngaged}"/> <p:outputLabel for="irbEngaged" value="IRB Not Engaged" style="display: inline-block"/>
+                            <p:selectBooleanCheckbox id="irbEngaged" value="#{researchProjectDetail.project.irbNotEngaged}"/> <p:outputLabel for="irbEngaged" value="IRB Not Engaged" style="display: inline-block"/>
                         </p>
                     </div>
                 </div>
@@ -95,8 +95,14 @@
 
                 <div class="control-group">
                     <div class="controls">
-                        <h:link outcome="list" value="Cancel"/>
-                        <p:commandButton value="Save" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                        <div class="row-fluid">
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel"/>
+                            </div>
+                            <div class="span1">
+                                <p:commandButton value="Save" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </h:form>

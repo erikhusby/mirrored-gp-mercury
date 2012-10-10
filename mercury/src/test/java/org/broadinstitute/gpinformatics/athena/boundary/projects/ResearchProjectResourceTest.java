@@ -69,7 +69,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         // Only do this if the server is calling this and thus, injection worked
         if (researchProjectResource != null) {
             ResearchProject researchProject = researchProjectResource.findResearchProjectByTitle(testTitle);
-            researchProjectDao.delete(researchProject);
+            researchProjectDao.remove(researchProject);
         }
     }
 

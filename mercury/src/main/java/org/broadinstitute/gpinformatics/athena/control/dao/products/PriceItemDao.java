@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.AthenaGenericDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -21,7 +21,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.
 /**
  * Dao for {@link PriceItem}s
  */
-public class PriceItemDao extends AthenaGenericDao {
+public class PriceItemDao extends GenericDao {
 
 
     /**
@@ -34,7 +34,7 @@ public class PriceItemDao extends AthenaGenericDao {
      */
     public List<PriceItem> findAll() {
 
-        EntityManager em = em();
+        EntityManager em = getEntityManager();
 
         CriteriaQuery<PriceItem> criteriaQuery =
                 getCriteriaBuilder().createQuery(PriceItem.class);
@@ -110,7 +110,7 @@ public class PriceItemDao extends AthenaGenericDao {
         Predicate[] predicates = new Predicate[predicateList.size()];
         cq.where(predicateList.toArray(predicates));
 
-        return em().createQuery(cq).getSingleResult();
+        return getEntityManager().createQuery(cq).getSingleResult();
 
     }
 }

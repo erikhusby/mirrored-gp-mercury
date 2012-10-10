@@ -28,4 +28,24 @@
     </changeSet>
 -->
 
+    <changeSet id="GPLIM-65-1" author="hrafal">
+        <!-- I ran what is in GPLIM-65-2, but messed things up in a way that required me to
+             empty this and found out there is a checksum, so I added all the appropriate checks
+             for existence in that one -->
+    </changeSet>
+
+    <changeSet id="GPLIM-65-2" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="research_project" columnName="irb_not_engaged" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="research_project">
+            <column name="irb_not_engaged" type="number(1,0)"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="research_project"
+                columnName="irb_not_engaged"
+                defaultNullValue="0" />
+    </changeSet>
 </databaseChangeLog>
