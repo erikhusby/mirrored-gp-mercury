@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.common.AthenaUtilities;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -8,19 +7,16 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
-import javax.enterprise.inject.New;
 import javax.inject.Inject;
 import javax.persistence.Transient;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
 import javax.persistence.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -383,7 +379,7 @@ public class ProductOrder implements Serializable {
                                 listOfFields);
 
 
-        addPublicComment("Sample List: "+AthenaUtilities.flattenCollectionOfStrings(getUniqueSampleNames()));
+        addPublicComment("Sample List: "+StringUtils.join(getUniqueSampleNames(), ','));
 
         StringBuilder buildValidationComments = new StringBuilder();
 
