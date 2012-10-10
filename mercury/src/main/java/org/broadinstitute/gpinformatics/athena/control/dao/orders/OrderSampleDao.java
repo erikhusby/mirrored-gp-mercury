@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.AthenaGenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -15,7 +15,7 @@ import javax.enterprise.context.RequestScoped;
  */
 @Stateful
 @RequestScoped
-public class OrderSampleDao extends AthenaGenericDao {
+public class OrderSampleDao extends GenericDao {
 
 
 
