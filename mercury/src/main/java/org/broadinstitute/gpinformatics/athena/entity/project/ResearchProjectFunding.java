@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.hibernate.annotations.Index;
 
 import javax.persistence.*;
 
@@ -17,6 +18,7 @@ public class ResearchProjectFunding {
     private Long id;
 
     @ManyToOne
+    @Index(name = "ix_funding_project")
     private ResearchProject researchProject;
 
     // A funding Identifier
@@ -43,8 +45,14 @@ public class ResearchProjectFunding {
 
     @Override
     public boolean equals(Object other) {
-        if ( (this == other ) ) return true;
-        if ( !(other instanceof ResearchProjectFunding) ) return false;
+        if ( (this == other ) ) {
+            return true;
+        }
+
+        if ( !(other instanceof ResearchProjectFunding) ) {
+            return false;
+        }
+
         ResearchProjectFunding castOther = (ResearchProjectFunding) other;
         return new EqualsBuilder()
                 .append(getFundingId(), castOther.getFundingId())
@@ -53,8 +61,6 @@ public class ResearchProjectFunding {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
-                .append(getFundingId())
-                .append(getResearchProject()).toHashCode();
+        return new HashCodeBuilder().append(getFundingId()).append(getResearchProject()).toHashCode();
     }
 }
