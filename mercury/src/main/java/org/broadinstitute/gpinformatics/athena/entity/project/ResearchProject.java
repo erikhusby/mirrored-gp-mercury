@@ -72,7 +72,7 @@ public class ResearchProject {
 
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
-    protected ResearchProject() {}
+    public ResearchProject() {}
 
     public ResearchProject(Long creator, String title, String synopsis, boolean irbEngaged) {
 
@@ -117,6 +117,28 @@ public class ResearchProject {
 
     public void addIrbNotes(String irbNotes) {
         this.irbNotes += "\n" + irbNotes;
+    }
+
+    // Setters
+
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setSynopsis(String synopsis) {
+        this.synopsis = synopsis;
+    }
+
+    public void setIrbEngaged(boolean irbEngaged) {
+        this.irbEngaged = irbEngaged;
+    }
+
+    public void setIrbNotes(String irbNotes) {
+        this.irbNotes = irbNotes;
     }
 
     /**

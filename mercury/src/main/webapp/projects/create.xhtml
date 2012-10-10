@@ -16,7 +16,7 @@
             <f:metadata>
                 <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
                 <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
-                <f:event type="preRenderView" listener="#{researchProjectDetail.initEmptyProject}"/>
+                <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
                 <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
             </f:metadata>
         </ui:define>

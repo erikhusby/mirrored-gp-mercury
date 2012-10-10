@@ -1,6 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
@@ -18,6 +24,9 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
     @Inject
     private ResearchProjectDetail detail;
+
+    @Inject
+    private ResearchProjectDao researchProjectDao;
 
     private List<BspUser> projectManagers = new ArrayList<BspUser>();
 
@@ -39,6 +48,34 @@ public class ResearchProjectForm extends AbstractJsfBean {
     }
 
     public String create() {
+        ResearchProject project = detail.getProject();
+        if (projectManagers != null) {
+            for (BspUser projectManager : projectManagers) {
+                project.addPerson(RoleType.PM, projectManager.getUserId());
+            }
+        }
+        if (scientists != null) {
+            for (BspUser scientist : scientists) {
+                project.addPerson(RoleType.SCIENTIST, scientist.getUserId());
+            }
+        }
+        if (fundingSources != null) {
+            for (Long fundingSource : fundingSources) {
+                project.addFunding(new ResearchProjectFunding(project, fundingSource.toString()));
+            }
+        }
+        // TODO: sample cohorts
+        if (irbs != null) {
+            for (Long irb : irbs) {
+                // TODO: use correct IRB type
+                project.addIrbNumber(new ResearchProjectIRB(project, ResearchProjectIRB.IrbType.OTHER, irb.toString()));
+            }
+        }
+        project.setIrbEngaged(!irbNotEngaged);
+        project.setCreatedBy(14567L);
+
+        researchProjectDao.persist(project);
+        addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
         return redirect("list");
     }
 
