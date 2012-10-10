@@ -12,6 +12,7 @@ import javax.persistence.Transient;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 
 import javax.persistence.*;
 import java.io.IOException;
@@ -372,12 +373,11 @@ public class ProductOrder implements Serializable {
                             this.quoteId));
         }
 
-        jiraService.createIssue(fetchJiraProject().getKeyPrefix(),
-                                fetchJiraIssueType(),
-                                title,
-                                comments,
-                                listOfFields);
+        CreateIssueResponse issueResponse =
+                jiraService.createIssue(fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title,
+                                                    comments, listOfFields);
 
+        setJiraTicketKey(issueResponse.getKey());
 
         addPublicComment("Sample List: "+StringUtils.join(getUniqueSampleNames(), ','));
 
