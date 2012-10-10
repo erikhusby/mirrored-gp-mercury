@@ -11,7 +11,7 @@ import javax.inject.Inject;
 import javax.persistence.NoResultException;
 import java.util.List;
 
-@Test
+@Test(enabled = false)
 public class ProductDaoTest extends ContainerTest {
 
     @Inject
