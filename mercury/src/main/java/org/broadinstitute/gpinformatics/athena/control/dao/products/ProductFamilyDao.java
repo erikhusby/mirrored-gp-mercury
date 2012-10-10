@@ -23,7 +23,7 @@ public class ProductFamilyDao extends GenericDao {
 
     public List<ProductFamily> findAll() {
 
-        EntityManager em = em();
+        EntityManager em = getEntityManager();
 
         CriteriaQuery<ProductFamily> criteriaQuery =
                 em.getCriteriaBuilder().createQuery(ProductFamily.class);
