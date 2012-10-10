@@ -4,7 +4,6 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -41,12 +40,6 @@ public class ResearchProjectForm extends AbstractJsfBean {
     // TODO: integrate with real IRBs (?)
     private List<Long> irbs = new ArrayList<Long>();
 
-    private boolean irbNotEngaged;
-
-    public void initForm() {
-        irbNotEngaged = !detail.getProject().isIrbEngaged();
-    }
-
     public String create() {
         ResearchProject project = detail.getProject();
         if (projectManagers != null) {
@@ -71,7 +64,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 project.addIrbNumber(new ResearchProjectIRB(project, ResearchProjectIRB.IrbType.OTHER, irb.toString()));
             }
         }
-        project.setIrbEngaged(!irbNotEngaged);
+
         project.setCreatedBy(14567L);
 
         researchProjectDao.persist(project);
@@ -137,13 +130,5 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
     public void setIrbs(List<Long> irbs) {
         this.irbs = irbs;
-    }
-
-    public boolean isIrbNotEngaged() {
-        return irbNotEngaged;
-    }
-
-    public void setIrbNotEngaged(boolean irbNotEngaged) {
-        this.irbNotEngaged = irbNotEngaged;
     }
 }
