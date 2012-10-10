@@ -16,12 +16,13 @@
             <f:metadata>
                 <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
                 <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
+                <!-- TODO: figure out if this is really the right way to do this -->
                 <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
             </f:metadata>
         </ui:define>
 
         <ui:define name="body">
-            <h:form styleClass="form-horizontal">
+            <h:form id="form" prependId="false" styleClass="form-horizontal">
                 <div class="control-group">
                     <p:outputLabel for="name" value="Name" styleClass="control-label"/>
                     <div class="controls">
@@ -94,8 +95,14 @@
 
                 <div class="control-group">
                     <div class="controls">
-                        <h:link outcome="list" value="Cancel"/>
-                        <p:commandButton value="Save" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                        <div class="row-fluid">
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel"/>
+                            </div>
+                            <div class="span1">
+                                <p:commandButton value="Save" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </h:form>

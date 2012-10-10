@@ -64,7 +64,6 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 project.addIrbNumber(new ResearchProjectIRB(project, ResearchProjectIRB.IrbType.OTHER, irb.toString()));
             }
         }
-
         project.setCreatedBy(14567L);
 
         researchProjectDao.persist(project);
