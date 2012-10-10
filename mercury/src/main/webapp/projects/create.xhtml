@@ -22,7 +22,7 @@
         </ui:define>
 
         <ui:define name="body">
-            <h:form styleClass="form-horizontal">
+            <h:form id="form" prependId="false" styleClass="form-horizontal">
                 <div class="control-group">
                     <p:outputLabel for="name" value="Name" styleClass="control-label"/>
                     <div class="controls">
@@ -95,8 +95,14 @@
 
                 <div class="control-group">
                     <div class="controls">
-                        <h:link outcome="list" value="Cancel"/>
-                        <p:commandButton value="Save" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                        <div class="row-fluid">
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel"/>
+                            </div>
+                            <div class="span1">
+                                <p:commandButton value="Save" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </h:form>

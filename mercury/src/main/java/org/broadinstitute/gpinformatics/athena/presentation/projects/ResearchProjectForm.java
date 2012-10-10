@@ -72,6 +72,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
             }
         }
         project.setIrbEngaged(!irbNotEngaged);
+        // TODO: get logged-in userID
         project.setCreatedBy(14567L);
 
         researchProjectDao.persist(project);
