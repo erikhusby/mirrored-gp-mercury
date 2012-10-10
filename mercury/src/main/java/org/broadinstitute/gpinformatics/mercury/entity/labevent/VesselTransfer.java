@@ -8,16 +8,18 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 /**
  * Super class for all transfers, allows them to share the same table, since they have many columns in common.
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 @DiscriminatorOptions(force = true)
 public abstract class VesselTransfer {
     @Id
-    @SequenceGenerator(name = "SEQ_VESSEL_TRANSFER", sequenceName = "SEQ_VESSEL_TRANSFER")
+    @SequenceGenerator(name = "SEQ_VESSEL_TRANSFER", schema = "mercury", sequenceName = "SEQ_VESSEL_TRANSFER")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_VESSEL_TRANSFER")
     private Long vesselTransferId;
 }

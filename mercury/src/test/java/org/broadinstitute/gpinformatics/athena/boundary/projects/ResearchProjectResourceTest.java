@@ -36,6 +36,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
+    private Long testResearchProjectId;
     private String testTitle;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -58,6 +59,8 @@ public class ResearchProjectResourceTest extends ContainerTest {
             researchProject.addPerson(RoleType.SCIENTIST, TestScientist2);
 
             researchProjectDao.persist(researchProject);
+
+            testResearchProjectId = researchProject.getResearchProjectId();
         }
     }
 

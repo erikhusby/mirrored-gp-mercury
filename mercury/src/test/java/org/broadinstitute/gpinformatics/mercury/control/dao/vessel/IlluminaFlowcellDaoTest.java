@@ -1,0 +1,23 @@
+package org.broadinstitute.gpinformatics.mercury.control.dao.vessel;
+
+import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.testng.annotations.Test;
+
+import javax.inject.Inject;
+
+/**
+ * Test persist and fetch
+ */
+public class IlluminaFlowcellDaoTest extends ContainerTest {
+
+    @Inject
+    private IlluminaFlowcellDao illuminaFlowcellDao;
+
+    @Test
+    public void testFindByBarcode() throws Exception {
+        IlluminaFlowcell junk = illuminaFlowcellDao.findByBarcode("junk");
+        Assert.assertNull("Unexpected flowcell", junk);
+    }
+}

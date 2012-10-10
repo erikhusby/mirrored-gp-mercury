@@ -277,13 +277,7 @@ public class LabEventFactory {
                     VesselPosition.getByName(receptacleType.getPosition()), receptacleType.getBarcode()));
         }
         String digest = RackOfTubes.makeDigest(positionBarcodeList);
-        List<RackOfTubes> racksOfTubes = rackOfTubesDao.findByDigest(digest);
-        RackOfTubes rackOfTubes = null;
-        // todo jmt handle digest collision
-        if(!racksOfTubes.isEmpty()) {
-            rackOfTubes = racksOfTubes.get(0);
-        }
-        return rackOfTubes;
+        return rackOfTubesDao.findByDigest(digest);
     }
 
     /**

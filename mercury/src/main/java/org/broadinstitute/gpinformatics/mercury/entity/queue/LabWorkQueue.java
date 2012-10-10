@@ -12,14 +12,16 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.util.Collection;
 
 @Entity
 @Audited
+@Table(schema = "mercury")
 public abstract class LabWorkQueue<T extends LabWorkQueueParameters> {
 
     @Id
-    @SequenceGenerator(name = "SEQ_LAB_WORK_QUEUE", sequenceName = "SEQ_LAB_WORK_QUEUE")
+    @SequenceGenerator(name = "SEQ_LAB_WORK_QUEUE", schema = "mercury", sequenceName = "SEQ_LAB_WORK_QUEUE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_WORK_QUEUE")
     private Long labWorkQueueId;
 

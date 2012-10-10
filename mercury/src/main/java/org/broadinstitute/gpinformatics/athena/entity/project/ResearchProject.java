@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.*;
@@ -14,6 +15,8 @@ import java.util.*;
  * Research Projects hold all the information about a research project
  */
 @Entity
+@Audited
+@Table(schema = "athena")
 public class ResearchProject {
 
     public static final boolean IRB_ENGAGED = true;
@@ -33,9 +36,9 @@ public class ResearchProject {
     }
 
     @Id
-    @SequenceGenerator(name="seq_research_project_index", sequenceName="seq_research_project_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_research_project_index", schema = "athena", sequenceName="seq_research_project_index")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
-    private Long id;
+    private Long researchProjectId;
 
     private Status status;
 
@@ -54,7 +57,7 @@ public class ResearchProject {
     private boolean irbEngaged = IRB_NOT_ENGAGED;
 
     // People related to the project
-    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "researchProject")
     private Set<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
@@ -110,6 +113,10 @@ public class ResearchProject {
 
     public String getSynopsis() {
         return synopsis;
+    }
+
+    public Long getResearchProjectId() {
+        return researchProjectId;
     }
 
     public Date getCreatedDate() {

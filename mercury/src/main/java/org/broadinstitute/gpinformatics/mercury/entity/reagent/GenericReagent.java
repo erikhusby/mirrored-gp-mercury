@@ -6,7 +6,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularStateRang
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.Table;
 import java.util.Set;
 
 /**
@@ -14,9 +16,11 @@ import java.util.Set;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class GenericReagent extends Reagent {
 
     @ManyToMany
+    @JoinTable(schema = "mercury")
     private Set<LabVessel> containers;
 
     public GenericReagent(String reagentName, String lot, MolecularEnvelope molecularEnvelope) {

@@ -7,6 +7,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 /**
  * Basically a way to summarize certain critical
@@ -51,10 +52,11 @@ import javax.persistence.SequenceGenerator;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class MolecularStateTemplate {
 
     @Id
-    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE_TEMPLATE", sequenceName = "SEQ_MOLECULAR_STATE_TEMPLATE")
+    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE_TEMPLATE", schema = "mercury", sequenceName = "SEQ_MOLECULAR_STATE_TEMPLATE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE_TEMPLATE")
     private Long molecularStateTemplateId;
 

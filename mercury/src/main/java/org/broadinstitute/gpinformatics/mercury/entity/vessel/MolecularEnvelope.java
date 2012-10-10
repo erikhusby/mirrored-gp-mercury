@@ -7,6 +7,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 /**
  * Target DNA is surrounded with various
@@ -44,10 +45,11 @@ import javax.persistence.SequenceGenerator;
 
 @Entity
 @Audited
+@Table(schema = "mercury")
 public abstract class MolecularEnvelope {
 
     @Id
-    @SequenceGenerator(name = "SEQ_MOLECULAR_ENVELOPE", sequenceName = "SEQ_MOLECULAR_ENVELOPE")
+    @SequenceGenerator(name = "SEQ_MOLECULAR_ENVELOPE", schema = "mercury", sequenceName = "SEQ_MOLECULAR_ENVELOPE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_ENVELOPE")
     private Long molecularEnvelopeId;
 

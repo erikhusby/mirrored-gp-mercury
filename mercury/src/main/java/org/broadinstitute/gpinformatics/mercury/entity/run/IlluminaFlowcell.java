@@ -13,20 +13,14 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Set;
 
-@NamedQueries({
-        @NamedQuery(
-                name = "IlluminaFlowcell.findByBarcode",
-                query = "select f from IlluminaFlowcell f where label = :barcode"
-        )
-})
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class IlluminaFlowcell extends AbstractRunCartridge implements VesselContainerEmbedder<RunChamber> {
 
     // todo jmt fix this

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 
@@ -10,6 +11,8 @@ import javax.persistence.*;
  * IRBs for a research project
  */
 @Entity
+@Audited
+@Table(schema = "athena")
 public class ResearchProjectIRB {
 
     public enum IrbType {
@@ -35,9 +38,9 @@ public class ResearchProjectIRB {
     }
 
     @Id
-    @SequenceGenerator(name="seq_rp_irb_index", sequenceName="seq_rp_irb_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_rp_irb_index", schema = "athena", sequenceName="seq_rp_irb_index")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_irb_index")
-    private Long id;
+    private Long researchProjectIRBId;
 
     @ManyToOne
     @Index(name = "ix_irb_project")
@@ -54,8 +57,8 @@ public class ResearchProjectIRB {
         this.irb = irb;
     }
 
-    public Long getId() {
-        return id;
+    public Long getResearchProjectIRBId() {
+        return researchProjectIRBId;
     }
 
     public ResearchProject getResearchProject() {

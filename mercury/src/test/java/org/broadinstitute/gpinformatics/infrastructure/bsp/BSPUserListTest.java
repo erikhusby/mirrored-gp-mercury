@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
-@Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BSPUserListTest extends Arquillian {
     @Deployment
     public static WebArchive deployment() {
@@ -29,7 +29,7 @@ public class BSPUserListTest extends Arquillian {
         List<BspUser> users = bspUserList.getUsers();
         Assert.assertNotNull(users);
         Assert.assertTrue(!users.isEmpty());
-        // This is an arbitrary sanity check; the actual database has about 2.5k users.
+        // This is an arbitrary sanity check; the actual database has about 2k users.
         Assert.assertTrue(users.size() > 1000);
     }
 

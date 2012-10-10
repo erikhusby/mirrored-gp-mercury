@@ -23,6 +23,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapKeyJoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,10 +34,11 @@ import java.util.Set;
 
 @Entity
 @Audited
+@Table(schema = "mercury")
 public abstract class ProjectPlan {
 
     @Id
-    @SequenceGenerator(name = "SEQ_PROJECT_PLAN", sequenceName = "SEQ_PROJECT_PLAN")
+    @SequenceGenerator(name = "SEQ_PROJECT_PLAN", schema = "mercury", sequenceName = "SEQ_PROJECT_PLAN")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PROJECT_PLAN")
     private Long projectPlanId;
 
@@ -46,14 +48,14 @@ public abstract class ProjectPlan {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated name is too long for Oracle
-    @JoinTable(name = "pp_map_start_smpl_to_aliqt")
+    @JoinTable(schema = "mercury", name = "pp_map_start_smpl_to_aliqt")
     // hbm2ddl always generates mapkey
     @MapKeyJoinColumn(name = "mapkey")
     private Map<StartingSample, LabVessel> mapStartingSampleToAliquot = new HashMap<StartingSample, LabVessel>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated name is too long for Oracle
-    @JoinTable(name = "pp_map_start_vssl_to_aliqt")
+    @JoinTable(schema = "mercury", name = "pp_map_start_vssl_to_aliqt")
     // hbm2ddl always generates mapkey
     @MapKeyJoinColumn(name = "mapkey")
     // For Oracle, this name must be <= 30 characters, including underscores from camel case conversion
@@ -61,11 +63,11 @@ public abstract class ProjectPlan {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(name = "pp_starting_samples")
+    @JoinTable(schema = "mercury", name = "pp_starting_samples")
     private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
 
     // have to specify name, generated name is too long for Oracle
-    @JoinTable(name = "pp_starting_lab_vessels")
+    @JoinTable(schema = "mercury", name = "pp_starting_lab_vessels")
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<LabVessel> startingLabVessels = new HashSet<LabVessel>();
 
