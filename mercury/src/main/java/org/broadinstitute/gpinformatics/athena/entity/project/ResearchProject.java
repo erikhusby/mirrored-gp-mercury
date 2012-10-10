@@ -5,6 +5,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.hibernate.annotations.Index;
 
 import javax.persistence.*;
 import java.util.*;
@@ -45,6 +46,7 @@ public class ResearchProject {
     private Long modifiedBy;
 
     @Column(unique = true)
+    @Index(name = "ix_rp_title")
     private String title;
 
     private String synopsis;
@@ -52,37 +54,52 @@ public class ResearchProject {
     private boolean irbEngaged = IRB_NOT_ENGAGED;
 
     // People related to the project
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
     private Set<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
-    @OneToMany(mappedBy = "researchProject")
+    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
     private Set<ResearchProjectCohort> sampleCohorts;
 
-    @OneToMany(mappedBy = "researchProject")
+    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
     private Set<ResearchProjectFunding> projectFunding;
 
-    @OneToMany(mappedBy = "researchProject")
+    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
     private Set<ResearchProjectIRB> irbNumbers;
 
     private String irbNotes;
 
-    @OneToMany(mappedBy = "researchProject")
-    private final List<ProductOrder> productOrders = new ArrayList<ProductOrder>();
+    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
+    private List<ProductOrder> productOrders;
 
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
-    public ResearchProject() {}
+    /**
+     * no arg constructor for hibernate and JSF.
+     */
+    public ResearchProject() {
+        this(null, null, null, false);
+    }
 
+    /**
+     * The full constructor for fields that are not settable.
+     *
+     * @param creator The user creating the project
+     * @param title The title (name) of the project
+     * @param synopsis A description of the project
+     * @param irbEngaged Is this project set up for IRB or ignoring that
+     */
     public ResearchProject(Long creator, String title, String synopsis, boolean irbEngaged) {
+        sampleCohorts = new HashSet<ResearchProjectCohort>();
+        productOrders = new ArrayList<ProductOrder>();
+        createdDate = new Date();
+        modifiedDate = createdDate;
+        irbNotes = "";
 
         this.title = title;
         this.synopsis = synopsis;
         this.createdBy = creator;
-        this.createdDate = new Date();
         this.modifiedBy = creator;
-        this.modifiedDate = this.createdDate;
-        this.irbNotes = "";
         this.irbEngaged = irbEngaged;
     }
 
@@ -165,25 +182,21 @@ public class ResearchProject {
         this.jiraTicketKey = jiraTicketKeyIn;
     }
 
+    /**
+     *
+     * @return Get the cohortIds. Since the cohort list is defaulted to empty, we know that the cohorts will exist
+     */
     public String[] getCohortIds() {
-        if (sampleCohorts != null) {
-            int i = 0;
-            String[] cohorts = new String[sampleCohorts.size()];
-            for (ResearchProjectCohort cohort : sampleCohorts) {
-                cohorts[i++] = cohort.getCohortId();
-            }
-
-            return cohorts;
+        int i = 0;
+        String[] cohorts = new String[sampleCohorts.size()];
+        for (ResearchProjectCohort cohort : sampleCohorts) {
+            cohorts[i++] = cohort.getCohortId();
         }
 
-        return new String[0];
+        return cohorts;
     }
 
     public void addCohort(ResearchProjectCohort sampleCohort ) {
-        if (sampleCohorts == null) {
-            sampleCohorts = new HashSet<ResearchProjectCohort>();
-        }
-
         sampleCohorts.add(sampleCohort);
     }
 

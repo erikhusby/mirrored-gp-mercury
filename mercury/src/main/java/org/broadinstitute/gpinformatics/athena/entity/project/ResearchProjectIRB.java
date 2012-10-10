@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.hibernate.annotations.Index;
 
 import javax.persistence.*;
 
@@ -39,6 +40,7 @@ public class ResearchProjectIRB {
     private Long id;
 
     @ManyToOne
+    @Index(name = "ix_irb_project")
     private ResearchProject researchProject;
 
     private String irb;
@@ -70,8 +72,14 @@ public class ResearchProjectIRB {
 
     @Override
     public boolean equals(Object other) {
-        if ( (this == other ) ) return true;
-        if ( !(other instanceof ResearchProjectIRB) ) return false;
+        if ( (this == other ) ) {
+            return true;
+        }
+
+        if (!(other instanceof ResearchProjectIRB)) {
+            return false;
+        }
+
         ResearchProjectIRB castOther = (ResearchProjectIRB) other;
         return new EqualsBuilder()
                 .append(getIrb(), castOther.getIrb())
@@ -81,9 +89,6 @@ public class ResearchProjectIRB {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
-                .append(getIrb())
-                .append(getIrbType())
-                .append(getResearchProject()).toHashCode();
+        return new HashCodeBuilder().append(getIrb()).append(getIrbType()).append(getResearchProject()).toHashCode();
     }
 }

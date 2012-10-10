@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StateChange;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingLibraryAnnotation;
@@ -109,6 +110,16 @@ public abstract class LabVessel implements Starter {
 
     @Embedded
     private UserRemarks userRemarks;
+
+    @Transient
+    /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
+    private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
+
+    @Transient
+    /**
+     * marked transient because arz hasn't gotten far enough to turn on db for this
+     */
+    private Set<SampleMetadata> samples = new HashSet<SampleMetadata>();
 
     protected LabVessel(String label) {
         this.label = label;
@@ -525,4 +536,64 @@ public abstract class LabVessel implements Starter {
     public Set<LabBatch> getLabBatches() {
         return labBatches;
     }
+
+    /**
+     * Does this container know what it's sample metadata is?
+     * Or does it need to look back in the event graph?
+     * @return
+     */
+    public boolean hasSampleMetadata() {
+        throw new RuntimeException("not implemented");
+    }
+
+
+    /**
+     * Walk the chain of custody back until it can be
+     * walked no further.  What you get are the roots
+     * of the transfer graph.
+     * @return
+     */
+    public Collection<? extends LabVessel> getChainOfCustodyRoots() {
+        // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
+        return chainOfCustodyRoots;
+    }
+
+    public void setChainOfCustodyRoots(Collection<? extends LabVessel> roots) {
+        // todo this is just for experimental GPLIM-64...this method shouldn't ever
+        // be in production.
+        this.chainOfCustodyRoots = roots;
+    }
+
+    /**
+     * What {@link SampleMetadata samples} are contained in
+     * this container?  Implementations are expected to
+     * walk the transfer graph back to a point where
+     * they can lookup {@link SampleMetadata} from
+     * an external source like BSP or a spreadsheet
+     * uploaded for "walk up" sequencing.
+     * @return
+     */
+    public Set<SampleMetadata> getSamples() {
+        // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
+        // in reality, the implementation would walk back to all roots,
+        // detecting vessels along the way where hasSampleMetadata is true.
+        if (!samples.isEmpty()) {
+            return samples;
+        }
+        // else walk transfers
+        throw new RuntimeException("history traversal for empty samples list not implemented");
+
+    }
+
+    /**
+     * For vessels that have been pushed over from BSP, we set
+     * the list of samples.  Otherwise, the list of samples
+     * is empty and is derived from a walk through event history.
+     * @param samples
+     */
+    public void setSamples(Set<SampleMetadata> samples) {
+        this.samples = samples;
+    }
 }
+
+
