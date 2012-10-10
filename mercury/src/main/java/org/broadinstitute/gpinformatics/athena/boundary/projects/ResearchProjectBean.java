@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.enterprise.context.RequestScoped;
@@ -73,4 +72,5 @@ public class ResearchProjectBean {
         }
         return items;
     }
+
 }

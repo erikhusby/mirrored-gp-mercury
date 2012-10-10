@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<body>
+
+    <h:link outcome="/security/login" value="Athena"/>
+    &gt;
+    <h:link outcome="list" value="Research Projects"/>
+    &gt;
+    #{researchProjectDetail.project.title}
+
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">View Research Project</ui:define>
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
+                <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
+            </f:metadata>
+        </ui:define>
+        <ui:define name="body">
+
+            <h:form styleClass="view-horizontal">
+                <div class="control-group">
+                    <span class="control-label">Project:</span>
+                    <span class="controls">#{researchProjectDetail.project.title}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">ID:</span>
+                    <span class="controls">#{researchProjectDetail.project.jiraTicketKey}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">Synopsis:</span>
+                    <span class="controls">#{researchProjectDetail.project.synopsis}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">Project Managers: </span>
+                    <span class="controls">#{userListBean.getUserListString(researchProjectDetail.project.projectManagers)}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">Sponsoring Scientists: </span>
+                    <span class="controls">#{userListBean.getUserListString(researchProjectDetail.project.scientists)}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">Created:</span>
+                    <span class="controls">
+                        By #{researchProjectDetail.project.createdBy}
+                        on #{researchProjectDetail.project.createdDate}
+                    </span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">Funding Sources:</span>
+                    <span class="controls">#{researchProjectDetail.fundingSources}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">Sample Cohorts:</span>
+                    <span class="controls">#{researchProjectDetail.cohorts}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">IRB Engaged:</span>
+                    <span class="controls">#{researchProjectDetail.project.irbEngaged}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">IRB/IACUC:</span>
+                    <span class="controls">#{researchProjectDetail.irbNumberString}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">IRB/IACUC Notes:</span>
+                    <span class="controls">#{researchProjectDetail.project.irbNotes}</span>
+                </div>
+
+                <br/>
+
+                <p:selectOneMenu id="selectedStatus" value="">
+                    <f:selectItem itemLabel="Filter By Status" itemValue="" />
+                    <f:selectItems value="#{researchProjectDetail.statuses}" />
+                </p:selectOneMenu>
+
+                <p:dataTable value="#{researchProjectDetail.project.productOrders}" var="product">
+                    <p:column headerText="Product ID">
+                        <h:link outcome="product/detail" value="DMY-1">
+                            <f:param name="orderId" value="#{product.title}"/>
+                        </h:link>
+                    </p:column>
+                    <p:column headerText="Name">
+                        #{product.title}
+                    </p:column>
+                    <p:column headerText="Product">
+                        #{product.title}
+                    </p:column>
+                    <p:column headerText="Status">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Date Created">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Date Updated">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Samples">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Program PM">
+                        #{product.orderStatus}
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+
+            <h:form>
+                <p:commandButton value="Edit Project" action="create" ajax="false">
+                    <f:param name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}"/>
+                </p:commandButton>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+</body>
+</html>

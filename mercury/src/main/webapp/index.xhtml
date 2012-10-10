@@ -11,7 +11,12 @@
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">Home</ui:define>
         <ui:define name="body">
-            <p>Welcome to Athena</p>
+            <p>As a Project Manager, you can manage:</p>
+            <ul>
+                <li><h:link value="Research Projects" outcome="/projects/list"/></li>
+                <li>Product Orders</li>
+                <li>Products</li>
+            </ul>
         </ui:define>
     </ui:composition>
 </body>
