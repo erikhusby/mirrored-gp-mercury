@@ -27,6 +27,11 @@ a { text-decoration: underline; }
 /* Override PrimeFaces's Bootstrap theme opinion that links in widgets should be default text color. */
 .ui-widget-content a { color: #08C; }
 
+/* Make p:autoComplete's input field a little wider to fit longer watermarks. */
+.ui-autocomplete-multiple .ui-autocomplete-input-token input {
+    width: 160px;
+}
+
 /* Tighten vertical spacing of Bootstrap horizontal forms. */
 .form-horizontal .control-group {
     margin-bottom: 12px;
