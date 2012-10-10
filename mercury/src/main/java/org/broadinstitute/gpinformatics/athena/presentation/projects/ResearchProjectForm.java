@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -13,7 +14,7 @@ import java.util.List;
  */
 @Named
 @RequestScoped
-public class ResearchProjectForm {
+public class ResearchProjectForm extends AbstractJsfBean {
 
     @Inject
     private ResearchProjectDetail detail;
@@ -35,6 +36,10 @@ public class ResearchProjectForm {
 
     public void initForm() {
         irbNotEngaged = !detail.getProject().isIrbEngaged();
+    }
+
+    public String create() {
+        return redirect("list");
     }
 
     public List<Long> completeFundingSource(String query) {
