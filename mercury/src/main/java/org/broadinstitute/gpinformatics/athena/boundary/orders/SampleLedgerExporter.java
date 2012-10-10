@@ -17,8 +17,11 @@ import java.util.*;
  * This class creates a spreadsheet version of a product order's sample billing status, also called the sample
  * billing ledger.  The exported spreadsheet will later be imported after the user has updated the sample
  * billing information.
+ *
+ * A future version of this class will probably support both export and import, since there will be some common
+ * code & data structures.
  */
-public class SampleLedgerExport {
+public class SampleLedgerExporter {
 
     private final ProductOrder productOrder;
 
@@ -52,7 +55,7 @@ public class SampleLedgerExport {
         return style;
     }
 
-    public SampleLedgerExport(ProductOrder productOrder) {
+    public SampleLedgerExporter(ProductOrder productOrder) {
         this.productOrder = productOrder;
         // SXSSFWorkbook is used to support very large spreadsheets.  SXSSF writes 100 rows at a time to a
         // temporary file, which is then copied into the output stream when all spreadsheet data has been written.
@@ -85,49 +88,79 @@ public class SampleLedgerExport {
         return sampleStatus;
     }
 
+    private class Writer {
+        Row currentRow;
+        Cell currentCell;
+        int rowNum;
+        int cellNum;
+
+        private void nextRow() {
+            currentRow = sheet.createRow(rowNum++);
+            cellNum = 0;
+        }
+
+        private void nextCell() {
+            currentCell = currentRow.createCell(cellNum++);
+        }
+
+        void writePreamble(String preamble) {
+            nextRow();
+            writeCell(preamble, preambleStyle);
+        }
+
+        void writeCell(String value, CellStyle style) {
+            nextCell();
+            currentCell.setCellValue(value);
+            currentCell.setCellStyle(style);
+        }
+
+        void writeCell(String value) {
+            nextCell();
+            currentCell.setCellValue(value);
+        }
+
+        void writeCell(double value) {
+            nextCell();
+            currentCell.setCellValue(value);
+        }
+    }
+
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.
      * @param out the stream to write to
      * @throws IOException if the stream can't be written to
      */
     public void writeToStream(OutputStream out) throws IOException {
-        Row currentRow;
-        Cell currentCell;
-        int rowNum = 0;
-        int cellNum = 0;
+        Writer writer = new Writer();
 
         // Write preamble.
-        // FIXME: preamble will include non per-sample PDO data, such as PDO number, etc.
+        String preambleText = "Order: " + productOrder.getJiraTicketKey() +
+                              ", Title: " + productOrder.getTitle() +
+                              ", Product: " + productOrder.getProduct().getProductName();
+        writer.writePreamble(preambleText);
 
         // Write headers.
-        currentRow = sheet.createRow(rowNum++);
+        writer.nextRow();
         for (String header : FIXED_HEADERS) {
-            currentCell = currentRow.createCell(cellNum++);
-            currentCell.setCellValue(header);
-            currentCell.setCellStyle(headerStyle);
+            writer.writeCell(header, headerStyle);
         }
         for (PriceItem item : priceItems) {
-            currentCell = currentRow.createCell(cellNum++);
-            currentCell.setCellValue(item.getCategory() + " - " + item.getName());
-            currentCell.setCellStyle(headerStyle);
+            writer.writeCell(item.getCategory() + " - " + item.getName(), headerStyle);
         }
 
         // Write content.
         for (ProductOrderSample sample : productOrder.getSamples()) {
-            currentRow = sheet.createRow(rowNum++);
-            currentCell = currentRow.createCell(cellNum++);
-            currentCell.setCellValue(sample.getSampleName());
-            currentCell = currentRow.createCell(cellNum++);
-            currentCell.setCellValue(sample.getBillingStatus().getDisplayName());
+            writer.nextRow();
+            writer.writeCell(sample.getSampleName());
+            writer.writeCell(sample.getBillingStatus().getDisplayName());
 
             Map<PriceItem, BigDecimal> billCounts = getBillCounts(sample);
             for (PriceItem item : priceItems) {
-                currentCell = currentRow.createCell(cellNum++);
                 BigDecimal count = billCounts.get(item);
                 if (count != null) {
-                    currentCell.setCellValue(count.doubleValue());
+                    writer.writeCell(count.doubleValue());
                 } else {
-                    currentCell.setCellValue(NO_BILL_COUNT);
+                    writer.writeCell(NO_BILL_COUNT);
                 }
             }
         }

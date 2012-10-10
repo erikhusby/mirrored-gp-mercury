@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -34,7 +35,7 @@ public class ProductOrderSample implements Serializable {
     private String comment;
 
     @OneToMany(cascade = CascadeType.PERSIST)
-    private Set<BillableItem> billableItems;
+    private Set<BillableItem> billableItems = new HashSet<BillableItem>();
 
     @ManyToOne
     private ProductOrder productOrder;

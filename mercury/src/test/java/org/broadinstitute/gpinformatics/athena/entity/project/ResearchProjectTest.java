@@ -11,16 +11,20 @@ import org.testng.annotations.Test;
 /**
  * Simple test of the research project without any database connection
  */
-@Test(groups = {TestGroups.DATABASE_FREE})
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectTest {
 
-    private final static String RESEARCH_PROJ_JIRA_KEY = "RP-1";
+    private static final String RESEARCH_PROJ_JIRA_KEY = "RP-1";
 
     private ResearchProject researchProject;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        researchProject = new ResearchProject(1111L, "MyResearchProject", "To study stuff.");
+        researchProject  = createDummyResearchProject();
+    }
+
+    public static ResearchProject createDummyResearchProject() {
+        ResearchProject researchProject = new ResearchProject(1111L, "MyResearchProject", "To study stuff.");
 
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant"));
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO"));
@@ -30,9 +34,10 @@ public class ResearchProjectTest {
 
         researchProject.addPerson(RoleType.SCIENTIST, 111L);
         researchProject.addPerson(RoleType.SCIENTIST, 222L);
+        return researchProject;
     }
 
-    @Test(groups = {TestGroups.DATABASE_FREE})
+    @Test
     public void manageRPTest() {
         Assert.assertNotNull(researchProject.getPeople(RoleType.SCIENTIST));
         Assert.assertTrue(researchProject.getPeople(RoleType.PM).isEmpty());
@@ -73,8 +78,6 @@ public class ResearchProjectTest {
 
         Assert.assertNotNull(researchProject.getJiraTicketKey());
 
-        Assert.assertEquals(researchProject.getJiraTicketKey(),RESEARCH_PROJ_JIRA_KEY);
-
-
+        Assert.assertEquals(researchProject.getJiraTicketKey(), RESEARCH_PROJ_JIRA_KEY);
     }
 }
