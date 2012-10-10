@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex_;
 

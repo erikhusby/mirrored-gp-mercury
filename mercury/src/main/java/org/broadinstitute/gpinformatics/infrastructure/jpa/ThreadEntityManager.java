@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.control.dao;
+package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -14,12 +14,13 @@ import javax.persistence.PersistenceContextType;
  */
 @Stateful
 @RequestScoped
-public class AthenaThreadEntityManager {
+public class ThreadEntityManager {
     /** To avoid LazyInitialization exceptions in JSF pages, the persistence context is extended */
     @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "mercury_pu")
     private EntityManager entityManager;
 
     public EntityManager getEntityManager() {
+        // todo jmt find a way to set this in the configuration
         entityManager.setFlushMode(FlushModeType.COMMIT);
         return entityManager;
     }

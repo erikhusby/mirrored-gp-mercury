@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -15,11 +16,11 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
-public class ResearchProjectDao extends AthenaGenericDao {
+public class ResearchProjectDao extends GenericDao {
 
     @SuppressWarnings("unchecked")
     public List<ResearchProject> findResearchProjectsByOwner(long username) {
-        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
@@ -29,7 +30,7 @@ public class ResearchProjectDao extends AthenaGenericDao {
 
     @SuppressWarnings("unchecked")
     public ResearchProject findResearchProjectsByName(String name) {
-        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
@@ -39,7 +40,7 @@ public class ResearchProjectDao extends AthenaGenericDao {
 
     @SuppressWarnings("unchecked")
     public List<ResearchProject> findAllResearchProjects() {
-        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         criteriaQuery.from(ResearchProject.class);
@@ -47,7 +48,7 @@ public class ResearchProjectDao extends AthenaGenericDao {
     }
 
     public ResearchProject findById(Long rpId) {
-        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);

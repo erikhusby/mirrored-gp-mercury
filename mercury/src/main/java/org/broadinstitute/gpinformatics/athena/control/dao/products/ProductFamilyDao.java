@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.AthenaGenericDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -17,7 +17,7 @@ import javax.persistence.criteria.Root;
  */
 @Stateful
 @RequestScoped
-public class ProductFamilyDao extends AthenaGenericDao {
+public class ProductFamilyDao extends GenericDao {
 
 
     /**
@@ -30,7 +30,7 @@ public class ProductFamilyDao extends AthenaGenericDao {
 
         try {
 
-            EntityManager em = em();
+            EntityManager em = getEntityManager();
 
             CriteriaQuery<ProductFamily> criteriaQuery =
                     em.getCriteriaBuilder().createQuery(ProductFamily.class);
