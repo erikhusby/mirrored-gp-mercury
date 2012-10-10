@@ -49,7 +49,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
     }
 
 
-    @Test(/* enabled = false, */ groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void createTestData() {
 
         createProductFamilies();
