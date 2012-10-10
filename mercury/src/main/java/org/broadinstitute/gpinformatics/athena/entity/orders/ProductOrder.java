@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -25,12 +26,14 @@ import java.util.Set;
  *      Time: 10:25 AM
  */
 @Entity
+@Audited
+@Table(schema = "athena")
 public class ProductOrder implements Serializable {
 
     @Id
-    @SequenceGenerator(name="PRODUCT_ORDER_INDEX", sequenceName="PRODUCT_ORDER_INDEX", allocationSize = 1)
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="PRODUCT_ORDER_INDEX")
-    private Long id;
+    @SequenceGenerator(name="SEQ_PRODUCT_ORDER", schema = "athena", sequenceName="SEQ_PRODUCT_ORDER")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_PRODUCT_ORDER")
+    private Long productOrderId;
 
     @Column(unique = true)
     private String title;                       // Unique title for the order
@@ -45,7 +48,7 @@ public class ProductOrder implements Serializable {
     @Column(length = 2000)
     private String comments;                    // Additional comments of the order
     private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrder")
     private List<ProductOrderSample> sampleProducts;
 
 

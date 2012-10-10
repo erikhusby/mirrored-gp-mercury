@@ -49,7 +49,7 @@ public class VesselContainer<T extends LabVessel> {
     * striptube holds tubes, tubes can't be removed, don't have barcodes. */
     @ManyToMany(targetEntity = LabVessel.class, cascade = CascadeType.PERSIST)
     // have to specify name, generated name is too long for Oracle
-    @JoinTable(name = "lv_map_position_to_vessel")
+    @JoinTable(schema = "mercury", name = "lv_map_position_to_vessel")
     @MapKeyEnumerated(EnumType.STRING)
     // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")

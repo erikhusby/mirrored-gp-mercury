@@ -14,12 +14,14 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 /**
  * Represents a transfer from a tube to all positions (wells) in a (plate) section
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class VesselToSectionTransfer extends VesselTransfer {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)

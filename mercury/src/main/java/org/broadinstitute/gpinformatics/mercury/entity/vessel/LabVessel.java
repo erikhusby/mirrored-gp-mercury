@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingLibrar
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
+import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
@@ -51,13 +52,13 @@ import java.util.logging.Logger;
  */
 @Entity
 @Audited
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
 @BatchSize(size = 50)
 public abstract class LabVessel implements Starter {
 
     private final static Logger logger = Logger.getLogger(LabVessel.class.getName());
 
-    @SequenceGenerator(name = "SEQ_LAB_VESSEL", sequenceName = "SEQ_LAB_VESSEL")
+    @SequenceGenerator(name = "SEQ_LAB_VESSEL", schema = "mercury",  sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
     @Id
     private Long labVesselId;
@@ -66,7 +67,8 @@ public abstract class LabVessel implements Starter {
 
     private Date createdOn;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
+    @JoinTable(schema = "mercury")
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -79,6 +81,7 @@ public abstract class LabVessel implements Starter {
     private LabVessel projectAuthority;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury")
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -87,7 +90,7 @@ public abstract class LabVessel implements Starter {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(name = "lv_reagent_contents")
+    @JoinTable(schema = "mercury", name = "lv_reagent_contents")
     private Set<Reagent> reagentContents = new HashSet<Reagent>();
 
     /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
@@ -97,6 +100,7 @@ public abstract class LabVessel implements Starter {
     private Integer reagentContentsCount = 0;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury")
     private Set<LabVessel> containers = new HashSet<LabVessel>();
 
     /** Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to

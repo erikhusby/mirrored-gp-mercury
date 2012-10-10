@@ -4,6 +4,7 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 
@@ -12,12 +13,14 @@ import javax.persistence.*;
  * stores a single role for a person in a project. The person/project/role should be unique within this
  */
 @Entity
+@Audited
+@Table(schema = "athena")
 public class ProjectPerson {
 
     @Id
-    @SequenceGenerator(name="seq_project_person_index", sequenceName="seq_project_person_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_project_person_index", schema = "athena", sequenceName="seq_project_person_index")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_project_person_index")
-    private Long id;
+    private Long projectPersonId;
 
     @ManyToOne
     @Index(name = "ix_person_project")
@@ -34,12 +37,12 @@ public class ProjectPerson {
         this.personId = personId;
     }
 
-    public Long getId() {
-        return id;
+    public Long getProjectPersonId() {
+        return projectPersonId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setProjectPersonId(Long id) {
+        this.projectPersonId = id;
     }
 
     public ResearchProject getResearchProject() {

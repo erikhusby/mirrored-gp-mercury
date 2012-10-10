@@ -28,9 +28,10 @@ import java.util.Set;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public abstract class StartingSample implements Starter {
 
-    @SequenceGenerator(name = "SEQ_STARTING_SAMPLE", sequenceName = "SEQ_STARTING_SAMPLE")
+    @SequenceGenerator(name = "SEQ_STARTING_SAMPLE", schema = "mercury", sequenceName = "SEQ_STARTING_SAMPLE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_STARTING_SAMPLE")
     @Id
     private Long sampleId;

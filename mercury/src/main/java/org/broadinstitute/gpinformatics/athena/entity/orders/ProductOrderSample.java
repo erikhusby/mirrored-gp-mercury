@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -20,20 +21,22 @@ import java.util.regex.Pattern;
  * Time: 10:26 AM
  */
 @Entity
+@Audited
+@Table(schema = "athena")
 public class ProductOrderSample implements Serializable {
 
     @Id
-    @SequenceGenerator(name="ORDER_SAMPLE_INDEX", sequenceName="ORDER_SAMPLE_INDEX", allocationSize = 1)
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="ORDER_SAMPLE_INDEX")
-    private Long id;
+    @SequenceGenerator(name="SEQ_ORDER_SAMPLE", schema = "athena", sequenceName="SEQ_ORDER_SAMPLE")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_ORDER_SAMPLE")
+    private Long productOrderSampleId;
 
     public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
     static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
     private BillingStatus billingStatus = BillingStatus.NotYetBilled;
-    private String comment;
+    private String sampleComment;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrderSample")
     private Set<BillableItem> billableItems;
 
     @ManyToOne
@@ -73,12 +76,12 @@ public class ProductOrderSample implements Serializable {
         this.billingStatus = billingStatus;
     }
 
-    public String getComment() {
-        return comment;
+    public String getSampleComment() {
+        return sampleComment;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setSampleComment(String comment) {
+        this.sampleComment = comment;
     }
 
     private BSPSampleDTO getBspDTO() {
@@ -236,7 +239,7 @@ public class ProductOrderSample implements Serializable {
             return false;
         if (billingStatus != that.billingStatus) return false;
         if (bspDTO != null ? !bspDTO.equals(that.bspDTO) : that.bspDTO != null) return false;
-        if (comment != null ? !comment.equals(that.comment) : that.comment != null) return false;
+        if (sampleComment != null ? !sampleComment.equals(that.sampleComment) : that.sampleComment != null) return false;
         if (!productOrder.equals(that.productOrder)) return false;
         if (!sampleName.equals(that.sampleName)) return false;
 
@@ -247,7 +250,7 @@ public class ProductOrderSample implements Serializable {
     public int hashCode() {
         int result = sampleName.hashCode();
         result = 31 * result + billingStatus.hashCode();
-        result = 31 * result + (comment != null ? comment.hashCode() : 0);
+        result = 31 * result + (sampleComment != null ? sampleComment.hashCode() : 0);
         result = 31 * result + (billableItems != null ? billableItems.hashCode() : 0);
         result = 31 * result + productOrder.hashCode();
         result = 31 * result + (bspDTO != null ? bspDTO.hashCode() : 0);

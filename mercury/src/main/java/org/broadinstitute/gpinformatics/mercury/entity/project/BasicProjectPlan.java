@@ -12,6 +12,7 @@ import org.hibernate.envers.Audited;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.*;
 
@@ -34,6 +35,7 @@ import java.util.*;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class BasicProjectPlan extends ProjectPlan {
 
     protected String planName;

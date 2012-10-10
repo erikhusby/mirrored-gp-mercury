@@ -11,6 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 /**
  * Some chemistry bits applied to {@link Goop} to help
@@ -26,10 +27,11 @@ import javax.persistence.SequenceGenerator;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public abstract class Reagent implements Containable {
 
     @Id
-    @SequenceGenerator(name = "SEQ_REAGENT", sequenceName = "SEQ_REAGENT")
+    @SequenceGenerator(name = "SEQ_REAGENT", schema = "mercury", sequenceName = "SEQ_REAGENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT")
     private Long reagentId;
 

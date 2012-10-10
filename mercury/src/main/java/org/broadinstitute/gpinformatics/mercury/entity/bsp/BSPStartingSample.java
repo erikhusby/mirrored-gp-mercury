@@ -18,6 +18,7 @@ import javax.naming.NamingException;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -29,6 +30,7 @@ import java.util.Set;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 @NamedQueries({
         @NamedQuery(
                 name = "BSPStartingSample.fetchBySampleName",

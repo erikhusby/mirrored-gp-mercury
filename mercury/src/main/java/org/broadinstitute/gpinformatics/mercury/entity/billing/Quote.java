@@ -6,6 +6,7 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.Collection;
 
@@ -16,6 +17,7 @@ import java.util.Collection;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class Quote {
 
     @Transient

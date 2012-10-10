@@ -7,10 +7,12 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import java.util.Date;
 
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class StatusNote {
 
     @Id

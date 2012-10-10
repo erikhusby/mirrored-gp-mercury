@@ -2,11 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -23,9 +22,7 @@ public class TwoDBarcodedTubeDAO extends GenericDao {
         for (String barcode : barcodes) {
             mapBarcodeToTube.put(barcode, null);
         }
-        Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery("TwoDBarcodedTube.fetchByBarcodes");
-        @SuppressWarnings("unchecked")
-        List<TwoDBarcodedTube> results = (List<TwoDBarcodedTube>) query.setParameter("barcodes", barcodes).getResultList();
+        List<TwoDBarcodedTube> results = findListByList(TwoDBarcodedTube.class, TwoDBarcodedTube_.label, barcodes);
         for (TwoDBarcodedTube result : results) {
             mapBarcodeToTube.put(result.getLabel(), result);
         }
@@ -33,13 +30,6 @@ public class TwoDBarcodedTubeDAO extends GenericDao {
     }
 
     public TwoDBarcodedTube findByBarcode(String barcode) {
-        TwoDBarcodedTube twoDBarcodedTube = null;
-        try {
-            twoDBarcodedTube = (TwoDBarcodedTube) this.getThreadEntityManager().getEntityManager().
-                    createNamedQuery("TwoDBarcodedTube.fetchByBarcode").
-                    setParameter("barcode", barcode).getSingleResult();
-        } catch (NoResultException ignored) {
-        }
-        return twoDBarcodedTube;
+        return findSingle(TwoDBarcodedTube.class, TwoDBarcodedTube_.label, barcode);
     }
 }

@@ -47,7 +47,7 @@ public class IlluminaRunResourceTest extends ContainerTest {
     public static final String BSP_HUMAN = "Homo : Homo sapiens";
 
     @Deployment
-    public static WebArchive buildSequelWar() {
+    public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class,
                 MockThriftService.class)
                 .addAsResource(ThriftFileAccessor.RUN_FILE);

@@ -154,7 +154,7 @@ public class ProductOrderTest {
         String [] sampleArray = sampleListStr.split(",");
         for ( String sampleName : sampleArray) {
             ProductOrderSample productOrderSample = new ProductOrderSample(sampleName);
-            productOrderSample.setComment("athenaComment");
+            productOrderSample.setSampleComment("athenaComment");
             for ( BillableItem billableItem : billableItems ) {
                 productOrderSample.addBillableItem(billableItem);
             }
