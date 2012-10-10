@@ -182,6 +182,12 @@ public class ProductOrder implements Serializable {
         this.jiraTicketKey = jiraTicketKeyIn;
     }
 
+    /**
+     * getUniqueParticipantCount provides the summation of all unique participants represented in the list of samples
+     * registered to this product order
+     * @return a count of every participant that is represented by at least one sample in the list of product order
+     * samples
+     */
     public int getUniqueParticipantCount() {
         Set<String> uniqueParticipants = new HashSet<String>();
 
@@ -214,6 +220,13 @@ public class ProductOrder implements Serializable {
         return uniqueSamples.size();
     }
 
+    /**
+     * getUniqueSampleNames provides a collection that contains the names of each sample that is represented by at least
+     * one sample that is registered to this product order
+     *
+     * @return a Set of unique Sample name which are represented in the list of samples registered to this product
+     * order
+     */
     private Set<String> getUniqueSampleNames() {
         Set<String> uniqueSamples = new HashSet<String>();
         for ( ProductOrderSample productOrderSample : sampleProducts) {
@@ -225,14 +238,30 @@ public class ProductOrder implements Serializable {
         return uniqueSamples;
     }
 
+    /**
+     * getTotalSampleCount exposes how many samples are registered to this product order
+     *
+     * @return a count of all samples registered to this product order
+     */
     public int getTotalSampleCount() {
         return sampleProducts.size();
     }
 
+    /**
+     * getDuplicateCount exposes how many samples registered to this product order are represented by more than one
+     * sample in the list
+     *
+     * @return a count of all samples that have more than one entry in the registered sample list
+     */
     public int getDuplicateCount() {
         return ( getTotalSampleCount() - getUniqueSampleCount());
     }
 
+    /**
+     * getBspSampleCount exposes how many of the samples, which are registered to this product order, are from BSP
+     *
+     * @return a count of all product order samples that come from bsp
+     */
     public int getBspSampleCount() {
         int count = 0;
 
@@ -245,12 +274,17 @@ public class ProductOrder implements Serializable {
         return count;
     }
 
+    /**
+     *
+     *
+     * @return
+     */
     public TumorNormalCount getTumorNormalCounts() {
 
         TumorNormalCount counts =
                 new TumorNormalCount(
-                        getGenderCount(BSPSampleDTO.TUMOR_IND),
-                        getGenderCount(BSPSampleDTO.NORMAL_IND)
+                        getSampleTypeCount(BSPSampleDTO.TUMOR_IND),
+                        getSampleTypeCount(BSPSampleDTO.NORMAL_IND)
                 );
         return counts;
     }
@@ -274,70 +308,109 @@ public class ProductOrder implements Serializable {
         return counts;
     }
 
-    public Integer getFingerprintCount() {
+    public Integer getFingerprintCount () {
 
         int fpCount = 0;
 
         for ( ProductOrderSample productOrderSample : sampleProducts ) {
-            if (productOrderSample.hasFootprint()) {
+            if ( productOrderSample.isInBspFormat () &&
+                    productOrderSample.hasFootprint()) {
                 fpCount++;
             }
         }
         return fpCount;
     }
 
-    public Map<String, Integer> getCountsByStockType() {
+    /**
+     * getCountsByStockType exposes the summation of each unique stock type found in the list of samples registered to
+     * this product order
+     *
+     * @return a Map, indexed by the unique stock type found, which gives a count of how many samples in the list of
+     * product order samples, are related to that stock type
+     */
+    public Map<String, Integer> getCountsByStockType () {
 
         Map<String, Integer> stockTypeCounts = new HashMap<String, Integer>();
 
         for(ProductOrderSample sample : sampleProducts) {
-            if(!stockTypeCounts.containsKey(sample.getStockType())) {
-                stockTypeCounts.put(sample.getStockType(), 0);
+            if(sample.isInBspFormat () ) {
+                if(!stockTypeCounts.containsKey(sample.getStockType())) {
+                    stockTypeCounts.put(sample.getStockType(), 0);
+                }
+                stockTypeCounts.put(sample.getStockType(), stockTypeCounts.get(sample.getStockType() + 1));
             }
-            stockTypeCounts.put(sample.getStockType(), stockTypeCounts.get(sample.getStockType() + 1));
         }
 
         return stockTypeCounts;
     }
 
-    public Integer getPrimaryDiseaseCount() {
-        List<String> uniqueDiseases = new LinkedList<String>();
+    /**
+     * getPrimaryDiseaseCount exposes the summation of each unique disease found in the list of samples registered to
+     * this product order
+     *
+     * @return a Map, indexed by the unique disease found, which gives a count of how many samples in the list of
+     * product order samples, are related to that disease.
+     */
+    public Map<String, Integer> getPrimaryDiseaseCount() {
+        Map<String, Integer> uniqueDiseases = new HashMap<String, Integer>();
 
         for(ProductOrderSample sample: sampleProducts) {
-            if(!uniqueDiseases.contains(sample.getDisease())) {
-                uniqueDiseases.add(sample.getDisease());
+            if(sample.isInBspFormat ()) {
+                if(!uniqueDiseases.containsKey(sample.getDisease())) {
+                    uniqueDiseases.put(sample.getDisease(),0);
+                }
+                uniqueDiseases.put(sample.getDisease(), uniqueDiseases.get(sample.getDisease()) +1);
             }
         }
 
-        return uniqueDiseases.size();
+        return uniqueDiseases;
     }
 
-    private Integer getGenderCount(final String gender) {
+    /**
+     * getGenderCount is a helper method to exposed the sum of all samples, registered to this product order, based on
+     * a given gender
+     * @param gender A string that represents the gender for which we wish to get a count
+     * @return a count of all samples for whom the participant's gener matches the one given
+     */
+    private Integer getGenderCount (String gender) {
 
         int counter = 0;
-        for(ProductOrderSample sample:sampleProducts) {
-            if(gender.equals(sample.getGender())) {
+        for (ProductOrderSample sample:sampleProducts) {
+            if (sample.isInBspFormat () && gender.equals (sample.getGender ())) {
                 counter++;
             }
         }
         return counter;
     }
 
-    private Integer getSampleTypeCount(final String sampleTypeInd) {
+    /**
+     * getSampleTypeCount is a helper method to expose the sum of all samples, registered to this product order,
+     * based on a given sample type
+     *
+     * @param sampleTypeInd a String representing the type of sample for which we wish to get a count
+     * @return a count of all samples that have a sample type matching the value passed in.
+     */
+    private Integer getSampleTypeCount (String sampleTypeInd) {
         int counter = 0;
-        for(ProductOrderSample sample:sampleProducts) {
-            if(sampleTypeInd.equals(sample.getSampleType())) {
+        for (ProductOrderSample sample:sampleProducts) {
+            if (sample.isInBspFormat () && sampleTypeInd.equals (sample.getSampleType ())) {
                 counter++;
             }
         }
         return counter;
     }
 
-    public Integer getReceivedSampleCount() {
+    /**
+     * getReceivedSampleCount is a helper method that determines how many BSP samples registered to this product order
+     * are marked as Received
+     *
+     * @return a count of all samples in this product order that are in a RECEIVED state
+     */
+    public Integer getReceivedSampleCount () {
         int counter = 0;
 
-        for(ProductOrderSample sample:sampleProducts) {
-            if(sample.isSampleReceived()) {
+        for (ProductOrderSample sample:sampleProducts) {
+            if (sample.isInBspFormat () && sample.isSampleReceived ()) {
                 counter++;
             }
         }
@@ -345,10 +418,16 @@ public class ProductOrder implements Serializable {
         return counter;
     }
 
-    public Integer getActiveSampleCount() {
+    /**
+     * getActiveSampleCount is a helper method that determines how many BSP samples registered to the product order are
+     * in an Active state
+     *
+     * @return a count of all samples in this product order that are in an ACTIVE state
+     */
+    public Integer getActiveSampleCount () {
         int counter = 0;
-        for(ProductOrderSample sample:sampleProducts) {
-            if(sample.isActiveStock()) {
+        for (ProductOrderSample sample:sampleProducts) {
+            if (sample.isInBspFormat() && sample.isActiveStock()) {
                 counter++;
             }
         }
@@ -356,6 +435,17 @@ public class ProductOrder implements Serializable {
         return counter;
     }
 
+    /**
+     * submitProductOrder encapsulates the set of steps necessary to finalize the submission of a product order.
+     * This mainly deals with jira ticket creation.  This method will:
+     * <ul>
+     *     <li>Create a new jira ticket and persist the reference to the ticket key</li>
+     *     <li>assign the submitter as a watcher to the ticket</li>
+     *     <li>Add a new comment listing all Samples contained within the order</li>
+     *     <li>Add any validation comments regarding the Samples contained within the order</li>
+     * </ul>
+     * @throws IOException
+     */
     public void submitProductOrder() throws IOException{
 
         Map<String, CustomFieldDefinition> submissionFields =
@@ -381,18 +471,22 @@ public class ProductOrder implements Serializable {
 
         addPublicComment("Sample List: "+StringUtils.join(getUniqueSampleNames(), ','));
 
-        StringBuilder buildValidationComments = new StringBuilder();
-
-
         /**
          * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
          */
-        addWatcher(createdBy.toString());
+//        addWatcher(createdBy.toString());
 
-        sampleValidationComments(buildValidationComments);
+        sampleValidationComments();
     }
 
-    public void sampleValidationComments(StringBuilder buildValidationCommentsIn) throws IOException {
+    /**
+     * sampleValidationComments is a helper method encapsulating the validations run against the samples contained
+     * within this product order.  The results of these validation checks are then added to the existing Jira Ticket
+     *
+     * @throws IOException
+     */
+    public void sampleValidationComments() throws IOException {
+        StringBuilder buildValidationCommentsIn = new StringBuilder();
         if(getBspNonBspSampleCounts().getBspSampleCount() == getTotalSampleCount()) {
             buildValidationCommentsIn.append("All Samples are BSP Samples");
             buildValidationCommentsIn.append("\n");
@@ -422,7 +516,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * Returns true is any and all samples are of BSP Format.
+     * Returns true if any and all samples are of BSP Format.
      * Note will return false if there are no samples on the sheet.
      * @return
      */
@@ -441,10 +535,19 @@ public class ProductOrder implements Serializable {
         return result;
     }
 
+    /**
+     * isSheetEmpty validates the existence of samples in the product order
+     * @return true if there are no samples currently assigned to this product order
+     */
     private boolean isSheetEmpty() {
         return (sampleProducts == null ) ||  sampleProducts.isEmpty();
     }
 
+    /**
+     * needsBspMetaData validates the State of all samples registered to this project order.
+     * @return true in the case that at least one sample in the product order list is deemed a BSP sample and does not
+     * have the necessary BSP meta data associated with it.
+     */
     private boolean needsBspMetaData() {
         boolean needed = false;
         if (! isSheetEmpty() ) {
@@ -459,6 +562,11 @@ public class ProductOrder implements Serializable {
         return needed;
     }
 
+    /**
+     * updateBspMetaData is a helper method that will update the BSP eta data of all samples registered to this product
+     * order that are represented in the given Map
+     * @param derivedMetaData a map of BSP metadata indexed by the sample name
+     */
     private void updateBspMetaData(Map<String, BSPSampleDTO> derivedMetaData) {
         for(ProductOrderSample sample:getSampleProducts()) {
             if(derivedMetaData.containsKey(sample.getSampleName())) {

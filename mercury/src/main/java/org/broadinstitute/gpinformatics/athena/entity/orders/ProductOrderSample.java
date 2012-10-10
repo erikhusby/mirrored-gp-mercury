@@ -55,11 +55,6 @@ public class ProductOrderSample implements Serializable {
         this.sampleName = sampleName;
     }
 
-//    public OrderSample(String sampleName, BSPSampleDTO bspDTO) {
-//        this.sampleName = sampleName;
-//        this.bspDTO = bspDTO;
-//    }
-
 
     public ProductOrderSample(final String sampleName, final BSPSampleDTO bspDTO, final ProductOrder productOrder) {
         this.sampleName = sampleName;
