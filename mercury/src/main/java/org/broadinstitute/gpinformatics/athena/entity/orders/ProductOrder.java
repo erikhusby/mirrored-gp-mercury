@@ -364,11 +364,11 @@ public class ProductOrder implements Serializable {
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
         listOfFields.add(
-                new CustomField(submissionFields.get(RequiredSubmissionFields.PRODUCT_FAMILY),
+                new CustomField(submissionFields.get(RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()),
                                 this.product.getProductFamily()));
 
         if(quoteId != null && !quoteId.isEmpty()) {
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.QUOTE_ID),
+            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.QUOTE_ID.getFieldName()),
                             this.quoteId));
         }
 
@@ -389,24 +389,28 @@ public class ProductOrder implements Serializable {
          */
         addWatcher(createdBy.toString());
 
+        sampleValidationComments(buildValidationComments);
+    }
+
+    public void sampleValidationComments(StringBuilder buildValidationCommentsIn) throws IOException {
         if(getBspNonBspSampleCounts().getBspSampleCount() == getTotalSampleCount()) {
-            buildValidationComments.append("All Samples are BSP Samples");
-            buildValidationComments.append("\n");
-            buildValidationComments.append(String.format("%i of %i Samples are in RECEIVED state",
+            buildValidationCommentsIn.append("All Samples are BSP Samples");
+            buildValidationCommentsIn.append("\n");
+            buildValidationCommentsIn.append(String.format("%i of %i Samples are in RECEIVED state",
                                                          getReceivedSampleCount(), getTotalSampleCount()));
-            buildValidationComments.append("\n");
-            buildValidationComments.append(String.format("%i of %i Samples are Active stock",
+            buildValidationCommentsIn.append("\n");
+            buildValidationCommentsIn.append(String.format("%i of %i Samples are Active stock",
                                                          getActiveSampleCount(), getTotalSampleCount()));
         } else if(getBspNonBspSampleCounts().getBspSampleCount() != 0 &&
                 getBspNonBspSampleCounts().getNonBspSampleCount() != 0) {
-            buildValidationComments.append(String.format("Of %i Samples, %i are BSP samples and %i are non-BSP",
+            buildValidationCommentsIn.append(String.format("Of %i Samples, %i are BSP samples and %i are non-BSP",
                                                          getTotalSampleCount(),getBspNonBspSampleCounts().getBspSampleCount(),
                                                          getBspNonBspSampleCounts().getNonBspSampleCount()));
         } else {
-            buildValidationComments.append("None of the samples come from BSP") ;
+            buildValidationCommentsIn.append("None of the samples come from BSP") ;
         }
 
-        addPublicComment(buildValidationComments.toString());
+        addPublicComment(buildValidationCommentsIn.toString());
     }
 
     public void addPublicComment(String comment) throws IOException{
