@@ -27,16 +27,38 @@ public class ResearchProjectResource {
         return findRPByTitle(researchProjectTitle);
     }
 
+    @GET
+    @Path("{researchProjectTitle}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public ResearchProject findResearchProjectById(@PathParam("researchProjectId") String researchProjectId) {
+        return findRPById(researchProjectId);
+    }
+
     private ResearchProject findRPByTitle(String researchProjectTitle) {
         // Check for content
         if (researchProjectTitle == null) {
-            throw new RuntimeException("ResearchProject Id is invalid.");
+            throw new RuntimeException("ResearchProject title is invalid.");
         }
 
         // Try to find research project by number
         ResearchProject researchProject = researchProjectDao.findByTitle(researchProjectTitle);
         if (researchProject == null) {
             throw new RuntimeException("Could not retrieve research project with id " + researchProjectTitle);
+        }
+
+        return researchProject;
+    }
+
+    private ResearchProject findRPById(String rpId) {
+        // Check for content
+        if (rpId == null) {
+            throw new RuntimeException("ResearchProject Id is invalid.");
+        }
+
+        // Try to find research project by number
+        ResearchProject researchProject = researchProjectDao.findByJiraTicketKey(rpId);
+        if (researchProject == null) {
+            throw new RuntimeException("Could not retrieve research project with id " + rpId);
         }
 
         return researchProject;

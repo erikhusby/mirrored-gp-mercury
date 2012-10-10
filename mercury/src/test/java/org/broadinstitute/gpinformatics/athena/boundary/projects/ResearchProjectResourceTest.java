@@ -46,6 +46,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
             testTitle = "MyResearchProject_" + UUID.randomUUID();
             ResearchProject researchProject =
                     new ResearchProject(TEST_CREATOR, testTitle, "To study stuff.", ResearchProject.IRB_NOT_ENGAGED);
+            researchProject.setJiraTicketKey(testTitle);
 
             researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant_" + UUID.randomUUID()));
             researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO_" + UUID.randomUUID()));
@@ -75,7 +76,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindResearchProjectById() throws Exception {
-        ResearchProject researchProject = researchProjectResource.findResearchProjectByTitle(testTitle);
+        ResearchProject researchProject = researchProjectResource.findResearchProjectById(testTitle);
         Assert.assertNotNull(researchProject);
         Assert.assertNotNull(researchProject.getTitle());
         Assert.assertEquals(researchProject.getTitle(), testTitle);
