@@ -46,12 +46,12 @@ public class ResearchProjectDao extends AthenaGenericDao {
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 
-    public ResearchProject findById(Long rpId) {
+    public ResearchProject findByJiraTicketKey(String jiraTicketKey) {
         EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
         CriteriaQuery<ResearchProject> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
         Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.researchProjectId), rpId));
+        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.jiraTicketKey), jiraTicketKey));
         return entityManager.createQuery(criteriaQuery).getSingleResult();
     }
 

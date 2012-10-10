@@ -48,4 +48,15 @@
                 columnName="irb_not_engaged"
                 defaultNullValue="0" />
     </changeSet>
+
+    <changeSet id="GPLIM-65-3" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="research_project" indexName="ix_rp_jira" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="research_project" indexName="ix_rp_jira" schemaName="athena">
+            <column name="jira_ticket_key"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>

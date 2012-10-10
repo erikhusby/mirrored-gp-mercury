@@ -57,24 +57,25 @@ public class ResearchProject {
     private boolean irbNotEngaged = IRB_ENGAGED;
 
     // People related to the project
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "researchProject")
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private Set<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
-    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private Set<ResearchProjectCohort> sampleCohorts;
 
-    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private Set<ResearchProjectFunding> projectFunding;
 
-    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private Set<ResearchProjectIRB> irbNumbers;
 
     private String irbNotes;
 
-    @OneToMany(mappedBy = "researchProject", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private List<ProductOrder> productOrders;
 
+    @Index(name = "ix_rp_jira")
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
     /**
@@ -372,11 +373,11 @@ public class ResearchProject {
         }
 
         ResearchProject castOther = (ResearchProject) other;
-        return new EqualsBuilder().append(getTitle(), castOther.getTitle()).isEquals();
+        return new EqualsBuilder().append(getJiraTicketKey(), castOther.getJiraTicketKey()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getTitle()).toHashCode();
+        return new HashCodeBuilder().append(getJiraTicketKey()).toHashCode();
     }
 }
