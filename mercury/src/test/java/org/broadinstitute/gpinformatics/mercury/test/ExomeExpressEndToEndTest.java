@@ -7,19 +7,12 @@ import org.broadinstitute.gpinformatics.mercury.boundary.Sample;
 import org.broadinstitute.gpinformatics.mercury.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.gpinformatics.mercury.boundary.designation.LibraryRegistrationSOAPServiceProducer;
 import org.broadinstitute.gpinformatics.mercury.boundary.designation.RegistrationJaxbConverter;
-import org.broadinstitute.gpinformatics.mercury.boundary.pass.PassServiceProducer;
-import org.broadinstitute.gpinformatics.mercury.boundary.pass.PassTestDataProducer;
-import org.broadinstitute.gpinformatics.mercury.boundary.pmbridge.PMBridgeService;
-import org.broadinstitute.gpinformatics.mercury.boundary.pmbridge.PMBridgeServiceProducer;
-import org.broadinstitute.gpinformatics.mercury.boundary.pmbridge.data.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.control.pass.PassBatchUtil;
-import org.broadinstitute.gpinformatics.mercury.control.pass.PassService;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.zims.LibraryBeanFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
@@ -70,9 +63,9 @@ public class ExomeExpressEndToEndTest {
 
     private LibraryRegistrationSOAPService registrationSOAPService = LibraryRegistrationSOAPServiceProducer.stubInstance();
 
-    private PMBridgeService pmBridgeService = PMBridgeServiceProducer.stubInstance();
+//    private PMBridgeService pmBridgeService = PMBridgeServiceProducer.stubInstance();
 
-    private PassService passService = PassServiceProducer.stubInstance();
+//    private PassService passService = PassServiceProducer.stubInstance();
 
     // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
     // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
@@ -92,10 +85,10 @@ public class ExomeExpressEndToEndTest {
     @Test(groups = {DATABASE_FREE}, enabled = true)
     public void testAll() throws Exception {
 
-        DirectedPass directedPass = PassTestDataProducer.produceDirectedPass();
+        DirectedPass directedPass = null; //PassTestDataProducer.produceDirectedPass();
 
         // unconditionally forward all PASSes to Squid for storage
-        passService.storePass(directedPass);
+//        passService.storePass(directedPass);
 
         // if this is an EE pass take it through the Mercury process:
         if (true /* R3_725 directedPass.isExomeExpress() */) {
@@ -107,9 +100,9 @@ public class ExomeExpressEndToEndTest {
             // labBatch
             // Project
 
-            ResearchProject researchProject = null;
-            if (directedPass.getResearchProject() != null)
-                researchProject = pmBridgeService.getResearchProjectByID(directedPass.getResearchProject());
+//            ResearchProject researchProject = null;
+//            if (directedPass.getResearchProject() != null)
+//                researchProject = pmBridgeService.getResearchProjectByID(directedPass.getResearchProject());
 
 
             //TODO SGM: change this to PassBackedProjectPlan
@@ -159,7 +152,7 @@ public class ExomeExpressEndToEndTest {
             Assert.assertEquals(workflowAnnotations.size(), 1);
 
             // create batches for the pass.  todo add more samples to the pass.
-            Collection<LabBatch> labBatches = PassBatchUtil.createBatches(projectPlan, 2, "TESTBatch");
+            Collection<LabBatch> labBatches = null;//PassBatchUtil.createBatches(projectPlan, 2, "TESTBatch");
             Assert.assertFalse(labBatches.isEmpty());
             Assert.assertEquals(labBatches.size(), 1);
 
