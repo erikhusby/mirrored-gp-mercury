@@ -32,6 +32,8 @@ public class ProductOrderSample implements Serializable {
 
     public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
     static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
+
+    @Column(nullable = false)
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
     private BillingStatus billingStatus = BillingStatus.NotYetBilled;
     private String sampleComment;

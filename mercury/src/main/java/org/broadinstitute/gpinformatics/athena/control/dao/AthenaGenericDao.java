@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.ejb.Stateful;
@@ -53,5 +54,10 @@ public class AthenaGenericDao {
     public void delete(ResearchProject researchProject) {
         EntityManager entityManager = AthenaThreadEntityManager.getEntityManager();
         entityManager.remove(researchProject);
+    }
+
+    public void delete(ProductOrder productOrder) {
+        EntityManager entityManager = AthenaThreadEntityManager.getEntityManager();
+        entityManager.remove(productOrder);
     }
 }

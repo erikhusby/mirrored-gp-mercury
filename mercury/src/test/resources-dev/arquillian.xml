@@ -4,12 +4,29 @@
     xsi:schemaLocation="http://jboss.org/schema/arquillian
     http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
 
-    <container qualifier="remote-glassfish" default="true">
+    <!--<container qualifier="remote-glassfish" default="true">-->
+        <!--<configuration>-->
+            <!--<property name="adminHost">localhost</property>-->
+            <!--&lt;!&ndash;<property name="adminHttps">true</property>&ndash;&gt;-->
+            <!--&lt;!&ndash;<property name="adminUser">admin</property>&ndash;&gt;-->
+            <!--&lt;!&ndash;<property name="adminPassword">admin</property>&ndash;&gt;-->
+        <!--</configuration>-->
+    <!--</container>-->
+
+    <!--<container qualifier="jbossas-7-managed" default="true">-->
+        <!--<configuration>-->
+            <!--&lt;!&ndash;<property name="jbossHome">target/jboss-as-7.0.2.Final</property>&ndash;&gt;-->
+            <!--<property name="managementAddress">${jboss.managementAddress}</property>-->
+            <!--<property name="managementPort">${jboss.managementPort}</property>-->
+            <!--<property name="username">${jboss.username}</property>-->
+            <!--<property name="password">${jboss.password}</property>-->
+        <!--</configuration>-->
+    <!--</container>-->
+
+    <!---->
+    <container qualifier="dev" default="true">
         <configuration>
-            <property name="adminHost">localhost</property>
-            <!--<property name="adminHttps">true</property>-->
-            <!--<property name="adminUser">admin</property>-->
-            <!--<property name="adminPassword">admin</property>-->
+            <property name="jbossHome">/Users/mccrory/Downloads/jboss-as-7.1.1.Final</property>
         </configuration>
     </container>
 
