@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -107,26 +108,8 @@ public class BSPStartingSample extends StartingSample {
      * Initialize the BSP DTO by calling the BSP web service
      */
     private void initDto() {
-        // todo jmt an entity calling a service is ugly, find a better way
-        if(bspDTO == null) {
-            // todo jmt refactor CDI stuff into a utility
-            try {
-                InitialContext initialContext = new InitialContext();
-                try {
-                    BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
-                    Bean bean = beanManager.getBeans(BSPSampleDataFetcher.class).iterator().next();
-                    CreationalContext ctx = beanManager.createCreationalContext(bean);
-                    BSPSampleDataFetcher bspSampleSearchService =
-                            (BSPSampleDataFetcher) beanManager.getReference(bean, bean.getClass(), ctx);
-                    bspDTO = bspSampleSearchService.fetchSingleSampleFromBSP(this.getSampleName());
-                } finally {
-                    initialContext.close();
-                }
-            } catch (NamingException e) {
-                throw new RuntimeException(e);
-            }
 
-        }
+        bspDTO = ServiceAccessUtility.getSampleName (this.getSampleName() );
     }
 
     @Override

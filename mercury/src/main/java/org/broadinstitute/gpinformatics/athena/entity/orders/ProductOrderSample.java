@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.envers.Audited;
 
 import javax.inject.Inject;
@@ -27,10 +28,6 @@ import java.util.regex.Pattern;
 @Audited
 @Table(schema = "athena")
 public class ProductOrderSample implements Serializable {
-
-    @Inject
-    @Transient
-    private BSPSampleDataFetcher bspFetcher;
 
     @Id
     @SequenceGenerator(name="SEQ_ORDER_SAMPLE", schema = "athena", sequenceName="SEQ_ORDER_SAMPLE")
@@ -88,10 +85,7 @@ public class ProductOrderSample implements Serializable {
 
     private BSPSampleDTO getBspDTO() {
         if ( isInBspFormat() && ! hasBSPDTOBeenInitialized() ) {
-            //TODO SGM Test Cases
-            // TODO SGM initialize DTO ?  Verify from Team
-
-            bspDTO = bspFetcher.fetchSingleSampleFromBSP(sampleName);
+            bspDTO = ServiceAccessUtility.getSampleName ( this.getSampleName ( ) );
         }
         return bspDTO;
     }
@@ -123,6 +117,7 @@ public class ProductOrderSample implements Serializable {
         return Pattern.matches(ProductOrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
     }
 
+    // Methods delegated to the DTO
     public boolean isSampleReceived() {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
@@ -140,7 +135,7 @@ public class ProductOrderSample implements Serializable {
 
     }
 
-    public boolean hasFootprint() {
+    public boolean hasFingerprint ( ) {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
@@ -150,7 +145,6 @@ public class ProductOrderSample implements Serializable {
 
     }
 
-    // Methods delegated to the DTO
     public String getVolume() throws IllegalStateException {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
@@ -176,105 +170,105 @@ public class ProductOrderSample implements Serializable {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getStockSample();
+        return getBspDTO().getStockSample ( );
     }
 
     public String getCollection() {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getCollection();
+        return getBspDTO().getCollection ( );
     }
 
     public String getCollaboratorsSampleName() {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getCollaboratorsSampleName();
+        return getBspDTO().getCollaboratorsSampleName ( );
     }
 
     public String getContainerId() {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getContainerId();
+        return getBspDTO().getContainerId ( );
     }
 
     public String getParticipantId() {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getPatientId();
+        return getBspDTO().getPatientId ( );
     }
 
     public String getOrganism() {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getOrganism();
+        return getBspDTO().getOrganism ( );
     }
 
-    public String getStockAtExport() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getStockAtExport();
-    }
-
-    public Boolean isPositiveControl() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().isPositiveControl();
-    }
-
-    public Boolean isNegativeControl() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().isNegativeControl();
-    }
+//    public String getStockAtExport() {
+//        if (! isInBspFormat() ) {
+//            throw ILLEGAL_STATE_EXCEPTION;
+//        }
+//        return getBspDTO().getStockAtExport ( );
+//    }
+//
+//    public Boolean isPositiveControl() {
+//        if (! isInBspFormat() ) {
+//            throw ILLEGAL_STATE_EXCEPTION;
+//        }
+//        return getBspDTO().isPositiveControl ( );
+//    }
+//
+//    public Boolean isNegativeControl() {
+//        if (! isInBspFormat() ) {
+//            throw ILLEGAL_STATE_EXCEPTION;
+//        }
+//        return getBspDTO().isNegativeControl ( );
+//    }
 
     public String getSampleLsid() {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getSampleLsid();
+        return getBspDTO().getSampleLsid ( );
     }
 
     public String getGender() {
         if (! isInBspFormat() ) {
            throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getGender();
+        return getBspDTO().getGender ( );
     }
 
     public String getDisease() {
         if (! isInBspFormat() ) {
            throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getPrimaryDisease();
+        return getBspDTO().getPrimaryDisease ( );
     }
 
     public String getSampleType() {
         if (! isInBspFormat() ) {
            throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getSampleType();
+        return getBspDTO().getSampleType ( );
     }
 
     public String getTotal() {
         if (! isInBspFormat() ) {
            throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getTotal();
+        return getBspDTO().getTotal ( );
     }
 
     public String getFingerprint() {
         if (! isInBspFormat() ) {
            throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getFingerprint();
+        return getBspDTO().getFingerprint ( );
     }
 
     public String getMaterialType() {

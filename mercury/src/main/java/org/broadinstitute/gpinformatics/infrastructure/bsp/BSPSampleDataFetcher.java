@@ -102,6 +102,7 @@ public class BSPSampleDataFetcher {
         String primaryDisease = null;
         String stockType = null;
         String fingerprint = null;
+        String containerId = null;
 
         if (bspColumns.length > 0) {
             patientId = bspColumns[0];
@@ -154,9 +155,13 @@ public class BSPSampleDataFetcher {
         if (bspColumns.length > 16) {
             fingerprint = bspColumns[16];
         }
+
+        if (bspColumns.length > 17) {
+            containerId = bspColumns[17];
+        }
         /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
 
-        return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,
+        return new BSPSampleDTO(containerId,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,
                                 volume,concentration, sampleLsid, collaboratorParticipantId, materialType, total,
                                 sampleType, primaryDisease,gender, stockType, fingerprint);
 
@@ -180,6 +185,7 @@ public class BSPSampleDataFetcher {
                 BSPSampleSearchColumn.PRIMARY_DISEASE,
                 BSPSampleSearchColumn.GENDER,
                 BSPSampleSearchColumn.STOCK_TYPE,
-                BSPSampleSearchColumn.FINGERPRINT);
+                BSPSampleSearchColumn.FINGERPRINT,
+                BSPSampleSearchColumn.CONTAINER_ID);
     }
 }

@@ -1,19 +1,16 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
-import javax.inject.Inject;
 import javax.persistence.Transient;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,14 +44,6 @@ import java.util.Set;
 public class ProductOrder implements Serializable {
 
     private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
-
-    @Inject
-    @Transient
-    private BSPSampleDataFetcher bspFetcher;
-
-    @Inject
-    @Transient
-    private JiraService jiraService;
 
     @Id
     @SequenceGenerator(name="SEQ_PRODUCT_ORDER", schema = "athena", sequenceName="SEQ_PRODUCT_ORDER")
@@ -199,9 +187,8 @@ public class ProductOrder implements Serializable {
         if (! isSheetEmpty() ) {
             if ( needsBspMetaData() ) {
 
-                Map<String, BSPSampleDTO> bspSampleMetaData = bspFetcher.fetchSamplesFromBSP(getUniqueSampleNames());
-
-                //todo SGM Test cases
+                Map<String, BSPSampleDTO> bspSampleMetaData =
+                        ServiceAccessUtility.getSampleNames( getUniqueSampleNames ( ) );
                 updateBspMetaData(bspSampleMetaData);
             }
 
@@ -314,8 +301,6 @@ public class ProductOrder implements Serializable {
         int billedCount = 0;
         int notBilledCount = 0;
 
-
-
         return new BilledNotBilledCounts(getBillingStatusCount(BillingStatus.Billed),
                                          getBillingStatusCount(BillingStatus.NotYetBilled));
     }
@@ -346,7 +331,7 @@ public class ProductOrder implements Serializable {
 
         for ( ProductOrderSample productOrderSample : samples ) {
             if ( productOrderSample.isInBspFormat () &&
-                    productOrderSample.hasFootprint()) {
+                    productOrderSample.hasFingerprint ( )) {
                 fpCount++;
             }
         }
@@ -483,8 +468,8 @@ public class ProductOrder implements Serializable {
     public void submitProductOrder() throws IOException{
 
         Map<String, CustomFieldDefinition> submissionFields =
-                jiraService.getCustomFields(new CreateIssueRequest.Fields.Project(fetchJiraProject().getKeyPrefix()),
-                                            fetchJiraIssueType());
+                ServiceAccessUtility.getJiraCustomFields ( new CreateIssueRequest.Fields.Project (
+                        fetchJiraProject ( ).getKeyPrefix ( ) ), fetchJiraIssueType ( ) );
 
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
@@ -498,12 +483,12 @@ public class ProductOrder implements Serializable {
         }
 
         CreateIssueResponse issueResponse =
-                jiraService.createIssue(fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title,
-                                                    comments, listOfFields);
+                ServiceAccessUtility.createJiraTicket ( fetchJiraProject ( ).getKeyPrefix ( ), fetchJiraIssueType ( ),
+                                                        title, comments, listOfFields );
 
         setJiraTicketKey(issueResponse.getKey());
 
-        addPublicComment("Sample List: "+StringUtils.join(getUniqueSampleNames(), ','));
+        addPublicComment ( "Sample List: " + StringUtils.join ( getUniqueSampleNames ( ), ',' ) );
 
         /**
          * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
@@ -542,11 +527,11 @@ public class ProductOrder implements Serializable {
     }
 
     public void addPublicComment(String comment) throws IOException{
-        jiraService.addComment(this.jiraTicketKey, comment);
+        ServiceAccessUtility.addJiraComment ( this.jiraTicketKey, comment );
     }
 
     public void addWatcher(String personLoginId) throws IOException {
-        jiraService.addWatcher(this.jiraTicketKey, personLoginId);
+        ServiceAccessUtility.addJiraComment ( this.jiraTicketKey, personLoginId );
     }
 
     /**

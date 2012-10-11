@@ -30,30 +30,4 @@ public class ProductOrderSampleTest {
 
     }
 
-    public void testOrderSampleConstruction() {
-
-        ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN");
-
-        Assert.assertTrue(testSample.isInBspFormat());
-
-        Assert.assertFalse(testSample.hasBSPDTOBeenInitialized());
-
-        try {
-            Assert.assertTrue(testSample.hasFootprint());
-            Assert.assertEquals(testSample.getCollaboratorParticipantId(),BSPSampleSearchServiceStub.SM_1P3XN_COLLAB_PID);
-            Assert.assertEquals(testSample.getMaterialType(), BSPSampleSearchServiceStub.SM_1P3XN_MAT_TYPE);
-            Assert.assertEquals(testSample.getTotal(), BSPSampleSearchServiceStub.SM_1P3XN_DNA);
-            Assert.assertEquals(testSample.getSampleType(), BSPSampleDTO.NORMAL_IND);
-            Assert.assertEquals(testSample.getDisease(), BSPSampleSearchServiceStub.SM_1P3XN_DISEASE);
-            Assert.assertEquals(testSample.getGender(), BSPSampleDTO.MALE_IND);
-            Assert.assertEquals(testSample.getStockType(), BSPSampleDTO.ACTIVE_IND);
-            Assert.assertEquals(testSample.getFingerprint(), BSPSampleSearchServiceStub.SM_1P3XN_FP);
-
-        } catch (IllegalStateException ise) {
-            Assert.fail();
-        }
-
-    }
-
-
 }

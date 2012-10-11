@@ -57,6 +57,8 @@ public class BSPSampleDTO implements Serializable {
 
     private final String fingerprint;
 
+    private final String containerId;
+
 
     // collaborator?
     // species vs organism?
@@ -68,6 +70,8 @@ public class BSPSampleDTO implements Serializable {
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantIdIn,
                         String materialTypeIn, String totalIn, String sampleTypeIn, String primaryDiseaseIn,
                         String genderIn, String stockTypeIn, String fingerprintIn) {
+
+        this.containerId = containerId;
         this.stockSample = stockSample;
         this.rootSample = rootSample;
         this.patientId = patientId;
@@ -157,7 +161,7 @@ public class BSPSampleDTO implements Serializable {
     }
 
     public String getContainerId() {
-        throw new RuntimeException("not implemented yet.");
+        return containerId;
     }
 
     public String getPatientId() {
@@ -169,15 +173,19 @@ public class BSPSampleDTO implements Serializable {
     }
 
     public String getStockAtExport() {
-        return stockAtExport;
+        throw new RuntimeException("not implemented yet.");
+//        return stockAtExport;
     }
 
     public Boolean isPositiveControl() {
-        return positiveControl;
+        throw new RuntimeException("not implemented yet.");
+//        return positiveControl;
     }
 
     public Boolean isNegativeControl() {
-        return negativeControl;
+        throw new RuntimeException("not implemented yet.");
+
+//        return negativeControl;
     }
 
     public String getSampleLsid() {
@@ -185,11 +193,11 @@ public class BSPSampleDTO implements Serializable {
     }
 
     public Boolean getPositiveControl() {
-        return positiveControl;
+        throw new RuntimeException("not implemented yet.");
     }
 
     public Boolean getNegativeControl() {
-        return negativeControl;
+        throw new RuntimeException("not implemented yet.");
     }
 
     public String getCollaboratorParticipantId() {
