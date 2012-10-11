@@ -12,7 +12,8 @@
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">Research Projects</ui:define>
         <ui:define name="body">
-            <p:dataTable value="#{researchProjectBean.allResearchProjects}" var="project" sortBy="#{project.createdDate}" sortOrder="descending">
+            <p:dataTable value="#{researchProjectBean.allResearchProjects}" var="project" sortBy="#{project.createdDate}" sortOrder="descending" filteredValue="#{researchProjectBean.filteredResearchProjects}">
+
                 <p:column headerText="Name" sortBy="#{project.title}">
                     <h:link outcome="view" value="#{project.title}">
                         <f:param name="researchProjectTitle" value="#{project.title}"/>
