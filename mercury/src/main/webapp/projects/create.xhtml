@@ -40,6 +40,14 @@
                 </div>
 
                 <div class="control-group">
+                    <p:outputLabel for="jiraTicketKey" value="JIRA Issue" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="jiraTicketKey" value="#{researchProjectDetail.project.jiraTicketKey}" size="25"/>
+                        <p:watermark for="jiraTicketKey" value="Enter the JIRA issue key"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <p:outputLabel for="projectManagers" value="Project Managers" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true"/>
