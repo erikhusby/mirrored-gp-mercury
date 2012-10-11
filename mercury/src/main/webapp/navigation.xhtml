@@ -10,12 +10,9 @@
       xmlns:sqltg="http://sequel.broadinstitute.org/tags">
 <body>
 <ui:composition>
-    <p:commandButton id="menuButton" value="Menu" type="button" styleClass="btn btn-mini" icon="ui-icon-carat-1-s"/>
-
     <h:form>
-        <p:menu overlay="true" trigger="menuButton" my="left top" at="left bottom" >
-            <p:submenu label="Athena">
-                <p:menuitem value="Projects" outcome="/projects/list" icon="ui-icon-home"/>
+        <p:menubar style="padding:0px;">
+            <p:submenu label="Projects" outcome="/projects/list" icon="ui-icon-home">
                 <p:menuitem value="Illumina Run Query" outcome="/zims/illuminaRunQuery" />
                 <p:menuitem value="PASS Dashboard" outcome="/pass/dashboard" />
                 <sqltg:AuthorizeBlock roles="Sequel-Developers">
@@ -23,11 +20,15 @@
                         <p:menuitem value="Page Administration" outcome="/administration/page_administration" icon="ui-icon-gear"/>
                     </ul>
                 </sqltg:AuthorizeBlock>
+
             </p:submenu>
 
-            <p:submenu label="Mercury">
+            <p:submenu label="Orders" icon="ui-icon-cart">
             </p:submenu>
-        </p:menu>
+
+            <p:submenu label="Products" icon="ui-icon-tag">
+            </p:submenu>
+        </p:menubar>
     </h:form>
 
 </ui:composition>

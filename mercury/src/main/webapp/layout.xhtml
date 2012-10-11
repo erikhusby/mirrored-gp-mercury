@@ -2,7 +2,7 @@
 <!--
   ~ The Broad Institute
   ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
-  ~ This software and its documentation are copyright 2011 by the
+  ~ This software and its documentation are copyright 2012 by the
   ~ Broad Institute/Massachusetts Institute of Technology. All rights are
   ~ reserved.
   ~
@@ -35,36 +35,38 @@
         <h:outputStylesheet library="css" name="bootstrap.css"/>
         <h:outputStylesheet library="css" name="styles.css"/>
         <link rel="shortcut icon" type="image/x-icon" href="#{request.contextPath}/favicon.ico"/>
-        <title>Athena : <ui:insert name="title"/></title>
+        <title>Mercury | <ui:insert name="title"/></title>
         <ui:insert name="head"/>
     </h:head>
     <h:body>
-
-        <div class="navbar navbar-fixed-top">
+        <div class="navbar">
             <div class="navbar-inner">
                 <div class="container-fluid">
-                    <div class="brand">
-                        <p:graphicImage url="/images/broad_logo.png" alt="Broad Institute"/> <h:link outcome="/index" style="padding-left: 20px;">Athena</h:link>
+                    <div class="row-fluid">
+                        <div class="brand">
+                            <p:graphicImage url="/images/broad_logo.png" alt="Broad Institute"/>
+                            <h:link outcome="/index" style="padding-left: 50px;text-decoration: none; font-variant: small-caps; font-size: 1.2em"><p:graphicImage url="/images/mercury_helmet.png" alt="Mercury Helmet"/> Mercury</h:link>
+                        </div>
+
+                        <sqltg:isLoggedIn>
+                            <h:form styleClass="navbar-form pull-right">
+                                <h:outputText value="#{request.getRemoteUser()}" />
+                                |
+                                <p:commandLink action="#{securityBackingBean.logout}" value="Logout">
+                                    <h:outputText value="Sign out" />
+                                </p:commandLink>
+                            </h:form>
+                        </sqltg:isLoggedIn>
                     </div>
-
-                    <sqltg:isLoggedIn>
-                        <h:form styleClass="navbar-form pull-right">
-                            <h:commandLink action="#{securityBackingBean.logout}" value="Logout">
-                                <span class="ui-icon ui-icon-power"></span>
-                            </h:commandLink>
-                        </h:form>
-                    </sqltg:isLoggedIn>
-
                 </div>
+            </div>
+            <div class="row-fluid">
+                <ui:include src="navigation.xhtml"></ui:include>
             </div>
         </div>
 
         <div class="container-fluid">
             <div class="row-fluid">
-                <div class="span12">
-                    <ui:include src="navigation.xhtml"></ui:include>
-                </div>
-
                 <p:ajaxStatus id="ajaxStatus">
                     <f:facet name="start">
                         Loading...
@@ -76,7 +78,7 @@
 
                 <p:dialog modal="false" widgetVar="statusDialog" draggable="false" closable="false" maximizable="false" resizable="false" minimizable="false">
                     <p:outputPanel>
-                        <p:graphicImage url="/images/spinner.gif" />
+                        <p:graphicImage url="/images/spinner.gif" alt="Please wait" />
                         <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&nbsp;wait..." />
                     </p:outputPanel>
                 </p:dialog>
@@ -87,6 +89,7 @@
                             <f:facet name="header"><span id="panelTitle"><ui:insert name="title"/></span></f:facet>
 
                             <!-- show messages/errors -->
+                            <p:messages severity="fatal" />
                             <p:messages severity="error" />
                             <p:messages severity="warn" />
                             <p:messages severity="info" />
@@ -99,7 +102,8 @@
         </div>
 
         <footer>
-            <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.</p>
+            <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.<br/>
+               Genomics Platform. Version 1.0 build October 12, 2012 12:34:56pm.</p>
         </footer>
 
         <ui:debug/>
