@@ -53,9 +53,7 @@
                             <h:form styleClass="navbar-form pull-right">
                                 <h:outputText value="#{request.getRemoteUser()}" />
                                 |
-                                <p:commandLink action="#{securityBackingBean.logout}" value="Logout">
-                                    <h:outputText value="Sign out" />
-                                </p:commandLink>
+                                <p:commandLink action="#{logoutHandler.logout}" value="Sign out" />
                             </h:form>
                         </sqltg:isLoggedIn>
                     </div>

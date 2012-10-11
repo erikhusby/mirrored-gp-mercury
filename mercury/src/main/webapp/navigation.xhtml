@@ -23,14 +23,14 @@
             </p:submenu>
 
             <p:submenu label="Products" icon="ui-icon-tag">
-                <p:menuitem value="List" outcome="/projects/list" />
-                <p:menuitem value="Create" outcome="/projects/list" />
+                <p:menuitem value="List" outcome="/products/list" />
+                <p:menuitem value="Create" outcome="/products/list" />
             </p:submenu>
         </p:menubar>
 
         <sqltg:AuthorizeBlock roles="Sequel-Developers">
-            <p:submenu label="Admin" icon="ui-icon-tag">
-                <p:menuitem value="Page Administration" outcome="/administration/page_administration" icon="ui-icon-gear"/>
+            <p:submenu label="Admin" icon="ui-icon-gear">
+                <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
             </p:submenu>
         </sqltg:AuthorizeBlock>
 
