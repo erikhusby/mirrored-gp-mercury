@@ -42,7 +42,7 @@
                 <div class="control-group">
                     <p:outputLabel for="projectManagers" value="Project Managers" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="bspUserConverter" multiple="true"/>
+                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true"/>
                         <p:watermark for="projectManagers" value="Type name to search"/>
                     </div>
                 </div>
@@ -50,7 +50,7 @@
                 <div class="control-group">
                     <p:outputLabel for="scientists" value="Scientists" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="bspUserConverter" multiple="true"/>
+                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true"/>
                         <p:watermark for="scientists" value="Type name to search"/>
                     </div>
                 </div>
