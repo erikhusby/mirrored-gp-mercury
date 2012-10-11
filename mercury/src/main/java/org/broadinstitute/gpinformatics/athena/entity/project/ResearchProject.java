@@ -54,7 +54,7 @@ public class ResearchProject {
 
     private String synopsis;
 
-    private boolean irbNotEngaged = IRB_ENGAGED;
+    private Boolean irbNotEngaged = IRB_ENGAGED;
 
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
@@ -93,7 +93,7 @@ public class ResearchProject {
      * @param synopsis A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
      */
-    public ResearchProject(Long creator, String title, String synopsis, boolean irbNotEngaged) {
+    public ResearchProject(Long creator, String title, String synopsis, Boolean irbNotEngaged) {
         sampleCohorts = new HashSet<ResearchProjectCohort>();
         productOrders = new ArrayList<ProductOrder>();
         createdDate = new Date();
@@ -158,7 +158,7 @@ public class ResearchProject {
         this.synopsis = synopsis;
     }
 
-    public void setIrbNotEngaged(boolean irbNotEngaged) {
+    public void setIrbNotEngaged(Boolean irbNotEngaged) {
         this.irbNotEngaged = irbNotEngaged;
     }
 
@@ -212,7 +212,7 @@ public class ResearchProject {
         sampleCohorts.remove(sampleCohort);
     }
 
-    public boolean isIrbNotEngaged() {
+    public Boolean isIrbNotEngaged() {
         return irbNotEngaged;
     }
 
