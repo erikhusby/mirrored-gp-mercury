@@ -52,6 +52,9 @@ public class ProductOrder implements Serializable {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrder")
     private List<ProductOrderSample> samples;
 
+    public String getBusinessKey() {
+        return jiraTicketKey;
+    }
 
     /**
      * Default no-arg constructor

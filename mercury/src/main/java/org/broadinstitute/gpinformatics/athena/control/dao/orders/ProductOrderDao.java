@@ -20,6 +20,10 @@ import java.util.List;
 @RequestScoped
 public class ProductOrderDao extends GenericDao {
 
+    public ProductOrder findByBusinessKey(String key) {
+        return findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, key);
+    }
+
     /**
      *
      * @param orderTitle
