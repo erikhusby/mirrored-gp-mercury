@@ -1,14 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.logout;
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthenticationService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.RequestScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
@@ -18,34 +16,31 @@ import javax.servlet.http.HttpServletRequest;
  *         Time: 11:47 AM
  */
 
-@ManagedBean
+@Named
 @RequestScoped
-public class SecurityBackingBean extends AbstractJsfBean {
-    @Inject
-    private AuthenticationService authSvc;
+public class LogoutHandler extends AbstractJsfBean {
 
-    private Log securityLogger = LogFactory.getLog(this.getClass());
+    @Inject
+    private Log logger;
 
     public String logout() {
 
-        String result = "/index?faces-redirect=true";
+        // If logout is successful, the redirect location is irrelevant since our authorization filter
+        // will force the user to the login page.
+        String result = redirect("/index");
 
         FacesContext context = FacesContext.getCurrentInstance();
 
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
 
         try {
-            securityLogger.info("Attempting Logout");
+            logger.debug("Attempting Logout");
             request.logout();
         } catch (ServletException ex) {
-            securityLogger.error("Logout Failed");
+            logger.error("Logout Failed", ex);
             result = request.getRequestURI();
         }
 
         return result;
-
     }
-
-
-
 }
