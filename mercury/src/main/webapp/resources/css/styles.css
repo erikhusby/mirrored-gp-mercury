@@ -10,7 +10,7 @@
  * use, misuse, or functionality.
  */
 body { padding-bottom: 40px; font-size: 12px; }
-footer { font-size: 0.75em; text-align: center; padding-top: 20px; }
+footer { font-size: 10px; text-align: center; padding-top: 20px; }
 
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; }

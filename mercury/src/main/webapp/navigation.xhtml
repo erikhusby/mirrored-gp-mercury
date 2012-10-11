@@ -13,24 +13,33 @@
     <h:form>
         <p:menubar style="padding:0px;">
             <p:submenu label="Projects" outcome="/projects/list" icon="ui-icon-home">
-                <p:menuitem value="Illumina Run Query" outcome="/zims/illuminaRunQuery" />
-                <p:menuitem value="PASS Dashboard" outcome="/pass/dashboard" />
-                <sqltg:AuthorizeBlock roles="Sequel-Developers">
-                    <ul>
-                        <p:menuitem value="Page Administration" outcome="/administration/page_administration" icon="ui-icon-gear"/>
-                    </ul>
-                </sqltg:AuthorizeBlock>
-
+                <p:menuitem value="List" outcome="/projects/list" />
+                <p:menuitem value="Create" outcome="/projects/list" />
             </p:submenu>
 
             <p:submenu label="Orders" icon="ui-icon-cart">
+                <p:menuitem value="List" outcome="/projects/list" />
+                <p:menuitem value="Create" outcome="/projects/list" />
             </p:submenu>
 
             <p:submenu label="Products" icon="ui-icon-tag">
+                <p:menuitem value="List" outcome="/projects/list" />
+                <p:menuitem value="Create" outcome="/projects/list" />
             </p:submenu>
         </p:menubar>
+
+        <sqltg:AuthorizeBlock roles="Sequel-Developers">
+            <p:submenu label="Admin" icon="ui-icon-tag">
+                <p:menuitem value="Page Administration" outcome="/administration/page_administration" icon="ui-icon-gear"/>
+            </p:submenu>
+        </sqltg:AuthorizeBlock>
+
     </h:form>
 
+<!--
+    <p:menuitem value="Illumina Run Query" outcome="/zims/illuminaRunQuery" />
+    <p:menuitem value="PASS Dashboard" outcome="/pass/dashboard" />
+-->
 </ui:composition>
 </body>
 </html>
