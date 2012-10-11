@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.AthenaGenericDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -10,6 +10,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.List;
 
 
 /**
@@ -17,7 +18,21 @@ import javax.persistence.criteria.Root;
  */
 @Stateful
 @RequestScoped
-public class ProductFamilyDao extends AthenaGenericDao {
+public class ProductFamilyDao extends GenericDao {
+
+
+    public List<ProductFamily> findAll() {
+
+        EntityManager em = getEntityManager();
+
+        CriteriaQuery<ProductFamily> criteriaQuery =
+                em.getCriteriaBuilder().createQuery(ProductFamily.class);
+
+        Root<ProductFamily> root = criteriaQuery.from(ProductFamily.class);
+
+        return em.createQuery(criteriaQuery).getResultList();
+    }
+
 
 
     /**
@@ -30,7 +45,7 @@ public class ProductFamilyDao extends AthenaGenericDao {
 
         try {
 
-            EntityManager em = em();
+            EntityManager em = getEntityManager();
 
             CriteriaQuery<ProductFamily> criteriaQuery =
                     em.getCriteriaBuilder().createQuery(ProductFamily.class);

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.project;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket_;
 

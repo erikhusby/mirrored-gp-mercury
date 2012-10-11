@@ -7,16 +7,18 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
  * Time: 3:06 PM
  */
 public enum BillingStatus {
-
     NotYetBilled("Not Yet Billed"),
     EligibleForBilling("Eligible For Billing"),
     Billed("Billed"),
     NotBillable("Not Billable");
 
-    private String displayName;
+    private final String displayName;
 
-    private BillingStatus(final String displayName) {
-        this.displayName = displayName;
+    public String getDisplayName() {
+        return displayName;
     }
 
+    private BillingStatus(String displayName) {
+        this.displayName = displayName;
+    }
 }

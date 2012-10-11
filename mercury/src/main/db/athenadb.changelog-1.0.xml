@@ -59,4 +59,15 @@
             <column name="jira_ticket_key"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="GPLIM-65-4" author="hrafal">
+        <preConditions>
+            <not>
+                <columnExists tableName="research_project_aud" columnName="irb_not_engaged" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="research_project_aud">
+            <column name="irb_not_engaged" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

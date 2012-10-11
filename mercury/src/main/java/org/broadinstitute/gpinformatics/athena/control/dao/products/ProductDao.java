@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.AthenaGenericDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -18,7 +18,7 @@ import java.util.List;
  * Dao for {@link Product}s, supporting the browse and CRUD UIs.
  *
  */
-public class ProductDao extends AthenaGenericDao {
+public class ProductDao extends GenericDao {
 
 
     /**
@@ -29,7 +29,7 @@ public class ProductDao extends AthenaGenericDao {
      */
     public List<Product> findTopLevelProducts() {
 
-        EntityManager em = em();
+        EntityManager em = getEntityManager();
 
         CriteriaQuery<Product> criteriaQuery =
                 em.getCriteriaBuilder().createQuery(Product.class);
@@ -52,7 +52,7 @@ public class ProductDao extends AthenaGenericDao {
      */
     public Product findByPartNumber(String partNumber) {
 
-        EntityManager em = em();
+        EntityManager em = getEntityManager();
 
         CriteriaQuery<Product> criteriaQuery =
                 em.getCriteriaBuilder().createQuery(Product.class);

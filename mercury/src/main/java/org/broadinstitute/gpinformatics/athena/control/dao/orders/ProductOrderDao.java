@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.AthenaGenericDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -21,7 +21,7 @@ import java.util.List;
 
 @Stateful
 @RequestScoped
-public class ProductOrderDao extends AthenaGenericDao {
+public class ProductOrderDao extends GenericDao {
 
     /**
      *
@@ -29,7 +29,7 @@ public class ProductOrderDao extends AthenaGenericDao {
      * @return
      */
     public ProductOrder findOrderByTitle(String orderTitle) {
-        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getEntityManager();
         CriteriaQuery<ProductOrder> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ProductOrder.class);
         Root<ProductOrder> root = criteriaQuery.from(ProductOrder.class);
@@ -42,7 +42,7 @@ public class ProductOrderDao extends AthenaGenericDao {
      * @return
      */
     public List<ProductOrder> findAllOrders() {
-        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getEntityManager();
         CriteriaQuery<ProductOrder> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ProductOrder.class);
         criteriaQuery.from(ProductOrder.class);
@@ -55,7 +55,7 @@ public class ProductOrderDao extends AthenaGenericDao {
      * @return
      */
     public ProductOrder findById(Long orderId) {
-        EntityManager entityManager = getAthenaThreadEntityManager().getEntityManager();
+        EntityManager entityManager = getEntityManager();
         CriteriaQuery<ProductOrder> criteriaQuery =
                 entityManager.getCriteriaBuilder().createQuery(ProductOrder.class);
         Root<ProductOrder> root = criteriaQuery.from(ProductOrder.class);
