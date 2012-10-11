@@ -49,7 +49,7 @@ public class ProductOrder implements Serializable {
     private String comments;                    // Additional comments of the order
     private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrder")
-    private List<ProductOrderSample> sampleProducts;
+    private List<ProductOrderSample> samples;
 
 
     /**
@@ -61,14 +61,14 @@ public class ProductOrder implements Serializable {
     /**
      * Constructor with mandatory fields
      * @param title
-     * @param sampleProducts
+     * @param samples
      * @param quoteId
      * @param product
      * @param researchProject
      */
-    public ProductOrder(String title, List<ProductOrderSample> sampleProducts, String quoteId, Product product, ResearchProject researchProject) {
+    public ProductOrder(String title, List<ProductOrderSample> samples, String quoteId, Product product, ResearchProject researchProject) {
         this.title = title;
-        this.sampleProducts = sampleProducts;
+        this.samples = samples;
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
@@ -122,12 +122,12 @@ public class ProductOrder implements Serializable {
         this.comments = comments;
     }
 
-    public List<ProductOrderSample> getSampleProducts() {
-        return sampleProducts;
+    public List<ProductOrderSample> getSamples() {
+        return samples;
     }
 
     public void addSample(ProductOrderSample sampleProduct) {
-        sampleProducts.add(sampleProduct);
+        samples.add(sampleProduct);
     }
 
     /**
@@ -163,7 +163,7 @@ public class ProductOrder implements Serializable {
                 throw new IllegalStateException("Not Yet Implemented");
             }
 
-            for ( ProductOrderSample productOrderSample : sampleProducts) {
+            for ( ProductOrderSample productOrderSample : samples) {
                 String participantId = productOrderSample.getParticipantId();
                 if (StringUtils.isNotBlank(participantId)) {
                     uniqueParticipants.add(participantId);
@@ -185,7 +185,7 @@ public class ProductOrder implements Serializable {
 
     private Set<String> getUniqueSampleNames() {
         Set<String> uniqueSamples = new HashSet<String>();
-        for ( ProductOrderSample productOrderSample : sampleProducts) {
+        for ( ProductOrderSample productOrderSample : samples) {
             String sampleName = productOrderSample.getSampleName();
             if (StringUtils.isNotBlank(sampleName)) {
                 uniqueSamples.add(sampleName);
@@ -195,7 +195,7 @@ public class ProductOrder implements Serializable {
     }
 
     public int getTotalSampleCount() {
-        return sampleProducts.size();
+        return samples.size();
     }
 
     public int getDuplicateCount() {
@@ -220,7 +220,7 @@ public class ProductOrder implements Serializable {
     public boolean areAllSampleBSPFormat() {
         boolean result = true;
         if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : sampleProducts) {
+            for ( ProductOrderSample productOrderSample : samples) {
                 if (! productOrderSample.isInBspFormat() ) {
                     result = false;
                     break;
@@ -233,13 +233,13 @@ public class ProductOrder implements Serializable {
     }
 
     private boolean isSheetEmpty() {
-        return (sampleProducts == null ) ||  sampleProducts.isEmpty();
+        return (samples == null ) ||  samples.isEmpty();
     }
 
     private boolean needsBspMetaData() {
         boolean needed = false;
         if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : sampleProducts) {
+            for ( ProductOrderSample productOrderSample : samples) {
                 if ( productOrderSample.isInBspFormat() &&
                      ! productOrderSample.hasBSPDTOBeenInitialized() ) {
                     needed = true;

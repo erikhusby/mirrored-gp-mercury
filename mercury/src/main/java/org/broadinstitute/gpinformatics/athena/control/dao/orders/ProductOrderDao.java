@@ -8,12 +8,14 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -36,16 +38,18 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findByResearchProject( ResearchProject researchProject ) {
 
-        EntityManager em = getEntityManager();
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<ProductOrder> cq = cb.createQuery(ProductOrder.class);
-        Root<ProductOrder> productOrderRoot = cq.from(ProductOrder.class);
-//        cq.where(cb.equal(productOrderRoot.join(ProductOrder_.researchProject), researchProject));
-        cq.where(cb.equal(productOrderRoot.get(ProductOrder_.researchProject), researchProject));
+        EntityManager entityManager = getEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<ProductOrder> criteriaQuery = criteriaBuilder.createQuery(ProductOrder.class);
+        Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
+        criteriaQuery.where(criteriaBuilder.equal(productOrderRoot.get(ProductOrder_.researchProject), researchProject));
 
-        final List<ProductOrder> productOrders = em.createQuery(cq).getResultList();
+        try {
+            return entityManager.createQuery(criteriaQuery).getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
+        }
 
-        return productOrders;
     }
 
 
@@ -56,6 +60,7 @@ public class ProductOrderDao extends GenericDao {
      * @return
      */
     public ProductOrder findByResearchProjectAndTitle(ResearchProject researchProject, String orderTitle) {
+        ProductOrder productOrder = null;
 
         if (researchProject == null) {
             throw new NullPointerException("Null Research Project.");
@@ -65,22 +70,26 @@ public class ProductOrderDao extends GenericDao {
             throw new NullPointerException("Null Product Order Title.");
         }
 
-        EntityManager em = getEntityManager();
-        CriteriaBuilder cb = em.getCriteriaBuilder();
+        EntityManager entityManager = getEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
         CriteriaQuery<ProductOrder> criteriaQuery =
-                cb.createQuery(ProductOrder.class);
+                criteriaBuilder.createQuery(ProductOrder.class);
 
         List<Predicate> predicateList = new ArrayList<Predicate>();
 
         Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
-        predicateList.add(cb.equal(productOrderRoot.get(ProductOrder_.researchProject), researchProject));
-        predicateList.add(cb.equal(productOrderRoot.get(ProductOrder_.title), orderTitle));
+        predicateList.add(criteriaBuilder.equal(productOrderRoot.get(ProductOrder_.researchProject), researchProject));
+        predicateList.add(criteriaBuilder.equal(productOrderRoot.get(ProductOrder_.title), orderTitle));
 
         Predicate[] predicates = new Predicate[predicateList.size()];
         criteriaQuery.where(predicateList.toArray(predicates));
 
-        return em.createQuery(criteriaQuery).getSingleResult();
+        try {
+            return entityManager.createQuery(criteriaQuery).getSingleResult();
+        } catch (NoResultException ignored) {
+            return null;
+        }
 
     }
 
@@ -91,10 +100,15 @@ public class ProductOrderDao extends GenericDao {
      * @return
      */
     public List<ProductOrder> findAllOrders() {
-            CriteriaQuery<ProductOrder> criteriaQuery =
-                    getEntityManager().getCriteriaBuilder().createQuery(ProductOrder.class);
-            TypedQuery<ProductOrder> typedQuery = getEntityManager().createQuery(criteriaQuery);
+        CriteriaQuery<ProductOrder> criteriaQuery =
+                getEntityManager().getCriteriaBuilder().createQuery(ProductOrder.class);
+        TypedQuery<ProductOrder> typedQuery = getEntityManager().createQuery(criteriaQuery);
+
+        try {
             return typedQuery.getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
+        }
     }
 
 
@@ -108,7 +122,11 @@ public class ProductOrderDao extends GenericDao {
      */
     /*
     public ProductOrder findById(Long personId) {
-        return findSingle(ProductOrder.class, ProductOrder_.personId, personId);
+        try {
+            return findSingle(ProductOrder.class, ProductOrder_.personId, personId);
+        } catch (NoResultException ignored) {
+            return null;
+        }
     }
     */
 

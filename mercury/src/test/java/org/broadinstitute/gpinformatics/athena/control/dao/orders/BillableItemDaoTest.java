@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -18,7 +19,8 @@ import java.util.UUID;
  * Date: 10/10/12
  * Time: 4:03 PM
  */
-public class BillableItemDaoTest {
+@Test(enabled = false)
+public class BillableItemDaoTest  extends ContainerTest {
 
     @Inject
     ProductOrderSampleDao productOrderSampleDao;

@@ -24,9 +24,8 @@ import java.util.UUID;
  * Date: 10/9/12
  * Time: 3:47 PM
  */
-@Test
+@Test(enabled = false)
 public class ProductOrderDaoTest extends ContainerTest {
-
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
     @Inject
@@ -84,7 +83,6 @@ public class ProductOrderDaoTest extends ContainerTest {
             Assert.assertTrue(NoResultException.class.isAssignableFrom(ejbx.getCause().getClass()));
             Assert.assertNull(productOrderFromDb);
         }
-        productOrderFromDb = null;
 
         System.out.println(" RP ID is " + firstFoundResearchProject.getResearchProjectId()  + " title is " + firstFoundResearchProject.getTitle());
 

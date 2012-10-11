@@ -6,9 +6,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,6 +24,7 @@ import java.util.List;
 public class BillableItemDao extends GenericDao {
 
 
+    //TODO hmc not tested yet
     public List<BillableItem> findByProductOrderSample(ProductOrderSample productOrderSample ) {
 
         EntityManager em = getEntityManager();
@@ -30,11 +33,14 @@ public class BillableItemDao extends GenericDao {
 
         Root<BillableItem> billableItemRoot = criteriaQuery.from(BillableItem.class);
         criteriaQuery.where(em.getCriteriaBuilder().equal(billableItemRoot.get(BillableItem_.productOrderSample), productOrderSample));
-        final List<BillableItem> billableItems = em.createQuery(criteriaQuery).getResultList();
-
-        return billableItems;
+        try {
+            return em.createQuery(criteriaQuery).getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
+        }
     }
 
+    //TODO hmc not tested yet
     public List<BillableItem> findByProductOrder(ProductOrder productOrder) {
 
         EntityManager em = getEntityManager();
@@ -44,10 +50,11 @@ public class BillableItemDao extends GenericDao {
 
         criteriaQuery.where(em.getCriteriaBuilder().equal(
             billableItemRoot.join(BillableItem_.productOrderSample).join(ProductOrderSample_.productOrder), productOrder));
-
-        final List<BillableItem> productOrderSamples = em.createQuery(criteriaQuery).getResultList();
-
-        return productOrderSamples;
+        try {
+            return em.createQuery(criteriaQuery).getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.emptyList();
+        }
     }
 
 }

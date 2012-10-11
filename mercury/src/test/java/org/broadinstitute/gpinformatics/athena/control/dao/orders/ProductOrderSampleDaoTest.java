@@ -1,15 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
-import org.testng.Assert;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Created by IntelliJ IDEA.
@@ -17,29 +11,34 @@ import java.util.UUID;
  * Date: 10/10/12
  * Time: 2:20 PM
  */
-public class ProductOrderSampleDaoTest extends GenericDao {
-
+@Test(enabled = false)
+public class ProductOrderSampleDaoTest  extends ContainerTest {
 
     @Inject
     ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    ProductOrderDao productOrderDao;
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrderSample_";
 
     @Test
     public void testFindByProductOrder() throws Exception {
 
+        // TODO hmc Need to test Dao method
         // create a productOrder and persist it.
-        String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
-        List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
-        sampleList.add(new ProductOrderSample("MS-1111"));
-        ProductOrder newProductOrder = new ProductOrder(testProductOrderTitle, sampleList, "quoteId", null, null );
-        productOrderSampleDao.persist(newProductOrder);
-        productOrderSampleDao.flush();
-        productOrderSampleDao.clear();
-
-        // Try to find the list of samples for a given product Order
-        List<ProductOrderSample> productOrderSamplesFromDb = productOrderSampleDao.findByProductOrder(newProductOrder);
-        Assert.assertNotNull(productOrderSamplesFromDb);
+//        String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
+//        List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
+//        sampleList.add(new ProductOrderSample("MS-1111"));
+//        sampleList.add(new ProductOrderSample("MS-2222"));
+//        sampleList.add(new ProductOrderSample("MS-3333"));
+//        ProductOrder newProductOrder = new ProductOrder(testProductOrderTitle, sampleList, "quoteId", null, null );
+//
+//
+//        // Try to find the list of samples for a given product Order
+//        List<ProductOrderSample> productOrderSamplesFromDb = productOrderSampleDao.findByProductOrder(newProductOrder);
+//        Assert.assertNotNull(productOrderSamplesFromDb);
+//        Assert.assertEquals( productOrderSamplesFromDb.size(), 3);
 
     }
 
