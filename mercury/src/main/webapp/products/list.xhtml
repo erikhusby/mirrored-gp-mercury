@@ -8,7 +8,10 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:p="http://primefaces.org/ui">
-<body>
+<h:head>
+    <title>Athena Product List</title>
+</h:head>
+<h:body>
 <ui:composition template="/layout.xhtml">
     <ui:define name="title">Products</ui:define>
     <ui:define name="body">
@@ -38,14 +41,14 @@
                 <!--<p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" />-->
 
                 <f:facet name="header">
-                    <p:outputPanel>
-                        <h:outputText value="Search Products:" />
-                        <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px" />
-                    </p:outputPanel>
+                        <p:outputPanel>
+                            <h:outputText value="Search"/>
+                            <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
+                        </p:outputPanel>
                 </f:facet>
 
-                <p:column sortBy="#{product.partNumber}" sortFunction="#{productsBean.genericCompare}"
-                          filterBy="#{product.partNumber}" filterStyle="display:none">
+                <p:column sortBy="#{product.partNumber}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.partNumber}" filterStyleClass="hide">
                     <f:facet name="header">
                         <h:outputText value="Part #" />
                     </f:facet>
@@ -53,23 +56,27 @@
                     <h:outputText value="#{product.partNumber}" />
                 </p:column>
 
-                <p:column sortBy="#{product.productName}" sortFunction="#{productsBean.genericCompare}"
-                          filterBy="#{product.productName}" filterStyle="display:none">
+                <p:column sortBy="#{product.productName}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.productName}" filterStyleClass="hide">
                     <f:facet name="header">
                         <h:outputText value="Name" />
                     </f:facet>
                     <h:outputText value="#{product.productName}" />
                 </p:column>
 
-                <p:column headerText="Product Family" sortBy="#{product.productFamily}" sortFunction="#{productsBean.genericCompare}">
+                <p:column sortBy="#{product.productFamily.name}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.productFamily.name}" filterStyleClass="hide">
+                    <f:facet name="header">
+                        <h:outputText value="Product Family" />
+                    </f:facet>
                     <h:outputText value="#{product.productFamily.name}" />
                 </p:column>
 
-                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productsBean.genericCompare}">
+                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productsBean.compare}">
                     <h:outputText value="#{product.topLevelProduct}" />
                 </p:column>
 
-                <p:column headerText="Availability Date" sortBy="#{product.availabilityDate}" sortFunction="#{productsBean.genericCompare}">
+                <p:column headerText="Availability Date" sortBy="#{product.availabilityDate}" sortFunction="#{productsBean.compare}">
                     <h:outputText value="#{product.availabilityDate}" />
                 </p:column>
 
@@ -85,5 +92,5 @@
         </h:form>
     </ui:define>
 </ui:composition>
-</body>
+</h:body>
 </html>
