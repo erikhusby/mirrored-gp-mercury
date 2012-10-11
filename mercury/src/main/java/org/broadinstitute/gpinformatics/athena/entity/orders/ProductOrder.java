@@ -279,7 +279,7 @@ public class ProductOrder implements Serializable {
      *
      * @return
      */
-    public TumorNormalCount getTumorNormalCounts() {
+    public TumorNormalCount getTumorNormalCounts ( ) {
 
         TumorNormalCount counts =
                 new TumorNormalCount(
@@ -289,7 +289,7 @@ public class ProductOrder implements Serializable {
         return counts;
     }
 
-    public MaleFemaleCount getMaleFemaleCounts() {
+    public MaleFemaleCount getMaleFemaleCounts ( ) {
 
         MaleFemaleCount counts =
                 new MaleFemaleCount(
@@ -299,7 +299,7 @@ public class ProductOrder implements Serializable {
         return counts;
     }
 
-    public BspNonBspSampleCount getBspNonBspSampleCounts() {
+    public BspNonBspSampleCount getBspNonBspSampleCounts ( ) {
         BspNonBspSampleCount counts =
                 new BspNonBspSampleCount(
                         getBspSampleCount(),
@@ -308,7 +308,37 @@ public class ProductOrder implements Serializable {
         return counts;
     }
 
-    public Integer getFingerprintCount () {
+    public BilledNotBilledCounts getBilledNotBilledCounts ( ) {
+        int billedCount = 0;
+        int notBilledCount = 0;
+
+
+
+        return new BilledNotBilledCounts(getBillingStatusCount(BillingStatus.Billed),
+                                         getBillingStatusCount(BillingStatus.NotYetBilled));
+    }
+
+    public int getElligibleForBillingCounts ( ) {
+        return getBillingStatusCount(BillingStatus.EligibleForBilling);
+    }
+
+    public int getNotBIllableCounts ( ) {
+        return getBillingStatusCount(BillingStatus.NotBillable);
+    }
+
+    private int getBillingStatusCount (BillingStatus targetStatus) {
+        int statusCount = 0;
+
+        for(ProductOrderSample sample:sampleProducts) {
+            if(targetStatus.equals ( sample.getBillingStatus ( ) )) {
+                statusCount++;
+            }
+        }
+
+        return statusCount;
+    }
+
+    public int getFingerprintCount ( ) {
 
         int fpCount = 0;
 
@@ -369,10 +399,11 @@ public class ProductOrder implements Serializable {
     /**
      * getGenderCount is a helper method to exposed the sum of all samples, registered to this product order, based on
      * a given gender
+     *
      * @param gender A string that represents the gender for which we wish to get a count
      * @return a count of all samples for whom the participant's gener matches the one given
      */
-    private Integer getGenderCount (String gender) {
+    private int getGenderCount ( String gender ) {
 
         int counter = 0;
         for (ProductOrderSample sample:sampleProducts) {
@@ -387,10 +418,11 @@ public class ProductOrder implements Serializable {
      * getSampleTypeCount is a helper method to expose the sum of all samples, registered to this product order,
      * based on a given sample type
      *
+     *
      * @param sampleTypeInd a String representing the type of sample for which we wish to get a count
      * @return a count of all samples that have a sample type matching the value passed in.
      */
-    private Integer getSampleTypeCount (String sampleTypeInd) {
+    private int getSampleTypeCount ( String sampleTypeInd ) {
         int counter = 0;
         for (ProductOrderSample sample:sampleProducts) {
             if (sample.isInBspFormat () && sampleTypeInd.equals (sample.getSampleType ())) {
@@ -406,7 +438,7 @@ public class ProductOrder implements Serializable {
      *
      * @return a count of all samples in this product order that are in a RECEIVED state
      */
-    public Integer getReceivedSampleCount () {
+    public int getReceivedSampleCount ( ) {
         int counter = 0;
 
         for (ProductOrderSample sample:sampleProducts) {
@@ -424,7 +456,7 @@ public class ProductOrder implements Serializable {
      *
      * @return a count of all samples in this product order that are in an ACTIVE state
      */
-    public Integer getActiveSampleCount () {
+    public int getActiveSampleCount ( ) {
         int counter = 0;
         for (ProductOrderSample sample:sampleProducts) {
             if (sample.isInBspFormat() && sample.isActiveStock()) {
