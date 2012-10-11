@@ -6,10 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.util.List;
 
 
@@ -20,20 +16,9 @@ import java.util.List;
 @RequestScoped
 public class ProductFamilyDao extends GenericDao {
 
-
     public List<ProductFamily> findAll() {
-
-        EntityManager em = getEntityManager();
-
-        CriteriaQuery<ProductFamily> criteriaQuery =
-                em.getCriteriaBuilder().createQuery(ProductFamily.class);
-
-        Root<ProductFamily> root = criteriaQuery.from(ProductFamily.class);
-
-        return em.createQuery(criteriaQuery).getResultList();
+        return findAll(ProductFamily.class);
     }
-
-
 
     /**
      * Return the ProductFamily corresponding to the well known ProductFamily.Name.
@@ -42,22 +27,6 @@ public class ProductFamilyDao extends GenericDao {
      * @return
      */
     public ProductFamily find(ProductFamily.ProductFamilyName productFamilyName) {
-
-        try {
-
-            EntityManager em = getEntityManager();
-
-            CriteriaQuery<ProductFamily> criteriaQuery =
-                    em.getCriteriaBuilder().createQuery(ProductFamily.class);
-
-            Root<ProductFamily> root = criteriaQuery.from(ProductFamily.class);
-            criteriaQuery.where(em.getCriteriaBuilder().equal(root.get(ProductFamily_.name), productFamilyName.name()));
-
-            return em.createQuery(criteriaQuery).getSingleResult();
-        }
-        catch (NoResultException nrx) {
-            return null;
-        }
-
+        return findSingle(ProductFamily.class, ProductFamily_.name, productFamilyName.name());
     }
 }

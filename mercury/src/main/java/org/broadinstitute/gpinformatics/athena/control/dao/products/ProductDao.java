@@ -6,9 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.util.List;
 
 @Stateful
@@ -20,7 +17,6 @@ import java.util.List;
  */
 public class ProductDao extends GenericDao {
 
-
     /**
      * Current 2012-10-04 UI Product Details mockup shows a three column table with Part#, Name, and Description, all
      * simple properties not requiring any fetches.
@@ -28,19 +24,8 @@ public class ProductDao extends GenericDao {
      * @return
      */
     public List<Product> findTopLevelProducts() {
-
-        EntityManager em = getEntityManager();
-
-        CriteriaQuery<Product> criteriaQuery =
-                em.getCriteriaBuilder().createQuery(Product.class);
-
-        Root<Product> root = criteriaQuery.from(Product.class);
-        criteriaQuery.where(em.getCriteriaBuilder().equal(root.get(Product_.topLevelProduct), true));
-
-        return em.createQuery(criteriaQuery).getResultList();
-
+        return findList(Product.class, Product_.topLevelProduct, true);
     }
-
 
     /**
      * Find a Product by the specified part number.  Currently not fetching through to addOns or PriceItems since
@@ -51,16 +36,6 @@ public class ProductDao extends GenericDao {
      * @return
      */
     public Product findByPartNumber(String partNumber) {
-
-        EntityManager em = getEntityManager();
-
-        CriteriaQuery<Product> criteriaQuery =
-                em.getCriteriaBuilder().createQuery(Product.class);
-
-        Root<Product> root = criteriaQuery.from(Product.class);
-        criteriaQuery.where(em.getCriteriaBuilder().equal(root.get(Product_.partNumber), partNumber));
-
-        return em.createQuery(criteriaQuery).getSingleResult();
-
+        return findSingle(Product.class, Product_.partNumber, partNumber);
     }
 }
