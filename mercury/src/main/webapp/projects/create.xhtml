@@ -18,9 +18,6 @@
                 <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
                 <!-- TODO: figure out if this is really the right way to do this -->
                 <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
-                <f:event type="preRenderView" listener="#{researchProjectDetail.initEmptyProject}"/>
-                <!-- TODO: remove this event listener once irbEngaged becomes irbNotEngaged (and also update selectBooleanCheckbox value binding) -->
-                <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
             </f:metadata>
         </ui:define>
 
@@ -83,7 +80,7 @@
                         <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}" completeMethod="#{researchProjectForm.completeIrbs}" multiple="true"/>
                         <p:watermark for="irbs" value="Type number to search"/>
                         <p>
-                            <p:selectBooleanCheckbox id="irbEngaged" value="#{researchProjectForm.irbNotEngaged}"/> <p:outputLabel for="irbEngaged" value="IRB Not Engaged" style="display: inline-block"/>
+                            <p:selectBooleanCheckbox id="irbEngaged" value="#{researchProjectDetail.project.irbNotEngaged}"/> <p:outputLabel for="irbEngaged" value="IRB Not Engaged" style="display: inline-block"/>
                         </p>
                     </div>
                 </div>
