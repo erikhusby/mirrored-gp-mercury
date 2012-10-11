@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,7 +20,6 @@ import java.util.List;
 @ManagedBean
 @RequestScoped
 public class PageAdministrationBean extends AbstractJsfBean {
-
     @Inject
     private AuthenticationService authSvc;
     private String pagePath;
@@ -33,7 +33,7 @@ public class PageAdministrationBean extends AbstractJsfBean {
 
     public Collection<String> getRoleList() {
         Collection<String> fullRoleList = null;
-        if(null != pagePath) {
+        if (null != pagePath) {
             Collection<String> roleList = authSvc.retrieveAuthorizedRoles(pagePath);
 
             fullRoleList = roleList;

@@ -6,6 +6,7 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -39,7 +40,7 @@ public class ProductOrderSample implements Serializable {
     private String sampleComment;
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrderSample")
-    private Set<BillableItem> billableItems;
+    private Set<BillableItem> billableItems = new HashSet<BillableItem>();
 
     @ManyToOne
     private ProductOrder productOrder;

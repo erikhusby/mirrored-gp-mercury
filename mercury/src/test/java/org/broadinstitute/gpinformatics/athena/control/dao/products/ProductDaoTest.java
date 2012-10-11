@@ -6,12 +6,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.ejb.EJBException;
 import javax.inject.Inject;
-import javax.persistence.NoResultException;
 import java.util.List;
 
-@Test(enabled = false)
+@Test
 public class ProductDaoTest extends ContainerTest {
 
     @Inject
@@ -20,16 +18,59 @@ public class ProductDaoTest extends ContainerTest {
 
     public void testFindTopLevelProducts() {
 
-        final List<Product> topLevelProducts = dao.findTopLevelProducts();
-        Assert.assertNotNull(topLevelProducts);
+        final List<Product> products = dao.findProducts(ProductDao.TopLevelProductsOnly.YES);
+        Assert.assertNotNull(products);
 
         // make sure exex is in there
-        for (Product product : topLevelProducts) {
-            if ("EXOME_EXPRESS-2012.11.01".equals(product.getPartNumber()))
+        for (Product product : products) {
+            if ("EXOME_EXPRESS-2012.11.01".equals(product.getPartNumber())) {
                 return;
+            }
         }
 
         Assert.fail("Did not find Exome Express top-level product!");
+
+        // needs a negative test for the absence of non top level products
+
+    }
+
+
+    public void testFindAvailableProducts() {
+
+        final List<Product> products = dao.findProducts(ProductDao.AvailableProductsOnly.YES);
+        Assert.assertNotNull(products);
+
+        // make sure exex is in there
+        for (Product product : products) {
+            if ("EXOME_EXPRESS-2012.11.01".equals(product.getPartNumber())) {
+                return;
+            }
+        }
+
+        Assert.fail("Did not find Exome Express top-level product!");
+
+        // needs a negative test for non-available products.  this will require test data with products having null
+        // availability dates and availability dates in the future.
+
+    }
+
+
+    public void testFindAvailableTopLevelProducts() {
+
+        final List<Product> products = dao.findProducts(ProductDao.AvailableProductsOnly.YES, ProductDao.TopLevelProductsOnly.NO);
+        Assert.assertNotNull(products);
+
+        // make sure exex is in there
+        for (Product product : products) {
+            if ("EXOME_EXPRESS-2012.11.01".equals(product.getPartNumber())) {
+                return;
+            }
+        }
+
+        Assert.fail("Did not find Exome Express top-level product!");
+
+        // needs a negative test for non-available products.  this will require test data with products having null
+        // availability dates and availability dates in the future.
 
     }
 
@@ -45,15 +86,8 @@ public class ProductDaoTest extends ContainerTest {
         Assert.assertEquals(product.getWorkflowName(), "EXEX-WF-2012.11.01");
 
         // negative test
-        try {
-            dao.findByPartNumber("NONEXISTENT PART!!!");
-        }
-        catch (EJBException ejbx) {
-            // Since Daos are @Stateful, a NoResultException that is generated within the Dao method will get
-            // wrapped in an EJBException and be thrown back to us.  So if we see an EJBException here that may be
-            // okay, provided it's wrapping the expected NoResultException
-            Assert.assertTrue(NoResultException.class.isAssignableFrom(ejbx.getCause().getClass()));
-        }
+        Product nonexistentProduct = dao.findByPartNumber("NONEXISTENT PART!!!");
+        Assert.assertNull(nonexistentProduct);
 
     }
 }

@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -27,7 +31,7 @@ public class PriceItem implements Serializable {
 
         GP("Genomics Platform");
 
-        private String quoteServerPlatform;
+        private final String quoteServerPlatform;
 
         private Platform(String quoteServerPlatform) {
             this.quoteServerPlatform = quoteServerPlatform;
@@ -56,7 +60,7 @@ public class PriceItem implements Serializable {
         ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
         CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing");
 
-        private String quoteServerCategory;
+        private final String quoteServerCategory;
 
 
         Category(String quoteServerCategory) {
@@ -80,7 +84,7 @@ public class PriceItem implements Serializable {
         TIME_AND_MATERIALS_LAB("Time and Materials - Laboratory"),
         TIME_AND_MATERIALS_IFX("Time and Materials - Informatics");
 
-        private String quoteServerName;
+        private final String quoteServerName;
 
         private Name(String quoteServerName) {
             this.quoteServerName = quoteServerName;
@@ -121,20 +125,25 @@ public class PriceItem implements Serializable {
     PriceItem() {}
 
 
-    public PriceItem(Platform platform, Category category, Name name, String quoteServerId) {
+    public PriceItem(@NotNull Platform platform, @NotNull Category category, @NotNull Name name,
+                     @NotNull String quoteServerId) {
 
-        if ( platform == null )
-            throw new NullPointerException( "Null platform specified!" );
+        if (platform == null) {
+            throw new NullPointerException("Null platform specified!");
+        }
 
-        if ( name == null )
-            throw new NullPointerException( "Null price item name specified!" );
+        if (name == null) {
+            throw new NullPointerException("Null price item name specified!");
+        }
 
-        if ( quoteServerId == null )
-            throw new NullPointerException( "Null quote server price item id specified!" );
+        if (quoteServerId == null) {
+            throw new NullPointerException("Null quote server price item id specified!");
+        }
 
         // don't currently know how to validate this other than against emptiness...
-        if ( "".equals(quoteServerId.trim()) )
-            throw new RuntimeException( "Empty quote server price item id specified!" );
+        if (StringUtils.isBlank(quoteServerId)) {
+            throw new IllegalArgumentException("Empty quote server price item id specified!");
+        }
 
         this.platform = platform.getQuoteServerPlatform();
         this.category = category.getQuoteServerCategory();
@@ -192,24 +201,23 @@ public class PriceItem implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof PriceItem)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof PriceItem)) {
+            return false;
+        }
 
         PriceItem priceItem = (PriceItem) o;
 
-        if (!category.equals(priceItem.category)) return false;
-        if (!name.equals(priceItem.name)) return false;
-        if (!platform.equals(priceItem.platform)) return false;
-
-        return true;
+        return new EqualsBuilder().append(category, priceItem.category)
+                .append(name, priceItem.name)
+                .append(platform, priceItem.platform).build();
     }
 
     @Override
     public int hashCode() {
-        int result = platform.hashCode();
-        result = 31 * result + category.hashCode();
-        result = 31 * result + name.hashCode();
-        return result;
+        return new HashCodeBuilder().append(platform).append(category).append(name).hashCode();
     }
 
 }

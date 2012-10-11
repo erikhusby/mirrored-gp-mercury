@@ -37,7 +37,8 @@ public class CreateProductOrderTestData extends ContainerTest {
     public void createTestData() {
 
         // create a researchProject
-        researchProject = new ResearchProject(1L, "ResearchProject_" + UUID.randomUUID(), "synopsis");
+        //TODO hmc create test data
+        researchProject = new ResearchProject(1L, "ResearchProject_" + UUID.randomUUID(), "synopsis", true);
         researchProjectDao.persist(researchProject);
 
 

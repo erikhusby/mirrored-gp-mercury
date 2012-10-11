@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -29,7 +29,6 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ProductOrderDao extends GenericDao {
-
 
     /**
      * Find ProductOrders by Research Project
@@ -100,9 +99,10 @@ public class ProductOrderDao extends GenericDao {
      * @return
      */
     public List<ProductOrder> findAllOrders() {
+        EntityManager entityManager = getEntityManager();
         CriteriaQuery<ProductOrder> criteriaQuery =
                 getEntityManager().getCriteriaBuilder().createQuery(ProductOrder.class);
-        TypedQuery<ProductOrder> typedQuery = getEntityManager().createQuery(criteriaQuery);
+        TypedQuery<ProductOrder> typedQuery = entityManager.createQuery(criteriaQuery);
 
         try {
             return typedQuery.getResultList();

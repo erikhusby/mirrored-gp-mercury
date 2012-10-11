@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -24,7 +26,7 @@ import java.io.Serializable;
 @Entity
 @Audited
 @Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
-public class ProductFamily implements Serializable {
+public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     /**
      * Known product families, a DAO method might accept one of these to return a persistent or detached instance
@@ -89,19 +91,24 @@ public class ProductFamily implements Serializable {
     }
 
     @Override
+    public int compareTo(ProductFamily productFamily) {
+        return getName().compareTo(productFamily.getName());
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+
         if (!(o instanceof ProductFamily)) return false;
 
         ProductFamily that = (ProductFamily) o;
 
-        if (!name.equals(that.name)) return false;
+        return new EqualsBuilder().append(getName(), that.getName()).isEquals();
 
-        return true;
     }
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return new HashCodeBuilder().append(getName()).toHashCode();
     }
 }

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.hibernate.envers.Audited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -137,7 +138,7 @@ public class ProductOrder implements Serializable {
      * @return a {@link String} that represents the unique Jira Ticket key
      */
     public String getJiraTicketKey() {
-        return this.jiraTicketKey;
+        return jiraTicketKey;
     }
 
     /**
@@ -147,11 +148,11 @@ public class ProductOrder implements Serializable {
      * @param jiraTicketKeyIn a {@link String} that represents the unique key to the Jira Ticket to which the current
      *                        Product Order is associated
      */
-    public void setJiraTicketKey(String jiraTicketKeyIn) {
-        if(jiraTicketKeyIn == null) {
+    public void setJiraTicketKey(@NotNull String jiraTicketKeyIn) {
+        if (jiraTicketKeyIn == null) {
             throw new NullPointerException("Jira Ticket Key cannot be null");
         }
-        this.jiraTicketKey = jiraTicketKeyIn;
+        jiraTicketKey = jiraTicketKeyIn;
     }
 
     public int getUniqueParticipantCount() {
@@ -174,13 +175,10 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * returns the number of unique participants
-     * @return
+     * @return the number of unique samples, as determined by the sample name
      */
     public int getUniqueSampleCount() {
-        int result = 0;
-        Set<String> uniqueSamples = getUniqueSampleNames();
-        return uniqueSamples.size();
+        return getUniqueSampleNames().size();
     }
 
     private Set<String> getUniqueSampleNames() {
@@ -199,7 +197,7 @@ public class ProductOrder implements Serializable {
     }
 
     public int getDuplicateCount() {
-        return ( getTotalSampleCount() - getUniqueSampleCount());
+        return (getTotalSampleCount() - getUniqueSampleCount());
     }
 
     public TumorNormalCount getTumorNormalCounts() {
@@ -213,9 +211,9 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * Returns true is any and all samples are of BSP Format.
-     * Note will return false if there are no samples on the sheet.
-     * @return
+     * @return true if all samples are of BSP Format.
+     * Will return false if there are no samples on the sheet.
+     *
      */
     public boolean areAllSampleBSPFormat() {
         boolean result = true;
@@ -285,7 +283,7 @@ public class ProductOrder implements Serializable {
 
         PRODUCT_FAMILY("Product Family");
 
-        private String fieldName;
+        private final String fieldName;
 
         private RequiredSubmissionFields(String fieldNameIn) {
             fieldName = fieldNameIn;

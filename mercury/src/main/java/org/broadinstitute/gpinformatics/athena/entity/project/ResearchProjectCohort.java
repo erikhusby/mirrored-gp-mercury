@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.hibernate.annotations.Index;
+
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -18,6 +22,7 @@ public class ResearchProjectCohort {
     private Long researchProjectCohortId;
 
     @ManyToOne
+    @Index(name = "ix_cohort_project")
     private ResearchProject researchProject;
 
     // The BSP cohort Identifier
@@ -40,6 +45,27 @@ public class ResearchProjectCohort {
 
     public String getCohortId() {
         return cohortId;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if ( (this == other ) ) {
+            return true;
+        }
+
+        if ( !(other instanceof ResearchProjectCohort) ) {
+            return false;
+        }
+
+        ResearchProjectCohort castOther = (ResearchProjectCohort) other;
+        return new EqualsBuilder()
+                .append(getCohortId(), castOther.getCohortId())
+                .append(getResearchProject(), castOther.getResearchProject()).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(getCohortId()).append(getResearchProject()).toHashCode();
     }
 }
 
