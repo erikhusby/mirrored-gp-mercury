@@ -7,9 +7,25 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import org.hibernate.envers.Audited;
-
-import javax.persistence.*;
-import java.util.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A lab event isn't just at the granularity
@@ -48,7 +64,7 @@ import java.util.*;
     // deltas in an aggregation in zamboni
 @Entity
 @Audited
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
 public abstract class LabEvent {
 
     public static final Comparator<GenericLabEvent> byEventDate = new Comparator<GenericLabEvent>() {
@@ -63,7 +79,7 @@ public abstract class LabEvent {
     };
 
     @Id
-    @SequenceGenerator(name = "SEQ_LAB_EVENT", sequenceName = "SEQ_LAB_EVENT")
+    @SequenceGenerator(name = "SEQ_LAB_EVENT", schema = "mercury", sequenceName = "SEQ_LAB_EVENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_EVENT")
     private Long labEventId;
 
@@ -77,6 +93,7 @@ public abstract class LabEvent {
     private Long disambiguator = 0L;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury")
     private Set<Reagent> reagents = new HashSet<Reagent>();
 
     // todo jmt a single transfer superclass that permits all section, position, vessel combinations

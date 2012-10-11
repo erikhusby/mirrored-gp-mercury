@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -23,7 +25,7 @@ import java.io.Serializable;
  */
 @Entity
 @Audited
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
+@Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
 public class ProductFamily implements Serializable {
 
     /**
@@ -56,9 +58,9 @@ public class ProductFamily implements Serializable {
 
 
     @Id
-    @SequenceGenerator(name = "SEQ_PRODUCT_FAMILY", sequenceName = "SEQ_PRODUCT_FAMILY")
+    @SequenceGenerator(name = "SEQ_PRODUCT_FAMILY", schema = "athena", sequenceName = "SEQ_PRODUCT_FAMILY")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_FAMILY")
-    private Long id;
+    private Long productFamilyId;
 
     private String name;
 
@@ -80,8 +82,8 @@ public class ProductFamily implements Serializable {
     }
 
 
-    public Long getId() {
-        return id;
+    public Long getProductFamilyId() {
+        return productFamilyId;
     }
 
     public String getName() {
@@ -91,17 +93,17 @@ public class ProductFamily implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+
         if (!(o instanceof ProductFamily)) return false;
 
         ProductFamily that = (ProductFamily) o;
 
-        if (!name.equals(that.name)) return false;
+        return new EqualsBuilder().append(getName(), that.getName()).isEquals();
 
-        return true;
     }
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return new HashCodeBuilder().append(getName()).toHashCode();
     }
 }

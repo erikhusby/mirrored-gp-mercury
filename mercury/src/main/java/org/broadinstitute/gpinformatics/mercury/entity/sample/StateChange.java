@@ -12,6 +12,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.util.Collection;
 
 /**
@@ -19,10 +20,11 @@ import java.util.Collection;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class StateChange {
 
     @Id
-    @SequenceGenerator(name = "SEQ_STATE_CHANGE", sequenceName = "SEQ_STATE_CHANGE")
+    @SequenceGenerator(name = "SEQ_STATE_CHANGE", schema = "mercury", sequenceName = "SEQ_STATE_CHANGE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_STATE_CHANGE")
     private Long stateChangeId;
 

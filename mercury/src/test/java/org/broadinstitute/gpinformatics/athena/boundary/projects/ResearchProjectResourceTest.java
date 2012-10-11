@@ -24,8 +24,11 @@ import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchPro
 public class ResearchProjectResourceTest extends ContainerTest {
 
     private static final Long TEST_CREATOR = 10L;
-    private static final Long TestScientist1 = 111L;
-    private static final Long TestScientist2 = 222L;
+    // This is a test number, useful for populating the DB
+    // private static final Long TEST_CREATOR = 10524L;
+
+    private static final Long TestScientist1 = 14567L;
+    private static final Long TestScientist2 = 11908L;
 
     @Inject
     ResearchProjectResource researchProjectResource;
@@ -42,7 +45,8 @@ public class ResearchProjectResourceTest extends ContainerTest {
         if (researchProjectResource != null) {
             testTitle = "MyResearchProject_" + UUID.randomUUID();
             ResearchProject researchProject =
-                    new ResearchProject(TEST_CREATOR, testTitle, "To study stuff.");
+                    new ResearchProject(TEST_CREATOR, testTitle, "To study stuff.", ResearchProject.IRB_NOT_ENGAGED);
+            researchProject.setJiraTicketKey(testTitle);
 
             researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant_" + UUID.randomUUID()));
             researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO_" + UUID.randomUUID()));
@@ -57,7 +61,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
             researchProjectDao.persist(researchProject);
 
-            testResearchProjectId = researchProject.getId();
+            testResearchProjectId = researchProject.getResearchProjectId();
         }
     }
 
@@ -65,14 +69,14 @@ public class ResearchProjectResourceTest extends ContainerTest {
     public void tearDown() throws Exception {
         // Only do this if the server is calling this and thus, injection worked
         if (researchProjectResource != null) {
-            ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
-            researchProjectDao.delete(researchProject);
+            ResearchProject researchProject = researchProjectResource.findResearchProjectByTitle(testTitle);
+            researchProjectDao.remove(researchProject);
         }
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindResearchProjectById() throws Exception {
-        ResearchProject researchProject = researchProjectResource.findResearchProjectById(testResearchProjectId);
+        ResearchProject researchProject = researchProjectResource.findResearchProjectById(testTitle);
         Assert.assertNotNull(researchProject);
         Assert.assertNotNull(researchProject.getTitle());
         Assert.assertEquals(researchProject.getTitle(), testTitle);

@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.vessel;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
@@ -14,6 +16,8 @@ import java.util.Map;
 /**
  * Data Access Object for BSPSampleAuthorityTwoDTube
  */
+@Stateful
+@RequestScoped
 public class BSPSampleAuthorityTwoDTubeDao extends GenericDao {
 
     /**

@@ -7,9 +7,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularStateRang
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.Table;
 
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class PCRPrimerPairReagent extends Reagent {
 
     private static Log gLog = LogFactory.getLog(PCRPrimerPairReagent.class);

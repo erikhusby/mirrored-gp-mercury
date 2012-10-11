@@ -3,31 +3,42 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.infrastructure.experiments.EntityUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.hibernate.annotations.Index;
+import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Research Projects hold all the information about a research project
  */
 @Entity
+@Audited
+@Table(schema = "athena")
 public class ResearchProject {
 
+    public static final boolean IRB_ENGAGED = false;
+    public static final boolean IRB_NOT_ENGAGED = true;
+
     public enum Status {
-        Open, Archived
+        Open, Archived;
+
+        public static List<String> getNames() {
+            List<String> names = new ArrayList<String>();
+            for (Status status : Status.values()) {
+                names.add(status.name());
+            }
+
+            return names;
+        }
     }
 
     @Id
-    @SequenceGenerator(name="seq_research_project_index", sequenceName="seq_research_project_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_research_project_index", schema = "athena", sequenceName="seq_research_project_index")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
-    private Long id;
+    private Long researchProjectId;
 
     private Status status;
 
@@ -38,42 +49,62 @@ public class ResearchProject {
     private Long modifiedBy;
 
     @Column(unique = true)
+    @Index(name = "ix_rp_title")
     private String title;
 
     private String synopsis;
 
+    private boolean irbNotEngaged = IRB_ENGAGED;
+
     // People related to the project
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private Set<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
-    @OneToMany(mappedBy = "researchProject")
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private Set<ResearchProjectCohort> sampleCohorts;
 
-    @OneToMany(mappedBy = "researchProject")
-    private Set<ResearchProjectFunding> fundingIDs;
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    private Set<ResearchProjectFunding> projectFunding;
 
-    @OneToMany(mappedBy = "researchProject")
-    private Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    private Set<ResearchProjectIRB> irbNumbers;
 
     private String irbNotes;
 
-    @OneToMany(mappedBy = "researchProject")
-    private final Set<ProductOrder> productOrders = new HashSet<ProductOrder>();
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    private List<ProductOrder> productOrders;
 
+    @Index(name = "ix_rp_jira")
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
-    protected ResearchProject() {}
+    /**
+     * no arg constructor for hibernate and JSF.
+     */
+    public ResearchProject() {
+        this(null, null, null, false);
+    }
 
-    public ResearchProject(Long creator, String title, String synopsis) {
+    /**
+     * The full constructor for fields that are not settable.
+     *
+     * @param creator The user creating the project
+     * @param title The title (name) of the project
+     * @param synopsis A description of the project
+     * @param irbNotEngaged Is this project set up for NO IRB?
+     */
+    public ResearchProject(Long creator, String title, String synopsis, boolean irbNotEngaged) {
+        sampleCohorts = new HashSet<ResearchProjectCohort>();
+        productOrders = new ArrayList<ProductOrder>();
+        createdDate = new Date();
+        modifiedDate = createdDate;
+        irbNotes = "";
 
         this.title = title;
         this.synopsis = synopsis;
         this.createdBy = creator;
-        this.createdDate = new Date();
         this.modifiedBy = creator;
-        this.modifiedDate = this.createdDate;
-        this.irbNotes = "";
+        this.irbNotEngaged = irbNotEngaged;
     }
 
     // Getters
@@ -85,8 +116,8 @@ public class ResearchProject {
         return synopsis;
     }
 
-    public Long getId() {
-        return id;
+    public Long getResearchProjectId() {
+        return researchProjectId;
     }
 
     public Date getCreatedDate() {
@@ -113,6 +144,28 @@ public class ResearchProject {
         this.irbNotes += "\n" + irbNotes;
     }
 
+    // Setters
+
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setSynopsis(String synopsis) {
+        this.synopsis = synopsis;
+    }
+
+    public void setIrbNotEngaged(boolean irbNotEngaged) {
+        this.irbNotEngaged = irbNotEngaged;
+    }
+
+    public void setIrbNotes(String irbNotes) {
+        this.irbNotes = irbNotes;
+    }
+
     /**
      * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
      * which this Research project is associated
@@ -137,15 +190,21 @@ public class ResearchProject {
         this.jiraTicketKey = jiraTicketKeyIn;
     }
 
-    public Set<ResearchProjectCohort> getSampleCohorts() {
-        return Collections.unmodifiableSet(sampleCohorts);
-    }
-
-    public void addCohort(ResearchProjectCohort sampleCohort ){
-        if (sampleCohorts == null) {
-            sampleCohorts = new HashSet<ResearchProjectCohort>();
+    /**
+     *
+     * @return Get the cohortIds. Since the cohort list is defaulted to empty, we know that the cohorts will exist
+     */
+    public String[] getCohortIds() {
+        int i = 0;
+        String[] cohorts = new String[sampleCohorts.size()];
+        for (ResearchProjectCohort cohort : sampleCohorts) {
+            cohorts[i++] = cohort.getCohortId();
         }
 
+        return cohorts;
+    }
+
+    public void addCohort(ResearchProjectCohort sampleCohort ) {
         sampleCohorts.add(sampleCohort);
     }
 
@@ -153,8 +212,22 @@ public class ResearchProject {
         sampleCohorts.remove(sampleCohort);
     }
 
-    public Set<ResearchProjectIRB> getIrbNumbers() {
-        return Collections.unmodifiableSet(irbNumbers);
+    public boolean isIrbNotEngaged() {
+        return irbNotEngaged;
+    }
+
+    public String[] getIrbNumbers() {
+        int i = 0;
+        if (sampleCohorts != null) {
+            String[] irbNumberList = new String[irbNumbers.size()];
+            for (ResearchProjectIRB irb : irbNumbers) {
+                irbNumberList[i++] = irb.getIrb();
+            }
+
+            return irbNumberList;
+        }
+
+        return new String[0];
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {
@@ -177,8 +250,8 @@ public class ResearchProject {
         associatedPeople.add(new ProjectPerson(this, role, personId));
     }
 
-    public Set<Long> getPeople(RoleType role) {
-        Set<Long> people = new HashSet<Long> ();
+    public Long[] getPeople(RoleType role) {
+        List<Long> people = new ArrayList<Long> ();
 
         if (associatedPeople != null) {
             for (ProjectPerson projectPerson : associatedPeople) {
@@ -188,23 +261,43 @@ public class ResearchProject {
             }
         }
 
-        return people;
+        return people.toArray(new Long[people.size()]);
     }
 
-    public Set<ResearchProjectFunding> getFundingIds() {
-        return Collections.unmodifiableSet(fundingIDs);
+    public Long[] getProjectManagers() {
+        return getPeople(RoleType.PM);
+    }
+
+    public Long[] getScientists() {
+        return getPeople(RoleType.SCIENTIST);
+    }
+
+    public String[] getFundingIds() {
+
+        if (projectFunding != null) {
+            String[] fundingIds = new String[projectFunding.size()];
+
+            int i=0;
+            for (ResearchProjectFunding fundingItem : projectFunding) {
+                fundingIds[i++] = fundingItem.getFundingId();
+            }
+
+            return fundingIds;
+        }
+
+        return new String[0];
     }
 
     public void addFunding(ResearchProjectFunding funding) {
-        if (fundingIDs == null) {
-            fundingIDs = new HashSet<ResearchProjectFunding>();
+        if (projectFunding == null) {
+            projectFunding = new HashSet<ResearchProjectFunding>();
         }
 
-        fundingIDs.add(funding);
+        projectFunding.add(funding);
     }
 
     public void removeFunding(ResearchProjectFunding funding) {
-        fundingIDs.remove(funding);
+        projectFunding.remove(funding);
     }
 
     public Status getStatus() {
@@ -215,35 +308,12 @@ public class ResearchProject {
         this.status = status;
     }
 
-    public Set<ProductOrder> getProductOrders() {
+    public List<ProductOrder> getProductOrders() {
         return productOrders;
     }
 
-    public String getIrbNumberString() {
-        Set<String> irbNumberString = new HashSet<String> ();
-        for (ResearchProjectIRB irb : getIrbNumbers()) {
-            irbNumberString.add(irb.getIrb());
-        }
-
-        return EntityUtils.flattenSetOfStrings(irbNumberString);
-    }
-
-    /**
-     *
-     * @param other The other object
-     * @return boolean
-     */
-    @Override
-    public boolean equals(Object other) {
-        if ( (this == other ) ) return true;
-        if ( !(other instanceof ResearchProject) ) return false;
-        ResearchProject castOther = (ResearchProject) other;
-        return new EqualsBuilder().append(title, castOther.title).isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder().append(title).toHashCode();
+    public RoleType[] getRoleTypes() {
+        return RoleType.values();
     }
 
     /**
@@ -292,6 +362,22 @@ public class ResearchProject {
         }
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if ( (this == other ) ) {
+            return true;
+        }
 
+        if ( !(other instanceof ResearchProject) ) {
+            return false;
+        }
 
+        ResearchProject castOther = (ResearchProject) other;
+        return new EqualsBuilder().append(getJiraTicketKey(), castOther.getJiraTicketKey()).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(getJiraTicketKey()).toHashCode();
+    }
 }

@@ -1,15 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.util.Collection;
 
 @Stateful
@@ -38,11 +35,6 @@ public class LabBatchDAO extends GenericDao {
     }
 
     public LabBatch findByName(String batchName) {
-        EntityManager entityManager = this.getThreadEntityManager().getEntityManager();
-        CriteriaQuery<LabBatch> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(LabBatch.class);
-        Root<LabBatch> root = criteriaQuery.from(LabBatch.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(LabBatch_.batchName), batchName));
-        return entityManager.createQuery(criteriaQuery).getSingleResult();
+        return findSingle(LabBatch.class, LabBatch_.batchName, batchName);
     }
 }

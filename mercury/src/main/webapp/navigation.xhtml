@@ -16,8 +16,9 @@
         <p:menu overlay="true" trigger="menuButton" my="left top" at="left bottom" >
             <p:submenu label="Athena">
                 <p:menuitem value="Projects" outcome="/projects/list" icon="ui-icon-home"/>
-                <p:menuitem value="Illumina Run Query" outcome="/zims/illuminaRunQuery" />
-                <p:menuitem value="PASS Dashboard" outcome="/pass/dashboard" />
+                <!-- TODO: bring these back for particular user roles? -->
+                <!--<p:menuitem value="Illumina Run Query" outcome="/zims/illuminaRunQuery" />-->
+                <!--<p:menuitem value="PASS Dashboard" outcome="/pass/dashboard" />-->
                 <sqltg:AuthorizeBlock roles="Sequel-Developers">
                     <ul>
                         <p:menuitem value="Page Administration" outcome="/administration/page_administration" icon="ui-icon-gear"/>

@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.project;
 
 
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -10,24 +10,16 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-@NamedQueries({
-        @NamedQuery(
-                name = "JiraTicket.fetchAllOrderByName",
-                query = "from JiraTicket j order by j.ticketName"),
-        @NamedQuery(
-                name = "JiraTicket.fetchByName",
-                query = "from JiraTicket j where j.ticketName = :ticketName")
-})
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class JiraTicket {
 
     public static final String TEST_PROJECT_PREFIX = "LCSET";

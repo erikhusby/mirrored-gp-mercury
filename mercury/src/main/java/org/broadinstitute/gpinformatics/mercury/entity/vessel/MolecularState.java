@@ -11,6 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.io.Serializable;
 
 /**
@@ -43,10 +44,11 @@ import java.io.Serializable;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class MolecularState implements Serializable {
 
     @Id
-    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE", sequenceName = "SEQ_MOLECULAR_STATE")
+    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE", schema = "mercury", sequenceName = "SEQ_MOLECULAR_STATE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE")
     private Long molecularStateId;
 

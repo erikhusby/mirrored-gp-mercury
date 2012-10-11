@@ -12,6 +12,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,14 +22,9 @@ import java.util.Set;
 /**
  * A traditional plate.
  */
-@NamedQueries(
-        @NamedQuery(
-                name = "StaticPlate.findByBarcode",
-                query = "select p from StaticPlate p where label = :barcode"
-        )
-)
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell>, Serializable {
 
     public enum PlateType {

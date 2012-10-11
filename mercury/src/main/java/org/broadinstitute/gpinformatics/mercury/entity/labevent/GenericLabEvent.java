@@ -11,6 +11,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.Date;
 
@@ -19,6 +20,7 @@ import java.util.Date;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class GenericLabEvent extends LabEvent {
 
     @Enumerated(EnumType.STRING)

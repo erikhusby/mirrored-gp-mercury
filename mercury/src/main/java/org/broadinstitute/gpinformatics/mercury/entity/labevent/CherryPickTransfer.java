@@ -14,6 +14,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 /**
  * Represents a transfer between positions in two vessel containers
@@ -21,6 +22,7 @@ import javax.persistence.ManyToOne;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class CherryPickTransfer extends VesselTransfer {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)

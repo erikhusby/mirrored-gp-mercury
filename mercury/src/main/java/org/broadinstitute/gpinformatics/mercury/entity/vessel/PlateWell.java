@@ -11,10 +11,12 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import java.util.Collection;
 import java.util.Set;
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class PlateWell extends LabVessel {
 
     @ManyToOne(fetch = FetchType.LAZY)

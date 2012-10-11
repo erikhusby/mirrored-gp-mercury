@@ -9,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 /**
  * Let's make a very simple person model
@@ -34,10 +35,11 @@ import javax.persistence.SequenceGenerator;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class Person {
 
     @Id
-    @SequenceGenerator(name = "SEQ_PERSON", sequenceName = "SEQ_PERSON")
+    @SequenceGenerator(name = "SEQ_PERSON", schema = "mercury", sequenceName = "SEQ_PERSON")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PERSON")
     private Long personId;
 

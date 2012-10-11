@@ -29,6 +29,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,10 +39,11 @@ import java.util.Set;
 
 @Entity
 @Audited
+@Table(schema = "mercury")
 public abstract class Project {
 
     @Id
-    @SequenceGenerator(name = "SEQ_PROJECT", sequenceName = "SEQ_PROJECT")
+    @SequenceGenerator(name = "SEQ_PROJECT", schema = "mercury", sequenceName = "SEQ_PROJECT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PROJECT")
     private Long projectId;
 

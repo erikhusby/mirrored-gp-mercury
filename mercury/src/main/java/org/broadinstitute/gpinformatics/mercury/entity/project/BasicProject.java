@@ -8,9 +8,11 @@ import org.hibernate.envers.Audited;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class BasicProject extends Project {
     
     private static Log gLog = LogFactory.getLog(BasicProject.class);

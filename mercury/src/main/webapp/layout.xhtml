@@ -36,20 +36,14 @@
     <h:head>
         <!--<link href='http://fonts.googleapis.com/css?family=Lato|Arvo|PT+Sans|Cantarell|Open+Sans' rel='stylesheet' type='text/css'/>-->
         <h:outputStylesheet library="css" name="bootstrap.css"/>
+        <h:outputStylesheet library="css" name="primefaces_bootstrap_fixes.css"/>
         <h:outputStylesheet library="css" name="styles.css"/>
         <title>Athena : <ui:insert name="title"/></title>
         <ui:insert name="head"/>
-        <style type="text/css">
-            body {
-                padding-top: 60px;
-                padding-bottom: 40px;
-                font-size: 12px;
-            }
-        </style>
     </h:head>
     <h:body>
 
-        <div class="navbar navbar-fixed-top">
+        <div class="navbar navbar-static-top">
             <div class="navbar-inner">
                 <div class="container-fluid">
 
@@ -57,7 +51,7 @@
                     <div class="nav-collapse pull-right">
                         <sqltg:isLoggedIn>
                             <h:form>
-                                <h:commandLink action="#{securityBackingBean.logout}" value="Logout"/>
+                                <h:commandLink action="#{logoutHandler.logout}" value="Logout"/>
                             </h:form>
                         </sqltg:isLoggedIn>
                     </div>

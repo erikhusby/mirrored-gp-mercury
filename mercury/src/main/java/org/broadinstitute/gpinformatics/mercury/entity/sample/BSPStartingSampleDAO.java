@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 // todo jmt this should be in the control.dao package
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample_;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaQuery;
@@ -15,6 +17,8 @@ import java.util.Map;
 
 /**
  */
+@Stateful
+@RequestScoped
 public class BSPStartingSampleDAO extends GenericDao {
 
     public BSPStartingSample findBySampleName(String stockName) {

@@ -8,6 +8,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import java.util.Set;
 
 /**
@@ -15,6 +16,7 @@ import java.util.Set;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class BSPSampleAuthorityTwoDTube extends TwoDBarcodedTube {
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
