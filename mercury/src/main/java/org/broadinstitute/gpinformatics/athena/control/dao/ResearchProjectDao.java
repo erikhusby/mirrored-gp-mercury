@@ -6,9 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.util.List;
 
 /**
@@ -20,6 +17,10 @@ public class ResearchProjectDao extends GenericDao {
 
     public List<ResearchProject> findResearchProjectsByOwner(long username) {
         return findList(ResearchProject.class, ResearchProject_.createdBy, username);
+    }
+
+    public ResearchProject findByBusinessKey(String key) {
+        return findByTitle(key);
     }
 
     public ResearchProject findByTitle(String title) {
