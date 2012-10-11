@@ -4,14 +4,14 @@
     xsi:schemaLocation="http://jboss.org/schema/arquillian
     http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
 
-    <!--<container qualifier="remote-glassfish" default="true">-->
-        <!--<configuration>-->
-            <!--<property name="adminHost">localhost</property>-->
-            <!--&lt;!&ndash;<property name="adminHttps">true</property>&ndash;&gt;-->
-            <!--&lt;!&ndash;<property name="adminUser">admin</property>&ndash;&gt;-->
-            <!--&lt;!&ndash;<property name="adminPassword">admin</property>&ndash;&gt;-->
-        <!--</configuration>-->
-    <!--</container>-->
+    <container qualifier="remote-glassfish" default="true">
+        <configuration>
+            <property name="adminHost">localhost</property>
+            <!--<property name="adminHttps">true</property>-->
+            <!--<property name="adminUser">admin</property>-->
+            <!--<property name="adminPassword">admin</property>-->
+        </configuration>
+    </container>
 
     <extension qualifier="selenium-server">
        <property name="skip">true</property>
@@ -46,13 +46,13 @@
     </container>
 -->
 
-<!-- for Arquillian-JBossAS7-Managed to download and manage its own AS instance -->
+<!-- for Arquillian-JBossAS7-Managed to download and manage its own AS instance
     <container qualifier="dev" default="true">
         <configuration>
-            <property name="jbossHome">/Library/JBoss7</property>
+            <property name="jbossHome">target/jboss-as-${jboss.version:7.1.0.Final}</property>
         </configuration>
     </container>
-
+-->
 <!--
     <container qualifier="remote-glassfish" default="true">
         <configuration>
