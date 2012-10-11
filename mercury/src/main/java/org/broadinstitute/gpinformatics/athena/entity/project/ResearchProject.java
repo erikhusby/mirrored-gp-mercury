@@ -116,6 +116,10 @@ public class ResearchProject {
         return synopsis;
     }
 
+    public Boolean getIrbNotEngaged() {
+        return irbNotEngaged;
+    }
+
     public Long getResearchProjectId() {
         return researchProjectId;
     }
