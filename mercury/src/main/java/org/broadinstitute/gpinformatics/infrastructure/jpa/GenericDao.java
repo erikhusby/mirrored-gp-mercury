@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.control.dao;
+package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -50,6 +50,10 @@ public class GenericDao {
 
     public EntityManager getEntityManager() {
         return threadEntityManager.getEntityManager();
+    }
+
+    protected CriteriaBuilder getCriteriaBuilder() {
+        return getEntityManager().getCriteriaBuilder();
     }
 
     /**

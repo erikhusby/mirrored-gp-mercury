@@ -2,8 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthenticationService;
 
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.RequestScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
@@ -16,7 +15,6 @@ import java.util.Collection;
  * @author Scott Matthews
  */
 
-@ManagedBean
 @RequestScoped
 public class AuthorizationManager {
     @Inject private AuthenticationService authSvc;
@@ -25,9 +23,9 @@ public class AuthorizationManager {
      * isUserAuthorized will determine if the user that us currently logged into the application is authorized to
      * access the current page.
      *
-     * @param pageUri
-     * @param requestIn
-     * @return
+     * @param pageUri page to check
+     * @param requestIn contains user data with roles
+     * @return true if user is authorized for the page
      */
     public boolean isUserAuthorized(String pageUri, HttpServletRequest requestIn) {
         boolean authorized = false;
@@ -49,13 +47,10 @@ public class AuthorizationManager {
 
     /**
      *
-     * isPageProtected determines if the current page needs authentication
-     *
-     * @param pageUri
-     * @param requestIn
-     * @return
+     * @param pageUri page to check
+     * @return true if the current page needs authentication
      */
-    public boolean isPageProtected(String pageUri, HttpServletRequest requestIn) {
+    public boolean isPageProtected(String pageUri) {
         return authSvc.isPageProtected(pageUri);
     }
 }

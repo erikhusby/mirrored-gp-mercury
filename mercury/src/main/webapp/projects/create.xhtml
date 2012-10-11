@@ -6,19 +6,105 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">Start New Project</ui:define>
-        <ui:define name="body">
-            <h:form>
-                <h:panelGrid columns="2">
-                    <h:outputLabel for="projectName">Projcet Name: </h:outputLabel>
-                    <p:inputText id="projectName" value="#{projectForm.projectName}"/>
+        <ui:define name="title">New Research Project</ui:define>
 
-                    <h:link outcome="list" value="Cancel"/>
-                    <p:commandButton value="Save" action="#{projectForm.create}" ajax="false"/>
-                </h:panelGrid>
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
+                <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
+                <!-- TODO: figure out if this is really the right way to do this -->
+                <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
+            </f:metadata>
+        </ui:define>
+
+        <ui:define name="body">
+            <h:form id="form" prependId="false" styleClass="form-horizontal">
+                <div class="control-group">
+                    <p:outputLabel for="name" value="Name" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="name" value="#{researchProjectDetail.project.title}" size="50"/>
+                        <p:watermark for="name" value="Enter the name of the research project"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="synopsis" value="Synopsis" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="50" rows="3"/>
+                        <p:watermark for="synopsis" value="Enter scientific background of the research project in this space"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="projectManagers" value="Project Managers" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="bspUserConverter" multiple="true"/>
+                        <p:watermark for="projectManagers" value="Type name to search"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="scientists" value="Scientists" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="bspUserConverter" multiple="true"/>
+                        <p:watermark for="scientists" value="Type name to search"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="fundingSources" value="Funding Sources" styleClass="control-label"/>
+                    <div class="controls">
+                        <!-- TODO: tie into funding source service -->
+                        <p:autoComplete id="fundingSources" value="#{researchProjectForm.fundingSources}" completeMethod="#{researchProjectForm.completeFundingSource}" multiple="true"/>
+                        <p:watermark for="fundingSources" value="Type number to search"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="sampleCohorts" value="Sample Cohorts" styleClass="control-label"/>
+                    <div class="controls">
+                        <!-- TODO: tie into sample service -->
+                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}" completeMethod="#{researchProjectForm.completeSampleCohorts}" multiple="true"/>
+                        <p:watermark for="sampleCohorts" value="Type number to search"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="irbs" value="IRB/IACUC Numbers" styleClass="control-label"/>
+                    <div class="controls">
+                        <!-- TODO: tie into real IRBs? -->
+                        <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}" completeMethod="#{researchProjectForm.completeIrbs}" multiple="true"/>
+                        <p:watermark for="irbs" value="Type number to search"/>
+                        <p>
+                            <p:selectBooleanCheckbox id="irbEngaged" value="#{researchProjectDetail.project.irbNotEngaged}"/> <p:outputLabel for="irbEngaged" value="IRB Not Engaged" style="display: inline-block"/>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="irbNotes" value="IRB Notes" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50"/>
+                        <p:watermark for="irbNotes" value="Enter notes about the above IRBs"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="row-fluid">
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel"/>
+                            </div>
+                            <div class="span1">
+                                <p:commandButton value="Save" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </h:form>
         </ui:define>
     </ui:composition>

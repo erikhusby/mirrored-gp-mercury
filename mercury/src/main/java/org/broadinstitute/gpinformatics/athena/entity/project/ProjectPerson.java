@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -22,6 +23,7 @@ public class ProjectPerson {
     private Long projectPersonId;
 
     @ManyToOne
+    @Index(name = "ix_person_project")
     private ResearchProject researchProject;
 
     private RoleType role;
@@ -55,29 +57,20 @@ public class ProjectPerson {
         return personId;
     }
 
-    /**
-     *
-     * @param other The other object
-     * @return boolean
-     */
     @Override
     public boolean equals(Object other) {
-        if ( (this == other ) ) return true;
-        if ( !(other instanceof ProjectPerson) ) return false;
+        if ((this == other )) return true;
+        if (!(other instanceof ProjectPerson) ) {
+            return false;
+        }
+
         ProjectPerson castOther = (ProjectPerson) other;
         return new EqualsBuilder()
-                .append(role, castOther.role)
-                .append(personId, castOther.personId).isEquals();
+                .append(getRole(), castOther.getRole()).append(getPersonId(), castOther.getPersonId()).isEquals();
     }
 
-    /**
-     *
-     * @return int
-     */
     @Override
     public int hashCode() {
-        return new HashCodeBuilder()
-                .append(role)
-                .append(personId).toHashCode();
+        return new HashCodeBuilder().append(getRole()).append(getPersonId()).toHashCode();
     }
 }

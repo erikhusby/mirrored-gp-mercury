@@ -33,6 +33,7 @@
     <ui:insert name="metadata"/>
     <h:head>
         <h:outputStylesheet library="css" name="bootstrap.css"/>
+        <h:outputStylesheet library="css" name="primefaces_bootstrap_fixes.css"/>
         <h:outputStylesheet library="css" name="styles.css"/>
         <link rel="shortcut icon" type="image/x-icon" href="#{request.contextPath}/favicon.ico"/>
         <title>Mercury | <ui:insert name="title"/></title>
@@ -67,6 +68,10 @@
 
         <div class="container-fluid">
             <div class="row-fluid">
+                <div class="span12">
+                    <ui:include src="navigation.xhtml"></ui:include>
+                </div>
+
                 <p:ajaxStatus id="ajaxStatus">
                     <f:facet name="start">
                         Loading...
@@ -97,8 +102,6 @@
                             <ui:insert name="body"/>
                     </p:panel>
             </div>
-
-
         </div>
 
         <footer>

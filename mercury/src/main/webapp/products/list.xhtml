@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<body>
+<ui:composition template="/layout.xhtml">
+    <ui:define name="title">Products</ui:define>
+    <ui:define name="body">
+
+        <!-- per the mockups, clicking a row in this table will view the Product Details -->
+        <p:dataTable value="#{productBean.topLevelProducts}" var="product">
+            <p:column headerText="Part #">
+                #{product.partNumber}
+            </p:column>
+
+            <p:column headerText="Name">
+                #{product.productName}
+            </p:column>
+
+            <p:column headerText="Description">
+                #{product.description}
+            </p:column>
+
+        </p:dataTable>
+
+        <h:form>
+            <p><p:commandButton value="New Product..." action="create?faces-redirect=true" ajax="false"/></p>
+            <!-- TODO: fill in action for new product order view -->
+            <p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>
+        </h:form>
+    </ui:define>
+</ui:composition>
+</body>
+</html>

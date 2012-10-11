@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.apache.commons.logging.Log;
-import org.primefaces.util.ArrayUtils;
 
 import javax.inject.Inject;
 import javax.servlet.*;
@@ -29,18 +28,15 @@ public class AuthorizationFilter implements Filter {
     public static final String LOGIN_PAGE = "/security/login.xhtml";
     public static final String TARGET_PAGE_ATTRIBUTE = "targeted_page";
 
-    // All assets required by the Login page, minus JSF support files.
-    private static final String[] LOGIN_ASSETS = { LOGIN_PAGE, "/images/broad_logo.png", "/images/pmb_broad-logo.jpg"};
-
     /**
-     * init is the default initialization method for this filter.  It grabs the filter config (defined in the
-     * web deployment descriptor) as well as the error page if authorization fails
+     * This the default initialization method for this filter.  It grabs the filter config (defined in the
+     * web deployment descriptor).
      * @param filterConfigIn Contains all values defined in the deployment descriptor
      * @throws ServletException
      */
     @Override
     public void init(FilterConfig filterConfigIn) throws ServletException {
-        filterConfig = filterConfigIn;
+        this.filterConfig = filterConfigIn;
     }
 
     /**
@@ -55,64 +51,63 @@ public class AuthorizationFilter implements Filter {
      *
      * A failure on any of these items will result in the user being redirected to an appropriate page.
      *
-     * @param servletRequestIn
-     * @param servletResponseIn
-     * @param filterChainIn
+     * @param servletRequest
+     * @param servletResponse
+     * @param filterChain
      * @throws IOException
      * @throws ServletException
      */
     @Override
-    public void doFilter(ServletRequest servletRequestIn,
-                         ServletResponse servletResponseIn,
-                         FilterChain filterChainIn)
+    public void doFilter(ServletRequest servletRequest,
+                         ServletResponse servletResponse,
+                         FilterChain filterChain)
             throws IOException, ServletException {
 
-        HttpServletRequest request = (HttpServletRequest)servletRequestIn;
+        HttpServletRequest request = (HttpServletRequest)servletRequest;
         String pageUri = request.getServletPath();
 
         if (!excludeFromFilter(pageUri)) {
-            logger.info("Checking authentication for: " + pageUri);
+            logger.debug("Checking authentication for: " + pageUri);
             String user = request.getRemoteUser();
             if (user == null) {
-                logger.info("User is not authenticated, redirecting to login page");
+                logger.debug("User is not authenticated, redirecting to login page");
                 if (!pageUri.equals(LOGIN_PAGE)) {
-                    servletRequestIn.setAttribute(TARGET_PAGE_ATTRIBUTE, pageUri);
+                    servletRequest.setAttribute(TARGET_PAGE_ATTRIBUTE, pageUri);
                 }
-                errorRedirect(servletRequestIn, servletResponseIn, LOGIN_PAGE);
+                errorRedirect(servletRequest, servletResponse, LOGIN_PAGE);
                 return;
             }
             boolean authorized = manager.isUserAuthorized(pageUri, request);
 
             if (!authorized) {
                 String errorMessage = "The user '" + user +  "' doesn't have permission to log in.";
-                logger.info(errorMessage);
-                errorRedirect(servletRequestIn, servletResponseIn, LOGIN_PAGE);
+                logger.warn(errorMessage);
+                errorRedirect(servletRequest, servletResponse, LOGIN_PAGE);
                 return;
             }
         }
-        filterChainIn.doFilter(servletRequestIn, servletResponseIn);
+        filterChain.doFilter(servletRequest, servletResponse);
     }
 
     /**
-     *
      * errorRedirect is a helper method that redirects to a page upon failure in the filter
      *
-     * @param requestIn
-     * @param responseIn
-     * @param errorPageIn
+     * @param request
+     * @param response
+     * @param errorPage
      * @throws IOException
      * @throws ServletException
      */
-    private void errorRedirect(ServletRequest requestIn, ServletResponse responseIn,
-                               String errorPageIn) throws IOException, ServletException{
-        filterConfig.getServletContext().getRequestDispatcher(errorPageIn).forward(requestIn, responseIn);
+    private void errorRedirect(ServletRequest request, ServletResponse response, String errorPage)
+            throws IOException, ServletException {
+        filterConfig.getServletContext().getRequestDispatcher(errorPage).forward(request, response);
     }
 
     private static boolean excludeFromFilter(String path) {
         return path.startsWith("/javax.faces.resource") ||
                path.startsWith("/rest") ||
                path.startsWith("/ArquillianServletRunner") ||
-               ArrayUtils.contains(LOGIN_ASSETS, path);
+               path.startsWith(LOGIN_PAGE);
     }
 
 
