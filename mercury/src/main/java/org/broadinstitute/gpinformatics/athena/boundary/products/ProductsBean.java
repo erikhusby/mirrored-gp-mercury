@@ -8,16 +8,16 @@ import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
 
 import javax.enterprise.context.RequestScoped;
-import javax.faces.bean.ManagedBean;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.AvailableProductsOnly.NO;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.AvailableProductsOnly.YES;
 
 
-@ManagedBean
+@Named
 @RequestScoped
 public class ProductsBean extends AbstractJsfBean {
 
@@ -30,7 +30,8 @@ public class ProductsBean extends AbstractJsfBean {
 
     private boolean rebuild = true;
 
-    private boolean availableProductsOnly = false;
+    // it seems a reasonable default to only show available products by default, but this can be changed if required
+    private boolean availableProductsOnly = true;
 
     // initializing this to an empty list makes there be no results on startup
     private List<Product> filteredProducts;
@@ -100,7 +101,6 @@ public class ProductsBean extends AbstractJsfBean {
 
 
     public void onAvailableProductsOnly(AjaxBehaviorEvent ignored) {
-        availableProductsOnly = !availableProductsOnly;
         rebuild = true;
     }
 }

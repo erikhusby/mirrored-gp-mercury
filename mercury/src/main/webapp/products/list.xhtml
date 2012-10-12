@@ -18,11 +18,12 @@
 
         <h:form id="form">
 
-            <h:panelGrid>
+            <h:panelGrid columns="1">
 
                 <h:panelGrid columns="2">
                     <p:selectBooleanCheckbox value="#{productsBean.availableProductsOnly}">
-                        <p:ajax event="click" listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>
+                        <!--<p:ajax event="click" listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>-->
+                        <p:ajax listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>
                     </p:selectBooleanCheckbox>
                     <h:outputText value="Available Products Only"/>
                 </h:panelGrid>
@@ -36,9 +37,8 @@
                          emptyMessage="No products found containing search text"
                          selection="#{productsBean.selectedProduct}" selectionMode="single">
 
-
-                <!--<p:ajax event="rowSelect" listener="#{productsBean.onRowSelect}" update=":form:display" oncomplete="passDialog.show()" />-->
-                <!--<p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" />-->
+                <p:ajax event="rowSelect" listener="#{productsBean.onRowSelect}" update=":form:productView" />
+                <p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" />
 
                 <f:facet name="header">
                         <p:outputPanel>
@@ -73,18 +73,22 @@
                 </p:column>
 
                 <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productsBean.compare}">
-                    <h:outputText value="#{product.topLevelProduct}" />
+                    <h:outputText value='#{product.topLevelProduct ? "Yes" : "No"}' />
                 </p:column>
 
                 <p:column headerText="Availability Date" sortBy="#{product.availabilityDate}" sortFunction="#{productsBean.compare}">
-                    <h:outputText value="#{product.availabilityDate}" />
+                    <h:outputText value="#{product.availabilityDate}">
+                        <f:convertDateTime pattern="MMM dd, yyyy" />
+                    </h:outputText>
                 </p:column>
 
             </p:dataTable>
 
-            <!-- vestige of copy/paste from PASS dashboard -->
-            <p:dialog id="passDialog" header="PASS Detail" widgetVar="passDialog" resizable="true"
-                      hideEffect="fade" modal="true" />
+
+            <p:panelGrid id="productView" header="PASS Detail" widgetVar="productView">
+
+            </p:panelGrid>
+
 
             <p><p:commandButton value="New Product..." action="create?faces-redirect=true" ajax="false"/></p>
             <!-- TODO: fill in action for new product order view -->
