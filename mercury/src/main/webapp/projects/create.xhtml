@@ -28,6 +28,7 @@
                     <div class="controls">
                         <p:inputText id="name" value="#{researchProjectDetail.project.title}" size="50"/>
                         <p:watermark for="name" value="Enter the name of the research project"/>
+                        <p:message for="name"/>
                     </div>
                 </div>
 
@@ -36,6 +37,7 @@
                     <div class="controls">
                         <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="50" rows="3"/>
                         <p:watermark for="synopsis" value="Enter scientific background of the research project in this space"/>
+                        <p:message for="synopsis"/>
                     </div>
                 </div>
 

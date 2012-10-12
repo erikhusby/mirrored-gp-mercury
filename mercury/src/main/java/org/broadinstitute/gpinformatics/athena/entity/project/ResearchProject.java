@@ -51,10 +51,10 @@ public class ResearchProject {
 
     @Column(unique = true)
     @Index(name = "ix_rp_title")
-    @NotNull
+    @NotNull(message = "Name is required")
     private String title;
 
-    @NotNull
+    @NotNull(message = "Synopsis is required")
     private String synopsis;
 
     private boolean irbNotEngaged = IRB_ENGAGED;
