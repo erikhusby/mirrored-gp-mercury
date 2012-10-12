@@ -222,9 +222,9 @@ public class ProductOrder implements Serializable {
      */
     public boolean areAllSampleBSPFormat() {
         boolean result = true;
-        if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : samples) {
-                if (! productOrderSample.isInBspFormat() ) {
+        if (!isSheetEmpty()) {
+            for (ProductOrderSample productOrderSample : samples) {
+                if (!productOrderSample.isInBspFormat()) {
                     result = false;
                     break;
                 }
@@ -241,10 +241,9 @@ public class ProductOrder implements Serializable {
 
     private boolean needsBspMetaData() {
         boolean needed = false;
-        if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : samples) {
-                if ( productOrderSample.isInBspFormat() &&
-                     ! productOrderSample.hasBSPDTOBeenInitialized() ) {
+        if (!isSheetEmpty()) {
+            for (ProductOrderSample productOrderSample : samples) {
+                if (productOrderSample.needsBspMetaData()) {
                     needed = true;
                     break;
                 }

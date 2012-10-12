@@ -32,6 +32,10 @@ public class BSPSampleDTO implements Serializable {
 
     private final String sampleLsid;
 
+    /** Use this when no valid DTO is present, to avoid null checks */
+    public static final BSPSampleDTO DUMMY =
+            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "");
+
     // collaborator?
     // species vs organism?
     // strain?

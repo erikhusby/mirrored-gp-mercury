@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.hibernate.envers.Audited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -32,6 +33,9 @@ public class ProductOrderSample implements Serializable {
     private Long productOrderSampleId;
 
     public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
+
+    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile(BSP_SAMPLE_FORMAT_REGEX);
+
     static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
     private BillingStatus billingStatus = BillingStatus.NotYetBilled;
@@ -45,6 +49,9 @@ public class ProductOrderSample implements Serializable {
 
     @Transient
     private BSPSampleDTO bspDTO;
+
+    @Transient
+    private boolean hasBspDTOBeenInitialized = false;
 
     ProductOrderSample() {
     }
@@ -81,21 +88,26 @@ public class ProductOrderSample implements Serializable {
         return sampleComment;
     }
 
-    public void setSampleComment(String comment) {
-        this.sampleComment = comment;
+    public void setSampleComment(String sampleComment) {
+        this.sampleComment = sampleComment;
+    }
+
+    public boolean needsBspMetaData() {
+        return isInBspFormat() && !hasBspDTOBeenInitialized;
     }
 
     private BSPSampleDTO getBspDTO() {
-        if ( isInBspFormat() && ! hasBSPDTOBeenInitialized() ) {
-            //TODO
-            // initialize DTO ?
-            throw new RuntimeException("Not yet Implemented.");
+        if (!hasBspDTOBeenInitialized) {
+            if (isInBspFormat()) {
+                bspDTO = BSPSampleDTO.DUMMY;
+                //TODO
+                // initialize DTO ?
+                //throw new RuntimeException("Not yet Implemented.");
+            } else {
+                bspDTO = BSPSampleDTO.DUMMY;
+            }
         }
         return bspDTO;
-    }
-
-    public boolean hasBSPDTOBeenInitialized() {
-        return bspDTO != null;
     }
 
     public Set<BillableItem> getBillableItems() {
@@ -111,106 +123,84 @@ public class ProductOrderSample implements Serializable {
     }
 
     public boolean isInBspFormat() {
-        return isInBspFormat( getSampleName() );
+        return isInBspFormat(sampleName);
     }
 
-    public static boolean isInBspFormat(String sampleName) {
-        if (StringUtils.isBlank(sampleName)) {
-            return false;
-        }
-        return Pattern.matches(ProductOrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
+    public static boolean isInBspFormat(@NotNull String sampleName) {
+        return !StringUtils.isBlank(sampleName)
+               && Pattern.matches(ProductOrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
     }
 
     // Methods delegated to the DTO
     public String getVolume() throws IllegalStateException {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().getVolume();
     }
 
     public String getConcentration() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().getConcentration();
     }
 
     public String getRootSample() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().getRootSample();
     }
 
     public String getStockSample() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().getStockSample();
     }
 
     public String getCollection() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().getCollection();
     }
 
     public String getCollaboratorsSampleName() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().getCollaboratorsSampleName();
     }
 
     public String getContainerId() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().getContainerId();
     }
 
     public String getParticipantId() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().getPatientId();
     }
 
     public String getOrganism() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().getOrganism();
     }
 
     public String getStockAtExport() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().getStockAtExport();
     }
 
     public Boolean isPositiveControl() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().isPositiveControl();
     }
 
     public Boolean isNegativeControl() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
+        ensureInBspFormat();
         return getBspDTO().isNegativeControl();
     }
 
     public String getSampleLsid() {
-        if (! isInBspFormat() ) {
+        ensureInBspFormat();
+        return getBspDTO().getSampleLsid();
+    }
+
+    private void ensureInBspFormat() {
+        if (!isInBspFormat()) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
-        return getBspDTO().getSampleLsid();
     }
 
     public String getGender() {
