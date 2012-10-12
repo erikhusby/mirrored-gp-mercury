@@ -1779,8 +1779,8 @@
                                            operation="="/>
                                 </propertyfile>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
-                                    <entry key="build.resultKey" type="string" value="${bamboo.resultKey}" operation="=" />
-                                    <entry key="build.buildTimeStamp" type="string" value="${bamboo.buildTimeStamp}" operation="=" />
+                                    <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
+                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}" operation="=" />
                                 </propertyfile>
                             </target>
                         </configuration>
