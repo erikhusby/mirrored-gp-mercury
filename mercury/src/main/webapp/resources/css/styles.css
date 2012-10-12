@@ -43,7 +43,7 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 .view-horizontal .control-label { float: left; width: 160px; text-align: right; }
 .view-horizontal .controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; height: 15px; padding-bottom: 5px; }
 
-.hide {
+.hide, .ui-datatable .ui-filter-column .hide {
     display: none;
     visibility: hidden;
 }
