@@ -2,13 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.AliquotReceiver;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConnectorStub;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingResponse;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
@@ -16,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.project.*;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.BSPAliquotWorkQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
@@ -69,7 +65,7 @@ public class EndToEndTest  {
         LabVessel stock1 = createBSPStock(masterSample1,"00001234"/*,plan1*/);
         LabVessel stock2 = createBSPStock(masterSample2,"00005678"/*,plan2*/);
 
-        BSPAliquotWorkQueue aliquotWorkQueue = new BSPAliquotWorkQueue(new BSPConnectorStub());
+//        BSPAliquotWorkQueue aliquotWorkQueue = new BSPAliquotWorkQueue(new BSPConnectorStub());
 
 //        Assert.assertTrue(project.getAllStarters().isEmpty());
 //        Assert.assertTrue(project2.getAllStarters().isEmpty());
@@ -90,10 +86,10 @@ public class EndToEndTest  {
         AliquotParameters aliquotParameters = new AliquotParameters(/*plan1,*/0.9f,0.6f);
         AliquotParameters aliquotParameters2 = new AliquotParameters(/*plan2,*/1.9f,2.6f);
         
-        aliquotWorkQueue.add(stock1,aliquotParameters,/*plan1.getWorkflowDescription(),*/null);
-        aliquotWorkQueue.add(stock2,aliquotParameters2,/*plan2.getWorkflowDescription(),*/null);
+//        aliquotWorkQueue.add(stock1,aliquotParameters,/*plan1.getWorkflowDescription(),*/null);
+//        aliquotWorkQueue.add(stock2,aliquotParameters2,/*plan2.getWorkflowDescription(),*/null);
 
-        BSPPlatingResponse platingResponse = aliquotWorkQueue.sendBatch();
+        BSPPlatingResponse platingResponse = null; //aliquotWorkQueue.sendBatch();
 
 //        Assert.assertFalse(plan1.getPendingPlatingRequests().isEmpty());
 //        Assert.assertEquals(1, plan1.getPendingPlatingRequests().size());

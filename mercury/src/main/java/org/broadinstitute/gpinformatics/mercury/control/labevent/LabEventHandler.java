@@ -1,25 +1,22 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.WorkQueueDAO;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.*;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
-import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.WorkQueueEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecularStateException;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMessage;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
+import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
-import java.util.*;
 
 public class LabEventHandler {
 
@@ -34,9 +31,6 @@ public class LabEventHandler {
     PartiallyProcessedLabEventCache invalidMolecularState;
 
     @Inject
-    WorkQueueDAO workQueueDAO;
-
-    @Inject
     Event<Billable> billableEvents;
 
     @Inject
@@ -46,13 +40,6 @@ public class LabEventHandler {
     QuoteService quoteService;
 
     public LabEventHandler() {}
-
-    public LabEventHandler(WorkQueueDAO workQueueDAO) {
-        if (workQueueDAO == null) {
-            throw new NullPointerException("workQueueDAO cannot be null.");
-        }
-        this.workQueueDAO = workQueueDAO;
-    }
 
     public HANDLER_RESPONSE handleEvent(LabEventMessage eventMessage) {
         // 0. write out the message to stable server-side storage,
@@ -174,26 +161,26 @@ public class LabEventHandler {
      * @param labEvent
      * @param workflow
      */
-    private void processProjectPlanOverrides(LabEvent labEvent,
-                                             WorkflowDescription workflow) {
-        if (workflow != null) {
-            for (LabVessel labVessel : labEvent.getAllLabVessels()) {
-                if (OrmUtil.proxySafeIsInstance(labVessel, VesselContainerEmbedder.class)) {
-                    Collection<LabVessel> containedVessels = OrmUtil.proxySafeCast(labVessel, VesselContainerEmbedder.class).
-                            getVesselContainer().getContainedVessels();
-                    if (containedVessels.isEmpty()) {
-                        processProjectPlanOverrides(labEvent,labVessel,workflow);
-                    }
-                    else {
-                        for (LabVessel vessel : containedVessels) {
-                            processProjectPlanOverrides(labEvent,vessel,workflow);
-                        }
-                    }
-                }
-
-            }
-        }
-    }
+//    private void processProjectPlanOverrides(LabEvent labEvent,
+//                                             WorkflowDescription workflow) {
+//        if (workflow != null) {
+//            for (LabVessel labVessel : labEvent.getAllLabVessels()) {
+//                if (OrmUtil.proxySafeIsInstance(labVessel, VesselContainerEmbedder.class)) {
+//                    Collection<LabVessel> containedVessels = OrmUtil.proxySafeCast(labVessel, VesselContainerEmbedder.class).
+//                            getVesselContainer().getContainedVessels();
+//                    if (containedVessels.isEmpty()) {
+//                        processProjectPlanOverrides(labEvent,labVessel,workflow);
+//                    }
+//                    else {
+//                        for (LabVessel vessel : containedVessels) {
+//                            processProjectPlanOverrides(labEvent,vessel,workflow);
+//                        }
+//                    }
+//                }
+//
+//            }
+//        }
+//    }
 
     /**
      * {@link #processProjectPlanOverrides(org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent, org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel, org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription)}
@@ -201,28 +188,28 @@ public class LabEventHandler {
      * @param vessel
      * @param workflow
      */
-    private void processProjectPlanOverrides(LabEvent labEvent,
-                                             LabVessel vessel,
-                                             WorkflowDescription workflow) {
-        for (LabWorkQueue labWorkQueue : workQueueDAO.getPendingQueues(vessel, workflow)) {
-            Collection<WorkQueueEntry> workQueueEntries = labWorkQueue.getEntriesForWorkflow(workflow,vessel);
-            if (workQueueEntries.size() == 1) {
-                // not ambiguous: single entry
-                WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
-//                if (workQueueEntry.getProjectPlanOverride() != null) {
-//                    labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
-//                }
-                workQueueEntry.dequeue();
-            }
-            else if (workQueueEntries.size() > 1) {
-                // todo ambiguous: how do we narrow down the exact queue that this
-                // vessel was placed in?
-                throw new RuntimeException("Mercury doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
-            }
-            /** else this vessel wasn't place in a {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue} */
-        }
-
-    }
+//    private void processProjectPlanOverrides(LabEvent labEvent,
+//                                             LabVessel vessel,
+//                                             WorkflowDescription workflow) {
+//        for (LabWorkQueue labWorkQueue : workQueueDAO.getPendingQueues(vessel, workflow)) {
+//            Collection<WorkQueueEntry> workQueueEntries = labWorkQueue.getEntriesForWorkflow(workflow,vessel);
+//            if (workQueueEntries.size() == 1) {
+//                // not ambiguous: single entry
+//                WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
+////                if (workQueueEntry.getProjectPlanOverride() != null) {
+////                    labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
+////                }
+//                workQueueEntry.dequeue();
+//            }
+//            else if (workQueueEntries.size() > 1) {
+//                // todo ambiguous: how do we narrow down the exact queue that this
+//                // vessel was placed in?
+//                throw new RuntimeException("Mercury doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
+//            }
+//            /** else this vessel wasn't place in a {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue} */
+//        }
+//
+//    }
 
     /**
      * If a relevant project considers this event a checkpointable

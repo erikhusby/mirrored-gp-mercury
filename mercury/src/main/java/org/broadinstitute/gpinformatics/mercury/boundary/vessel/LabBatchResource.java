@@ -1,17 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.ProjectPlanDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
-import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.BSPStartingSampleDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -29,9 +24,6 @@ import java.util.Set;
 @Path("/labbatch")
 @Stateless
 public class LabBatchResource {
-
-    @Inject
-    private ProjectPlanDao projectPlanDao;
 
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
@@ -61,7 +53,7 @@ public class LabBatchResource {
 //            projectPlanDao.persist(projectPlan);
         }
 
-        projectPlanDao.flush();
+//        projectPlanDao.flush();
         return "Batch persisted";
     }
 

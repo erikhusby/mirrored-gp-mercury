@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
@@ -19,9 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -40,9 +37,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -51,7 +46,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -136,7 +130,7 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
+        LabEventHandler labEventHandler = new LabEventHandler();
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(workflowDescription,
                 bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
@@ -213,7 +207,7 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
+        LabEventHandler labEventHandler = new LabEventHandler();
 
         // todo jmt fix preflight
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(workflowDescription,
@@ -315,7 +309,7 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
+        LabEventHandler labEventHandler = new LabEventHandler();
         BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke();
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageFactory, labEventFactory,
                 labEventHandler, mapBarcodeToTube, buildIndexPlate.getIndexPlate());
@@ -1681,16 +1675,5 @@ public class LabEventTest {
 
             return this;
         }
-    }
-
-    private WorkQueueDAO createMockWorkQueueDAO() {
-        WorkQueueDAO workQueueDAO = EasyMock.createMock(WorkQueueDAO.class);
-        EasyMock.expect(workQueueDAO.getPendingQueues(
-                (LabVessel)EasyMock.anyObject(),
-                (WorkflowDescription)EasyMock.anyObject()
-        )).andReturn(Collections.<LabWorkQueue>emptySet()).anyTimes();
-
-        EasyMock.replay(workQueueDAO);
-        return workQueueDAO;
     }
 }
