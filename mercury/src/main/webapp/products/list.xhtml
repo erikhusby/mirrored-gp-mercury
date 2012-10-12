@@ -8,33 +8,89 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:p="http://primefaces.org/ui">
-<body>
+<h:head>
+    <title>Athena Product List</title>
+</h:head>
+<h:body>
 <ui:composition template="/layout.xhtml">
     <ui:define name="title">Products</ui:define>
     <ui:define name="body">
 
-        <!-- per the mockups, clicking a row in this table will view the Product Details -->
-        <p:dataTable value="#{productBean.topLevelProducts}" var="product">
-            <p:column headerText="Part #">
-                #{product.partNumber}
-            </p:column>
+        <h:form id="form">
 
-            <p:column headerText="Name">
-                #{product.productName}
-            </p:column>
+            <h:panelGrid>
 
-            <p:column headerText="Description">
-                #{product.description}
-            </p:column>
+                <h:panelGrid columns="2">
+                    <p:selectBooleanCheckbox value="#{productsBean.availableProductsOnly}">
+                        <p:ajax event="click" listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>
+                    </p:selectBooleanCheckbox>
+                    <h:outputText value="Available Products Only"/>
+                </h:panelGrid>
 
-        </p:dataTable>
+            </h:panelGrid>
 
-        <h:form>
+            <!-- per the mockups, clicking a row in this table should view the Product Details -->
+            <p:dataTable value="#{productsBean.productsDataModel}" var="product"
+                         id="dataTable" widgetVar="dataTable"
+                         filteredValue="#{productsBean.filteredProducts}"
+                         emptyMessage="No products found containing search text"
+                         selection="#{productsBean.selectedProduct}" selectionMode="single">
+
+
+                <!--<p:ajax event="rowSelect" listener="#{productsBean.onRowSelect}" update=":form:display" oncomplete="passDialog.show()" />-->
+                <!--<p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" />-->
+
+                <f:facet name="header">
+                        <p:outputPanel>
+                            <h:outputText value="Search"/>
+                            <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
+                        </p:outputPanel>
+                </f:facet>
+
+                <p:column sortBy="#{product.partNumber}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.partNumber}" filterStyleClass="hide">
+                    <f:facet name="header">
+                        <h:outputText value="Part #" />
+                    </f:facet>
+                        
+                    <h:outputText value="#{product.partNumber}" />
+                </p:column>
+
+                <p:column sortBy="#{product.productName}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.productName}" filterStyleClass="hide">
+                    <f:facet name="header">
+                        <h:outputText value="Name" />
+                    </f:facet>
+                    <h:outputText value="#{product.productName}" />
+                </p:column>
+
+                <p:column sortBy="#{product.productFamily.name}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.productFamily.name}" filterStyleClass="hide">
+                    <f:facet name="header">
+                        <h:outputText value="Product Family" />
+                    </f:facet>
+                    <h:outputText value="#{product.productFamily.name}" />
+                </p:column>
+
+                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productsBean.compare}">
+                    <h:outputText value="#{product.topLevelProduct}" />
+                </p:column>
+
+                <p:column headerText="Availability Date" sortBy="#{product.availabilityDate}" sortFunction="#{productsBean.compare}">
+                    <h:outputText value="#{product.availabilityDate}" />
+                </p:column>
+
+            </p:dataTable>
+
+            <!-- vestige of copy/paste from PASS dashboard -->
+            <p:dialog id="passDialog" header="PASS Detail" widgetVar="passDialog" resizable="true"
+                      hideEffect="fade" modal="true" />
+
             <p><p:commandButton value="New Product..." action="create?faces-redirect=true" ajax="false"/></p>
             <!-- TODO: fill in action for new product order view -->
             <p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>
         </h:form>
     </ui:define>
 </ui:composition>
-</body>
+</h:body>
 </html>

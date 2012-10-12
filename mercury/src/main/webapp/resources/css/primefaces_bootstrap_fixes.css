@@ -1,14 +1,10 @@
 /* Reset styles from Bootstrap that make p:autoComplete not work or look ugly. */
 .ui-autocomplete-multiple select { display: none; }
 .ui-autocomplete-multiple input, .ui-autocomplete-multiple input:focus {
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-    box-shadow: none;
-    padding: inherit;
+    -webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none; padding: inherit;
 }
+
 .controls .ui-autocomplete-multiple { display: inline-block; }
 
 /* Let PrimeFaces control the width of inputs instead of Bootstrap. */
-input, textarea, .uneditable-input {
-    width: auto;
-}
+input, textarea, .uneditable-input { width: auto; }
