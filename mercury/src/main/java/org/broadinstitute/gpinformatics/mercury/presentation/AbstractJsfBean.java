@@ -5,9 +5,10 @@ import javax.faces.context.FacesContext;
 import java.io.Serializable;
 
 /**
- * Class to define some common useful functions to remove boiler plate code for JSF functionality.
+ * Class to define some common useful functions to remove boiler plate code for JSF functionality.  This class is
+ * purposely not made serializable so that the implementing classes can choose to do so if they require it.
  */
-public abstract class AbstractJsfBean implements Serializable {
+public abstract class AbstractJsfBean {
     public String redirect(String result) {
         return result + "?faces-redirect=true&includeViewParams=true";
     }
