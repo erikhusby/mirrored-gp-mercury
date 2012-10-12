@@ -2,22 +2,24 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
 
 import javax.enterprise.context.RequestScoped;
-import javax.faces.bean.ManagedBean;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
+import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.AvailableProductsOnly.NO;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.AvailableProductsOnly.YES;
 
 
-@ManagedBean
+@Named
 @RequestScoped
 public class ProductsBean extends AbstractJsfBean {
 
@@ -32,8 +34,11 @@ public class ProductsBean extends AbstractJsfBean {
 
     private boolean availableProductsOnly = false;
 
-    // initializing this to an empty list makes there be no results on startup
     private List<Product> filteredProducts;
+
+    private List<Product> selectedProductAddOns;
+
+    private List<PriceItem> selectedProductPriceItems;
 
 
     public ProductsDataModel getProductsDataModel() {
@@ -52,12 +57,14 @@ public class ProductsBean extends AbstractJsfBean {
 
 
     public void onRowSelect(SelectEvent event) {
-        this.selectedProduct = (Product) event.getObject();
+        selectedProduct = (Product) event.getObject();
+        selectedProductAddOns = new ArrayList<Product>(selectedProduct.getAddOns());
+        selectedProductPriceItems = new ArrayList<PriceItem>(selectedProduct.getPriceItems());
     }
 
 
     public void onRowUnselect(UnselectEvent event) {
-        this.selectedProduct = null;
+        selectedProduct = null;
     }
 
     public int compare(Object o1, Object o2) {
@@ -100,7 +107,15 @@ public class ProductsBean extends AbstractJsfBean {
 
 
     public void onAvailableProductsOnly(AjaxBehaviorEvent ignored) {
-        availableProductsOnly = !availableProductsOnly;
         rebuild = true;
+    }
+
+
+    public List<Product> getSelectedProductAddOns() {
+        return selectedProductAddOns;
+    }
+
+    public List<PriceItem> getSelectedProductPriceItems() {
+        return selectedProductPriceItems;
     }
 }

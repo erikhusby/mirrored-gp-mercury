@@ -5,10 +5,9 @@
       http://java.sun.com/xml/ns/javaee
       http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
 
-<!--
     <alternatives>
-        <stereotype>org.broadinstitute.gpinformatics.mercuryy.infrastructure.Offline</stereotype>
+        <!--<class>org.apache.myfaces.extensions.cdi.jsf.impl.scope.conversation.ClientSideWindowHandler</class>-->
+        <!--<stereotype>org.broadinstitute.gpinformatics.mercuryy.infrastructure.Offline</stereotype>-->
     </alternatives>
--->
 
 </beans>

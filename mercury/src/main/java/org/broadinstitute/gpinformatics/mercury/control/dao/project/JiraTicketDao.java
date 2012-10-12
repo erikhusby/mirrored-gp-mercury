@@ -6,8 +6,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaQuery;
 import java.util.List;
 
 /**
@@ -15,15 +13,10 @@ import java.util.List;
  */
 @Stateful
 @RequestScoped
-public class JiraTicketDao extends GenericDao{
+public class JiraTicketDao extends GenericDao {
 
     public List<JiraTicket> fetchAll(int first, int max) {
-        CriteriaQuery<JiraTicket> criteriaQuery =
-                getEntityManager().getCriteriaBuilder().createQuery(JiraTicket.class);
-        TypedQuery<JiraTicket> typedQuery = getEntityManager().createQuery(criteriaQuery);
-        typedQuery.setFirstResult(first);
-        typedQuery.setMaxResults(max);
-        return typedQuery.getResultList();
+        return findAll(JiraTicket.class, first, max);
     }
 
     public JiraTicket fetchByName(String ticketName) {

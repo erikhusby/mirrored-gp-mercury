@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
@@ -33,19 +32,7 @@ public class PriceItemDao extends GenericDao {
      * @return
      */
     public List<PriceItem> findAll() {
-
-        EntityManager em = getEntityManager();
-
-        CriteriaQuery<PriceItem> criteriaQuery =
-                getCriteriaBuilder().createQuery(PriceItem.class);
-
-        Root<PriceItem> root = criteriaQuery.from(PriceItem.class);
-        criteriaQuery.where(em.getCriteriaBuilder().equal(root.get(PriceItem_.platform), GP.getQuoteServerPlatform()));
-
-        final List<PriceItem> priceItems = em.createQuery(criteriaQuery).getResultList();
-
-        return priceItems;
-
+        return findList(PriceItem.class, PriceItem_.platform, GP.getQuoteServerPlatform());
     }
 
 
