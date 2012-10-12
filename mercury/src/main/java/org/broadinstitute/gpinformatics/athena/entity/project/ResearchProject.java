@@ -9,6 +9,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 /**
@@ -50,8 +51,10 @@ public class ResearchProject {
 
     @Column(unique = true)
     @Index(name = "ix_rp_title")
+    @NotNull
     private String title;
 
+    @NotNull
     private String synopsis;
 
     private boolean irbNotEngaged = IRB_ENGAGED;
