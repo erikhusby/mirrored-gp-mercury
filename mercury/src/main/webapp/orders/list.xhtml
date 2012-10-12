@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">Product Orders</ui:define>
+        <ui:define name="body">
+            <p:dataTable value="#{productOrderBean.allProductOrders}" var="order">
+                <p:column headerText="Name" sortBy="#{order.title}">
+                    <h:link outcome="view" value="#{order.title}">
+                        <f:param name="productOrderKey" value="#{order.businessKey}"/>
+                    </h:link>
+                </p:column>
+
+                <p:column headerText="ID" sortBy="#{order.jiraTicketKey}">
+                    #{order.jiraTicketKey}
+                </p:column>
+
+                <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allProjectStatuses}" filterMatchMode="exact">
+                    #{order.orderStatus}
+                </p:column>
+
+                <p:column headerText="Research Project">
+                    #{order.researchProject.title}
+                </p:column>
+
+                <p:column headerText="Owner">
+                    ???
+                </p:column>
+
+                <p:column headerText="Updated">
+                    ???
+                </p:column>
+
+                <p:column headerText="Samples">
+                    #{order.sampleSummary}
+                </p:column>
+            </p:dataTable>
+
+            <h:form>
+                <p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+</body>
+</html>

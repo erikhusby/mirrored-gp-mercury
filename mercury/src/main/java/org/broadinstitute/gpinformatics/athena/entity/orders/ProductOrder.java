@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
@@ -9,9 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Class to model the concept of a Product ProductOrder that can be created
@@ -51,6 +50,9 @@ public class ProductOrder implements Serializable {
     private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrder")
     private List<ProductOrderSample> samples;
+
+    @Transient
+    private String sampleSummary;
 
     public String getBusinessKey() {
         return jiraTicketKey;
@@ -278,6 +280,28 @@ public class ProductOrder implements Serializable {
         return CreateIssueRequest.Fields.Issuetype.Product_Order;
     }
 
+    public String getSampleSummary() {
+        if (sampleSummary == null) {
+            if (samples != null) {
+                Map<BillingStatus, Integer> totals = new EnumMap<BillingStatus, Integer>(BillingStatus.class);
+                for (ProductOrderSample sample : samples) {
+                    Integer total = totals.get(sample.getBillingStatus());
+                    if (total == null) {
+                        totals.put(sample.getBillingStatus(), 1);
+                    } else {
+                        ++total;
+                    }
+                }
+                StringBuilder sb = new StringBuilder();
+                for (Map.Entry<BillingStatus, Integer> entry : totals.entrySet()) {
+                    sb.append(entry.getKey()).append(": ").append(entry.getValue()).append(" ");
+                }
+                sampleSummary = sb.toString();
+            }
+        }
+        return sampleSummary;
+    }
+
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
@@ -303,10 +327,15 @@ public class ProductOrder implements Serializable {
      * Date: 9/26/12
      * Time: 11:56 AM
      */
-    public static enum OrderStatus {
+    public enum OrderStatus implements StatusType {
         Draft,
         Submitted,
-        Closed
+        Closed;
+
+        @Override
+        public String getDisplayName() {
+            return name();
+        }
     }
 
     @Override

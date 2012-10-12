@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.List;
 
 /**
  * Class for creating a product order, or editing a draft product order.
@@ -22,13 +22,29 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     // Add state that can be edited here.
 
-    private List<String> sampleIDs;
+    private String sampleIDs = "";
 
-    public List<String> getSampleIDs() {
+    public String getSampleIDs() {
         return sampleIDs;
     }
 
-    public void setSampleIDs(List<String> sampleIDs) {
+    public void setSampleIDs(String sampleIDs) {
         this.sampleIDs = sampleIDs;
+    }
+
+    /**
+     * Load local state before bringing up the UI.
+     */
+    public void load() {
+        if (sampleIDs == null && productOrderDetail != null) {
+            StringBuilder sb = new StringBuilder();
+            String separator = "";
+            for (ProductOrderSample sample : productOrderDetail.getProductOrder().getSamples()) {
+                sb.append(separator).append(sample.getSampleName());
+                separator = ", ";
+            }
+
+            sampleIDs = sb.toString();
+        }
     }
 }

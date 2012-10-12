@@ -37,7 +37,7 @@ public class ProductOrderDao extends GenericDao {
      *
      * @return
      */
-    public List<ProductOrder> findAllOrders() {
+    public List<ProductOrder> findAll() {
         return findAll(ProductOrder.class);
     }
 
