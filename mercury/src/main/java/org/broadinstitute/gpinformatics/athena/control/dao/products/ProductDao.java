@@ -103,6 +103,7 @@ public class ProductDao extends GenericDao {
 
     }
 
+
     /**
      * Find a Product by the specified part number.  Currently not fetching through to addOns or PriceItems since
      * there probably aren't enough of them to really bog things down, but that decision can be revisited if needed.
