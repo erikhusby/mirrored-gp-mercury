@@ -71,28 +71,28 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> extends FullAcce
                                                  WorkflowDescription workflowDescription,
                                                  T parameters,
                                                  JiraService jiraService) {
-        Collection<Project> allProjects = new HashSet<Project>();
+//        Collection<Project> allProjects = new HashSet<Project>();
         for (LabVessel vessel : vessels) {
             for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
-                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-                    allProjects.add(projectPlan.getProject());
-                }
+//                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+//                    allProjects.add(projectPlan.getProject());
+//                }
             }
         }
 
         String ticketTitle = null;
         StringBuilder ticketDetails = new StringBuilder();
-        if (allProjects.size() == 1) {
-            Project singleProject = allProjects.iterator().next();
-            ticketTitle = "Work for " + singleProject.getProjectName();
-            ticketDetails.append(singleProject.getProjectName());
-        }
-        else {
-            ticketTitle = "Work for " + allProjects.size() + " projects";
-            for (Project project : allProjects) {
-                ticketDetails.append(project.getProjectName()).append(" ");
-            }
-        }
+//        if (allProjects.size() == 1) {
+//            Project singleProject = allProjects.iterator().next();
+//            ticketTitle = "Work for " + singleProject.getProjectName();
+//            ticketDetails.append(singleProject.getProjectName());
+//        }
+//        else {
+//            ticketTitle = "Work for " + allProjects.size() + " projects";
+//            for (Project project : allProjects) {
+//                ticketDetails.append(project.getProjectName()).append(" ");
+//            }
+//        }
 
         CreateIssueResponse jiraTicketCreationResponse =  null;
 
@@ -168,7 +168,7 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> extends FullAcce
         }
     }
     
-    private void startWorkflow(LabVessel vessel,BasicProjectPlan plan,T workflowParameters) {
+    private void startWorkflow(LabVessel vessel,/*BasicProjectPlan plan,*/T workflowParameters) {
         Collection<LabVessel> vessels = new ArrayList<LabVessel>(1);
         vessels.add(vessel);
     }
@@ -177,15 +177,15 @@ public class FIFOLabWorkQueue<T extends LabWorkQueueParameters> extends FullAcce
     @Override
     public LabWorkQueueResponse add(LabVessel vessel, 
                                     T workflowParameters, 
-                                    WorkflowDescription workflowDescription,
-                                    BasicProjectPlan projectPlanOverride) {
+                                    WorkflowDescription workflowDescription/*,
+                                    BasicProjectPlan projectPlanOverride*/) {
         if (vessel == null) {
              throw new NullPointerException("vessel cannot be null.");
         }
         if (workflowDescription == null) {
              throw new NullPointerException("workflowDescription cannot be null.");
         }
-        WorkQueueEntry newWork = new WorkQueueEntry(this,vessel,workflowParameters,workflowDescription,projectPlanOverride);
+        WorkQueueEntry newWork = new WorkQueueEntry(this,vessel,workflowParameters,workflowDescription/*,projectPlanOverride*/);
         LabWorkQueueResponse response = null;
         if (requestedWork.contains(newWork)) {
             response = new StandardLabWorkQueueResponse(vessel.getLabel() + " is already in " + getQueueName() + "; duplicate work has been requested."); 

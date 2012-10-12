@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.bsp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
@@ -60,15 +59,15 @@ public class BSPStartingSample extends StartingSample {
      *                about performance.
      */
     public BSPStartingSample(String sampleName,
-                             ProjectPlan plan,
+//                             ProjectPlan plan,
                              BSPSampleDTO bspDTO) {
-        this(sampleName,plan);
+        this(sampleName/*,plan*/);
         this.bspDTO = bspDTO;
     }
     
-    public BSPStartingSample(String sampleName,
-                             ProjectPlan plan) {
-        super(sampleName, plan);
+    public BSPStartingSample(String sampleName/*,
+                             ProjectPlan plan*/) {
+        super(sampleName/*, plan*/);
     }
 
     public void setBspDTO(BSPSampleDTO dto) {
@@ -142,12 +141,12 @@ public class BSPStartingSample extends StartingSample {
     @Override
     public Set<SampleInstance> getSampleInstances() {
         final Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
-        ProjectPlan rootPlan = getRootProjectPlan();
+//        ProjectPlan rootPlan = getRootProjectPlan();
         WorkflowDescription workflow = null;
-        if (rootPlan != null) {
-            workflow = rootPlan.getWorkflowDescription();
-        }
-        sampleInstances.add(new SampleInstance(this,null,rootPlan,null,workflow));
+//        if (rootPlan != null) {
+//            workflow = rootPlan.getWorkflowDescription();
+//        }
+        sampleInstances.add(new SampleInstance(this,null,/*rootPlan,*/null,workflow));
         return sampleInstances;
     }
 

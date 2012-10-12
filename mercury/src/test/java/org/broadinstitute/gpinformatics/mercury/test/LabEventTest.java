@@ -19,10 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProject;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
@@ -119,18 +116,18 @@ public class LabEventTest {
 //        Controller.startCPURecording(true);
 
         // Project and workflow
-        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
+//        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("HS", null,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         workflowDescription.initFromFile("HybridSelectionV2.bpmn");
-        BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
+//        BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
 
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + rackPosition;
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", /*projectPlan, */null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
         }
@@ -196,10 +193,10 @@ public class LabEventTest {
     public void testWholeGenomeShotgun() {
 //        Controller.startCPURecording(true);
 
-        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
+//        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         workflowDescription.initFromFile("WholeGenomeShotgun.bpmn");
-        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
+//        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
@@ -207,7 +204,7 @@ public class LabEventTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", /*projectPlan, */null));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
 
@@ -301,9 +298,9 @@ public class LabEventTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void testFluidigm() {
-        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
+//        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
+//        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
@@ -311,7 +308,7 @@ public class LabEventTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", /*projectPlan, */null));
             mapBarcodeToTube.put(barcode,bspAliquot);
         }
 

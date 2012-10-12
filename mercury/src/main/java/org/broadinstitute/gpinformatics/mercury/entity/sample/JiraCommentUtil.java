@@ -101,19 +101,19 @@ public class JiraCommentUtil {
                                                    JiraTicket ticket) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
-        final Map<Project,Collection<String>> samplesByProject = new HashMap<Project,Collection<String>>();
+//        final Map<Project,Collection<String>> samplesByProject = new HashMap<Project,Collection<String>>();
         final Collection<StartingSample> allStarters = new HashSet<StartingSample>();
 
         for (LabVessel vessel : labVessels) {
             for (SampleInstance samInstance: vessel.getSampleInstances()) {
-                for (ProjectPlan projectPlan : samInstance.getAllProjectPlans()) {
-                    Project p = projectPlan.getProject();
-                    if (!samplesByProject.containsKey(p)) {
-                        samplesByProject.put(p,new HashSet<String>());
-                    }
-                    samplesByProject.get(p).add(samInstance.getStartingSample().getSampleName());
+//                for (ProjectPlan projectPlan : samInstance.getAllProjectPlans()) {
+//                    Project p = projectPlan.getProject();
+//                    if (!samplesByProject.containsKey(p)) {
+//                        samplesByProject.put(p,new HashSet<String>());
+//                    }
+//                    samplesByProject.get(p).add(samInstance.getStartingSample().getSampleName());
                     allStarters.add(samInstance.getStartingSample());
-                }
+//                }
             }
         }
 
@@ -121,17 +121,17 @@ public class JiraCommentUtil {
         messageBuilder.append("\n");
         messageBuilder.append("||Sample||Project||Owner||").append("\n");
 
-        for (Map.Entry<Project,Collection<String>> entry: samplesByProject.entrySet()) {
-            for (String sampleName: entry.getValue()) {
-                String sampleURL = "[" + sampleName + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + sampleName+ "]";
-                Person projectOwner = entry.getKey().getPlatformOwner();
-                String userName = null;
-                if (projectOwner != null) {
-                    userName = projectOwner.getLogin();
-                }
-                messageBuilder.append("|").append(sampleURL).append("|").append(entry.getKey().getProjectName()).append("|").append(userName).append("|").append("\n");
-            }
-        }
+//        for (Map.Entry<Project,Collection<String>> entry: samplesByProject.entrySet()) {
+//            for (String sampleName: entry.getValue()) {
+//                String sampleURL = "[" + sampleName + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + sampleName+ "]";
+//                Person projectOwner = entry.getKey().getPlatformOwner();
+//                String userName = null;
+//                if (projectOwner != null) {
+//                    userName = projectOwner.getLogin();
+//                }
+//                messageBuilder.append("|").append(sampleURL).append("|").append(entry.getKey().getProjectName()).append("|").append(userName).append("|").append("\n");
+//            }
+//        }
         messageBuilder.append("{panel}");
         ticket.addComment(messageBuilder.toString());
     }

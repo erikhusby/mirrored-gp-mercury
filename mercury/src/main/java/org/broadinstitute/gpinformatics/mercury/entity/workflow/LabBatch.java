@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -59,8 +58,8 @@ public class LabBatch {
     @ManyToOne(fetch = FetchType.LAZY)
     private JiraTicket jiraTicket;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private ProjectPlan projectPlan;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    private ProjectPlan projectPlan;
 
     // todo jmt get Hibernate to sort this
     @OneToMany(mappedBy = "labBatch")
@@ -72,24 +71,24 @@ public class LabBatch {
      * @param batchName
      * @param starters
      */
-    public LabBatch(ProjectPlan projectPlan,
-                    String batchName,
-                    Set<Starter> starters) {
-        if (projectPlan == null) {
-            throw new NullPointerException("ProjectPlan cannot be null.");
-        }
-        if (batchName == null) {
-            throw new NullPointerException("BatchName cannot be null");
-        }
-        if (starters == null) {
-            throw new NullPointerException("starters cannot be null");
-        }
-        this.projectPlan = projectPlan;
-        this.batchName = batchName;
-        for (Starter starter : starters) {
-            addStarter(starter);
-        }
-    }
+//    public LabBatch(ProjectPlan projectPlan,
+//                    String batchName,
+//                    Set<Starter> starters) {
+//        if (projectPlan == null) {
+//            throw new NullPointerException("ProjectPlan cannot be null.");
+//        }
+//        if (batchName == null) {
+//            throw new NullPointerException("BatchName cannot be null");
+//        }
+//        if (starters == null) {
+//            throw new NullPointerException("starters cannot be null");
+//        }
+//        this.projectPlan = projectPlan;
+//        this.batchName = batchName;
+//        for (Starter starter : starters) {
+//            addStarter(starter);
+//        }
+//    }
 
     public LabBatch(
             String batchName,
@@ -110,11 +109,11 @@ public class LabBatch {
     protected LabBatch() {
     }
 
-    public ProjectPlan getProjectPlan() {
-        // todo could have different project plans per
-        // starter, make this a map accessible by Starter.
-        return projectPlan;
-    }
+//    public ProjectPlan getProjectPlan() {
+//        // todo could have different project plans per
+//        // starter, make this a map accessible by Starter.
+//        return projectPlan;
+//    }
 
     public Set<Starter> getStarters() {
         Set<Starter> starters = new HashSet<Starter>();
@@ -157,13 +156,13 @@ public class LabBatch {
         return jiraTicket;
     }
 
-    public void setProjectPlanOverride(LabVessel vessel,ProjectPlan planOverride) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
+//    public void setProjectPlanOverride(LabVessel vessel,ProjectPlan planOverride) {
+//        throw new RuntimeException("I haven't been written yet.");
+//    }
 
-    public ProjectPlan getProjectPlanOverride(LabVessel labVessel) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
+//    public ProjectPlan getProjectPlanOverride(LabVessel labVessel) {
+//        throw new RuntimeException("I haven't been written yet.");
+//    }
 
     public Set<GenericLabEvent> getLabEvents() {
         return labEvents;

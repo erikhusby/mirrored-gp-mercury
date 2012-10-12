@@ -14,7 +14,7 @@ public class BSPSampleTest {
         BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(new BSPSampleSearchServiceStub());
         String sampleName = "SM-12CO4";
         BSPStartingSample bspSample = new BSPStartingSample(sampleName,
-                null,
+//                null,
                 fetcher.fetchSingleSampleFromBSP(sampleName));
         String patientId = bspSample.getPatientId();
 

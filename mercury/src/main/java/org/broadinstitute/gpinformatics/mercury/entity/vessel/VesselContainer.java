@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -84,14 +83,14 @@ public class VesselContainer<T extends LabVessel> {
         return (T) this.mapPositionToVessel.get(position);
     }
 
-    private static void applyProjectPlanOverrideIfPresent(LabEvent event,
-            Collection<SampleInstance> sampleInstances) {
-        if (event.getProjectPlanOverride() != null) {
-            for (SampleInstance sampleInstance : sampleInstances) {
-                sampleInstance.resetProjectPlan(event.getProjectPlanOverride());
-            }
-        }
-    }
+//    private static void applyProjectPlanOverrideIfPresent(LabEvent event,
+//            Collection<SampleInstance> sampleInstances) {
+//        if (event.getProjectPlanOverride() != null) {
+//            for (SampleInstance sampleInstance : sampleInstances) {
+//                sampleInstance.resetProjectPlan(event.getProjectPlanOverride());
+//            }
+//        }
+//    }
 
     public Set<LabEvent> getTransfersFrom() {
         Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
@@ -142,17 +141,17 @@ public class VesselContainer<T extends LabVessel> {
                     labBatchesAtHopCount.get(hopCount).addAll(labBatches);
                 }
                 for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
-                    for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-                        for (Starter starter : projectPlan.getStarters()) {
-                            Collection<LabBatch> labBatchesForStarter = starter.getLabBatches();
-                            if (!labBatchesForStarter.isEmpty()) {
-                                if (!labBatchesAtHopCount.containsKey(STARTER_INDEX)) {
-                                    labBatchesAtHopCount.put(STARTER_INDEX,new HashSet<LabBatch>());
-                                }
-                                labBatchesAtHopCount.get(STARTER_INDEX).addAll(labBatchesForStarter);
-                            }
-                        }
-                    }
+//                    for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+//                        for (Starter starter : projectPlan.getStarters()) {
+//                            Collection<LabBatch> labBatchesForStarter = starter.getLabBatches();
+//                            if (!labBatchesForStarter.isEmpty()) {
+//                                if (!labBatchesAtHopCount.containsKey(STARTER_INDEX)) {
+//                                    labBatchesAtHopCount.put(STARTER_INDEX,new HashSet<LabBatch>());
+//                                }
+//                                labBatchesAtHopCount.get(STARTER_INDEX).addAll(labBatchesForStarter);
+//                            }
+//                        }
+//                    }
                 }
             }
             return TraversalControl.ContinueTraversing;
@@ -180,12 +179,12 @@ public class VesselContainer<T extends LabVessel> {
             if (labVessel != null) {
                 for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
                     StartingSample startingSample = sampleInstance.getStartingSample();
-                    if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
-                        if (!singleSampleLibrariesForInstance.containsKey(startingSample)) {
-                            singleSampleLibrariesForInstance.put(startingSample,new HashSet<LabVessel>());
-                        }
-                        singleSampleLibrariesForInstance.get(startingSample).add(labVessel);
-                    }
+//                    if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
+//                        if (!singleSampleLibrariesForInstance.containsKey(startingSample)) {
+//                            singleSampleLibrariesForInstance.put(startingSample,new HashSet<LabVessel>());
+//                        }
+//                        singleSampleLibrariesForInstance.get(startingSample).add(labVessel);
+//                    }
                 }
             }
             return TraversalControl.ContinueTraversing;
@@ -238,7 +237,7 @@ public class VesselContainer<T extends LabVessel> {
                     reagents.addAll(labVessel.getReagentContents());
                 }
                 if (labEvent != null) {
-                    applyProjectPlanOverrideIfPresent(labEvent, sampleInstances);
+//                    applyProjectPlanOverrideIfPresent(labEvent, sampleInstances);
                 }
             }
             if(labEvent != null && this.labEvent == null) {
@@ -393,7 +392,7 @@ public class VesselContainer<T extends LabVessel> {
                         sampleInstances.addAll(OrmUtil.proxySafeCast(sourceLabVessel,
                                 VesselContainerEmbedder.class).getVesselContainer().getSampleInstances());
                         // todo arz fix this, probably by using LabBatch properly
-                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
+//                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                     }
                 }
             }

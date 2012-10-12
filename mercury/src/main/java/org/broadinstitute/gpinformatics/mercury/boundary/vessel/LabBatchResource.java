@@ -4,8 +4,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.project.ProjectPlanD
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProject;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
@@ -56,36 +54,36 @@ public class LabBatchResource {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(tubeBarcodes);
         Map<String, BSPStartingSample> mapBarcodeToSample = bspStartingSampleDAO.findByNames(sampleBarcodes);
         if(labBatchBean.getWorkflowName() == null) {
-            LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapBarcodeToSample, null);
+            LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapBarcodeToSample/*, null*/);
             labBatchDAO.persist(labBatch);
         } else {
-            BasicProjectPlan projectPlan = buildProjectPlan(labBatchBean, mapBarcodeToTube, mapBarcodeToSample);
-            projectPlanDao.persist(projectPlan);
+//            BasicProjectPlan projectPlan = buildProjectPlan(labBatchBean, mapBarcodeToTube, mapBarcodeToSample);
+//            projectPlanDao.persist(projectPlan);
         }
 
         projectPlanDao.flush();
         return "Batch persisted";
     }
 
-    public BasicProjectPlan buildProjectPlan(
-            LabBatchBean labBatchBean,
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            Map<String, BSPStartingSample> mapBarcodeToSample) {
-        // todo jmt fix workflow
-        JiraTicket jiraTicket = new JiraTicket(new JiraServiceStub(), labBatchBean.getBatchId(), labBatchBean.getBatchId());
-        BasicProject project = new BasicProject(labBatchBean.getBatchId(), jiraTicket);
-        BasicProjectPlan projectPlan = new BasicProjectPlan(
-                project,
-                labBatchBean.getBatchId(),
-                new WorkflowDescription(labBatchBean.getWorkflowName(), null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
-
-        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapBarcodeToSample, projectPlan);
-        jiraTicket.setLabBatch(labBatch);
-        return projectPlan;
-    }
+//    public BasicProjectPlan buildProjectPlan(
+//            LabBatchBean labBatchBean,
+//            Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+//            Map<String, BSPStartingSample> mapBarcodeToSample) {
+//        // todo jmt fix workflow
+//        JiraTicket jiraTicket = new JiraTicket(new JiraServiceStub(), labBatchBean.getBatchId(), labBatchBean.getBatchId());
+//        BasicProject project = new BasicProject(labBatchBean.getBatchId(), jiraTicket);
+//        BasicProjectPlan projectPlan = new BasicProjectPlan(
+//                project,
+//                labBatchBean.getBatchId(),
+//                new WorkflowDescription(labBatchBean.getWorkflowName(), null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+//
+//        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapBarcodeToSample, projectPlan);
+//        jiraTicket.setLabBatch(labBatch);
+//        return projectPlan;
+//    }
 
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            Map<String, BSPStartingSample> mapBarcodeToSample, BasicProjectPlan projectPlan) {
+            Map<String, BSPStartingSample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
         Set<Starter> starters = new HashSet<Starter>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
@@ -99,21 +97,21 @@ public class LabBatchResource {
             } else {
                 BSPStartingSample bspStartingSample = mapBarcodeToSample.get(tubeBean.getSampleBarcode());
                 if(bspStartingSample == null) {
-                    bspStartingSample = new BSPStartingSample(tubeBean.getSampleBarcode() + ".aliquot", projectPlan);
+                    bspStartingSample = new BSPStartingSample(tubeBean.getSampleBarcode() + ".aliquot"/*, projectPlan*/);
                     mapBarcodeToSample.put(tubeBean.getSampleBarcode(), bspStartingSample);
                 }
 
                 starters.add(bspStartingSample);
-                projectPlan.addStarter(bspStartingSample);
-                projectPlan.addAliquotForStarter(bspStartingSample, twoDBarcodedTube);
+//                projectPlan.addStarter(bspStartingSample);
+//                projectPlan.addAliquotForStarter(bspStartingSample, twoDBarcodedTube);
             }
         }
         LabBatch labBatch;
-        if(projectPlan == null) {
+//        if(projectPlan == null) {
             labBatch = new LabBatch(labBatchBean.getBatchId(), starters);
-        } else {
-            labBatch = new LabBatch(projectPlan, labBatchBean.getBatchId(), starters);
-        }
+//        } else {
+//            labBatch = new LabBatch(projectPlan, labBatchBean.getBatchId(), starters);
+//        }
         return labBatch;
     }
 }

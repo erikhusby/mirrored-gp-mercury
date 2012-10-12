@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularStateRange;
@@ -78,7 +77,7 @@ public class BSPAliquotWorkQueue extends LabWorkQueue<AliquotParameters> impleme
 
 
     @Override
-    public LabWorkQueueResponse add(LabVessel vessel, AliquotParameters workflowParameters, WorkflowDescription workflowDescription, BasicProjectPlan projectPlanOverride) {
+    public LabWorkQueueResponse add(LabVessel vessel, AliquotParameters workflowParameters, WorkflowDescription workflowDescription/*, BasicProjectPlan projectPlanOverride*/) {
         if (vessel == null) {
             throw new IllegalArgumentException("labTangible must be non-null in BSPAliquotWorkQueue.add");
         }

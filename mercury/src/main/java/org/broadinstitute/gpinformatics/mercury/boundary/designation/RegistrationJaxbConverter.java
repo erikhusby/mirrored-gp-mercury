@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.squid.RegistrationSampl
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequencingPlanDetails;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequencingTechnology;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -31,7 +30,7 @@ import java.util.Set;
 public class RegistrationJaxbConverter {
 
 
-    public static SequelLibrary squidify(TwoDBarcodedTube tubeIn, ProjectPlan planIn) {
+    public static SequelLibrary squidify(TwoDBarcodedTube tubeIn/*, ProjectPlan planIn*/) {
 
         final SequelLibrary registerLibrary = new SequelLibrary();
         registerLibrary.setLibraryName(tubeIn.getLabCentricName());
@@ -100,8 +99,8 @@ public class RegistrationJaxbConverter {
 
         SequencingPlanDetails details = new SequencingPlanDetails();
 
-        details.setNumberOfLanes(planIn.getLaneCoverage());
-        details.setReadLength(planIn.getReadLength());
+//        details.setNumberOfLanes(planIn.getLaneCoverage());
+//        details.setReadLength(planIn.getReadLength());
 
         registerLibrary.setPlanDetails(details);
 

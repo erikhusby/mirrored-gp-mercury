@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 
 /**
  * Service called when a third party service
@@ -61,9 +60,9 @@ public class AliquotReceiver {
                                             BSPPlatingReceipt receipt) {
         BSPPlatingRequest platingRequest = resolveAliquotToPlatingRequest(source,aliquot,receipt);
 
-        for (Project project : aliquot.getAllProjects()) {
-            project.addJiraComment("Aliquot " + aliquot.getLabel() + " derived from " + source.getLabel() + " has been received.");
-        }
+//        for (Project project : aliquot.getAllProjects()) {
+//            project.addJiraComment("Aliquot " + aliquot.getLabel() + " derived from " + source.getLabel() + " has been received.");
+//        }
 
         aliquot.logNote(new StatusNote(LabEventName.ALIQUOT_RECEIVED));
         return platingRequest;
@@ -74,9 +73,9 @@ public class AliquotReceiver {
                                             BSPPlatingReceipt receipt) {
         BSPPlatingRequest platingRequest = resolveAliquotToPlatingRequest(source,aliquot,receipt);
 
-        for (Project project : aliquot.getAllProjects()) {
-            project.addJiraComment("Aliquot " + aliquot.getLabCentricName() + " derived from " + source.getLabCentricName() + " has been received.");
-        }
+//        for (Project project : aliquot.getAllProjects()) {
+//            project.addJiraComment("Aliquot " + aliquot.getLabCentricName() + " derived from " + source.getLabCentricName() + " has been received.");
+//        }
 
         aliquot.logNote(new StatusNote(LabEventName.ALIQUOT_RECEIVED));
         return platingRequest;
@@ -117,7 +116,7 @@ public class AliquotReceiver {
                     // particular aliquots.
                     possibleRequest.setFulfilled(true);
                     for (SampleInstance sampleInstance: aliquot.getSampleInstances()) {
-                        sampleInstance.getStartingSample().setRootProjectPlan(possibleRequest.getAliquotParameters().getProjectPlan());
+//                        sampleInstance.getStartingSample().setRootProjectPlan(possibleRequest.getAliquotParameters().getProjectPlan());
                     }
 
                     platingRequest = possibleRequest;
@@ -158,7 +157,7 @@ public class AliquotReceiver {
                     // particular aliquots.
                     possibleRequest.setFulfilled(true);
                     for (SampleInstance sampleInstance: aliquot.getSampleInstances()) {
-                        sampleInstance.getStartingSample().setRootProjectPlan(possibleRequest.getAliquotParameters().getProjectPlan());
+//                        sampleInstance.getStartingSample().setRootProjectPlan(possibleRequest.getAliquotParameters().getProjectPlan());
                     }
 
                     platingRequest = possibleRequest;

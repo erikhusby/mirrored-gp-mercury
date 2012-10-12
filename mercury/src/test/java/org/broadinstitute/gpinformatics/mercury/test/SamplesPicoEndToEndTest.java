@@ -49,7 +49,7 @@ public class SamplesPicoEndToEndTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         Map<String, BSPStartingSample> mapBarcodeToSample = new LinkedHashMap<String, BSPStartingSample>();
         LabBatch labBatch = labBatchResource.buildLabBatch(new LabBatchBean(batchId, "HybSel", tubeBeans),
-                mapBarcodeToTube, mapBarcodeToSample, null);
+                mapBarcodeToTube, mapBarcodeToSample/*, null*/);
 
         // validate workflow?
         // messaging

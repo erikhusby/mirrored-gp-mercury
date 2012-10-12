@@ -54,7 +54,7 @@ public class TransferTraverserTest extends ContainerTest{
 
         // either the starter is a bsp sample, in which case we need to get the aliquot
         if (OrmUtil.proxySafeIsInstance(starter,Starter.class)) {
-            labVessel = starter.getSampleInstances().iterator().next().getSingleProjectPlan().getAliquotForStarter(starter);
+//            labVessel = starter.getSampleInstances().iterator().next().getSingleProjectPlan().getAliquotForStarter(starter);
         }
         // or the start is itself a lab vessel for something like topoffs or rework
         else {

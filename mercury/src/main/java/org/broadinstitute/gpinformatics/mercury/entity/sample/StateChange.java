@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReadBucket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 import org.hibernate.envers.Audited;
 
@@ -46,9 +45,9 @@ public class StateChange {
         throw new RuntimeException("Method not yet implemented.");
     }
     
-    public BasicProjectPlan getProjectPlanOverride() {
-        throw new RuntimeException("Method not yet implemented.");
-    }
+//    public BasicProjectPlan getProjectPlanOverride() {
+//        throw new RuntimeException("Method not yet implemented.");
+//    }
 
     public Collection<ReadBucket> getReadBucketOverrides() {
         throw new RuntimeException("Method not yet implemented.");

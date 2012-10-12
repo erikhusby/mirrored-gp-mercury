@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReadBucket;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
@@ -38,8 +37,8 @@ public abstract class StartingSample implements Starter {
 
     private  String sampleName;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    private ProjectPlan projectPlan;
+//    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+//    private ProjectPlan projectPlan;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     BSPSampleAuthorityTwoDTube bspSampleAuthorityTwoDTube;
@@ -48,10 +47,10 @@ public abstract class StartingSample implements Starter {
     @Transient
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
-    protected StartingSample(String sampleName, ProjectPlan projectPlan) {
+    protected StartingSample(String sampleName/*, ProjectPlan projectPlan*/) {
         this.sampleName = sampleName;
         // todo jmt add to projectPlan?
-        this.projectPlan = projectPlan;
+//        this.projectPlan = projectPlan;
     }
 
     protected StartingSample() {
@@ -82,13 +81,13 @@ public abstract class StartingSample implements Starter {
         throw new RuntimeException("not implemented");
     }
 
-    public ProjectPlan getRootProjectPlan() {
-        return projectPlan;
-    }
-
-    public void setRootProjectPlan(ProjectPlan rootProjectPlan) {
-        this.projectPlan = rootProjectPlan;
-    }
+//    public ProjectPlan getRootProjectPlan() {
+//        return projectPlan;
+//    }
+//
+//    public void setRootProjectPlan(ProjectPlan rootProjectPlan) {
+//        this.projectPlan = rootProjectPlan;
+//    }
 
     public Collection<ReadBucket> getRootReadBuckets() {
         throw new RuntimeException("not implemented");

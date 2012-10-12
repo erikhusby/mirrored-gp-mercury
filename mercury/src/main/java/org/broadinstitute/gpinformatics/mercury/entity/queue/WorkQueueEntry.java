@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -14,13 +13,13 @@ public class WorkQueueEntry<T extends LabWorkQueueParameters> {
 
     private LabWorkQueue queue;
 
-    private BasicProjectPlan projectPlanOverride;
+//    private BasicProjectPlan projectPlanOverride;
 
     public WorkQueueEntry(LabWorkQueue queue,
                           LabVessel vessel,
                           T workflowParameters,
-                          WorkflowDescription workflowDescription,
-                          BasicProjectPlan projectPlanOverride) {
+                          WorkflowDescription workflowDescription/*,
+                          BasicProjectPlan projectPlanOverride*/) {
         if (queue == null) {
             throw new RuntimeException("Queue cannot be null.");
         }
@@ -34,7 +33,7 @@ public class WorkQueueEntry<T extends LabWorkQueueParameters> {
         this.queue = queue;
         this.parameters = workflowParameters;
         this.workflowDescription = workflowDescription;
-        this.projectPlanOverride = projectPlanOverride;
+//        this.projectPlanOverride = projectPlanOverride;
     }
 
     public void dequeue() {
@@ -54,7 +53,7 @@ public class WorkQueueEntry<T extends LabWorkQueueParameters> {
     }
 
 
-    public BasicProjectPlan getProjectPlanOverride() {
-        return projectPlanOverride;
-    }
+//    public BasicProjectPlan getProjectPlanOverride() {
+//        return projectPlanOverride;
+//    }
 }

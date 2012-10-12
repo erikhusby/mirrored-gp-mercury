@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
+//import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -28,9 +28,9 @@ public class WorkflowEngine {
         for (Workflow workflow : workflows) {
             if ((workflow.getAllVessels().contains(labVessel))) {
                 if (workflowDescription != null) {
-                    if (workflowDescription.equals(workflow.getProjectPlan().getWorkflowDescription())) {
-                        workflowsForVessel.add(workflow);
-                    }
+//                    if (workflowDescription.equals(workflow.getProjectPlan().getWorkflowDescription())) {
+//                        workflowsForVessel.add(workflow);
+//                    }
                 }
                 else {
                     workflowsForVessel.add(workflow);
@@ -40,7 +40,7 @@ public class WorkflowEngine {
         return workflowsForVessel;
     }
     
-    public Collection<BasicProjectPlan> getActiveProjectPlans(SampleInstance sampleInstance) {
-        throw new RuntimeException("not implemented");
-    }
+//    public Collection<BasicProjectPlan> getActiveProjectPlans(SampleInstance sampleInstance) {
+//        throw new RuntimeException("not implemented");
+//    }
 }

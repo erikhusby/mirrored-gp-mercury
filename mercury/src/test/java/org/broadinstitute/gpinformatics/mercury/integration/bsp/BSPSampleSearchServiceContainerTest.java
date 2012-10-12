@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.integration.bsp;
 
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -18,7 +17,7 @@ public class BSPSampleSearchServiceContainerTest extends ContainerTest {
      */
     @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
     public void testDto() {
-        BSPStartingSample bspStartingSample = new BSPStartingSample("SM-12CO4", new PassBackedProjectPlan());
+        BSPStartingSample bspStartingSample = new BSPStartingSample("SM-12CO4"/*, new PassBackedProjectPlan()*/);
         String patientId = bspStartingSample.getPatientId();
         Assert.assertEquals(patientId, "PT-2LK3", "Wrong patient ID");
     }

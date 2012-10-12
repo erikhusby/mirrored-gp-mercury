@@ -6,14 +6,12 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.WorkQueueDA
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.*;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.WorkQueueEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
@@ -211,9 +209,9 @@ public class LabEventHandler {
             if (workQueueEntries.size() == 1) {
                 // not ambiguous: single entry
                 WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
-                if (workQueueEntry.getProjectPlanOverride() != null) {
-                    labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
-                }
+//                if (workQueueEntry.getProjectPlanOverride() != null) {
+//                    labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
+//                }
                 workQueueEntry.dequeue();
             }
             else if (workQueueEntries.size() > 1) {
@@ -234,25 +232,25 @@ public class LabEventHandler {
      * @param event
      */
     public void notifyCheckpoints(LabEvent event) {
-        Map<Project,Collection<StartingSample>> samplesForProject = new HashMap<Project,Collection<StartingSample>>();
+//        Map<Project,Collection<StartingSample>> samplesForProject = new HashMap<Project,Collection<StartingSample>>();
         for (LabVessel container : event.getAllLabVessels()) {
             for (SampleInstance sampleInstance: container.getSampleInstances()) {
-                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-                    Project p = projectPlan.getProject();
-                    if (!samplesForProject.containsKey(p)) {
-                        samplesForProject.put(p,new HashSet<StartingSample>());
-                    }
-                    if (p.getCheckpointableEvents().contains(event.getEventName())) {
-                        samplesForProject.get(p).add(sampleInstance.getStartingSample());
-                    }
-                }
+//                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+//                    Project p = projectPlan.getProject();
+//                    if (!samplesForProject.containsKey(p)) {
+//                        samplesForProject.put(p,new HashSet<StartingSample>());
+//                    }
+//                    if (p.getCheckpointableEvents().contains(event.getEventName())) {
+//                        samplesForProject.get(p).add(sampleInstance.getStartingSample());
+//                    }
+//                }
 
             }
         }
-        for (Map.Entry<Project, Collection<StartingSample>> entry : samplesForProject.entrySet()) {
-            String message = entry.getValue().size() + " aliquots for " + entry.getKey().getProjectName() + " have been processed through the " + event.getEventName() + " event";
-            entry.getKey().addJiraComment(message);
-        }
+//        for (Map.Entry<Project, Collection<StartingSample>> entry : samplesForProject.entrySet()) {
+//            String message = entry.getValue().size() + " aliquots for " + entry.getKey().getProjectName() + " have been processed through the " + event.getEventName() + " event";
+//            entry.getKey().addJiraComment(message);
+//        }
     }
     
     // todo thread for doing Stalker.stalk() for all active projects, LabVessels?

@@ -1,21 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
 
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
-
 public class AliquotParameters implements LabWorkQueueParameters {
 
-    private ProjectPlan projectPlan;
+//    private ProjectPlan projectPlan;
 
     private float volume;
 
     private float concentration;
 
-    public AliquotParameters(ProjectPlan projectPlan,float volume,float concentration) {
-        if (projectPlan == null) {
-             throw new IllegalArgumentException("project must be non-null in AliquotParameters.AliquotParameters");
-        }
-        this.projectPlan = projectPlan;
+    public AliquotParameters(/*ProjectPlan projectPlan,*/float volume,float concentration) {
+//        if (projectPlan == null) {
+//             throw new IllegalArgumentException("project must be non-null in AliquotParameters.AliquotParameters");
+//        }
+//        this.projectPlan = projectPlan;
         this.volume = volume;
         this.concentration = concentration;
     }
@@ -32,9 +30,9 @@ public class AliquotParameters implements LabWorkQueueParameters {
         throw new RuntimeException("Method not yet implemented.");
     }
 
-    public ProjectPlan getProjectPlan() {
-        return projectPlan;
-    }
+//    public ProjectPlan getProjectPlan() {
+//        return projectPlan;
+//    }
     
 
     @Override

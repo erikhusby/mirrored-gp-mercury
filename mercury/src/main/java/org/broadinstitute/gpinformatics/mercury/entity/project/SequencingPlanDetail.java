@@ -29,23 +29,23 @@ public class SequencingPlanDetail {
 
     private CoverageGoal coverageGoal;
 
-    private ProjectPlan projectPlan;
+//    private ProjectPlan projectPlan;
     
     public SequencingPlanDetail(SequencingTechnology sequencingTechnology,
-                                CoverageGoal coverageGoal,
-                                ProjectPlan projectPlan) {
-        if (projectPlan == null) {
-             throw new NullPointerException("projectPlan cannot be null.");
-        }
+                                CoverageGoal coverageGoal/*,
+                                ProjectPlan projectPlan*/) {
+//        if (projectPlan == null) {
+//             throw new NullPointerException("projectPlan cannot be null.");
+//        }
          this.sequencingTechnology = sequencingTechnology;
         this.coverageGoal = coverageGoal;
-        this.projectPlan = projectPlan;
-        projectPlan.addSequencingDetail(this);
+//        this.projectPlan = projectPlan;
+//        projectPlan.addSequencingDetail(this);
     }
 
-    public ProjectPlan getProjectPlan() {
-        return projectPlan;
-    }
+//    public ProjectPlan getProjectPlan() {
+//        return projectPlan;
+//    }
 
     /**
      * Illumina, Ion, Pacbio, Sanger, etc.  Each implementation

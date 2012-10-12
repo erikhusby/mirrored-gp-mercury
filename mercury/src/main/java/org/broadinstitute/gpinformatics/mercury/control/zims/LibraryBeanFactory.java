@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -54,12 +53,12 @@ public class LibraryBeanFactory {
 //            Project project = sampleInstances.iterator().next().getSingleProjectPlan().getProject();
             SampleInstance sampleInstance = singleSampleLibrary.getSampleInstances().iterator().next();
 
-            Project project = sampleInstance.getSingleProjectPlan().getProject();
+//            Project project = sampleInstance.getSingleProjectPlan().getProject();
             // todo jmt is this downcast legitimate
             BSPStartingSample bspStartingSample = (BSPStartingSample) sampleInstance.getStartingSample();
             libraries.add(new LibraryBean(
                     libraryName/*String library*/,
-                    project.getProjectName()/*String project*/,
+                    null,//project.getProjectName()/*String project*/,
                     null/*String initiative*/,
                     null/*Long workRequest*/,
                     null/*MolecularIndexingScheme indexingScheme*/,

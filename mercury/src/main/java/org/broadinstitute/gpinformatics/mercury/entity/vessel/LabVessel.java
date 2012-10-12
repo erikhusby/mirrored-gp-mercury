@@ -7,8 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
@@ -73,12 +71,6 @@ public abstract class LabVessel implements Starter {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private MolecularState molecularState;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Project project;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private LabVessel projectAuthority;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "mercury")
@@ -294,6 +286,7 @@ public abstract class LabVessel implements Starter {
      */
     public abstract Set<LabEvent> getTransfersTo();
 
+/*
     public void addNoteToProjects(String message) {
         Collection<Project> ticketsToNotify = new HashSet<Project>();
         for (SampleInstance sampleInstance : getSampleInstances()) {
@@ -307,6 +300,7 @@ public abstract class LabVessel implements Starter {
             project.addJiraComment(message);
         }
     }
+*/
 
     /**
      * When a {@link org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket} is created for a
@@ -442,7 +436,7 @@ public abstract class LabVessel implements Starter {
      * calling {@link org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance#getAllProjectPlans()}
      * @return
      */
-    public abstract Collection<Project> getAllProjects();
+//    public abstract Collection<Project> getAllProjects();
 
 
     /**

@@ -1,14 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bsp;
 
 import org.apache.commons.logging.Log;
-import org.broadinstitute.gpinformatics.mercury.boundary.GSSRSample;
-import org.broadinstitute.gpinformatics.mercury.boundary.GSSRSampleKitRequest;
-import org.broadinstitute.gpinformatics.mercury.boundary.RequestSampleSet;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BSPPlatingReceiptDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.BSPStartingSampleDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
@@ -16,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthority
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.AliquotReceiver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
@@ -45,74 +40,6 @@ public class BSPSampleFactory {
 
     private static final Float WATER_CONTROL_CONCENTARTION = 0F;
 
-    public List<LabVessel> buildFromBSPExportMessage(GSSRSampleKitRequest bspRequest) throws Exception {
-        List<LabVessel> bspSamples = new ArrayList<LabVessel>();
-        String bspPlatingReceipt = bspRequest.getPlatingRequestID();
-        BSPPlatingReceipt bspReceipt = bspPlatingReceiptDAO.findByReceipt(bspPlatingReceipt);
-        Collection<BSPPlatingRequest> bspPlatingRequests = bspReceipt.getPlatingRequests();
-        List<RequestSampleSet> requestSampleSetList = bspRequest.getRequestSampleSet();
-
-        Map<String, StartingSample> aliquotSourceMap = new HashMap<String, StartingSample>(); //<bspAliquotLSID, StartingSample >
-        Map<String, BSPSampleDTO> bspControlSampleDataMap = new HashMap<String, BSPSampleDTO>(); //<bspAliquotLSID, BSPSampleDTO>
-        Map<String, String> lsidMap = new HashMap<String, String>(); //<bareID, LSID>
-        for (RequestSampleSet reqSampleSet : requestSampleSetList) {
-            //Looks like control samples are passed in separate RequestSampleSet !!
-            List<GSSRSample> sampleList = reqSampleSet.getGssrSample();
-            List<String> sampleNames = new ArrayList<String>();
-            for (GSSRSample sample : sampleList) {
-
-                String sourceSample = sample.getSampleSource();
-                //once BSP starts passing this no more lookup .. This should contain the stock we requested (StartingSample)
-
-                //each sample is bsp sample
-                String lsid = sample.getSampleOrganismAttributes().getLSId();
-                //aliquotPassSourceMap.put(lsid, null);
-                String[] chunks = lsid.split(":");
-                String bareId = chunks[chunks.length - 1];
-                sampleNames.add(bareId);
-                lsidMap.put(bareId, lsid);
-                //volume, concentration ??
-            }
-
-            //now do sample search and figure out parents/source
-            //once bsp passes source in xml we don't need this
-            BSPSampleDataFetcher bspDataFetcher = new BSPSampleDataFetcher();
-            Map<String, BSPSampleDTO> bspSampleDTOMap = bspDataFetcher.fetchSamplesFromBSP(sampleNames);
-
-            for (String sampleName : sampleNames) {
-                BSPSampleDTO sampleData = bspSampleDTOMap.get(sampleName);
-                if (sampleData == null) {
-                    throw new Exception("Failed to lookup bsp sample data for sample : " + sampleName);
-                }
-
-                String rootSample = sampleData.getRootSample();
-                String stockAtExport = sampleData.getStockAtExport();
-
-                if (sampleData.isPositiveControl() || sampleData.isNegativeControl()) {
-                    bspControlSampleDataMap.put(sampleName, sampleData);
-                } else {
-                    //TODO .. all this lookup will go away  once we change the wsdl and bsp will pass actual stock requested
-                    //TODO .. so that we can map directly rather than trying to lookup and match for requested stock during plating request
-                    //lookup BSPStartingSample
-                    StartingSample startingSample = bspStartingSampleDAO.findBySampleName(rootSample);
-                    if (startingSample == null) {
-                        startingSample = bspStartingSampleDAO.findBySampleName(stockAtExport);
-                        if (startingSample == null) {
-                            throw new Exception("Source Stock Sample not identified for sample: " + sampleName);
-                        }
-                    }
-                    aliquotSourceMap.put(lsidMap.get(sampleName), startingSample);
-                }
-            }
-
-            //looks like we don't need the BSPSampleData !!
-            //now receive all the aliquots
-            bspSamples = receiveBSPAliquots(bspReceipt, aliquotSourceMap, bspControlSampleDataMap);
-        }
-
-        return bspSamples;
-    }
-
     public List<LabVessel> receiveBSPAliquots(BSPPlatingReceipt bspReceipt,
                                               Map<String, StartingSample> aliquotSourceMap,
                                               Map<String, BSPSampleDTO> bspControlSampleDataMap)
@@ -139,11 +66,11 @@ public class BSPSampleFactory {
             if (startingSample == null) {
                 throw new Exception("failed to lookup starting sample for sample : " + sampleLSID);
             }
-            ProjectPlan projectPlan = startingSample.getRootProjectPlan();
+//            ProjectPlan projectPlan = startingSample.getRootProjectPlan();
 
-            StartingSample aliquot = new BSPStartingSample(sampleName, projectPlan);
+            StartingSample aliquot = new BSPStartingSample(sampleName/*, projectPlan*/);
             LabVessel bspAliquot = new BSPSampleAuthorityTwoDTube(aliquot);
-            projectPlan.addAliquotForStarter(startingSample, bspAliquot);
+//            projectPlan.addAliquotForStarter(startingSample, bspAliquot);
 
             bspAliquots.add(bspAliquot);
             AliquotReceiver aliquotReceiver = new AliquotReceiver();
@@ -183,7 +110,7 @@ public class BSPSampleFactory {
             bspPlatingRequests.add(platingRequest);
 
             //TODO .. check back ..addToProjectPlan ??
-            starter.getRootProjectPlan().addPlatingRequest(platingRequest);
+//            starter.getRootProjectPlan().addPlatingRequest(platingRequest);
         }
 
         //TODO .. Do we controls added to BSPPlatingRequest ??
@@ -225,7 +152,7 @@ public class BSPSampleFactory {
     //TODO .. Why is this here rather than in BSPPlatingRequestServiceImpl ??
     //for testability so that this code cna be tested from stub/impl/xxxxxx without duplicating ???
     public List<ControlWell> buildControlWells(Map<String, AliquotParameters> positiveControlMap,
-                                               ProjectPlan projectPlan, int negControlCount, Float negControlVolume,
+                                               /*ProjectPlan projectPlan, */int negControlCount, Float negControlVolume,
                                                String posControlQuote, String negControlQuote)
             throws Exception {
 

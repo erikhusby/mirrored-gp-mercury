@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
+//import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularStateRange;
@@ -46,8 +46,8 @@ public abstract class LabWorkQueue<T extends LabWorkQueueParameters> {
      */
     public abstract LabWorkQueueResponse add(LabVessel vessel,
                                     T workflowParameters,
-                                    WorkflowDescription workflowDescription,
-                                    BasicProjectPlan projectPlanOverride);
+                                    WorkflowDescription workflowDescription/*,
+                                    BasicProjectPlan projectPlanOverride*/);
 
     /**
      * What's the MolecularStateRange required for

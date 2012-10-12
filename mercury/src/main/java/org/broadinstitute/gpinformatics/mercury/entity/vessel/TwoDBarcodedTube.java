@@ -6,16 +6,12 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.Failure;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import javax.persistence.JoinTable;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -124,21 +120,6 @@ public class TwoDBarcodedTube extends LabVessel {
             sampleInstances = startingSample.getSampleInstances();
         }
         return sampleInstances;
-    }
-
-    @Override
-    public Collection<Project> getAllProjects() {
-        Collection<Project> allProjects = new HashSet<Project>();
-        for (SampleInstance sampleInstance : getSampleInstances()) {
-            if (sampleInstance.getAllProjectPlans() != null) {
-                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-                    if (projectPlan != null) {
-                        allProjects.add(projectPlan.getProject());
-                    }
-                }
-            }
-        }
-        return allProjects;
     }
 
     @Override

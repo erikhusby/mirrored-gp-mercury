@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -46,11 +45,11 @@ public class LabEventProjectPlanOverrider {
             LabBatch batch = possibleBatches.iterator().next();
             batch.getJiraTicket().addComment(labEvent.getEventOperator().getLogin() + "is processing " + labEvent.getEventName().name() + " at " + labEvent.getEventLocation());
             for (LabVessel vessel : vessels) {
-                ProjectPlan projectPlanOverride = batch.getProjectPlanOverride(vessel);
-                if (projectPlanOverride != null) {
-                    throw new RuntimeException("I haven't been written yet");
-                    //labEvent.setProjectPlanOverride(vessel,projectPlanOverride);
-                }
+//                ProjectPlan projectPlanOverride = batch.getProjectPlanOverride(vessel);
+//                if (projectPlanOverride != null) {
+//                    throw new RuntimeException("I haven't been written yet");
+//                    //labEvent.setProjectPlanOverride(vessel,projectPlanOverride);
+//                }
             }
         }
         // else no batches

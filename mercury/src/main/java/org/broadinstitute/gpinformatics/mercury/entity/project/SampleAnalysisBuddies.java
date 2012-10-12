@@ -29,8 +29,8 @@ public class SampleAnalysisBuddies {
         throw new RuntimeException("not implemented");
     }
     
-    public Project getProject() {
-        throw new RuntimeException("not implemented");
-    }
+//    public Project getProject() {
+//        throw new RuntimeException("not implemented");
+//    }
     
 }

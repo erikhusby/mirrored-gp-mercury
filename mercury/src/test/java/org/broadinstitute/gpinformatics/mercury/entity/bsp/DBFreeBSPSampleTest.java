@@ -37,7 +37,7 @@ public class DBFreeBSPSampleTest {
         ).andReturn(resultColumns).atLeastOnce();
 
         EasyMock.replay(service);
-        BSPStartingSample sample = new BSPStartingSample(sampleName,null,new BSPSampleDataFetcher(service).fetchSingleSampleFromBSP(sampleName));
+        BSPStartingSample sample = new BSPStartingSample(sampleName,/*null,*/new BSPSampleDataFetcher(service).fetchSingleSampleFromBSP(sampleName));
         Assert.assertEquals(resultColumns.iterator().next()[0], sample.getPatientId());
     }
 }

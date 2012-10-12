@@ -2,13 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReadBucket;
 
 import java.util.ArrayList;
@@ -108,7 +104,7 @@ public class SampleInstance  {
 
     private GSP_CONTROL_ROLE controlRole;
 
-    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
+//    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
 
     private Collection<ReadBucket> readBuckets = new HashSet<ReadBucket>();
 
@@ -118,12 +114,12 @@ public class SampleInstance  {
 
     public SampleInstance(StartingSample sample,
             GSP_CONTROL_ROLE controlRole,
-            ProjectPlan projectPlan,
+//            ProjectPlan projectPlan,
             MolecularState molecularState,
             WorkflowDescription workflowDescription) {
         this.sample = sample;
         this.controlRole = controlRole;
-        projectPlans.add(projectPlan);
+//        projectPlans.add(projectPlan);
         this.molecularState = molecularState;
     }
 
@@ -181,25 +177,25 @@ public class SampleInstance  {
      * {@link #getAllProjectPlans()}.
      * @return
      */
-    public ProjectPlan getSingleProjectPlan() {
-        if (projectPlans.isEmpty()) {
-            return null;
-        }
-        else if (projectPlans.size() <= 1) {
-            return projectPlans.iterator().next();
-        }
-        else {
-            throw new RuntimeException("There are " + projectPlans.size() + " possible project plans for " + this);
-        }
-    }
+//    public ProjectPlan getSingleProjectPlan() {
+//        if (projectPlans.isEmpty()) {
+//            return null;
+//        }
+//        else if (projectPlans.size() <= 1) {
+//            return projectPlans.iterator().next();
+//        }
+//        else {
+//            throw new RuntimeException("There are " + projectPlans.size() + " possible project plans for " + this);
+//        }
+//    }
 
     /**
      * @see #getSingleProjectPlan()
      * @return
      */
-    public Collection<ProjectPlan> getAllProjectPlans() {
-        return projectPlans;
-    }
+//    public Collection<ProjectPlan> getAllProjectPlans() {
+//        return projectPlans;
+//    }
 
     /**
      * What is the molecular state  of this
@@ -250,13 +246,13 @@ public class SampleInstance  {
      * your override the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan}.
      * @param projectPlan
      */
-    public void resetProjectPlan(BasicProjectPlan projectPlan) {
-        if (projectPlan == null) {
-            throw new RuntimeException("Cannot reset projectPlan to null.");
-        }
-        projectPlans.clear();
-        projectPlans.add(projectPlan);
-    }
+//    public void resetProjectPlan(BasicProjectPlan projectPlan) {
+//        if (projectPlan == null) {
+//            throw new RuntimeException("Cannot reset projectPlan to null.");
+//        }
+//        projectPlans.clear();
+//        projectPlans.add(projectPlan);
+//    }
 
     public void addReagent(Reagent reagent) {
         reagents.add(reagent);
@@ -266,25 +262,25 @@ public class SampleInstance  {
         return reagents;
     }
 
-    public void applyChange(StateChange change) {
-        if (change != null) {
-            if (change.getControlRole() != null) {
-                controlRole = change.getControlRole();
-            }
-            if (change.getProjectPlanOverride() != null) {
-                projectPlans.add(change.getProjectPlanOverride());
-            }
-            if (change.getReadBucketOverrides() != null) {
-                readBuckets.clear();
-                readBuckets.addAll(change.getReadBucketOverrides());
-            }
-            if (change.getMolecularState() != null) {
-                if (change.getMolecularState().getMolecularEnvelope() != null) {
-                    MolecularEnvelope envelopeDelta = change.getMolecularState().getMolecularEnvelope();
-                    getMolecularState().getMolecularEnvelope().surroundWith(envelopeDelta);
-                }
-            }
-        }
-    }
+//    public void applyChange(StateChange change) {
+//        if (change != null) {
+//            if (change.getControlRole() != null) {
+//                controlRole = change.getControlRole();
+//            }
+//            if (change.getProjectPlanOverride() != null) {
+//                projectPlans.add(change.getProjectPlanOverride());
+//            }
+//            if (change.getReadBucketOverrides() != null) {
+//                readBuckets.clear();
+//                readBuckets.addAll(change.getReadBucketOverrides());
+//            }
+//            if (change.getMolecularState() != null) {
+//                if (change.getMolecularState().getMolecularEnvelope() != null) {
+//                    MolecularEnvelope envelopeDelta = change.getMolecularState().getMolecularEnvelope();
+//                    getMolecularState().getMolecularEnvelope().surroundWith(envelopeDelta);
+//                }
+//            }
+//        }
+//    }
 
 }
