@@ -109,7 +109,9 @@ public class BSPStartingSample extends StartingSample {
      */
     private void initDto() {
 
-        bspDTO = ServiceAccessUtility.getSampleName (this.getSampleName() );
+        if(bspDTO == null ) {
+            bspDTO = ServiceAccessUtility.getSampleName (this.getSampleName() );
+        }
     }
 
     @Override
