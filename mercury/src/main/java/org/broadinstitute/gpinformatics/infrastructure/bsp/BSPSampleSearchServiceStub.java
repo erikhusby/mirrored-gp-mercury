@@ -16,7 +16,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_1P3XN_COLLAB_SAMP_ID = "CollaboratorSampleX";
     public static final String SM_1P3XN_FP =
             "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
-    public static final String SM_1P3XN_DISEASE = "Carcinoid Tumor";
+    public static final String SM_1P3XN_DISEASE = "Malignant peripheral nerve sheath tumor";
     public static final String SM_1P3XN_DNA = "1.7717738037109374";
     public static final String SM_1P3XN_MAT_TYPE = "DNA:DNA Genomic";
     public static final String SM_1P3XN_STOCK_SAMP = "SM-1P3XN";
@@ -44,7 +44,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
 
     public static final String SM_12CO4 = "SM-12CO4";
     public static final String SM_12CO4_PATIENT_ID = "PT-2LK3";
-    public static final String SM_12CO4_ROOT_SAMP = "ROOT";
+    public static final String SM_12CO4_ROOT_SAMP = "";
     public static final String SM_12CO4_STOCK_SAMP = "SM-12CO4";
     public static final String SM_12CO4_COLLAB_SAMP_ID = "CollaboratorSampleX";
     public static final String SM_12CO4_COLL = "Hungarian Goulash";
@@ -136,7 +136,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                 BSPSampleDTO.TUMOR_IND,  //  SAMPLE_TYPE
                 SM_12CO4_DISEASE ,//  PRIMARY_DISEASE
                 BSPSampleDTO.FEMALE_IND,//  GENDER
-                BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
+                "",//  STOCK_TYPE
                 SM_12CO4_FP,//  FINGERPRINT
                 SM_12CO4_CONTAINER_ID //Container ID
 

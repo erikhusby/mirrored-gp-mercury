@@ -350,11 +350,12 @@ public class ProductOrder implements Serializable {
         Map<String, Integer> stockTypeCounts = new HashMap<String, Integer>();
 
         for(ProductOrderSample sample : samples) {
-            if(sample.isInBspFormat () ) {
+            if(sample.isInBspFormat () &&
+               !StringUtils.isEmpty(sample.getStockType())) {
                 if(!stockTypeCounts.containsKey(sample.getStockType())) {
                     stockTypeCounts.put(sample.getStockType(), 0);
                 }
-                stockTypeCounts.put(sample.getStockType(), stockTypeCounts.get(sample.getStockType() + 1));
+                stockTypeCounts.put(sample.getStockType(), stockTypeCounts.get(sample.getStockType()) + 1);
             }
         }
 
@@ -372,7 +373,8 @@ public class ProductOrder implements Serializable {
         Map<String, Integer> uniqueDiseases = new HashMap<String, Integer>();
 
         for(ProductOrderSample sample: samples) {
-            if(sample.isInBspFormat ()) {
+            if(sample.isInBspFormat () &&
+                    !StringUtils.isEmpty(sample.getDisease())) {
                 if(!uniqueDiseases.containsKey(sample.getDisease())) {
                     uniqueDiseases.put(sample.getDisease(),0);
                 }
