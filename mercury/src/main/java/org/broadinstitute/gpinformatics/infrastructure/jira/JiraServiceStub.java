@@ -30,7 +30,7 @@ public class JiraServiceStub implements JiraService {
 
     @Override
     public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException {
-        return new CreateIssueResponse("123",projectPrefix + "123");
+        return new CreateIssueResponse("123",projectPrefix + "-123");
     }
 
     @Override

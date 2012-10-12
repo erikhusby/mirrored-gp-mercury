@@ -511,14 +511,14 @@ public class ProductOrder implements Serializable {
         if(getBspNonBspSampleCounts().getBspSampleCount() == getTotalSampleCount()) {
             buildValidationCommentsIn.append("All Samples are BSP Samples");
             buildValidationCommentsIn.append("\n");
-            buildValidationCommentsIn.append(String.format("%i of %i Samples are in RECEIVED state",
+            buildValidationCommentsIn.append(String.format("%s of %s Samples are in RECEIVED state",
                                                          getReceivedSampleCount(), getTotalSampleCount()));
             buildValidationCommentsIn.append("\n");
-            buildValidationCommentsIn.append(String.format("%i of %i Samples are Active stock",
+            buildValidationCommentsIn.append(String.format("%s of %s Samples are Active stock",
                                                          getActiveSampleCount(), getTotalSampleCount()));
         } else if(getBspNonBspSampleCounts().getBspSampleCount() != 0 &&
                 getBspNonBspSampleCounts().getNonBspSampleCount() != 0) {
-            buildValidationCommentsIn.append(String.format("Of %i Samples, %i are BSP samples and %i are non-BSP",
+            buildValidationCommentsIn.append(String.format("Of %s Samples, %s are BSP samples and %s are non-BSP",
                                                          getTotalSampleCount(),getBspNonBspSampleCounts().getBspSampleCount(),
                                                          getBspNonBspSampleCounts().getNonBspSampleCount()));
         } else {

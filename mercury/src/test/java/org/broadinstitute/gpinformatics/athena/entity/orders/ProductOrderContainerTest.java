@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthenticationServiceTest;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.HashSet;
 
 /**
@@ -20,7 +21,7 @@ import java.util.HashSet;
 @Test (groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderContainerTest extends ContainerTest {
 
-    public void testSimpleProductOrder() {
+    public void testSimpleProductOrder() throws IOException{
 
         ProductOrder testOrder =
                 new ProductOrder("containerTest Product Order Test1",
@@ -41,7 +42,7 @@ public class ProductOrderContainerTest extends ContainerTest {
         Assert.assertEquals ( 1 , testOrder.getMaleFemaleCounts().getFemaleCount());
         Assert.assertEquals ( 2 , testOrder.getMaleFemaleCounts().getMaleCount());
 
-        Assert.assertTrue ( testOrder.getCountsByStockType().containsKey( BSPSampleDTO.ACTIVE_IND));
+        Assert.assertTrue ( testOrder.getCountsByStockType ( ).containsKey ( BSPSampleDTO.ACTIVE_IND ) );
         Assert.assertEquals ( 2, testOrder.getCountsByStockType ( ).get ( BSPSampleDTO.ACTIVE_IND ).intValue ( ) );
 
         Assert.assertTrue( testOrder.getPrimaryDiseaseCount().containsKey( BSPSampleSearchServiceStub.SM_12CO4_DISEASE));
@@ -54,6 +55,9 @@ public class ProductOrderContainerTest extends ContainerTest {
 
         Assert.assertEquals( 2 , testOrder.getActiveSampleCount());
 
+        testOrder.submitProductOrder();
+
+        Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
 
     }
     public void testSimpleNonBspProductOrder() {
@@ -70,7 +74,16 @@ public class ProductOrderContainerTest extends ContainerTest {
 
         Assert.assertEquals ( 3 , testOrder.getTotalSampleCount());
         Assert.assertEquals ( 0 , testOrder.getDuplicateCount());
-        Assert.assertEquals ( 0 , testOrder.getBspSampleCount());
+        Assert.assertEquals ( 0 , testOrder.getBspSampleCount ( ));
+
+        try {
+            testOrder.getUniqueParticipantCount();
+            Assert.fail();
+        } catch (IllegalStateException ise) {
+
+        }
+
+
     }
 
     public static ResearchProject createDummyResearchProject ( String researchProjectTitle ) {
