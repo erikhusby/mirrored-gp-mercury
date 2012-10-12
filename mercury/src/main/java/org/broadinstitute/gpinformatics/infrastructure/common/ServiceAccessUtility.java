@@ -96,8 +96,7 @@ public class ServiceAccessUtility {
         return createdJiraTicket;
     }
 
-    public static Map<String, CustomFieldDefinition> getJiraCustomFields (CreateIssueRequest.Fields.Project jiraProject,
-                                                                          CreateIssueRequest.Fields.Issuetype projectIssue)
+    public static Map<String, CustomFieldDefinition> getJiraCustomFields ( )
             throws IOException{
 
         Map<String, CustomFieldDefinition> customFields = null;
@@ -110,7 +109,7 @@ public class ServiceAccessUtility {
                 CreationalContext ctx = beanManager.createCreationalContext(bean);
                 JiraService jiraService =
                         (JiraService) beanManager.getReference(bean, bean.getClass(), ctx);
-                customFields = jiraService.getCustomFields(jiraProject, projectIssue);
+                customFields = jiraService.getCustomFields( );
             } finally {
                 initialContext.close();
             }
@@ -151,6 +150,23 @@ public class ServiceAccessUtility {
                 JiraService jiraService =
                         (JiraService) beanManager.getReference(bean, bean.getClass(), ctx);
                 jiraService.addWatcher ( issueKey, newWatcherId );
+            } finally {
+                initialContext.close();
+            }
+        } catch (NamingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public static void addJiraPublicLink (AddIssueLinkRequest.LinkType linkType,String sourceIssueKey, String targetIssueKey) throws IOException{
+        try {
+            InitialContext initialContext = new InitialContext();
+            try{
+                BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
+                Bean bean = beanManager.getBeans(JiraService.class).iterator().next();
+                CreationalContext ctx = beanManager.createCreationalContext(bean);
+                JiraService jiraService =
+                        (JiraService) beanManager.getReference(bean, bean.getClass(), ctx);
+                jiraService.addLink (linkType, sourceIssueKey, targetIssueKey);
             } finally {
                 initialContext.close();
             }

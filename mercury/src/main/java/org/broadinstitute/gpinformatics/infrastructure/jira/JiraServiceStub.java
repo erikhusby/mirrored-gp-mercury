@@ -11,10 +11,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -73,12 +71,11 @@ public class JiraServiceStub implements JiraService {
     }
 
     @Override
-    public Map<String, CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,
-                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+    public Map<String, CustomFieldDefinition> getCustomFields ( ) throws IOException {
         final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
-            customFields.put(requiredFieldName, new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,
-                                                                          requiredFieldName, true));
+            customFields.put ( requiredFieldName, new CustomFieldDefinition ( "stub_custom_field_" + requiredFieldName,
+                                                                              requiredFieldName, true ) );
         }
         return customFields;
     }

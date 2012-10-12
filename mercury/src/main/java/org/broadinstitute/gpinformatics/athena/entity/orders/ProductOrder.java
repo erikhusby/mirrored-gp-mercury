@@ -11,6 +11,7 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
@@ -470,8 +471,7 @@ public class ProductOrder implements Serializable {
     public void submitProductOrder() throws IOException{
 
         Map<String, CustomFieldDefinition> submissionFields =
-                ServiceAccessUtility.getJiraCustomFields ( new CreateIssueRequest.Fields.Project (
-                        fetchJiraProject ( ).getKeyPrefix ( ) ), fetchJiraIssueType ( ) );
+                ServiceAccessUtility.getJiraCustomFields ( );
 
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
@@ -488,7 +488,9 @@ public class ProductOrder implements Serializable {
                 ServiceAccessUtility.createJiraTicket ( fetchJiraProject ( ).getKeyPrefix ( ), fetchJiraIssueType ( ),
                                                         title, comments, listOfFields );
 
-        setJiraTicketKey(issueResponse.getKey());
+        jiraTicketKey = issueResponse.getKey();
+
+        addLink(researchProject.getJiraTicketKey());
 
         addPublicComment ( "Sample List: " + StringUtils.join ( getUniqueSampleNames ( ), ',' ) );
 
@@ -496,6 +498,7 @@ public class ProductOrder implements Serializable {
          * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
          */
 //        addWatcher(createdBy.toString());
+
 
         sampleValidationComments();
     }
@@ -529,11 +532,15 @@ public class ProductOrder implements Serializable {
     }
 
     public void addPublicComment(String comment) throws IOException{
-        ServiceAccessUtility.addJiraComment ( this.jiraTicketKey, comment );
+        ServiceAccessUtility.addJiraComment ( jiraTicketKey, comment );
     }
 
     public void addWatcher(String personLoginId) throws IOException {
-        ServiceAccessUtility.addJiraComment ( this.jiraTicketKey, personLoginId );
+        ServiceAccessUtility.addJiraWatcher ( jiraTicketKey, personLoginId );
+    }
+
+    public void addLink(String targetIssueKey) throws IOException {
+        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
     }
 
     /**

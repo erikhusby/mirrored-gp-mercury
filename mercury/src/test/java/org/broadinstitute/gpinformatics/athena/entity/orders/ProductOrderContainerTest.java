@@ -87,7 +87,11 @@ public class ProductOrderContainerTest extends ContainerTest {
     }
 
     public static ResearchProject createDummyResearchProject ( String researchProjectTitle ) {
-        return new ResearchProject (1L, researchProjectTitle,"Simple test object for unit tests", true);
+        ResearchProject dummyProject = new ResearchProject (1L, researchProjectTitle,"Simple test object for unit tests", true);
+
+        dummyProject.setJiraTicketKey("RP-123");
+
+        return dummyProject ;
     }
 
 }
