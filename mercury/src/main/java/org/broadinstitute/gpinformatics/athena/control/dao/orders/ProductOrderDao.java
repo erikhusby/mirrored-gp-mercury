@@ -92,23 +92,13 @@ public class ProductOrderDao extends GenericDao {
 
     }
 
-
     /**
      * Find all ProductOrders.
      * Not sure if we need this but have put it in here just in case.
      * @return
      */
-    public List<ProductOrder> findAllOrders() {
-        EntityManager entityManager = getEntityManager();
-        CriteriaQuery<ProductOrder> criteriaQuery =
-                getEntityManager().getCriteriaBuilder().createQuery(ProductOrder.class);
-        TypedQuery<ProductOrder> typedQuery = entityManager.createQuery(criteriaQuery);
-
-        try {
-            return typedQuery.getResultList();
-        } catch (NoResultException ignored) {
-            return Collections.emptyList();
-        }
+    public List<ProductOrder> findAll() {
+        return findAll(ProductOrder.class);
     }
 
 

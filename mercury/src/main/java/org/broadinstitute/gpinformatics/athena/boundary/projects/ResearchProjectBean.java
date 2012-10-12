@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
+import org.broadinstitute.gpinformatics.athena.boundary.BoundaryUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
@@ -65,12 +66,6 @@ public class ResearchProjectBean {
      * @return list of all research project statuses
      */
     public List<SelectItem> getAllProjectStatuses() {
-        List<SelectItem> items = new ArrayList<SelectItem>();
-        items.add(new SelectItem("", "Any"));
-        for (ResearchProject.Status status : ResearchProject.Status.values()) {
-            items.add(new SelectItem(status.name()));
-        }
-        return items;
+        return BoundaryUtils.buildEnumFilterList(ResearchProject.Status.values());
     }
-
 }

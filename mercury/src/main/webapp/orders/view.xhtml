@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<body>
+
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">View Product Order</ui:define>
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="productOrderKey" value="#{productOrderDetail.productOrderKey}" />
+                <f:event type="preRenderView" listener="#{productOrderDetail.load}" />
+            </f:metadata>
+        </ui:define>
+        <ui:define name="body">
+
+            <h:form styleClass="view-horizontal">
+                <div class="control-group">
+                    <span class="control-label">Project:</span>
+                    <span class="controls">#{productOrderDetail.productOrder.title}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">ID:</span>
+                    <span class="controls">
+                        <h:link outcome="http://prodinfojira.broadinstitute.org/jira/browse/#{productOrderDetail.productOrder.jiraTicketKey}"
+                                value="#{productOrderDetail.productOrder.jiraTicketKey}"/>
+                    </span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">Product:</span>
+                    <span class="controls">#{productOrderDetail.productOrder.product.productName}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">Quote ID:</span>
+                    <span class="controls">
+                        <h:link outcome="TODO/QUOTE/SERVER/LINK"
+                                value="#{productOrderDetail.productOrder.quoteId}"/>
+                    </span>
+                </div>
+
+
+                <div class="control-group">
+                    <span class="control-label">Comments:</span>
+                    <span class="controls">#{productOrderDetail.productOrder.comments}</span>
+                </div>
+
+                <div class="control-group">
+                    <span class="control-label">Samples:</span>
+                    <span class="controls">#{productOrderDetail.productOrder.sampleSummary}</span>
+                </div>
+
+                <br/>
+
+                <p:selectOneMenu id="selectedStatus" value="">
+                    <f:selectItem itemLabel="Status" itemValue="" />
+                    <f:selectItems value="#{productOrderBean.allSampleStatuses}" />
+                </p:selectOneMenu>
+
+                <p:dataTable value="#{productOrderDetail.productOrder.samples}" var="sample">
+                    <p:column headerText="ID">
+                        <h:link outcome="TODO/BSP/SERVER/LINK" value="#{sample.sampleName}"/>
+                    </p:column>
+                    <p:column headerText="Participant ID">
+                        #{sample.participantId}
+                    </p:column>
+                    <p:column headerText="Status">
+                        #{sample.billingStatus}
+                    </p:column>
+                    <p:column headerText="Eligible">
+                        ???
+                    </p:column>
+                    <p:column headerText="Billed">
+                        ???
+                    </p:column>
+                    <p:column headerText="Abandoned">
+                        ???
+                    </p:column>
+                    <p:column headerText="Eligible">
+                        ???
+                    </p:column>
+                    <p:column headerText="Date Created">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Date Updated">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Samples">
+                        #{product.orderStatus}
+                    </p:column>
+                    <p:column headerText="Program PM">
+                        #{product.orderStatus}
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+
+            <h:form>
+                <p:commandButton value="Edit Project" action="create" ajax="false">
+                    <f:param name="productOrderTitle" value="#{productOrderDetail.productOrderTitle}"/>
+                </p:commandButton>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+</body>
+</html>

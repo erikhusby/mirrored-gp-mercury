@@ -1,25 +1,25 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
-import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
 
-import javax.faces.bean.SessionScoped;
+import javax.enterprise.context.RequestScoped;
+import javax.faces.bean.ManagedBean;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.AvailableProductsOnly.NO;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.AvailableProductsOnly.YES;
 
 
-@Named
-@SessionScoped
-public class ProductsBean {
+@ManagedBean
+@RequestScoped
+public class ProductsBean extends AbstractJsfBean {
 
     @Inject
     private ProductDao productDao;
@@ -60,12 +60,19 @@ public class ProductsBean {
         this.selectedProduct = null;
     }
 
-    public int genericCompare(Object o1, Object o2) {
-        CompareToBuilder builder = new CompareToBuilder();
-        builder.append(o1, o2);
-        return builder.build();
-    }
+    public int compare(Object o1, Object o2) {
 
+        if (o1 == o2)
+            return 0;
+
+        if (o1 == null)
+            return -1;
+
+        if (o2 == null)
+            return 1;
+
+        return ((Comparable) o1).compareTo(o2);
+    }
 
     public Product getSelectedProduct() {
         return selectedProduct;
