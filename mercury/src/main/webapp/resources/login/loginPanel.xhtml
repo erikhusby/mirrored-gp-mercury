@@ -17,28 +17,43 @@
     <cc:interface/>
     <cc:implementation>
             <div class="row">
-                <div class="span5">
+                <div class="span3">
                     <p:graphicImage url="/images/mercury_logo.png" alt="Broad Institute" style="float: left;"/>
                 </div>
 
-                <div class="span7">
-                    <p>Please enter your Broad Username and Password.</p>
+                <div class="span9">
+                    <h:form id="form" prependId="false" styleClass="form-horizontal">
+                        <div class="control-group">
+                            <div class="controls">
+                                <p>Please enter your Broad Username and Password.</p>
+                            </div>
+                        </div>
 
-                    <h:form>
-                        <h:panelGrid columns="2">
-                            <h:outputText value="Username" />
-                            <p:inputText label="Username" value="#{userLogin.username}" required="true" requiredMessage="Username is required"/>
+                        <div class="control-group">
+                            <p:outputLabel for="username" value="Username" styleClass="control-label"/>
+                            <div class="controls">
+                                <p:inputText id="username" label="Username" value="#{userLogin.username}" required="true" requiredMessage="Username is required"/>
+                            </div>
+                        </div>
 
-                            <h:outputText value="Password" />
-                            <p:password label="Password" value="#{userLogin.password}" required="true" requiredMessage="Password is required" feedback="false"/>
+                        <div class="control-group">
+                            <p:outputLabel for="password" value="Password" styleClass="control-label"/>
+                            <div class="controls">
+                                <p:password id="password" label="Password" value="#{userLogin.password}" required="true" requiredMessage="Password is required" feedback="false"/>
+                            </div>
+                        </div>
 
-                            <h:panelGroup />
-                            <h:commandButton value="Sign in" action="#{userLogin.authenticateUser}" class="btn btn-primary"/>
-                        </h:panelGrid>
+                        <div class="control-group">
+                            <div class="controls">
+                                <div class="row-fluid">
+                                    <div class="span1">
+                                        <h:commandButton value="Sign in" action="#{userLogin.authenticateUser}" class="btn btn-primary"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </h:form>
                 </div>
             </div>
-
     </cc:implementation>
-
 </html>
