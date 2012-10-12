@@ -134,7 +134,7 @@
     drop table mercury.person cascade constraints;
 
     drop table mercury.person_aud cascade constraints;
-
+/*
     drop table mercury.pp_map_start_smpl_to_aliqt cascade constraints;
 
     drop table mercury.pp_map_start_smpl_to_aliqt_aud cascade constraints;
@@ -158,7 +158,7 @@
     drop table mercury.project_plan cascade constraints;
 
     drop table mercury.project_plan_aud cascade constraints;
-
+*/
     drop table mercury.quote cascade constraints;
 
     drop table mercury.quote_aud cascade constraints;
@@ -200,7 +200,7 @@
     drop table mercury.workflow_description cascade constraints;
 
     drop table mercury.workflow_description_aud cascade constraints;
-
+/*
     drop table project_available_quotes cascade constraints;
 
     drop table project_available_quotes_aud cascade constraints;
@@ -216,7 +216,7 @@
     drop table project_project_plans cascade constraints;
 
     drop table project_project_plans_aud cascade constraints;
-
+*/
     drop sequence athena.SEQ_BILLABLE_ITEM;
 
     drop sequence athena.SEQ_ORDER_SAMPLE;
@@ -254,11 +254,11 @@
     drop sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE;
 
     drop sequence mercury.SEQ_PERSON;
-
+/*
     drop sequence mercury.SEQ_PROJECT;
 
     drop sequence mercury.SEQ_PROJECT_PLAN;
-
+*/
     drop sequence mercury.SEQ_REAGENT;
 
     drop sequence mercury.SEQ_REV_INFO;
@@ -567,7 +567,7 @@
         batch_name varchar2(255 char),
         is_active number(1,0) not null,
         jira_ticket varchar2(255 char),
-        project_plan number(19,0),
+--        project_plan number(19,0),
         primary key (lab_batch_id),
         unique (batch_name)
     );
@@ -579,7 +579,7 @@
         batch_name varchar2(255 char),
         is_active number(1,0),
         jira_ticket varchar2(255 char),
-        project_plan number(19,0),
+--        project_plan number(19,0),
         primary key (lab_batch_id, rev)
     );
 
@@ -607,7 +607,7 @@
         lab_event_type varchar2(255 char),
         event_operator number(19,0),
         in_place_lab_vessel number(19,0),
-        project_plan_override number(19,0),
+--        project_plan_override number(19,0),
         lab_batch number(19,0),
         primary key (lab_event_id),
         unique (event_location, event_date, disambiguator)
@@ -624,7 +624,7 @@
         quote_server_batch_id varchar2(255 char),
         event_operator number(19,0),
         in_place_lab_vessel number(19,0),
-        project_plan_override number(19,0),
+--        project_plan_override number(19,0),
         lab_event_type varchar2(255 char),
         lab_batch number(19,0),
         primary key (lab_event_id, rev)
@@ -656,8 +656,8 @@
         digest varchar2(255 char),
         rack_type varchar2(255 char),
         molecular_state number(19,0),
-        project number(19,0),
-        project_authority number(19,0),
+--        project number(19,0),
+--        project_authority number(19,0),
         read_bucket_authority number(19,0),
         aliquot number(19,0),
         plate number(19,0),
@@ -673,8 +673,8 @@
         created_on timestamp,
         label varchar2(255 char),
         molecular_state number(19,0),
-        project number(19,0),
-        project_authority number(19,0),
+--        project number(19,0),
+--        project_authority number(19,0),
         read_bucket_authority number(19,0),
         digest varchar2(255 char),
         rack_type varchar2(255 char),
@@ -913,7 +913,7 @@
         username varchar2(255 char),
         primary key (person_id, rev)
     );
-
+/*
     create table mercury.pp_map_start_smpl_to_aliqt (
         project_plan number(19,0) not null,
         map_starting_sample_to_aliquot number(19,0) not null,
@@ -1019,7 +1019,7 @@
         quote varchar2(255 char),
         primary key (project_plan_id, rev)
     );
-
+*/
     create table mercury.quote (
         alphanumeric_id varchar2(255 char) not null,
         primary key (alphanumeric_id)
@@ -1121,7 +1121,7 @@
         sample_id number(19,0) not null,
         sample_name varchar2(255 char),
         bsp_sample_authority_twodtube number(19,0),
-        project_plan number(19,0),
+--        project_plan number(19,0),
         primary key (sample_id)
     );
 
@@ -1132,7 +1132,7 @@
         revtype number(3,0),
         sample_name varchar2(255 char),
         bsp_sample_authority_twodtube number(19,0),
-        project_plan number(19,0),
+--        project_plan number(19,0),
         primary key (sample_id, rev)
     );
 
@@ -1209,7 +1209,7 @@
         workflow_name varchar2(255 char),
         primary key (workflow_description_id, rev)
     );
-
+/*
     create table project_available_quotes (
         project number(19,0) not null,
         available_quotes varchar2(255 char) not null,
@@ -1265,7 +1265,7 @@
         revtype number(3,0),
         primary key (rev, project, project_plans)
     );
-
+*/
     alter table athena.billable_item
         add constraint FK4A845AB199F23B52
         foreign key (product_order_sample)
@@ -1415,12 +1415,12 @@
         add constraint FKB6E9442E8A39BE24
         foreign key (rev)
         references mercury.rev_info;
-
+/*
     alter table mercury.lab_batch
         add constraint FKD102BE085DAC64D7
         foreign key (project_plan)
         references mercury.project_plan;
-
+*/
     alter table mercury.lab_batch
         add constraint FKD102BE084334B1F1
         foreign key (jira_ticket)
@@ -1450,12 +1450,12 @@
         add constraint FKD1365968A1B8F5BF
         foreign key (lab_batch)
         references mercury.lab_batch;
-
+/*
     alter table mercury.lab_event
         add constraint FKD1365968A12D5FAA
         foreign key (project_plan_override)
         references mercury.project_plan;
-
+*/
     alter table mercury.lab_event
         add constraint FKD13659683B570EF2
         foreign key (event_operator)
@@ -1490,12 +1490,12 @@
         add constraint FK71AE15281149B707
         foreign key (read_bucket_authority)
         references mercury.lab_vessel;
-
+/*
     alter table mercury.lab_vessel
         add constraint FK71AE15286E580798
         foreign key (project)
         references mercury.project;
-
+*/
     alter table mercury.lab_vessel
         add constraint FK71AE152876284BB0
         foreign key (aliquot)
@@ -1510,12 +1510,12 @@
         add constraint FK71AE15286DE9BBF6
         foreign key (molecular_state)
         references mercury.molecular_state;
-
+/*
     alter table mercury.lab_vessel
         add constraint FK71AE15283BA3A1ED
         foreign key (project_authority)
         references mercury.lab_vessel;
-
+*/
     alter table mercury.lab_vessel_aud
         add constraint FK14FBEB198A39BE24
         foreign key (rev)
@@ -1700,7 +1700,7 @@
         add constraint FK287892C68A39BE24
         foreign key (rev)
         references mercury.rev_info;
-
+/*
     alter table mercury.pp_map_start_smpl_to_aliqt
         add constraint FK7FAEB807A5892C6C
         foreign key (map_starting_sample_to_aliquot)
@@ -1805,7 +1805,7 @@
         add constraint FK288ACB008A39BE24
         foreign key (rev)
         references mercury.rev_info;
-
+*/
     alter table mercury.quote_aud
         add constraint FKA7A04A6D8A39BE24
         foreign key (rev)
@@ -1870,12 +1870,12 @@
         add constraint FK18C9CA8979B8E476
         foreign key (bsp_sample_authority_twodtube)
         references mercury.lab_vessel;
-
+/*
     alter table mercury.starting_sample
         add constraint FK18C9CA895DAC64D7
         foreign key (project_plan)
         references mercury.project_plan;
-
+*/
     alter table mercury.starting_sample_aud
         add constraint FKB28C07FA8A39BE24
         foreign key (rev)
@@ -1968,7 +1968,7 @@
         add constraint FK34339F6D8A39BE24
         foreign key (rev)
         references mercury.rev_info;
-
+/*
     alter table project_available_quotes
         add constraint FK2E7B8C136E580798
         foreign key (project)
@@ -2028,7 +2028,7 @@
         add constraint FK85E13A0F8A39BE24
         foreign key (rev)
         references mercury.rev_info;
-
+*/
     create sequence athena.SEQ_BILLABLE_ITEM start with 1 increment by 50;
 
     create sequence athena.SEQ_ORDER_SAMPLE start with 1 increment by 50;
@@ -2066,11 +2066,11 @@
     create sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE start with 1 increment by 50;
 
     create sequence mercury.SEQ_PERSON start with 1 increment by 50;
-
+/*
     create sequence mercury.SEQ_PROJECT start with 1 increment by 50;
 
     create sequence mercury.SEQ_PROJECT_PLAN start with 1 increment by 50;
-
+*/
     create sequence mercury.SEQ_REAGENT start with 1 increment by 50;
 
     create sequence mercury.SEQ_REV_INFO start with 1 increment by 50;
