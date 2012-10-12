@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-//import org.apache.myfaces.extensions.cdi.core.api.scope.conversation.ViewAccessScoped;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.BoundaryUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -82,12 +82,7 @@ public class ResearchProjectBean implements Serializable {
      * @return list of all research project statuses
      */
     public List<SelectItem> getAllProjectStatuses() {
-        List<SelectItem> items = new ArrayList<SelectItem>();
-        items.add(new SelectItem("", "Any"));
-        for (ResearchProject.Status status : ResearchProject.Status.values()) {
-            items.add(new SelectItem(status.name()));
-        }
-        return items;
+        return BoundaryUtils.buildEnumFilterList(ResearchProject.Status.values());
     }
 
     public List<ResearchProject> getFilteredResearchProjects() {
@@ -97,5 +92,4 @@ public class ResearchProjectBean implements Serializable {
     public void setFilteredResearchProjects(List<ResearchProject> filteredResearchProjects) {
         this.filteredResearchProjects = filteredResearchProjects;
     }
-
 }
