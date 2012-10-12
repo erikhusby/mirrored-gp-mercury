@@ -9,7 +9,6 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
@@ -29,6 +28,15 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ProductOrderDao extends GenericDao {
+
+    /**
+     *
+     * @param key
+     * @return
+     */
+    public ProductOrder findByBusinessKey(String key) {
+        return findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, key);
+    }
 
     /**
      * Find ProductOrders by Research Project
@@ -111,15 +119,19 @@ public class ProductOrderDao extends GenericDao {
      * @return
      */
     /*
-    public ProductOrder findById(Long personId) {
-        try {
-            return findSingle(ProductOrder.class, ProductOrder_.personId, personId);
-        } catch (NoResultException ignored) {
-            return null;
-        }
+    public ProductOrder findByPersonId(Long personId) {
+        findSingle(ProductOrder.class, ProductOrder_.personId, personId);
     }
     */
 
+    /**
+     *
+     * @param orderId
+     * @return
+     */
+    public ProductOrder findById(Long orderId) {
+        return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
+    }
 
     /**
      * Package protected method to remove ProductOrders.
