@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
@@ -220,31 +222,24 @@ public class ProductOrderSample implements Serializable {
 
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ProductOrderSample)) return false;
-
-        final ProductOrderSample that = (ProductOrderSample) o;
-
-        if (billableItems != null ? !billableItems.equals(that.billableItems) : that.billableItems != null)
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ProductOrderSample)) {
             return false;
-        if (billingStatus != that.billingStatus) return false;
-        if (bspDTO != null ? !bspDTO.equals(that.bspDTO) : that.bspDTO != null) return false;
-        if (sampleComment != null ? !sampleComment.equals(that.sampleComment) : that.sampleComment != null) return false;
-        if (!productOrder.equals(that.productOrder)) return false;
-        if (!sampleName.equals(that.sampleName)) return false;
+        }
 
-        return true;
+        ProductOrderSample that = (ProductOrderSample) o;
+        return new EqualsBuilder().append(sampleName, that.sampleName).append(billingStatus, that.billingStatus)
+                .append(sampleComment, that.sampleComment).append(billableItems, that.billableItems)
+                .append(productOrder, that.productOrder).append(bspDTO, that.bspDTO).build();
     }
 
     @Override
     public int hashCode() {
-        int result = sampleName.hashCode();
-        result = 31 * result + billingStatus.hashCode();
-        result = 31 * result + (sampleComment != null ? sampleComment.hashCode() : 0);
-        result = 31 * result + (billableItems != null ? billableItems.hashCode() : 0);
-        result = 31 * result + productOrder.hashCode();
-        result = 31 * result + (bspDTO != null ? bspDTO.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder().append(sampleName).append(billingStatus)
+                .append(sampleComment).append(billableItems).append(productOrder)
+                .append(bspDTO).build();
     }
 }
