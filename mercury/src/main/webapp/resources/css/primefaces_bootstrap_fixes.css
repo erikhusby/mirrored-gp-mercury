@@ -4,7 +4,6 @@
     -webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none; padding: inherit;
 }
 
-.ui-menu-item-list { margin-left: 15px; }
 /* Fix bug with p:menubar and bootstrap theme. */
 .ui-menu.ui-widget li > .ui-menuitem-link { padding-right: 1px; }
 
