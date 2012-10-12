@@ -47,6 +47,22 @@ public class BSPUserList {
         return null;
     }
 
+    /**
+     * Returns the BSP user for the given username, or null if no user exists with that name. Username comparison
+     * ignores case.
+     *
+     * @param username the username to look for
+     * @return the BSP user or null
+     */
+    public BspUser getByUsername(String username) {
+        for (BspUser user : users) {
+            if (user.getUsername().equalsIgnoreCase(username)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
     @Inject
     // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {

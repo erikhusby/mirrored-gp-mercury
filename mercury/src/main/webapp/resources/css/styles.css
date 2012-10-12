@@ -30,7 +30,7 @@ a { text-decoration: underline; }
 .ui-datatable-data td .align-right { float: right; }
 
 /* Fix bug with PrimeFaces Bootstrap theme: http://forum.primefaces.org/viewtopic.php?f=9&t=25031 */
-.ui-widget-content input.ui-state-error { color: black; }
+.ui-widget-content input.ui-state-error, .ui-widget-content textarea.ui-state-error { color: black; }
 
 .controls .ui-message-error { display: inline-block; }
 

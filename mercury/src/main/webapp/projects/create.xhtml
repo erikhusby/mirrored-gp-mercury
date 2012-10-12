@@ -18,6 +18,7 @@
                 <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
                 <!-- TODO: figure out if this is really the right way to do this -->
                 <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
+                <f:event type="preValidate" listener="#{researchProjectForm.initEmptyProject}"/>
             </f:metadata>
         </ui:define>
 
@@ -29,15 +30,6 @@
                         <p:inputText id="name" value="#{researchProjectDetail.project.title}" size="50" required="true"/>
                         <p:watermark for="name" value="Enter the name of the research project"/>
                         <p:message for="name"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <p:outputLabel for="jiraTicketKey" value="JIRA Issue" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:inputText id="jiraTicketKey" value="#{researchProjectDetail.project.jiraTicketKey}" size="25" required="true"/>
-                        <p:watermark for="jiraTicketKey" value="Enter the JIRA issue key"/>
-                        <p:message for="jiraTicketKey"/>
                     </div>
                 </div>
 
