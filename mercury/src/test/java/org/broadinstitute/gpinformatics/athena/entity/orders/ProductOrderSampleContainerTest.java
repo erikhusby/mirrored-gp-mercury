@@ -19,9 +19,9 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
 
         ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN");
 
-        Assert.assertTrue ( testSample.isInBspFormat ( ) );
+        Assert.assertTrue( testSample.isInBspFormat ( ) );
 
-        Assert.assertFalse(testSample.needsBspMetaData());
+        Assert.assertTrue( testSample.needsBspMetaData());
 
         try {
 
