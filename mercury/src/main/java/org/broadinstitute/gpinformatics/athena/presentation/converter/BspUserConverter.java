@@ -25,6 +25,11 @@ public class BspUserConverter implements Converter {
 
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object object) {
-        return ((BspUser) object).getUserId().toString();
+        Long userId = ((BspUser) object).getUserId();
+        if (userId != null) {
+            return userId.toString();
+        } else {
+            return null;
+        }
     }
 }

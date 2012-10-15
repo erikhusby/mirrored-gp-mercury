@@ -43,7 +43,7 @@
 
                     <p:column headerText="Created Date" sortBy="#{project.createdDate}">
                         <h:outputText value="#{project.createdDate}">
-                            <f:convertDateTime type="date"/>
+                            <f:convertDateTime type="both" timeStyle="short"/>
                         </h:outputText>
                     </p:column>
                 </p:dataTable>
