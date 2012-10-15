@@ -81,9 +81,6 @@ public class ProductOrder implements Serializable {
      */
     ProductOrder() {
     }
-    public ProductOrder ( String title, List<ProductOrderSample> samples, String quoteId, Product product, ResearchProject researchProject ) {
-        this(1L,title, samples, quoteId, product, researchProject );
-    }
 
     /**
      * Constructor with mandatory fields
