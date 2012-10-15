@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.Strandedness;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 
 import java.util.HashSet;
@@ -36,7 +36,7 @@ public class RegistrationJaxbConverter {
         registerLibrary.setLibraryName(tubeIn.getLabCentricName());
         registerLibrary.setReceptacleBarcode(tubeIn.getLabel());
 
-        Set<MolecularState.STRANDEDNESS> strandednessesState = new HashSet<MolecularState.STRANDEDNESS>();
+        Set<Strandedness> strandednessesState = new HashSet<Strandedness>();
 
         for(SampleInstance currSample:tubeIn.getSampleInstances()) {
             final RegistrationSample sampleInstance = new RegistrationSample();
@@ -94,7 +94,7 @@ public class RegistrationJaxbConverter {
                                                "Double stranded.  There should not be a mixture");
         }
 
-        registerLibrary.setSingleStrandInd(MolecularState.STRANDEDNESS.SINGLE_STRANDED.equals(
+        registerLibrary.setSingleStrandInd(Strandedness.SINGLE_STRANDED.equals(
                 strandednessesState.iterator().next()));
 
         SequencingPlanDetails details = new SequencingPlanDetails();

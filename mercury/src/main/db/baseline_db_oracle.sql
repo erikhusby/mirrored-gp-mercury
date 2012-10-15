@@ -91,9 +91,9 @@
 
     drop table mercury.lab_vessel_tickets_created_aud cascade constraints;
 
-    drop table mercury.lab_work_queue cascade constraints;
-
-    drop table mercury.lab_work_queue_aud cascade constraints;
+--     drop table mercury.lab_work_queue cascade constraints;
+--
+--     drop table mercury.lab_work_queue_aud cascade constraints;
 
     drop table mercury.lb_starting_lab_vessels cascade constraints;
 
@@ -127,9 +127,9 @@
 
     drop table mercury.molecular_state_aud cascade constraints;
 
-    drop table mercury.molecular_state_template cascade constraints;
-
-    drop table mercury.molecular_state_template_aud cascade constraints;
+--     drop table mercury.molecular_state_template cascade constraints;
+--
+--     drop table mercury.molecular_state_template_aud cascade constraints;
 
     drop table mercury.person cascade constraints;
 
@@ -185,9 +185,9 @@
 
     drop table mercury.starting_sample_aud cascade constraints;
 
-    drop table mercury.state_change cascade constraints;
-
-    drop table mercury.state_change_aud cascade constraints;
+--     drop table mercury.state_change cascade constraints;
+--
+--     drop table mercury.state_change_aud cascade constraints;
 
     drop table mercury.status_note cascade constraints;
 
@@ -245,13 +245,13 @@
 
     drop sequence mercury.SEQ_LAB_VESSEL;
 
-    drop sequence mercury.SEQ_LAB_WORK_QUEUE;
+--    drop sequence mercury.SEQ_LAB_WORK_QUEUE;
 
     drop sequence mercury.SEQ_MOLECULAR_ENVELOPE;
 
     drop sequence mercury.SEQ_MOLECULAR_STATE;
 
-    drop sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE;
+--     drop sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE;
 
     drop sequence mercury.SEQ_PERSON;
 /*
@@ -267,7 +267,7 @@
 
     drop sequence mercury.SEQ_STARTING_SAMPLE;
 
-    drop sequence mercury.SEQ_STATE_CHANGE;
+--     drop sequence mercury.SEQ_STATE_CHANGE;
 
     drop sequence mercury.SEQ_VESSEL_TRANSFER;
 
@@ -744,17 +744,17 @@
         primary key (rev, lab_vessel, tickets_created)
     );
 
-    create table mercury.lab_work_queue (
-        lab_work_queue_id number(19,0) not null,
-        primary key (lab_work_queue_id)
-    );
-
-    create table mercury.lab_work_queue_aud (
-        lab_work_queue_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
-        primary key (lab_work_queue_id, rev)
-    );
+--     create table mercury.lab_work_queue (
+--         lab_work_queue_id number(19,0) not null,
+--         primary key (lab_work_queue_id)
+--     );
+--
+--     create table mercury.lab_work_queue_aud (
+--         lab_work_queue_id number(19,0) not null,
+--         rev number(19,0) not null,
+--         revtype number(3,0),
+--         primary key (lab_work_queue_id, rev)
+--     );
 
     create table mercury.lb_starting_lab_vessels (
         lab_batch number(19,0) not null,
@@ -869,7 +869,7 @@
         nucleic_acid_state varchar2(255 char),
         strand varchar2(255 char),
         molecular_envelope number(19,0),
-        molecular_state_template number(19,0),
+--         molecular_state_template number(19,0),
         primary key (molecular_state_id)
     );
 
@@ -880,21 +880,21 @@
         nucleic_acid_state varchar2(255 char),
         strand varchar2(255 char),
         molecular_envelope number(19,0),
-        molecular_state_template number(19,0),
+--         molecular_state_template number(19,0),
         primary key (molecular_state_id, rev)
     );
 
-    create table mercury.molecular_state_template (
-        molecular_state_template_id number(19,0) not null,
-        primary key (molecular_state_template_id)
-    );
-
-    create table mercury.molecular_state_template_aud (
-        molecular_state_template_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
-        primary key (molecular_state_template_id, rev)
-    );
+--     create table mercury.molecular_state_template (
+--         molecular_state_template_id number(19,0) not null,
+--         primary key (molecular_state_template_id)
+--     );
+--
+--     create table mercury.molecular_state_template_aud (
+--         molecular_state_template_id number(19,0) not null,
+--         rev number(19,0) not null,
+--         revtype number(3,0),
+--         primary key (molecular_state_template_id, rev)
+--     );
 
     create table mercury.person (
         person_id number(19,0) not null,
@@ -1136,17 +1136,17 @@
         primary key (sample_id, rev)
     );
 
-    create table mercury.state_change (
-        state_change_id number(19,0) not null,
-        primary key (state_change_id)
-    );
-
-    create table mercury.state_change_aud (
-        state_change_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
-        primary key (state_change_id, rev)
-    );
+--     create table mercury.state_change (
+--         state_change_id number(19,0) not null,
+--         primary key (state_change_id)
+--     );
+--
+--     create table mercury.state_change_aud (
+--         state_change_id number(19,0) not null,
+--         rev number(19,0) not null,
+--         revtype number(3,0),
+--         primary key (state_change_id, rev)
+--     );
 
     create table mercury.status_note (
         status_note_id number(19,0) not null,
@@ -1581,10 +1581,10 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.lab_work_queue_aud
-        add constraint FK815E93C68A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.lab_work_queue_aud
+--         add constraint FK815E93C68A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
     alter table mercury.lb_starting_lab_vessels
         add constraint FKD2D0A1F5A1B8F5BF
@@ -1681,20 +1681,20 @@
         foreign key (molecular_envelope)
         references mercury.molecular_envelope;
 
-    alter table mercury.molecular_state
-        add constraint FK3453D9C221C79D25
-        foreign key (molecular_state_template)
-        references mercury.molecular_state_template;
+--     alter table mercury.molecular_state
+--         add constraint FK3453D9C221C79D25
+--         foreign key (molecular_state_template)
+--         references mercury.molecular_state_template;
 
     alter table mercury.molecular_state_aud
         add constraint FKCF99D2B38A39BE24
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.molecular_state_template_aud
-        add constraint FK1CFFA4C88A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.molecular_state_template_aud
+--         add constraint FK1CFFA4C88A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
     alter table mercury.person_aud
         add constraint FK287892C68A39BE24
@@ -1881,10 +1881,10 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.state_change_aud
-        add constraint FK7F42220F8A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.state_change_aud
+--         add constraint FK7F42220F8A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
     alter table mercury.status_note_aud
         add constraint FKBF6042908A39BE24
@@ -2057,13 +2057,13 @@
 
     create sequence mercury.SEQ_LAB_VESSEL start with 1 increment by 50;
 
-    create sequence mercury.SEQ_LAB_WORK_QUEUE start with 1 increment by 50;
+--     create sequence mercury.SEQ_LAB_WORK_QUEUE start with 1 increment by 50;
 
     create sequence mercury.SEQ_MOLECULAR_ENVELOPE start with 1 increment by 50;
 
     create sequence mercury.SEQ_MOLECULAR_STATE start with 1 increment by 50;
 
-    create sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE start with 1 increment by 50;
+--     create sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE start with 1 increment by 50;
 
     create sequence mercury.SEQ_PERSON start with 1 increment by 50;
 /*
@@ -2079,7 +2079,7 @@
 
     create sequence mercury.SEQ_STARTING_SAMPLE start with 1 increment by 50;
 
-    create sequence mercury.SEQ_STATE_CHANGE start with 1 increment by 50;
+--     create sequence mercury.SEQ_STATE_CHANGE start with 1 increment by 50;
 
     create sequence mercury.SEQ_VESSEL_TRANSFER start with 1 increment by 50;
 

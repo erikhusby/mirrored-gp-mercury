@@ -45,7 +45,7 @@ public class EndToEndTest  {
         return createBSPStock(aliquotName,tubeBarcode/*,projectPlan*/);
     }
     
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {DATABASE_FREE}, enabled = false)
     public void doIt() {
 
         String masterSample1 = "master sample1";

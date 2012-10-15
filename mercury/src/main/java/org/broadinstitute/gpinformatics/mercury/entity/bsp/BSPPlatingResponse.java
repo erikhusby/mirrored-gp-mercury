@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bsp;
 
-import org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueueResponse;
-
-public class BSPPlatingResponse implements LabWorkQueueResponse {
+public class BSPPlatingResponse {
 
     //@Inject
     //private Log log;
@@ -35,8 +33,4 @@ public class BSPPlatingResponse implements LabWorkQueueResponse {
         return wasRejected;
     }
 
-    @Override
-    public String getText() {
-        return text;
-    }
 }

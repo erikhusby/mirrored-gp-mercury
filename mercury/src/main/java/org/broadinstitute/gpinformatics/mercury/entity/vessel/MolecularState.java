@@ -52,31 +52,21 @@ public class MolecularState implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE")
     private Long molecularStateId;
 
-    public enum DNA_OR_RNA {
-        DNA,
-        RNA
-    };
-
-    public enum STRANDEDNESS {
-        DOUBLE_STRANDED,
-        SINGLE_STRANDED
-    }
-
     @ManyToOne(fetch = FetchType.LAZY)
     private MolecularEnvelope molecularEnvelope;
 
     @Enumerated(EnumType.STRING)
-    private DNA_OR_RNA nucleicAcidState;
+    private NucleicAcid nucleicAcidState;
 
     @Enumerated(EnumType.STRING)
-    private STRANDEDNESS strand;
+    private Strandedness strand;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private MolecularStateTemplate molecularStateTemplate = new MolecularStateTemplate();
-
-    public MolecularState(DNA_OR_RNA nucleicAcidState, STRANDEDNESS strand) {
+    public MolecularState(NucleicAcid nucleicAcidState, Strandedness strand) {
         this.nucleicAcidState = nucleicAcidState;
         this.strand = strand;
+    }
+
+    MolecularState() {
     }
 
     /**
@@ -97,7 +87,7 @@ public class MolecularState implements Serializable {
      * Is the target sample in the evenlope DNA or RNA?
      * @return
      */
-    public DNA_OR_RNA getNucleicAcidState() {
+    public NucleicAcid getNucleicAcidState() {
         return nucleicAcidState;
     }
 
@@ -109,7 +99,7 @@ public class MolecularState implements Serializable {
      * or has it been denatured?
      * @return
      */
-    public STRANDEDNESS getStrand() {
+    public Strandedness getStrand() {
         return strand;
     }
 
@@ -132,15 +122,6 @@ public class MolecularState implements Serializable {
      */
     public Float getVolume() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    /**
-     * What's the generalized template used to determine
-     * whether a {@link Goop} has consistent state?
-     * @return
-     */
-    public MolecularStateTemplate getMolecularStateTemplate() {
-        return molecularStateTemplate;
     }
 
 }

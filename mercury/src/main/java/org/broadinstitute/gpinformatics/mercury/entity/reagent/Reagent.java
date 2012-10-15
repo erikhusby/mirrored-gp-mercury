@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.Containable;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularEnvelope;
 import org.hibernate.envers.Audited;
 
@@ -14,21 +13,21 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * Some chemistry bits applied to {@link Goop} to help
+ * Some chemistry bits applied to Goop to help
  * transform it into a sequenceable state.
  * 
  * Basic rule of thumb: Things that you want to
- * sequence are {@link Goop}.  Things that the lab
+ * sequence are Goop.  Things that the lab
  * consumes from other vendors (IDT, Fluidigm,
  * Illumina, etc.) are {@link Reagent}s.  Oligos
- * like primers and baits are not {@link Goop}.
+ * like primers and baits are not Goop.
  * Although they contain DNA, they are considered
  * {@link Reagent}s.
  */
 @Entity
 @Audited
 @Table(schema = "mercury")
-public abstract class Reagent implements Containable {
+public abstract class Reagent {
 
     @Id
     @SequenceGenerator(name = "SEQ_REAGENT", schema = "mercury", sequenceName = "SEQ_REAGENT")

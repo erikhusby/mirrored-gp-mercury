@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.queue;
 
 
-public class AliquotParameters implements LabWorkQueueParameters {
+public class AliquotParameters {
 
 //    private ProjectPlan projectPlan;
 
@@ -33,11 +33,5 @@ public class AliquotParameters implements LabWorkQueueParameters {
 //    public ProjectPlan getProjectPlan() {
 //        return projectPlan;
 //    }
-    
 
-    @Override
-    public String toText() {
-        return "Volume: " + getTargetVolume(); // etc.
-    }
-    
 }

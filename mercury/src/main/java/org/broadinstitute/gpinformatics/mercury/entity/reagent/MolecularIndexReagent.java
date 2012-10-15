@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularStateRange;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -24,21 +22,6 @@ public class MolecularIndexReagent extends Reagent {
     }
 
     public MolecularIndexReagent() {
-    }
-
-    @Override
-    public Iterable<LabVessel> getContainers() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void addToContainer(LabVessel container) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Iterable<LabVessel> getContainers(MolecularStateRange molecularStateRange) {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     public MolecularIndexingScheme getMolecularIndexingScheme() {
