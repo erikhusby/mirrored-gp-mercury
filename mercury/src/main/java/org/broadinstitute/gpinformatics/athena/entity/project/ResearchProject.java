@@ -273,8 +273,16 @@ public class ResearchProject {
         return getPeople(RoleType.PM);
     }
 
+    public Long[] getBroadPIs() {
+        return getPeople(RoleType.BROAD_PI);
+    }
+
     public Long[] getScientists() {
         return getPeople(RoleType.SCIENTIST);
+    }
+
+    public Long[] getExternalCollaborators() {
+        return getPeople(RoleType.EXTERNAL);
     }
 
     public String[] getFundingIds() {
