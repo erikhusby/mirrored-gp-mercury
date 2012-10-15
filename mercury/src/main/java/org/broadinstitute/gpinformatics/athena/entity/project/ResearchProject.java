@@ -84,6 +84,10 @@ public class ResearchProject {
     @Index(name = "ix_rp_jira")
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
+    public String getBusinessKey() {
+        return title;
+    }
+
     /**
      * no arg constructor for hibernate and JSF.
      */
