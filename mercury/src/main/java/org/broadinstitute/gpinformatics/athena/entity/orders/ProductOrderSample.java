@@ -93,10 +93,7 @@ public class ProductOrderSample implements Serializable {
     private BSPSampleDTO getBspDTO() {
         if (!hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {
-                bspDTO = BSPSampleDTO.DUMMY;
-                //TODO
-                // initialize DTO ?
-                //throw new RuntimeException("Not yet Implemented.");
+                bspDTO = ServiceAccessUtility.getSampleName ( this.getSampleName ( ) );
             } else {
                 bspDTO = BSPSampleDTO.DUMMY;
             }

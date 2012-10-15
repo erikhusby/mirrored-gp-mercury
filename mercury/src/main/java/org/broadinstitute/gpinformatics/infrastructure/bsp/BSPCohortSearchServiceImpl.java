@@ -69,95 +69,6 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
         specifyHttpAuthCredentials(client, bspConfig);
     }
 
-// TODO remove
-    public List<String[]> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... queryColumns) {
-
-        if (queryColumns == null || queryColumns.length == 0)
-            throw new RuntimeException("No query columns supplied!");
-
-        if (sampleIDs == null)
-            return null;
-
-        if (sampleIDs.size() == 0)
-            return new ArrayList<String[]>();
-
-        List<String[]> ret = new ArrayList<String[]>();
-
-        String urlString = url(Endpoint.SAMPLE_SEARCH);
-
-        logger.info(String.format("url string is '%s'", urlString));
-
-        WebResource webResource = getJerseyClient().resource(urlString);
-
-
-        List<String> queryParameters = new ArrayList<String>();
-        InputStream is = null;
-
-        try {
-            for (BSPSampleSearchColumn column : queryColumns)
-                queryParameters.add("columns=" + URLEncoder.encode(column.columnName(), "UTF-8"));
-
-            for (String sampleID : sampleIDs)
-                queryParameters.add("sample_ids=" + sampleID);
-
-            String queryString = "";
-            if (queryParameters.size() > 0)
-                queryString = StringUtils.join(queryParameters, "&");
-
-            logger.info("query string to be POSTed is '" + queryString + "'");
-
-            ClientResponse clientResponse =
-                    webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, queryString);
-
-            is = clientResponse.getEntityInputStream();
-            BufferedReader rdr = new BufferedReader(new InputStreamReader(is));
-
-            if (clientResponse.getStatus() != ClientResponse.Status.OK.getStatusCode()) {
-                String errMsg = "Cannot retrieve sample data from BSP platform. Received response code : " + clientResponse.getStatus();
-                logger.error(errMsg + " : " + rdr.readLine());
-                throw new RuntimeException(errMsg);
-            }
-
-            // skip header line
-            rdr.readLine();
-
-            // what should be the first real data line
-            String readLine = rdr.readLine();
-
-            while (readLine != null) {
-                String[] rawBSPData = readLine.split("\t", -1);
-                // BSP always seems to return 1 more field than we asked for?
-                String[] truncatedData = new String[rawBSPData.length - 1];
-                System.arraycopy(rawBSPData, 0, truncatedData, 0, truncatedData.length);
-                ret.add(truncatedData);
-                readLine = rdr.readLine();
-            }
-            is.close();
-        } catch(ClientHandlerException e) {
-            String errMsg = "Could not communicate with BSP platform to retrieve sample data.";
-            logger.error(errMsg + " at " + urlString, e);
-            throw e;
-        } catch (Exception exp) {
-            logger.error("Exception occurred trying to retrieve BSP sample data  : " + exp.getMessage(), exp);
-            throw new RuntimeException(exp);
-        }  finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) { }
-            }
-        }
-
-        return ret;
-
-    }
-
-//    @Override
-//    public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
-//        BSPSampleSearchColumn [] dummy = new BSPSampleSearchColumn[resultColumns.size()];
-//        return runSampleSearch(sampleIDs, resultColumns.toArray(dummy));
-//    }
-
 
     private Set<Cohort> runCollectionSearch(Person bspUser ) {
 
@@ -257,7 +168,7 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
     @Override
     public List<String> runSampleSearchByCohort(Cohort cohort) {
 
-        if ((cohort == null) ) {
+        if (cohort == null) {
             throw new IllegalArgumentException("Cohort param was null. Cannot retrieve list of samples from BSP.");
         }
 
@@ -269,14 +180,9 @@ public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService impl
         // Faked out here as API is not yet available. Add 4 samples to results.
         List<String> tempIds = new ArrayList<String>();
         tempIds.add("SM-11K1"); tempIds.add("SM-11K2");tempIds.add("SM-11K4");tempIds.add("SM-11K4");
-
-        List<String[]> tempResults = runSampleSearch(tempIds, BSPSampleSearchColumn.SAMPLE_ID );
-        for ( String[] sampleResult : tempResults ) {
-            results.add(sampleResult[0]);
-        }
         //TODO end
 
-        return results;
+        return tempIds;
     }
 
 }

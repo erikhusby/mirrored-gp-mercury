@@ -33,8 +33,8 @@ public class ProductOrderContainerTest extends ContainerTest {
                                  ProductOrderTest.createDummyProduct(),
                                  createDummyResearchProject ("Test Research Project" ) );
 
-        Assert.assertEquals ( testOrder.getUniqueParticipantCount(), 1 );
-        Assert.assertEquals ( testOrder.getUniqueSampleCount ( ), 3 );
+        Assert.assertEquals ( 1 , testOrder.getUniqueParticipantCount());
+        Assert.assertEquals ( 3 , testOrder.getUniqueSampleCount ( ) );
         Assert.assertEquals ( 2 , testOrder.getTumorNormalCounts().getNormalCount ( ));
         Assert.assertEquals ( 1 , testOrder.getTumorNormalCounts().getTumorCount ( ));
 
