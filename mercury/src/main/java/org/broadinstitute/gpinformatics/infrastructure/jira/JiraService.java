@@ -77,19 +77,11 @@ public interface JiraService extends Serializable {
 
     /**
      * getCustomFields returns all possible custom fields in the system for a given JIRA project
-     * @param project An instance of
-     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Project} that
-     *                represents the Jira Project for which a user of this method wishes to gain custom fields
-     *                for
-     * @param issueType An instance of {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype}
-     *                  that represents the specific issue type of the project for which a user of this method
-     *                  wishes to gain custom fields
      * @return A {@link Map} of the custom fields found for the project/issuetype combination.  To make it easy to
      * reference, the field map is indexed by the field name.
      * @throws IOException
      */
-    public Map<String, CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,
-                                                              CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
+    public Map<String, CustomFieldDefinition> getCustomFields ( ) throws IOException;
 
     /**
      * addLink provides a user with the ability to, tell the Jira system to create a new link to another jira ticket
