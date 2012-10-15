@@ -42,8 +42,7 @@ public class ResearchProjectResource {
      *
      * @return null if not found, otherwise the matching research project
      */
-    @NotNull
-    private ResearchProject findRPByTitle(String researchProjectTitle) {
+    private ResearchProject findRPByTitle(@NotNull String researchProjectTitle) {
         // Try to find research project by number
         return researchProjectDao.findByTitle(researchProjectTitle);
     }
@@ -55,8 +54,7 @@ public class ResearchProjectResource {
      *
      * @return null if not found, otherwise the matching research project
      */
-    @NotNull
-    private ResearchProject findRPById(String jiraTicketKey) {
+    private ResearchProject findRPById(@NotNull String jiraTicketKey) {
         return researchProjectDao.findByJiraTicketKey(jiraTicketKey);
     }
 
