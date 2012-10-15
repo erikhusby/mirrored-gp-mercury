@@ -13,7 +13,7 @@
         <ui:define name="title">Product Orders</ui:define>
 
         <ui:define name="body">
-            <p:dataTable value="#{productOrderBean.allProductOrders}" var="order">
+            <p:dataTable value="#{productOrderBean.allProductOrders}" var="order" filteredValue="#{productOrderBean.filteredProductOrders}">
                 <p:column headerText="Name" sortBy="#{order.title}">
                     <h:link outcome="view" value="#{order.title}">
                         <f:param name="productOrderKey" value="#{order.businessKey}"/>
@@ -24,11 +24,11 @@
                     #{order.jiraTicketKey}
                 </p:column>
 
-                <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allProjectStatuses}" filterMatchMode="exact">
+                <p:column headerText="Status" sortBy="#{order.orderStatus}" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
                     #{order.orderStatus}
                 </p:column>
 
-                <p:column headerText="Research Project">
+                <p:column headerText="Research Project" sortBy="#{order.researchProject.title}" >
                     #{order.researchProject.title}
                 </p:column>
 
