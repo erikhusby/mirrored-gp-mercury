@@ -19,7 +19,6 @@ import java.util.ArrayList;
 @Named
 @RequestScoped
 public class ProductOrderDetail {
-
     @Inject
     ProductOrderDao productOrderDao;
 

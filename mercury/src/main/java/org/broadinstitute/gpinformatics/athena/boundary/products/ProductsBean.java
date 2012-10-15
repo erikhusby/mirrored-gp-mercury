@@ -22,7 +22,6 @@ import static org.broadinstitute.gpinformatics.athena.control.dao.products.Produ
 @Named
 @RequestScoped
 public class ProductsBean extends AbstractJsfBean {
-
     @Inject
     private ProductDao productDao;
 
@@ -42,7 +41,6 @@ public class ProductsBean extends AbstractJsfBean {
 
 
     public ProductsDataModel getProductsDataModel() {
-
         if (rebuild) {
 
             // doing an explicit assignment to a temporary variable to highlight the strong type
@@ -54,7 +52,6 @@ public class ProductsBean extends AbstractJsfBean {
 
         return productsDataModel;
     }
-
 
     public void onRowSelect(SelectEvent event) {
         selectedProduct = (Product) event.getObject();
@@ -68,7 +65,6 @@ public class ProductsBean extends AbstractJsfBean {
     }
 
     public int compare(Object o1, Object o2) {
-
         if (o1 == o2)
             return 0;
 
@@ -132,11 +128,9 @@ public class ProductsBean extends AbstractJsfBean {
         this.filteredProducts = filteredProducts;
     }
 
-
     public void onAvailableProductsOnly(AjaxBehaviorEvent ignored) {
         rebuild = true;
     }
-
 
     public List<Product> getSelectedProductAddOns() {
         return selectedProductAddOns;

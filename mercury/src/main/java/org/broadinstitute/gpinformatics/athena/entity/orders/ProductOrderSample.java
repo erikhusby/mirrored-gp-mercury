@@ -18,17 +18,12 @@ import java.util.regex.Pattern;
  * a billableItem and an optionally comment which may be in most cases empty but on
  * occasion can actually have a value to describe "exceptions" that occur for a particular sample.
  *
- * <p/>
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 8/28/12
- * Time: 10:26 AM
+ * @author mccrory
  */
 @Entity
 @Audited
 @Table(schema = "athena")
 public class ProductOrderSample implements Serializable {
-
     @Id
     @SequenceGenerator(name="SEQ_ORDER_SAMPLE", schema = "athena", sequenceName="SEQ_ORDER_SAMPLE")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_ORDER_SAMPLE")
@@ -66,7 +61,6 @@ public class ProductOrderSample implements Serializable {
 //        this.sampleName = sampleName;
 //        this.bspDTO = bspDTO;
 //    }
-
 
     public ProductOrderSample(final String sampleName, final BSPSampleDTO bspDTO, final ProductOrder productOrder) {
         this.sampleName = sampleName;
@@ -219,7 +213,6 @@ public class ProductOrderSample implements Serializable {
         //TODO hmc
         throw new RuntimeException("Not yet Implemented.");
     }
-
 
     @Override
     public boolean equals(Object o) {

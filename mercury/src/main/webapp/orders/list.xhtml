@@ -11,6 +11,7 @@
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">Product Orders</ui:define>
+
         <ui:define name="body">
             <p:dataTable value="#{productOrderBean.allProductOrders}" var="order">
                 <p:column headerText="Name" sortBy="#{order.title}">
