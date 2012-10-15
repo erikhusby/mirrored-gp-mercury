@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.jetbrains.annotations.NotNull;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -34,41 +35,36 @@ public class ResearchProjectResource {
         return findRPById(researchProjectId);
     }
 
+    /**
+     * Get the research project by the project title.
+     *
+     * @param researchProjectTitle The name given to the research project being looked up
+     *
+     * @return null if not found, otherwise the matching research project
+     */
+    @NotNull
     private ResearchProject findRPByTitle(String researchProjectTitle) {
-        // Check for content
-        if (researchProjectTitle == null) {
-            throw new RuntimeException("ResearchProject title is invalid.");
-        }
-
         // Try to find research project by number
-        ResearchProject researchProject = researchProjectDao.findByTitle(researchProjectTitle);
-        if (researchProject == null) {
-            throw new RuntimeException("Could not retrieve research project with id " + researchProjectTitle);
-        }
-
-        return researchProject;
+        return researchProjectDao.findByTitle(researchProjectTitle);
     }
 
-    private ResearchProject findRPById(String rpId) {
-        // Check for content
-        if (rpId == null) {
-            throw new RuntimeException("ResearchProject Id is invalid.");
-        }
-
-        // Try to find research project by number
-        ResearchProject researchProject = researchProjectDao.findByJiraTicketKey(rpId);
-        if (researchProject == null) {
-            throw new RuntimeException("Could not retrieve research project with id " + rpId);
-        }
-
-        return researchProject;
+    /**
+     * Get the research project by the id (jira ticket key). If not found, returns null.
+     *
+     * @param jiraTicketKey The jira ticket key for the research project.
+     *
+     * @return null if not found, otherwise the matching research project
+     */
+    @NotNull
+    private ResearchProject findRPById(String jiraTicketKey) {
+        return researchProjectDao.findByJiraTicketKey(jiraTicketKey);
     }
 
     /**
      * Method to GET the list of research projects. Optionally filter this by the user who created them if the creator
      * param is supplied.
      *
-     * @param creatorId The createdBy to look up
+     * @param creatorId The createdBy to look up, If null, gets all research projects
      *
      * @return The research projects that match
      */
