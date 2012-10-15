@@ -172,7 +172,7 @@ public class ExomeExpressEndToEndTest {
             // grab the jira custom field definitions
             final Map<String, CustomFieldDefinition> requiredFieldsMap = JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraService);
             Assert.assertFalse(requiredFieldsMap.isEmpty());
-            Assert.assertEquals(requiredFieldsMap.size(), 3);
+            Assert.assertEquals(requiredFieldsMap.size(), 10);
 
 
             final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!");
@@ -424,7 +424,8 @@ public class ExomeExpressEndToEndTest {
             for (Starter starter : projectPlan.getStarters()) {
                 BSPSampleAuthorityTwoDTube aliquot = (BSPSampleAuthorityTwoDTube) projectPlan.getAliquotForStarter(starter);
                 BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
-                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName()));
+                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
+                                                             "", "", "","", "", "", "",""));
             }
 
             // ZIMS

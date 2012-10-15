@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.hibernate.envers.Audited;
 
 import javax.enterprise.context.spi.CreationalContext;
@@ -14,6 +17,8 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.Entity;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.util.LinkedHashSet;
@@ -27,7 +32,15 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "mercury")
+@NamedQueries({
+        @NamedQuery(
+                name = "BSPStartingSample.fetchBySampleName",
+                query = "select s from BSPStartingSample s where sampleName = :sampleName"
+        )
+})
 public class BSPStartingSample extends StartingSample {
+
+    private static Log gLog = LogFactory.getLog(BSPStartingSample.class);
 
     @Transient
     private BSPSampleDTO bspDTO;
@@ -95,25 +108,9 @@ public class BSPStartingSample extends StartingSample {
      * Initialize the BSP DTO by calling the BSP web service
      */
     private void initDto() {
-        // todo jmt an entity calling a service is ugly, find a better way
-        if (bspDTO == null) {
-            // todo jmt refactor CDI stuff into a utility
-            try {
-                InitialContext initialContext = new InitialContext();
-                try {
-                    BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
-                    Bean<?> bean = beanManager.getBeans(BSPSampleDataFetcher.class).iterator().next();
-                    CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
-                    BSPSampleDataFetcher bspSampleSearchService =
-                            (BSPSampleDataFetcher) beanManager.getReference(bean, bean.getClass(), ctx);
-                    bspDTO = bspSampleSearchService.fetchSingleSampleFromBSP(getSampleName());
-                } finally {
-                    initialContext.close();
-                }
-            } catch (NamingException e) {
-                throw new RuntimeException(e);
-            }
 
+        if(bspDTO == null ) {
+            bspDTO = ServiceAccessUtility.getSampleName (this.getSampleName() );
         }
     }
 
@@ -129,13 +126,13 @@ public class BSPStartingSample extends StartingSample {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
+        final Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
         ProjectPlan rootPlan = getRootProjectPlan();
         WorkflowDescription workflow = null;
         if (rootPlan != null) {
             workflow = rootPlan.getWorkflowDescription();
         }
-        sampleInstances.add(new SampleInstance(this, null, rootPlan, null, workflow));
+        sampleInstances.add(new SampleInstance(this,null,rootPlan,null,workflow));
         return sampleInstances;
     }
 
