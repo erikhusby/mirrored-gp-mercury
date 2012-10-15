@@ -216,4 +216,8 @@ public class Product implements Serializable {
     public int hashCode() {
         return partNumber != null ? partNumber.hashCode() : 0;
     }
+
+    public String getBusinessKey() {
+        return partNumber;
+    }
 }

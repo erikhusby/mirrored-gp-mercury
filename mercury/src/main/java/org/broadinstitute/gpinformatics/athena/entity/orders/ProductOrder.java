@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -93,7 +97,8 @@ public class ProductOrder implements Serializable {
      * @param product
      * @param researchProject
      */
-    public ProductOrder ( Long creatorId, String title, List<ProductOrderSample> samples, String quoteId, Product product, ResearchProject researchProject ) {
+    public ProductOrder (Long creatorId, String title, List<ProductOrderSample> samples, String quoteId,
+                         Product product, ResearchProject researchProject) {
         this.createdBy = creatorId;
         this.title = title;
         this.samples = samples;
