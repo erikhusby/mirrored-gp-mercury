@@ -12,6 +12,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.text.MessageFormat;
+import java.text.NumberFormat;
 
 /**
  * Class for creating a product order, or editing a draft product order.
@@ -44,7 +45,13 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     public String getFundsRemaining() {
         if (quote != null) {
-            return quote.getQuoteFunding().getFundsRemaining();
+            String fundsRemainingString = quote.getQuoteFunding().getFundsRemaining();
+            try {
+                double fundsRemaining = Double.parseDouble(fundsRemainingString);
+                return NumberFormat.getCurrencyInstance().format(fundsRemaining);
+            } catch (NumberFormatException e) {
+                return fundsRemainingString;
+            }
         }
         return "";
     }

@@ -20,6 +20,7 @@
         </ui:define>
 
         <ui:define name="body">
+            <p:messages autoUpdate="true"/>
             <h:form id="form" prependId="false" styleClass="form-horizontal">
                 <div class="control-group">
                     <p:outputLabel for="name" value="Name" styleClass="control-label"/>
@@ -64,6 +65,7 @@
                             <p:ajax update="fundsRemaining" listener="#{productOrderForm.loadFundsRemaining}"/>
                         </p:inputText>
                         <p:watermark for="quote" value="Enter Quote ID"/>
+                        <p:message for="quote"/>
                         <p/>
                         <h:outputText id="fundsRemaining" value="Funds Remaining: #{productOrderForm.fundsRemaining}" />
                     </div>
