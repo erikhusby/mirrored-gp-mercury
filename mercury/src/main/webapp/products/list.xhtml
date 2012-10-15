@@ -68,14 +68,14 @@
                 </p:column>
 
                 <p:column sortBy="#{product.productFamily.name}" sortFunction="#{productsBean.compare}"
-                          filterBy="#{product.productFamily.name}" filterStyleClass="hide" width="200">
+                          filterBy="#{product.productFamily.name}" filterStyleClass="hide" width="250">
                     <f:facet name="header">
                         <h:outputText value="Product Family" />
                     </f:facet>
                     <h:outputText value="#{product.productFamily.name}" />
                 </p:column>
 
-                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productsBean.compare}" width="75">
+                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productsBean.compare}" width="100">
                     <h:outputText value='#{product.topLevelProduct ? "Yes" : "No"}' />
                 </p:column>
 
@@ -92,7 +92,7 @@
 
         <h:form id="productMainView" styleClass="form-horizontal form-readonly" >
 
-            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
+            <h:panelGroup rendered="#{productsBean.selectedProduct != null}">
 
             <div class="control-group">
                 <label class="control-label">Name</label>
@@ -128,13 +128,13 @@
                         <div class="form-value">#{productsBean.selectedProductDiscontinuedDate}</div>
                     </div>
                 </div>
-            </p:panelGrid>
+            </h:panelGroup>
 
         </h:form>
 
 
         <h:form id="productAddOnsView">
-            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
+            <h:panelGroup rendered="#{productsBean.selectedProduct != null}">
                 <p:dataTable value="#{productsBean.selectedProductAddOns}" var="addOn">
                     <f:facet name="header">
                         <h:outputText value="Add Ons" />
@@ -160,12 +160,12 @@
                     </p:column>
 
                 </p:dataTable>
-            </p:panelGrid>
+            </h:panelGroup>
         </h:form>
 
 
         <h:form id="productPriceItemsView">
-            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
+            <h:panelGroup rendered="#{productsBean.selectedProduct != null}">
 
                 <p:dataTable value="#{productsBean.selectedProductPriceItems}" var="priceItem">
                     <f:facet name="header">
@@ -197,7 +197,7 @@
                                 value='#{productsBean.isPriceItemDefaultForSelected(priceItem) ? "Yes" : "No"}'/>
                     </p:column>
                 </p:dataTable>
-            </p:panelGrid>
+            </h:panelGroup>
         </h:form>
 
             <!--<p><p:commandButton value="New Product..." action="create?faces-redirect=true" ajax="false"/></p>-->
