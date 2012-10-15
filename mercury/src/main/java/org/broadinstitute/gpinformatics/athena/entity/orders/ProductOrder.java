@@ -82,13 +82,15 @@ public class ProductOrder implements Serializable {
 
     /**
      * Constructor with mandatory fields
+     * @param creatorId
      * @param title
      * @param samples
      * @param quoteId
      * @param product
      * @param researchProject
      */
-    public ProductOrder(String title, List<ProductOrderSample> samples, String quoteId, Product product, ResearchProject researchProject) {
+    public ProductOrder ( Long creatorId, String title, List<ProductOrderSample> samples, String quoteId, Product product, ResearchProject researchProject ) {
+        this.createdBy = creatorId;
         this.title = title;
         this.samples = samples;
         this.quoteId = quoteId;
@@ -176,6 +178,34 @@ public class ProductOrder implements Serializable {
         jiraTicketKey = jiraTicketKeyIn;
     }
 
+    public Date getCreatedDate ( ) {
+        return createdDate;
+    }
+
+    public void setCreatedDate ( Date createdDateIn ) {
+        createdDate = createdDateIn;
+    }
+
+    public Long getCreatedBy ( ) {
+        return createdBy;
+    }
+
+    public Date getModifiedDate ( ) {
+        return modifiedDate;
+    }
+
+    public void setModifiedDate ( Date modifiedDateIn ) {
+        modifiedDate = modifiedDateIn;
+    }
+
+    public Long getModifiedBy ( ) {
+        return modifiedBy;
+    }
+
+    public void setModifiedBy ( Long modifiedByIn ) {
+        modifiedBy = modifiedByIn;
+    }
+
     /**
      * getUniqueParticipantCount provides the summation of all unique participants represented in the list of samples
      * registered to this product order
@@ -207,7 +237,7 @@ public class ProductOrder implements Serializable {
      * @return the number of unique samples, as determined by the sample name
      */
     public int getUniqueSampleCount() {
-        return getUniqueSampleNames().size();
+        return getUniqueSampleNames().size ( );
     }
 
     /**
@@ -292,8 +322,8 @@ public class ProductOrder implements Serializable {
 
         MaleFemaleCount counts =
                 new MaleFemaleCount(
-                        getGenderCount(BSPSampleDTO.MALE_IND),
-                        getGenderCount(BSPSampleDTO.FEMALE_IND)
+                        getGenderCount ( BSPSampleDTO.MALE_IND ),
+                        getGenderCount ( BSPSampleDTO.FEMALE_IND )
                 );
         return counts;
     }
@@ -308,7 +338,7 @@ public class ProductOrder implements Serializable {
     public BspNonBspSampleCount getBspNonBspSampleCounts ( ) {
         BspNonBspSampleCount counts =
                 new BspNonBspSampleCount(
-                        getBspSampleCount(),
+                        getBspSampleCount ( ),
                         getTotalSampleCount() - getBspSampleCount()
                 );
         return counts;

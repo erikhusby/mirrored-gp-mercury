@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthenticationServiceTest;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -21,10 +20,13 @@ import java.util.HashSet;
 @Test (groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderContainerTest extends ContainerTest {
 
+    private static final Long TEST_CREATOR = 10L;
+
+
     public void testSimpleProductOrder() throws IOException{
 
         ProductOrder testOrder =
-                new ProductOrder("containerTest Product Order Test1",
+                new ProductOrder( TEST_CREATOR, "containerTest Product Order Test1",
                                  ProductOrderTest.createSampleList("SM-12CO4,SM-1P3WY,SM-1P3XN",
                                                                    new HashSet<BillableItem> ()),
                                  "newQuote",
@@ -65,7 +67,7 @@ public class ProductOrderContainerTest extends ContainerTest {
     public void testSimpleNonBspProductOrder() {
 
         ProductOrder testOrder =
-                new ProductOrder("containerTest Product Order Test2",
+                new ProductOrder( TEST_CREATOR, "containerTest Product Order Test2",
                                  ProductOrderTest.createSampleList("SM_12CO4,SM_1P3WY,SM_1P3XN",
                                                                    new HashSet<BillableItem> ()),
                                  "newQuote",
