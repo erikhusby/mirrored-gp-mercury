@@ -50,8 +50,7 @@ public class UserListBean {
     }
 
     public List<BspUser> searchUser(String query) {
-        // TODO: filter by query
-        return userList.getUsers();
+        return userList.find(query);
     }
 
     public String getUserListString(Long[] userIds) {
