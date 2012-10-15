@@ -15,23 +15,17 @@ import java.util.regex.Pattern;
  * a billableItem and an optionally comment which may be in most cases empty but on
  * occasion can actually have a value to describe "exceptions" that occur for a particular sample.
  *
- * <p/>
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 8/28/12
- * Time: 10:26 AM
+ * @author mccory
  */
 @Entity
 @Audited
 @Table(schema = "athena")
 public class ProductOrderSample implements Serializable {
-
     @Id
     @SequenceGenerator(name="SEQ_ORDER_SAMPLE", schema = "athena", sequenceName="SEQ_ORDER_SAMPLE")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_ORDER_SAMPLE")
     private Long productOrderSampleId;
 
-    public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
     static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
     private BillingStatus billingStatus = BillingStatus.NotYetBilled;
@@ -86,10 +80,10 @@ public class ProductOrderSample implements Serializable {
     }
 
     private BSPSampleDTO getBspDTO() {
-        if ( isInBspFormat() && ! hasBSPDTOBeenInitialized() ) {
+        if ( isInBspFormat() && !hasBSPDTOBeenInitialized() ) {
             //TODO
             // initialize DTO ?
-            throw new RuntimeException("Not yet Implemented.");
+            //throw new RuntimeException("Not yet Implemented.");
         }
         return bspDTO;
     }
@@ -118,96 +112,96 @@ public class ProductOrderSample implements Serializable {
         if (StringUtils.isBlank(sampleName)) {
             return false;
         }
-        return Pattern.matches(ProductOrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
+        return Pattern.matches(BSPSampleDTO.BSP_SAMPLE_FORMAT_REGEX, sampleName);
     }
 
     // Methods delegated to the DTO
     public String getVolume() throws IllegalStateException {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getVolume();
     }
 
     public String getConcentration() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getConcentration();
     }
 
     public String getRootSample() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getRootSample();
     }
 
     public String getStockSample() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getStockSample();
     }
 
     public String getCollection() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getCollection();
     }
 
     public String getCollaboratorsSampleName() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getCollaboratorsSampleName();
     }
 
     public String getContainerId() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getContainerId();
     }
 
     public String getParticipantId() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getPatientId();
     }
 
     public String getOrganism() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getOrganism();
     }
 
     public String getStockAtExport() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getStockAtExport();
     }
 
     public Boolean isPositiveControl() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().isPositiveControl();
     }
 
     public Boolean isNegativeControl() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().isNegativeControl();
     }
 
     public String getSampleLsid() {
-        if (! isInBspFormat() ) {
+        if (!isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;
         }
         return getBspDTO().getSampleLsid();

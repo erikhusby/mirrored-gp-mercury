@@ -474,7 +474,9 @@
         <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
             <id>JavaEE</id>
-
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <dependencies>
                 <dependency>
                     <groupId>javax</groupId>
@@ -1538,6 +1540,10 @@
                                 <propertyfile file="${pom.basedir}/target/version.properties">
                                     <entry key="project.version" type="string" value="${project.version}"
                                            operation="="/>
+                                </propertyfile>
+                                <propertyfile file="${pom.basedir}/target/classes/build.properties">
+                                    <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
+                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}" operation="=" />
                                 </propertyfile>
                             </target>
                         </configuration>

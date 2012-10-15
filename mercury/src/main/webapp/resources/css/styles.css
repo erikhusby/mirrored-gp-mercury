@@ -36,7 +36,8 @@ a { text-decoration: underline; }
 .view-horizontal .control-label { float: left; width: 160px; text-align: right; }
 .view-horizontal .controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; height: 15px; padding-bottom: 5px; }
 
-.hide {
-    display: none;
-    visibility: hidden;
-}
+.form-readonly .control-group { margin-bottom: 0px; }
+
+.form-value { font-size: 14px; padding: 5px 7px; }
+
+.hide, .ui-datatable .ui-filter-column .hide { display: none; visibility: hidden; }

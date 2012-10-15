@@ -28,7 +28,6 @@ import java.util.Date;
 @Named
 @RequestScoped
 public class ProductOrderDetail {
-
     @Inject
     ProductOrderDao productOrderDao;
 

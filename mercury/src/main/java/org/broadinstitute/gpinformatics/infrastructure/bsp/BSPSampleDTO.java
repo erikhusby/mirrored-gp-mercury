@@ -7,6 +7,7 @@ import java.io.Serializable;
  * data from BSP.
  */
 public class BSPSampleDTO implements Serializable {
+    public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
 
     private final String patientId;
 
