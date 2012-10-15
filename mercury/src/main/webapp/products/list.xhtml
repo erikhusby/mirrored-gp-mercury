@@ -16,7 +16,7 @@
     <ui:define name="title">Products</ui:define>
     <ui:define name="body">
 
-        <h:form id="form">
+        <h:form id="productList">
 
             <h:panelGrid columns="1">
 
@@ -38,8 +38,8 @@
                          emptyMessage="No products found containing search text"
                          selection="#{productsBean.selectedProduct}" selectionMode="single">
 
-                <p:ajax event="rowSelect" listener="#{productsBean.onRowSelect}" update=":form:productView"/>
-                <p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" update=":form:productView" />
+                <p:ajax event="rowSelect" listener="#{productsBean.onRowSelect}" update=":productMainView :productAddOnsView :productPriceItemsView"/>
+                <p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" update=":productMainView :productAddOnsView :productPriceItemsView" />
 
                 <f:facet name="header">
                         <p:outputPanel>
@@ -84,107 +84,123 @@
                 </p:column>
 
             </p:dataTable>
+        </h:form>
 
 
-            <p:panelGrid id="productView" columns="1">
-                <!--<h:outputText value="Hi everybody!" rendered="#{productsBean.selectedProduct != null}" />-->
 
-                <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
-                    <p:panelGrid columns="2">
-                        <h:outputText value="Name" styleClass="control-label"/>
-                        <h:outputText value="#{productsBean.selectedProduct.productName}"/>
-                    </p:panelGrid>
-                    <p:panelGrid columns="2">
-                        <h:outputText value="Part Number" styleClass="control-label"/>
-                        <h:outputText value="#{productsBean.selectedProduct.partNumber}"/>
-                    </p:panelGrid>
-                    <p:panelGrid columns="2">
-                        <h:outputText value="Product Family" styleClass="control-label"/>
-                        <h:outputText value="#{productsBean.selectedProduct.productFamily.displayName}"/>
-                    </p:panelGrid>
-                    <p:panelGrid columns="2">
-                        <h:outputText value="Availability Date" styleClass="control-label"/>
-                        <h:outputText value="#{productsBean.selectedProduct.availabilityDate}">
-                            <f:convertDateTime pattern="MMM dd, yyyy" />
-                        </h:outputText>
-                    </p:panelGrid>
-                    <p:panelGrid columns="2">
-                        <h:outputText value="Discontinued Date" styleClass="control-label"/>
-                        <h:outputText value="#{productsBean.selectedProduct.discontinuedDate}">
-                            <f:convertDateTime pattern="MMM dd, yyyy" />
-                        </h:outputText>
-                    </p:panelGrid>
+        <h:form id="productMainView" styleClass="form-horizontal form-readonly" >
 
-                    <!-- if we want any of the transient data on price items that will need to be fetched from the
-                         quote server -->
-                    <p:panelGrid columns="2">
-                        <h:outputText value="Price Items" />
-                        <p:dataTable value="#{productsBean.selectedProductPriceItems}" var="priceItem">
+            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
 
-                            <p:column>
-                                <f:facet name="header">
-                                    <h:outputText value="Platform"/>
-                                </f:facet>
-                                <h:outputText value="#{priceItem.platform}"/>
-                            </p:column>
-                            <p:column>
-                                <f:facet name="header">
-                                    <h:outputText value="Category"/>
-                                </f:facet>
-                                <h:outputText value="#{priceItem.category}"/>
-                            </p:column>
-                            <p:column>
-                                <f:facet name="header">
-                                    <h:outputText value="Name"/>
-                                </f:facet>
-                                <h:outputText value="#{priceItem.name}"/>
-                            </p:column>
-                            <p:column>
-                                <f:facet name="header">
-                                    <h:outputText value="Default?"/>
-                                </f:facet>
-                                <h:outputText value='#{priceItem.equals(productsBean.selectedProduct.defaultPriceItem) ? "Yes" : "No"}'/>
+            <div class="control-group">
+                <label class="control-label">Name</label>
+                <div class="controls">
+                    <div class="form-value">#{productsBean.selectedProduct.productName}</div>
+                </div>
+            </div>
 
-                            </p:column>
+            <div class="control-group">
+                <label class="control-label">Part Number</label>
+                <div class="controls">
+                    <div class="form-value">#{productsBean.selectedProduct.partNumber}</div>
+                </div>
+            </div>
 
-                        </p:dataTable>
-                    </p:panelGrid>
-                    <p:panelGrid columns="2">
-                        <h:outputText value="Add Ons" />
+            <div class="control-group">
+                <label class="control-label">Product Family</label>
+                <div class="controls">
+                    <div class="form-value">#{productsBean.selectedProduct.productFamily.displayName}</div>
+                </div>
+            </div>
 
-                        <p:dataTable value="#{productsBean.selectedProductAddOns}" var="addOn">
+            <div class="control-group">
+                <label class="control-label">Availability Date</label>
+                <div class="controls">
+                    <div class="form-value">#{productsBean.selectedProductAvailabilityDate}</div>
+                </div>
+            </div>
 
-                            <p:column>
-                                <f:facet name="header">
-                                    <h:outputText value="Name"/>
-                                </f:facet>
-                                <h:outputText value="#{addOn.productName}"/>
-                            </p:column>
-                            <p:column>
-                                <f:facet name="header">
-                                    <h:outputText value="Part Number"/>
-                                </f:facet>
-                                <h:outputText value="#{addOn.partNumber}"/>
-                            </p:column>
-                            <p:column>
-                                <f:facet name="header">
-                                    <h:outputText value="Product Family"/>
-                                </f:facet>
-                                <h:outputText value="#{addOn.productFamily.displayName}"/>
-                            </p:column>
-
-                        </p:dataTable>
-                    </p:panelGrid>
-
-                </p:panelGrid>
-
+                <div class="control-group">
+                    <label class="control-label">Discontinued Date</label>
+                    <div class="controls">
+                        <div class="form-value">#{productsBean.selectedProductDiscontinuedDate}</div>
+                    </div>
+                </div>
             </p:panelGrid>
 
-
-            <p><p:commandButton value="New Product..." action="create?faces-redirect=true" ajax="false"/></p>
-            <!-- TODO: fill in action for new product order view -->
-            <p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>
         </h:form>
+
+
+        <h:form id="productAddOnsView">
+            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
+                <p:dataTable value="#{productsBean.selectedProductAddOns}" var="addOn">
+                    <f:facet name="header">
+                        <h:outputText value="Add Ons" />
+                    </f:facet>
+
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Name"/>
+                        </f:facet>
+                        <h:outputText value="#{addOn.productName}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Part Number"/>
+                        </f:facet>
+                        <h:outputText value="#{addOn.partNumber}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Product Family"/>
+                        </f:facet>
+                        <h:outputText value="#{addOn.productFamily.displayName}"/>
+                    </p:column>
+
+                </p:dataTable>
+            </p:panelGrid>
+        </h:form>
+
+
+        <h:form id="productPriceItemsView">
+            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
+
+                <p:dataTable value="#{productsBean.selectedProductPriceItems}" var="priceItem">
+                    <f:facet name="header">
+                        <h:outputText value="Price Items" />
+                    </f:facet>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Platform"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.platform}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Category"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.category}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Name"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.name}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Default?"/>
+                        </f:facet>
+                        <h:outputText
+                                value='#{productsBean.isPriceItemDefaultForSelected(priceItem) ? "Yes" : "No"}'/>
+                    </p:column>
+                </p:dataTable>
+            </p:panelGrid>
+        </h:form>
+
+            <!--<p><p:commandButton value="New Product..." action="create?faces-redirect=true" ajax="false"/></p>-->
+            <!-- TODO: fill in action for new product order view -->
+            <!--<p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>-->
     </ui:define>
 </ui:composition>
 </h:body>
