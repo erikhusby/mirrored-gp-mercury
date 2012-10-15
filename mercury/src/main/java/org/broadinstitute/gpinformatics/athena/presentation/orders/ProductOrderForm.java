@@ -36,6 +36,7 @@ public class ProductOrderForm extends AbstractJsfBean {
      * Load local state before bringing up the UI.
      */
     public void load() {
+        productOrderDetail.load();
         if (sampleIDs == null && productOrderDetail != null) {
             StringBuilder sb = new StringBuilder();
             String separator = "";
