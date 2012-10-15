@@ -13,7 +13,6 @@ import javax.inject.Inject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-@Impl
 public class BSPManagerFactoryImpl implements BSPManagerFactory {
 
     @Inject
