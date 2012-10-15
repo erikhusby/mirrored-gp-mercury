@@ -14,7 +14,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,17 +44,19 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findByResearchProject( ResearchProject researchProject ) {
 
-        EntityManager entityManager = getEntityManager();
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        CriteriaQuery<ProductOrder> criteriaQuery = criteriaBuilder.createQuery(ProductOrder.class);
-        Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
-        criteriaQuery.where(criteriaBuilder.equal(productOrderRoot.get(ProductOrder_.researchProject), researchProject));
+//        EntityManager entityManager = getEntityManager();
+//        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+//        CriteriaQuery<ProductOrder> criteriaQuery = criteriaBuilder.createQuery(ProductOrder.class);
+//        Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
+//        criteriaQuery.where(criteriaBuilder.equal(productOrderRoot.get(ProductOrder_.researchProject), researchProject));
+//
+//        try {
+//            return entityManager.createQuery(criteriaQuery).getResultList();
+//        } catch (NoResultException ignored) {
+//            return Collections.emptyList();
+//        }
 
-        try {
-            return entityManager.createQuery(criteriaQuery).getResultList();
-        } catch (NoResultException ignored) {
-            return Collections.emptyList();
-        }
+        return findList(ProductOrder.class, ProductOrder_.researchProject, researchProject);
 
     }
 
@@ -133,14 +134,5 @@ public class ProductOrderDao extends GenericDao {
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
     }
 
-    /**
-     * Package protected method to remove ProductOrders.
-     * Used in the Test Code.
-     * @param productOrder
-     */
-    void delete(ProductOrder productOrder) {
-        EntityManager entityManager = getEntityManager();
-        entityManager.remove(productOrder);
-    }
 
 }

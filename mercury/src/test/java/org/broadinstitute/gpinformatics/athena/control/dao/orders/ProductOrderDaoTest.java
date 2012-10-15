@@ -101,7 +101,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 //        orders = productOrderDao.findAllOrders();
 //        for (ProductOrder foundProductOrder : orders) {
 //            if (foundProductOrder.getTitle().startsWith(TEST_ORDER_TITLE_PREFIX)) {
-//                productOrderDao.delete(foundProductOrder);
+//                productOrderDao.remove(foundProductOrder);
 //            }
 //        }
     }
