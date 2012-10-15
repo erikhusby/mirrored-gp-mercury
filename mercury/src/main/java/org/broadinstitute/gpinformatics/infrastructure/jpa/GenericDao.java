@@ -144,7 +144,7 @@ public class GenericDao {
     }
 
     /**
-     * Returns a list of entities that matches a list of values for a specified property.
+     * Returns a list of entities that matches a specified value for a specified property.
      * @param entity the class of entity to return
      * @param singularAttribute the metadata field for the property to query
      * @param value the value to query
