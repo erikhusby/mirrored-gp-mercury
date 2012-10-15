@@ -41,18 +41,27 @@ public class ResearchProject {
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
     private Long researchProjectId;
 
-    private Status status;
+    @Column(nullable = false)
+    private Status status = Status.Open;
 
     // creation/modification information
+    @Column(nullable = false)
     private Date createdDate;
+
+    @Column(nullable = false)
     private Long createdBy;
+
+    @Column(nullable = false)
     private Date modifiedDate;
+
+    @Column(nullable = false)
     private Long modifiedBy;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     @Index(name = "ix_rp_title")
     private String title;
 
+    @Column(nullable = false)
     private String synopsis;
 
     private boolean irbNotEngaged = IRB_ENGAGED;
