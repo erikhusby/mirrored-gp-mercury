@@ -1,14 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularEnvelope;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -38,13 +35,13 @@ public abstract class Reagent {
 
     private String lot;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
-    private MolecularEnvelope molecularEnvelope;
+//    @ManyToOne(cascade = CascadeType.PERSIST)
+//    private MolecularEnvelope molecularEnvelope;
 
-    protected Reagent(String reagentName, String lot, MolecularEnvelope molecularEnvelope) {
+    protected Reagent(String reagentName, String lot/*, MolecularEnvelope molecularEnvelope*/) {
         this.reagentName = reagentName;
         this.lot = lot;
-        this.molecularEnvelope = molecularEnvelope;
+//        this.molecularEnvelope = molecularEnvelope;
     }
 
     protected Reagent() {
@@ -55,9 +52,9 @@ public abstract class Reagent {
      * reagent applies to the target sample.
      * @return
      */
-    public MolecularEnvelope getMolecularEnvelopeDelta() {
-        return molecularEnvelope;
-    }
+//    public MolecularEnvelope getMolecularEnvelopeDelta() {
+//        return molecularEnvelope;
+//    }
 
     public String getReagentName() {
         return reagentName;

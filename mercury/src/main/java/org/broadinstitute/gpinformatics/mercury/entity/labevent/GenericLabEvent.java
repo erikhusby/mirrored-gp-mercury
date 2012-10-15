@@ -57,6 +57,7 @@ public class GenericLabEvent extends LabEvent {
      * these
      * @return
      */
+/*
     @Transient
     private boolean isMolecularStateBeingChanged() {
         boolean hasMolStateChange = false;
@@ -67,6 +68,7 @@ public class GenericLabEvent extends LabEvent {
         }
         return hasMolStateChange;
     }
+*/
 
     /**
      * After writing this method, I know think we only need

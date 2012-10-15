@@ -1241,7 +1241,7 @@ public class LabEventTest {
 
     public static TwoDBarcodedTube buildBaitTube(String tubeBarcode) {
         TwoDBarcodedTube baitTube = new TwoDBarcodedTube(tubeBarcode);
-        baitTube.addReagent(new GenericReagent("BaitSet", "xyz", null));
+        baitTube.addReagent(new GenericReagent("BaitSet", "xyz"));
         return baitTube;
     }
 

@@ -1,17 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.hibernate.envers.Audited;
-
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
 import java.io.Serializable;
 
 /**
@@ -42,23 +30,23 @@ import java.io.Serializable;
  * LabEvents and LabWorkQueues both make use of expected
  * molecular state.
  */
-@Entity
-@Audited
-@Table(schema = "mercury")
+//@Entity
+//@Audited
+//@Table(schema = "mercury")
 public class MolecularState implements Serializable {
 
-    @Id
-    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE", schema = "mercury", sequenceName = "SEQ_MOLECULAR_STATE")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE")
-    private Long molecularStateId;
+//    @Id
+//    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE", schema = "mercury", sequenceName = "SEQ_MOLECULAR_STATE")
+//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE")
+//    private Long molecularStateId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private MolecularEnvelope molecularEnvelope;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    private MolecularEnvelope molecularEnvelope;
 
-    @Enumerated(EnumType.STRING)
+//    @Enumerated(EnumType.STRING)
     private NucleicAcid nucleicAcidState;
 
-    @Enumerated(EnumType.STRING)
+//    @Enumerated(EnumType.STRING)
     private Strandedness strand;
 
     public MolecularState(NucleicAcid nucleicAcidState, Strandedness strand) {
@@ -75,13 +63,13 @@ public class MolecularState implements Serializable {
      * envelope.
      * @return
      */
-    public MolecularEnvelope getMolecularEnvelope() {
-        return molecularEnvelope;
-    }
-
-    public void setMolecularEnvelope(MolecularEnvelope molecularEnvelopeDelta) {
-        molecularEnvelope = molecularEnvelopeDelta;
-    }
+//    public MolecularEnvelope getMolecularEnvelope() {
+//        return molecularEnvelope;
+//    }
+//
+//    public void setMolecularEnvelope(MolecularEnvelope molecularEnvelopeDelta) {
+//        molecularEnvelope = molecularEnvelopeDelta;
+//    }
 
     /**
      * Is the target sample in the evenlope DNA or RNA?

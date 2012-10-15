@@ -107,9 +107,9 @@
 
     drop table mercury.lv_reagent_contents_aud cascade constraints;
 
-    drop table mercury.molecular_envelope cascade constraints;
-
-    drop table mercury.molecular_envelope_aud cascade constraints;
+--     drop table mercury.molecular_envelope cascade constraints;
+--
+--     drop table mercury.molecular_envelope_aud cascade constraints;
 
     drop table mercury.molecular_index cascade constraints;
 
@@ -123,9 +123,9 @@
 
     drop table mercury.molecular_indexing_scheme_aud cascade constraints;
 
-    drop table mercury.molecular_state cascade constraints;
-
-    drop table mercury.molecular_state_aud cascade constraints;
+--     drop table mercury.molecular_state cascade constraints;
+--
+--     drop table mercury.molecular_state_aud cascade constraints;
 
 --     drop table mercury.molecular_state_template cascade constraints;
 --
@@ -247,9 +247,9 @@
 
 --    drop sequence mercury.SEQ_LAB_WORK_QUEUE;
 
-    drop sequence mercury.SEQ_MOLECULAR_ENVELOPE;
-
-    drop sequence mercury.SEQ_MOLECULAR_STATE;
+--     drop sequence mercury.SEQ_MOLECULAR_ENVELOPE;
+--
+--     drop sequence mercury.SEQ_MOLECULAR_STATE;
 
 --     drop sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE;
 
@@ -800,25 +800,25 @@
         primary key (rev, lab_vessel, reagent_contents)
     );
 
-    create table mercury.molecular_envelope (
-        dtype varchar2(31 char) not null,
-        molecular_envelope_id number(19,0) not null,
-        five_prime_seq varchar2(255 char),
-        name varchar2(255 char),
-        three_prime_seq varchar2(255 char),
-        primary key (molecular_envelope_id)
-    );
-
-    create table mercury.molecular_envelope_aud (
-        dtype varchar2(31 char) not null,
-        molecular_envelope_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
-        five_prime_seq varchar2(255 char),
-        name varchar2(255 char),
-        three_prime_seq varchar2(255 char),
-        primary key (molecular_envelope_id, rev)
-    );
+--     create table mercury.molecular_envelope (
+--         dtype varchar2(31 char) not null,
+--         molecular_envelope_id number(19,0) not null,
+--         five_prime_seq varchar2(255 char),
+--         name varchar2(255 char),
+--         three_prime_seq varchar2(255 char),
+--         primary key (molecular_envelope_id)
+--     );
+--
+--     create table mercury.molecular_envelope_aud (
+--         dtype varchar2(31 char) not null,
+--         molecular_envelope_id number(19,0) not null,
+--         rev number(19,0) not null,
+--         revtype number(3,0),
+--         five_prime_seq varchar2(255 char),
+--         name varchar2(255 char),
+--         three_prime_seq varchar2(255 char),
+--         primary key (molecular_envelope_id, rev)
+--     );
 
     create table mercury.molecular_index (
         molecular_index_id number(19,0) not null,
@@ -864,25 +864,25 @@
         primary key (molecular_indexing_scheme_id, rev)
     );
 
-    create table mercury.molecular_state (
-        molecular_state_id number(19,0) not null,
-        nucleic_acid_state varchar2(255 char),
-        strand varchar2(255 char),
-        molecular_envelope number(19,0),
+--     create table mercury.molecular_state (
+--         molecular_state_id number(19,0) not null,
+--         nucleic_acid_state varchar2(255 char),
+--         strand varchar2(255 char),
+--         molecular_envelope number(19,0),
 --         molecular_state_template number(19,0),
-        primary key (molecular_state_id)
-    );
-
-    create table mercury.molecular_state_aud (
-        molecular_state_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
-        nucleic_acid_state varchar2(255 char),
-        strand varchar2(255 char),
-        molecular_envelope number(19,0),
+--         primary key (molecular_state_id)
+--     );
+--
+--     create table mercury.molecular_state_aud (
+--         molecular_state_id number(19,0) not null,
+--         rev number(19,0) not null,
+--         revtype number(3,0),
+--         nucleic_acid_state varchar2(255 char),
+--         strand varchar2(255 char),
+--         molecular_envelope number(19,0),
 --         molecular_state_template number(19,0),
-        primary key (molecular_state_id, rev)
-    );
+--         primary key (molecular_state_id, rev)
+--     );
 
 --     create table mercury.molecular_state_template (
 --         molecular_state_template_id number(19,0) not null,
@@ -1037,7 +1037,7 @@
         reagent_id number(19,0) not null,
         lot varchar2(255 char),
         reagent_name varchar2(255 char),
-        molecular_envelope number(19,0),
+--         molecular_envelope number(19,0),
         molecular_indexing_scheme number(19,0),
         primary key (reagent_id)
     );
@@ -1049,7 +1049,7 @@
         revtype number(3,0),
         lot varchar2(255 char),
         reagent_name varchar2(255 char),
-        molecular_envelope number(19,0),
+--         molecular_envelope number(19,0),
         molecular_indexing_scheme number(19,0),
         primary key (reagent_id, rev)
     );
@@ -1646,10 +1646,10 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.molecular_envelope_aud
-        add constraint FK6CC133708A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.molecular_envelope_aud
+--         add constraint FK6CC133708A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
     alter table mercury.molecular_index_aud
         add constraint FK1BCC2E748A39BE24
@@ -1676,20 +1676,20 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.molecular_state
-        add constraint FK3453D9C2218B0C4C
-        foreign key (molecular_envelope)
-        references mercury.molecular_envelope;
+--     alter table mercury.molecular_state
+--         add constraint FK3453D9C2218B0C4C
+--         foreign key (molecular_envelope)
+--         references mercury.molecular_envelope;
 
 --     alter table mercury.molecular_state
 --         add constraint FK3453D9C221C79D25
 --         foreign key (molecular_state_template)
 --         references mercury.molecular_state_template;
 
-    alter table mercury.molecular_state_aud
-        add constraint FKCF99D2B38A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.molecular_state_aud
+--         add constraint FKCF99D2B38A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
 --     alter table mercury.molecular_state_template_aud
 --         add constraint FK1CFFA4C88A39BE24
@@ -1811,10 +1811,10 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.reagent
-        add constraint FK40671CB2218B0C4C
-        foreign key (molecular_envelope)
-        references mercury.molecular_envelope;
+--     alter table mercury.reagent
+--         add constraint FK40671CB2218B0C4C
+--         foreign key (molecular_envelope)
+--         references mercury.molecular_envelope;
 
     alter table mercury.reagent
         add constraint FK40671CB2AA5A4C9
@@ -2059,9 +2059,9 @@
 
 --     create sequence mercury.SEQ_LAB_WORK_QUEUE start with 1 increment by 50;
 
-    create sequence mercury.SEQ_MOLECULAR_ENVELOPE start with 1 increment by 50;
+--     create sequence mercury.SEQ_MOLECULAR_ENVELOPE start with 1 increment by 50;
 
-    create sequence mercury.SEQ_MOLECULAR_STATE start with 1 increment by 50;
+--     create sequence mercury.SEQ_MOLECULAR_STATE start with 1 increment by 50;
 
 --     create sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE start with 1 increment by 50;
 

@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularEnvelope;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -200,8 +199,8 @@ public class EndToEndTest  {
     private void checkForSampleProjectData(SequencingRun srun,
                                           /*BasicProjectPlan projectPlan,*/
                                           StartingSample sam,
-                                          int numberOfSampleSheetsPerSample,
-                                          MolecularEnvelope expectedEnvelope) {
+                                          int numberOfSampleSheetsPerSample/*,
+                                          MolecularEnvelope expectedEnvelope*/) {
         boolean foundSample = false;
         boolean foundProject = false;
         boolean wasIndexFound = false;
@@ -210,18 +209,18 @@ public class EndToEndTest  {
                 for (SampleInstance sampleInstance : chamber.getSampleInstances()) {
                     if (sam.equals(sampleInstance.getStartingSample())) {
                         foundSample = true;
-                        MolecularEnvelope envelope = sampleInstance.getMolecularState().getMolecularEnvelope();
+//                        MolecularEnvelope envelope = sampleInstance.getMolecularState().getMolecularEnvelope();
 
                         // sloppy check on the envelope: we're not checking position relative
                         // to other envelopes; just the presence of this envelope somewhere
-                        if (expectedEnvelope.equals(envelope)) {
-                            wasIndexFound = true;
-                        }
-                        while (envelope.getContainedEnvelope() != null) {
-                            if (expectedEnvelope.equals(envelope.getContainedEnvelope())) {
-                                wasIndexFound = true;
-                            }
-                        }
+//                        if (expectedEnvelope.equals(envelope)) {
+//                            wasIndexFound = true;
+//                        }
+//                        while (envelope.getContainedEnvelope() != null) {
+//                            if (expectedEnvelope.equals(envelope.getContainedEnvelope())) {
+//                                wasIndexFound = true;
+//                            }
+//                        }
 
 
 //                        ProjectPlan fetchedPlan = sampleInstance.getSingleProjectPlan();
@@ -238,9 +237,9 @@ public class EndToEndTest  {
             if (!foundProject) {
                 Assert.fail("Failed to find project");
             }
-            if (!wasIndexFound) {
-                Assert.fail("Couldn't find envelope " + expectedEnvelope);
-            }
+//            if (!wasIndexFound) {
+//                Assert.fail("Couldn't find envelope " + expectedEnvelope);
+//            }
         }
     }
     
