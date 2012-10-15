@@ -6,9 +6,11 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
+import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
@@ -27,6 +29,9 @@ public class ResearchProjectForm extends AbstractJsfBean {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
+    @Inject
+    private BSPUserList bspUserList;
+
     private List<BspUser> projectManagers = new ArrayList<BspUser>();
 
     private List<BspUser> scientists = new ArrayList<BspUser>();
@@ -40,7 +45,19 @@ public class ResearchProjectForm extends AbstractJsfBean {
     // TODO: integrate with real IRBs (?)
     private List<Long> irbs = new ArrayList<Long>();
 
+    public void initEmptyProject() {
+        String username = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
+        BspUser user = bspUserList.getByUsername(username);
+        if (user != null) {
+            projectManagers.add(user);
+        } else {
+            projectManagers.add(bspUserList.getUsers().get(0));
+        }
+    }
+
     public String create() {
+        // TODO: move some of this logic down into boundary, or deeper!
+
         ResearchProject project = detail.getProject();
         if (projectManagers != null) {
             for (BspUser projectManager : projectManagers) {
@@ -64,7 +81,14 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 project.addIrbNumber(new ResearchProjectIRB(project, ResearchProjectIRB.IrbType.OTHER, irb.toString()));
             }
         }
-        project.setCreatedBy(14567L);
+        // TODO: store BspUser in SessionScoped bean on login.
+        String username = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
+        BspUser user = bspUserList.getByUsername(username);
+        if (user != null) {
+            project.setCreatedBy(user.getUserId());
+        } else {
+            project.setCreatedBy(1L);
+        }
 
         researchProjectDao.persist(project);
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
