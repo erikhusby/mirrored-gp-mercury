@@ -16,45 +16,77 @@
             <f:metadata>
                 <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
                 <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
+                <f:event type="preValidate" listener="#{researchProjectDetail.restoreModel}"/>
                 <!-- TODO: figure out if this is really the right way to do this -->
                 <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
+                <f:event type="preValidate" listener="#{researchProjectForm.initEmptyProject}"/>
             </f:metadata>
         </ui:define>
 
         <ui:define name="body">
             <h:form id="form" prependId="false" styleClass="form-horizontal">
+
+                <!-- propagate researchProjectTitle for restoreModel on postback -->
+                <h:inputHidden value="#{researchProjectDetail.researchProjectTitle}"/>
+
+                <!-- Name -->
                 <div class="control-group">
                     <p:outputLabel for="name" value="Name" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="name" value="#{researchProjectDetail.project.title}" size="50"/>
+                        <p:inputText id="name" value="#{researchProjectDetail.project.title}" size="50" required="true"/>
                         <p:watermark for="name" value="Enter the name of the research project"/>
+                        <p:message for="name"/>
                     </div>
                 </div>
 
+                <!-- Synopsis -->
                 <div class="control-group">
                     <p:outputLabel for="synopsis" value="Synopsis" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="50" rows="3"/>
+                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="50" rows="3" required="true"/>
                         <p:watermark for="synopsis" value="Enter scientific background of the research project in this space"/>
+                        <p:message for="synopsis"/>
                     </div>
                 </div>
 
+                <!-- Project Managers -->
                 <div class="control-group">
                     <p:outputLabel for="projectManagers" value="Project Managers" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="bspUserConverter" multiple="true"/>
+                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true" required="true" requiredMessage="There must be at least one project manager."/>
                         <p:watermark for="projectManagers" value="Type name to search"/>
+                        <p:message for="projectManagers"/>
                     </div>
                 </div>
 
+                <!-- Broad PIs -->
+                <div class="control-group">
+                    <p:outputLabel for="broadPIs" value="Broad PIs" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="broadPIs" value="#{researchProjectForm.broadPIs}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true"/>
+                        <p:watermark for="broadPIs" value="Type name to search"/>
+                    </div>
+                </div>
+
+                <!-- Scientists -->
                 <div class="control-group">
                     <p:outputLabel for="scientists" value="Scientists" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="bspUserConverter" multiple="true"/>
+                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true"/>
                         <p:watermark for="scientists" value="Type name to search"/>
                     </div>
                 </div>
 
+                <!-- External Collaborators -->
+                <div class="control-group">
+                    <p:outputLabel for="externalCollaborators" value="External Collaborators" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="externalCollaborators" value="#{researchProjectForm.externalCollaborators}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true"/>
+                        <p:watermark for="externalCollaborators" value="Type name to search"/>
+                    </div>
+                </div>
+
+                <!-- Funding Sources -->
                 <div class="control-group">
                     <p:outputLabel for="fundingSources" value="Funding Sources" styleClass="control-label"/>
                     <div class="controls">
@@ -64,6 +96,7 @@
                     </div>
                 </div>
 
+                <!-- Sample Cohorts -->
                 <div class="control-group">
                     <p:outputLabel for="sampleCohorts" value="Sample Cohorts" styleClass="control-label"/>
                     <div class="controls">
@@ -73,6 +106,7 @@
                     </div>
                 </div>
 
+                <!-- IRB/IACUC Numbers, IRB Not Engaged -->
                 <div class="control-group">
                     <p:outputLabel for="irbs" value="IRB/IACUC Numbers" styleClass="control-label"/>
                     <div class="controls">
@@ -85,6 +119,7 @@
                     </div>
                 </div>
 
+                <!-- IRB Notes -->
                 <div class="control-group">
                     <p:outputLabel for="irbNotes" value="IRB Notes" styleClass="control-label"/>
                     <div class="controls">

@@ -21,7 +21,7 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
 
         Assert.assertTrue ( testSample.isInBspFormat ( ) );
 
-        Assert.assertFalse(testSample.hasBSPDTOBeenInitialized());
+        Assert.assertFalse(testSample.needsBspMetaData());
 
         try {
 

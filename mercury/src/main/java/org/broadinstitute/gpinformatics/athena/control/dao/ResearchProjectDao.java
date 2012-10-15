@@ -6,9 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.util.List;
 
 /**
@@ -18,42 +15,23 @@ import java.util.List;
 @RequestScoped
 public class ResearchProjectDao extends GenericDao {
 
-    @SuppressWarnings("unchecked")
     public List<ResearchProject> findResearchProjectsByOwner(long username) {
-        EntityManager entityManager = getEntityManager();
-        CriteriaQuery<ResearchProject> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
-        Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.createdBy), username));
-        return entityManager.createQuery(criteriaQuery).getResultList();
+        return findList(ResearchProject.class, ResearchProject_.createdBy, username);
     }
 
-    @SuppressWarnings("unchecked")
+    public ResearchProject findByBusinessKey(String key) {
+        return findByTitle(key);
+    }
+
     public ResearchProject findByTitle(String title) {
-        EntityManager entityManager = getEntityManager();
-        CriteriaQuery<ResearchProject> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
-        Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.title), title));
-        return entityManager.createQuery(criteriaQuery).getSingleResult();
+        return findSingle(ResearchProject.class, ResearchProject_.title, title);
     }
 
-    @SuppressWarnings("unchecked")
     public List<ResearchProject> findAllResearchProjects() {
-        EntityManager entityManager = getEntityManager();
-        CriteriaQuery<ResearchProject> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
-        criteriaQuery.from(ResearchProject.class);
-        return entityManager.createQuery(criteriaQuery).getResultList();
+        return findAll(ResearchProject.class);
     }
 
     public ResearchProject findByJiraTicketKey(String jiraTicketKey) {
-        EntityManager entityManager = getEntityManager();
-        CriteriaQuery<ResearchProject> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(ResearchProject.class);
-        Root<ResearchProject> root = criteriaQuery.from(ResearchProject.class);
-        criteriaQuery.where(entityManager.getCriteriaBuilder().equal(root.get(ResearchProject_.jiraTicketKey), jiraTicketKey));
-        return entityManager.createQuery(criteriaQuery).getSingleResult();
+        return findSingle(ResearchProject.class, ResearchProject_.jiraTicketKey, jiraTicketKey);
     }
-
 }

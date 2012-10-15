@@ -8,23 +8,19 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueReq
 
 import javax.persistence.Transient;
 import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Class to model the concept of a Product ProductOrder that can be created
@@ -73,11 +69,20 @@ public class ProductOrder implements Serializable {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrder")
     private List<ProductOrderSample> samples;
 
+    @Transient
+    private String sampleSummary;
+
+    public String getBusinessKey() {
+        return jiraTicketKey;
+    }
 
     /**
      * Default no-arg constructor
      */
     ProductOrder() {
+    }
+    public ProductOrder ( String title, List<ProductOrderSample> samples, String quoteId, Product product, ResearchProject researchProject ) {
+        this(1L,title, samples, quoteId, product, researchProject );
     }
 
     /**
@@ -625,9 +630,9 @@ public class ProductOrder implements Serializable {
      */
     public boolean areAllSampleBSPFormat() {
         boolean result = true;
-        if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : samples) {
-                if (! productOrderSample.isInBspFormat() ) {
+        if (!isSheetEmpty()) {
+            for (ProductOrderSample productOrderSample : samples) {
+                if (!productOrderSample.isInBspFormat()) {
                     result = false;
                     break;
                 }
@@ -653,10 +658,9 @@ public class ProductOrder implements Serializable {
      */
     private boolean needsBspMetaData() {
         boolean needed = false;
-        if (! isSheetEmpty() ) {
-            for ( ProductOrderSample productOrderSample : samples) {
-                if ( productOrderSample.isInBspFormat() &&
-                     ! productOrderSample.hasBSPDTOBeenInitialized() ) {
+        if (!isSheetEmpty()) {
+            for (ProductOrderSample productOrderSample : samples) {
+                if (productOrderSample.needsBspMetaData()) {
                     needed = true;
                     break;
                 }
@@ -707,6 +711,28 @@ public class ProductOrder implements Serializable {
         return CreateIssueRequest.Fields.Issuetype.Product_Order;
     }
 
+    public String getSampleSummary() {
+        if (sampleSummary == null) {
+            if (samples != null) {
+                Map<BillingStatus, Integer> totals = new EnumMap<BillingStatus, Integer>(BillingStatus.class);
+                for (ProductOrderSample sample : samples) {
+                    Integer total = totals.get(sample.getBillingStatus());
+                    if (total == null) {
+                        totals.put(sample.getBillingStatus(), 1);
+                    } else {
+                        ++total;
+                    }
+                }
+                StringBuilder sb = new StringBuilder();
+                for (Map.Entry<BillingStatus, Integer> entry : totals.entrySet()) {
+                    sb.append(entry.getKey().getDisplayName()).append(": ").append(entry.getValue()).append(" ");
+                }
+                sampleSummary = sb.toString();
+            }
+        }
+        return sampleSummary;
+    }
+
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
@@ -733,10 +759,15 @@ public class ProductOrder implements Serializable {
      * Date: 9/26/12
      * Time: 11:56 AM
      */
-    public static enum OrderStatus {
+    public enum OrderStatus implements StatusType {
         Draft,
         Submitted,
-        Closed
+        Closed;
+
+        @Override
+        public String getDisplayName() {
+            return name();
+        }
     }
 
     @Override

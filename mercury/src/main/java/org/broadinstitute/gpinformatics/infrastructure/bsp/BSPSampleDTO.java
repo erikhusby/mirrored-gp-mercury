@@ -3,8 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import java.io.Serializable;
 
 /**
- * A simple DTO for fetching commonly used
- * data from BSP.
+ * A simple DTO for fetching commonly used data from BSP.
  */
 public class BSPSampleDTO implements Serializable {
 
@@ -59,6 +58,10 @@ public class BSPSampleDTO implements Serializable {
 
     private final String containerId;
 
+
+    /** Use this when no valid DTO is present, to avoid null checks */
+    public static final BSPSampleDTO DUMMY =
+            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
 
     // collaborator?
     // species vs organism?

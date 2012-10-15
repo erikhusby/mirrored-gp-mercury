@@ -12,22 +12,18 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 /**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 10/3/12
- * Time: 5:59 PM
+ * A test.
+ *
+ * @author mccory
  */
 @Test(groups = {TestGroups.DATABASE_FREE})
 public class ProductOrderSampleTest {
-
     @Test
     public void testIsInBspFormat() throws Exception {
-
         Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG"));
         Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG5"));
         Assert.assertTrue(ProductOrderSample.isInBspFormat("SM-2ACG6"));
-        Assert.assertFalse(ProductOrderSample.isInBspFormat(null));
-
+        Assert.assertFalse(ProductOrderSample.isInBspFormat("Blahblahblah"));
+        Assert.assertFalse(ProductOrderSample.isInBspFormat("12345"));
     }
-
 }

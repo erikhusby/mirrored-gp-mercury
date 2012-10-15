@@ -26,63 +26,107 @@
         </ui:define>
         <ui:define name="body">
 
-            <h:form styleClass="view-horizontal">
+            <!-- Name -->
+            <h:form styleClass="form-horizontal form-readonly">
                 <div class="control-group">
-                    <span class="control-label">Project:</span>
-                    <span class="controls">#{researchProjectDetail.project.title}</span>
+                    <label class="control-label">Project</label>
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.project.title}</div>
+                    </div>
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">ID:</span>
-                    <span class="controls">#{researchProjectDetail.project.jiraTicketKey}</span>
+                    <label class="control-label">ID</label>
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.project.jiraTicketKey}</div>
+                    </div>
+                </div>
+
+                <!-- Synopsis -->
+                <div class="control-group">
+                    <label class="control-label">Synopsis</label>
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.project.synopsis}</div>
+                    </div>
+                </div>
+
+                <!-- Project Managers -->
+                <div class="control-group">
+                    <label class="control-label">Project Managers</label>
+                    <div class="controls">
+                        <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.projectManagers)}</div>
+                    </div>
+                </div>
+
+                <!-- Broad PIs -->
+                <div class="control-group">
+                    <label class="control-label">Broad PIs</label>
+                    <div class="controls">
+                        <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.broadPIs)}</div>
+                    </div>
+                </div>
+
+                <!-- Scientists -->
+                <div class="control-group">
+                    <label class="control-label">Sponsoring Scientists</label>
+                    <div class="controls">
+                        <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.scientists)}</div>
+                    </div>
+                </div>
+
+                <!-- External Collaborators -->
+                <div class="control-group">
+                    <label class="control-label">External Collaborators</label>
+                    <div class="controls">
+                        <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.externalCollaborators)}</div>
+                    </div>
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">Synopsis:</span>
-                    <span class="controls">#{researchProjectDetail.project.synopsis}</span>
+                    <label class="control-label">Created</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            By #{userListBean.getUser(researchProjectDetail.project.createdBy)} on
+                            <h:outputText value="#{researchProjectDetail.project.createdDate}">
+                                <f:convertDateTime type="date"/>
+                            </h:outputText>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">Project Managers: </span>
-                    <span class="controls">#{userListBean.getUserListString(researchProjectDetail.project.projectManagers)}</span>
+                    <label class="control-label">Funding Sources</label>
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.fundingSources}</div>
+                    </div>
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">Sponsoring Scientists: </span>
-                    <span class="controls">#{userListBean.getUserListString(researchProjectDetail.project.scientists)}</span>
+                    <label class="control-label">Sample Cohorts</label>
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.cohorts}</div>
+                    </div>
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">Created:</span>
-                    <span class="controls">
-                        By #{researchProjectDetail.project.createdBy}
-                        on #{researchProjectDetail.project.createdDate}
-                    </span>
+                    <label class="control-label">IRB Not Engaged</label>
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.project.irbNotEngaged}</div>
+                    </div>
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">Funding Sources:</span>
-                    <span class="controls">#{researchProjectDetail.fundingSources}</span>
+                    <label class="control-label">IRB/IACUC</label>
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.irbNumberString}</div>
+                    </div>
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">Sample Cohorts:</span>
-                    <span class="controls">#{researchProjectDetail.cohorts}</span>
-                </div>
-
-                <div class="control-group">
-                    <span class="control-label">IRB Not Engaged:</span>
-                    <span class="controls">#{researchProjectDetail.project.irbNotEngaged}</span>
-                </div>
-
-                <div class="control-group">
-                    <span class="control-label">IRB/IACUC:</span>
-                    <span class="controls">#{researchProjectDetail.irbNumberString}</span>
-                </div>
-
-                <div class="control-group">
-                    <span class="control-label">IRB/IACUC Notes:</span>
-                    <span class="controls">#{researchProjectDetail.project.irbNotes}</span>
+                    <label class="control-label">IRB/IACUC Notes</label>
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.project.irbNotes}</div>
+                    </div>
                 </div>
 
                 <br/>
