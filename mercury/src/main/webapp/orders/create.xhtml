@@ -43,6 +43,19 @@
                 </div>
 
                 <div class="control-group">
+                    <p:outputLabel for="product" value="Product" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="product" value="#{productOrderDetail.productOrder.product}"
+                                        completeMethod="#{productsBean.getProductCompletions}"
+                                        forceSelection="true"
+                                        var="product" itemLabel="#{product.productName}"
+                                        dropdown="true"
+                                        size="50"/>
+                        <p:watermark for="product" value="Type name to search"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
