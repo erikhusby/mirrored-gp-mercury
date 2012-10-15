@@ -655,7 +655,7 @@
                     <plugin>
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.1</version>
+                        <version>2.0.5</version>
                         <executions>
                             <execution>
                                 <phase>process-resources</phase>
@@ -689,21 +689,21 @@
                     <plugin>
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.1</version>
+                        <version>2.0.5</version>
                         <executions>
                             <execution>
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/athenadb.changelog-1.0.xml</changeLogFile>
                                     <!-- todo jmt decide how best to have different parameters for different databases -->
-<!--
                                     <driver>org.postgresql.Driver</driver>
                                     <url>jdbc:postgresql://localhost/postgres</url>
--->
+<!--
                                     <driver>oracle.jdbc.driver.OracleDriver</driver>
                                     <url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</url>
+-->
                                     <username>athena</username>
-                                    <password>athena_dev</password>
+                                    <password>athena_local</password>
                                     <defaultSchemaName>athena</defaultSchemaName>
                                     <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                                 </configuration>
