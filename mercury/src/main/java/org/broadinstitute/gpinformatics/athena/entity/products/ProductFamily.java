@@ -90,6 +90,12 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         return name;
     }
 
+
+    @Transient
+    public String getDisplayName() {
+        return ProductFamilyName.valueOf(getName()).getDisplayName();
+    }
+
     @Override
     public int compareTo(ProductFamily productFamily) {
         return getName().compareTo(productFamily.getName());
