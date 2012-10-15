@@ -208,27 +208,6 @@ public class ProductOrderSample implements Serializable {
         return getBspDTO().getOrganism ( );
     }
 
-//    public String getStockAtExport() {
-//        if (! isInBspFormat() ) {
-//            throw ILLEGAL_STATE_EXCEPTION;
-//        }
-//        return getBspDTO().getStockAtExport ( );
-//    }
-//
-//    public Boolean isPositiveControl() {
-//        if (! isInBspFormat() ) {
-//            throw ILLEGAL_STATE_EXCEPTION;
-//        }
-//        return getBspDTO().isPositiveControl ( );
-//    }
-//
-//    public Boolean isNegativeControl() {
-//        if (! isInBspFormat() ) {
-//            throw ILLEGAL_STATE_EXCEPTION;
-//        }
-//        return getBspDTO().isNegativeControl ( );
-//    }
-
     public String getSampleLsid() {
         if (! isInBspFormat() ) {
             throw ILLEGAL_STATE_EXCEPTION;

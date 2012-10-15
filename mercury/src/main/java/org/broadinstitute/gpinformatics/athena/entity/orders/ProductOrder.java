@@ -256,7 +256,7 @@ public class ProductOrder implements Serializable {
         int count = 0;
 
         for(ProductOrderSample sample : samples) {
-            if(sample.isInBspFormat()) {
+            if(sample.isInBspFormat ( )) {
                 count++;
             }
         }
@@ -265,9 +265,11 @@ public class ProductOrder implements Serializable {
     }
 
     /**
+     * getTumorNormalCounts calculates both How many samples registered to this product order are tumor samples AND how
+     * many samples are normal (Non-tumor) samples
      *
-     *
-     * @return
+     * @return An instance of a TumorNormalCount object which exposes both the tumor sample counts and normal sample
+     * counts for the registered samples
      */
     public TumorNormalCount getTumorNormalCounts ( ) {
 
@@ -279,6 +281,13 @@ public class ProductOrder implements Serializable {
         return counts;
     }
 
+    /**
+     * getMaleFemaleCounts calculates both how many samples registered to this product order are from Male participants
+     * and how many samples are from Female participants
+     *
+     * @return an instance of a MaleFemaleCount object which exposes both the Male participant sample counts and the
+     * Female Participant counts
+     */
     public MaleFemaleCount getMaleFemaleCounts ( ) {
 
         MaleFemaleCount counts =
@@ -289,6 +298,13 @@ public class ProductOrder implements Serializable {
         return counts;
     }
 
+    /**
+     * getBspNonBspSampleCounts calculates both how many samples registered to this product order are from BSP and how
+     * many samples are not from BSP
+     *
+     * @return an instance of a BspNonBspSampleCount object which exposes both the BSP sample counts and the non-BSP
+     * sample counts
+     */
     public BspNonBspSampleCount getBspNonBspSampleCounts ( ) {
         BspNonBspSampleCount counts =
                 new BspNonBspSampleCount(
@@ -298,22 +314,45 @@ public class ProductOrder implements Serializable {
         return counts;
     }
 
+    /**
+     * getBilledNotBilledCounts calculates both how many samples registered to this product have been billed and how
+     * many samples have not been billed
+     *
+     * @return an instance of a BilledNotBilledCounts object which exposes both the Billed counts and the not billed
+     * counts
+     */
     public BilledNotBilledCounts getBilledNotBilledCounts ( ) {
-        int billedCount = 0;
-        int notBilledCount = 0;
 
         return new BilledNotBilledCounts(getBillingStatusCount(BillingStatus.Billed),
                                          getBillingStatusCount(BillingStatus.NotYetBilled));
     }
 
+    /**
+     * getElligibleForBillingCounts calculates how many samples are eligible to be billed
+     *
+     * @return a count of all samples registered to this product order that are eligible for billing
+     */
     public int getElligibleForBillingCounts ( ) {
         return getBillingStatusCount(BillingStatus.EligibleForBilling);
     }
 
-    public int getNotBIllableCounts ( ) {
+    /**
+     * getNotBillableCounts calculates how many samples have not been billed
+     *
+     * @return a count of all samples registered to this product order that have not been billed
+     */
+    public int getNotBillableCounts ( ) {
         return getBillingStatusCount(BillingStatus.NotBillable);
     }
 
+    /**
+     * getBillingStatusCount calculates how many samples registered to this product order have a billing status that
+     * matches targetStatus
+     *
+     * @param targetStatus an instance of a BillingStatus enum for which the user wishes to compare against the list
+     *                     of Product Order Samples registered to this Product Order
+     * @return a count of all samples that have a billing status that matches the given billing status
+     */
     private int getBillingStatusCount (BillingStatus targetStatus) {
         int statusCount = 0;
 
@@ -326,6 +365,12 @@ public class ProductOrder implements Serializable {
         return statusCount;
     }
 
+    /**
+     * getFingerprintCount calculates how many samples registered to this product order have a fingerprint associated
+     * with it
+     *
+     * @return a count of the samples that have a fingerprint
+     */
     public int getFingerprintCount ( ) {
 
         int fpCount = 0;

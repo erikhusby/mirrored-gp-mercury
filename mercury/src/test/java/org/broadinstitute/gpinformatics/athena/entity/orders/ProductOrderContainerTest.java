@@ -42,6 +42,8 @@ public class ProductOrderContainerTest extends ContainerTest {
         Assert.assertEquals ( 1 , testOrder.getMaleFemaleCounts().getFemaleCount());
         Assert.assertEquals ( 2 , testOrder.getMaleFemaleCounts().getMaleCount());
 
+        Assert.assertEquals ( 3, testOrder.getFingerprintCount());
+
         Assert.assertTrue ( testOrder.getCountsByStockType ( ).containsKey ( BSPSampleDTO.ACTIVE_IND ) );
         Assert.assertEquals ( 2, testOrder.getCountsByStockType ( ).get ( BSPSampleDTO.ACTIVE_IND ).intValue ( ) );
 
