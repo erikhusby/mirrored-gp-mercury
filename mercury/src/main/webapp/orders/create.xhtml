@@ -36,6 +36,7 @@
                                         completeMethod="#{researchProjectBean.getProjectCompletions}"
                                         forceSelection="true"
                                         var="project" itemLabel="#{project.title}"
+                                        converter="#{researchProjectConverter}"
                                         dropdown="true"
                                         size="50"/>
                         <p:watermark for="researchProject" value="Type name to search"/>
@@ -49,6 +50,7 @@
                                         completeMethod="#{productsBean.getProductCompletions}"
                                         forceSelection="true"
                                         var="product" itemLabel="#{product.productName}"
+                                        converter="#{productConverter}"
                                         dropdown="true"
                                         size="50"/>
                         <p:watermark for="product" value="Type name to search"/>
@@ -58,19 +60,14 @@
                 <div class="control-group">
                     <p:outputLabel for="quote" value="Quote" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="quote" value="#{productOrderDetail.productOrder.quoteId}" size="50"/>
+                        <p:inputText id="quote" value="#{productOrderDetail.productOrder.quoteId}" size="50">
+                            <p:ajax update="fundsRemaining" listener="#{productOrderForm.loadFundsRemaining}"/>
+                        </p:inputText>
                         <p:watermark for="quote" value="Enter Quote ID"/>
+                        <p/>
+                        <h:outputText id="fundsRemaining" value="Funds Remaining: #{productOrderForm.fundsRemaining}" />
                     </div>
                 </div>
-
-                <!--<div class="control-group">-->
-                    <!--<div class="controls">-->
-                        <!--<p:outputLabel id="fundsRemaining" value="Funds Remaining: #{productOrderForm.fundsRemaining}}" />-->
-                        <!--<p:button title="Update">-->
-                            <!--<f:ajax event="click"  listener="#{productOrderForm.loadFundsRemaining}" update="fundsRemaining"/>-->
-                        <!--</p:button>-->
-                    <!--</div>-->
-                <!--</div>-->
 
                 <div class="control-group">
                     <p:outputLabel for="comments" value="Comments" styleClass="control-label"/>

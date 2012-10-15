@@ -53,6 +53,10 @@ public class ProductDao extends GenericDao {
         return findProducts(AvailableProductsOnly.NO, topLevelProductsOnly);
     }
 
+    public Product findByBusinessKey(String key) {
+        return findByPartNumber(key);
+    }
+
     /**
      * General purpose product finder method
      *
