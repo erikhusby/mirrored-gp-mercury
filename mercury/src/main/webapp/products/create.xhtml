@@ -28,24 +28,24 @@
                     <!-- TODO hook up the productFamily, see below -->
                     <p:outputLabel for="productFamily" value="Product Family" styleClass="control-label"/>
                     <div class="controls">
-                    <p:selectOneMenu id="productFamily" value="#{productDetail.productFamily}">
-                        <f:selectItem itemLabel="Select the product family" itemValue="" />
-                        <f:selectItem itemLabel="GENERAL_PRODUCTS" itemValue="1" />
-                        <f:selectItem itemLabel="EXOME_SEQUENCING_ANALYSIS" itemValue="2" />
-                        <f:selectItem itemLabel="WHOLE_GENOME_SEQUENCING_ANALYSIS" itemValue="3" />
-                        <f:selectItem itemLabel="WHOLE_GENOME_ARRAY_ANALYSIS" itemValue="4" />
-                        <f:selectItem itemLabel="RNA_ANALYSIS" itemValue="5" />
-                        <f:selectItem itemLabel="ASSEMBLY_ANALYSIS" itemValue="6" />
-                        <f:selectItem itemLabel="METAGENOMIC_ANALYSIS" itemValue="7" />
-                        <f:selectItem itemLabel="EPIGENOMIC_ANALYSIS" itemValue="8" />
-                        <f:selectItem itemLabel="ILLUMINA_SEQUENCING_ONLY" itemValue="9" />
-                        <f:selectItem itemLabel="ALTERNATIVE_TECHNOLOGIES" itemValue="10" />
-                        <f:selectItem itemLabel="CUSTOM_PRODUCTS_TARGETED_SEQUENCING" itemValue="11" />
-                    </p:selectOneMenu>
-                        <!--<p:selectOneMenu id="productFamily" value="#{productDetail.productFamily}">-->
-                            <!--<f:selectItem itemLabel="Select the product family" itemValue="" />-->
-                            <!--<f:selectItems value="#{productDetail.productFamilies}" />-->
-                        <!--</p:selectOneMenu> -->
+                    <!--<p:selectOneMenu id="productFamily" value="#{productDetail.productFamily}">-->
+                        <!--<f:selectItem itemLabel="Select the product family" itemValue="" />-->
+                        <!--<f:selectItem itemLabel="GENERAL_PRODUCTS" itemValue="1" />-->
+                        <!--<f:selectItem itemLabel="EXOME_SEQUENCING_ANALYSIS" itemValue="2" />-->
+                        <!--<f:selectItem itemLabel="WHOLE_GENOME_SEQUENCING_ANALYSIS" itemValue="3" />-->
+                        <!--<f:selectItem itemLabel="WHOLE_GENOME_ARRAY_ANALYSIS" itemValue="4" />-->
+                        <!--<f:selectItem itemLabel="RNA_ANALYSIS" itemValue="5" />-->
+                        <!--<f:selectItem itemLabel="ASSEMBLY_ANALYSIS" itemValue="6" />-->
+                        <!--<f:selectItem itemLabel="METAGENOMIC_ANALYSIS" itemValue="7" />-->
+                        <!--<f:selectItem itemLabel="EPIGENOMIC_ANALYSIS" itemValue="8" />-->
+                        <!--<f:selectItem itemLabel="ILLUMINA_SEQUENCING_ONLY" itemValue="9" />-->
+                        <!--<f:selectItem itemLabel="ALTERNATIVE_TECHNOLOGIES" itemValue="10" />-->
+                        <!--<f:selectItem itemLabel="CUSTOM_PRODUCTS_TARGETED_SEQUENCING" itemValue="11" />-->
+                    <!--</p:selectOneMenu>-->
+                        <p:selectOneMenu id="productFamily" value="#{productDetail.productFamily}">
+                            <f:selectItem itemLabel="Select the product family" itemValue="" />
+                            <f:selectItems value="#{productDetail.productFamilies}" />
+                        </p:selectOneMenu>
                     </div>
                 </div>
 
