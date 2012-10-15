@@ -12,6 +12,8 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +40,8 @@ public class ProductsBean extends AbstractJsfBean {
     private List<Product> selectedProductAddOns;
 
     private List<PriceItem> selectedProductPriceItems;
+
+    private static final DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
 
 
     public ProductsDataModel getProductsDataModel() {
@@ -79,6 +83,42 @@ public class ProductsBean extends AbstractJsfBean {
 
     public Product getSelectedProduct() {
         return selectedProduct;
+    }
+
+
+    public String getSelectedProductAvailabilityDate() {
+        if (selectedProduct == null || selectedProduct.getAvailabilityDate() == null) {
+            return "";
+        }
+
+        return dateFormat.format(selectedProduct.getAvailabilityDate());
+    }
+
+
+    public String getSelectedProductDiscontinuedDate() {
+        if (selectedProduct == null || selectedProduct.getDiscontinuedDate() == null) {
+            return "";
+        }
+
+        return dateFormat.format(selectedProduct.getDiscontinuedDate());
+    }
+
+
+    public boolean isPriceItemDefaultForSelected(PriceItem priceItem) {
+        if (selectedProduct == null) {
+            return false;
+        }
+
+        if (selectedProduct.getDefaultPriceItem() == null && priceItem == null) {
+            return true;
+        }
+
+        if (selectedProduct.getDefaultPriceItem() == null || priceItem == null) {
+            return false;
+        }
+
+        return (selectedProduct.getDefaultPriceItem().equals(priceItem));
+
     }
 
     public void setSelectedProduct(Product selectedProduct) {
