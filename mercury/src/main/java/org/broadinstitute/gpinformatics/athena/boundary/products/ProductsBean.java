@@ -12,6 +12,8 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +24,6 @@ import static org.broadinstitute.gpinformatics.athena.control.dao.products.Produ
 @Named
 @RequestScoped
 public class ProductsBean extends AbstractJsfBean {
-
     @Inject
     private ProductDao productDao;
 
@@ -40,9 +41,10 @@ public class ProductsBean extends AbstractJsfBean {
 
     private List<PriceItem> selectedProductPriceItems;
 
+    private static final DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
+
 
     public ProductsDataModel getProductsDataModel() {
-
         if (rebuild) {
 
             // doing an explicit assignment to a temporary variable to highlight the strong type
@@ -54,7 +56,6 @@ public class ProductsBean extends AbstractJsfBean {
 
         return productsDataModel;
     }
-
 
     public void onRowSelect(SelectEvent event) {
         selectedProduct = (Product) event.getObject();
@@ -68,7 +69,6 @@ public class ProductsBean extends AbstractJsfBean {
     }
 
     public int compare(Object o1, Object o2) {
-
         if (o1 == o2)
             return 0;
 
@@ -83,6 +83,42 @@ public class ProductsBean extends AbstractJsfBean {
 
     public Product getSelectedProduct() {
         return selectedProduct;
+    }
+
+
+    public String getSelectedProductAvailabilityDate() {
+        if (selectedProduct == null || selectedProduct.getAvailabilityDate() == null) {
+            return "";
+        }
+
+        return dateFormat.format(selectedProduct.getAvailabilityDate());
+    }
+
+
+    public String getSelectedProductDiscontinuedDate() {
+        if (selectedProduct == null || selectedProduct.getDiscontinuedDate() == null) {
+            return "";
+        }
+
+        return dateFormat.format(selectedProduct.getDiscontinuedDate());
+    }
+
+
+    public boolean isPriceItemDefaultForSelected(PriceItem priceItem) {
+        if (selectedProduct == null) {
+            return false;
+        }
+
+        if (selectedProduct.getDefaultPriceItem() == null && priceItem == null) {
+            return true;
+        }
+
+        if (selectedProduct.getDefaultPriceItem() == null || priceItem == null) {
+            return false;
+        }
+
+        return (selectedProduct.getDefaultPriceItem().equals(priceItem));
+
     }
 
     public void setSelectedProduct(Product selectedProduct) {
@@ -105,11 +141,9 @@ public class ProductsBean extends AbstractJsfBean {
         this.filteredProducts = filteredProducts;
     }
 
-
     public void onAvailableProductsOnly(AjaxBehaviorEvent ignored) {
         rebuild = true;
     }
-
 
     public List<Product> getSelectedProductAddOns() {
         return selectedProductAddOns;
