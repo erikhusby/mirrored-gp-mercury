@@ -14,6 +14,8 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
@@ -608,16 +610,64 @@ public class ProductOrder implements Serializable {
         addPublicComment(buildValidationCommentsIn.toString());
     }
 
+    /**
+     * addPublicComment Allows a user to create a jira comment for this product order
+     * @param comment comment to set in Jira
+     * @throws IOException
+     */
     public void addPublicComment(String comment) throws IOException{
         ServiceAccessUtility.addJiraComment ( jiraTicketKey, comment );
     }
 
+    /**
+     * addWatcher allows a user to add a user as a watcher of the Jira ticket associated with this product order
+     *
+     * @param personLoginId Broad User Id
+     * @throws IOException
+     */
     public void addWatcher(String personLoginId) throws IOException {
         ServiceAccessUtility.addJiraWatcher ( jiraTicketKey, personLoginId );
     }
 
+    /**
+     * addLink allows a user to link this the jira ticket associated with this product order with another Jira Ticket
+     *
+     * @param targetIssueKey Unique Jira Key of the Jira ticket to which this product order's Jira Ticket will be
+     *                       linked
+     * @throws IOException
+     */
     public void addLink(String targetIssueKey) throws IOException {
         ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
+    }
+
+    /**
+     * closeProductOrder allows a user to set the Jira ticket associated with this product order into a "Billed" state
+     *
+     * @throws IOException
+     */
+    public void closeProductOrder() throws IOException {
+
+        if(StringUtils.isEmpty(jiraTicketKey)) {
+            throw new IllegalStateException("A jira Ticket has not been created.");
+        }
+        IssueTransitionResponse transitions = ServiceAccessUtility.getTransitions(jiraTicketKey);
+
+        String transitionId = null;
+
+        for( Transition currentTransition:transitions.getTransitions()) {
+            if(TransitionStates.Complete.getStateName().equals(currentTransition.getName())) {
+                transitionId = currentTransition.getId();
+                break;
+            }
+        }
+
+        if(null == transitionId) {
+            throw new IllegalStateException("The Jira Ticket " + jiraTicketKey +
+                                                    " cannot be closed at this time");
+        }
+
+        ServiceAccessUtility.postTransition(jiraTicketKey, transitionId);
+
     }
 
     /**
@@ -764,6 +814,23 @@ public class ProductOrder implements Serializable {
         @Override
         public String getDisplayName() {
             return name();
+        }
+    }
+
+    private enum TransitionStates {
+        Complete("Complete"),
+        Cancel("Cancel"),
+        Start_Progress("Start Progress"),
+        Put_On_Hold("Put On Hold");
+
+        private String stateName;
+
+        private TransitionStates (String stateName ) {
+            this.stateName = stateName;
+        }
+
+        public String getStateName ( ) {
+            return stateName;
         }
     }
 

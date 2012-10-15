@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
@@ -174,4 +175,49 @@ public class ServiceAccessUtility {
             throw new RuntimeException(e);
         }
     }
+
+    public static IssueTransitionResponse getTransitions(String jiraTicketKey) throws IOException{
+
+        IssueTransitionResponse response = null;
+
+        try {
+            InitialContext initialContext = new InitialContext();
+            try{
+                BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
+                Bean bean = beanManager.getBeans(JiraService.class).iterator().next();
+                CreationalContext ctx = beanManager.createCreationalContext(bean);
+                JiraService jiraService =
+                        (JiraService) beanManager.getReference(bean, bean.getClass(), ctx);
+                response = jiraService.findAvailableTransitions(jiraTicketKey);
+            } finally {
+                initialContext.close();
+            }
+        } catch (NamingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return response;
+    }
+
+    public static void postTransition(String jiraTicketKey, String transitionId) throws IOException {
+
+
+        try {
+            InitialContext initialContext = new InitialContext();
+            try{
+                BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
+                Bean bean = beanManager.getBeans(JiraService.class).iterator().next();
+                CreationalContext ctx = beanManager.createCreationalContext(bean);
+                JiraService jiraService =
+                        (JiraService) beanManager.getReference(bean, bean.getClass(), ctx);
+               jiraService.postNewTransition(jiraTicketKey, transitionId);
+            } finally {
+                initialContext.close();
+            }
+        } catch (NamingException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
 }

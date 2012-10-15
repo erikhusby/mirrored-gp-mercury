@@ -15,6 +15,10 @@ public class TransitionFields {
     private List<String>           operations;
     private List<String> allowedValues;
 
+    public TransitionFields ( String nameIn ) {
+        name = nameIn;
+    }
+
     public TransitionFields ( String requiredIn, FieldSchema schemaIn, String nameIn ) {
         required = requiredIn;
         schema = schemaIn;

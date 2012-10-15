@@ -23,7 +23,7 @@ public class ProductOrderContainerTest extends ContainerTest {
     private static final Long TEST_CREATOR = 10L;
 
 
-    public void testSimpleProductOrder() throws IOException{
+    public void testSimpleProductOrder() throws IOException, IllegalStateException{
 
         ProductOrder testOrder =
                 new ProductOrder( TEST_CREATOR, "containerTest Product Order Test1",
@@ -60,6 +60,8 @@ public class ProductOrderContainerTest extends ContainerTest {
         Assert.assertEquals( 2 , testOrder.getActiveSampleCount());
 
         testOrder.submitProductOrder();
+
+        testOrder.closeProductOrder();
 
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
 
