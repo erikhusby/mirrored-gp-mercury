@@ -1,19 +1,16 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-
-import javax.persistence.Transient;
-import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,7 +88,8 @@ public class ProductOrder implements Serializable {
      * @param product
      * @param researchProject
      */
-    public ProductOrder ( Long creatorId, String title, List<ProductOrderSample> samples, String quoteId, Product product, ResearchProject researchProject ) {
+    public ProductOrder (Long creatorId, String title, List<ProductOrderSample> samples, String quoteId,
+                         Product product, ResearchProject researchProject) {
         this.createdBy = creatorId;
         this.title = title;
         this.samples = samples;
@@ -112,9 +110,9 @@ public class ProductOrder implements Serializable {
         return researchProject;
     }
 
-    public void setResearchProjectName(ResearchProject researchProject) {
+    public void setResearchProject(ResearchProject researchProject) {
         this.researchProject = researchProject;
-    }
+}
 
     public Product getProduct() {
         return product;
