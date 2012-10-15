@@ -3,12 +3,9 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import java.io.Serializable;
 
 /**
- * A simple DTO for fetching commonly used
- * data from BSP.
+ * A simple DTO for fetching commonly used data from BSP.
  */
 public class BSPSampleDTO implements Serializable {
-    public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
-
     private final String patientId;
 
     private final String stockSample;
@@ -32,6 +29,10 @@ public class BSPSampleDTO implements Serializable {
     private final Boolean negativeControl;
 
     private final String sampleLsid;
+
+    /** Use this when no valid DTO is present, to avoid null checks */
+    public static final BSPSampleDTO DUMMY =
+            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "");
 
     // collaborator?
     // species vs organism?
