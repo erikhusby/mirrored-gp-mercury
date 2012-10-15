@@ -11,20 +11,20 @@
 <body>
 <ui:composition>
     <h:form>
-        <p:menubar style="padding:0px;">
+        <p:menubar style="padding:0px;" autoDisplay="false">
             <p:submenu label="Projects" outcome="/projects/list" icon="ui-icon-home">
                 <p:menuitem value="List" outcome="/projects/list" />
-                <p:menuitem value="Create" outcome="/projects/list" />
+                <p:menuitem value="Create" outcome="/projects/create" />
             </p:submenu>
 
             <p:submenu label="Orders" icon="ui-icon-cart">
-                <p:menuitem value="List" outcome="/projects/list" />
-                <p:menuitem value="Create" outcome="/projects/list" />
+                <p:menuitem value="List" outcome="/orders/list" />
+                <p:menuitem value="Create" outcome="/orders/create" />
             </p:submenu>
 
             <p:submenu label="Products" icon="ui-icon-tag">
                 <p:menuitem value="List" outcome="/products/list" />
-                <p:menuitem value="Create" outcome="/products/list" />
+                <p:menuitem value="Create" outcome="/products/create" />
             </p:submenu>
         </p:menubar>
 

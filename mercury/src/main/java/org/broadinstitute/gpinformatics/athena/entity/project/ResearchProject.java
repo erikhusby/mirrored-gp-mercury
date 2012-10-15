@@ -10,6 +10,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 /**
@@ -46,18 +47,27 @@ public class ResearchProject {
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
     private Long researchProjectId;
 
-    private Status status;
+    @Column(nullable = false)
+    private Status status = Status.Open;
 
     // creation/modification information
+    @Column(nullable = false)
     private Date createdDate;
+
+    @Column(nullable = false)
     private Long createdBy;
+
+    @Column(nullable = false)
     private Date modifiedDate;
+
+    @Column(nullable = false)
     private Long modifiedBy;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     @Index(name = "ix_rp_title")
     private String title;
 
+    @Column(nullable = false)
     private String synopsis;
 
     private boolean irbNotEngaged = IRB_ENGAGED;
@@ -83,6 +93,10 @@ public class ResearchProject {
 
     @Index(name = "ix_rp_jira")
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
+
+    public String getBusinessKey() {
+        return title;
+    }
 
     /**
      * no arg constructor for hibernate and JSF.
@@ -278,8 +292,16 @@ public class ResearchProject {
         return getPeople(RoleType.PM);
     }
 
+    public Long[] getBroadPIs() {
+        return getPeople(RoleType.BROAD_PI);
+    }
+
     public Long[] getScientists() {
         return getPeople(RoleType.SCIENTIST);
+    }
+
+    public Long[] getExternalCollaborators() {
+        return getPeople(RoleType.EXTERNAL);
     }
 
     public String[] getFundingIds() {
