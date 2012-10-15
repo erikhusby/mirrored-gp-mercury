@@ -27,13 +27,13 @@ public class ProductsBean extends AbstractJsfBean {
     @Inject
     private ProductDao productDao;
 
-    private Product selectedProduct = null;
+    private Product selectedProduct;
 
-    private ProductsDataModel productsDataModel = new ProductsDataModel();
+    private final ProductsDataModel productsDataModel = new ProductsDataModel();
 
     private boolean rebuild = true;
 
-    private boolean availableProductsOnly = false;
+    private boolean availableProductsOnly;
 
     private List<Product> filteredProducts;
 
@@ -79,6 +79,33 @@ public class ProductsBean extends AbstractJsfBean {
             return 1;
 
         return ((Comparable) o1).compareTo(o2);
+    }
+
+    /**
+     * Used for auto-complete in the UI, given a search term
+     * @param search list of search terms, whitespace separated. If more than one term is present, all terms must
+     *               match a substring in the text. Search is case insensitive.
+     */
+    // FIXME: refactor for common cases
+    public List<Product> getProductCompletions(String search) {
+        List<Product> list = new ArrayList<Product>();
+        String[] searchStrings = search.toLowerCase().split("\\s");
+
+        for (Product product : getProductsDataModel()) {
+            String label = product.getProductName().toLowerCase();
+            boolean include = true;
+            for (String s : searchStrings) {
+                if (!label.contains(s)) {
+                    include = false;
+                    break;
+                }
+            }
+            if (include) {
+                list.add(product);
+            }
+        }
+
+        return list;
     }
 
     public Product getSelectedProduct() {
