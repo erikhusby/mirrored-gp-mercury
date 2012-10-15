@@ -63,6 +63,23 @@ public class BSPUserList {
         return null;
     }
 
+    /**
+     * Returns a list of users whose first name, last name, or username match the given query.
+     *
+     * @param query the query string to match on
+     * @return a list of matching users
+     */
+    public List<BspUser> find(String query) {
+        String lowerQuery = query.toLowerCase();
+        List<BspUser> results = new ArrayList<BspUser>();
+        for (BspUser user : users) {
+            if (user.getFirstName().toLowerCase().contains(lowerQuery) || user.getLastName().toLowerCase().contains(lowerQuery) || user.getUsername().contains(lowerQuery)) {
+                results.add(user);
+            }
+        }
+        return results;
+    }
+
     @Inject
     // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {

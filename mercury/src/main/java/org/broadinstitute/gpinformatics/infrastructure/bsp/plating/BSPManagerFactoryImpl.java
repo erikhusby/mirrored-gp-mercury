@@ -7,17 +7,17 @@ import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.BspWorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-
+@Impl
 public class BSPManagerFactoryImpl implements BSPManagerFactory {
 
     @Inject
     private BSPConfig params;
-
 
     private Object create(Class<?> clazz) {
         try {
@@ -38,7 +38,6 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
         }
     }
 
-
     public WorkRequestManager createWorkRequestManager() {
         return (WorkRequestManager) create(BspWorkRequestManager.class);
     }
@@ -50,5 +49,4 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
     public UserManager createUserManager() {
         return (UserManager) create(BspUserManager.class);
     }
-
 }
