@@ -2,7 +2,7 @@
 <!--
   ~ The Broad Institute
   ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
-  ~ This software and its documentation are copyright 2011 by the
+  ~ This software and its documentation are copyright 2012 by the
   ~ Broad Institute/Massachusetts Institute of Technology. All rights are
   ~ reserved.
   ~
@@ -10,9 +10,7 @@
   ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
   ~ use, misuse, or functionality.
   -->
-<!DOCTYPE html
-        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -34,37 +32,40 @@
 <f:view contentType="text/html">
     <ui:insert name="metadata"/>
     <h:head>
-        <!--<link href='http://fonts.googleapis.com/css?family=Lato|Arvo|PT+Sans|Cantarell|Open+Sans' rel='stylesheet' type='text/css'/>-->
         <h:outputStylesheet library="css" name="bootstrap.css"/>
         <h:outputStylesheet library="css" name="primefaces_bootstrap_fixes.css"/>
         <h:outputStylesheet library="css" name="styles.css"/>
-        <title>Athena : <ui:insert name="title"/></title>
+        <link rel="shortcut icon" type="image/x-icon" href="#{request.contextPath}/favicon.ico"/>
+        <title>Mercury | <ui:insert name="title"/></title>
         <ui:insert name="head"/>
     </h:head>
     <h:body>
-
-        <div class="navbar navbar-static-top">
+        <div class="navbar">
             <div class="navbar-inner">
                 <div class="container-fluid">
+                    <div class="row-fluid">
+                        <div class="brand">
+                            <p:graphicImage url="/images/broad_logo.png" alt="Broad Institute"/>
+                            <h:link outcome="/index" style="padding-left: 50px;text-decoration: none; font-variant: small-caps; font-size: 1.2em"><p:graphicImage url="/images/mercury_helmet.png" alt="Mercury Helmet"/> Mercury</h:link>
+                        </div>
 
-                    <div class="brand"><p:graphicImage url="/images/broad_logo.png" alt="Broad Institute"/> <h:link outcome="/index" style="padding-left: 20px;">Athena</h:link></div>
-                    <div class="nav-collapse pull-right">
                         <sqltg:isLoggedIn>
-                            <h:form>
-                                <h:commandLink action="#{logoutHandler.logout}" value="Logout"/>
+                            <h:form styleClass="navbar-form pull-right">
+                                <h:outputText value="#{request.getRemoteUser()}" />
+                                |
+                                <p:commandLink action="#{logoutHandler.logout}" value="Sign out" />
                             </h:form>
                         </sqltg:isLoggedIn>
                     </div>
                 </div>
             </div>
+            <div class="row-fluid">
+                <ui:include src="navigation.xhtml"></ui:include>
+            </div>
         </div>
 
         <div class="container-fluid">
             <div class="row-fluid">
-                <div class="span12">
-                    <ui:include src="navigation.xhtml"></ui:include>
-                </div>
-
                 <p:ajaxStatus id="ajaxStatus">
                     <f:facet name="start">
                         Loading...
@@ -76,7 +77,7 @@
 
                 <p:dialog modal="false" widgetVar="statusDialog" draggable="false" closable="false" maximizable="false" resizable="false" minimizable="false">
                     <p:outputPanel>
-                        <p:graphicImage url="/images/spinner.gif" />
+                        <p:graphicImage url="/images/spinner.gif" alt="Please wait" />
                         <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&nbsp;wait..." />
                     </p:outputPanel>
                 </p:dialog>
@@ -84,24 +85,26 @@
 
             <div class="row-fluid">
                     <p:panel>
-                            <f:facet name="header"><span id="panelTitle"><ui:insert name="title"/></span></f:facet>
+                        <f:facet name="header"><span id="panelTitle"><ui:insert name="title"/></span></f:facet>
 
-                            <!-- show messages/errors -->
-                            <p:messages severity="error" />
-                            <p:messages severity="warn" />
-                            <p:messages severity="info" />
+                        <!-- show messages/errors -->
+                        <p:messages severity="fatal" />
+                        <p:messages severity="error" />
+                        <p:messages severity="warn" />
+                        <p:messages severity="info" />
 
-                            <ui:insert name="body"/>
+                        <ui:insert name="body"/>
                     </p:panel>
             </div>
-
-            <footer>
-                Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.
-            </footer>
-
         </div>
 
+        <footer>
+            <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.<br/>
+               Genomics Platform. Version 1.0 build October 12, 2012 12:34:56pm.</p>
+        </footer>
+
         <ui:debug/>
+
     </h:body>
 </f:view>
 </html>

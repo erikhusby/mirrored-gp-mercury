@@ -70,4 +70,51 @@
             <column name="irb_not_engaged" type="number(1,0)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-65-6" author="hrafal">
+        <dropColumn tableName="research_project_aud" schemaName="athena" columnName="status"/>
+        <addColumn tableName="research_project_aud" schemaName="athena">
+            <column name="status" type="varchar(30)"/>
+        </addColumn>
+        <addNotNullConstraint tableName="research_project_aud" schemaName="athena" columnName="status" defaultNullValue="Open"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-65-7" author="hrafal">
+        <dropColumn tableName="research_project" schemaName="athena" columnName="status"/>
+        <addColumn tableName="research_project" schemaName="athena">
+            <column name="status" type="varchar(30)"/>
+        </addColumn>
+        <addNotNullConstraint tableName="research_project" schemaName="athena" columnName="status" defaultNullValue="Open"/>
+    </changeSet>
+    <changeSet id="GPLIM-45-1" author="scottmat">
+        <preConditions>
+            <and>
+                <not>
+                    <columnExists tableName="product_order" columnName="created_by" schemaName="athena" />
+                </not>
+                <not>
+                    <columnExists tableName="product_order" columnName="modified_by" schemaName="athena" />
+                </not>
+                <not>
+                    <columnExists tableName="product_order" columnName="created_date" schemaName="athena" />
+                </not>
+                <not>
+                    <columnExists tableName="product_order" columnName="modified_date" schemaName="athena" />
+                </not>
+            </and>
+        </preConditions>
+        <addColumn tableName="product_order">
+            <column name="created_by" type="DECIMAL(15,0)"/>
+        </addColumn>
+        <addColumn tableName="product_order">
+            <column name="modified_by" type="DECIMAL(15,0)"/>
+        </addColumn>
+        <addColumn tableName="product_order">
+            <column name="created_date" type="DATE"/>
+        </addColumn>
+        <addColumn tableName="product_order">
+            <column name="modified_date" type="DATE"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

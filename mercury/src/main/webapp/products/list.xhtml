@@ -8,33 +8,200 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:p="http://primefaces.org/ui">
-<body>
+<h:head>
+    <title>Athena Product List</title>
+</h:head>
+<h:body>
 <ui:composition template="/layout.xhtml">
     <ui:define name="title">Products</ui:define>
     <ui:define name="body">
 
-        <!-- per the mockups, clicking a row in this table will view the Product Details -->
-        <p:dataTable value="#{productBean.topLevelProducts}" var="product">
-            <p:column headerText="Part #">
-                #{product.partNumber}
-            </p:column>
+        <h:form id="productList">
 
-            <p:column headerText="Name">
-                #{product.productName}
-            </p:column>
+            <h:panelGrid columns="1">
 
-            <p:column headerText="Description">
-                #{product.description}
-            </p:column>
+                <h:panelGrid columns="2">
+                    <!-- disabling this since it doesn't play nice with the filter -->
+                    <p:selectBooleanCheckbox value="#{productsBean.availableProductsOnly}" disabled="true">
+                        <!--<p:ajax event="click" listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>-->
+                        <p:ajax listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>
+                    </p:selectBooleanCheckbox>
+                    <h:outputText value="Available Products Only"/>
+                </h:panelGrid>
 
-        </p:dataTable>
+            </h:panelGrid>
 
-        <h:form>
-            <p><p:commandButton value="New Product..." action="create?faces-redirect=true" ajax="false"/></p>
-            <!-- TODO: fill in action for new product order view -->
-            <p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>
+            <!-- per the mockups, clicking a row in this table should view the Product Details -->
+            <p:dataTable value="#{productsBean.productsDataModel}" var="product"
+                         id="dataTable" widgetVar="dataTable"
+                         filteredValue="#{productsBean.filteredProducts}"
+                         emptyMessage="No products found containing search text"
+                         selection="#{productsBean.selectedProduct}" selectionMode="single">
+
+                <p:ajax event="rowSelect" listener="#{productsBean.onRowSelect}" update=":productMainView :productAddOnsView :productPriceItemsView"/>
+                <p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" update=":productMainView :productAddOnsView :productPriceItemsView" />
+
+                <f:facet name="header">
+                        <p:outputPanel>
+                            <h:outputText value="Search"/>
+                            <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
+                        </p:outputPanel>
+                </f:facet>
+
+                <p:column sortBy="#{product.partNumber}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.partNumber}" filterStyleClass="hide">
+                    <f:facet name="header">
+                        <h:outputText value="Part #" />
+                    </f:facet>
+                        
+                    <h:outputText value="#{product.partNumber}" />
+                </p:column>
+
+                <p:column sortBy="#{product.productName}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.productName}" filterStyleClass="hide">
+                    <f:facet name="header">
+                        <h:outputText value="Name" />
+                    </f:facet>
+                    <h:outputText value="#{product.productName}" />
+                </p:column>
+
+                <p:column sortBy="#{product.productFamily.name}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.productFamily.name}" filterStyleClass="hide">
+                    <f:facet name="header">
+                        <h:outputText value="Product Family" />
+                    </f:facet>
+                    <h:outputText value="#{product.productFamily.name}" />
+                </p:column>
+
+                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productsBean.compare}">
+                    <h:outputText value='#{product.topLevelProduct ? "Yes" : "No"}' />
+                </p:column>
+
+                <p:column headerText="Availability Date" sortBy="#{product.availabilityDate}" sortFunction="#{productsBean.compare}">
+                    <h:outputText value="#{product.availabilityDate}">
+                        <f:convertDateTime pattern="MMM dd, yyyy" />
+                    </h:outputText>
+                </p:column>
+
+            </p:dataTable>
         </h:form>
+
+
+
+        <h:form id="productMainView" styleClass="form-horizontal form-readonly" >
+
+            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
+
+            <div class="control-group">
+                <label class="control-label">Name</label>
+                <div class="controls">
+                    <div class="form-value">#{productsBean.selectedProduct.productName}</div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Part Number</label>
+                <div class="controls">
+                    <div class="form-value">#{productsBean.selectedProduct.partNumber}</div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Product Family</label>
+                <div class="controls">
+                    <div class="form-value">#{productsBean.selectedProduct.productFamily.displayName}</div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Availability Date</label>
+                <div class="controls">
+                    <div class="form-value">#{productsBean.selectedProductAvailabilityDate}</div>
+                </div>
+            </div>
+
+                <div class="control-group">
+                    <label class="control-label">Discontinued Date</label>
+                    <div class="controls">
+                        <div class="form-value">#{productsBean.selectedProductDiscontinuedDate}</div>
+                    </div>
+                </div>
+            </p:panelGrid>
+
+        </h:form>
+
+
+        <h:form id="productAddOnsView">
+            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
+                <p:dataTable value="#{productsBean.selectedProductAddOns}" var="addOn">
+                    <f:facet name="header">
+                        <h:outputText value="Add Ons" />
+                    </f:facet>
+
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Name"/>
+                        </f:facet>
+                        <h:outputText value="#{addOn.productName}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Part Number"/>
+                        </f:facet>
+                        <h:outputText value="#{addOn.partNumber}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Product Family"/>
+                        </f:facet>
+                        <h:outputText value="#{addOn.productFamily.displayName}"/>
+                    </p:column>
+
+                </p:dataTable>
+            </p:panelGrid>
+        </h:form>
+
+
+        <h:form id="productPriceItemsView">
+            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
+
+                <p:dataTable value="#{productsBean.selectedProductPriceItems}" var="priceItem">
+                    <f:facet name="header">
+                        <h:outputText value="Price Items" />
+                    </f:facet>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Platform"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.platform}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Category"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.category}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Name"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.name}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Default?"/>
+                        </f:facet>
+                        <h:outputText
+                                value='#{productsBean.isPriceItemDefaultForSelected(priceItem) ? "Yes" : "No"}'/>
+                    </p:column>
+                </p:dataTable>
+            </p:panelGrid>
+        </h:form>
+
+            <!--<p><p:commandButton value="New Product..." action="create?faces-redirect=true" ajax="false"/></p>-->
+            <!-- TODO: fill in action for new product order view -->
+            <!--<p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>-->
     </ui:define>
 </ui:composition>
-</body>
+</h:body>
 </html>

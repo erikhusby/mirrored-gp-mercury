@@ -26,7 +26,7 @@ import java.io.Serializable;
 @Entity
 @Audited
 @Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
-public class ProductFamily implements Serializable {
+public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     /**
      * Known product families, a DAO method might accept one of these to return a persistent or detached instance
@@ -88,6 +88,17 @@ public class ProductFamily implements Serializable {
 
     public String getName() {
         return name;
+    }
+
+
+    @Transient
+    public String getDisplayName() {
+        return ProductFamilyName.valueOf(getName()).getDisplayName();
+    }
+
+    @Override
+    public int compareTo(ProductFamily productFamily) {
+        return getName().compareTo(productFamily.getName());
     }
 
     @Override

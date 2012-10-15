@@ -11,24 +11,50 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:cc="http://java.sun.com/jsf/composite">
+      xmlns:cc="http://java.sun.com/jsf/composite"
+      xmlns:f="http://java.sun.com/jsf/core" xmlns:p="http://primefaces.org/ui">
 
     <cc:interface/>
     <cc:implementation>
-            Please enter your Broad Username and Password.
+            <div class="row">
+                <div class="span3">
+                    <p:graphicImage url="/images/mercury_logo.png" alt="Broad Institute" style="float: left;"/>
+                </div>
 
-            <h:form>
-                <h:panelGrid columns="2">
-                    <h:outputText value="Username:" />
-                    <h:inputText label="Username:" value="#{userLogin.username}" required="true" requiredMessage="Username is required"/>
+                <div class="span9">
+                    <h:form id="form" prependId="false" styleClass="form-horizontal">
+                        <div class="control-group">
+                            <div class="controls">
+                                <p>Please enter your Broad Username and Password.</p>
+                            </div>
+                        </div>
 
-                    <h:outputText value="Password:" />
-                    <h:inputSecret label="Password:" value="#{userLogin.password}" required="true" requiredMessage="Password is required" />
+                        <div class="control-group">
+                            <p:outputLabel for="username" value="Username" styleClass="control-label"/>
+                            <div class="controls">
+                                <p:focus />
+                                <p:inputText id="username" label="Username" value="#{userLogin.username}" required="true" requiredMessage="Username is required"/>
+                            </div>
+                        </div>
 
-                    <h:panelGroup />
-                    <h:commandButton value="Sign in" action="#{userLogin.authenticateUser}" class="btn btn-primary"/>
-                </h:panelGrid>
-            </h:form>
+                        <div class="control-group">
+                            <p:outputLabel for="password" value="Password" styleClass="control-label"/>
+                            <div class="controls">
+                                <p:password id="password" label="Password" value="#{userLogin.password}" required="true" requiredMessage="Password is required" feedback="false"/>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <div class="controls">
+                                <div class="row-fluid">
+                                    <div class="span1">
+                                        <h:commandButton value="Sign in" action="#{userLogin.authenticateUser}" class="btn btn-primary"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </h:form>
+                </div>
+            </div>
     </cc:implementation>
-
 </html>

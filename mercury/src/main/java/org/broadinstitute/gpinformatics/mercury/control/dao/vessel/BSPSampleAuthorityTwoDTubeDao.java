@@ -2,13 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,13 +28,8 @@ public class BSPSampleAuthorityTwoDTubeDao extends GenericDao {
             mapLabelToTube.put(label, null);
         }
 
-        EntityManager entityManager = this.getThreadEntityManager().getEntityManager();
-        CriteriaQuery<BSPSampleAuthorityTwoDTube> criteriaQuery =
-                entityManager.getCriteriaBuilder().createQuery(BSPSampleAuthorityTwoDTube.class);
-        Root<BSPSampleAuthorityTwoDTube> root = criteriaQuery.from(BSPSampleAuthorityTwoDTube.class);
-        criteriaQuery.where(root.get(LabVessel_.label).in(labels));
         List<BSPSampleAuthorityTwoDTube> bspSampleAuthorityTwoDTubes =
-                entityManager.createQuery(criteriaQuery).getResultList();
+                findListByList(BSPSampleAuthorityTwoDTube.class, BSPSampleAuthorityTwoDTube_.label, labels);
 
         for (BSPSampleAuthorityTwoDTube bspSampleAuthorityTwoDTube : bspSampleAuthorityTwoDTubes) {
             mapLabelToTube.put(bspSampleAuthorityTwoDTube.getLabel(), bspSampleAuthorityTwoDTube);

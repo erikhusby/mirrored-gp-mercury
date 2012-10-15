@@ -8,7 +8,5 @@ import java.io.Serializable;
  * Mockable interface for looking up values from JNDI
  */
 public interface JNDIResolver extends Serializable {
-
     String lookupProperty(String name) throws NamingException;
-
 }
