@@ -18,7 +18,6 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.io.IOException;
-import javax.validation.constraints.NotNull;
 import java.util.*;
 
 /**
@@ -56,6 +55,7 @@ public class ResearchProject {
     private Long researchProjectId;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Status status = Status.Open;
 
     // creation/modification information
@@ -309,7 +309,7 @@ public class ResearchProject {
     }
 
     public Long[] getExternalCollaborators() {
-        return getPeople(RoleType.EXTERNAL);
+        return getPeople ( RoleType.EXTERNAL );
     }
 
     public String[] getFundingIds() {
@@ -356,7 +356,7 @@ public class ResearchProject {
         return RoleType.values();
     }
 
-    public void submit() throws IOException{
+    public void submit() throws IOException {
 
         Map<String, CustomFieldDefinition> submissionFields =
                 ServiceAccessUtility.getJiraCustomFields ( );
