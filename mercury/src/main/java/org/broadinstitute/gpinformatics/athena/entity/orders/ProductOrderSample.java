@@ -4,6 +4,7 @@ import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,10 +58,6 @@ public class ProductOrderSample implements Serializable {
         this.sampleName = sampleName;
     }
 
-//    public OrderSample(String sampleName, BSPSampleDTO bspDTO) {
-//        this.sampleName = sampleName;
-//        this.bspDTO = bspDTO;
-//    }
 
     public ProductOrderSample(final String sampleName, final BSPSampleDTO bspDTO, final ProductOrder productOrder) {
         this.sampleName = sampleName;
@@ -95,10 +92,7 @@ public class ProductOrderSample implements Serializable {
     private BSPSampleDTO getBspDTO() {
         if (!hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {
-                bspDTO = BSPSampleDTO.DUMMY;
-                //TODO
-                // initialize DTO ?
-                //throw new RuntimeException("Not yet Implemented.");
+                bspDTO = ServiceAccessUtility.getSampleDtoByName ( this.getSampleName ( ) );
             } else {
                 bspDTO = BSPSampleDTO.DUMMY;
             }
@@ -128,6 +122,29 @@ public class ProductOrderSample implements Serializable {
     }
 
     // Methods delegated to the DTO
+    public boolean isSampleReceived() {
+        if (! isInBspFormat() ) {
+            throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return ((null != getBspDTO().getRootSample()) &&(!getBspDTO().getRootSample().isEmpty()));
+    }
+
+    public boolean isActiveStock() {
+        ensureInBspFormat();
+
+        return  ((null != getBspDTO().getStockType()) &&
+                (getBspDTO().getStockType().equals(BSPSampleDTO.ACTIVE_IND)));
+
+    }
+
+    public boolean hasFingerprint ( ) {
+        ensureInBspFormat();
+
+        return ((null != this.getBspDTO().getFingerprint()) &&
+                (!this.getBspDTO().getFingerprint().isEmpty()));
+
+    }
+
     public String getVolume() throws IllegalStateException {
         ensureInBspFormat();
         return getBspDTO().getVolume();
@@ -173,19 +190,17 @@ public class ProductOrderSample implements Serializable {
         return getBspDTO().getOrganism();
     }
 
-    public String getStockAtExport() {
+
+    public String getGender() {
         ensureInBspFormat();
-        return getBspDTO().getStockAtExport();
+        return getBspDTO().getGender ( );
     }
 
-    public Boolean isPositiveControl() {
-        ensureInBspFormat();
-        return getBspDTO().isPositiveControl();
-    }
-
-    public Boolean isNegativeControl() {
-        ensureInBspFormat();
-        return getBspDTO().isNegativeControl();
+    public String getDisease() {
+        if (! isInBspFormat() ) {
+           throw ILLEGAL_STATE_EXCEPTION;
+        }
+        return getBspDTO().getPrimaryDisease ( );
     }
 
     public String getSampleLsid() {
@@ -198,21 +213,38 @@ public class ProductOrderSample implements Serializable {
             throw ILLEGAL_STATE_EXCEPTION;
         }
     }
-
-    public String getGender() {
-        //TODO hmc
-        throw new RuntimeException("Not yet Implemented.");
-    }
-
-    public String getDisease() {
-        //TODO hmc
-        throw new RuntimeException("Not yet Implemented.");
-    }
-
     public String getSampleType() {
-        //TODO hmc
-        throw new RuntimeException("Not yet Implemented.");
+        ensureInBspFormat();
+        return getBspDTO().getSampleType ( );
     }
+
+    public String getTotal() {
+        ensureInBspFormat();
+        return getBspDTO().getTotal ( );
+    }
+
+    public String getFingerprint() {
+        ensureInBspFormat();
+        return getBspDTO().getFingerprint ( );
+    }
+
+    public String getMaterialType() {
+        ensureInBspFormat();
+        return getBspDTO().getMaterialType();
+    }
+
+    public String getStockType() {
+
+        ensureInBspFormat();
+        return getBspDTO().getStockType();
+    }
+
+    public String getCollaboratorParticipantId() {
+        ensureInBspFormat();
+         return getBspDTO().getCollaboratorParticipantId();
+     }
+
+
 
     @Override
     public boolean equals(Object o) {

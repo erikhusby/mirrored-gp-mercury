@@ -38,7 +38,7 @@ public class ProductOrderDetail {
     public void initEmpty() {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         // FIXME: need default constructor to create empty product order.
-        productOrder = new ProductOrder("", new ArrayList<ProductOrderSample>(), "", null, researchProject);
+        productOrder = new ProductOrder(10L,"", new ArrayList<ProductOrderSample>(), "", null, researchProject);
     }
 
     public void load() {
