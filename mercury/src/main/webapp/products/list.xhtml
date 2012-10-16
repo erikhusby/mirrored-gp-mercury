@@ -104,7 +104,7 @@
             <div class="control-group">
                 <label class="control-label">Part Number</label>
                 <div class="controls">
-                    <div class="form-value">#{productsBean.selectedProduct.partNumber}</div>
+                    <div class="form-value">#{productsBean.selectedProduct.partNumber} (<a href="/link/to/product_sheet/#{productsBean.selectedProduct.partNumber}.pdf">Product Sheet PDF</a>)</div>
                 </div>
             </div>
 
@@ -126,6 +126,13 @@
                     <label class="control-label">Discontinued Date</label>
                     <div class="controls">
                         <div class="form-value">#{productsBean.selectedProductDiscontinuedDate}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Description</label>
+                    <div class="controls">
+                        <div class="form-value">#{productsBean.selectedProduct.description}</div>
                     </div>
                 </div>
             </h:panelGroup>
