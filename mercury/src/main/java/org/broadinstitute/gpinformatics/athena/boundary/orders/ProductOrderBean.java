@@ -45,16 +45,6 @@ public class ProductOrderBean {
         return BoundaryUtils.buildEnumFilterList(ProductOrder.OrderStatus.values());
     }
 
-
-    /**
-     * Returns a list of SelectItems for all project statuses, including an "Any" selection.
-     *
-     * @return list of all research project statuses
-     */
-    public List<SelectItem> getAllProjectStatuses() {
-        return BoundaryUtils.buildEnumFilterList(ResearchProject.Status.values());
-    }
-
     /**
      * Returns a list of SelectItems for all product order sample statuses, including an "Any" selection.
      *
