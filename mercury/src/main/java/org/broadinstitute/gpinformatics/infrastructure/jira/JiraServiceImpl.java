@@ -7,7 +7,9 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.watchers.GetWatcherResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -20,7 +22,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCom
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -69,7 +70,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         if (baseUrl == null) {
 
             String urlString = "%s/rest/api/2";
-            baseUrl = String.format(urlString, jiraConfig.getUrlBase());
+            baseUrl = String.format(urlString, jiraConfig.getUrlBase ( ));
 
         }
 
@@ -207,19 +208,11 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public Map<String, CustomFieldDefinition> getCustomFields(CreateIssueRequest.Fields.Project project,
-                                                              CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
-        if (project == null) {
-            throw new NullPointerException("project cannot be null");
-        }
-        if (issueType == null) {
-            throw new NullPointerException("issueType cannot be null");
-        }
-
+    public Map<String, CustomFieldDefinition> getCustomFields ( ) throws IOException {
         String urlString = getBaseUrl() + "/issue/field";
 
         String jsonResponse =
-                getJerseyClient().resource(urlString).get(String.class);
+                getJerseyClient ( ).resource ( urlString ).get ( String.class );
 
         return CustomFieldJsonParser.parseCustomFields(jsonResponse);
     }
@@ -229,5 +222,45 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         //Untill such a time as I can remove this method, its delegated to Jira Config
         return jiraConfig.createTicketUrl(jiraTicketName);
+    }
+
+    @Override
+    public IssueTransitionResponse findAvailableTransitions ( String jiraIssueKey ) {
+        String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
+
+
+        WebResource webResource =
+                getJerseyClient().resource(urlString)
+                        .queryParam ( "expand", "transitions.fields" );
+
+        return get(webResource, new GenericType<IssueTransitionResponse>(){});
+
+    }
+
+    @Override
+    public void postNewTransition ( String jiraIssueKey, IssueTransitionRequest jiraIssueTransition ) throws IOException{
+
+        String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
+
+        WebResource webResource =
+                getJerseyClient().resource(urlString);
+
+        post(webResource, jiraIssueTransition);
+
+    }
+
+    @Override
+    public void postNewTransition ( String jiraIssueKey, String transitionId ) throws IOException{
+
+        IssueTransitionRequest jiraIssueTransition =
+                new IssueTransitionRequest(new Transition(transitionId));
+
+        String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
+
+        WebResource webResource =
+                getJerseyClient().resource(urlString);
+
+        post(webResource, jiraIssueTransition);
+
     }
 }

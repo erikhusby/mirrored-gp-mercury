@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao.products;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.jetbrains.annotations.NotNull;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -52,12 +53,9 @@ public class ProductDao extends GenericDao {
         return findProducts(AvailableProductsOnly.NO, topLevelProductsOnly);
     }
 
-
-    public List<Product> findProducts(TopLevelProductsOnly topLevelProductsOnly, AvailableProductsOnly availableProductsOnly) {
-        return findProducts(availableProductsOnly, topLevelProductsOnly);
+    public Product findByBusinessKey(String key) {
+        return findByPartNumber(key);
     }
-
-
 
     /**
      * General purpose product finder method
@@ -68,16 +66,8 @@ public class ProductDao extends GenericDao {
      *
      * @return
      */
-    public List<Product> findProducts(AvailableProductsOnly availableProductsOnly, TopLevelProductsOnly topLevelProductsOnly) {
-
-        if (availableProductsOnly == null) {
-            throw new IllegalArgumentException("availableProductsOnly can not be null!");
-        }
-
-        if (topLevelProductsOnly == null) {
-            throw new IllegalArgumentException("topLevelProducts can not be null!");
-        }
-
+    public List<Product> findProducts(@NotNull AvailableProductsOnly availableProductsOnly,
+                                      @NotNull TopLevelProductsOnly topLevelProductsOnly) {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Product> cq = cb.createQuery(Product.class);
         List<Predicate> predicateList = new ArrayList<Predicate>();

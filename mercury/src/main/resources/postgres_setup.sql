@@ -14,3 +14,5 @@ CREATE ROLE athena LOGIN ENCRYPTED PASSWORD 'md5fac80c91a15c3a4a610fe4f62384a977
 CREATE SCHEMA athena
        AUTHORIZATION athena;
 
+-- This function is useful for generating grant statements for many tables
+create function execute(text) returns void as $BODY$BEGIN execute $1; END;$BODY$ language plpgsql;

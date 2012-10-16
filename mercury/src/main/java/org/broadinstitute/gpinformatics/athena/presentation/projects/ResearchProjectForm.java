@@ -6,9 +6,11 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
+import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
@@ -27,29 +29,64 @@ public class ResearchProjectForm extends AbstractJsfBean {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
-    private List<BspUser> projectManagers = new ArrayList<BspUser>();
+    @Inject
+    private BSPUserList bspUserList;
 
-    private List<BspUser> scientists = new ArrayList<BspUser>();
+    @Inject
+    private FacesContext facesContext;
+
+    private List<BspUser> projectManagers;
+
+    private List<BspUser> broadPIs;
+
+    private List<BspUser> scientists;
+
+    private List<BspUser> externalCollaborators;
 
     // TODO: integrate with real quotes
-    private List<Long> fundingSources = new ArrayList<Long>();
+    private List<Long> fundingSources;
 
     // TODO: integrate with real sample cohorts
-    private List<Long> sampleCohorts = new ArrayList<Long>();
+    private List<Long> sampleCohorts;
 
-    // TODO: integrate with real IRBs (?)
-    private List<Long> irbs = new ArrayList<Long>();
+    // TODO: change to a text field to be parsed as comma-separated
+    private List<Long> irbs;
+
+    public void initEmptyProject() {
+        if (!facesContext.isPostback()) {
+            projectManagers = new ArrayList<BspUser>();
+            String username = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
+            BspUser user = bspUserList.getByUsername(username);
+            if (user != null) {
+                projectManagers.add(user);
+            } else {
+                projectManagers.add(bspUserList.getUsers().get(0));
+            }
+        }
+    }
 
     public String create() {
+        // TODO: move some of this logic down into boundary, or deeper!
+
         ResearchProject project = detail.getProject();
         if (projectManagers != null) {
             for (BspUser projectManager : projectManagers) {
                 project.addPerson(RoleType.PM, projectManager.getUserId());
             }
         }
+        if (broadPIs != null) {
+            for (BspUser broadPI : broadPIs) {
+                project.addPerson(RoleType.BROAD_PI, broadPI.getUserId());
+            }
+        }
         if (scientists != null) {
             for (BspUser scientist : scientists) {
                 project.addPerson(RoleType.SCIENTIST, scientist.getUserId());
+            }
+        }
+        if (externalCollaborators != null) {
+            for (BspUser externalCollaborator : externalCollaborators) {
+                project.addPerson(RoleType.EXTERNAL, externalCollaborator.getUserId());
             }
         }
         if (fundingSources != null) {
@@ -64,7 +101,14 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 project.addIrbNumber(new ResearchProjectIRB(project, ResearchProjectIRB.IrbType.OTHER, irb.toString()));
             }
         }
-        project.setCreatedBy(14567L);
+        // TODO: store BspUser in SessionScoped bean on login.
+        String username = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
+        BspUser user = bspUserList.getByUsername(username);
+        if (user != null) {
+            project.setCreatedBy(user.getUserId());
+        } else {
+            project.setCreatedBy(1L);
+        }
 
         researchProjectDao.persist(project);
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
@@ -91,6 +135,22 @@ public class ResearchProjectForm extends AbstractJsfBean {
         return ids;
     }
 
+    public List<BspUser> getProjectManagers() {
+        return projectManagers;
+    }
+
+    public void setProjectManagers(List<BspUser> projectManagers) {
+        this.projectManagers = projectManagers;
+    }
+
+    public List<BspUser> getBroadPIs() {
+        return broadPIs;
+    }
+
+    public void setBroadPIs(List<BspUser> broadPIs) {
+        this.broadPIs = broadPIs;
+    }
+
     public List<BspUser> getScientists() {
         return scientists;
     }
@@ -99,12 +159,12 @@ public class ResearchProjectForm extends AbstractJsfBean {
         this.scientists = scientists;
     }
 
-    public List<BspUser> getProjectManagers() {
-        return projectManagers;
+    public List<BspUser> getExternalCollaborators() {
+        return externalCollaborators;
     }
 
-    public void setProjectManagers(List<BspUser> projectManagers) {
-        this.projectManagers = projectManagers;
+    public void setExternalCollaborators(List<BspUser> externalCollaborators) {
+        this.externalCollaborators = externalCollaborators;
     }
 
     public List<Long> getFundingSources() {

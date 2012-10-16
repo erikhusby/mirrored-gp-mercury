@@ -29,6 +29,11 @@ public class BSPSampleSearchServiceProducer {
         return impl;
     }
 
+    public static BSPSampleSearchService stubInstance() {
+        return new BSPSampleSearchServiceStub();
+    }
+
+
 
     /**
      * Creates a BSPCohortSearchServiceImpl with plain old new operator for container-free testing,

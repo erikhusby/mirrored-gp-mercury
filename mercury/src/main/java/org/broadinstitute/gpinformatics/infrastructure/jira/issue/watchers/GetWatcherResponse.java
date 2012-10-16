@@ -16,6 +16,12 @@ public class GetWatcherResponse {
     private byte watchCount;
     private List<Watcher> watchers;
 
+    public GetWatcherResponse ( String selfIn, boolean watchingIn, byte watchCountIn, List<Watcher> watchersIn ) {
+        self = selfIn;
+        isWatching = watchingIn;
+        watchCount = watchCountIn;
+        watchers = watchersIn;
+    }
 
     public class Watcher {
         private String self;
@@ -25,5 +31,21 @@ public class GetWatcherResponse {
         private AvatarInfo avatarUrls;
 
         private Boolean active;
+    }
+
+    public String getSelf ( ) {
+        return self;
+    }
+
+    public boolean isWatching ( ) {
+        return isWatching;
+    }
+
+    public byte getWatchCount ( ) {
+        return watchCount;
+    }
+
+    public List<Watcher> getWatchers ( ) {
+        return watchers;
     }
 }
