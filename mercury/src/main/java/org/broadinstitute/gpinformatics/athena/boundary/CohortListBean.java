@@ -56,7 +56,7 @@ public class CohortListBean {
     public String getCohortListString(String[] cohortIds) {
         String cohortListString = "";
 
-        if (cohortList != null) {
+        if ((cohortList != null) && (cohortIds != null) && (cohortIds.length > 0)) {
             String[] nameList = new String[cohortIds.length];
             int i=0;
             for (String cohortId : cohortIds) {
