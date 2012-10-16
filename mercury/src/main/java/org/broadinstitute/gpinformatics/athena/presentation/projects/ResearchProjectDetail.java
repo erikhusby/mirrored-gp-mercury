@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
+import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Arrays;
@@ -24,6 +25,9 @@ public class ResearchProjectDetail extends AbstractJsfBean {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
+    @Inject
+    private FacesContext facesContext;
+
     private String researchProjectTitle;
 
     private ResearchProject project;
@@ -35,7 +39,15 @@ public class ResearchProjectDetail extends AbstractJsfBean {
     }
 
     public void loadProject() {
+        // TODO: make this more deliberate, as in not needing to check for a null project
+        // TODO: also, researchProjectTitle should rely on viewParam validation (and conversion to strip whitespace)
         if ((project == null) && !StringUtils.isBlank(researchProjectTitle)) {
+            project = researchProjectDao.findByTitle(researchProjectTitle);
+        }
+    }
+
+    public void restoreModel() {
+        if (facesContext.isPostback() && researchProjectTitle != null) {
             project = researchProjectDao.findByTitle(researchProjectTitle);
         }
     }

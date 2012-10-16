@@ -11,6 +11,7 @@
  */
 body { padding-bottom: 40px; font-size: 12px; }
 footer { font-size: 10px; text-align: center; padding-top: 20px; }
+
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; }
 
@@ -27,8 +28,16 @@ label, input, button, select, textarea { font-size: 12px }
 /* Tighten vertical spacing of Bootstrap horizontal forms. */
 .form-horizontal .control-group { margin-bottom: 12px; }
 
-/* Right-justify p:dataTable content. E.g.: <h:outputText value="..." styleClass="dataTable-align-right" */
+/* Right-justify p:dataTable content. E.g.: <h:outputText value="..." styleClass="dataTable-align-right"/> */
 .ui-datatable-data td .align-right { float: right; }
+
+/* Fix bug with PrimeFaces Bootstrap theme: http://forum.primefaces.org/viewtopic.php?f=9&t=25031 */
+.ui-widget-content input.ui-state-error, .ui-widget-content textarea.ui-state-error { color: black; }
+
+.controls .ui-message-error { display: inline-block; }
+
+/* Change error label style to more closely match Bootstrap. */
+label.ui-state-error, .ui-widget-content label.ui-state-error { background: white; color: #B94A48 }
 
 .pass-section { font-weight: bold; }
 .pass-label { font-style: italic; padding-right: 10px; }

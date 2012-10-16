@@ -13,6 +13,9 @@
         <ui:define name="title">Research Projects</ui:define>
         <ui:define name="body">
             <h:form>
+                <div style="text-align: right">
+                    <h:link value="New Research Project" outcome="create"/>
+                </div>
                 <p:dataTable value="#{researchProjectBean.allResearchProjects}" var="project" sortBy="#{project.createdDate}" sortOrder="descending" filteredValue="#{researchProjectBean.filteredResearchProjects}">
 
                     <p:column headerText="Name" sortBy="#{project.title}">
@@ -43,14 +46,13 @@
 
                     <p:column headerText="Created Date" sortBy="#{project.createdDate}">
                         <h:outputText value="#{project.createdDate}">
-                            <f:convertDateTime type="date"/>
+                            <f:convertDateTime type="both" timeStyle="short"/>
                         </h:outputText>
                     </p:column>
                 </p:dataTable>
 
-                <p><p:commandButton value="New Research Project..." action="create?faces-redirect=true" ajax="false"/></p>
                 <!-- TODO: fill in action for new product order view -->
-                <p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>
+                <!--<p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>-->
             </h:form>
         </ui:define>
     </ui:composition>

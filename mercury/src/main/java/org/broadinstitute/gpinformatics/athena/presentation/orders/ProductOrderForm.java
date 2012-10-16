@@ -11,6 +11,8 @@ import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.text.MessageFormat;
+import java.text.NumberFormat;
 
 /**
  * Class for creating a product order, or editing a draft product order.
@@ -43,7 +45,13 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     public String getFundsRemaining() {
         if (quote != null) {
-            return quote.getQuoteFunding().getFundsRemaining();
+            String fundsRemainingString = quote.getQuoteFunding().getFundsRemaining();
+            try {
+                double fundsRemaining = Double.parseDouble(fundsRemainingString);
+                return NumberFormat.getCurrencyInstance().format(fundsRemaining);
+            } catch (NumberFormatException e) {
+                return fundsRemainingString;
+            }
         }
         return "";
     }
@@ -65,9 +73,17 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
     }
 
-    public void loadFundsRemaining() throws QuoteServerException, QuoteNotFoundException {
-        if (productOrderDetail.getProductOrder().getQuoteId() != null) {
-            quote = quoteService.getQuoteFromQuoteServer(productOrderDetail.getProductOrder().getQuoteId());
+    public void loadFundsRemaining() {
+        String quoteId = productOrderDetail.getProductOrder().getQuoteId();
+        String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", quoteId);
+        if (quoteId != null) {
+            try {
+                quote = quoteService.getQuoteFromQuoteServer(quoteId);
+            } catch (QuoteServerException e) {
+                addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
+            } catch (QuoteNotFoundException e) {
+                addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
+            }
         }
     }
 }

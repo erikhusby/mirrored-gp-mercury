@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.NoResultException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,14 +18,7 @@ import java.util.Map;
 public class BSPStartingSampleDAO extends GenericDao {
 
     public BSPStartingSample findBySampleName(String stockName) {
-        BSPStartingSample bspStartingSample = null;
-        try {
-            bspStartingSample = (BSPStartingSample) getThreadEntityManager().getEntityManager().
-                    createNamedQuery("BSPStartingSample.fetchBySampleName").
-                    setParameter("sampleName", stockName).getSingleResult();
-        } catch (NoResultException ignored) {
-        }
-        return bspStartingSample;
+        return findSingle(BSPStartingSample.class, BSPStartingSample_.sampleName, stockName);
     }
 
     public Map<String, BSPStartingSample> findByNames(List<String> labels) {

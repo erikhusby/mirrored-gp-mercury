@@ -22,6 +22,9 @@ public class ResearchProjectConverter implements Converter {
 
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object object) {
-        return ((ResearchProject) object).getBusinessKey();
+        if (object != null) {
+            return ((ResearchProject) object).getBusinessKey();
+        }
+        return "";
     }
 }
