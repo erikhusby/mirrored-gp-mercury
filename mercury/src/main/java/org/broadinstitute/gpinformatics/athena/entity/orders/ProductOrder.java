@@ -95,6 +95,9 @@ public class ProductOrder implements Serializable {
     public ProductOrder (Long creatorId, String title, List<ProductOrderSample> samples, String quoteId,
                          Product product, ResearchProject researchProject) {
         this.createdBy = creatorId;
+        createdDate = new Date();
+        this.modifiedBy = this.createdBy;
+        modifiedDate = createdDate;
         this.title = title;
         this.samples = samples;
         this.quoteId = quoteId;

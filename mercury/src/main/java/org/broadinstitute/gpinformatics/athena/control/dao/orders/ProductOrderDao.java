@@ -99,7 +99,6 @@ public class ProductOrderDao extends GenericDao {
     }
 
 
-    //TODO hmc find Order by (PM) Person Id.  This needs a person Id on ProductOrder
     /**
      * Find all the ProductOrders for a person who is
      * associated ( as the creator ) with the ProductOrders
@@ -107,11 +106,20 @@ public class ProductOrderDao extends GenericDao {
      * @param personId
      * @return
      */
-    /*
-    public ProductOrder findByPersonId(Long personId) {
-        findSingle(ProductOrder.class, ProductOrder_.personId, personId);
+    public List<ProductOrder> findByCreatedPersonId(Long personId) {
+        return findList(ProductOrder.class, ProductOrder_.createdBy, personId);
     }
-    */
+
+    /**
+     * Find all the ProductOrders for a person who is
+     * associated ( as the modifier ) with the ProductOrders
+     *
+     * @param personId
+     * @return
+     */
+    public List<ProductOrder> findByModifiedPersonId(Long personId) {
+        return findList(ProductOrder.class, ProductOrder_.modifiedBy, personId);
+    }
 
     /**
      * Find a ProductOrder by it's primary key identifier
