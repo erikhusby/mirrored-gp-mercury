@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.BoundaryUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.BillingStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.model.SelectItem;
@@ -14,7 +15,6 @@ import java.util.List;
 @Named
 @RequestScoped
 public class ProductOrderBean {
-
     @Inject
     private ProductOrderDao productOrderDao;
 
@@ -43,6 +43,16 @@ public class ProductOrderBean {
      */
     public List<SelectItem> getAllOrderStatuses() {
         return BoundaryUtils.buildEnumFilterList(ProductOrder.OrderStatus.values());
+    }
+
+
+    /**
+     * Returns a list of SelectItems for all project statuses, including an "Any" selection.
+     *
+     * @return list of all research project statuses
+     */
+    public List<SelectItem> getAllProjectStatuses() {
+        return BoundaryUtils.buildEnumFilterList(ResearchProject.Status.values());
     }
 
     /**
