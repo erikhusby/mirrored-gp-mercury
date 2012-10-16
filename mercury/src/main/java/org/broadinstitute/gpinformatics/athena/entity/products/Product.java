@@ -5,6 +5,7 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -189,6 +190,16 @@ public class Product implements Serializable {
 
     public String getWorkflowName() {
         return workflowName;
+    }
+
+
+    public boolean isAvailable() {
+        Date now = Calendar.getInstance().getTime();
+
+        // need this logic in the dao too
+        // available in the past and not yet discontinued
+        return availabilityDate != null && (availabilityDate.compareTo(now) < 0) &&
+                (discontinuedDate == null || discontinuedDate.compareTo(now) > 0);
     }
 
 //    public List<RiskContingency> getRiskContingencies() {

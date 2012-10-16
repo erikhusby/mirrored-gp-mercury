@@ -18,18 +18,18 @@
 
         <h:form id="productList">
 
-            <h:panelGrid columns="1">
+            <!--<h:panelGrid columns="1">-->
 
-                <h:panelGrid columns="2">
-                    <!-- disabling this since it doesn't play nice with the filter -->
-                    <p:selectBooleanCheckbox value="#{productsBean.availableProductsOnly}" disabled="true">
+                <!--<h:panelGrid columns="2">-->
+                    <!-- removing this since it doesn't play nice with the filter and I don't have time to fight it -->
+                    <!--<p:selectBooleanCheckbox value="#{productsBean.availableProductsOnly}" disabled="true">-->
                         <!--<p:ajax event="click" listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>-->
-                        <p:ajax listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>
-                    </p:selectBooleanCheckbox>
-                    <h:outputText value="Available Products Only"/>
-                </h:panelGrid>
+                        <!--<p:ajax listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>-->
+                    <!--</p:selectBooleanCheckbox>-->
+                    <!--<h:outputText value="Available Products Only"/>-->
+                <!--</h:panelGrid>-->
 
-            </h:panelGrid>
+            <!--</h:panelGrid>-->
 
             <!-- per the mockups, clicking a row in this table should view the Product Details -->
 
@@ -79,10 +79,8 @@
                     <h:outputText value='#{product.topLevelProduct ? "Yes" : "No"}' />
                 </p:column>
 
-                <p:column headerText="Availability Date" sortBy="#{product.availabilityDate}" sortFunction="#{productsBean.compare}" width="125">
-                    <h:outputText value="#{product.availabilityDate}">
-                        <f:convertDateTime pattern="MMM dd, yyyy" />
-                    </h:outputText>
+                <p:column headerText="Available?" sortBy="#{product.available}" sortFunction="#{productsBean.compare}" width="125">
+                    <h:outputText value='#{product.available ? "Yes" : "No"}'/>
                 </p:column>
 
             </p:dataTable>
@@ -104,7 +102,7 @@
             <div class="control-group">
                 <label class="control-label">Part Number</label>
                 <div class="controls">
-                    <div class="form-value">#{productsBean.selectedProduct.partNumber} (<a href="/link/to/product_sheet/#{productsBean.selectedProduct.partNumber}.pdf">Product Sheet PDF</a>)</div>
+                    <div class="form-value">#{productsBean.selectedProduct.partNumber} (<a href="http://link/to/product_sheet/#{productsBean.selectedProduct.partNumber}.pdf">Product Sheet PDF</a>)</div>
                 </div>
             </div>
 
