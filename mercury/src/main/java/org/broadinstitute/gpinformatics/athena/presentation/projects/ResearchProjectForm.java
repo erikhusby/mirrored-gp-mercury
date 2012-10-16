@@ -52,17 +52,38 @@ public class ResearchProjectForm extends AbstractJsfBean {
     // TODO: change to a text field to be parsed as comma-separated
     private List<Long> irbs;
 
-    public void initEmptyProject() {
+    public void initForm() {
+        // Only initialize the form on postback. Otherwise, we'll leave the form as the user submitted it.
         if (!facesContext.isPostback()) {
-            projectManagers = new ArrayList<BspUser>();
-            String username = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
-            BspUser user = bspUserList.getByUsername(username);
-            if (user != null) {
-                projectManagers.add(user);
+
+            // Add current user as a PM only if this is a new research project being created
+            if (detail.getProject().getResearchProjectId() == null) {
+                projectManagers = new ArrayList<BspUser>();
+                String username = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
+                BspUser user = bspUserList.getByUsername(username);
+                if (user != null) {
+                    projectManagers.add(user);
+                } else {
+                    projectManagers.add(bspUserList.getUsers().get(0));
+                }
             } else {
-                projectManagers.add(bspUserList.getUsers().get(0));
+                projectManagers = makeBspUserList(detail.getProject().getProjectManagers());
+                broadPIs = makeBspUserList(detail.getProject().getBroadPIs());
+                scientists = makeBspUserList(detail.getProject().getScientists());
+                externalCollaborators = makeBspUserList(detail.getProject().getExternalCollaborators());
             }
         }
+    }
+
+    private List<BspUser> makeBspUserList(Long[] userIds) {
+        List<BspUser> users = new ArrayList<BspUser>();
+        for (Long userId : userIds) {
+            BspUser user = bspUserList.getById(userId);
+            if (user != null) {
+                users.add(user);
+            }
+        }
+        return users;
     }
 
     public String create() {
@@ -112,6 +133,12 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
         researchProjectDao.persist(project);
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
+        return redirect("list");
+    }
+
+    public String edit() {
+        // TODO: try to do away with merge
+        researchProjectDao.getEntityManager().merge(detail.getProject());
         return redirect("list");
     }
 

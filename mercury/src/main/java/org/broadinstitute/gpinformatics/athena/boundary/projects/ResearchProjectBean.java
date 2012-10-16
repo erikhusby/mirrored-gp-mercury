@@ -58,9 +58,11 @@ public class ResearchProjectBean implements Serializable {
         Set<BspUser> owners = new HashSet<BspUser>();
         for (ResearchProject project : getAllResearchProjects()) {
             Long createdBy = project.getCreatedBy();
-            BspUser bspUser = bspUserList.getById(createdBy);
-            if (bspUser != null) {
-                owners.add(bspUser);
+            if (createdBy != null) {
+                BspUser bspUser = bspUserList.getById(createdBy);
+                if (bspUser != null) {
+                    owners.add(bspUser);
+                }
             }
         }
 

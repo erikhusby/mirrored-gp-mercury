@@ -20,8 +20,7 @@
         <ui:define name="title">View Research Project</ui:define>
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
-                <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
+                <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
             </f:metadata>
         </ui:define>
         <ui:define name="body">
@@ -166,11 +165,7 @@
                 </p:dataTable>
             </h:form>
 
-            <h:form>
-                <p:commandButton value="Edit Project" action="create" ajax="false">
-                    <f:param name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}"/>
-                </p:commandButton>
-            </h:form>
+            <h:link value="Edit Project" outcome="create?includeViewParams=true"/>
         </ui:define>
     </ui:composition>
 </body>

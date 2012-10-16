@@ -22,14 +22,6 @@ import java.util.List;
 @RequestScoped
 public class ResearchProjectDetail extends AbstractJsfBean {
 
-    @Inject
-    private ResearchProjectDao researchProjectDao;
-
-    @Inject
-    private FacesContext facesContext;
-
-    private String researchProjectTitle;
-
     private ResearchProject project;
 
     private String[] selectedPersonnel;
@@ -38,30 +30,12 @@ public class ResearchProjectDetail extends AbstractJsfBean {
         project = new ResearchProject();
     }
 
-    public void loadProject() {
-        // TODO: make this more deliberate, as in not needing to check for a null project
-        // TODO: also, researchProjectTitle should rely on viewParam validation (and conversion to strip whitespace)
-        if ((project == null) && !StringUtils.isBlank(researchProjectTitle)) {
-            project = researchProjectDao.findByTitle(researchProjectTitle);
-        }
-    }
-
-    public void restoreModel() {
-        if (facesContext.isPostback() && researchProjectTitle != null) {
-            project = researchProjectDao.findByTitle(researchProjectTitle);
-        }
-    }
-
-    public String getResearchProjectTitle() {
-        return researchProjectTitle;
-    }
-
-    public void setResearchProjectTitle(String researchProjectTitle) {
-        this.researchProjectTitle = researchProjectTitle;
-    }
-
     public ResearchProject getProject() {
         return project;
+    }
+
+    public void setProject(ResearchProject project) {
+        this.project = project;
     }
 
     public String getSponsoredScientists() {

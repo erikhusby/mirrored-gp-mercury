@@ -242,7 +242,7 @@ public class ResearchProject {
 
     public String[] getIrbNumbers() {
         int i = 0;
-        if (sampleCohorts != null) {
+        if (irbNumbers != null) {
             String[] irbNumberList = new String[irbNumbers.size()];
             for (ResearchProjectIRB irb : irbNumbers) {
                 irbNumberList[i++] = irb.getIrb();

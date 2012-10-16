@@ -14,20 +14,14 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
-                <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
-                <f:event type="preValidate" listener="#{researchProjectDetail.restoreModel}"/>
-                <!-- TODO: figure out if this is really the right way to do this -->
+                <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
                 <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
-                <f:event type="preValidate" listener="#{researchProjectForm.initEmptyProject}"/>
+                <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
             </f:metadata>
         </ui:define>
 
         <ui:define name="body">
             <h:form id="form" prependId="false" styleClass="form-horizontal">
-
-                <!-- propagate researchProjectTitle for restoreModel on postback -->
-                <h:inputHidden value="#{researchProjectDetail.researchProjectTitle}"/>
 
                 <!-- Name -->
                 <div class="control-group">
@@ -135,7 +129,9 @@
                                 <h:link outcome="list" value="Cancel"/>
                             </div>
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                                <!-- TODO: display only one button -->
+                                <p:commandButton value="Create" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Save" action="#{researchProjectForm.edit}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                         </div>
                     </div>
