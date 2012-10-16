@@ -95,7 +95,19 @@
                     <p:outputLabel for="sampleCohorts" value="Sample Cohorts" styleClass="control-label"/>
                     <div class="controls">
                         <!-- TODO: tie into sample service -->
-                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}" completeMethod="#{cohortListBean.searchActiveCohort}" var="cohort" itemLabel="#{cohort.cohortId}" itemValue="#{cohort}" converter="#{bspCohortConverter}" multiple="true"/>
+                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}" completeMethod="#{cohortListBean.searchActiveCohort}" var="cohort" accesskey="#{cohort.cohortId}:#{cohort.name}" itemLabel="#{cohort.name}" itemValue="#{cohort}"  converter="#{bspCohortConverter}" multiple="true">
+                            <p:column style="width:50%">
+                                #{cohort.cohortId}: #{cohort.name}
+                            </p:column>
+
+                            <p:column style="width:25%">
+                                #{cohort.group}
+                            </p:column>
+
+                            <p:column style="width:25%">
+                                #{cohort.group}
+                            </p:column>
+                        </p:autoComplete>
                         <p:watermark for="sampleCohorts" value="Type number to search"/>
                     </div>
                 </div>
