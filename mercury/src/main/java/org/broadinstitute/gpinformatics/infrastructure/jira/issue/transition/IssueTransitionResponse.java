@@ -27,4 +27,23 @@ public class IssueTransitionResponse {
     public List<Transition> getTransitions ( ) {
         return transitions;
     }
+
+    public String getTransitionId(String transitionName) {
+
+        String transitionId = null;
+
+        for( Transition currentTransition:transitions) {
+            if(transitionName.equals(currentTransition.getName())) {
+                transitionId = currentTransition.getId();
+                break;
+            }
+        }
+
+        if(null == transitionId) {
+            throw new IllegalStateException("The Jira Ticket is not able to transition to " +
+                                            transitionName+ " at this time");
+        }
+
+        return transitionId;
+    }
 }

@@ -4,7 +4,6 @@ import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +92,7 @@ public class ProductOrderSample implements Serializable {
     private BSPSampleDTO getBspDTO() {
         if (!hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {
-                bspDTO = ServiceAccessUtility.getSampleName ( this.getSampleName ( ) );
+                bspDTO = ServiceAccessUtility.getSampleDtoByName ( this.getSampleName ( ) );
             } else {
                 bspDTO = BSPSampleDTO.DUMMY;
             }

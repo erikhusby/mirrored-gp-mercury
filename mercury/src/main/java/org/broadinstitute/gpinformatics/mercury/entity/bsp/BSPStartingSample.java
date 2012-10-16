@@ -11,11 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.hibernate.envers.Audited;
 
-import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -110,7 +105,7 @@ public class BSPStartingSample extends StartingSample {
     private void initDto() {
 
         if(bspDTO == null ) {
-            bspDTO = ServiceAccessUtility.getSampleName (this.getSampleName() );
+            bspDTO = ServiceAccessUtility.getSampleDtoByName ( this.getSampleName ( ) );
         }
     }
 
