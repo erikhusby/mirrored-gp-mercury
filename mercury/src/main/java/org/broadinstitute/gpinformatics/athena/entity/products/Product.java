@@ -134,16 +134,8 @@ public class Product implements Serializable {
         return availabilityDate;
     }
 
-    public void setAvailabilityDate(Date availabilityDate) {
-        this.availabilityDate = availabilityDate;
-    }
-
     public Date getDiscontinuedDate() {
         return discontinuedDate;
-    }
-
-    public void setDiscontinuedDate(Date discontinuedDate) {
-        this.discontinuedDate = discontinuedDate;
     }
 
     public Integer getExpectedCycleTimeSeconds() {
