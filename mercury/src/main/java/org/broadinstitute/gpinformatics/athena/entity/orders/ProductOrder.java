@@ -29,7 +29,6 @@ import java.util.*;
 @Audited
 @Table(schema = "athena")
 public class ProductOrder implements Serializable {
-
     @Id
     @SequenceGenerator(name="SEQ_PRODUCT_ORDER", schema = "athena", sequenceName="SEQ_PRODUCT_ORDER")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_PRODUCT_ORDER")
@@ -43,11 +42,16 @@ public class ProductOrder implements Serializable {
 
     @OneToOne
     private Product product;
+
     private OrderStatus orderStatus = OrderStatus.Draft;
+
     private String quoteId;                     // Alphanumeric Id
+
     @Column(length = 2000)
     private String comments;                    // Additional comments of the order
+
     private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
+
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrder")
     private List<ProductOrderSample> samples;
 

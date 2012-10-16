@@ -19,15 +19,25 @@
             </f:metadata>
         </ui:define>
         <ui:define name="body">
-
             <h:form styleClass="view-horizontal">
-                <div class="control-group">
-                    <span class="control-label">Project:</span>
-                    <span class="controls">#{productOrderDetail.productOrder.title}</span>
+                <div class="row-fluid">
+                    <p:commandButton value="Close Out" action="create" ajax="false" styleClass="btn">
+                        <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
+                    </p:commandButton>
+                    &nbsp;
+                    <p:commandButton value="Copy" action="create" ajax="false" styleClass="btn">
+                        <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
+                    </p:commandButton>
+                    &nbsp;
+                    <p:splitButton value="  More Actions  " icon="ui-icon-plus">
+                        <p:menuitem value="Get Quote Template" action="create" includeViewParams="true" icon="ui-icon-folder-open"/>
+                        <p:menuitem value="Update Billing" action="create" includeViewParams="true" icon="ui-icon-arrowrefresh-1-e"/>
+                    </p:splitButton>
                 </div>
 
+
                 <div class="control-group">
-                    <span class="control-label">ID:</span>
+                    <span class="control-label">Order Barcode</span>
                     <span class="controls">
                         <h:link outcome="http://prodinfojira.broadinstitute.org/jira/browse/#{productOrderDetail.productOrder.jiraTicketKey}"
                                 value="#{productOrderDetail.productOrder.jiraTicketKey}"/>
@@ -35,12 +45,13 @@
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">Product:</span>
-                    <span class="controls">#{productOrderDetail.productOrder.product.productName}</span>
+                    <span class="control-label">Product</span>
+                    <span class="controls">#{productOrderDetail.productOrder.title}</span>
                 </div>
 
+
                 <div class="control-group">
-                    <span class="control-label">Quote ID:</span>
+                    <span class="control-label">Quote ID</span>
                     <span class="controls">
                         <h:link outcome="TODO/QUOTE/SERVER/LINK"
                                 value="#{productOrderDetail.productOrder.quoteId}"/>
@@ -49,23 +60,59 @@
 
 
                 <div class="control-group">
-                    <span class="control-label">Comments:</span>
+                    <span class="control-label">Comments</span>
                     <span class="controls">#{productOrderDetail.productOrder.comments}</span>
                 </div>
 
                 <div class="control-group">
-                    <span class="control-label">Samples:</span>
+                    <span class="control-label">Samples</span>
                     <span class="controls">#{productOrderDetail.productOrder.sampleSummary}</span>
                 </div>
 
-                <br/>
+                <p></p>
 
-                <p:selectOneMenu id="selectedStatus" value="">
-                    <f:selectItem itemLabel="Status" itemValue="" />
-                    <f:selectItems value="#{productOrderBean.allSampleStatuses}" />
-                </p:selectOneMenu>
 
-                <p:dataTable value="#{productOrderDetail.productOrder.samples}" var="sample">
+                <div class="row-fluid">
+                    <div class="pull-left span6">
+                        <span>Status</span>
+                        <span>
+                            <p:selectOneMenu id="selectedStatus" value="">
+                                <f:selectItem itemLabel="Status" itemValue="" />
+                                <f:selectItems value="#{productOrderBean.allSampleStatuses}" />
+                            </p:selectOneMenu>
+                        </span>
+                    </div>
+                </div>
+                <p/>
+                <div class="row">
+                    <div class="pull-right ui-widget-header" style="padding: 5px;">
+                        <span class="ui-icon ui-icon-folder-open" style="float:left;"></span>
+                        <h:outputText value=" Export all data as: " />
+
+                        <p:commandLink title="Click to download all sample data as a Microsoft Excel file">
+                            <h:outputText value="Excel"/>
+                            <p:dataExporter type="xls" target="sampleData" fileName="#{productOrderDetail.productOrder.title}" />
+                        </p:commandLink>
+                        &nbsp;
+                        <p:commandLink title="Click to download all sample data as a CSV file">
+                            <h:outputText value="CSV"/>
+                            <p:dataExporter type="csv" target="sampleData" fileName="#{productOrderDetail.productOrder.title}" />
+                        </p:commandLink>
+                    </div>
+                </div>
+
+                <p:dataTable id="sampleData"
+                             value="#{productOrderDetail.productOrder.samples}"
+                             var="sample"
+                             paginator="true"
+                             paginatorAlwaysVisible='false'
+                             rows="100"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="50,100,250,1000">
+                    <f:facet name="header">
+                        Samples
+                    </f:facet>
+
                     <p:column headerText="ID">
                         <h:link outcome="TODO/BSP/SERVER/LINK" value="#{sample.sampleName}"/>
                     </p:column>
@@ -102,11 +149,6 @@
                 </p:dataTable>
             </h:form>
 
-            <h:form>
-                <p:commandButton value="Edit Project" action="create" ajax="false">
-                    <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
-                </p:commandButton>
-            </h:form>
         </ui:define>
     </ui:composition>
 </body>
