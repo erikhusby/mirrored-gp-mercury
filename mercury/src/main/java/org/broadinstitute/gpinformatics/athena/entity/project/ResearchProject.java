@@ -1,15 +1,23 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -46,18 +54,28 @@ public class ResearchProject {
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
     private Long researchProjectId;
 
-    private Status status;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Status status = Status.Open;
 
     // creation/modification information
+    @Column(nullable = false)
     private Date createdDate;
+
+    @Column(nullable = false)
     private Long createdBy;
+
+    @Column(nullable = false)
     private Date modifiedDate;
+
+    @Column(nullable = false)
     private Long modifiedBy;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     @Index(name = "ix_rp_title")
     private String title;
 
+    @Column(nullable = false)
     private String synopsis;
 
     private boolean irbNotEngaged = IRB_ENGAGED;
@@ -83,6 +101,10 @@ public class ResearchProject {
 
     @Index(name = "ix_rp_jira")
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
+
+    public String getBusinessKey() {
+        return title;
+    }
 
     /**
      * no arg constructor for hibernate and JSF.
@@ -120,6 +142,10 @@ public class ResearchProject {
 
     public String getSynopsis() {
         return synopsis;
+    }
+
+    public boolean getIrbNotEngaged() {
+        return irbNotEngaged;
     }
 
     public Long getResearchProjectId() {
@@ -241,7 +267,7 @@ public class ResearchProject {
             irbNumbers = new HashSet<ResearchProjectIRB>();
         }
 
-        irbNumbers.add(irbNumber);
+        irbNumbers.add ( irbNumber );
     }
 
     public void removeIrbNumber(ResearchProjectIRB irbNumber) {
@@ -274,8 +300,16 @@ public class ResearchProject {
         return getPeople(RoleType.PM);
     }
 
+    public Long[] getBroadPIs() {
+        return getPeople(RoleType.BROAD_PI);
+    }
+
     public Long[] getScientists() {
         return getPeople(RoleType.SCIENTIST);
+    }
+
+    public Long[] getExternalCollaborators() {
+        return getPeople ( RoleType.EXTERNAL );
     }
 
     public String[] getFundingIds() {
@@ -322,6 +356,71 @@ public class ResearchProject {
         return RoleType.values();
     }
 
+    public void submit() throws IOException {
+
+        Map<String, CustomFieldDefinition> submissionFields =
+                ServiceAccessUtility.getJiraCustomFields ( );
+
+        List<CustomField> listOfFields = new ArrayList<CustomField>();
+
+        //TODO HR, SGM -- Update for Sponsoring Scientist
+        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()),
+                                         associatedPeople.iterator().next().getPersonId().toString()));
+
+        if(!sampleCohorts.isEmpty()) {
+            List<String> cohortNames = new ArrayList<String>();
+
+            for(ResearchProjectCohort cohort:sampleCohorts) {
+                cohortNames.add(cohort.getCohortId());
+            }
+            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Cohorts.getFieldName()),
+                                             StringUtils.join(cohortNames,',')));
+        }
+        if(!projectFunding.isEmpty()) {
+            List<String> fundingSources = new ArrayList<String>();
+            for(ResearchProjectFunding fundingSrc:projectFunding) {
+                fundingSources.add(fundingSrc.getFundingId());
+            }
+
+            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Funding_Source.getFieldName()),
+                                             StringUtils.join(fundingSources,',')));
+        }
+        if(!irbNumbers.isEmpty()) {
+            List<String> irbNums = new ArrayList<String>();
+            for(ResearchProjectIRB irb:irbNumbers ){
+                irbNums.add(irb.getIrb());
+            }
+            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_Number.getFieldName()),
+                                             StringUtils.join(irbNums,',')));
+        }
+        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_Engaged.getFieldName()),
+                                         BooleanUtils.toStringYesNo(irbNotEngaged) ));
+
+        CreateIssueResponse researchProjectResponse =
+                ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
+                                                      title, synopsis, listOfFields);
+
+        jiraTicketKey = researchProjectResponse.getKey();
+
+        /**
+         * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
+         */
+//        addWatcher(createdBy.toString());
+
+    }
+
+    public void addPublicComment(String comment) throws IOException{
+        ServiceAccessUtility.addJiraComment ( jiraTicketKey, comment );
+    }
+
+    public void addWatcher(String personLoginId) throws IOException {
+        ServiceAccessUtility.addJiraWatcher ( jiraTicketKey, personLoginId );
+    }
+
+    public void addLink(String targetIssueKey) throws IOException {
+        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
+    }
+
     /**
      * fetchJiraProject is a helper method that binds a specific Jira project to a ResearchProject entity.  This
      * makes it easier for a user of this object to interact with Jira for this entity
@@ -355,7 +454,11 @@ public class ResearchProject {
      */
     public enum RequiredSubmissionFields {
 
-        Sponsoring_Scientist("Sponsoring Scientist");
+        Sponsoring_Scientist("Sponsoring Scientist"),
+        Cohorts("Cohort(s)"),
+        Funding_Source("Funding Source"),
+        IRB_IACUC_Number("IRB/IACUC Number"),
+        IRB_Engaged("IRB Engaged?");
 
         private String fieldName;
 

@@ -95,6 +95,14 @@ public class BSPSampleDataFetcher {
         String organism = null;
         String sampleLsid = null;
         String gender = null;
+        String collaboratorParticipantId = null;
+        String materialType = null;
+        String total = null;
+        String sampleType = null;
+        String primaryDisease = null;
+        String stockType = null;
+        String fingerprint = null;
+        String containerId = null;
 
         if (bspColumns.length > 0) {
             patientId = bspColumns[0];
@@ -111,21 +119,51 @@ public class BSPSampleDataFetcher {
         if (bspColumns.length > 4) {
             collection = bspColumns[4];
         }
-        if (bspColumns.length > 4) {
+        if (bspColumns.length > 5) {
             volume = bspColumns[5];
         }
-        if (bspColumns.length > 5) {
+        if (bspColumns.length > 6) {
             concentration = bspColumns[6];
         }
-        if (bspColumns.length > 6) {
+        if (bspColumns.length > 7) {
             organism = bspColumns[7];
         }
-        if (bspColumns.length > 7) {
+        if (bspColumns.length > 8) {
             sampleLsid = bspColumns[8];
+        }
+        if (bspColumns.length > 9) {
+            collaboratorParticipantId = bspColumns[9];
+        }
+        if (bspColumns.length > 10) {
+            materialType = bspColumns[10];
+        }
+        if (bspColumns.length > 11) {
+            total = bspColumns[11];
+        }
+        if (bspColumns.length > 12) {
+            sampleType = bspColumns[12];
+        }
+        if (bspColumns.length > 13) {
+            primaryDisease = bspColumns[13];
+        }
+        if (bspColumns.length > 14) {
+            gender = bspColumns[14];
+        }
+        if (bspColumns.length > 15) {
+            stockType = bspColumns[15];
+        }
+        if (bspColumns.length > 16) {
+            fingerprint = bspColumns[16];
+        }
+
+        if (bspColumns.length > 17) {
+            containerId = bspColumns[17];
         }
         /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
 
-        return new BSPSampleDTO(null,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,volume,concentration, sampleLsid);
+        return new BSPSampleDTO(containerId,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,
+                                volume,concentration, sampleLsid, collaboratorParticipantId, materialType, total,
+                                sampleType, primaryDisease,gender, stockType, fingerprint);
 
     }
 
@@ -139,6 +177,15 @@ public class BSPSampleDataFetcher {
                 BSPSampleSearchColumn.VOLUME,
                 BSPSampleSearchColumn.CONCENTRATION,
                 BSPSampleSearchColumn.SPECIES,
-                BSPSampleSearchColumn.LSID);
+                BSPSampleSearchColumn.LSID,
+                BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
+                BSPSampleSearchColumn.MATERIAL_TYPE,
+                BSPSampleSearchColumn.TOTAL_DNA,
+                BSPSampleSearchColumn.SAMPLE_TYPE,
+                BSPSampleSearchColumn.PRIMARY_DISEASE,
+                BSPSampleSearchColumn.GENDER,
+                BSPSampleSearchColumn.STOCK_TYPE,
+                BSPSampleSearchColumn.FINGERPRINT,
+                BSPSampleSearchColumn.CONTAINER_ID);
     }
 }

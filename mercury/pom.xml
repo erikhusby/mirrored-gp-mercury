@@ -474,7 +474,9 @@
         <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
             <id>JavaEE</id>
-
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <dependencies>
                 <dependency>
                     <groupId>javax</groupId>
@@ -653,7 +655,7 @@
                     <plugin>
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.1</version>
+                        <version>2.0.5</version>
                         <executions>
                             <execution>
                                 <phase>process-resources</phase>
@@ -687,21 +689,21 @@
                     <plugin>
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.1</version>
+                        <version>2.0.5</version>
                         <executions>
                             <execution>
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/athenadb.changelog-1.0.xml</changeLogFile>
                                     <!-- todo jmt decide how best to have different parameters for different databases -->
-<!--
                                     <driver>org.postgresql.Driver</driver>
                                     <url>jdbc:postgresql://localhost/postgres</url>
--->
+<!--
                                     <driver>oracle.jdbc.driver.OracleDriver</driver>
                                     <url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</url>
+-->
                                     <username>athena</username>
-                                    <password>athena_dev</password>
+                                    <password>athena_local</password>
                                     <defaultSchemaName>athena</defaultSchemaName>
                                     <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                                 </configuration>
@@ -1117,6 +1119,13 @@
         	<groupId>com.intellij</groupId>
         	<artifactId>annotations</artifactId>
         	<version>9.0.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.meanbean</groupId>
+            <artifactId>meanbean</artifactId>
+            <version>2.0.3</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -1538,6 +1547,10 @@
                                 <propertyfile file="${pom.basedir}/target/version.properties">
                                     <entry key="project.version" type="string" value="${project.version}"
                                            operation="="/>
+                                </propertyfile>
+                                <propertyfile file="${pom.basedir}/target/classes/build.properties">
+                                    <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
+                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}" operation="=" />
                                 </propertyfile>
                             </target>
                         </configuration>
