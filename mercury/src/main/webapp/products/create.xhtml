@@ -28,31 +28,18 @@
                     <!-- TODO hook up the productFamily, see below -->
                     <p:outputLabel for="productFamily" value="Product Family" styleClass="control-label"/>
                     <div class="controls">
-                    <!--<p:selectOneMenu id="productFamily" value="#{productDetail.productFamily}">-->
-                        <!--<f:selectItem itemLabel="Select the product family" itemValue="" />-->
-                        <!--<f:selectItem itemLabel="GENERAL_PRODUCTS" itemValue="1" />-->
-                        <!--<f:selectItem itemLabel="EXOME_SEQUENCING_ANALYSIS" itemValue="2" />-->
-                        <!--<f:selectItem itemLabel="WHOLE_GENOME_SEQUENCING_ANALYSIS" itemValue="3" />-->
-                        <!--<f:selectItem itemLabel="WHOLE_GENOME_ARRAY_ANALYSIS" itemValue="4" />-->
-                        <!--<f:selectItem itemLabel="RNA_ANALYSIS" itemValue="5" />-->
-                        <!--<f:selectItem itemLabel="ASSEMBLY_ANALYSIS" itemValue="6" />-->
-                        <!--<f:selectItem itemLabel="METAGENOMIC_ANALYSIS" itemValue="7" />-->
-                        <!--<f:selectItem itemLabel="EPIGENOMIC_ANALYSIS" itemValue="8" />-->
-                        <!--<f:selectItem itemLabel="ILLUMINA_SEQUENCING_ONLY" itemValue="9" />-->
-                        <!--<f:selectItem itemLabel="ALTERNATIVE_TECHNOLOGIES" itemValue="10" />-->
-                        <!--<f:selectItem itemLabel="CUSTOM_PRODUCTS_TARGETED_SEQUENCING" itemValue="11" />-->
-                    <!--</p:selectOneMenu>-->
                         <p:selectOneMenu id="productFamily" value="#{productDetail.productFamily}">
-                            <f:selectItem itemLabel="Select the product family" itemValue="" />
-                            <f:selectItems value="#{productDetail.productFamilies}" />
+                            <p:watermark for="description" value="Select the Product family"/>
+                            <f:selectItem itemLabel="Select the Product family" itemValue="" />
+                            <f:selectItems value="#{productDetail.productFamilies}"  var="fam" itemValue="#{fam.productFamilyId}" itemLabel="#{fam.displayName}" required="true" />
                         </p:selectOneMenu>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <p:outputLabel for="name" value="Product Name" styleClass="control-label"/>
+                    <p:outputLabel for="name" value="Product Name" styleClass="control-label" />
                     <div class="controls">
-                        <p:inputText id="name" value="#{productDetail.productName}" size="50"/>
+                        <p:inputText id="name" value="#{productDetail.productName}" size="50" required="true"/>
                         <p:watermark for="name" value="Enter the name of the new product"/>
                     </div>
                 </div>
@@ -69,7 +56,7 @@
                 <div class="control-group">
                     <p:outputLabel for="partNumber" value="Part Number" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="partNumber" value="#{productDetail.partNumber}" size="50"/>
+                        <p:inputText id="partNumber" value="#{productDetail.partNumber}" size="50" required="true"/>
                         <p:watermark for="partNumber" value="Enter the part number of the product"/>
                     </div>
                 </div>
@@ -77,7 +64,7 @@
                 <div class="control-group">
                     <p:outputLabel for="availabilityDate" value="Availability Date" styleClass="control-label"/>
                     <div class="controls">
-                        <p:calendar value="#{productDetail.availabilityDate}" id="availabilityDate" size="50"/>
+                        <p:calendar value="#{productDetail.availabilityDate}" id="availabilityDate" size="50" required="true"/>
                         <p:watermark for="availabilityDate" value="Enter the availability date"/>
                     </div>
                 </div>
