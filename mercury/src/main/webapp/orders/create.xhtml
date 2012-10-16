@@ -73,10 +73,57 @@
                 <div class="control-group">
                     <p:outputLabel for="comments" value="Comments" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="comments" value="#{productOrderDetail.productOrder.comments}"/>
+                        <p:inputTextarea id="comments" value="#{productOrderDetail.productOrder.comments}" cols="50"/>
                         <p:watermark for="comments" value="Enter Comments"/>
                     </div>
                 </div>
+
+                <p:dialog header="Samples" widgetVar="samplesDialog" modal="true">
+                    <h:form id="sampleDialogForm" prependId="false" styleClass="form-horizontal">
+                        <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.sampleIDs}" cols="80" rows="20">
+                            <p:ajax update="samplesDialogStatus" listener="#{productOrderForm.load}"/>
+                        </p:inputTextarea>
+                        <br/>
+                        <h:outputText id="samplesDialogStatus" value="#{productOrderForm.sampleStatus}"/>
+                        <div class="control-group">
+                            <div class="controls">
+                                <div class="row-fluid">
+                                    <div class="span1">
+                                        <p:commandButton value="Cancel" onclick="samplesDialog.hide()" ajax="false" />
+                                    </div>
+                                    <div class="span1">
+                                        <p:commandButton value="OK" onclick="samplesDialog.hide()" ajax="false" styleClass="ui-priority-primary"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </h:form>
+                </p:dialog>
+
+                <div class="control-group">
+                    <h:outputText value="Samples" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:commandButton value="Edit Sample List..." onclick="samplesDialog.show()"/>
+                    </div>
+                </div>
+
+                <p:dataTable value="#{productOrderDetail.productOrder.samples}" var="sample">
+                    <p:column headerText="ID">
+                        #{sample.sampleName}
+                    </p:column>
+
+                    <p:column headerText="Participant">
+                        #{sample.bspDTO.patientId}
+                    </p:column>
+
+                    <p:column headerText="Material">
+                        #{sample.bspDTO.materialType}
+                    </p:column>
+
+                    <p:column headerText="Volume">
+                        #{sample.bspDTO.volume}
+                    </p:column>
+                </p:dataTable>
 
                 <div class="control-group">
                     <div class="controls">

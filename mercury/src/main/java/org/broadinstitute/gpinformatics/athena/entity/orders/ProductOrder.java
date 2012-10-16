@@ -9,15 +9,8 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-
-import javax.persistence.Transient;
-import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.hibernate.envers.Audited;
@@ -26,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.persistence.*;
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -229,11 +223,11 @@ public class ProductOrder implements Serializable {
     public int getUniqueParticipantCount() {
         Set<String> uniqueParticipants = new HashSet<String>();
 
-        if (! isSheetEmpty() ) {
-            if ( needsBspMetaData() ) {
+        if (!isSheetEmpty()) {
+            if (needsBspMetaData()) {
 
                 Map<String, BSPSampleDTO> bspSampleMetaData =
-                        ServiceAccessUtility.getSampleNames( getUniqueSampleNames ( ) );
+                        ServiceAccessUtility.getSampleNames(getUniqueSampleNames());
                 updateBspMetaData(bspSampleMetaData);
             }
 
@@ -299,8 +293,8 @@ public class ProductOrder implements Serializable {
     public int getBspSampleCount() {
         int count = 0;
 
-        for(ProductOrderSample sample : samples) {
-            if(sample.isInBspFormat ( )) {
+        for (ProductOrderSample sample : samples) {
+            if (sample.isInBspFormat()) {
                 count++;
             }
         }
@@ -315,14 +309,10 @@ public class ProductOrder implements Serializable {
      * @return An instance of a TumorNormalCount object which exposes both the tumor sample counts and normal sample
      * counts for the registered samples
      */
-    public TumorNormalCount getTumorNormalCounts ( ) {
-
-        TumorNormalCount counts =
-                new TumorNormalCount(
-                        getSampleTypeCount(BSPSampleDTO.TUMOR_IND),
-                        getSampleTypeCount(BSPSampleDTO.NORMAL_IND)
-                );
-        return counts;
+    public TumorNormalCount getTumorNormalCounts() {
+        return new TumorNormalCount(
+                getSampleTypeCount(BSPSampleDTO.TUMOR_IND),
+                getSampleTypeCount(BSPSampleDTO.NORMAL_IND));
     }
 
     /**
@@ -332,14 +322,10 @@ public class ProductOrder implements Serializable {
      * @return an instance of a MaleFemaleCount object which exposes both the Male participant sample counts and the
      * Female Participant counts
      */
-    public MaleFemaleCount getMaleFemaleCounts ( ) {
-
-        MaleFemaleCount counts =
-                new MaleFemaleCount(
-                        getGenderCount ( BSPSampleDTO.MALE_IND ),
-                        getGenderCount ( BSPSampleDTO.FEMALE_IND )
-                );
-        return counts;
+    public MaleFemaleCount getMaleFemaleCounts() {
+        return new MaleFemaleCount(
+                getGenderCount(BSPSampleDTO.MALE_IND),
+                getGenderCount(BSPSampleDTO.FEMALE_IND));
     }
 
     /**
@@ -349,13 +335,10 @@ public class ProductOrder implements Serializable {
      * @return an instance of a BspNonBspSampleCount object which exposes both the BSP sample counts and the non-BSP
      * sample counts
      */
-    public BspNonBspSampleCount getBspNonBspSampleCounts ( ) {
-        BspNonBspSampleCount counts =
-                new BspNonBspSampleCount(
-                        getBspSampleCount ( ),
-                        getTotalSampleCount() - getBspSampleCount()
-                );
-        return counts;
+    public BspNonBspSampleCount getBspNonBspSampleCounts() {
+        return new BspNonBspSampleCount(
+                getBspSampleCount(),
+                getTotalSampleCount() - getBspSampleCount());
     }
 
     /**
@@ -365,8 +348,7 @@ public class ProductOrder implements Serializable {
      * @return an instance of a BilledNotBilledCounts object which exposes both the Billed counts and the not billed
      * counts
      */
-    public BilledNotBilledCounts getBilledNotBilledCounts ( ) {
-
+    public BilledNotBilledCounts getBilledNotBilledCounts() {
         return new BilledNotBilledCounts(getBillingStatusCount(BillingStatus.Billed),
                                          getBillingStatusCount(BillingStatus.NotYetBilled));
     }
@@ -376,7 +358,7 @@ public class ProductOrder implements Serializable {
      *
      * @return a count of all samples registered to this product order that are eligible for billing
      */
-    public int getElligibleForBillingCounts ( ) {
+    public int getElligibleForBillingCounts() {
         return getBillingStatusCount(BillingStatus.EligibleForBilling);
     }
 
@@ -385,7 +367,7 @@ public class ProductOrder implements Serializable {
      *
      * @return a count of all samples registered to this product order that have not been billed
      */
-    public int getNotBillableCounts ( ) {
+    public int getNotBillableCounts() {
         return getBillingStatusCount(BillingStatus.NotBillable);
     }
 
@@ -397,11 +379,11 @@ public class ProductOrder implements Serializable {
      *                     of Product Order Samples registered to this Product Order
      * @return a count of all samples that have a billing status that matches the given billing status
      */
-    private int getBillingStatusCount (BillingStatus targetStatus) {
+    private int getBillingStatusCount(BillingStatus targetStatus) {
         int statusCount = 0;
 
-        for(ProductOrderSample sample:samples) {
-            if(targetStatus.equals ( sample.getBillingStatus ( ) )) {
+        for (ProductOrderSample sample : samples) {
+            if (targetStatus == sample.getBillingStatus()) {
                 statusCount++;
             }
         }
@@ -415,13 +397,11 @@ public class ProductOrder implements Serializable {
      *
      * @return a count of the samples that have a fingerprint
      */
-    public int getFingerprintCount ( ) {
-
+    public int getFingerprintCount() {
         int fpCount = 0;
 
-        for ( ProductOrderSample productOrderSample : samples ) {
-            if ( productOrderSample.isInBspFormat () &&
-                    productOrderSample.hasFingerprint ( )) {
+        for (ProductOrderSample productOrderSample : samples ) {
+            if (productOrderSample.isInBspFormat() && productOrderSample.hasFingerprint()) {
                 fpCount++;
             }
         }
@@ -439,13 +419,13 @@ public class ProductOrder implements Serializable {
 
         Map<String, Integer> stockTypeCounts = new HashMap<String, Integer>();
 
-        for(ProductOrderSample sample : samples) {
-            if(sample.isInBspFormat () &&
-               !StringUtils.isEmpty(sample.getStockType())) {
-                if(!stockTypeCounts.containsKey(sample.getStockType())) {
-                    stockTypeCounts.put(sample.getStockType(), 0);
+        for (ProductOrderSample sample : samples) {
+            if (sample.isInBspFormat () && !StringUtils.isEmpty(sample.getStockType())) {
+                String stockType = sample.getStockType();
+                if (!stockTypeCounts.containsKey(stockType)) {
+                    stockTypeCounts.put(stockType, 0);
                 }
-                stockTypeCounts.put(sample.getStockType(), stockTypeCounts.get(sample.getStockType()) + 1);
+                stockTypeCounts.put(stockType, stockTypeCounts.get(stockType) + 1);
             }
         }
 
@@ -462,13 +442,13 @@ public class ProductOrder implements Serializable {
     public Map<String, Integer> getPrimaryDiseaseCount() {
         Map<String, Integer> uniqueDiseases = new HashMap<String, Integer>();
 
-        for(ProductOrderSample sample: samples) {
-            if(sample.isInBspFormat () &&
-                    !StringUtils.isEmpty(sample.getDisease())) {
-                if(!uniqueDiseases.containsKey(sample.getDisease())) {
-                    uniqueDiseases.put(sample.getDisease(),0);
+        for (ProductOrderSample sample: samples) {
+            if (sample.isInBspFormat() && !StringUtils.isEmpty(sample.getDisease())) {
+                String disease = sample.getDisease();
+                if (!uniqueDiseases.containsKey(disease)) {
+                    uniqueDiseases.put(disease, 0);
                 }
-                uniqueDiseases.put(sample.getDisease(), uniqueDiseases.get(sample.getDisease()) +1);
+                uniqueDiseases.put(disease, uniqueDiseases.get(disease) + 1);
             }
         }
 
@@ -482,11 +462,10 @@ public class ProductOrder implements Serializable {
      * @param gender A string that represents the gender for which we wish to get a count
      * @return a count of all samples for whom the participant's gener matches the one given
      */
-    private int getGenderCount ( String gender ) {
-
+    private int getGenderCount(String gender) {
         int counter = 0;
-        for (ProductOrderSample sample:samples) {
-            if (sample.isInBspFormat () && gender.equals (sample.getGender ())) {
+        for (ProductOrderSample sample : samples) {
+            if (sample.isInBspFormat() && gender.equals(sample.getGender())) {
                 counter++;
             }
         }
@@ -546,6 +525,11 @@ public class ProductOrder implements Serializable {
         return counter;
     }
 
+    private static void addCustomField(Map<String, CustomFieldDefinition> submissionFields,
+                                       List<CustomField> list, RequiredSubmissionFields field, Object value) {
+        list.add(new CustomField(submissionFields.get(field.getFieldName()), value));
+    }
+
     /**
      * submitProductOrder encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
@@ -557,67 +541,61 @@ public class ProductOrder implements Serializable {
      * </ul>
      * @throws IOException
      */
-    public void submitProductOrder() throws IOException{
-
-        Map<String, CustomFieldDefinition> submissionFields =
-                ServiceAccessUtility.getJiraCustomFields ( );
+    public void submitProductOrder() throws IOException {
+        Map<String, CustomFieldDefinition> submissionFields = ServiceAccessUtility.getJiraCustomFields();
 
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
-        listOfFields.add(
-                new CustomField(submissionFields.get(RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()),
-                                this.product.getProductFamily()));
+        addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT_FAMILY,
+                product.getProductFamily());
 
-        if(quoteId != null && !quoteId.isEmpty()) {
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.QUOTE_ID.getFieldName()),
-                            this.quoteId));
+        if (quoteId != null && !quoteId.isEmpty()) {
+            addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.QUOTE_ID, quoteId);
         }
 
-        CreateIssueResponse issueResponse =
-                ServiceAccessUtility.createJiraTicket ( fetchJiraProject ( ).getKeyPrefix ( ), fetchJiraIssueType ( ),
-                                                        title, comments, listOfFields );
+        CreateIssueResponse issueResponse = ServiceAccessUtility.createJiraTicket(
+                fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title, comments, listOfFields);
 
         jiraTicketKey = issueResponse.getKey();
 
         addLink(researchProject.getJiraTicketKey());
 
-        addPublicComment ( "Sample List: " + StringUtils.join ( getUniqueSampleNames ( ), ',' ) );
+        addPublicComment("Sample List: " + StringUtils.join(getUniqueSampleNames(), ','));
 
-        /**
-         * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
-         */
-//        addWatcher(createdBy.toString());
-
+        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
 
         sampleValidationComments();
     }
 
     /**
-     * sampleValidationComments is a helper method encapsulating the validations run against the samples contained
-     * within this product order.  The results of these validation checks are then added to the existing Jira Ticket
+     * This is a helper method encapsulating the validations run against the samples contained
+     * within this product order.  The results of these validation checks are then added to the existing Jira Ticket.
+     *
+     * FIXME: this code is currently iterating over the samples many times to find the counts. Instead it should
+     * loop only once, and do all the counts at the same time.
      *
      * @throws IOException
      */
     public void sampleValidationComments() throws IOException {
-        StringBuilder buildValidationCommentsIn = new StringBuilder();
-        if(getBspNonBspSampleCounts().getBspSampleCount() == getTotalSampleCount()) {
-            buildValidationCommentsIn.append("All Samples are BSP Samples");
-            buildValidationCommentsIn.append("\n");
-            buildValidationCommentsIn.append(String.format("%s of %s Samples are in RECEIVED state",
-                                                         getReceivedSampleCount(), getTotalSampleCount()));
-            buildValidationCommentsIn.append("\n");
-            buildValidationCommentsIn.append(String.format("%s of %s Samples are Active stock",
-                                                         getActiveSampleCount(), getTotalSampleCount()));
+        StringBuilder sb = new StringBuilder();
+        if (getBspNonBspSampleCounts().getBspSampleCount() == getTotalSampleCount()) {
+            sb.append("All Samples are BSP Samples");
+            sb.append("\n");
+            sb.append(MessageFormat.format("{0} of {1} Samples are in RECEIVED state",
+                    getReceivedSampleCount(), getTotalSampleCount()));
+            sb.append("\n");
+            sb.append(MessageFormat.format("{0} of {1} Samples are Active stock",
+                    getActiveSampleCount(), getTotalSampleCount()));
         } else if(getBspNonBspSampleCounts().getBspSampleCount() != 0 &&
                 getBspNonBspSampleCounts().getNonBspSampleCount() != 0) {
-            buildValidationCommentsIn.append(String.format("Of %s Samples, %s are BSP samples and %s are non-BSP",
-                                                         getTotalSampleCount(),getBspNonBspSampleCounts().getBspSampleCount(),
-                                                         getBspNonBspSampleCounts().getNonBspSampleCount()));
+            sb.append(MessageFormat.format("Of {0} Samples, {1} are BSP samples and {2} are non-BSP",
+                    getTotalSampleCount(), getBspNonBspSampleCounts().getBspSampleCount(),
+                    getBspNonBspSampleCounts().getNonBspSampleCount()));
         } else {
-            buildValidationCommentsIn.append("None of the samples come from BSP") ;
+            sb.append("None of the samples come from BSP") ;
         }
 
-        addPublicComment(buildValidationCommentsIn.toString());
+        addPublicComment(sb.toString());
     }
 
     /**
@@ -625,8 +603,8 @@ public class ProductOrder implements Serializable {
      * @param comment comment to set in Jira
      * @throws IOException
      */
-    public void addPublicComment(String comment) throws IOException{
-        ServiceAccessUtility.addJiraComment ( jiraTicketKey, comment );
+    public void addPublicComment(String comment) throws IOException {
+        ServiceAccessUtility.addJiraComment(jiraTicketKey, comment);
     }
 
     /**
@@ -636,7 +614,7 @@ public class ProductOrder implements Serializable {
      * @throws IOException
      */
     public void addWatcher(String personLoginId) throws IOException {
-        ServiceAccessUtility.addJiraWatcher ( jiraTicketKey, personLoginId );
+        ServiceAccessUtility.addJiraWatcher(jiraTicketKey, personLoginId);
     }
 
     /**
@@ -647,7 +625,7 @@ public class ProductOrder implements Serializable {
      * @throws IOException
      */
     public void addLink(String targetIssueKey) throws IOException {
-        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
+        ServiceAccessUtility.addJiraPublicLink(AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
     }
 
     /**
@@ -656,34 +634,31 @@ public class ProductOrder implements Serializable {
      * @throws IOException
      */
     public void closeProductOrder() throws IOException {
-
-        if(StringUtils.isEmpty(jiraTicketKey)) {
+        if (StringUtils.isEmpty(jiraTicketKey)) {
             throw new IllegalStateException("A jira Ticket has not been created.");
         }
         IssueTransitionResponse transitions = ServiceAccessUtility.getTransitions(jiraTicketKey);
 
         String transitionId = null;
 
-        for( Transition currentTransition:transitions.getTransitions()) {
-            if(TransitionStates.Complete.getStateName().equals(currentTransition.getName())) {
+        for (Transition currentTransition : transitions.getTransitions()) {
+            if (TransitionStates.Complete.getStateName().equals(currentTransition.getName())) {
                 transitionId = currentTransition.getId();
                 break;
             }
         }
 
-        if(null == transitionId) {
+        if (transitionId == null) {
             throw new IllegalStateException("The Jira Ticket " + jiraTicketKey +
                                                     " cannot be closed at this time");
         }
 
         ServiceAccessUtility.postTransition(jiraTicketKey, transitionId);
-
     }
 
     /**
-     * Returns true if any and all samples are of BSP Format.
-     * Note will return false if there are no samples on the sheet.
-     * @return
+     * @return true if all samples are of BSP Format. Note:
+     * will return false if there are no samples on the sheet.
      */
     public boolean areAllSampleBSPFormat() {
         boolean result = true;
@@ -727,13 +702,13 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * updateBspMetaData is a helper method that will update the BSP eta data of all samples registered to this product
-     * order that are represented in the given Map
+     * This is a helper method that will update the BSP eta data of all samples registered to this product
+     * order that are represented in the given Map.
      * @param derivedMetaData a map of BSP metadata indexed by the sample name
      */
     private void updateBspMetaData(Map<String, BSPSampleDTO> derivedMetaData) {
-        for(ProductOrderSample sample:getSamples()) {
-            if(derivedMetaData.containsKey(sample.getSampleName())) {
+        for (ProductOrderSample sample : getSamples()) {
+            if (derivedMetaData.containsKey(sample.getSampleName())) {
                 sample.setBspDTO(derivedMetaData.get(sample.getSampleName()));
             }
         }
@@ -742,8 +717,8 @@ public class ProductOrder implements Serializable {
 
 
     /**
-     * fetchJiraProject is a helper method that binds a specific Jira project to an ProductOrder entity.  This
-     * makes it easier for a user of this object to interact with Jira for this entity
+     * This is a helper method that binds a specific Jira project to an ProductOrder entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity.
      *
      * @return An enum of type
      * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
@@ -755,9 +730,8 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     *
-     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to an ProductOrder entity.  This
-     * makes it easier for a user of this object to interact with Jira for this entity
+     * This is a helper method that binds a specific Jira Issue Type to an ProductOrder entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity.
      *
      * @return An enum of type
      * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
@@ -826,7 +800,7 @@ public class ProductOrder implements Serializable {
         Start_Progress("Start Progress"),
         Put_On_Hold("Put On Hold");
 
-        private String stateName;
+        private final String stateName;
 
         private TransitionStates (String stateName ) {
             this.stateName = stateName;
