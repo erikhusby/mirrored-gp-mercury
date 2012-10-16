@@ -19,12 +19,13 @@ import java.util.List;
 import java.util.UUID;
 
 /**
+ *
  * Created by IntelliJ IDEA.
  * User: mccrory
  * Date: 10/9/12
  * Time: 3:47 PM
  */
-@Test(enabled = false)
+@Test(enabled = true)
 public class ProductOrderDaoTest extends ContainerTest {
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
@@ -60,7 +61,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
         sampleList.add(new ProductOrderSample("MS-1111"));
         sampleList.add(new ProductOrderSample("MS-1112"));
-        ProductOrder newProductOrder = new ProductOrder(testProductOrderTitle, sampleList, "quoteId", null, firstFoundResearchProject );
+        ProductOrder newProductOrder = new ProductOrder(1L, testProductOrderTitle, sampleList, "quoteId", null, firstFoundResearchProject );
         productOrderDao.persist(newProductOrder);
         productOrderDao.flush();
         productOrderDao.clear();

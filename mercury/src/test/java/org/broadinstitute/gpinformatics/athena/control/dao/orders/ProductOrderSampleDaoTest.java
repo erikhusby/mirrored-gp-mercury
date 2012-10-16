@@ -6,7 +6,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 
 /**
- * Created by IntelliJ IDEA.
+ *
  * User: mccrory
  * Date: 10/10/12
  * Time: 2:20 PM

@@ -49,7 +49,7 @@ public class BillableItemDaoTest  extends ContainerTest {
         List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
         sampleList.add(new ProductOrderSample("MS-1111"));
         sampleList.add(new ProductOrderSample("MS-1112"));
-        ProductOrder newProductOrder = new ProductOrder(testProductOrderTitle, sampleList, "quoteId", null, firstResearchProjectFound );
+        ProductOrder newProductOrder = new ProductOrder(1L, testProductOrderTitle, sampleList, "quoteId", null, firstResearchProjectFound );
         productOrderDao.persist(newProductOrder);
         productOrderDao.flush();
         productOrderDao.clear();

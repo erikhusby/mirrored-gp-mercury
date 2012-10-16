@@ -13,6 +13,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,19 +44,6 @@ public class ProductOrderDao extends GenericDao {
      * @return
      */
     public List<ProductOrder> findByResearchProject( ResearchProject researchProject ) {
-
-//        EntityManager entityManager = getEntityManager();
-//        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-//        CriteriaQuery<ProductOrder> criteriaQuery = criteriaBuilder.createQuery(ProductOrder.class);
-//        Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
-//        criteriaQuery.where(criteriaBuilder.equal(productOrderRoot.get(ProductOrder_.researchProject), researchProject));
-//
-//        try {
-//            return entityManager.createQuery(criteriaQuery).getResultList();
-//        } catch (NoResultException ignored) {
-//            return Collections.emptyList();
-//        }
-
         return findList(ProductOrder.class, ProductOrder_.researchProject, researchProject);
 
     }
@@ -67,7 +55,7 @@ public class ProductOrderDao extends GenericDao {
      * @param researchProject
      * @return
      */
-    public ProductOrder findByResearchProjectAndTitle(ResearchProject researchProject, String orderTitle) {
+    public ProductOrder findByResearchProjectAndTitle(@NotNull ResearchProject researchProject, @NotNull String orderTitle) {
         ProductOrder productOrder = null;
 
         if (researchProject == null) {
@@ -126,7 +114,7 @@ public class ProductOrderDao extends GenericDao {
     */
 
     /**
-     *
+     * Find a ProductOrder by it's primary key identifier
      * @param orderId
      * @return
      */
