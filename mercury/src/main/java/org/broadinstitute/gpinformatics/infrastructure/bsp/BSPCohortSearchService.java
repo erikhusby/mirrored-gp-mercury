@@ -47,7 +47,7 @@ public class BSPCohortSearchService extends AbstractJerseyClientService {
     }
 
     private String url( Endpoint endpoint ) {
-        return String.format("%s:%d/ws/bsp/%s", bspConfig.getHost(), bspConfig.getPort(), endpoint.getSuffixUrl());
+        return String.format("http://%s:%d/ws/bsp/%s", bspConfig.getHost(), bspConfig.getPort(), endpoint.getSuffixUrl());
     }
 
     @Override
