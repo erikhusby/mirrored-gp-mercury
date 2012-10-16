@@ -66,7 +66,7 @@
 
         <div class="container-fluid">
             <div class="row-fluid">
-                <p:ajaxStatus id="ajaxStatus">
+                <p:ajaxStatus id="ajaxStatus" styleClass="span2 offset5">
                     <f:facet name="start">
                         Loading...
                     </f:facet>
@@ -100,7 +100,7 @@
 
         <footer>
             <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.<br/>
-               Genomics Platform. Version 1.0 build October 12, 2012 12:34:56pm.</p>
+               Genomics Platform. <ui:include src="administration/buildInfo.xhtml"/></p>
         </footer>
 
         <ui:debug/>
