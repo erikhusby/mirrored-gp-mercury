@@ -3,9 +3,11 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
@@ -33,6 +35,9 @@ public class ResearchProjectForm extends AbstractJsfBean {
     private BSPUserList bspUserList;
 
     @Inject
+    private BSPCohortList cohortList;
+
+    @Inject
     private FacesContext facesContext;
 
     private List<BspUser> projectManagers;
@@ -47,7 +52,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
     private List<Long> fundingSources;
 
     // TODO: integrate with real sample cohorts
-    private List<Long> sampleCohorts;
+    private List<Cohort> sampleCohorts;
 
     // TODO: change to a text field to be parsed as comma-separated
     private List<Long> irbs;
@@ -202,11 +207,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
         this.fundingSources = fundingSources;
     }
 
-    public List<Long> getSampleCohorts() {
+    public List<Cohort> getSampleCohorts() {
         return sampleCohorts;
     }
 
-    public void setSampleCohorts(List<Long> sampleCohorts) {
+    public void setSampleCohorts(List<Cohort> sampleCohorts) {
         this.sampleCohorts = sampleCohorts;
     }
 

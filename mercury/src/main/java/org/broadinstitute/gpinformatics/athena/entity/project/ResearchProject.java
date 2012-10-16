@@ -10,7 +10,6 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.*;
 
 /**
@@ -48,6 +47,7 @@ public class ResearchProject {
     private Long researchProjectId;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Status status = Status.Open;
 
     // creation/modification information

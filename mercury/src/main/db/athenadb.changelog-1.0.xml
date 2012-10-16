@@ -70,4 +70,20 @@
             <column name="irb_not_engaged" type="number(1,0)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-65-6" author="hrafal">
+        <dropColumn tableName="research_project_aud" schemaName="athena" columnName="status"/>
+        <addColumn tableName="research_project_aud" schemaName="athena">
+            <column name="status" type="varchar(30)"/>
+        </addColumn>
+        <addNotNullConstraint tableName="research_project_aud" schemaName="athena" columnName="status" defaultNullValue="Open"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-65-7" author="hrafal">
+        <dropColumn tableName="research_project" schemaName="athena" columnName="status"/>
+        <addColumn tableName="research_project" schemaName="athena">
+            <column name="status" type="varchar(30)"/>
+        </addColumn>
+        <addNotNullConstraint tableName="research_project" schemaName="athena" columnName="status" defaultNullValue="Open"/>
+    </changeSet>
 </databaseChangeLog>
