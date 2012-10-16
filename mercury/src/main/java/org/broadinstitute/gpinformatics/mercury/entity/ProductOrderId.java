@@ -5,16 +5,16 @@ package org.broadinstitute.gpinformatics.mercury.entity;
  */
 public class ProductOrderId {
 
-    private String name;
+    private String businessKey;
 
 
     // not sure if this should be name, id, "barcode", jira ticket
     // it's whatever the business key is in athena for a product order
     public ProductOrderId(String name) {
-        this.name = name;
+        this.businessKey = name;
     }
 
-    public String getName() {
-        return name;
+    public String getBusinessKey ( ) {
+        return businessKey;
     }
 }

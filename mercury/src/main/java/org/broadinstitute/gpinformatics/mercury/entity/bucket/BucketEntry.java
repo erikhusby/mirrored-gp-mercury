@@ -11,9 +11,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
  */
 public class BucketEntry {
 
+    private Long bucketEntryId;
+
     private LabVessel labVessel;
 
     private ProductOrderId productOrder;
+
+    private Bucket bucketExistence;
+
+    private Integer productOrderBucketRanking;
 
     public LabVessel getLabVessel() {
         throw new RuntimeException("not implemented yet");
