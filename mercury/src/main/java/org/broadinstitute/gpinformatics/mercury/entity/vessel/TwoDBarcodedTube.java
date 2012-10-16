@@ -30,10 +30,6 @@ public class TwoDBarcodedTube extends LabVessel {
 
     private static Log gLog = LogFactory.getLog(TwoDBarcodedTube.class);
     
-    @OneToMany // todo jmt should this have mappedBy?
-    @JoinTable(schema = "mercury")
-    private Collection<StatusNote> notes = new HashSet<StatusNote>();
-
     // todo jmt why is this never assigned?
     @Transient
     private StartingSample startingSample;
@@ -120,22 +116,6 @@ public class TwoDBarcodedTube extends LabVessel {
             sampleInstances = startingSample.getSampleInstances();
         }
         return sampleInstances;
-    }
-
-    @Override
-    public StatusNote getLatestNote() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void logNote(StatusNote statusNote) {
-        gLog.info(statusNote);
-        this.notes.add(statusNote);
-    }
-
-    @Override
-    public Collection<StatusNote> getAllStatusNotes() {
-        return this.notes;
     }
 
     @Override

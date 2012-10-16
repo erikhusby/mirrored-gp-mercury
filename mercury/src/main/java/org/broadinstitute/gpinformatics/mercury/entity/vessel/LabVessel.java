@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.Failure;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
@@ -98,6 +100,11 @@ public abstract class LabVessel implements Starter {
 
     @OneToMany(mappedBy = "inPlaceLabVessel")
     private Set<LabEvent> inPlaceLabEvents = new HashSet<LabEvent>();
+
+    @OneToMany // todo jmt should this have mappedBy?
+    @JoinTable(schema = "mercury")
+    private Collection<StatusNote> notes = new HashSet<StatusNote>();
+
 
     @Embedded
     private UserRemarks userRemarks;
@@ -358,7 +365,7 @@ public abstract class LabVessel implements Starter {
     /**
      * Probably a transient that computes the {@link SampleInstance} data
      * on-the-fly by walking the history and applying the
-     * {@link StateChange}s applied during lab work.
+     * StateChange applied during lab work.
      * @return
      */
     public abstract Set<SampleInstance> getSampleInstances();
@@ -443,7 +450,9 @@ public abstract class LabVessel implements Starter {
      * For informational use only.  Can be volatile.
      * @return
      */
-    public abstract StatusNote getLatestNote();
+    public StatusNote getLatestNote() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
     /**
      * Reporting will want to look at aliquot-level
@@ -463,9 +472,14 @@ public abstract class LabVessel implements Starter {
      * a sample centric manner.
      * @param statusNote
      */
-    public abstract void logNote(StatusNote statusNote);
+    public void logNote(StatusNote statusNote) {
+//        logger.info(statusNote);
+        this.notes.add(statusNote);
+    }
 
-    public abstract Collection<StatusNote> getAllStatusNotes();
+    public Collection<StatusNote> getAllStatusNotes() {
+        return this.notes;
+    }
 
     public abstract Float getVolume();
 
@@ -482,7 +496,7 @@ public abstract class LabVessel implements Starter {
 
     /**
      * In the context of the given {@link WorkflowDescription}, are there any
-     * events for this vessel which are annotated as {@link WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY}?
+     * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
      * @param workflowDescription
      * @return
      */
