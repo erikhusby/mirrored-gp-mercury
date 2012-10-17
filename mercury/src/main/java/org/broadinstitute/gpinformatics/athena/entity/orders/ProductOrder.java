@@ -9,23 +9,16 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-
-import javax.persistence.Transient;
-
-import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.IOException;
 import java.io.Serializable;
-import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -95,6 +88,13 @@ public class ProductOrder implements Serializable {
     }
 
     /**
+     * Constructor called when creating a new ProductOrder.
+     */
+    public ProductOrder(long createdBy, ResearchProject researchProject) {
+        this(createdBy, "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
+    }
+
+    /**
      * Constructor with mandatory fields
      *
      * @param creatorId
@@ -104,7 +104,7 @@ public class ProductOrder implements Serializable {
      * @param product
      * @param researchProject
      */
-    public ProductOrder(Long creatorId, String title, List<ProductOrderSample> samples, String quoteId,
+    public ProductOrder(@Nonnull Long creatorId, @Nonnull String title, List<ProductOrderSample> samples, String quoteId,
                         Product product, ResearchProject researchProject) {
         this.createdBy = creatorId;
         this.title = title;
@@ -166,8 +166,8 @@ public class ProductOrder implements Serializable {
         return samples;
     }
 
-    public void addSample(ProductOrderSample sampleProduct) {
-        samples.add(sampleProduct);
+    public void setSamples(List<ProductOrderSample> samples) {
+        this.samples = samples;
     }
 
     /**
