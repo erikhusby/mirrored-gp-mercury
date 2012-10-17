@@ -45,7 +45,7 @@ public class ProductOrderTest {
 
         ProductOrderSample sample = new ProductOrderSample("SM-1234");
         sample.addBillableItem(new BillableItem(priceItem, new BigDecimal("1")));
-        order.addSample(sample);
+        order.setSamples(Collections.singletonList(sample));
 
         return order;
     }
