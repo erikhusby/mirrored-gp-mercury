@@ -132,6 +132,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
             }
         }
         project.setCreatedBy(userBean.getBspUser().getUserId());
+        project.recordModification(userBean.getBspUser().getUserId());
 
         researchProjectDao.persist(project);
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
