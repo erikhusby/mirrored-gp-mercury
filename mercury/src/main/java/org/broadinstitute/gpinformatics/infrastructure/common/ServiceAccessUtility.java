@@ -42,7 +42,7 @@ public class ServiceAccessUtility {
 
             try {
                 InitialContext initialContext = new InitialContext();
-                try{
+                try {
                     BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
                     Bean<?> bean = beanManager.getBeans(classType).iterator().next();
                     CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
