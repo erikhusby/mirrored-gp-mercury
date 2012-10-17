@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -281,6 +282,9 @@ public class ProductOrder implements Serializable {
      * @return a count of all samples registered to this product order
      */
     public int getTotalSampleCount() {
+        if (CollectionUtils.isEmpty(samples)) {
+            return 0;
+        }
         return samples.size();
     }
 

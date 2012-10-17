@@ -48,7 +48,6 @@
                         <span class="controls input-xlarge uneditable-input">#{productOrderDetail.productOrder.title}</span>
                     </div>
 
-
                     <div class="control-group">
                         <span class="control-label">Quote ID</span>
                         <span class="controls input-xlarge uneditable-input">
@@ -56,7 +55,6 @@
                                     value="#{productOrderDetail.productOrder.quoteId}"/>
                         </span>
                     </div>
-
 
                     <div class="control-group">
                         <span class="control-label">Comments</span>
@@ -67,6 +65,8 @@
                         <span class="control-label">Samples</span>
                         <span class="controls">#{productOrderDetail.productOrder.sampleSummary}</span>
                     </div>
+
+                    <p/>
 
                     <div class="row-fluid">
                         <div class="pull-left">
@@ -79,10 +79,12 @@
                             </span>
                         </div>
                     </div>
+
                     <p/>
+
                     <div class="row">
                         <div class="pull-right ui-widget-header" style="padding: 5px;">
-                            <span class="ui-icon ui-icon-folder-open" style="float:left;"></span>
+                            <span class="ui-icon ui-icon-folder-open" style="float:left;">&nbsp;</span>
                             <h:outputText value=" Export all data as: " />
 
                             <p:commandLink title="Click to download all sample data as a Microsoft Excel file">
