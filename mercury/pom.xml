@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -42,7 +40,8 @@
         <connection>scm:git|${git.url}</connection>
         <developerConnection>scm:git|${git.url}</developerConnection>
         <url>${git.browseUrl}</url>
-    </scm>
+      <tag>1.0</tag>
+  </scm>
 
     <distributionManagement>
         <site>
@@ -173,7 +172,7 @@
         was not really possible.
         -->
         <tests.excludedGroups>UI</tests.excludedGroups>
-        <tests.groups/>
+        <tests.groups />
 
         <build.resultKey>LOCAL</build.resultKey>
         <build.buildTimeStamp>now</build.buildTimeStamp>
@@ -368,8 +367,7 @@
                                                This yields a namespace definition on the form
                                                <xs:schema ... xmlns:[toPrefix]="[uri]" ... />
 
-                                               (I.e: <xs:schema ... xmlns:some="http://some/namespace"
-                                                                    xmlns:xs="http://www.w3.org/2001/XMLSchema"> )
+                                               (I.e: <xs:schema ... xmlns:some="http://some/namespace" xmlns:xs="http://www.w3.org/2001/XMLSchema"> )
 
                                                ... and transforms relevant xml schema elements to use the provided namespace prefix:
 
@@ -470,7 +468,7 @@
             <profile>
                 <id>Tests.UI</id>
                 <properties>
-                    <tests.excludedGroups/>
+                    <tests.excludedGroups />
                     <tests.groups>UI,arquillian</tests.groups>
                 </properties>
             </profile>
@@ -1550,8 +1548,7 @@
                         <configuration>
                             <target>
                                 <propertyfile file="${pom.basedir}/target/version.properties">
-                                    <entry key="project.version" type="string" value="${project.version}"
-                                           operation="="/>
+                                    <entry key="project.version" type="string" value="${project.version}" operation="=" />
                                 </propertyfile>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
                                     <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
