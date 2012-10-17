@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
+import javax.annotation.Nullable;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
-import java.io.Serializable;
 
 /**
  * Class to define some common useful functions to remove boiler plate code for JSF functionality.  This class is
@@ -62,9 +62,9 @@ public abstract class AbstractJsfBean {
      * @param summary The displayed message on the web page
      * @param detail The detailed information of the message
      */
-    private void addMessage(String clientId, FacesMessage.Severity severity, String summary, String detail) {
+    private static void addMessage(@Nullable String clientId, FacesMessage.Severity severity, String summary, String detail) {
         FacesContext context = FacesContext.getCurrentInstance();
-        context.addMessage(clientId,new FacesMessage(severity, summary, detail));
+        context.addMessage(clientId, new FacesMessage(severity, summary, detail));
     }
 
     /**
