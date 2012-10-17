@@ -45,7 +45,6 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findByResearchProject( ResearchProject researchProject ) {
         return findList(ProductOrder.class, ProductOrder_.researchProject, researchProject);
-
     }
 
 
@@ -86,7 +85,6 @@ public class ProductOrderDao extends GenericDao {
         } catch (NoResultException ignored) {
             return null;
         }
-
     }
 
     /**
@@ -106,7 +104,10 @@ public class ProductOrderDao extends GenericDao {
      * @param personId
      * @return
      */
-    public List<ProductOrder> findByCreatedPersonId(Long personId) {
+    public List<ProductOrder> findByCreatedPersonId(@NotNull Long personId) {
+        if (personId == null) {
+                    throw new NullPointerException("Null Person Id.");
+        }
         return findList(ProductOrder.class, ProductOrder_.createdBy, personId);
     }
 
@@ -117,7 +118,10 @@ public class ProductOrderDao extends GenericDao {
      * @param personId
      * @return
      */
-    public List<ProductOrder> findByModifiedPersonId(Long personId) {
+    public List<ProductOrder> findByModifiedPersonId(@NotNull Long personId) {
+        if (personId == null) {
+                    throw new NullPointerException("Null Person Id.");
+        }
         return findList(ProductOrder.class, ProductOrder_.modifiedBy, personId);
     }
 
@@ -126,7 +130,10 @@ public class ProductOrderDao extends GenericDao {
      * @param orderId
      * @return
      */
-    public ProductOrder findById(Long orderId) {
+    public ProductOrder findById(@NotNull Long orderId) {
+        if (orderId == null) {
+                    throw new NullPointerException("Null ProductOrder Id.");
+        }
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
     }
 
