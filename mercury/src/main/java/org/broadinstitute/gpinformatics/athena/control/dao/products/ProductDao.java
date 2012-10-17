@@ -79,7 +79,12 @@ public class ProductDao extends GenericDao {
             predicateList.add(cb.isNotNull(product.get(Product_.availabilityDate)));
             // and it is in the past
             predicateList.add(cb.lessThan(product.get(Product_.availabilityDate), Calendar.getInstance().getTime()));
-            // todo mlc add logic here to deal with discontinued dates!
+
+            // and the discontinued date is null or in the future
+            predicateList.add(
+                cb.or( cb.isNull(product.get(Product_.discontinuedDate)),
+                       cb.greaterThan(product.get(Product_.discontinuedDate), Calendar.getInstance().getTime()))
+            );
         }
 
         if (topLevelProductsOnly == TopLevelProductsOnly.YES) {

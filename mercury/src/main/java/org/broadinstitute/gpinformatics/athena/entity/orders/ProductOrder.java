@@ -9,10 +9,12 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+
+import javax.persistence.Transient;
+
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
@@ -227,7 +229,7 @@ public class ProductOrder implements Serializable {
             if (needsBspMetaData()) {
 
                 Map<String, BSPSampleDTO> bspSampleMetaData =
-                        ServiceAccessUtility.getSampleNames(getUniqueSampleNames());
+                        ServiceAccessUtility.getSampleDtoByNames(getUniqueSampleNames());
                 updateBspMetaData(bspSampleMetaData);
             }
 
@@ -639,19 +641,7 @@ public class ProductOrder implements Serializable {
         }
         IssueTransitionResponse transitions = ServiceAccessUtility.getTransitions(jiraTicketKey);
 
-        String transitionId = null;
-
-        for (Transition currentTransition : transitions.getTransitions()) {
-            if (TransitionStates.Complete.getStateName().equals(currentTransition.getName())) {
-                transitionId = currentTransition.getId();
-                break;
-            }
-        }
-
-        if (transitionId == null) {
-            throw new IllegalStateException("The Jira Ticket " + jiraTicketKey +
-                                                    " cannot be closed at this time");
-        }
+        String transitionId = transitions.getTransitionId(TransitionStates.Complete.getStateName());
 
         ServiceAccessUtility.postTransition(jiraTicketKey, transitionId);
     }
