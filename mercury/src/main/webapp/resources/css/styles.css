@@ -13,14 +13,14 @@ body { padding-bottom: 40px; font-size: 12px; }
 footer { font-size: 10px; text-align: center; padding-top: 20px; }
 
 /* Override Bootstrap's opinion that links should not be underlined. */
-a { text-decoration: underline; }
+a { text-decoration: underline; color: #0088CC; }
 
 label, input, button, select, textarea { font-size: 12px }
 
 #ajaxStatus_start { background-color: #004478; color: #ffffff; left: 0; padding: 5px; position: fixed; top: 0; }
 
 /* Override PrimeFaces's Bootstrap theme opinion that links in widgets should be default text color. */
-.ui-widget-content a { color: #08C; }
+.ui-widget-content a { color: #0088CC; !important }
 
 /* Make p:autoComplete's input field a little wider to fit longer watermarks. */
 .ui-autocomplete-multiple .ui-autocomplete-input-token input {  width: 160px; }

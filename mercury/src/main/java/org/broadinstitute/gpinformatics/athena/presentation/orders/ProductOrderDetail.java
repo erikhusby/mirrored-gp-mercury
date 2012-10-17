@@ -34,7 +34,6 @@ public class ProductOrderDetail {
     /** The product order we're currently displaying */
     private ProductOrder productOrder;
 
-    @PostConstruct
     public void initEmpty() {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         // FIXME: need default constructor to create empty product order.
