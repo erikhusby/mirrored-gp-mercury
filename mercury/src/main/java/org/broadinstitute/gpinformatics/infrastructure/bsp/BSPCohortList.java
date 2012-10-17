@@ -19,12 +19,23 @@ import java.util.Set;
 @Singleton
 public class BSPCohortList {
 
-    private final Set<Cohort> cohortList;
+    private Set<Cohort> cohortList = null;
+
+    @Inject
+    private BSPCohortSearchService cohortSearchService;
 
     /**
      * @return list of bsp users, sorted by cohortId.
      */
     public Set<Cohort> getCohorts() {
+        if (cohortList == null) {
+            try {
+                cohortList = cohortSearchService.getAllCohorts();
+            } catch (Exception ex) {
+                // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
+            }
+        }
+
         return cohortList;
     }
 
@@ -34,13 +45,14 @@ public class BSPCohortList {
      * @return if found, the cohort, otherwise null
      */
     public Cohort getById(String cohortId) {
-        // Could improve performance here by storing users in a TreeMap.  Wait until performance becomes
-        // an issue, then fix.
-        for (Cohort cohort : cohortList) {
-            if (cohort.getCohortId().equals(cohortId)) {
-                return cohort;
+        if (getCohorts() != null) {
+            for (Cohort cohort : getCohorts()) {
+                if (cohort.getCohortId().equals(cohortId)) {
+                    return cohort;
+                }
             }
         }
+
         return null;
     }
 
@@ -67,15 +79,18 @@ public class BSPCohortList {
     public List<Cohort> findActive(String query) {
         String lowerQuery = query.toLowerCase();
         List<Cohort> results = new ArrayList<Cohort>();
-        for (Cohort cohort : cohortList) {
-            if (!cohort.isArchived()  &&
-                 ((cohort.getCohortId().toLowerCase().contains(lowerQuery) ||
-                   cohort.getName().toLowerCase().contains(lowerQuery) ||
-                   cohort.getGroup().toLowerCase().contains(lowerQuery) ||
-                   cohort.getCategory().contains(lowerQuery)))) {
-                results.add(cohort);
+        if (getCohorts() != null) {
+            for (Cohort cohort : getCohorts()) {
+                if (!cohort.isArchived()  &&
+                     ((cohort.getCohortId().toLowerCase().contains(lowerQuery) ||
+                       cohort.getName().toLowerCase().contains(lowerQuery) ||
+                       cohort.getGroup().toLowerCase().contains(lowerQuery) ||
+                       cohort.getCategory().contains(lowerQuery)))) {
+                    results.add(cohort);
+                }
             }
         }
+
         return results;
     }
 
@@ -88,19 +103,17 @@ public class BSPCohortList {
     public List<Cohort> find(String query) {
         String lowerQuery = query.toLowerCase();
         List<Cohort> results = new ArrayList<Cohort>();
-        for (Cohort cohort : cohortList) {
-            if (cohort.getCohortId().toLowerCase().contains(lowerQuery) ||
-                cohort.getName().toLowerCase().contains(lowerQuery) ||
-                cohort.getGroup().toLowerCase().contains(lowerQuery) ||
-                cohort.getCategory().contains(lowerQuery)) {
-                results.add(cohort);
+        if (getCohorts() != null) {
+            for (Cohort cohort : getCohorts()) {
+                if (cohort.getCohortId().toLowerCase().contains(lowerQuery) ||
+                    cohort.getName().toLowerCase().contains(lowerQuery) ||
+                    cohort.getGroup().toLowerCase().contains(lowerQuery) ||
+                    cohort.getCategory().contains(lowerQuery)) {
+                    results.add(cohort);
+                }
             }
         }
-        return results;
-    }
 
-    @Inject
-    public BSPCohortList(BSPCohortSearchService cohortSearchService) {
-        cohortList = cohortSearchService.getAllCohorts();
+        return results;
     }
 }
