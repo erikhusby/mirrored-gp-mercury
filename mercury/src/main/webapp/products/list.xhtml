@@ -13,23 +13,14 @@
 </h:head>
 <h:body>
 <ui:composition template="/layout.xhtml">
+    <ui:define name="metadata">
+        <f:event type="preRenderView" listener="#{productsBean.onPreRenderView}" />
+    </ui:define>
+
     <ui:define name="title">Products</ui:define>
     <ui:define name="body">
 
         <h:form id="productList">
-
-            <!--<h:panelGrid columns="1">-->
-
-                <!--<h:panelGrid columns="2">-->
-                    <!-- removing this since it doesn't play nice with the filter and I don't have time to fight it -->
-                    <!--<p:selectBooleanCheckbox value="#{productsBean.availableProductsOnly}" disabled="true">-->
-                        <!--<p:ajax event="click" listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>-->
-                        <!--<p:ajax listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>-->
-                    <!--</p:selectBooleanCheckbox>-->
-                    <!--<h:outputText value="Available Products Only"/>-->
-                <!--</h:panelGrid>-->
-
-            <!--</h:panelGrid>-->
 
             <!-- per the mockups, clicking a row in this table should view the Product Details -->
 

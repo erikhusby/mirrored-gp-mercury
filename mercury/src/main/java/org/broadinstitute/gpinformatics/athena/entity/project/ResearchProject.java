@@ -199,6 +199,16 @@ public class ResearchProject {
     }
 
     /**
+     * Sets the last modified by property to the specified user and the last modified date to the current date.
+     *
+     * @param personId the person who modified the research project
+     */
+    public void recordModification(Long personId) {
+        modifiedBy = personId;
+        modifiedDate = new Date();
+    }
+
+    /**
      * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
      * which this Research project is associated
      *
@@ -250,7 +260,7 @@ public class ResearchProject {
 
     public String[] getIrbNumbers() {
         int i = 0;
-        if (sampleCohorts != null) {
+        if (irbNumbers != null) {
             String[] irbNumberList = new String[irbNumbers.size()];
             for (ResearchProjectIRB irb : irbNumbers) {
                 irbNumberList[i++] = irb.getIrb();
@@ -267,7 +277,7 @@ public class ResearchProject {
             irbNumbers = new HashSet<ResearchProjectIRB>();
         }
 
-        irbNumbers.add ( irbNumber );
+        irbNumbers.add(irbNumber);
     }
 
     public void removeIrbNumber(ResearchProjectIRB irbNumber) {

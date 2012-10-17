@@ -4,38 +4,40 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.DataTableFilteredValuesBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
 
 import javax.enterprise.context.RequestScoped;
-import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.AvailableProductsOnly.NO;
-import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.AvailableProductsOnly.YES;
 
 
+/**
+ * Backing bean for Products list/view and CRUD pages
+ */
 @Named
 @RequestScoped
-public class ProductsBean extends AbstractJsfBean {
+public class ProductsBean extends AbstractJsfBean implements Serializable {
+
     @Inject
     private ProductDao productDao;
 
+    @Inject
+    DataTableFilteredValuesBean filteredValuesBean;
+
     private Product selectedProduct;
 
-    private final ProductsDataModel productsDataModel = new ProductsDataModel();
+    private ProductsDataModel productsDataModel;
 
     private boolean rebuild = true;
-
-    private boolean availableProductsOnly;
-
-    private List<Product> filteredProducts;
 
     private List<Product> selectedProductAddOns;
 
@@ -43,20 +45,28 @@ public class ProductsBean extends AbstractJsfBean {
 
     private static final DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
 
+    /**
+     * Hook the JSF preRenderView event to initiate a conversation
+     */
+    public void onPreRenderView() {
+        filteredValuesBean.beginConversation();
+    }
+
 
     public ProductsDataModel getProductsDataModel() {
-        if (rebuild) {
 
-            // doing an explicit assignment to a temporary variable to highlight the strong type
-            ProductDao.AvailableProductsOnly availableOnly = availableProductsOnly ? YES : NO;
-            productsDataModel.setWrappedData(productDao.findProducts(availableOnly));
-
-            rebuild = false;
+        // lazy load
+        if (productsDataModel == null) {
+            productsDataModel = new ProductsDataModel(productDao.findProducts());
         }
 
         return productsDataModel;
     }
 
+
+    /**
+     * Row selection handler
+     */
     public void onRowSelect(SelectEvent event) {
         selectedProduct = (Product) event.getObject();
         selectedProductAddOns = new ArrayList<Product>(selectedProduct.getAddOns());
@@ -64,10 +74,17 @@ public class ProductsBean extends AbstractJsfBean {
     }
 
 
+    /**
+     * Row deselection handler
+     */
     public void onRowUnselect(UnselectEvent event) {
         selectedProduct = null;
     }
 
+
+    /**
+     * Generic comparison method for column sorts.  Assumes passed in parameters implement {@link Comparable}
+     */
     public int compare(Object o1, Object o2) {
         if (o1 == o2)
             return 0;
@@ -108,11 +125,17 @@ public class ProductsBean extends AbstractJsfBean {
         return list;
     }
 
+
     public Product getSelectedProduct() {
         return selectedProduct;
     }
 
 
+    /**
+     * Handle nulls and date formatting
+     *
+     * @return
+     */
     public String getSelectedProductAvailabilityDate() {
         if (selectedProduct == null || selectedProduct.getAvailabilityDate() == null) {
             return "";
@@ -121,7 +144,11 @@ public class ProductsBean extends AbstractJsfBean {
         return dateFormat.format(selectedProduct.getAvailabilityDate());
     }
 
-
+    /**
+     * Handle nulls and date formatting
+     *
+     * @return
+     */
     public String getSelectedProductDiscontinuedDate() {
         if (selectedProduct == null || selectedProduct.getDiscontinuedDate() == null) {
             return "";
@@ -152,25 +179,14 @@ public class ProductsBean extends AbstractJsfBean {
         this.selectedProduct = selectedProduct;
     }
 
-    public boolean isAvailableProductsOnly() {
-        return availableProductsOnly;
-    }
-
-    public void setAvailableProductsOnly(boolean availableProductsOnly) {
-        this.availableProductsOnly = availableProductsOnly;
-    }
-
     public List<Product> getFilteredProducts() {
-        return filteredProducts;
+        return filteredValuesBean.getFilteredValues();
     }
 
     public void setFilteredProducts(List<Product> filteredProducts) {
-        this.filteredProducts = filteredProducts;
+        filteredValuesBean.setFilteredValues(filteredProducts);
     }
 
-    public void onAvailableProductsOnly(AjaxBehaviorEvent ignored) {
-        rebuild = true;
-    }
 
     public List<Product> getSelectedProductAddOns() {
         return selectedProductAddOns;

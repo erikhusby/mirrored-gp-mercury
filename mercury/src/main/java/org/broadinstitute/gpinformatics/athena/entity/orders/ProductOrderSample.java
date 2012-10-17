@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -36,6 +37,8 @@ public class ProductOrderSample implements Serializable {
 
     static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
 
+    @Index(name = "ix_pos_sample_name")
+    @Column(nullable = false)
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
 
     private BillingStatus billingStatus = BillingStatus.NotYetBilled;
@@ -45,6 +48,7 @@ public class ProductOrderSample implements Serializable {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrderSample")
     private Set<BillableItem> billableItems = new HashSet<BillableItem>();
 
+    @Index(name = "ix_pos_product_order")
     @ManyToOne
     private ProductOrder productOrder;
 
