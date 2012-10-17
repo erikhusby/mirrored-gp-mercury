@@ -94,7 +94,12 @@
                             &nbsp;
                             <p:commandLink title="Click to download all sample data as a CSV file">
                                 <h:outputText value="CSV"/>
-                                <p:dataExporter type="csv" target="sampleData" fileName="#{productOrderDetail.productOrder.title}" />
+                                <p:dataExporter
+                                        type="csv"
+                                        pageOnly = "false"
+                                        encoding = "UTF-8"
+                                        target="samples"
+                                        fileName="#{productOrderDetail.productOrder.title}" />
                             </p:commandLink>
                         </div>
                     </div>
