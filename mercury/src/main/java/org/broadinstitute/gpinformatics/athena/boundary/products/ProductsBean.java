@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.DataTableFilteredValuesBean;
@@ -19,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
 /**
  * Backing bean for Products list/view and CRUD pages
  */
@@ -28,22 +26,20 @@ import java.util.List;
 public class ProductsBean extends AbstractJsfBean implements Serializable {
 
     @Inject
-    private ProductDao productDao;
+    private ProductListBean productList;
 
     @Inject
-    DataTableFilteredValuesBean filteredValuesBean;
+    private DataTableFilteredValuesBean filteredValuesBean;
 
     private Product selectedProduct;
 
     private ProductsDataModel productsDataModel;
 
-    private boolean rebuild = true;
-
     private List<Product> selectedProductAddOns;
 
     private List<PriceItem> selectedProductPriceItems;
 
-    private static final DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
 
     /**
      * Hook the JSF preRenderView event to initiate a conversation
@@ -57,7 +53,7 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
 
         // lazy load
         if (productsDataModel == null) {
-            productsDataModel = new ProductsDataModel(productDao.findProducts());
+            productsDataModel = new ProductsDataModel(productList.getProducts());
         }
 
         return productsDataModel;
@@ -141,7 +137,7 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
             return "";
         }
 
-        return dateFormat.format(selectedProduct.getAvailabilityDate());
+        return DATE_FORMAT.format(selectedProduct.getAvailabilityDate());
     }
 
     /**
@@ -154,7 +150,7 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
             return "";
         }
 
-        return dateFormat.format(selectedProduct.getDiscontinuedDate());
+        return DATE_FORMAT.format(selectedProduct.getDiscontinuedDate());
     }
 
 
