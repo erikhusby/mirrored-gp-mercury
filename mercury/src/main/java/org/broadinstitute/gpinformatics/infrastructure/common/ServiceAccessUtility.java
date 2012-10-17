@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -16,6 +18,7 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 
@@ -29,6 +32,34 @@ import java.util.Map;
  */
 public class ServiceAccessUtility {
 
+    private abstract static class Caller<RESULT_TYPE, API_CLASS> {
+
+        abstract RESULT_TYPE call(API_CLASS apiInstance);
+
+        public RESULT_TYPE apiCall(Type classType) {
+
+            RESULT_TYPE foundServiceObject = null;
+
+            try {
+                InitialContext initialContext = new InitialContext();
+                try {
+                    BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
+                    Bean<?> bean = beanManager.getBeans(classType).iterator().next();
+                    CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
+                    @SuppressWarnings("unchecked")
+                    API_CLASS apiInstance = (API_CLASS) beanManager.getReference(bean, bean.getClass(), ctx);
+                    foundServiceObject = call(apiInstance);
+                } finally {
+                    initialContext.close();
+                }
+            } catch (NamingException e) {
+                throw new RuntimeException(e);
+            }
+
+            return foundServiceObject;
+        }
+    }
+
     /**
      * getSampleDtoByName exposes an integration layer service call to retrieve a BSP Sample DTo based on a sample
      * name
@@ -36,27 +67,22 @@ public class ServiceAccessUtility {
      * @param sampleName a BSP sample name for which a user wishes to find BSP Meta Data
      * @return an instance of a BSP Sample DTO
      */
-    public static BSPSampleDTO getSampleDtoByName ( String sampleName ) {
-
-        BSPSampleDTO foundServiceObject = null;
-
-        try {
-            InitialContext initialContext = new InitialContext();
-            try{
-                BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
-                Bean bean = beanManager.getBeans(BSPSampleDataFetcher.class).iterator().next();
-                CreationalContext ctx = beanManager.createCreationalContext(bean);
-                BSPSampleDataFetcher bspSampleSearchService =
-                        (BSPSampleDataFetcher) beanManager.getReference(bean, bean.getClass(), ctx);
-                foundServiceObject = bspSampleSearchService.fetchSingleSampleFromBSP(sampleName);
-            } finally {
-                initialContext.close();
+    public static BSPSampleDTO getSampleDtoByName(final String sampleName) {
+        return (new Caller<BSPSampleDTO, BSPSampleDataFetcher>() {
+            @Override
+            BSPSampleDTO call(BSPSampleDataFetcher apiInstance) {
+                return apiInstance.fetchSingleSampleFromBSP(sampleName);
             }
-        } catch (NamingException e) {
-            throw new RuntimeException(e);
-        }
+        }).apiCall(BSPSampleDataFetcher.class);
+    }
 
-        return foundServiceObject;
+    public static BspUser getBspUserForId(final long userId) {
+        return (new Caller<BspUser, BSPUserList>() {
+            @Override
+            BspUser call(BSPUserList apiInstance) {
+                return apiInstance.getById(userId);
+            }
+        }).apiCall(BSPSampleDataFetcher.class);
     }
 
     /**

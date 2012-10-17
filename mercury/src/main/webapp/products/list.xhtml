@@ -35,8 +35,8 @@
                 <p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" update=":productMainView :productAddOnsView :productPriceItemsView" />
 
                 <f:facet name="header">
-                        <p:outputPanel>
-                            <h:outputText value="Search"/>
+                        <p:outputPanel styleClass="pull-right">
+                            <h:outputText value=" Search "/>
                             <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
                         </p:outputPanel>
                 </f:facet>
