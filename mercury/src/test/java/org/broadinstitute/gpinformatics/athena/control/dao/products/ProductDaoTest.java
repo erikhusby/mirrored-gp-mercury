@@ -1,19 +1,136 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
 
+import org.apache.commons.collections15.CollectionUtils;
+import org.apache.commons.collections15.Predicate;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+
+import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
+
 
 @Test
 public class ProductDaoTest extends ContainerTest {
 
     @Inject
     private ProductDao dao;
+
+    @Inject
+    private ProductFamilyDao productFamilyDao;
+
+    private List<Product> createdProducts;
+
+    public enum DateSpec {
+        NULL,
+        PAST,
+        FUTURE
+    }
+
+    private class DatesAndAvailability {
+
+        private DateSpec availableDateSpec;
+
+        private DateSpec discontinuedDateSpec;
+
+        private boolean expectingAvailable;
+
+
+        public DatesAndAvailability(DateSpec availableDateSpec, DateSpec discontinuedDateSpec, boolean expectingAvailable) {
+            if (availableDateSpec == null) {
+                throw new NullPointerException("available DateSpec can not be null!");
+            }
+
+            if (discontinuedDateSpec == null) {
+                throw new NullPointerException("discontinued DateSpec can not be null!");
+            }
+
+            this.availableDateSpec = availableDateSpec;
+            this.discontinuedDateSpec = discontinuedDateSpec;
+            this.expectingAvailable = expectingAvailable;
+        }
+
+
+        public Product createProduct() {
+
+            ProductFamily generalProductsProductFamily =
+                    ProductDaoTest.this.productFamilyDao.find(ProductFamily.ProductFamilyName.GENERAL_PRODUCTS);
+
+            final int DAYS = 24 * 60 * 60;
+
+            Date availableDate = null;
+            Date discontinuedDate = null;
+
+            Calendar past = Calendar.getInstance();
+            past.add(Calendar.YEAR, -1);
+
+            Calendar future = Calendar.getInstance();
+            future.add(Calendar.YEAR, 1);
+
+            if (availableDateSpec == PAST) {
+                availableDate = past.getTime();
+            }
+            else if (availableDateSpec == FUTURE) {
+                availableDate = future.getTime();
+            }
+
+            if (discontinuedDateSpec == PAST) {
+                discontinuedDate = past.getTime();
+            }
+            else if (discontinuedDateSpec == FUTURE) {
+                discontinuedDate = future.getTime();
+            }
+
+            return new Product(
+                    "Test Data",                        // product name
+                    generalProductsProductFamily,       // product family
+                    "test data ",                       // description
+                    "dummy part number",                // part number
+                    availableDate,                      // availability date
+                    discontinuedDate,                   // discontinued date
+                    3 * DAYS,                           // expected cycle time
+                    4 * DAYS,                           // guaranteed cycle time
+                    192,                                // samples per week
+                    "dummy input requirements",         // input requirements
+                    "dummy deliverables",               // deliverables
+                    false,                              // top level product
+                    "dummy price item id"               // quote server price item id
+            );
+        }
+
+        @Override
+        public String toString() {
+            return "DatesAndAvailability{" +
+                    "availableDateSpec=" + availableDateSpec +
+                    ", discontinuedDateSpec=" + discontinuedDateSpec +
+                    ", expectingAvailable=" + expectingAvailable +
+                    '}';
+        }
+    }
+
+
+
+
+    @AfterMethod
+    public void afterMethod() {
+
+        if (createdProducts != null) {
+            for (Product product : createdProducts) {
+                dao.remove(product);
+            }
+        }
+
+        createdProducts = null;
+    }
 
 
     public void testFindTopLevelProducts() {
@@ -37,20 +154,47 @@ public class ProductDaoTest extends ContainerTest {
 
     public void testFindAvailableProducts() {
 
-        final List<Product> products = dao.findProducts(ProductDao.AvailableProductsOnly.YES);
-        Assert.assertNotNull(products);
+        DatesAndAvailability [] datesAndAvailabilities = new DatesAndAvailability [] {
+            // availability dates must all be non-null and in the past
+            new DatesAndAvailability(NULL, NULL, false),
+            new DatesAndAvailability(NULL, PAST, false),
+            new DatesAndAvailability(NULL, FUTURE, false),
+            new DatesAndAvailability(FUTURE, NULL, false),
+            new DatesAndAvailability(FUTURE, PAST, false),
+            new DatesAndAvailability(FUTURE, FUTURE, false),
+            // discontinued date must be null or in the future
+            new DatesAndAvailability(PAST, PAST, false),
+            new DatesAndAvailability(PAST, NULL, true),
+            new DatesAndAvailability(PAST, FUTURE, true)
+        };
 
-        // make sure exex is in there
-        for (Product product : products) {
-            if ("EXOME_EXPRESS-2012.11.01".equals(product.getPartNumber())) {
-                return;
+        createdProducts = new ArrayList<Product>();
+
+        for (DatesAndAvailability datesAndAvailability : datesAndAvailabilities) {
+            Product product = datesAndAvailability.createProduct();
+            dao.persist(product);
+            createdProducts.add(product);
+
+            List<Product> products = dao.findProducts(ProductDao.AvailableProductsOnly.YES);
+            // filter out non test data
+            CollectionUtils.filter(products, new Predicate<Product>() {
+                @Override
+                public boolean evaluate(Product product) {
+                    return "Test Data".equals(product.getProductName());
+                }
+            });
+
+            if (! datesAndAvailability.expectingAvailable) {
+                Assert.assertEquals(products.size(), 0);
             }
+            else {
+                Assert.assertEquals(products.size(), 1, datesAndAvailability.toString());
+                Assert.assertEquals(products.get(0), product, datesAndAvailability.toString());
+            }
+
+            dao.remove(product);
+            createdProducts.clear();
         }
-
-        Assert.fail("Did not find Exome Express top-level product!");
-
-        // needs a negative test for non-available products.  this will require test data with products having null
-        // availability dates and availability dates in the future.
 
     }
 
@@ -68,9 +212,6 @@ public class ProductDaoTest extends ContainerTest {
         }
 
         Assert.fail("Did not find Exome Express top-level product!");
-
-        // needs a negative test for non-available products.  this will require test data with products having null
-        // availability dates and availability dates in the future.
 
     }
 
