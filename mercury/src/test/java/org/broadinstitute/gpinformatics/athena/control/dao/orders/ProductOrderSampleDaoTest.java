@@ -22,7 +22,6 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrderSample_";
 
-    @Test
     public void testFindByProductOrder() throws Exception {
 
         // TODO hmc Need to test Dao method
