@@ -1572,7 +1572,7 @@
                     <goals>validate</goals>
                     <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <scmCommentPrefix>[REL-000 Production Release]</scmCommentPrefix>
+                    <scmCommentPrefix>[REL-000 Production Release] </scmCommentPrefix>
                 </configuration>
             </plugin>
 
