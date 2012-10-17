@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-
+// todo jmt this should be in control, or deleted
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
