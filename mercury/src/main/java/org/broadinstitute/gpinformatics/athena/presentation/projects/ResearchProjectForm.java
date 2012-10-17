@@ -85,33 +85,23 @@ public class ResearchProjectForm extends AbstractJsfBean {
         return users;
     }
 
+    public String save() {
+        ResearchProject project = detail.getProject();
+        if (project.getResearchProjectId() == null) {
+            return create();
+        } else {
+            return edit();
+        }
+    }
+
     public String create() {
         // TODO: move some of this logic down into boundary, or deeper!
 
         ResearchProject project = detail.getProject();
-        if (projectManagers != null) {
-            for (BspUser projectManager : projectManagers) {
-                project.addPerson(RoleType.PM, projectManager.getUserId());
-            }
-        }
-
-        if (broadPIs != null) {
-            for (BspUser broadPI : broadPIs) {
-                project.addPerson(RoleType.BROAD_PI, broadPI.getUserId());
-            }
-        }
-
-        if (scientists != null) {
-            for (BspUser scientist : scientists) {
-                project.addPerson(RoleType.SCIENTIST, scientist.getUserId());
-            }
-        }
-
-        if (externalCollaborators != null) {
-            for (BspUser externalCollaborator : externalCollaborators) {
-                project.addPerson(RoleType.EXTERNAL, externalCollaborator.getUserId());
-            }
-        }
+        addPeople(project, RoleType.PM, projectManagers);
+        addPeople(project, RoleType.BROAD_PI, broadPIs);
+        addPeople(project, RoleType.SCIENTIST, scientists);
+        addPeople(project, RoleType.EXTERNAL, externalCollaborators);
 
         if (fundingSources != null) {
             for (Long fundingSource : fundingSources) {
@@ -139,8 +129,17 @@ public class ResearchProjectForm extends AbstractJsfBean {
         return redirect("list");
     }
 
+    private void addPeople(ResearchProject project, RoleType role, List<BspUser> people) {
+        if (people != null) {
+            for (BspUser projectManager : people) {
+                project.addPerson(role, projectManager.getUserId());
+            }
+        }
+    }
+
     public String edit() {
         // TODO: try to do away with merge
+        // TODO: manage changes in personnel
         researchProjectDao.getEntityManager().merge(detail.getProject());
         return redirect("list");
     }

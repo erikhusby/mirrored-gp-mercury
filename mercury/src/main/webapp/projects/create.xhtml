@@ -10,7 +10,7 @@
       xmlns:f="http://java.sun.com/jsf/core">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">New Research Project</ui:define>
+        <ui:define name="title">#{researchProjectDetail.project.researchProjectId == null ? 'New' : 'Edit'} Research Project</ui:define>
 
         <ui:define name="metadata">
             <f:metadata>
@@ -134,9 +134,7 @@
                                 <h:link outcome="list" value="Cancel"/>
                             </div>
                             <div class="span1">
-                                <!-- TODO: display only one button -->
-                                <p:commandButton value="Create" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
-                                <p:commandButton value="Save" action="#{researchProjectForm.edit}" ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Save" action="#{researchProjectForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                         </div>
                     </div>
