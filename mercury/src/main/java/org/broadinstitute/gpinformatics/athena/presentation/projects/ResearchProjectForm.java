@@ -3,10 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
+import org.broadinstitute.gpinformatics.athena.entity.project.*;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -55,7 +52,6 @@ public class ResearchProjectForm extends AbstractJsfBean {
     // TODO: integrate with real quotes
     private List<Long> fundingSources;
 
-    // TODO: integrate with real sample cohorts
     private List<Cohort> sampleCohorts;
 
     // TODO: change to a text field to be parsed as comma-separated
@@ -98,27 +94,37 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 project.addPerson(RoleType.PM, projectManager.getUserId());
             }
         }
+
         if (broadPIs != null) {
             for (BspUser broadPI : broadPIs) {
                 project.addPerson(RoleType.BROAD_PI, broadPI.getUserId());
             }
         }
+
         if (scientists != null) {
             for (BspUser scientist : scientists) {
                 project.addPerson(RoleType.SCIENTIST, scientist.getUserId());
             }
         }
+
         if (externalCollaborators != null) {
             for (BspUser externalCollaborator : externalCollaborators) {
                 project.addPerson(RoleType.EXTERNAL, externalCollaborator.getUserId());
             }
         }
+
         if (fundingSources != null) {
             for (Long fundingSource : fundingSources) {
                 project.addFunding(new ResearchProjectFunding(project, fundingSource.toString()));
             }
         }
-        // TODO: sample cohorts
+
+        if (sampleCohorts != null) {
+            for (Cohort cohort : sampleCohorts) {
+                project.addCohort(new ResearchProjectCohort(project, cohort.getCohortId()));
+            }
+        }
+
         if (irbs != null) {
             for (Long irb : irbs) {
                 // TODO: use correct IRB type

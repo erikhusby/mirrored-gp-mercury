@@ -30,7 +30,7 @@ public class ResearchProjectCohort {
 
     protected ResearchProjectCohort() { }
 
-    ResearchProjectCohort(ResearchProject researchProject, String cohortId) {
+    public ResearchProjectCohort(ResearchProject researchProject, String cohortId) {
         this.researchProject = researchProject;
         this.cohortId = cohortId;
     }

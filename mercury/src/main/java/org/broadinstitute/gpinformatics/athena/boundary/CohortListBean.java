@@ -21,7 +21,7 @@ public class CohortListBean {
     @Inject
     private BSPCohortList cohortList;
 
-    public String getCohort(String cohortId) {
+    public String getCohortName(String cohortId) {
         String fullName = "";
         if (cohortId != null) {
             Cohort cohort = cohortList.getById(cohortId);
@@ -29,7 +29,7 @@ public class CohortListBean {
             if (cohort == null) {
                 return "(Unknown user: " + cohortId + ")";
             }
-            return cohort.getCohortId() + ": " + cohort.getName() + "(" + cohort.getGroup() + ", " + cohort.getCategory() + ")";
+            return cohort.getName();
         }
 
         return fullName;
@@ -60,7 +60,7 @@ public class CohortListBean {
             String[] nameList = new String[cohortIds.length];
             int i=0;
             for (String cohortId : cohortIds) {
-                nameList[i++] = getCohort(cohortId);
+                nameList[i++] = getCohortName(cohortId);
             }
 
             cohortListString = StringUtils.join(nameList, ", ");

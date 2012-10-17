@@ -55,3 +55,6 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 input::-webkit-input-placeholder { color: #999999; }
 input:-moz-placeholder { color: #999999; }
 input:-ms-input-placeholder { color: #999999; }
+
+.ac-dropdown-text { font-size: small; }
+.ac-dropdown-subtext { font-size: smaller; font-style: italic; }
