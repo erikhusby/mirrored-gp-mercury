@@ -31,7 +31,7 @@ public class BillableItemDaoTest  extends ContainerTest {
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestBillableItem_";
 
-    @Test
+    //TODO hmc need to complete this test
     public void testFindByProductOrderSample() throws Exception {
 
         // Find a research project in the DB
@@ -57,7 +57,6 @@ public class BillableItemDaoTest  extends ContainerTest {
     }
 
     //TODO hmc need to complete this test
-    @Test
     public void testFindByProductOrder() throws Exception {
 
     }
