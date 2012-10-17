@@ -285,7 +285,7 @@ public class ProductOrder implements Serializable {
      * @return a count of all samples registered to this product order
      */
     public int getTotalSampleCount() {
-        if (CollectionUtils.isEmpty(samples)) {
+        if (samples == null) {
             return 0;
         }
         return samples.size();
