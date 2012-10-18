@@ -66,8 +66,10 @@ public class UserLogin extends AbstractJsfBean {
             if (bspUser != null) {
                 userBean.setBspUser(bspUser);
             } else {
+                // FIXME: Temporarily map unknown users to the BSP tester user. Will need to handle this in userBean.
+                userBean.setBspUser(bspUserList.getByUsername("tester"));
                 // reuse exception handling below
-                throw new ServletException("Login error: couldn't find BspUser: " + username);
+                //throw new ServletException("Login error: couldn't find BspUser: " + username);
             }
             addInfoMessage("Welcome back!", "Sign in successful");
 

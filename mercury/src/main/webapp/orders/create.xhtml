@@ -16,16 +16,44 @@
             <f:metadata>
                 <f:viewParam name="researchProjectKey" value="#{productOrderDetail.researchProjectKey}" />
                 <f:event type="preRenderView" listener="#{productOrderForm.load}" />
+                <f:event type="preValidate" listener="#{productOrderDetail.initEmpty}"/>
             </f:metadata>
         </ui:define>
 
         <ui:define name="body">
+            <p:dialog header="Enter Samples" widgetVar="samplesDialog" modal="true" onShow="">
+                <h:form id="sampleDialogForm" prependId="false">
+                    <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.sampleIDsText}" cols="80" rows="20">
+                        <p:ajax update="samplesDialogStatus,samplesDialogInput"
+                                listener="#{productOrderForm.dialogSampleIdsChanged}"/>
+                    </p:inputTextarea>
+                    <br/>
+                    <h:outputText id="samplesDialogStatus" value="#{productOrderForm.sampleStatus}"/>
+                    <div class="control-group">
+                        <div class="controls">
+                            <div class="row-fluid">
+                                <div class="span1">
+                                    <p:commandButton value="Cancel" onclick="samplesDialog.hide()"/>
+                                </div>
+                                <div class="span1">
+                                    <p:commandButton value="OK" onclick="samplesDialog.hide()"
+                                                     actionListener="#{productOrderForm.dialogCommit}"
+                                                     styleClass="ui-priority-primary"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </h:form>
+            </p:dialog>
+
             <h:form id="form" prependId="false" styleClass="form-horizontal">
                 <div class="control-group">
                     <p:outputLabel for="name" value="Name" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="name" value="#{productOrderDetail.productOrder.title}" size="50"/>
+                        <p:inputText id="name" value="#{productOrderDetail.productOrder.title}" size="50"
+                                     required="true"/>
                         <p:watermark for="name" value="Enter the name of the order"/>
+                        <p:message for="name"/>
                     </div>
                 </div>
 
@@ -38,8 +66,10 @@
                                         var="project" itemLabel="#{project.title}"
                                         converter="#{researchProjectConverter}"
                                         dropdown="true"
+                                        required="true"
                                         size="50"/>
                         <p:watermark for="researchProject" value="Type name to search"/>
+                        <p:message for="researchProject"/>
                     </div>
                 </div>
 
@@ -52,15 +82,17 @@
                                         var="product" itemLabel="#{product.productName}"
                                         converter="#{productConverter}"
                                         dropdown="true"
+                                        required="true"
                                         size="50"/>
                         <p:watermark for="product" value="Type name to search"/>
+                        <p:message for="product"/>
                     </div>
                 </div>
 
                 <div class="control-group">
                     <p:outputLabel for="quote" value="Quote" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="quote" value="#{productOrderDetail.productOrder.quoteId}" size="50">
+                        <p:inputText id="quote" value="#{productOrderDetail.productOrder.quoteId}" size="50" required="true">
                             <p:ajax update="fundsRemaining" listener="#{productOrderForm.loadFundsRemaining}"/>
                         </p:inputText>
                         <p:watermark for="quote" value="Enter Quote ID"/>
@@ -73,10 +105,37 @@
                 <div class="control-group">
                     <p:outputLabel for="comments" value="Comments" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="comments" value="#{productOrderDetail.productOrder.comments}"/>
+                        <p:inputTextarea id="comments" value="#{productOrderDetail.productOrder.comments}" cols="50"/>
                         <p:watermark for="comments" value="Enter Comments"/>
                     </div>
                 </div>
+
+                <div class="control-group">
+                    <h:outputText value="Samples" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:commandButton value="Edit Sample List..." onclick="samplesDialog.show()">
+                            <p:ajax listener="#{productOrderForm.dialogPrepareToShow}"/>
+                        </p:commandButton>
+                    </div>
+                </div>
+
+                <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample">
+                    <p:column headerText="ID">
+                        #{sample.sampleName}
+                    </p:column>
+
+                    <p:column headerText="Participant">
+                        #{sample.bspDTO.patientId}
+                    </p:column>
+
+                    <p:column headerText="Material">
+                        #{sample.bspDTO.materialType}
+                    </p:column>
+
+                    <p:column headerText="Volume">
+                        #{sample.bspDTO.volume}
+                    </p:column>
+                </p:dataTable>
 
                 <div class="control-group">
                     <div class="controls">

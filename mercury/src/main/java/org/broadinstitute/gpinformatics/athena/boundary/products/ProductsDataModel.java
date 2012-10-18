@@ -8,6 +8,9 @@ import java.util.List;
 
 public class ProductsDataModel extends ListDataModel<Product> implements SelectableDataModel<Product> {
 
+    public ProductsDataModel(List<Product> products) {
+        super(products);
+    }
 
 
     @Override
