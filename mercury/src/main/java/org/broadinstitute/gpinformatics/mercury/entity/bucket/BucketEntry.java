@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -23,40 +24,42 @@ import javax.persistence.UniqueConstraint;
  */
 @Entity
 @Audited
-@Table (schema = "mercury")
+@Table (schema = "mercury",name = "bucket_entry")
 public class BucketEntry {
 
     @SequenceGenerator (name = "SEQ_BUCKET_ENTRY", schema = "mercury",  sequenceName = "SEQ_BUCKET_ENTRY")
     @GeneratedValue (strategy = GenerationType.SEQUENCE, generator = "SEQ_BUCKET_ENTRY")
     @Id
+    @Column(name = "bucket_entry_id")
     private Long bucketEntryId;
 
     @ManyToOne (cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private LabVessel labVessel;
 
-    private ProductOrderId productOrder;
+
+    private String poBusinessKey;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private Bucket bucketExistence;
 
     private Integer productOrderRanking;
 
-    public BucketEntry ( LabVessel labVesselIn, ProductOrderId productOrderIn ) {
-        this(labVesselIn, productOrderIn, null);
+    public BucketEntry ( LabVessel labVesselIn, String poBusinessKey) {
+        this(labVesselIn, poBusinessKey, null);
     }
 
-    public BucketEntry ( LabVessel labVesselIn, ProductOrderId productOrderIn, Integer productOrderRankingIn ) {
+    public BucketEntry ( LabVessel labVesselIn, String poBusinessKey, Integer productOrderRankingIn ) {
         labVessel = labVesselIn;
-        productOrder = productOrderIn;
+        this.poBusinessKey = poBusinessKey;
         productOrderRanking = productOrderRankingIn;
     }
 
     public LabVessel getLabVessel() {
-        throw new RuntimeException("not implemented yet");
+        return this.labVessel;
     }
 
-    public ProductOrderId getProductOrderId() {
-        throw new RuntimeException("not implemented yet");
+    public String getPoBusinessKey() {
+        return this.poBusinessKey;
     }
 
 }
