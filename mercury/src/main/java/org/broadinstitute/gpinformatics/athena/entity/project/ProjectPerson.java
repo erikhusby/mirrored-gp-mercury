@@ -14,7 +14,7 @@ import javax.persistence.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "PROJECT_PERSON", schema = "athena")
 public class ProjectPerson {
 
     @Id
@@ -26,7 +26,10 @@ public class ProjectPerson {
     @Index(name = "ix_person_project")
     private ResearchProject researchProject;
 
+    @Column(name = "ROLE")
     private RoleType role;
+
+    @Column(name = "PERSON_ID")
     private Long personId;
 
     protected ProjectPerson() { }

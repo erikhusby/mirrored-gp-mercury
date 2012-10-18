@@ -13,7 +13,7 @@ import javax.persistence.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "RESEARCH_PROJECT_COHORT", schema = "athena")
 public class ResearchProjectCohort {
 
     @Id
@@ -26,6 +26,7 @@ public class ResearchProjectCohort {
     private ResearchProject researchProject;
 
     // The BSP cohort Identifier
+    @Column(name = "COHORT_ID")
     private String cohortId;
 
     protected ResearchProjectCohort() { }

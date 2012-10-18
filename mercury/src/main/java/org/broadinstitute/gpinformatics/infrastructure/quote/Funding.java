@@ -1,8 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import org.broadinstitute.gpinformatics.athena.entity.project.FundingId;
-import org.broadinstitute.gpinformatics.athena.entity.project.GrantId;
-import org.broadinstitute.gpinformatics.athena.entity.project.PurchaseOrderId;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -49,10 +48,12 @@ public class Funding {
         this.grantDescription = grantDescription;
     }
 
-    public FundingId getFundingID() {
-        return FUNDS_RESERVATION.equals(getFundingType()) ?
-                new GrantId(grantNumber) :
-                new PurchaseOrderId(purchaseOrderNumber);
+    public String getFundingTypeAndName() {
+        return FUNDS_RESERVATION.equals(getFundingType()) ? "CO-" + grantNumber : "PO-" + purchaseOrderNumber;
+    }
+
+    public String getMatchDescription() {
+        return FUNDS_RESERVATION.equals(getFundingType()) ? grantDescription : institute;
     }
 
     @XmlAttribute(name = "costObject")
@@ -163,40 +164,23 @@ public class Funding {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(Object other) {
+        if ( (this == other ) ) {
+            return true;
+        }
 
-        Funding funding = (Funding) o;
-
-        if (broadName != null ? !broadName.equals(funding.broadName) : funding.broadName != null) return false;
-        if (commonName != null ? !commonName.equals(funding.commonName) : funding.commonName != null) return false;
-        if (costObject != null ? !costObject.equals(funding.costObject) : funding.costObject != null) return false;
-        if (fundingType != null ? !fundingType.equals(funding.fundingType) : funding.fundingType != null) return false;
-        if (grantDescription != null ? !grantDescription.equals(funding.grantDescription) : funding.grantDescription != null)
+        if ( !(other instanceof Funding) ) {
             return false;
-        if (grantNumber != null ? !grantNumber.equals(funding.grantNumber) : funding.grantNumber != null) return false;
-        if (grantStatus != null ? !grantStatus.equals(funding.grantStatus) : funding.grantStatus != null) return false;
-        if (sponsorName != null ? !sponsorName.equals(funding.sponsorName) : funding.sponsorName != null) return false;
-        if (institute != null ? !institute.equals(funding.institute) : funding.institute != null) return false;
-        if (purchaseOrderNumber != null ? !purchaseOrderNumber.equals(funding.purchaseOrderNumber) : funding.purchaseOrderNumber != null)
-            return false;
+        }
 
-        return true;
+        Funding castOther = (Funding) other;
+        return new EqualsBuilder().append(getCostObject(), castOther.getCostObject())
+                                  .append(getPurchaseOrderNumber(), castOther.getPurchaseOrderNumber())
+                                  .append(getFundingType(), castOther.getFundingType()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = costObject != null ? costObject.hashCode() : 0;
-        result = 31 * result + (broadName != null ? broadName.hashCode() : 0);
-        result = 31 * result + (commonName != null ? commonName.hashCode() : 0);
-        result = 31 * result + (grantDescription != null ? grantDescription.hashCode() : 0);
-        result = 31 * result + (grantNumber != null ? grantNumber.hashCode() : 0);
-        result = 31 * result + (grantStatus != null ? grantStatus.hashCode() : 0);
-        result = 31 * result + (sponsorName != null ? sponsorName.hashCode() : 0);
-        result = 31 * result + (fundingType != null ? fundingType.hashCode() : 0);
-        result = 31 * result + (institute != null ? institute.hashCode() : 0);
-        result = 31 * result + (purchaseOrderNumber != null ? purchaseOrderNumber.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder().append(getCommonName()).append(getFundingType()).toHashCode();
     }
 }

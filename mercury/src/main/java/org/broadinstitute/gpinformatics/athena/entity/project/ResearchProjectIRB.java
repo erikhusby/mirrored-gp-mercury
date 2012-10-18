@@ -12,7 +12,7 @@ import javax.persistence.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "RESEARCH_PROJECTIRB", schema = "athena")
 public class ResearchProjectIRB {
 
     public enum IrbType {
@@ -46,7 +46,10 @@ public class ResearchProjectIRB {
     @Index(name = "ix_irb_project")
     private ResearchProject researchProject;
 
+    @Column(name = "IRB")
     private String irb;
+
+    @Column(name = "IRB_TYPE")
     private IrbType irbType;
 
     protected ResearchProjectIRB() { }
