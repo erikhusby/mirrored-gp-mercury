@@ -13,6 +13,10 @@
         <ui:define name="title">Product Orders</ui:define>
 
         <ui:define name="body">
+            <h:form>
+                <p><p:commandButton value="New Product Order" action="create?faces-redirect=true" ajax="false" styleClass="btn"/></p>
+            </h:form>
+
             <p:dataTable value="#{productOrderBean.allProductOrders}" var="order">
                 <p:column headerText="Name" sortBy="#{order.title}">
                     <h:link outcome="view" value="#{order.title}">
@@ -24,7 +28,7 @@
                     #{order.jiraTicketKey}
                 </p:column>
 
-                <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allProjectStatuses}" filterMatchMode="exact">
+                <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
                     #{order.orderStatus}
                 </p:column>
 
@@ -45,9 +49,6 @@
                 </p:column>
             </p:dataTable>
 
-            <h:form>
-                <p><p:commandButton value="New Product Order..." action="create?faces-redirect=true" ajax="false"/></p>
-            </h:form>
         </ui:define>
     </ui:composition>
 </body>

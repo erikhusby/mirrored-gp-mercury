@@ -38,6 +38,15 @@
         <link rel="shortcut icon" type="image/x-icon" href="#{request.contextPath}/favicon.ico"/>
         <title>Mercury | <ui:insert name="title"/></title>
         <ui:insert name="head"/>
+
+        <script type="text/javascript" src="http://prodinfojira.broadinstitute.org/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
+        <script type="text/javascript">window.ATL_JQ_PAGE_PROPS =  {
+            "triggerFunction": function(showCollectorDialog) {
+                jQuery("#jiraProblem").click(function(e) {
+                    e.preventDefault();
+                    showCollectorDialog();
+                });
+            }};</script>
     </h:head>
     <h:body>
         <div class="navbar">
@@ -51,6 +60,8 @@
 
                         <sqltg:isLoggedIn>
                             <h:form styleClass="navbar-form pull-right">
+                                <span id="jiraProblem" class="badge badge-warning" style="cursor:help;">Feedback?</span>
+                                |
                                 <h:outputText value="#{request.getRemoteUser()}" />
                                 |
                                 <p:commandLink action="#{logoutHandler.logout}" value="Sign out" />
@@ -66,7 +77,7 @@
 
         <div class="container-fluid">
             <div class="row-fluid">
-                <p:ajaxStatus id="ajaxStatus">
+                <p:ajaxStatus id="ajaxStatus" styleClass="span2 offset5">
                     <f:facet name="start">
                         Loading...
                     </f:facet>
@@ -88,10 +99,10 @@
                         <f:facet name="header"><span id="panelTitle"><ui:insert name="title"/></span></f:facet>
 
                         <!-- show messages/errors -->
-                        <p:messages severity="fatal" />
-                        <p:messages severity="error" />
-                        <p:messages severity="warn" />
-                        <p:messages severity="info" />
+                        <p:messages autoUpdate="true" severity="fatal" />
+                        <p:messages autoUpdate="true" severity="error" />
+                        <p:messages autoUpdate="true" severity="warn" />
+                        <p:messages autoUpdate="true" severity="info" />
 
                         <ui:insert name="body"/>
                     </p:panel>
@@ -100,7 +111,7 @@
 
         <footer>
             <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.<br/>
-               Genomics Platform. Version 1.0 build October 12, 2012 12:34:56pm.</p>
+               Genomics Platform. <ui:include src="administration/buildInfo.xhtml"/></p>
         </footer>
 
         <ui:debug/>

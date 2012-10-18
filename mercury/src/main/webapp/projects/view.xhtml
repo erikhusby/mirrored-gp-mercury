@@ -20,8 +20,7 @@
         <ui:define name="title">View Research Project</ui:define>
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
-                <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
+                <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
             </f:metadata>
         </ui:define>
         <ui:define name="body">
@@ -104,7 +103,7 @@
                 <div class="control-group">
                     <label class="control-label">Sample Cohorts</label>
                     <div class="controls">
-                        <div class="form-value">#{researchProjectDetail.cohorts}</div>
+                        <div class="form-value">#{cohortListBean.getCohortListString(researchProjectDetail.project.cohortIds)}</div>
                     </div>
                 </div>
 
@@ -131,46 +130,37 @@
 
                 <br/>
 
-                <p:selectOneMenu id="selectedStatus" value="">
-                    <f:selectItem itemLabel="Filter By Status" itemValue="" />
-                    <f:selectItems value="#{researchProjectDetail.statuses}" />
-                </p:selectOneMenu>
-
-                <p:dataTable value="#{researchProjectDetail.project.productOrders}" var="product">
+                <p:dataTable value="#{researchProjectDetail.project.productOrders}" var="order" filteredValue="#{productOrderBean.filteredProductOrders}">
                     <p:column headerText="Product ID">
-                        <h:link outcome="product/detail" value="DMY-1">
-                            <f:param name="orderId" value="#{product.title}"/>
+                        <h:link outcome="/orders/view" value="#{order.jiraTicketKey}">
+                            <f:param name="productOrderKey" value="#{order.businessKey}"/>
                         </h:link>
                     </p:column>
                     <p:column headerText="Name">
-                        #{product.title}
+                        #{order.title}
                     </p:column>
                     <p:column headerText="Product">
-                        #{product.title}
+                        #{order.product.productName}
                     </p:column>
-                    <p:column headerText="Status">
-                        #{product.orderStatus}
+                    <p:column headerText="Status" sortBy="#{order.orderStatus}" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
+                        #{order.orderStatus}
                     </p:column>
                     <p:column headerText="Date Created">
-                        #{product.orderStatus}
+                        #{order.createdDate}
                     </p:column>
                     <p:column headerText="Date Updated">
-                        #{product.orderStatus}
+                        #{order.modifiedDate}
                     </p:column>
                     <p:column headerText="Samples">
-                        #{product.orderStatus}
+                        #{order.sampleSummary}
                     </p:column>
                     <p:column headerText="Program PM">
-                        #{product.orderStatus}
+                        #{userListBean.getUserListString(order.createdBy)}
                     </p:column>
                 </p:dataTable>
             </h:form>
 
-            <h:form>
-                <p:commandButton value="Edit Project" action="create" ajax="false">
-                    <f:param name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}"/>
-                </p:commandButton>
-            </h:form>
+            <h:link value="Edit Project" outcome="create?includeViewParams=true"/>
         </ui:define>
     </ui:composition>
 </body>

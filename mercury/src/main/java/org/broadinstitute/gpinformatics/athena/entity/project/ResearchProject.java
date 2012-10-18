@@ -107,7 +107,7 @@ public class ResearchProject {
     }
 
     /**
-     * no arg constructor for hibernate and JSF.
+     * no arg constructor for JSF.
      */
     public ResearchProject() {
         this(null, null, null, false);
@@ -199,6 +199,16 @@ public class ResearchProject {
     }
 
     /**
+     * Sets the last modified by property to the specified user and the last modified date to the current date.
+     *
+     * @param personId the person who modified the research project
+     */
+    public void recordModification(Long personId) {
+        modifiedBy = personId;
+        modifiedDate = new Date();
+    }
+
+    /**
      * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
      * which this Research project is associated
      *
@@ -250,7 +260,7 @@ public class ResearchProject {
 
     public String[] getIrbNumbers() {
         int i = 0;
-        if (sampleCohorts != null) {
+        if (irbNumbers != null) {
             String[] irbNumberList = new String[irbNumbers.size()];
             for (ResearchProjectIRB irb : irbNumbers) {
                 irbNumberList[i++] = irb.getIrb();
@@ -267,7 +277,7 @@ public class ResearchProject {
             irbNumbers = new HashSet<ResearchProjectIRB>();
         }
 
-        irbNumbers.add ( irbNumber );
+        irbNumbers.add(irbNumber);
     }
 
     public void removeIrbNumber(ResearchProjectIRB irbNumber) {
@@ -363,9 +373,9 @@ public class ResearchProject {
 
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
-        //TODO HR, SGM -- Update for Sponsoring Scientist
-        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()),
-                                         associatedPeople.iterator().next().getPersonId().toString()));
+        listOfFields.add(new CustomField(submissionFields.get(
+                RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()),
+                ServiceAccessUtility.getBspUserForId(associatedPeople.iterator().next().getPersonId())));
 
         if(!sampleCohorts.isEmpty()) {
             List<String> cohortNames = new ArrayList<String>();
@@ -405,8 +415,7 @@ public class ResearchProject {
         /**
          * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
          */
-//        addWatcher(createdBy.toString());
-
+        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
     }
 
     public void addPublicComment(String comment) throws IOException{

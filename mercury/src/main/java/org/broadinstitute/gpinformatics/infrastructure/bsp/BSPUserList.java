@@ -23,6 +23,8 @@ import java.util.List;
 @Singleton
 public class BSPUserList {
 
+    private static long userIdSeq = 101010101L;
+
     private final List<BspUser> users;
 
     /**
@@ -86,6 +88,7 @@ public class BSPUserList {
         List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
 
         if (rawUsers != null) {
+            addQADudeUsers(rawUsers);
             Collections.sort(rawUsers, new Comparator<BspUser>() {
                 @Override
                 public int compare(BspUser o1, BspUser o2) {
@@ -103,5 +106,22 @@ public class BSPUserList {
         } else {
             users = new ArrayList<BspUser>();
         }
+    }
+
+    private void addQADudeUsers(List<BspUser> users) {
+        users.add(makeBspUser("QADudeTest", "QADude", "Test", "qadudetest@broadinstitute.org"));
+        users.add(makeBspUser("QADudePM", "QADude", "PM", "qadudepm@broadinstitute.org"));
+        users.add(makeBspUser("QADudeLU", "QADude", "LU", "qadudelu@broadinstitute.org"));
+        users.add(makeBspUser("QADudeLM", "QADude", "LM", "qadudelm@broadinstitute.org"));
+    }
+
+    private synchronized BspUser makeBspUser(String username, String firstName, String lastName, String email) {
+        BspUser user = new BspUser();
+        user.setUserId(userIdSeq++);
+        user.setUsername(username);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        return user;
     }
 }

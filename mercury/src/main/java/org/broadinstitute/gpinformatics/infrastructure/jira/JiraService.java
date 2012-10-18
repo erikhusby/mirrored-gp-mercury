@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueReq
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -122,4 +124,10 @@ public interface JiraService extends Serializable {
      * @throws IOException
      */
     void addWatcher(String key, String watcherId) throws IOException;
+
+    IssueTransitionResponse findAvailableTransitions ( String jiraIssueKey );
+
+    void postNewTransition( String jiraIssueKey, IssueTransitionRequest jiraIssueTransition ) throws IOException;
+
+    void postNewTransition ( String jiraIssueKey, String transitionId ) throws IOException;
 }

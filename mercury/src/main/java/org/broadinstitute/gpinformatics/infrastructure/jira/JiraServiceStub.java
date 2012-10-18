@@ -9,10 +9,17 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueReq
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -83,5 +90,38 @@ public class JiraServiceStub implements JiraService {
     @Override
     public String createTicketUrl(String jiraTicketName) {
         return "http://dummy-jira-service.blah/" + jiraTicketName;
+    }
+
+
+    @Override
+    public IssueTransitionResponse findAvailableTransitions ( String jiraIssueKey ) {
+
+        Transition transition1 = new Transition("1","Open",new NextTransition("", "In Progress","","2"));
+        Transition transition2 = new Transition("3","Complete",new NextTransition("", "Closed","","4"));
+        Transition transition3 = new Transition("5","Cancel",new NextTransition("", "Closed","","6"));
+        Transition transition4 = new Transition("7","Start Progress",new NextTransition("", "in Progress","","8"));
+        Transition transition5 = new Transition("9","Put On Hold",new NextTransition("", "held","","10"));
+
+
+        List<Transition> transitions = new LinkedList<Transition>();
+        transitions.add(transition1);
+        transitions.add(transition2);
+        transitions.add(transition3);
+        transitions.add(transition4);
+        transitions.add(transition5);
+        IssueTransitionResponse dummyResponse =
+                new IssueTransitionResponse("",transitions);
+
+        return dummyResponse;
+    }
+
+    @Override
+    public void postNewTransition ( String jiraIssueKey, IssueTransitionRequest jiraIssueTransition )
+            throws IOException {
+    }
+
+    @Override
+    public void postNewTransition ( String jiraIssueKey, String transitionId ) throws IOException {
+
     }
 }

@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectTest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.meanbean.test.BeanTester;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -44,13 +45,18 @@ public class ProductOrderTest {
 
         ProductOrderSample sample = new ProductOrderSample("SM-1234");
         sample.addBillableItem(new BillableItem(priceItem, new BigDecimal("1")));
-        order.addSample(sample);
+        order.setSamples(Collections.singletonList(sample));
 
         return order;
     }
 
     @AfterMethod
     public void tearDown() throws Exception {
+    }
+
+    @Test
+    public void test_basic_beaniness() {
+        new BeanTester().testBean(ProductOrder.class);
     }
 
     @Test

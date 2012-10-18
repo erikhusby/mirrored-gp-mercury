@@ -3,13 +3,11 @@ package org.broadinstitute.gpinformatics.athena.control.dao.products;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.jetbrains.annotations.NotNull;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -52,12 +50,9 @@ public class ProductDao extends GenericDao {
         return findProducts(AvailableProductsOnly.NO, topLevelProductsOnly);
     }
 
-
-    public List<Product> findProducts(TopLevelProductsOnly topLevelProductsOnly, AvailableProductsOnly availableProductsOnly) {
-        return findProducts(availableProductsOnly, topLevelProductsOnly);
+    public Product findByBusinessKey(String key) {
+        return findByPartNumber(key);
     }
-
-
 
     /**
      * General purpose product finder method
@@ -68,28 +63,37 @@ public class ProductDao extends GenericDao {
      *
      * @return
      */
-    public List<Product> findProducts(AvailableProductsOnly availableProductsOnly, TopLevelProductsOnly topLevelProductsOnly) {
-
-        if (availableProductsOnly == null) {
-            throw new IllegalArgumentException("availableProductsOnly can not be null!");
-        }
-
-        if (topLevelProductsOnly == null) {
-            throw new IllegalArgumentException("topLevelProducts can not be null!");
-        }
-
+    public List<Product> findProducts(@NotNull AvailableProductsOnly availableProductsOnly,
+                                      @NotNull TopLevelProductsOnly topLevelProductsOnly) {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Product> cq = cb.createQuery(Product.class);
         List<Predicate> predicateList = new ArrayList<Predicate>();
+        cq.distinct(true);
 
         Root<Product> product = cq.from(Product.class);
+
+        // left join fetches may be required for an application scoped cache of Products.  JPA criteria queries
+        // don't seem to do a good job with this and will double select all the fields of the associations: once for the
+        // join and again for the fetch.
+        // http://stackoverflow.com/questions/4511368/jpa-2-criteria-fetch-path-navigation
+
+//        product.join(Product_.priceItems, JoinType.LEFT);
+//        product.fetch(Product_.priceItems, JoinType.LEFT);
+//
+//        product.join(Product_.addOns, JoinType.LEFT);
+//        product.fetch(Product_.addOns, JoinType.LEFT);
 
         if (availableProductsOnly == AvailableProductsOnly.YES) {
             // there is an availability date
             predicateList.add(cb.isNotNull(product.get(Product_.availabilityDate)));
             // and it is in the past
             predicateList.add(cb.lessThan(product.get(Product_.availabilityDate), Calendar.getInstance().getTime()));
-            // todo mlc add logic here to deal with discontinued dates!
+
+            // and the discontinued date is null or in the future
+            predicateList.add(
+                cb.or( cb.isNull(product.get(Product_.discontinuedDate)),
+                       cb.greaterThan(product.get(Product_.discontinuedDate), Calendar.getInstance().getTime()))
+            );
         }
 
         if (topLevelProductsOnly == TopLevelProductsOnly.YES) {

@@ -13,27 +13,23 @@
 </h:head>
 <h:body>
 <ui:composition template="/layout.xhtml">
+    <ui:define name="metadata">
+        <f:event type="preRenderView" listener="#{productsBean.onPreRenderView}" />
+    </ui:define>
+
     <ui:define name="title">Products</ui:define>
     <ui:define name="body">
 
+        <!-- I would very much like to restore the ajax boolean checkbox for 'Available Products Only', but there
+             were too many problems getting this to work properly with the datatable filtering.  -->
+
         <h:form id="productList">
 
-            <h:panelGrid columns="1">
-
-                <h:panelGrid columns="2">
-                    <!-- disabling this since it doesn't play nice with the filter -->
-                    <p:selectBooleanCheckbox value="#{productsBean.availableProductsOnly}" disabled="true">
-                        <!--<p:ajax event="click" listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>-->
-                        <p:ajax listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>
-                    </p:selectBooleanCheckbox>
-                    <h:outputText value="Available Products Only"/>
-                </h:panelGrid>
-
-            </h:panelGrid>
-
             <!-- per the mockups, clicking a row in this table should view the Product Details -->
+
             <p:dataTable value="#{productsBean.productsDataModel}" var="product"
                          id="dataTable" widgetVar="dataTable"
+                         scrollable="true" scrollHeight="200" resizableColumns="true"
                          filteredValue="#{productsBean.filteredProducts}"
                          emptyMessage="No products found containing search text"
                          selection="#{productsBean.selectedProduct}" selectionMode="single">
@@ -41,46 +37,49 @@
                 <p:ajax event="rowSelect" listener="#{productsBean.onRowSelect}" update=":productMainView :productAddOnsView :productPriceItemsView"/>
                 <p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" update=":productMainView :productAddOnsView :productPriceItemsView" />
 
+                <!-- for reasons I have not yet determined the data displayed in the dataTable appears to lag the
+                     contents of the filter text field by one UI event.  e.g., if the data rows included 'bar' and 'baz'
+                     I should see both rows if the filter text was 'ba'.  But as soon as I made the filter text 'bar',
+                     I should see only the 'bar' result and not 'baz'.  But currently 'baz' continues to show until
+                     another UI event, which could be another character typed in the filter field or a column sort. -->
                 <f:facet name="header">
-                        <p:outputPanel>
-                            <h:outputText value="Search"/>
+                        <p:outputPanel styleClass="pull-right">
+                            <h:outputText value=" Search "/>
                             <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
                         </p:outputPanel>
                 </f:facet>
 
                 <p:column sortBy="#{product.partNumber}" sortFunction="#{productsBean.compare}"
-                          filterBy="#{product.partNumber}" filterStyleClass="hide">
+                          filterBy="#{product.partNumber}" filterStyleClass="hide" width="250">
                     <f:facet name="header">
-                        <h:outputText value="Part #" />
+                        <h:outputText value="Part Number" />
                     </f:facet>
                         
                     <h:outputText value="#{product.partNumber}" />
                 </p:column>
 
                 <p:column sortBy="#{product.productName}" sortFunction="#{productsBean.compare}"
-                          filterBy="#{product.productName}" filterStyleClass="hide">
+                          filterBy="#{product.productName}" filterStyleClass="hide" width="200">
                     <f:facet name="header">
                         <h:outputText value="Name" />
                     </f:facet>
                     <h:outputText value="#{product.productName}" />
                 </p:column>
 
-                <p:column sortBy="#{product.productFamily.name}" sortFunction="#{productsBean.compare}"
-                          filterBy="#{product.productFamily.name}" filterStyleClass="hide">
+                <p:column sortBy="#{product.productFamily.displayName}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.productFamily.displayName}" filterStyleClass="hide" width="250">
                     <f:facet name="header">
                         <h:outputText value="Product Family" />
                     </f:facet>
-                    <h:outputText value="#{product.productFamily.name}" />
+                    <h:outputText value="#{product.productFamily.displayName}" />
                 </p:column>
 
-                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productsBean.compare}">
+                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productsBean.compare}" width="100">
                     <h:outputText value='#{product.topLevelProduct ? "Yes" : "No"}' />
                 </p:column>
 
-                <p:column headerText="Availability Date" sortBy="#{product.availabilityDate}" sortFunction="#{productsBean.compare}">
-                    <h:outputText value="#{product.availabilityDate}">
-                        <f:convertDateTime pattern="MMM dd, yyyy" />
-                    </h:outputText>
+                <p:column headerText="Available?" sortBy="#{product.available}" sortFunction="#{productsBean.compare}" width="125">
+                    <h:outputText value='#{product.available ? "Yes" : "No"}'/>
                 </p:column>
 
             </p:dataTable>
@@ -90,7 +89,14 @@
 
         <h:form id="productMainView" styleClass="form-horizontal form-readonly" >
 
-            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
+            <h:panelGroup rendered="#{productsBean.selectedProduct != null}">
+
+                <div class="control-group">
+                    <label class="control-label">Part Number</label>
+                    <div class="controls">
+                        <div class="form-value">#{productsBean.selectedProduct.partNumber} (<a href="http://link/to/product_sheet/#{productsBean.selectedProduct.partNumber}.pdf">Product Sheet PDF</a>)</div>
+                    </div>
+                </div>
 
             <div class="control-group">
                 <label class="control-label">Name</label>
@@ -99,12 +105,7 @@
                 </div>
             </div>
 
-            <div class="control-group">
-                <label class="control-label">Part Number</label>
-                <div class="controls">
-                    <div class="form-value">#{productsBean.selectedProduct.partNumber}</div>
-                </div>
-            </div>
+
 
             <div class="control-group">
                 <label class="control-label">Product Family</label>
@@ -126,31 +127,46 @@
                         <div class="form-value">#{productsBean.selectedProductDiscontinuedDate}</div>
                     </div>
                 </div>
-            </p:panelGrid>
+
+                <div class="control-group">
+                    <label class="control-label">Description</label>
+                    <div class="controls">
+                        <div class="form-value">#{productsBean.selectedProduct.description}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Deliverables</label>
+                    <div class="controls">
+                        <div class="form-value">#{productsBean.selectedProduct.deliverables}</div>
+                    </div>
+                </div>
+
+            </h:panelGroup>
 
         </h:form>
 
 
         <h:form id="productAddOnsView">
-            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
-                <p:dataTable value="#{productsBean.selectedProductAddOns}" var="addOn">
+            <h:panelGroup rendered="#{productsBean.selectedProduct != null}">
+                <p:dataTable value="#{productsBean.selectedProductAddOns}" var="addOn" resizableColumns="true">
                     <f:facet name="header">
                         <h:outputText value="Add Ons" />
                     </f:facet>
 
-                    <p:column>
-                        <f:facet name="header">
-                            <h:outputText value="Name"/>
-                        </f:facet>
-                        <h:outputText value="#{addOn.productName}"/>
-                    </p:column>
-                    <p:column>
+                    <p:column width="250">
                         <f:facet name="header">
                             <h:outputText value="Part Number"/>
                         </f:facet>
                         <h:outputText value="#{addOn.partNumber}"/>
                     </p:column>
-                    <p:column>
+                    <p:column width="200">
+                        <f:facet name="header">
+                            <h:outputText value="Name"/>
+                        </f:facet>
+                        <h:outputText value="#{addOn.productName}"/>
+                    </p:column>
+                    <p:column width="250">
                         <f:facet name="header">
                             <h:outputText value="Product Family"/>
                         </f:facet>
@@ -158,36 +174,36 @@
                     </p:column>
 
                 </p:dataTable>
-            </p:panelGrid>
+            </h:panelGroup>
         </h:form>
 
 
         <h:form id="productPriceItemsView">
-            <p:panelGrid columns="1" rendered="#{productsBean.selectedProduct != null}">
+            <h:panelGroup rendered="#{productsBean.selectedProduct != null}">
 
-                <p:dataTable value="#{productsBean.selectedProductPriceItems}" var="priceItem">
+                <p:dataTable value="#{productsBean.selectedProductPriceItems}" var="priceItem" resizableColumns="true">
                     <f:facet name="header">
                         <h:outputText value="Price Items" />
                     </f:facet>
-                    <p:column>
+                    <p:column width="200">
                         <f:facet name="header">
                             <h:outputText value="Platform"/>
                         </f:facet>
                         <h:outputText value="#{priceItem.platform}"/>
                     </p:column>
-                    <p:column>
+                    <p:column width="250">
                         <f:facet name="header">
                             <h:outputText value="Category"/>
                         </f:facet>
                         <h:outputText value="#{priceItem.category}"/>
                     </p:column>
-                    <p:column>
+                    <p:column width="250">
                         <f:facet name="header">
                             <h:outputText value="Name"/>
                         </f:facet>
                         <h:outputText value="#{priceItem.name}"/>
                     </p:column>
-                    <p:column>
+                    <p:column width="100">
                         <f:facet name="header">
                             <h:outputText value="Default?"/>
                         </f:facet>
@@ -195,7 +211,7 @@
                                 value='#{productsBean.isPriceItemDefaultForSelected(priceItem) ? "Yes" : "No"}'/>
                     </p:column>
                 </p:dataTable>
-            </p:panelGrid>
+            </h:panelGroup>
         </h:form>
 
             <!--<p><p:commandButton value="New Product..." action="create?faces-redirect=true" ajax="false"/></p>-->
