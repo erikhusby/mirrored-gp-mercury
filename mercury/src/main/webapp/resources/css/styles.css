@@ -61,5 +61,6 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 
 .hide, .ui-datatable .ui-filter-column .hide { display: none; visibility: hidden; }
 
+/* These are for multi-line autocomplete full text formatting - see cohort, user and funding in research project */
 .ac-dropdown-text { font-size: small; }
 .ac-dropdown-subtext { font-size: smaller; font-style: italic; }
