@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * Could not seem to inject the BSPCohortList directly into the xhtml file, so this is a wrapper that does
- * the injection and provides the access to the find for anything that wants user names instead of the stored
+ * the injection and provides the access to the find for anything that wants cohort names instead of the stored
  * ID.
  */
 @Named
@@ -22,17 +22,17 @@ public class CohortListBean {
     private BSPCohortList cohortList;
 
     private String getCohortName(String cohortId) {
-        String fullName = "";
+        String cohortName = "";
         if (cohortId != null) {
             Cohort cohort = cohortList.getById(cohortId);
 
             if (cohort == null) {
-                return "(Unknown user: " + cohortId + ")";
+                return "(Unknown cohort: " + cohortId + ")";
             }
             return cohort.getName();
         }
 
-        return fullName;
+        return cohortName;
     }
 
     public List<Cohort> searchActiveCohort(String query) {
