@@ -480,7 +480,7 @@ public class ProductOrder implements Serializable {
     private int getGenderCount(String gender) {
         int counter = 0;
         for (ProductOrderSample sample : samples) {
-            if (sample.isInBspFormat() && gender.equals(sample.getBspDTO().getGender())) {
+            if (sample.isInBspFormat() && gender.equalsIgnoreCase(sample.getBspDTO().getGender())) {
                 counter++;
             }
         }
