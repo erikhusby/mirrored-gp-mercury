@@ -672,8 +672,8 @@
             <id>PROD</id>
             <properties>
                 <!-- Oracle Dev -->
-                <driver>oracle.jdbc.driver.OracleDriver</driver>
-                <url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</url>
+                <liquibase.driver>oracle.jdbc.driver.OracleDriver</liquibase.driver>
+                <liquibase.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</liquibase.url>
                 <mercury.password>mercury_prod</mercury.password>
                 <athena.password>athena_prod</athena.password>
             </properties>
