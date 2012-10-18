@@ -25,7 +25,7 @@ import java.util.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject {
 
     public static final boolean IRB_ENGAGED = false;
@@ -54,30 +54,31 @@ public class ResearchProject {
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
     private Long researchProjectId;
 
-    @Column(nullable = false)
+    @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status = Status.Open;
 
     // creation/modification information
-    @Column(nullable = false)
+    @Column(name = "CREATED_DATE", nullable = false)
     private Date createdDate;
 
-    @Column(nullable = false)
+    @Column(name = "CREATED_BY", nullable = false)
     private Long createdBy;
 
-    @Column(nullable = false)
+    @Column(name = "MODIFIED_DATE", nullable = false)
     private Date modifiedDate;
 
-    @Column(nullable = false)
+    @Column(name = "MODIFIED_BY", nullable = false)
     private Long modifiedBy;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "TITLE", unique = true, nullable = false)
     @Index(name = "ix_rp_title")
     private String title;
 
-    @Column(nullable = false)
+    @Column(name = "SYNOPSIS", nullable = false)
     private String synopsis;
 
+    @Column(name = "IRB_NOT_ENGAGED", nullable = false)
     private boolean irbNotEngaged = IRB_ENGAGED;
 
     // People related to the project
@@ -103,11 +104,12 @@ public class ResearchProject {
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
     public String getBusinessKey() {
+        // TODO: change to jiraTicketKey once it's populated
         return title;
     }
 
     /**
-     * no arg constructor for hibernate and JSF.
+     * no arg constructor for JSF.
      */
     public ResearchProject() {
         this(null, null, null, false);
@@ -199,6 +201,16 @@ public class ResearchProject {
     }
 
     /**
+     * Sets the last modified by property to the specified user and the last modified date to the current date.
+     *
+     * @param personId the person who modified the research project
+     */
+    public void recordModification(Long personId) {
+        modifiedBy = personId;
+        modifiedDate = new Date();
+    }
+
+    /**
      * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
      * which this Research project is associated
      *
@@ -250,7 +262,7 @@ public class ResearchProject {
 
     public String[] getIrbNumbers() {
         int i = 0;
-        if (sampleCohorts != null) {
+        if (irbNumbers != null) {
             String[] irbNumberList = new String[irbNumbers.size()];
             for (ResearchProjectIRB irb : irbNumbers) {
                 irbNumberList[i++] = irb.getIrb();
@@ -267,14 +279,14 @@ public class ResearchProject {
             irbNumbers = new HashSet<ResearchProjectIRB>();
         }
 
-        irbNumbers.add ( irbNumber );
+        irbNumbers.add(irbNumber);
     }
 
     public void removeIrbNumber(ResearchProjectIRB irbNumber) {
         irbNumbers.remove(irbNumber);
     }
 
-    public void addPerson(RoleType role, Long personId) {
+    public void addPerson(RoleType role, long personId) {
         if (associatedPeople == null) {
             associatedPeople = new HashSet<ProjectPerson>();
         }
@@ -363,9 +375,9 @@ public class ResearchProject {
 
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
-        //TODO HR, SGM -- Update for Sponsoring Scientist
-        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()),
-                                         associatedPeople.iterator().next().getPersonId().toString()));
+        listOfFields.add(new CustomField(submissionFields.get(
+                RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()),
+                ServiceAccessUtility.getBspUserForId(associatedPeople.iterator().next().getPersonId())));
 
         if(!sampleCohorts.isEmpty()) {
             List<String> cohortNames = new ArrayList<String>();
@@ -405,8 +417,7 @@ public class ResearchProject {
         /**
          * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
          */
-//        addWatcher(createdBy.toString());
-
+        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
     }
 
     public void addPublicComment(String comment) throws IOException{

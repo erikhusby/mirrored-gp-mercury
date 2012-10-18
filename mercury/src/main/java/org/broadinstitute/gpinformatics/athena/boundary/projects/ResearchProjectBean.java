@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.BoundaryUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 
 import javax.enterprise.context.RequestScoped;
@@ -30,6 +30,9 @@ public class ResearchProjectBean implements Serializable {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private BSPCohortList cohortList;
 
     /** All research projects, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
     private List<ResearchProject> allResearchProjects;
@@ -58,9 +61,11 @@ public class ResearchProjectBean implements Serializable {
         Set<BspUser> owners = new HashSet<BspUser>();
         for (ResearchProject project : getAllResearchProjects()) {
             Long createdBy = project.getCreatedBy();
-            BspUser bspUser = bspUserList.getById(createdBy);
-            if (bspUser != null) {
-                owners.add(bspUser);
+            if (createdBy != null) {
+                BspUser bspUser = bspUserList.getById(createdBy);
+                if (bspUser != null) {
+                    owners.add(bspUser);
+                }
             }
         }
 

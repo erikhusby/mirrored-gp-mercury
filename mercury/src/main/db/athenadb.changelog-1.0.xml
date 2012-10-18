@@ -154,4 +154,34 @@
            </addColumn>
        </changeSet>
 
+    <changeSet id="GPLIM-69-3" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="product_order_sample" indexName="ix_pos_sample_name" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="product_order_sample" indexName="ix_pos_sample_name" schemaName="athena">
+            <column name="sample_name"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-69-4" author="mccrory">
+        <preConditions>
+            <not>
+                <indexExists tableName="product_order_sample" indexName="ix_pos_product_order" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="product_order_sample" indexName="ix_pos_product_order" schemaName="athena">
+            <column name="product_order"/>
+        </createIndex>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-69-5" author="mccrory">
+        <dropColumn tableName="research_project_aud" schemaName="athena" columnName="status"/>
+        <addColumn tableName="research_project_aud" schemaName="athena">
+            <column name="status" type="varchar(30)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

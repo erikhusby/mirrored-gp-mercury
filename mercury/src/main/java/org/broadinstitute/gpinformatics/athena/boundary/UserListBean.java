@@ -21,18 +21,13 @@ public class UserListBean {
     @Inject
     private BSPUserList userList;
 
-    public String getUser(Long userId) {
-        String fullName = "";
-        if (userId != null) {
-            BspUser bspUser = userList.getById(userId);
-            // TODO: handle this situation differently?
-            if (bspUser == null) {
-                return "(Unknown user: " + userId + ")";
-            }
-            return bspUser.getFirstName() + " " + bspUser.getLastName();
+    public String getUserFullName(long userId) {
+        BspUser bspUser = userList.getById(userId);
+        if (bspUser == null) {
+            return "(Unknown user: " + userId + ")";
         }
 
-        return fullName;
+        return bspUser.getFirstName() + " " + bspUser.getLastName();
     }
 
     public BspUser[] getUsers(Long[] userIds) {
@@ -60,7 +55,7 @@ public class UserListBean {
             String[] nameList = new String[userIds.length];
             int i=0;
             for (Long userId : userIds) {
-                nameList[i++] = getUser(userId);
+                nameList[i++] = getUserFullName(userId);
             }
 
             userListString = StringUtils.join(nameList, ", ");
