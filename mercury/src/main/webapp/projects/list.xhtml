@@ -29,7 +29,7 @@
                     </p:column>
 
                     <p:column headerText="Owner" filterBy="#{project.createdBy}" filterOptions="#{researchProjectBean.allProjectOwners}" filterMatchMode="exact">
-                        #{userListBean.getUser(project.createdBy)}
+                        #{userListBean.getUserFullName(project.createdBy)}
                     </p:column>
 
                     <p:column headerText="Status" filterBy="#{project.status}" filterOptions="#{researchProjectBean.allProjectStatuses}" filterMatchMode="exact">
@@ -50,9 +50,6 @@
                         </h:outputText>
                     </p:column>
                 </p:dataTable>
-
-                <!-- TODO: fill in action for new product order view -->
-                <!--<p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>-->
             </h:form>
         </ui:define>
     </ui:composition>

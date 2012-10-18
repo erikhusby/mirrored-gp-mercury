@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -14,6 +15,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +25,9 @@ import java.util.List;
 @Named
 @RequestScoped
 public class ResearchProjectForm extends AbstractJsfBean {
+
+    @Inject
+    private Log log;
 
     @Inject
     private ResearchProjectDetail detail;
@@ -124,6 +129,14 @@ public class ResearchProjectForm extends AbstractJsfBean {
         project.setCreatedBy(userBean.getBspUser().getUserId());
         project.recordModification(userBean.getBspUser().getUserId());
 
+        try {
+            project.submit();
+        } catch (IOException e) {
+            log.error("Error creating JIRA ticket for research project", e);
+            addErrorMessage("Error creating JIRA issue", "Unable to create JIRA issue: " + e.getMessage());
+            // redisplay create view
+            return null;
+        }
         researchProjectDao.persist(project);
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
         return redirect("list");
