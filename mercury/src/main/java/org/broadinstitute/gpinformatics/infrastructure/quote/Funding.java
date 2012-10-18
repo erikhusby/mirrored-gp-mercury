@@ -42,10 +42,10 @@ public class Funding {
 
     public Funding() {}
 
-    public Funding(String fundingType,
-                   String grantDescription) {
+    public Funding(String fundingType, String grantDescription, String costObject) {
         this.fundingType = fundingType;
         this.grantDescription = grantDescription;
+        this.costObject = costObject;
     }
 
     public String getFundingTypeAndName() {
@@ -181,6 +181,6 @@ public class Funding {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getCommonName()).append(getFundingType()).toHashCode();
+        return new HashCodeBuilder().append(getCostObject()).append(getPurchaseOrderNumber()).append(getFundingType()).toHashCode();
     }
 }

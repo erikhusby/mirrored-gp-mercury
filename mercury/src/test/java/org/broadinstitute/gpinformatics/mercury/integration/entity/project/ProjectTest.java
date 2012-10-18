@@ -285,7 +285,7 @@ public class ProjectTest  {
         BasicProjectPlan plan = new BasicProjectPlan(project,project.getProjectName() + " Plan",workflow);
         String quoteId = "DNA23";
         plan.setQuote(new Quote(quoteId,
-                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteId,new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))), ApprovalStatus.FUNDED)));
+                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteId,new QuoteFunding(new FundingLevel("50",new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI"))), ApprovalStatus.FUNDED)));
         
         return plan;
     }
@@ -418,9 +418,9 @@ public class ProjectTest  {
     
     private QuotesCache buildQuotesCache() {
         Quotes quotes = new Quotes();
-        quotes.addQuote(new org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF128",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))), ApprovalStatus.FUNDED));
-        quotes.addQuote(new  org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF129",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))), ApprovalStatus.FUNDED));
-        quotes.addQuote(new  org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF130",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI"))), ApprovalStatus.FUNDED));
+        quotes.addQuote(new org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF128",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI", "NHGRI-1"))), ApprovalStatus.FUNDED));
+        quotes.addQuote(new  org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF129",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI", "NHGRI-2"))), ApprovalStatus.FUNDED));
+        quotes.addQuote(new  org.broadinstitute.gpinformatics.infrastructure.quote.Quote("GF130",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NCI", "NCI"))), ApprovalStatus.FUNDED));
         return new QuotesCache(quotes);
     }
 }
