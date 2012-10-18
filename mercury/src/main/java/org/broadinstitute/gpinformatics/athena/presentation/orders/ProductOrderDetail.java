@@ -4,26 +4,28 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.ArrayList;
 
 /**
  * Class for displaying details about a product order.
  */
 @Named
 @RequestScoped
-public class ProductOrderDetail {
+public class ProductOrderDetail extends AbstractJsfBean {
     @Inject
     ProductOrderDao productOrderDao;
 
     @Inject
     ResearchProjectDao researchProjectDao;
+
+    @Inject
+    UserBean userBean;
 
     /** Key used to look up this product order. */
     private String productOrderKey;
@@ -34,11 +36,11 @@ public class ProductOrderDetail {
     /** The product order we're currently displaying */
     private ProductOrder productOrder;
 
-    @PostConstruct
     public void initEmpty() {
-        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
-        // FIXME: need default constructor to create empty product order.
-        productOrder = new ProductOrder(10L,"", new ArrayList<ProductOrderSample>(), "", null, researchProject);
+        if (productOrder == null) {
+            ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+            productOrder = new ProductOrder(userBean.getBspUser().getUserId(), researchProject);
+        }
     }
 
     public void load() {

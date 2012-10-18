@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
 /**
  * Backing bean for Products list/view and CRUD pages
  */
@@ -28,25 +27,24 @@ import java.util.List;
 public class ProductsBean extends AbstractJsfBean implements Serializable {
 
     @Inject
-    private ProductDao productDao;
+    private DataTableFilteredValuesBean filteredValuesBean;
 
     @Inject
-    DataTableFilteredValuesBean filteredValuesBean;
+    private ProductDao productDao;
 
     private Product selectedProduct;
 
     private ProductsDataModel productsDataModel;
 
-    private boolean rebuild = true;
-
     private List<Product> selectedProductAddOns;
 
     private List<PriceItem> selectedProductPriceItems;
 
-    private static final DateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
 
     /**
-     * Hook the JSF preRenderView event to initiate a conversation
+     * Hook the JSF preRenderView event to explicitly initiate a long-running conversation in the conversation scoped
+     * {@link DataTableFilteredValuesBean}
      */
     public void onPreRenderView() {
         filteredValuesBean.beginConversation();
@@ -55,8 +53,15 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
 
     public ProductsDataModel getProductsDataModel() {
 
-        // lazy load
+
         if (productsDataModel == null) {
+            // "lazy" load, except this bean is request scoped so we end up creating a new ProductsDataModel
+            // for every request, including column sorts and each character typed into the search filter.
+            //
+            // Making a broader scoped cache of Products introduces LIEs on the add-on and price item associations.
+            // The ProductDao find method can be modified to left join fetch these associations, but the JPA criteria
+            // API has some issues with left join fetching efficiently (it selects every column twice per
+            // http://stackoverflow.com/questions/4511368/jpa-2-criteria-fetch-path-navigation).
             productsDataModel = new ProductsDataModel(productDao.findProducts());
         }
 
@@ -77,7 +82,7 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
     /**
      * Row deselection handler
      */
-    public void onRowUnselect(UnselectEvent event) {
+    public void onRowUnselect(UnselectEvent ignored) {
         selectedProduct = null;
     }
 
@@ -141,7 +146,7 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
             return "";
         }
 
-        return dateFormat.format(selectedProduct.getAvailabilityDate());
+        return DATE_FORMAT.format(selectedProduct.getAvailabilityDate());
     }
 
     /**
@@ -154,7 +159,7 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
             return "";
         }
 
-        return dateFormat.format(selectedProduct.getDiscontinuedDate());
+        return DATE_FORMAT.format(selectedProduct.getDiscontinuedDate());
     }
 
 
@@ -186,7 +191,6 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
     public void setFilteredProducts(List<Product> filteredProducts) {
         filteredValuesBean.setFilteredValues(filteredProducts);
     }
-
 
     public List<Product> getSelectedProductAddOns() {
         return selectedProductAddOns;
