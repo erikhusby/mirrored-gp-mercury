@@ -104,11 +104,12 @@ public class ResearchProject {
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
     public String getBusinessKey() {
+        // TODO: change to jiraTicketKey once it's populated
         return title;
     }
 
     /**
-     * no arg constructor for hibernate and JSF.
+     * no arg constructor for JSF.
      */
     public ResearchProject() {
         this(null, null, null, false);
@@ -374,9 +375,9 @@ public class ResearchProject {
 
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
-        //TODO HR, SGM -- Update for Sponsoring Scientist
-        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()),
-                                         associatedPeople.iterator().next().getPersonId().toString()));
+        listOfFields.add(new CustomField(submissionFields.get(
+                RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()),
+                ServiceAccessUtility.getBspUserForId(associatedPeople.iterator().next().getPersonId())));
 
         if(!sampleCohorts.isEmpty()) {
             List<String> cohortNames = new ArrayList<String>();
@@ -416,8 +417,7 @@ public class ResearchProject {
         /**
          * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
          */
-//        addWatcher(createdBy.toString());
-
+        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
     }
 
     public void addPublicComment(String comment) throws IOException{
