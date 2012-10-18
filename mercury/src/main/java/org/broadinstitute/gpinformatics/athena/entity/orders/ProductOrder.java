@@ -37,7 +37,7 @@ import java.util.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements Serializable {
     private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
