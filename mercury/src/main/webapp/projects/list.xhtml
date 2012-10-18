@@ -20,7 +20,7 @@
 
                     <p:column headerText="Name" sortBy="#{project.title}">
                         <h:link outcome="view" value="#{project.title}">
-                            <f:param name="researchProjectTitle" value="#{project.title}"/>
+                            <f:param name="researchProject" value="#{project.businessKey}"/>
                         </h:link>
                     </p:column>
 

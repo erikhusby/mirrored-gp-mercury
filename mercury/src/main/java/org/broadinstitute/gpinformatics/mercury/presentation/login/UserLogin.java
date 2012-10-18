@@ -7,17 +7,22 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
  */
 
 import org.apache.commons.logging.Log;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.RequestScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
-@ManagedBean
+//@javax.faces.bean.ManagedBean
+//@javax.faces.bean.RequestScoped
+@Named
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
     private String username;
@@ -26,6 +31,12 @@ public class UserLogin extends AbstractJsfBean {
 
     @Inject
     private Log logger;
+
+    @Inject
+    private UserBean userBean;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     public String getUsername() {
         return username;
@@ -51,6 +62,15 @@ public class UserLogin extends AbstractJsfBean {
             HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
 
             request.login(username, password);
+            BspUser bspUser = bspUserList.getByUsername(username);
+            if (bspUser != null) {
+                userBean.setBspUser(bspUser);
+            } else {
+                // FIXME: Temporarily map unknown users to the BSP tester user. Will need to handle this in userBean.
+                userBean.setBspUser(bspUserList.getByUsername("tester"));
+                // reuse exception handling below
+                //throw new ServletException("Login error: couldn't find BspUser: " + username);
+            }
             addInfoMessage("Welcome back!", "Sign in successful");
 
             String previouslyTargetedPage = (String)request.getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);

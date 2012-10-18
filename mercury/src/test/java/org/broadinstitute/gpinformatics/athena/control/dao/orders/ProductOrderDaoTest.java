@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResourceTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -35,6 +36,10 @@ public class ProductOrderDaoTest extends ContainerTest {
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
+        if (researchProjectDao != null) {
+            ResearchProject researchProject = ResearchProjectResourceTest.createDummyResearchProject("TestResearchProject_" + UUID.randomUUID());
+            researchProjectDao.persist(researchProject);
+        }
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -110,7 +115,7 @@ public class ProductOrderDaoTest extends ContainerTest {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void  findOrdersModifiedBy () {
         List<ProductOrder> ordersCreatedbyList = null;
-        ordersCreatedbyList = productOrderDao.findByModifiedPersonId( 1L );
+        ordersCreatedbyList = productOrderDao.findByModifiedPersonId(1L);
         Assert.assertNotNull(ordersCreatedbyList);
         Assert.assertTrue(ordersCreatedbyList.size() > 0 );
     }

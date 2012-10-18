@@ -10,24 +10,18 @@
       xmlns:f="http://java.sun.com/jsf/core">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">New Research Project</ui:define>
+        <ui:define name="title">#{researchProjectDetail.project.researchProjectId == null ? 'New' : 'Edit'} Research Project</ui:define>
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="researchProjectTitle" value="#{researchProjectDetail.researchProjectTitle}" />
-                <f:event type="preRenderView" listener="#{researchProjectDetail.loadProject}" />
-                <f:event type="preValidate" listener="#{researchProjectDetail.restoreModel}"/>
-                <!-- TODO: figure out if this is really the right way to do this -->
+                <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
                 <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
-                <f:event type="preValidate" listener="#{researchProjectForm.initEmptyProject}"/>
+                <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
             </f:metadata>
         </ui:define>
 
         <ui:define name="body">
             <h:form id="form" prependId="false" styleClass="form-horizontal">
-
-                <!-- propagate researchProjectTitle for restoreModel on postback -->
-                <h:inputHidden value="#{researchProjectDetail.researchProjectTitle}"/>
 
                 <!-- Name -->
                 <div class="control-group">
@@ -101,7 +95,12 @@
                     <p:outputLabel for="sampleCohorts" value="Sample Cohorts" styleClass="control-label"/>
                     <div class="controls">
                         <!-- TODO: tie into sample service -->
-                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}" completeMethod="#{researchProjectForm.completeSampleCohorts}" multiple="true"/>
+                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}" completeMethod="#{cohortListBean.searchActiveCohort}" var="cohort" accesskey="#{cohort.cohortId}:#{cohort.name}" itemLabel="#{cohort.name}" itemValue="#{cohort}"  converter="#{bspCohortConverter}" multiple="true">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{cohort.cohortId}: #{cohort.name}</div>
+                                <div class="ac-dropdown-subtext">#{cohort.group}: #{cohort.category}</div>
+                            </p:column>
+                        </p:autoComplete>
                         <p:watermark for="sampleCohorts" value="Type number to search"/>
                     </div>
                 </div>
@@ -135,7 +134,7 @@
                                 <h:link outcome="list" value="Cancel"/>
                             </div>
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{researchProjectForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Save" action="#{researchProjectForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                         </div>
                     </div>

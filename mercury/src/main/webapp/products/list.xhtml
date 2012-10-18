@@ -13,23 +13,14 @@
 </h:head>
 <h:body>
 <ui:composition template="/layout.xhtml">
+    <ui:define name="metadata">
+        <f:event type="preRenderView" listener="#{productsBean.onPreRenderView}" />
+    </ui:define>
+
     <ui:define name="title">Products</ui:define>
     <ui:define name="body">
 
         <h:form id="productList">
-
-            <!--<h:panelGrid columns="1">-->
-
-                <!--<h:panelGrid columns="2">-->
-                    <!-- removing this since it doesn't play nice with the filter and I don't have time to fight it -->
-                    <!--<p:selectBooleanCheckbox value="#{productsBean.availableProductsOnly}" disabled="true">-->
-                        <!--<p:ajax event="click" listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>-->
-                        <!--<p:ajax listener="#{productsBean.onAvailableProductsOnly}" update="dataTable" global="true"/>-->
-                    <!--</p:selectBooleanCheckbox>-->
-                    <!--<h:outputText value="Available Products Only"/>-->
-                <!--</h:panelGrid>-->
-
-            <!--</h:panelGrid>-->
 
             <!-- per the mockups, clicking a row in this table should view the Product Details -->
 
@@ -44,8 +35,8 @@
                 <p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" update=":productMainView :productAddOnsView :productPriceItemsView" />
 
                 <f:facet name="header">
-                        <p:outputPanel>
-                            <h:outputText value="Search"/>
+                        <p:outputPanel styleClass="pull-right">
+                            <h:outputText value=" Search "/>
                             <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
                         </p:outputPanel>
                 </f:facet>
@@ -67,12 +58,12 @@
                     <h:outputText value="#{product.productName}" />
                 </p:column>
 
-                <p:column sortBy="#{product.productFamily.name}" sortFunction="#{productsBean.compare}"
-                          filterBy="#{product.productFamily.name}" filterStyleClass="hide" width="250">
+                <p:column sortBy="#{product.productFamily.displayName}" sortFunction="#{productsBean.compare}"
+                          filterBy="#{product.productFamily.displayName}" filterStyleClass="hide" width="250">
                     <f:facet name="header">
                         <h:outputText value="Product Family" />
                     </f:facet>
-                    <h:outputText value="#{product.productFamily.name}" />
+                    <h:outputText value="#{product.productFamily.displayName}" />
                 </p:column>
 
                 <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productsBean.compare}" width="100">
