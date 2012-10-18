@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Reusable class for holding filtered values from a PrimeFaces {@link org.primefaces.component.datatable.DataTable}
  * in conversation scope to be compatible with sortable columns.  This may not be enough conversation state to enable
- * all filtration for a given UI; see {@link org.broadinstitute.gpinformatics.athena.boundary.products.ProductsBean} for an example.
+ * all filtration for a given UI.
  */
 public class DataTableFilteredValuesBean implements Serializable {
     @Inject

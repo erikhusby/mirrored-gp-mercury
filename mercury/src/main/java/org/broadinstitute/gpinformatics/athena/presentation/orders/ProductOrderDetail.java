@@ -1,16 +1,14 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
-import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -27,7 +25,7 @@ public class ProductOrderDetail extends AbstractJsfBean {
     ResearchProjectDao researchProjectDao;
 
     @Inject
-    BSPUserList userList;
+    UserBean userBean;
 
     /** Key used to look up this product order. */
     private String productOrderKey;
@@ -41,14 +39,7 @@ public class ProductOrderDetail extends AbstractJsfBean {
     public void initEmpty() {
         if (productOrder == null) {
             ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
-            String username = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
-            BspUser user = userList.getByUsername(username);
-            long userId = 0;
-            if (user != null) {
-                // FIXME: how to handle unknown user?? Should disallow login for user.
-                userId = userList.getByUsername(username).getUserId();
-            }
-            productOrder = new ProductOrder(userId, researchProject);
+            productOrder = new ProductOrder(userBean.getBspUser().getUserId(), researchProject);
         }
     }
 

@@ -48,7 +48,8 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
     @Inject
     private QuoteConfig quoteConfig;
 
-    public PMBQuoteServiceImpl() {}
+    public PMBQuoteServiceImpl() {
+    }
 
     public PMBQuoteServiceImpl( QuoteConfig quoteConfig ) {
         this.quoteConfig = quoteConfig;
@@ -64,7 +65,6 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         specifyHttpAuthCredentials(client, quoteConfig);
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }
-
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
