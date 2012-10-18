@@ -15,9 +15,9 @@
         <ui:define name="metadata">
             <f:metadata>
                 <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
-                <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
-                <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
             </f:metadata>
+            <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
+            <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
         </ui:define>
 
         <ui:define name="body">

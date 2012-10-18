@@ -103,6 +103,7 @@ public class ResearchProject {
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
     public String getBusinessKey() {
+        // TODO: change to jiraTicketKey once it's populated
         return title;
     }
 
