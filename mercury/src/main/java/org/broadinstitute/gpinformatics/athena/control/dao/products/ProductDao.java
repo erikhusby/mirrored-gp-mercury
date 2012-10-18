@@ -72,11 +72,16 @@ public class ProductDao extends GenericDao {
 
         Root<Product> product = cq.from(Product.class);
 
-        product.join(Product_.priceItems, JoinType.LEFT);
-        product.fetch(Product_.priceItems, JoinType.LEFT);
+        // left join fetches may be required for an application scoped cache of Products.  JPA criteria queries
+        // don't seem to do a good job with this and will double select all the fields of the associations: once for the
+        // join and again for the fetch.
+        // http://stackoverflow.com/questions/4511368/jpa-2-criteria-fetch-path-navigation
 
-        product.join(Product_.addOns, JoinType.LEFT);
-        product.fetch(Product_.addOns, JoinType.LEFT);
+//        product.join(Product_.priceItems, JoinType.LEFT);
+//        product.fetch(Product_.priceItems, JoinType.LEFT);
+//
+//        product.join(Product_.addOns, JoinType.LEFT);
+//        product.fetch(Product_.addOns, JoinType.LEFT);
 
         if (availableProductsOnly == AvailableProductsOnly.YES) {
             // there is an availability date
