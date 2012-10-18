@@ -42,7 +42,11 @@ public class ResearchProjectIRB {
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_irb_index")
     private Long researchProjectIRBId;
 
-    @ManyToOne
+    /**
+     * This is eager fetched because this class' whole purpose is to bridge a specific person and project. If you
+     * ever only need the ID, you should write a specific projection query in the DAO
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
     @Index(name = "ix_irb_project")
     private ResearchProject researchProject;
 
