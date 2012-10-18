@@ -16,16 +16,16 @@ import java.util.Map;
 
 public class QuotesCacheTest {
 
-    Quote quote1 = new Quote("DNA32", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant"))), ApprovalStatus.FUNDED);
-    Quote quote2 = new Quote("DNA33", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant"))), ApprovalStatus.FUNDED);
-    Quote quote3 = new Quote("DNA34", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Cheap Grant"))), ApprovalStatus.FUNDED);
-    Quote quote4 = new Quote("DNA35", new QuoteFunding(new FundingLevel("50", new Funding(Funding.FUNDS_RESERVATION, "NHGRI"))), ApprovalStatus.FUNDED);
+    Quote quote1 = new Quote("DNA32", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant", "Magical Infinite Grant"))), ApprovalStatus.FUNDED);
+    Quote quote2 = new Quote("DNA33", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant", "Magical Infinite Grant"))), ApprovalStatus.FUNDED);
+    Quote quote3 = new Quote("DNA34", new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "Cheap Grant", "Cheap Grant"))), ApprovalStatus.FUNDED);
+    Quote quote4 = new Quote("DNA35", new QuoteFunding(new FundingLevel("50", new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI"))), ApprovalStatus.FUNDED);
 
 
     @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
     public void test_quotes_for_funding_source() throws Exception {
         Quotes quotes = new Quotes();
-        Funding targetSource = new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant");
+        Funding targetSource = new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant", "Magical Infinite Grant");
 
         quotes.addQuote(quote1);
         quotes.addQuote(quote2);
@@ -52,17 +52,17 @@ public class QuotesCacheTest {
         quotes.addQuote(quote3);
         quotes.addQuote(quote4);
 
-        Assert.assertEquals(4, quotes.getQuotes().size());
+        Assert.assertEquals(quotes.getQuotes().size(), 4);
 
         QuotesCache cache = new QuotesCache(quotes);
         Collection<Funding> fundingSources = cache.getAllFundingSources();
 
         Assert.assertFalse(fundingSources == null);
-        Assert.assertEquals(3, fundingSources.size());
+        Assert.assertEquals(fundingSources.size(), 3);
 
-        Assert.assertTrue(fundingSources.contains(new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant")));
-        Assert.assertTrue(fundingSources.contains(new Funding(Funding.FUNDS_RESERVATION, "Cheap Grant")));
-        Assert.assertTrue(fundingSources.contains(new Funding(Funding.FUNDS_RESERVATION, "NHGRI")));
+        Assert.assertTrue(fundingSources.contains(new Funding(Funding.FUNDS_RESERVATION, "Magical Infinite Grant", "Magical Infinite Grant")));
+        Assert.assertTrue(fundingSources.contains(new Funding(Funding.FUNDS_RESERVATION, "Cheap Grant", "Cheap Grant")));
+        Assert.assertTrue(fundingSources.contains(new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI")));
 
         Assert.assertEquals(quotes.getQuotes(), cache.getQuotes());
     }
@@ -78,7 +78,7 @@ public class QuotesCacheTest {
         QuotesCache cache = new QuotesCache(quoteService.getAllQuotes());
         System.out.println("Quotes call took " + (System.currentTimeMillis() - start) + "ms");
 
-        Funding nhgriGrant = new Funding(Funding.FUNDS_RESERVATION, "NHGRI_NIH_LANDER");
+        Funding nhgriGrant = new Funding(Funding.FUNDS_RESERVATION, "NHGRI_NIH_LANDER", "NHGRI_NIH_LANDER");
         start = System.currentTimeMillis();
         Collection<Quote> foundQuotes = cache.getQuotesForGrantDescription(nhgriGrant.getGrantDescription());
         System.out.println("Search for quotes took " + (System.currentTimeMillis() - start) + "ms");
