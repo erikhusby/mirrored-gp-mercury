@@ -138,7 +138,7 @@ public class BSPCohortSearchService extends AbstractJerseyClientService {
 
     private Set<Cohort> runCollectionSearch() {
 
-        SortedSet<Cohort> usersCohorts = new TreeSet<Cohort>(new Cohort.CohortComparator());
+        SortedSet<Cohort> usersCohorts = new TreeSet<Cohort>(Cohort.COHORT_BY_ID);
         String urlString = url(Endpoint.ALL_COHORTS);
         logger.info(String.format("url string is '%s'", urlString));
         WebResource webResource = getJerseyClient().resource(urlString);
