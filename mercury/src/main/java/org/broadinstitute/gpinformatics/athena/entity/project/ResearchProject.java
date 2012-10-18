@@ -370,54 +370,56 @@ public class ResearchProject {
 
     public void submit() throws IOException {
 
-        Map<String, CustomFieldDefinition> submissionFields =
-                ServiceAccessUtility.getJiraCustomFields ( );
+        if (jiraTicketKey == null) {
+            Map<String, CustomFieldDefinition> submissionFields =
+                    ServiceAccessUtility.getJiraCustomFields ( );
 
-        List<CustomField> listOfFields = new ArrayList<CustomField>();
+            List<CustomField> listOfFields = new ArrayList<CustomField>();
 
-        listOfFields.add(new CustomField(submissionFields.get(
-                RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()),
-                ServiceAccessUtility.getBspUserForId(associatedPeople.iterator().next().getPersonId())));
+            listOfFields.add(new CustomField(submissionFields.get(
+                    RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()),
+                    ServiceAccessUtility.getBspUserForId(associatedPeople.iterator().next().getPersonId())));
 
-        if(!sampleCohorts.isEmpty()) {
-            List<String> cohortNames = new ArrayList<String>();
+            if(!sampleCohorts.isEmpty()) {
+                List<String> cohortNames = new ArrayList<String>();
 
-            for(ResearchProjectCohort cohort:sampleCohorts) {
-                cohortNames.add(cohort.getCohortId());
+                for(ResearchProjectCohort cohort:sampleCohorts) {
+                    cohortNames.add(cohort.getCohortId());
+                }
+                listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Cohorts.getFieldName()),
+                                                 StringUtils.join(cohortNames,',')));
             }
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Cohorts.getFieldName()),
-                                             StringUtils.join(cohortNames,',')));
-        }
-        if(!projectFunding.isEmpty()) {
-            List<String> fundingSources = new ArrayList<String>();
-            for(ResearchProjectFunding fundingSrc:projectFunding) {
-                fundingSources.add(fundingSrc.getFundingId());
+            if(!projectFunding.isEmpty()) {
+                List<String> fundingSources = new ArrayList<String>();
+                for(ResearchProjectFunding fundingSrc:projectFunding) {
+                    fundingSources.add(fundingSrc.getFundingId());
+                }
+
+                listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Funding_Source.getFieldName()),
+                                                 StringUtils.join(fundingSources,',')));
             }
-
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Funding_Source.getFieldName()),
-                                             StringUtils.join(fundingSources,',')));
-        }
-        if(!irbNumbers.isEmpty()) {
-            List<String> irbNums = new ArrayList<String>();
-            for(ResearchProjectIRB irb:irbNumbers ){
-                irbNums.add(irb.getIrb());
+            if(!irbNumbers.isEmpty()) {
+                List<String> irbNums = new ArrayList<String>();
+                for(ResearchProjectIRB irb:irbNumbers ){
+                    irbNums.add(irb.getIrb());
+                }
+                listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_Number.getFieldName()),
+                                                 StringUtils.join(irbNums,',')));
             }
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_Number.getFieldName()),
-                                             StringUtils.join(irbNums,',')));
+            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_Engaged.getFieldName()),
+                                             BooleanUtils.toStringYesNo(irbNotEngaged) ));
+
+            CreateIssueResponse researchProjectResponse =
+                    ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
+                                                          title, synopsis, listOfFields);
+
+            jiraTicketKey = researchProjectResponse.getKey();
+
+            /**
+             * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
+             */
+            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
-        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_Engaged.getFieldName()),
-                                         BooleanUtils.toStringYesNo(irbNotEngaged) ));
-
-        CreateIssueResponse researchProjectResponse =
-                ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
-                                                      title, synopsis, listOfFields);
-
-        jiraTicketKey = researchProjectResponse.getKey();
-
-        /**
-         * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
-         */
-        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
     }
 
     public void addPublicComment(String comment) throws IOException{
