@@ -85,7 +85,7 @@
                     <label class="control-label">Created</label>
                     <div class="controls">
                         <div class="form-value">
-                            By #{userListBean.getUser(researchProjectDetail.project.createdBy)} on
+                            By #{userListBean.getUserFullName(researchProjectDetail.project.createdBy)} on
                             <h:outputText value="#{researchProjectDetail.project.createdDate}">
                                 <f:convertDateTime type="date"/>
                             </h:outputText>
@@ -96,7 +96,7 @@
                 <div class="control-group">
                     <label class="control-label">Funding Sources</label>
                     <div class="controls">
-                        <div class="form-value">#{researchProjectDetail.fundingSources}</div>
+                        <div class="form-value">#{fundingListBean.getFundingListString(researchProjectDetail.project.fundingIds)}</div>
                     </div>
                 </div>
 

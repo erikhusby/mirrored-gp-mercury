@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.*;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -49,8 +50,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
     private List<BspUser> externalCollaborators;
 
-    // TODO: integrate with real quotes
-    private List<Long> fundingSources;
+    private List<Funding> fundingSources;
 
     private List<Cohort> sampleCohorts;
 
@@ -104,8 +104,8 @@ public class ResearchProjectForm extends AbstractJsfBean {
         addPeople(project, RoleType.EXTERNAL, externalCollaborators);
 
         if (fundingSources != null) {
-            for (Long fundingSource : fundingSources) {
-                project.addFunding(new ResearchProjectFunding(project, fundingSource.toString()));
+            for (Funding fundingSource : fundingSources) {
+                project.addFunding(new ResearchProjectFunding(project, fundingSource.getFundingTypeAndName()));
             }
         }
 
@@ -196,11 +196,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
         this.externalCollaborators = externalCollaborators;
     }
 
-    public List<Long> getFundingSources() {
+    public List<Funding> getFundingSources() {
         return fundingSources;
     }
 
-    public void setFundingSources(List<Long> fundingSources) {
+    public void setFundingSources(List<Funding> fundingSources) {
         this.fundingSources = fundingSources;
     }
 
