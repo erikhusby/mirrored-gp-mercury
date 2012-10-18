@@ -43,9 +43,19 @@
 
                 <!-- for reasons I have not yet determined the data displayed in the dataTable appears to lag the
                      contents of the filter text field by one UI event.  e.g., if the data rows included 'bar' and 'baz'
-                     I should see both rows if the filter text was 'ba'.  But as soon as I made the filter text 'bar',
+                     I should see both rows if the filter text was 'ba'.  If I were to type the additional 'r'
+                     in the filter box to make the filter text 'bar',
                      I should see only the 'bar' result and not 'baz'.  But currently 'baz' continues to show until
-                     another UI event, which could be another character typed in the filter field or a column sort. -->
+                     another UI event, which could be another character typed in the filter field or a column sort.
+
+                     Apparently this is a known problem:
+
+                     http://forum.primefaces.org/viewtopic.php?f=3&t=25078#p79125
+
+                     See this other link for a similar sounding problem that might affect column select filtering:
+
+                     http://code.google.com/p/primefaces/issues/detail?id=4671&can=1
+                      -->
                 <f:facet name="header">
                         <p:outputPanel styleClass="pull-right">
                             <h:outputText value=" Search "/>
