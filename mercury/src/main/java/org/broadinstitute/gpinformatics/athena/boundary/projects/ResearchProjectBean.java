@@ -24,7 +24,6 @@ import java.util.*;
 //@ViewAccessScoped
 //@ConversationScoped
 public class ResearchProjectBean implements Serializable {
-
     @Inject
     private ResearchProjectDao researchProjectDao;
 

@@ -26,13 +26,17 @@
         <h:form id="productList">
 
             <!-- per the mockups, clicking a row in this table should view the Product Details -->
-
-            <p:dataTable value="#{productsBean.productsDataModel}" var="product"
-                         id="dataTable" widgetVar="dataTable"
-                         scrollable="true" scrollHeight="200" resizableColumns="true"
+            <p:dataTable value="#{productsBean.productsDataModel}"
+                         var="product"
+                         id="dataTable"
+                         widgetVar="dataTable"
+                         scrollable="true"
+                         scrollHeight="200"
+                         resizableColumns="true"
                          filteredValue="#{productsBean.filteredProducts}"
                          emptyMessage="No products found containing search text"
-                         selection="#{productsBean.selectedProduct}" selectionMode="single">
+                         selection="#{productsBean.selectedProduct}"
+                         selectionMode="single">
 
                 <p:ajax event="rowSelect" listener="#{productsBean.onRowSelect}" update=":productMainView :productAddOnsView :productPriceItemsView"/>
                 <p:ajax event="rowUnselect" listener="#{productsBean.onRowUnselect}" update=":productMainView :productAddOnsView :productPriceItemsView" />

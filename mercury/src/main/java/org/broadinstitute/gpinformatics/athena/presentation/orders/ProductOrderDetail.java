@@ -39,7 +39,7 @@ public class ProductOrderDetail extends AbstractJsfBean {
     public void initEmpty() {
         if (productOrder == null) {
             ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
-            productOrder = new ProductOrder(userBean.getBspUser().getUserId(), researchProject);
+            productOrder = new ProductOrder(userBean.getBspUser(), researchProject);
         }
     }
 

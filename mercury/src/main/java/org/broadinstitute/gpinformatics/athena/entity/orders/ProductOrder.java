@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -37,7 +37,7 @@ import java.util.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements Serializable {
     private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
@@ -82,6 +82,10 @@ public class ProductOrder implements Serializable {
         return jiraTicketKey;
     }
 
+    public boolean isInDB() {
+        return productOrderId != null;
+    }
+
     /**
      * Default no-arg constructor
      */
@@ -91,8 +95,8 @@ public class ProductOrder implements Serializable {
     /**
      * Constructor called when creating a new ProductOrder.
      */
-    public ProductOrder(long createdBy, ResearchProject researchProject) {
-        this(createdBy, "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
+    public ProductOrder(@Nonnull BspUser createdBy, ResearchProject researchProject) {
+        this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
     }
 
     /**

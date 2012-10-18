@@ -31,12 +31,12 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     enum Endpoint {
-        SINGLE_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
+        SINGLE_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
         ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
         ALL_PRICE_ITEMS("/quotes/ws/portals/private/get_price_list"),
         REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
         //TODO this next enum value will be removed soon.
-        SINGLE_NUMERIC_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_ids=");
+        SINGLE_NUMERIC_QUOTE("/quotes/ws/portals/private/getquotes?with_funding=true&quote_ids=");
 
         String suffixUrl;
 
@@ -140,7 +140,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
      */
     @Override
     public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException {
-
         return this.getSingleQuoteById(id, url(Endpoint.SINGLE_QUOTE));
     }
 
@@ -194,7 +193,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-
         return this.getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE));
     }
 

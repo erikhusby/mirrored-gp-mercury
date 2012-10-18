@@ -60,9 +60,9 @@
 
                         <sqltg:isLoggedIn>
                             <h:form styleClass="navbar-form pull-right">
-                                <span id="jiraProblem" class="badge badge-warning" style="cursor:help;">Feedback?</span>
+                                <span id="jiraProblem" class="badge badge-warning" style="cursor: help;" title="Click here to send a bug report or feedback">Feedback?</span>
                                 |
-                                <h:outputText value="#{request.getRemoteUser()}" />
+                                <h:outputText value="#{request.getRemoteUser()}" styleClass="badge"/>
                                 |
                                 <p:commandLink action="#{logoutHandler.logout}" value="Sign out" />
                             </h:form>
