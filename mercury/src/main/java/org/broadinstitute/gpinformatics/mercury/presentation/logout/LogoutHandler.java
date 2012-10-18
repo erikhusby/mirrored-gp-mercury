@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.logout;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -23,6 +24,9 @@ public class LogoutHandler extends AbstractJsfBean {
     @Inject
     private Log logger;
 
+    @Inject
+    private UserBean userBean;
+
     public String logout() {
 
         // If logout is successful, the redirect location is irrelevant since our authorization filter
@@ -36,6 +40,7 @@ public class LogoutHandler extends AbstractJsfBean {
         try {
             logger.debug("Attempting Logout");
             request.logout();
+            userBean.setBspUser(null);
         } catch (ServletException ex) {
             logger.error("Logout Failed", ex);
             result = request.getRequestURI();

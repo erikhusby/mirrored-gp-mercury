@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -38,6 +39,9 @@ public class ResearchProjectForm extends AbstractJsfBean {
     @Inject
     private FacesContext facesContext;
 
+    @Inject
+    private UserBean userBean;
+
     private List<BspUser> projectManagers;
 
     private List<BspUser> broadPIs;
@@ -60,13 +64,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
             // Add current user as a PM only if this is a new research project being created
             if (detail.getProject().getResearchProjectId() == null) {
                 projectManagers = new ArrayList<BspUser>();
-                String username = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
-                BspUser user = bspUserList.getByUsername(username);
-                if (user != null) {
-                    projectManagers.add(user);
-                } else {
-                    projectManagers.add(bspUserList.getUsers().get(0));
-                }
+                projectManagers.add(userBean.getBspUser());
             } else {
                 projectManagers = makeBspUserList(detail.getProject().getProjectManagers());
                 broadPIs = makeBspUserList(detail.getProject().getBroadPIs());
@@ -87,33 +85,23 @@ public class ResearchProjectForm extends AbstractJsfBean {
         return users;
     }
 
+    public String save() {
+        ResearchProject project = detail.getProject();
+        if (project.getResearchProjectId() == null) {
+            return create();
+        } else {
+            return edit();
+        }
+    }
+
     public String create() {
         // TODO: move some of this logic down into boundary, or deeper!
 
         ResearchProject project = detail.getProject();
-        if (projectManagers != null) {
-            for (BspUser projectManager : projectManagers) {
-                project.addPerson(RoleType.PM, projectManager.getUserId());
-            }
-        }
-
-        if (broadPIs != null) {
-            for (BspUser broadPI : broadPIs) {
-                project.addPerson(RoleType.BROAD_PI, broadPI.getUserId());
-            }
-        }
-
-        if (scientists != null) {
-            for (BspUser scientist : scientists) {
-                project.addPerson(RoleType.SCIENTIST, scientist.getUserId());
-            }
-        }
-
-        if (externalCollaborators != null) {
-            for (BspUser externalCollaborator : externalCollaborators) {
-                project.addPerson(RoleType.EXTERNAL, externalCollaborator.getUserId());
-            }
-        }
+        addPeople(project, RoleType.PM, projectManagers);
+        addPeople(project, RoleType.BROAD_PI, broadPIs);
+        addPeople(project, RoleType.SCIENTIST, scientists);
+        addPeople(project, RoleType.EXTERNAL, externalCollaborators);
 
         if (fundingSources != null) {
             for (Funding fundingSource : fundingSources) {
@@ -133,22 +121,25 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 project.addIrbNumber(new ResearchProjectIRB(project, ResearchProjectIRB.IrbType.OTHER, irb.toString()));
             }
         }
-        // TODO: store BspUser in SessionScoped bean on login.
-        String username = FacesContext.getCurrentInstance().getExternalContext().getRemoteUser();
-        BspUser user = bspUserList.getByUsername(username);
-        if (user != null) {
-            project.setCreatedBy(user.getUserId());
-        } else {
-            project.setCreatedBy(1L);
-        }
+        project.setCreatedBy(userBean.getBspUser().getUserId());
+        project.recordModification(userBean.getBspUser().getUserId());
 
         researchProjectDao.persist(project);
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
         return redirect("list");
     }
 
+    private void addPeople(ResearchProject project, RoleType role, List<BspUser> people) {
+        if (people != null) {
+            for (BspUser projectManager : people) {
+                project.addPerson(role, projectManager.getUserId());
+            }
+        }
+    }
+
     public String edit() {
         // TODO: try to do away with merge
+        // TODO: manage changes in personnel
         researchProjectDao.getEntityManager().merge(detail.getProject());
         return redirect("list");
     }

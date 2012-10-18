@@ -1,10 +1,7 @@
-package org.broadinstitute.gpinformatics.athena.entity.orders;
+package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
@@ -13,8 +10,8 @@ import javax.inject.Inject;
 import java.util.Calendar;
 
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.*;
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Platform.GP;
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Name.*;
+import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Platform.GP;
 
 
 /**

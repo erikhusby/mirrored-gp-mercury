@@ -55,11 +55,11 @@ public class Product implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private PriceItem defaultPriceItem;
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
     private Set<PriceItem> priceItems = new HashSet<PriceItem>();
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
     private Set<Product> addOns = new HashSet<Product>();
 
@@ -124,6 +124,10 @@ public class Product implements Serializable {
 
     public String getPartNumber() {
         return partNumber;
+    }
+
+    public void setPartNumber(String partNumber) {
+        this.partNumber = partNumber;
     }
 
     public Date getAvailabilityDate() {

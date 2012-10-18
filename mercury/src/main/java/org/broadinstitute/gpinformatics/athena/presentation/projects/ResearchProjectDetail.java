@@ -24,8 +24,7 @@ public class ResearchProjectDetail extends AbstractJsfBean {
 
     private ResearchProject project;
 
-    private String[] selectedPersonnel;
-
+    // TODO: move to form?
     public void initEmptyProject() {
         project = new ResearchProject();
     }
@@ -56,13 +55,5 @@ public class ResearchProjectDetail extends AbstractJsfBean {
 
     public String getIrbNumberString() {
         return StringUtils.join(project.getIrbNumbers(), ", ");
-    }
-
-    public String[] getSelectedPersonnel() {
-        return selectedPersonnel;
-    }
-
-    public void setSelectedPersonnel(String[] selectedPersonnel) {
-        this.selectedPersonnel = selectedPersonnel;
     }
 }
