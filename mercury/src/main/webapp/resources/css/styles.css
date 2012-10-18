@@ -39,6 +39,14 @@ label, input, button, select, textarea { font-size: 12px }
 /* Change error label style to more closely match Bootstrap. */
 label.ui-state-error, .ui-widget-content label.ui-state-error { background: white; color: #B94A48 }
 
+/* Fix bug with PrimeFaces Bootstrap theme: http://forum.primefaces.org/viewtopic.php?f=9&t=25031 */
+.ui-widget-content input.ui-state-error, .ui-widget-content textarea.ui-state-error { color: black; }
+
+.controls .ui-message-error { display: inline-block; }
+
+/* Change error label style to more closely match Bootstrap. */
+label.ui-state-error, .ui-widget-content label.ui-state-error { background: white; color: #B94A48 }
+
 .pass-section { font-weight: bold; }
 .pass-label { font-style: italic; padding-right: 10px; }
 .pass-data { }
@@ -52,3 +60,7 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 .form-value { font-size: 12px; padding: 5px 7px; }
 
 .hide, .ui-datatable .ui-filter-column .hide { display: none; visibility: hidden; }
+
+/* These are for multi-line autocomplete full text formatting - see cohort, user and funding in research project */
+.ac-dropdown-text { font-size: small; }
+.ac-dropdown-subtext { font-size: smaller; font-style: italic; }
