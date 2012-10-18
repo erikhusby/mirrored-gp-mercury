@@ -778,7 +778,9 @@ public class ProductOrder implements Serializable {
      */
     public enum RequiredSubmissionFields {
         PRODUCT_FAMILY("Product Family"),
-        QUOTE_ID("Quote ID");
+        QUOTE_ID("Quote ID"),
+        MERCURY_URL("Mercury URL"),
+        SAMPLE_IDS("Sample IDs");
 
         private final String fieldName;
 
