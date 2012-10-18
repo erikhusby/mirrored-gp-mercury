@@ -129,6 +129,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
         project.setCreatedBy(userBean.getBspUser().getUserId());
         project.recordModification(userBean.getBspUser().getUserId());
 
+/* disabled until JIRA issue creation is working
         try {
             project.submit();
         } catch (IOException e) {
@@ -137,6 +138,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
             // redisplay create view
             return null;
         }
+*/
         researchProjectDao.persist(project);
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
         return redirect("list");
