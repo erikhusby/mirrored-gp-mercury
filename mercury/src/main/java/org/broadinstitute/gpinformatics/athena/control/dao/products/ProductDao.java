@@ -7,10 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -71,8 +68,20 @@ public class ProductDao extends GenericDao {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Product> cq = cb.createQuery(Product.class);
         List<Predicate> predicateList = new ArrayList<Predicate>();
+        cq.distinct(true);
 
         Root<Product> product = cq.from(Product.class);
+
+        // left join fetches may be required for an application scoped cache of Products.  JPA criteria queries
+        // don't seem to do a good job with this and will double select all the fields of the associations: once for the
+        // join and again for the fetch.
+        // http://stackoverflow.com/questions/4511368/jpa-2-criteria-fetch-path-navigation
+
+//        product.join(Product_.priceItems, JoinType.LEFT);
+//        product.fetch(Product_.priceItems, JoinType.LEFT);
+//
+//        product.join(Product_.addOns, JoinType.LEFT);
+//        product.fetch(Product_.addOns, JoinType.LEFT);
 
         if (availableProductsOnly == AvailableProductsOnly.YES) {
             // there is an availability date

@@ -59,7 +59,9 @@ public class BSPSampleDTO implements Serializable {
     private final String containerId;
 
 
-    /** Use this when no valid DTO is present, to avoid null checks */
+    /**
+     * Use this when no valid DTO is present, to avoid null checks
+     */
     public static final BSPSampleDTO DUMMY =
             new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
 
@@ -239,4 +241,17 @@ public class BSPSampleDTO implements Serializable {
         return TUMOR_IND.equals(sampleType);
     }
 
+    public boolean isSampleReceived() {
+        return ((null != getRootSample()) && (!getRootSample().isEmpty()));
+    }
+
+    public boolean isActiveStock() {
+        return ((null != getStockType()) &&
+                (getStockType().equals(ACTIVE_IND)));
+    }
+
+    public boolean hasFingerprint() {
+        return ((null != getFingerprint()) &&
+                (!getFingerprint().isEmpty()));
+    }
 }

@@ -3,13 +3,11 @@ package org.broadinstitute.gpinformatics.infrastructure.experiments.seq;
 import java.math.BigInteger;
 
 /**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 5/18/12
- * Time: 12:14 PM
+ * PFReadsCoverageModel class.
+ *
+ * @author mccrory
  */
 public class PFReadsCoverageModel extends SeqCoverageModel {
-
     private final org.broadinstitute.gpinformatics.mercury.boundary.PFReadsCoverageModel pfReadsCoverageModel;
     public final static BigInteger DEFAULT_READS = BigInteger.ONE;
     public final static BigInteger MINIMUM_READS = DEFAULT_READS;
@@ -32,7 +30,6 @@ public class PFReadsCoverageModel extends SeqCoverageModel {
     }
 
     public void setReadsDesired(final BigInteger readsDesired) {
-
         // If MINIMUM_READS is numerically greater than the non-null reads arg then throw an exception.
         if (readsDesired != null &&
                 ((MINIMUM_READS.compareTo(readsDesired) > 0))) {
