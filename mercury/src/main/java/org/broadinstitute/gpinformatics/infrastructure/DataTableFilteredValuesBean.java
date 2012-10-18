@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
-
 import javax.enterprise.context.Conversation;
 import javax.enterprise.context.ConversationScoped;
 import javax.inject.Inject;
@@ -16,7 +15,6 @@ import java.util.List;
  * all filtration for a given UI; see {@link org.broadinstitute.gpinformatics.athena.boundary.products.ProductsBean} for an example.
  */
 public class DataTableFilteredValuesBean implements Serializable {
-
     @Inject
     private Conversation conversation;
 

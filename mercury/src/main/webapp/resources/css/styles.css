@@ -14,10 +14,11 @@ footer { font-size: 10px; text-align: center; padding-top: 20px; }
 
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; color: #0088CC; }
+a.external{background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
 
 label, input, button, select, textarea { font-size: 12px }
 
-#ajaxStatus_start { background-color: #004478; color: #ffffff; left: 0; padding: 5px; position: fixed; top: 0; }
+#ajaxStatus_start { background-color: #0088CC; color: #ffffff; left: 0; padding: 5px; position: fixed; top: 0; left: 50% }
 
 /* Override PrimeFaces's Bootstrap theme opinion that links in widgets should be default text color. */
 .ui-widget-content a { color: #0088CC; !important }

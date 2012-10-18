@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name= "PRODUCT_ORDER_SAMPLE", schema = "athena")
 public class ProductOrderSample implements Serializable {
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")

@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.BoundaryUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.BillingStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.model.SelectItem;
@@ -22,6 +22,8 @@ public class ProductOrderBean {
     private List<ProductOrder> allProductOrders;
 
     private List<ProductOrder> filteredProductOrders;
+
+    private List<ProductOrderSample> filteredSamples;
 
     /**
      * Returns a list of all product orders. Only actually fetches the list from the database once per request
@@ -60,5 +62,13 @@ public class ProductOrderBean {
 
     public void setFilteredProductOrders(List<ProductOrder> filteredProductOrders) {
         this.filteredProductOrders = filteredProductOrders;
+    }
+
+    public List<ProductOrderSample> getFilteredSamples() {
+        return filteredSamples;
+    }
+
+    public void setFilteredSamples(List<ProductOrderSample> filteredSamples) {
+        this.filteredSamples = filteredSamples;
     }
 }

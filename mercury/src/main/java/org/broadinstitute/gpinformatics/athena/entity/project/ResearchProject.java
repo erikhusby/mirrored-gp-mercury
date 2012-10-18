@@ -25,7 +25,7 @@ import java.util.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject {
 
     public static final boolean IRB_ENGAGED = false;
