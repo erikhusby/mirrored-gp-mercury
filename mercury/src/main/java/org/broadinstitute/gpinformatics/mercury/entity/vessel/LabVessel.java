@@ -598,6 +598,26 @@ public abstract class LabVessel implements Starter {
     public void setSamples(Set<SampleMetadata> samples) {
         this.samples = samples;
     }
+
+    @Override
+    public boolean equals ( Object o ) {
+        if ( this == o )
+            return true;
+        if ( !( o instanceof LabVessel ) )
+            return false;
+
+        LabVessel labVessel = ( LabVessel ) o;
+
+        if ( label != null ? !label.equals ( labVessel.label ) : labVessel.label != null )
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode () {
+        return label != null ? label.hashCode () : 0;
+    }
 }
 
 

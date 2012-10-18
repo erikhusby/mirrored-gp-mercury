@@ -15,6 +15,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import java.util.Comparator;
 
 /**
  * An entry into a lab {@link Bucket}.  An entry is
@@ -36,12 +37,13 @@ public class BucketEntry {
     @ManyToOne (cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private LabVessel labVessel;
 
-
+    @Column(name = "po_business_key")
     private String poBusinessKey;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private Bucket bucketExistence;
 
+    @Column(name = "product_order_ranking")
     private Integer productOrderRanking;
 
     public BucketEntry ( LabVessel labVesselIn, String poBusinessKey) {
@@ -62,4 +64,35 @@ public class BucketEntry {
         return this.poBusinessKey;
     }
 
+    public Bucket getBucketExistence () {
+        return bucketExistence;
+    }
+
+    public Integer getProductOrderRanking () {
+        return productOrderRanking;
+    }
+
+    @Override
+    public boolean equals ( Object o ) {
+        if ( this == o )
+            return true;
+        if ( !( o instanceof BucketEntry ) )
+            return false;
+
+        BucketEntry that = ( BucketEntry ) o;
+
+        if ( labVessel != null ? !labVessel.equals ( that.labVessel ) : that.labVessel != null )
+            return false;
+        if ( poBusinessKey != null ? !poBusinessKey.equals ( that.poBusinessKey ) : that.poBusinessKey != null )
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode () {
+        int result = labVessel != null ? labVessel.hashCode () : 0;
+        result = 31 * result + ( poBusinessKey != null ? poBusinessKey.hashCode () : 0 );
+        return result;
+    }
 }

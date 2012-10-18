@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.hibernate.envers.Audited;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -11,6 +12,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,22 +34,19 @@ public class Bucket {
     @OneToMany (mappedBy = "bucketExistence")
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
-    private String bucketDefinition;
+    @Column ( name = "bucket_definition_name")
+    private String bucketDefinitionName;
 
-    public Bucket (  @NotNull String bucketDefinitionIn ) {
-        bucketDefinition = bucketDefinitionIn;
+    public Bucket ( @NotNull String bucketDefinitionIn ) {
+        this.bucketDefinitionName = bucketDefinitionIn;
     }
 
-    public String getBucketDefinition ( ) {
-        return bucketDefinition;
+    public String getBucketDefinitionName ( ) {
+        return bucketDefinitionName;
     }
 
     public Set<BucketEntry> getBucketEntries ( ) {
-        return bucketEntries;
-    }
-
-    public void setBucketEntries ( @NotNull Set<BucketEntry> bucketEntriesIn ) {
-        bucketEntries = bucketEntriesIn;
+        return Collections.unmodifiableSet( bucketEntries );
     }
 
     /**
@@ -57,6 +56,21 @@ public class Bucket {
      * @return
      */
     public boolean contains(BucketEntry bucketEntry) {
-        throw new RuntimeException("not implemeted yet");
+
+        return bucketEntries.contains(bucketEntry);
+
     }
+
+    /**
+     *
+     * @param newEntry
+     */
+    public void addEntry( BucketEntry newEntry ) {
+        bucketEntries.add(newEntry);
+    }
+
+    public void removeEntry ( BucketEntry entryToRemove) {
+        bucketEntries.remove(entryToRemove);
+    }
+
 }
