@@ -53,7 +53,7 @@ public class ProductOrderSample implements Serializable {
     private ProductOrder productOrder;
 
     @Transient
-    private BSPSampleDTO bspDTO;
+    private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
 
     @Transient
     private boolean hasBspDTOBeenInitialized;
@@ -62,7 +62,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public ProductOrderSample(@Nonnull String sampleName) {
-        this(sampleName, BSPSampleDTO.DUMMY, null);
+        this.sampleName = sampleName;
     }
 
     public ProductOrderSample(@Nonnull String sampleName, @Nonnull BSPSampleDTO bspDTO, ProductOrder productOrder) {
