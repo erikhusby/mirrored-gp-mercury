@@ -15,9 +15,9 @@
         <ui:define name="metadata">
             <f:metadata>
                 <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
-                <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
-                <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
             </f:metadata>
+            <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
+            <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
         </ui:define>
 
         <ui:define name="body">
@@ -84,8 +84,12 @@
                 <div class="control-group">
                     <p:outputLabel for="fundingSources" value="Funding Sources" styleClass="control-label"/>
                     <div class="controls">
-                        <!-- TODO: tie into funding source service -->
-                        <p:autoComplete id="fundingSources" value="#{researchProjectForm.fundingSources}" completeMethod="#{researchProjectForm.completeFundingSource}" multiple="true"/>
+                        <p:autoComplete id="fundingSources" value="#{researchProjectForm.fundingSources}" completeMethod="#{fundingListBean.searchFunding}" var="funding" itemLabel="#{funding.fundingTypeAndName}" itemValue="#{funding}" converter="#{quoteFundingConverter}" multiple="true">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{funding.fundingTypeAndName}</div>
+                                <div class="ac-dropdown-subtext">#{funding.matchDescription}:</div>
+                            </p:column>
+                        </p:autoComplete>
                         <p:watermark for="fundingSources" value="Type number to search"/>
                     </div>
                 </div>
@@ -94,8 +98,7 @@
                 <div class="control-group">
                     <p:outputLabel for="sampleCohorts" value="Sample Cohorts" styleClass="control-label"/>
                     <div class="controls">
-                        <!-- TODO: tie into sample service -->
-                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}" completeMethod="#{cohortListBean.searchActiveCohort}" var="cohort" accesskey="#{cohort.cohortId}:#{cohort.name}" itemLabel="#{cohort.name}" itemValue="#{cohort}"  converter="#{bspCohortConverter}" multiple="true">
+                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}" completeMethod="#{cohortListBean.searchActiveCohort}" var="cohort" itemLabel="#{cohort.cohortId}: #{cohort.name}" itemValue="#{cohort}" converter="#{bspCohortConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{cohort.cohortId}: #{cohort.name}</div>
                                 <div class="ac-dropdown-subtext">#{cohort.group}: #{cohort.category}</div>

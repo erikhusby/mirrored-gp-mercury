@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.DataTableFilteredValuesBean;
@@ -26,10 +27,10 @@ import java.util.List;
 public class ProductsBean extends AbstractJsfBean implements Serializable {
 
     @Inject
-    private ProductListBean productList;
+    private DataTableFilteredValuesBean filteredValuesBean;
 
     @Inject
-    private DataTableFilteredValuesBean filteredValuesBean;
+    private ProductDao productDao;
 
     private Product selectedProduct;
 
@@ -42,7 +43,8 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
 
     /**
-     * Hook the JSF preRenderView event to initiate a conversation
+     * Hook the JSF preRenderView event to explicitly initiate a long-running conversation in the conversation scoped
+     * {@link DataTableFilteredValuesBean}
      */
     public void onPreRenderView() {
         filteredValuesBean.beginConversation();
@@ -51,9 +53,16 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
 
     public ProductsDataModel getProductsDataModel() {
 
-        // lazy load
+
         if (productsDataModel == null) {
-            productsDataModel = new ProductsDataModel(productList.getProducts());
+            // "lazy" load, except this bean is request scoped so we end up creating a new ProductsDataModel
+            // for every request, including column sorts and each character typed into the search filter.
+            //
+            // Making a broader scoped cache of Products introduces LIEs on the add-on and price item associations.
+            // The ProductDao find method can be modified to left join fetch these associations, but the JPA criteria
+            // API has some issues with left join fetching efficiently (it selects every column twice per
+            // http://stackoverflow.com/questions/4511368/jpa-2-criteria-fetch-path-navigation).
+            productsDataModel = new ProductsDataModel(productDao.findProducts());
         }
 
         return productsDataModel;
@@ -73,7 +82,7 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
     /**
      * Row deselection handler
      */
-    public void onRowUnselect(UnselectEvent event) {
+    public void onRowUnselect(UnselectEvent ignored) {
         selectedProduct = null;
     }
 
@@ -182,7 +191,6 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
     public void setFilteredProducts(List<Product> filteredProducts) {
         filteredValuesBean.setFilteredValues(filteredProducts);
     }
-
 
     public List<Product> getSelectedProductAddOns() {
         return selectedProductAddOns;

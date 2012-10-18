@@ -14,7 +14,7 @@ import javax.persistence.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "PROJECT_PERSON", schema = "athena")
 public class ProjectPerson {
 
     @Id
@@ -22,11 +22,18 @@ public class ProjectPerson {
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_project_person_index")
     private Long projectPersonId;
 
-    @ManyToOne
+    /**
+     * This is eager fetched because this class' whole purpose is to bridge a specific person and project. If you
+     * ever only need the ID, you should write a specific projection query in the DAO
+     */
+    @ManyToOne(fetch = FetchType.EAGER)
     @Index(name = "ix_person_project")
     private ResearchProject researchProject;
 
+    @Column(name = "ROLE")
     private RoleType role;
+
+    @Column(name = "PERSON_ID")
     private Long personId;
 
     protected ProjectPerson() { }

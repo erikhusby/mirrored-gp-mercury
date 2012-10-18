@@ -10,8 +10,8 @@ import javax.inject.Named;
 import java.util.List;
 
 /**
- * Could not seem to inject the BSPUserList directly into the xhtml file, so this is a wrapper that does
- * the injection and provides the access to the find for anything that wants user names instead of the stored
+ * Could not seem to inject the BSPCohortList directly into the xhtml file, so this is a wrapper that does
+ * the injection and provides the access to the find for anything that wants cohort names instead of the stored
  * ID.
  */
 @Named
@@ -21,32 +21,18 @@ public class CohortListBean {
     @Inject
     private BSPCohortList cohortList;
 
-    public String getCohortName(String cohortId) {
-        String fullName = "";
+    private String getCohortName(String cohortId) {
+        String cohortName = "";
         if (cohortId != null) {
             Cohort cohort = cohortList.getById(cohortId);
 
             if (cohort == null) {
-                return "(Unknown user: " + cohortId + ")";
+                return "(Unknown cohort: " + cohortId + ")";
             }
             return cohort.getName();
         }
 
-        return fullName;
-    }
-
-    public Cohort[] getCohorts(String[] cohortIds) {
-        if (cohortIds == null) {
-            return new Cohort[0];
-        }
-
-        Cohort[] cohorts = new Cohort[cohortIds.length];
-        int i=0;
-        for (String cohortId : cohortIds) {
-            cohorts[i++] = cohortList.getById(cohortId);
-        }
-
-        return cohorts;
+        return cohortName;
     }
 
     public List<Cohort> searchActiveCohort(String query) {
@@ -56,7 +42,7 @@ public class CohortListBean {
     public String getCohortListString(String[] cohortIds) {
         String cohortListString = "";
 
-        if ((cohortList != null) && (cohortIds != null) && (cohortIds.length > 0)) {
+        if ((cohortIds != null) && (cohortIds.length > 0)) {
             String[] nameList = new String[cohortIds.length];
             int i=0;
             for (String cohortId : cohortIds) {

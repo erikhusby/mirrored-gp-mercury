@@ -82,7 +82,7 @@ public class ServiceAccessUtility {
             BspUser call(BSPUserList apiInstance) {
                 return apiInstance.getById(userId);
             }
-        }).apiCall(BSPSampleDataFetcher.class);
+        }).apiCall(BSPUserList.class);
     }
 
     /**

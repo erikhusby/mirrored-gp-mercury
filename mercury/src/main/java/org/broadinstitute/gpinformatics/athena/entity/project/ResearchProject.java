@@ -25,7 +25,7 @@ import java.util.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject {
 
     public static final boolean IRB_ENGAGED = false;
@@ -54,30 +54,31 @@ public class ResearchProject {
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
     private Long researchProjectId;
 
-    @Column(nullable = false)
+    @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status = Status.Open;
 
     // creation/modification information
-    @Column(nullable = false)
+    @Column(name = "CREATED_DATE", nullable = false)
     private Date createdDate;
 
-    @Column(nullable = false)
+    @Column(name = "CREATED_BY", nullable = false)
     private Long createdBy;
 
-    @Column(nullable = false)
+    @Column(name = "MODIFIED_DATE", nullable = false)
     private Date modifiedDate;
 
-    @Column(nullable = false)
+    @Column(name = "MODIFIED_BY", nullable = false)
     private Long modifiedBy;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "TITLE", unique = true, nullable = false)
     @Index(name = "ix_rp_title")
     private String title;
 
-    @Column(nullable = false)
+    @Column(name = "SYNOPSIS", nullable = false)
     private String synopsis;
 
+    @Column(name = "IRB_NOT_ENGAGED", nullable = false)
     private boolean irbNotEngaged = IRB_ENGAGED;
 
     // People related to the project
@@ -103,6 +104,7 @@ public class ResearchProject {
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
     public String getBusinessKey() {
+        // TODO: change to jiraTicketKey once it's populated
         return title;
     }
 
@@ -284,7 +286,7 @@ public class ResearchProject {
         irbNumbers.remove(irbNumber);
     }
 
-    public void addPerson(RoleType role, Long personId) {
+    public void addPerson(RoleType role, long personId) {
         if (associatedPeople == null) {
             associatedPeople = new HashSet<ProjectPerson>();
         }
