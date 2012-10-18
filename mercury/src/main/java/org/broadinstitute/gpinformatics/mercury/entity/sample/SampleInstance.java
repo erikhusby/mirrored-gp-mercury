@@ -5,11 +5,8 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReadBucket;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -88,7 +85,7 @@ import java.util.List;
  * The unique key of a SampleAliquotInstance
  * is the {@Link SampleAliquot} and the
  * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState}.  You can have the same
- * {@link Goop} in a {@link SampleSheet} or
+ * Goop in a SampleSheet or
  * a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}, in which case they'll
  * have to have different {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState}.
  * */
@@ -105,8 +102,6 @@ public class SampleInstance  {
     private GSP_CONTROL_ROLE controlRole;
 
 //    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
-
-    private Collection<ReadBucket> readBuckets = new HashSet<ReadBucket>();
 
     private MolecularState molecularState;
 
@@ -234,26 +229,6 @@ public class SampleInstance  {
      */
     //public WorkflowDescription getWorkflowDescription();
 
-    public Collection<ReadBucket> getReadBuckets() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    /**
-     * Based the entry/exit of a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel} into
-     * or out of a {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue}, Mercury has the
-     * ability to "override" the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan} for a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}
-     * at a particular spot in the worklow.  This method is how
-     * your override the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan}.
-     * @param projectPlan
-     */
-//    public void resetProjectPlan(BasicProjectPlan projectPlan) {
-//        if (projectPlan == null) {
-//            throw new RuntimeException("Cannot reset projectPlan to null.");
-//        }
-//        projectPlans.clear();
-//        projectPlans.add(projectPlan);
-//    }
-
     public void addReagent(Reagent reagent) {
         reagents.add(reagent);
     }
@@ -261,26 +236,5 @@ public class SampleInstance  {
     public List<Reagent> getReagents() {
         return reagents;
     }
-
-//    public void applyChange(StateChange change) {
-//        if (change != null) {
-//            if (change.getControlRole() != null) {
-//                controlRole = change.getControlRole();
-//            }
-//            if (change.getProjectPlanOverride() != null) {
-//                projectPlans.add(change.getProjectPlanOverride());
-//            }
-//            if (change.getReadBucketOverrides() != null) {
-//                readBuckets.clear();
-//                readBuckets.addAll(change.getReadBucketOverrides());
-//            }
-//            if (change.getMolecularState() != null) {
-//                if (change.getMolecularState().getMolecularEnvelope() != null) {
-//                    MolecularEnvelope envelopeDelta = change.getMolecularState().getMolecularEnvelope();
-//                    getMolecularState().getMolecularEnvelope().surroundWith(envelopeDelta);
-//                }
-//            }
-//        }
-//    }
 
 }

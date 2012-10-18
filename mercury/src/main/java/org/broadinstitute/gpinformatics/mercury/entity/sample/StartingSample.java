@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReadBucket;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
@@ -8,8 +7,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
-import java.util.Collection;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -88,10 +95,6 @@ public abstract class StartingSample implements Starter {
 //    public void setRootProjectPlan(ProjectPlan rootProjectPlan) {
 //        this.projectPlan = rootProjectPlan;
 //    }
-
-    public Collection<ReadBucket> getRootReadBuckets() {
-        throw new RuntimeException("not implemented");
-    }
 
     public SampleInstance.GSP_CONTROL_ROLE getRootControlRole() {
         throw new RuntimeException("not implemented");
