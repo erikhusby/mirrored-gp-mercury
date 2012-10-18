@@ -285,7 +285,7 @@ public class ResearchProject {
         irbNumbers.remove(irbNumber);
     }
 
-    public void addPerson(RoleType role, Long personId) {
+    public void addPerson(RoleType role, long personId) {
         if (associatedPeople == null) {
             associatedPeople = new HashSet<ProjectPerson>();
         }
