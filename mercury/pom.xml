@@ -177,6 +177,13 @@
 
         <build.resultKey>LOCAL</build.resultKey>
         <build.buildTimeStamp>now</build.buildTimeStamp>
+
+        <!-- Default Database settings for Liquibase -->
+        <liquibase.driver>org.postgresql.Driver</liquibase.driver>
+        <liquibase.url>jdbc:postgresql://localhost/postgres</liquibase.url>
+        <mercury.password>mercury_dev</mercury.password>
+        <athena.password>athena_dev</athena.password>
+
     </properties>
 
     <profiles>
@@ -625,6 +632,13 @@
         </profile>
         <profile>
             <id>BUILD</id>
+            <properties>
+                <!--  Oracle Dev database -->
+                <liquibase.driver>oracle.jdbc.driver.OracleDriver</liquibase.driver>
+                <liquibase.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</liquibase.url>
+                <mercury.password>mercury_dev</mercury.password>
+                <athena.password>athena_dev</athena.password>
+            </properties>
             <build>
                 <testResources>
                     <testResource>
@@ -641,18 +655,32 @@
                         </includes>
                     </testResource>
                 </testResources>
-	    </build>
+	        </build>
         </profile>
 
         <profile>
             <id>QA</id>
+            <properties>
+                <!-- Oracle Dev -->
+                <liquibase.driver>oracle.jdbc.driver.OracleDriver</liquibase.driver>
+                <liquibase.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</liquibase.url>
+                <mercury.password>mercury_qa</mercury.password>
+                <athena.password>athena_qa</athena.password>
+            </properties>
         </profile>
         <profile>
             <id>PROD</id>
+            <properties>
+                <!-- Oracle Dev -->
+                <driver>oracle.jdbc.driver.OracleDriver</driver>
+                <url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</url>
+                <mercury.password>mercury_prod</mercury.password>
+                <athena.password>athena_prod</athena.password>
+            </properties>
         </profile>
 
         <profile>
-            <id>LiquibaseMercury</id>
+            <id>Liquibase</id>
             <build>
                 <plugins>
                     <plugin>
@@ -661,19 +689,14 @@
                         <version>2.0.5</version>
                         <executions>
                             <execution>
+                                <id>Mercury</id>
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/mercurydb.changelog-1.0.xml</changeLogFile>
-                                    <!-- todo jmt decide how best to have different parameters for different databases -->
-                                    <!--
-                                    <driver>org.postgresql.Driver</driver>
-                                    <url>jdbc:postgresql://localhost/postgres</url>
--->
-                                    <driver>oracle.jdbc.driver.OracleDriver</driver>
-                                    <url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</url>
+                                    <driver>${liquibase.driver}</driver>
+                                    <url>${liquibase.url}</url>
                                     <username>mercury</username>
-                                    <password>mercury_dev</password>
-                                    <!--<password>mercury_local</password>-->
+                                    <password>${mercury.password}</password>
                                     <defaultSchemaName>mercury</defaultSchemaName>
                                     <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                                 </configuration>
@@ -681,34 +704,15 @@
                                     <goal>update</goal>
                                 </goals>
                             </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>LiquibaseAthena</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.liquibase</groupId>
-                        <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.5</version>
-                        <executions>
                             <execution>
+                                <id>Athena</id>
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/athenadb.changelog-1.0.xml</changeLogFile>
-                                    <!-- todo jmt decide how best to have different parameters for different databases -->
-                                    <!--
-                                    <driver>org.postgresql.Driver</driver>
-                                    <url>jdbc:postgresql://localhost/postgres</url>
--->
-                                    <driver>oracle.jdbc.driver.OracleDriver</driver>
-                                    <url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</url>
+                                    <driver>${liquibase.driver}</driver>
+                                    <url>${liquibase.url}</url>
                                     <username>athena</username>
-                                    <password>athena_dev</password>
-                                    <!--<password>athena_local</password>-->
+                                    <password>${athena.password}</password>
                                     <defaultSchemaName>athena</defaultSchemaName>
                                     <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                                 </configuration>
