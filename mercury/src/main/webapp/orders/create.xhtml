@@ -15,8 +15,8 @@
         <ui:define name="metadata">
             <f:metadata>
                 <f:viewParam name="researchProjectKey" value="#{productOrderDetail.researchProjectKey}" />
-                <f:event type="preRenderView" listener="#{productOrderForm.load}" />
                 <f:event type="preValidate" listener="#{productOrderDetail.initEmpty}"/>
+                <f:event type="preRenderView" listener="#{productOrderForm.load}" />
             </f:metadata>
         </ui:define>
 
@@ -63,7 +63,7 @@
                         <p:autoComplete id="researchProject" value="#{productOrderDetail.productOrder.researchProject}"
                                         completeMethod="#{researchProjectBean.getProjectCompletions}"
                                         forceSelection="true"
-                                        var="project" itemLabel="#{project.title}"
+                                        var="project" itemLabel="#{project.title}" itemValue="#{project}"
                                         converter="#{researchProjectConverter}"
                                         dropdown="true"
                                         required="true"
@@ -79,7 +79,9 @@
                         <p:autoComplete id="product" value="#{productOrderDetail.productOrder.product}"
                                         completeMethod="#{productsBean.getProductCompletions}"
                                         forceSelection="true"
-                                        var="product" itemLabel="#{product.productName}"
+                                        var="product"
+                                        itemLabel="#{product.productName}"
+                                        itemValue="#{product}"
                                         converter="#{productConverter}"
                                         dropdown="true"
                                         required="true"
@@ -144,7 +146,7 @@
                                 <h:link outcome="list" value="Cancel"/>
                             </div>
                             <div class="span1">
-                                <p:commandButton value="Save" ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Save" action="#{productOrderForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                         </div>
                     </div>

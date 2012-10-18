@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -173,5 +174,14 @@ public class ProductOrderForm extends AbstractJsfBean {
                 addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
             }
         }
+    }
+
+    public String save() {
+        ProductOrder order = productOrderDetail.getProductOrder();
+        String action = order.isInDB() ? "modified" : "created";
+        productOrderDao.persist(order);
+        addInfoMessage(MessageFormat.format("Product Order {0}.", action),
+                MessageFormat.format("Product Order ''{0}'' has been {1}.", order.getTitle(), action));
+        return redirect("list");
     }
 }
