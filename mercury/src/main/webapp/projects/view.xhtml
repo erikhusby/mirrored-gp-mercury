@@ -85,7 +85,7 @@
                     <label class="control-label">Created</label>
                     <div class="controls">
                         <div class="form-value">
-                            By #{userListBean.getUser(researchProjectDetail.project.createdBy)} on
+                            By #{userListBean.getUserFullName(researchProjectDetail.project.createdBy)} on
                             <h:outputText value="#{researchProjectDetail.project.createdDate}">
                                 <f:convertDateTime type="date"/>
                             </h:outputText>

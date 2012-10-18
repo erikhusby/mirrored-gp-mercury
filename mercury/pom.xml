@@ -166,6 +166,9 @@
         <seam.version>3.1.0.Final</seam.version>
         <jersey.version>1.11</jersey.version>
 
+        <oracle.version>6-11.2.0.1.0</oracle.version>
+        <postgresql.version>9.1-901.jdbc4</postgresql.version>
+
         <jbossas_7.version>7.1.1.Final</jbossas_7.version>
 
         <!-- In order to ignore the UI tests by default but turn them on in the Tests.UI profile, we need to do this
@@ -177,6 +180,15 @@
 
         <build.resultKey>LOCAL</build.resultKey>
         <build.buildTimeStamp>now</build.buildTimeStamp>
+
+        <!-- Default Postgres Database settings for Liquibase and Maven SQL Plugin-->
+        <database>postgres</database>
+        <database.driver>org.postgresql.Driver</database.driver>
+        <database.url>jdbc:postgresql://localhost/postgres</database.url>
+        <mercury.password>mercury_dev</mercury.password>
+        <athena.password>athena_dev</athena.password>
+        <database.delimiterType>normal</database.delimiterType>
+
     </properties>
 
     <profiles>
@@ -625,6 +637,16 @@
         </profile>
         <profile>
             <id>BUILD</id>
+            <properties>
+                <!--  Oracle Dev database -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</database.url>
+                <mercury.password>mercury_dev</mercury.password>
+                <athena.password>athena_dev</athena.password>
+            </properties>
             <build>
                 <testResources>
                     <testResource>
@@ -641,18 +663,38 @@
                         </includes>
                     </testResource>
                 </testResources>
-	    </build>
+	        </build>
         </profile>
 
         <profile>
             <id>QA</id>
+            <properties>
+                <!-- Oracle Dev -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
+                <mercury.password>mercury_qa</mercury.password>
+                <athena.password>athena_qa</athena.password>
+            </properties>
         </profile>
         <profile>
             <id>PROD</id>
+            <properties>
+                <!-- Oracle Dev -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</database.url>
+                <mercury.password>mercury_prod</mercury.password>
+                <athena.password>athena_prod</athena.password>
+            </properties>
         </profile>
 
         <profile>
-            <id>LiquibaseMercury</id>
+            <id>Liquibase</id>
             <build>
                 <plugins>
                     <plugin>
@@ -661,17 +703,14 @@
                         <version>2.0.5</version>
                         <executions>
                             <execution>
+                                <id>Mercury</id>
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/mercurydb.changelog-1.0.xml</changeLogFile>
-                                    <!-- todo jmt decide how best to have different parameters for different databases -->
-                                    <driver>org.postgresql.Driver</driver>
-                                    <url>jdbc:postgresql://localhost/postgres</url>
-                                    <!--<driver>oracle.jdbc.driver.OracleDriver</driver>-->
-                                    <!--<url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</url>-->
+                                    <driver>${database.driver}</driver>
+                                    <url>${database.url}</url>
                                     <username>mercury</username>
-                                    <password>mercury_local</password>
-                                    <!--<password>mercury_dev</password>-->
+                                    <password>${mercury.password}</password>
                                     <defaultSchemaName>mercury</defaultSchemaName>
                                     <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                                 </configuration>
@@ -679,32 +718,15 @@
                                     <goal>update</goal>
                                 </goals>
                             </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>LiquibaseAthena</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.liquibase</groupId>
-                        <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.5</version>
-                        <executions>
                             <execution>
+                                <id>Athena</id>
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/athenadb.changelog-1.0.xml</changeLogFile>
-                                    <!-- todo jmt decide how best to have different parameters for different databases -->
-                                    <driver>org.postgresql.Driver</driver>
-                                    <url>jdbc:postgresql://localhost/postgres</url>
-                                    <!--<driver>oracle.jdbc.driver.OracleDriver</driver>-->
-                                    <!--<url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</url>-->
+                                    <driver>${database.driver}</driver>
+                                    <url>${database.url}</url>
                                     <username>athena</username>
-                                    <password>athena_local</password>
-                                    <!--<password>athena_dev</password>-->
+                                    <password>${athena.password}</password>
                                     <defaultSchemaName>athena</defaultSchemaName>
                                     <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                                 </configuration>
@@ -714,10 +736,46 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>sql-maven-plugin</artifactId>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.oracle</groupId>
+                                <artifactId>ojdbc</artifactId>
+                                <version>${oracle.version}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>${postgresql.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <driver>${database.driver}</driver>
+                            <url>${database.url}</url>
+                            <username>athena</username>
+                            <password>${athena.password}</password>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>Apply Athena Grants</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <delimiterType>${database.delimiterType}</delimiterType>
+                                    <srcFiles>
+                                        <srcFile>src/main/db/athena-${database}-grants.sql</srcFile>
+                                    </srcFiles>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
-
     </profiles>
 
     <dependencyManagement>
@@ -1011,13 +1069,13 @@
         <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>9.1-901.jdbc4</version>
+            <version>${postgresql.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>ojdbc</artifactId>
-            <version>6-11.2.0.1.0</version>
+            <version>${oracle.version}</version>
         </dependency>
 
         <dependency>
@@ -1188,7 +1246,16 @@
                     <version>7.1.1.Final</version>
                 </plugin>
 
-
+                <plugin>
+                    <groupId>org.liquibase</groupId>
+                    <artifactId>liquibase-maven-plugin</artifactId>
+                    <version>2.0.5</version>
+                </plugin>
+                <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>sql-maven-plugin</artifactId>
+                        <version>1.5</version>
+                </plugin>
                 <!--
                                 <plugin>
                                     <artifactId>maven-dependency-plugin</artifactId>
