@@ -10,7 +10,7 @@ import javax.inject.Named;
 import java.util.List;
 
 /**
- * Could not seem to inject the BSPUserList directly into the xhtml file, so this is a wrapper that does
+ * Could not seem to inject the BSPCohortList directly into the xhtml file, so this is a wrapper that does
  * the injection and provides the access to the find for anything that wants user names instead of the stored
  * ID.
  */
