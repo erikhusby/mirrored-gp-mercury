@@ -166,6 +166,9 @@
         <seam.version>3.1.0.Final</seam.version>
         <jersey.version>1.11</jersey.version>
 
+        <oracle.version>6-11.2.0.1.0</oracle.version>
+        <postgresql.version>9.1-901.jdbc4</postgresql.version>
+
         <jbossas_7.version>7.1.1.Final</jbossas_7.version>
 
         <!-- In order to ignore the UI tests by default but turn them on in the Tests.UI profile, we need to do this
@@ -178,11 +181,13 @@
         <build.resultKey>LOCAL</build.resultKey>
         <build.buildTimeStamp>now</build.buildTimeStamp>
 
-        <!-- Default Database settings for Liquibase -->
-        <liquibase.driver>org.postgresql.Driver</liquibase.driver>
-        <liquibase.url>jdbc:postgresql://localhost/postgres</liquibase.url>
+        <!-- Default Postgres Database settings for Liquibase and Maven SQL Plugin-->
+        <database>postgres</database>
+        <database.driver>org.postgresql.Driver</database.driver>
+        <database.url>jdbc:postgresql://localhost/postgres</database.url>
         <mercury.password>mercury_dev</mercury.password>
         <athena.password>athena_dev</athena.password>
+        <database.delimiterType>normal</database.delimiterType>
 
     </properties>
 
@@ -634,8 +639,11 @@
             <id>BUILD</id>
             <properties>
                 <!--  Oracle Dev database -->
-                <liquibase.driver>oracle.jdbc.driver.OracleDriver</liquibase.driver>
-                <liquibase.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</liquibase.url>
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</database.url>
                 <mercury.password>mercury_dev</mercury.password>
                 <athena.password>athena_dev</athena.password>
             </properties>
@@ -662,8 +670,11 @@
             <id>QA</id>
             <properties>
                 <!-- Oracle Dev -->
-                <liquibase.driver>oracle.jdbc.driver.OracleDriver</liquibase.driver>
-                <liquibase.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</liquibase.url>
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
                 <mercury.password>mercury_qa</mercury.password>
                 <athena.password>athena_qa</athena.password>
             </properties>
@@ -672,8 +683,11 @@
             <id>PROD</id>
             <properties>
                 <!-- Oracle Dev -->
-                <liquibase.driver>oracle.jdbc.driver.OracleDriver</liquibase.driver>
-                <liquibase.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</liquibase.url>
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</database.url>
                 <mercury.password>mercury_prod</mercury.password>
                 <athena.password>athena_prod</athena.password>
             </properties>
@@ -686,15 +700,14 @@
                     <plugin>
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.5</version>
                         <executions>
                             <execution>
                                 <id>Mercury</id>
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/mercurydb.changelog-1.0.xml</changeLogFile>
-                                    <driver>${liquibase.driver}</driver>
-                                    <url>${liquibase.url}</url>
+                                    <driver>${database.driver}</driver>
+                                    <url>${database.url}</url>
                                     <username>mercury</username>
                                     <password>${mercury.password}</password>
                                     <defaultSchemaName>mercury</defaultSchemaName>
@@ -709,8 +722,8 @@
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/athenadb.changelog-1.0.xml</changeLogFile>
-                                    <driver>${liquibase.driver}</driver>
-                                    <url>${liquibase.url}</url>
+                                    <driver>${database.driver}</driver>
+                                    <url>${database.url}</url>
                                     <username>athena</username>
                                     <password>${athena.password}</password>
                                     <defaultSchemaName>athena</defaultSchemaName>
@@ -722,10 +735,46 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>sql-maven-plugin</artifactId>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.oracle</groupId>
+                                <artifactId>ojdbc</artifactId>
+                                <version>${oracle.version}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>${postgresql.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <driver>${database.driver}</driver>
+                            <url>${database.url}</url>
+                            <username>athena</username>
+                            <password>${athena.password}</password>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>Apply Athena Grants</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <delimiterType>${database.delimiterType}</delimiterType>
+                                    <srcFiles>
+                                        <srcFile>src/main/db/athena-${database}-grants.sql</srcFile>
+                                    </srcFiles>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
-
     </profiles>
 
     <dependencyManagement>
@@ -1019,13 +1068,13 @@
         <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>9.1-901.jdbc4</version>
+            <version>${postgresql.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>ojdbc</artifactId>
-            <version>6-11.2.0.1.0</version>
+            <version>${oracle.version}</version>
         </dependency>
 
         <dependency>
@@ -1196,7 +1245,16 @@
                     <version>7.1.1.Final</version>
                 </plugin>
 
-
+                <plugin>
+                    <groupId>org.liquibase</groupId>
+                    <artifactId>liquibase-maven-plugin</artifactId>
+                    <version>2.0.5</version>
+                </plugin>
+                <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>sql-maven-plugin</artifactId>
+                        <version>1.5</version>
+                </plugin>
                 <!--
                                 <plugin>
                                     <artifactId>maven-dependency-plugin</artifactId>
