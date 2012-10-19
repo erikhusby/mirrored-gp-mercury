@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.BSPStartingSampleDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -29,7 +29,7 @@ public class LabBatchResource {
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
     @Inject
-    private BSPStartingSampleDAO bspStartingSampleDAO;
+    private MercurySampleDao mercurySampleDao;
 
     @Inject
     private LabBatchDAO labBatchDAO;
@@ -37,18 +37,21 @@ public class LabBatchResource {
     @POST
     public String createLabBatch(LabBatchBean labBatchBean) {
         List<String> tubeBarcodes = new ArrayList<String>();
-        List<String> sampleBarcodes = new ArrayList<String>();
+        List<MercurySample> mercurySampleKeys = new ArrayList<MercurySample>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             tubeBarcodes.add(tubeBean.getBarcode());
-            sampleBarcodes.add(tubeBean.getSampleBarcode());
+            if(tubeBean.getSampleBarcode() != null && tubeBean.getProductOrderKey() != null) {
+                mercurySampleKeys.add(new MercurySample(tubeBean.getProductOrderKey(), tubeBean.getSampleBarcode()));
+            }
         }
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(tubeBarcodes);
-        Map<String, BSPStartingSample> mapBarcodeToSample = bspStartingSampleDAO.findByNames(sampleBarcodes);
+        Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
         if(labBatchBean.getWorkflowName() == null) {
-            LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapBarcodeToSample/*, null*/);
+            LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample/*, null*/);
             labBatchDAO.persist(labBatch);
         } else {
+            // todo jmt how to attach workflow to a batch with no product order?
 //            BasicProjectPlan projectPlan = buildProjectPlan(labBatchBean, mapBarcodeToTube, mapBarcodeToSample);
 //            projectPlanDao.persist(projectPlan);
         }
@@ -75,7 +78,7 @@ public class LabBatchResource {
 //    }
 
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            Map<String, BSPStartingSample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
+            Map<MercurySample, MercurySample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
         Set<Starter> starters = new HashSet<Starter>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
@@ -83,20 +86,26 @@ public class LabBatchResource {
                 twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.getBarcode());
                 mapBarcodeToTube.put(tubeBean.getBarcode(), twoDBarcodedTube);
             }
-
-            if (tubeBean.getSampleBarcode() == null) {
-                starters.add(twoDBarcodedTube);
-            } else {
-                BSPStartingSample bspStartingSample = mapBarcodeToSample.get(tubeBean.getSampleBarcode());
-                if(bspStartingSample == null) {
-                    bspStartingSample = new BSPStartingSample(tubeBean.getSampleBarcode() + ".aliquot"/*, projectPlan*/);
-                    mapBarcodeToSample.put(tubeBean.getSampleBarcode(), bspStartingSample);
+            if(tubeBean.getSampleBarcode() != null && tubeBean.getProductOrderKey() != null) {
+                MercurySample mercurySample = mapBarcodeToSample.get(new MercurySample(tubeBean.getProductOrderKey(), tubeBean.getSampleBarcode()));
+                if(mercurySample != null) {
+                    twoDBarcodedTube.addSample(mercurySample);
                 }
+            }
 
-                starters.add(bspStartingSample);
+//            if (tubeBean.getSampleBarcode() == null) {
+//                starters.add(twoDBarcodedTube);
+//            } else {
+//                BSPStartingSample bspStartingSample = mapBarcodeToSample.get(tubeBean.getSampleBarcode());
+//                if(bspStartingSample == null) {
+//                    bspStartingSample = new BSPStartingSample(tubeBean.getSampleBarcode() + ".aliquot"/*, projectPlan*/);
+//                    mapBarcodeToSample.put(tubeBean.getSampleBarcode(), bspStartingSample);
+//                }
+//
+//                starters.add(bspStartingSample);
 //                projectPlan.addStarter(bspStartingSample);
 //                projectPlan.addAliquotForStarter(bspStartingSample, twoDBarcodedTube);
-            }
+//            }
         }
         LabBatch labBatch;
 //        if(projectPlan == null) {

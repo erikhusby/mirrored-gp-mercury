@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.BSPStartingSampleDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -23,8 +22,8 @@ import java.util.*;
 public class BSPSampleFactory {
 
 
-    @Inject
-    private BSPStartingSampleDAO bspStartingSampleDAO;
+//    @Inject
+//    private BSPStartingSampleDAO bspStartingSampleDAO;
 
     @Inject
     private BSPPlatingReceiptDAO bspPlatingReceiptDAO;

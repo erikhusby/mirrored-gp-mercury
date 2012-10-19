@@ -13,10 +13,10 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -43,13 +43,13 @@ public class SamplesPicoEndToEndTest {
         List<TubeBean> tubeBeans = new ArrayList<TubeBean>();
         for(int rackPosition = 1; rackPosition <= 96; rackPosition++) {
             String barcode = "R" + rackPosition;
-            tubeBeans.add(new TubeBean(barcode, null));
+            tubeBeans.add(new TubeBean(barcode, null, null));
         }
         String batchId = "BP-1";
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        Map<String, BSPStartingSample> mapBarcodeToSample = new LinkedHashMap<String, BSPStartingSample>();
+        Map<MercurySample, MercurySample> mapSampleToSample = new LinkedHashMap<MercurySample, MercurySample>();
         LabBatch labBatch = labBatchResource.buildLabBatch(new LabBatchBean(batchId, "HybSel", tubeBeans),
-                mapBarcodeToTube, mapBarcodeToSample/*, null*/);
+                mapBarcodeToTube, mapSampleToSample/*, null*/);
 
         // validate workflow?
         // messaging

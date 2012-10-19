@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.Failure;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
@@ -12,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -113,11 +112,8 @@ public abstract class LabVessel implements Starter {
     /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
     private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
 
-    @Transient
-    /**
-     * marked transient because arz hasn't gotten far enough to turn on db for this
-     */
-    private Set<SampleMetadata> samples = new HashSet<SampleMetadata>();
+    @ManyToMany
+    private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
 
     protected LabVessel(String label) {
         this.label = label;
@@ -580,12 +576,12 @@ public abstract class LabVessel implements Starter {
      * uploaded for "walk up" sequencing.
      * @return
      */
-    public Set<SampleMetadata> getSamples() {
+    public Set<MercurySample> getMercurySamples() {
         // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
         // in reality, the implementation would walk back to all roots,
         // detecting vessels along the way where hasSampleMetadata is true.
-        if (!samples.isEmpty()) {
-            return samples;
+        if (!mercurySamples.isEmpty()) {
+            return mercurySamples;
         }
         // else walk transfers
         throw new RuntimeException("history traversal for empty samples list not implemented");
@@ -596,10 +592,14 @@ public abstract class LabVessel implements Starter {
      * For vessels that have been pushed over from BSP, we set
      * the list of samples.  Otherwise, the list of samples
      * is empty and is derived from a walk through event history.
-     * @param samples
+     * @param mercurySample
      */
-    public void setSamples(Set<SampleMetadata> samples) {
-        this.samples = samples;
+    public void addSample(MercurySample mercurySample) {
+        this.mercurySamples.add(mercurySample);
+    }
+
+    public void addAllSamples(Set<MercurySample> mercurySamples) {
+        this.mercurySamples.addAll(mercurySamples);
     }
 }
 

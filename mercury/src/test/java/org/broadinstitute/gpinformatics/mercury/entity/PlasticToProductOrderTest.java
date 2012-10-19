@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity;
 
 
-import static junit.framework.Assert.*;
-
-import org.broadinstitute.gpinformatics.infrastructure.StubSampleMetadata;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
@@ -14,12 +11,18 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import static junit.framework.Assert.*;
 
 public class PlasticToProductOrderTest {
 
@@ -28,14 +31,15 @@ public class PlasticToProductOrderTest {
     public void test_simple_tube_in_rack_maps_to_pdo() {
         Bucket bucket = new Bucket();
         BucketResource bucketResource = new BucketResource();
-        Set<SampleMetadata> rootSamples = new HashSet<SampleMetadata>();
-        rootSamples.add(new StubSampleMetadata("TCGA123","Human",null));
         BettaLimsMessageFactory messageFactory = new BettaLimsMessageFactory();
         LabEventFactory eventFactory = new LabEventFactory(new PersonDAO());
+
+        Set<MercurySample> rootSamples = new HashSet<MercurySample>();
+        rootSamples.add(new MercurySample("PO1", "TCGA123")); //StubSampleMetadata("TCGA123","Human",null));
         Map<String,TwoDBarcodedTube> barcodeToTubeMap = new HashMap<String, TwoDBarcodedTube>();
         String destinationPlateBarcode = "Plate0000";
         TwoDBarcodedTube tube = new TwoDBarcodedTube("0000");
-        tube.setSamples(rootSamples);
+        tube.addAllSamples(rootSamples);
         barcodeToTubeMap.put(tube.getLabel(),tube);
 
 
@@ -87,23 +91,23 @@ public class PlasticToProductOrderTest {
 
         LabVessel targetVessel = rackToPlateTransfer.getTargetLabVessels().iterator().next();
         targetVessel.setChainOfCustodyRoots(barcodeToTubeMap.values());
-        targetVessel.setSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
+        targetVessel.addAllSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
         // todo I'm setting this on the rack here, but it should just work on the tube
         LabVessel source = rackToPlateTransfer.getSourceLabVessels().iterator().next();
         source.setChainOfCustodyRoots(barcodeToTubeMap.values());
-        source.setSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
+        source.addAllSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
 
         Map<LabVessel,ProductOrderId> vesselPOMap = poResolver.findProductOrders(targetVessel);
 
         for (Map.Entry<LabVessel, ProductOrderId> labVesselPO : vesselPOMap.entrySet()) {
             assertTrue(samplePOMapFromAthena.containsKey(labVesselPO.getKey())); // make sure that the LabVessel called out in the PO
                                                                                  // is found by the resolver
-            Set<SampleMetadata> samples = labVesselPO.getKey().getSamples();
+            Set<MercurySample> samples = labVesselPO.getKey().getMercurySamples();
 
             for (LabVessel athenaProductOrderLabVessel : samplePOMapFromAthena.keySet()) {
                 // athenaProductOrderLabVessel is the mercury LabVessel created when BSP pushes the sample
                 // over to mercury during sample receipt
-                for (SampleMetadata athenaRootSample : athenaProductOrderLabVessel.getSamples()) {
+                for (MercurySample athenaRootSample : athenaProductOrderLabVessel.getMercurySamples()) {
                     // although we expect a 1-1 between athenaRootSample and athenaProductOrderLabVessel, pre-pooled stuff
                     // can have a many-to-one.
                     assertTrue(samples.contains(athenaRootSample));
