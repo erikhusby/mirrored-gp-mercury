@@ -18,7 +18,7 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:p="http://primefaces.org/ui"
       xmlns:sqltg="http://sequel.broadinstitute.org/tags"
-      xmlns:vt="http://java.sun.com/jsf/composite/login">
+      xmlns:pe="http://primefaces.org/ui/extensions">
 
 <!--
   Base JSF page template to be used in the "template" attribure of
@@ -76,14 +76,37 @@
         </div>
 
         <div class="container-fluid">
-            <p:ajaxStatus id="ajaxStatus" styleClass="span2 offset5">
-                <f:facet name="start">
-                    Loading...
-                </f:facet>
-                <f:facet name="complete">
-                    <h:outputText value="" />
-                </f:facet>
-            </p:ajaxStatus>
+            <div class="row-fluid">
+                <p:ajaxStatus id="ajaxStatus" styleClass="span2 offset5">
+                    <f:facet name="start">
+                        Loading...
+                    </f:facet>
+                    <f:facet name="complete">
+                        <h:outputText value="" />
+                    </f:facet>
+                </p:ajaxStatus>
+
+                <pe:ajaxErrorHandler
+                        title="Server Error: {error-name}"
+                        button="Close"
+                        widgetVar="ajaxErrorHandler" buttonOnclick="ajaxErrorHandler.hide()">
+                    <f:facet name="body">
+                        <div>
+                            <h:form>
+                                <p:tabView>
+                                    <p:tab title="Message">
+                                        Error message: {error-message}
+                                    </p:tab>
+                                    <p:tab title="Detail">
+                                        <div style="overflow: auto; height: 300px; width: 700px;">
+                                            <pre style="font-size: 10px">{error-stacktrace}</pre>
+                                        </div>
+                                    </p:tab>
+                                </p:tabView>
+                            </h:form>
+                        </div>
+                    </f:facet>
+                </pe:ajaxErrorHandler>
 
             <p:dialog modal="false" widgetVar="statusDialog" draggable="false" closable="false" maximizable="false" resizable="false" minimizable="false">
                 <p:outputPanel>

@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
@@ -42,7 +40,8 @@
         <connection>scm:git|${git.url}</connection>
         <developerConnection>scm:git|${git.url}</developerConnection>
         <url>${git.browseUrl}</url>
-    </scm>
+      <tag>HEAD</tag>
+  </scm>
 
     <distributionManagement>
         <site>
@@ -176,7 +175,7 @@
         was not really possible.
         -->
         <tests.excludedGroups>UI</tests.excludedGroups>
-        <tests.groups/>
+        <tests.groups />
 
         <build.resultKey>LOCAL</build.resultKey>
         <build.buildTimeStamp>now</build.buildTimeStamp>
@@ -380,8 +379,7 @@
                                                This yields a namespace definition on the form
                                                <xs:schema ... xmlns:[toPrefix]="[uri]" ... />
 
-                                               (I.e: <xs:schema ... xmlns:some="http://some/namespace"
-                                                                    xmlns:xs="http://www.w3.org/2001/XMLSchema"> )
+                                               (I.e: <xs:schema ... xmlns:some="http://some/namespace" xmlns:xs="http://www.w3.org/2001/XMLSchema"> )
 
                                                ... and transforms relevant xml schema elements to use the provided namespace prefix:
 
@@ -482,7 +480,7 @@
             <profile>
                 <id>Tests.UI</id>
                 <properties>
-                    <tests.excludedGroups/>
+                    <tests.excludedGroups />
                     <tests.groups>UI,arquillian</tests.groups>
                 </properties>
             </profile>
@@ -817,6 +815,19 @@
                 <scope>import</scope>
             </dependency>
 -->
+            <dependency>
+                <groupId>org.primefaces.extensions</groupId>
+                <artifactId>primefaces-extensions</artifactId>
+                <version>0.6.1</version>
+            </dependency>
+
+            <!-- primefaces-extensions has a dependency on primefaces, so use this to control the version of primefaces we depend on -->
+            <!-- see: http://code.google.com/p/primefaces-extensions/wiki/GettingStarted -->
+            <dependency>
+                <groupId>org.primefaces</groupId>
+                <artifactId>primefaces</artifactId>
+                <version>3.4.1</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -975,7 +986,11 @@
         <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
-            <version>3.4.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.primefaces.extensions</groupId>
+            <artifactId>primefaces-extensions</artifactId>
         </dependency>
 
         <dependency>
@@ -1613,8 +1628,7 @@
                         <configuration>
                             <target>
                                 <propertyfile file="${pom.basedir}/target/version.properties">
-                                    <entry key="project.version" type="string" value="${project.version}"
-                                           operation="="/>
+                                    <entry key="project.version" type="string" value="${project.version}" operation="=" />
                                 </propertyfile>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
                                     <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
@@ -1632,10 +1646,11 @@
                 <configuration>
                     <tagNameFormat>@{project.version}</tagNameFormat>
                     <preparationGoals>clean validate</preparationGoals>
-                    <goals>validate</goals>
+                    <goals>help:active-profiles validate</goals>
                     <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <scmCommentPrefix>[Release]</scmCommentPrefix>
+                    <scmCommentPrefix>[REL-000 Production Release] </scmCommentPrefix>
+                    <!--<arguments>-X</arguments>-->
                 </configuration>
             </plugin>
 
