@@ -82,7 +82,7 @@ public class ResearchProject {
     private boolean irbNotEngaged = IRB_ENGAGED;
 
     // People related to the project
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
@@ -312,16 +312,56 @@ public class ResearchProject {
         return getPeople(RoleType.PM);
     }
 
+    public void updateProjectManagers(Long[] personIds) {
+        updatePeople(RoleType.PM, personIds);
+    }
+
     public Long[] getBroadPIs() {
         return getPeople(RoleType.BROAD_PI);
+    }
+
+    public void updateBroadPIs(Long[] personIds) {
+        updatePeople(RoleType.BROAD_PI, personIds);
     }
 
     public Long[] getScientists() {
         return getPeople(RoleType.SCIENTIST);
     }
 
+    public void updateScientists(Long[] personIds) {
+        updatePeople(RoleType.SCIENTIST, personIds);
+    }
+
     public Long[] getExternalCollaborators() {
         return getPeople ( RoleType.EXTERNAL );
+    }
+
+    public void updateExternalCollaborators(Long[] personIds) {
+        updatePeople(RoleType.EXTERNAL, personIds);
+    }
+
+    public void updatePeople(RoleType role, Long[] personIds) {
+        Set<Long> currentIds = new HashSet<Long>(Arrays.asList(getPeople(role)));
+        Set<Long> newIds = new HashSet<Long>(Arrays.asList(personIds));
+
+        Set<ProjectPerson> peopleToRemove = new HashSet<ProjectPerson>();
+        for (ProjectPerson person : associatedPeople) {
+            if (person.getRole().equals(role)) {
+                if (!newIds.contains(person.getPersonId())) {
+                    peopleToRemove.add(person);
+                }
+            }
+        }
+
+        Set<ProjectPerson> peopleToAdd = new HashSet<ProjectPerson>();
+        for (Long personId : personIds) {
+            if (!currentIds.contains(personId)) {
+                peopleToAdd.add(new ProjectPerson(this, role, personId));
+            }
+        }
+
+        associatedPeople.removeAll(peopleToRemove);
+        associatedPeople.addAll(peopleToAdd);
     }
 
     public String[] getFundingIds() {
