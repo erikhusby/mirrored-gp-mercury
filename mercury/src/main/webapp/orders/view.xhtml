@@ -13,8 +13,8 @@
         <ui:define name="title">View Product Order</ui:define>
         <ui:define name="metadata">
             <f:metadata>
-                <f:event type="preRenderView" listener="#{productOrderDetail.load}" />
-                <f:viewParam name="productOrderKey" value="#{productOrderDetail.productOrderKey}" />
+
+                <f:viewParam name="productOrderKey" value="#{productOrderDetail.productOrder}" converter="#{productOrderConverter}" />
             </f:metadata>
         </ui:define>
         <ui:define name="body">
@@ -36,35 +36,35 @@
 
                 <div class="row-fluid">
                     <div class="control-group">
-                        <span class="control-label label">Order Barcode</span>
+                        <span class="control-label label-form">Order Barcode</span>
                         <span class="controls">
-                            <h:outputLink value="http://prodinfojira.broadinstitute.org/jira/browse/#{productOrderDetail.productOrder.jiraTicketKey}" class="external">
+                            <h:outputLink target="_new" value="http://prodinfojira.broadinstitute.org/jira/browse/#{productOrderDetail.productOrder.jiraTicketKey}" class="external">
                                 <h:outputText value="#{productOrderDetail.productOrder.jiraTicketKey}" />
                             </h:outputLink>
                         </span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label">Product</span>
+                        <span class="control-label label-form">Product</span>
                         <span class="controls">#{productOrderDetail.productOrder.title}</span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label">Quote ID</span>
+                        <span class="control-label label-form">Quote ID</span>
                         <span class="controls">
-                            <h:outputLink value="#{QuoteConfig.url(QuoteConfig.SINGLE_NUMERIC_QUOTE)}#{productOrderDetail.productOrder.quoteId}" class="external">
+                            <h:outputLink target="_new" value="#{QuoteConfig.url(QuoteConfig.SINGLE_NUMERIC_QUOTE)}#{productOrderDetail.productOrder.quoteId}" class="external">
                                 <h:outputText value="#{productOrderDetail.productOrder.quoteId}" />
                             </h:outputLink>
                         </span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label">Comments</span>
+                        <span class="control-label label-form">Comments</span>
                         <span class="controls">#{productOrderDetail.productOrder.comments}</span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label">Samples</span>
+                        <span class="control-label label-form">Samples</span>
                         <span class="controls">#{productOrderDetail.productOrder.sampleSummary}</span>
                     </div>
 
@@ -97,7 +97,7 @@
 
                     <p:dataTable id="sampleData"
                                  value="#{productOrderDetail.productOrder.samples}"
-                                 filteredValue="#{productOrderBean.filteredSamples}"
+                                 filteredValue="#{productOrderFilterBean.filteredSamples}"
                                  var="sample"
                                  paginator="true"
                                  paginatorAlwaysVisible='false'
@@ -116,7 +116,7 @@
                         <p:column headerText="Participant ID">
                             #{sample.bspDTO.patientId}
                         </p:column>
-                        <p:column headerText="Status" filterBy="#{sample.billingStatus.displayName}" filterOptions="#{productOrderBean.allSampleStatuses}" filterMatchMode="exact">
+                        <p:column headerText="Status" filterBy="#{sample.billingStatus}" filterOptions="#{productOrderBean.allSampleStatuses}" filterMatchMode="exact">
                             #{sample.billingStatus.displayName}
                         </p:column>
                         <p:column headerText="Eligible">

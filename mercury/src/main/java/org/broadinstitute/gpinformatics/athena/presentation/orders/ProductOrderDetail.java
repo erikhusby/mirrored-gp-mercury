@@ -68,4 +68,8 @@ public class ProductOrderDetail extends AbstractJsfBean {
     public ProductOrder getProductOrder() {
         return productOrder;
     }
+
+    public void setProductOrder(ProductOrder productOrder) {
+        this.productOrder = productOrder;
+    }
 }

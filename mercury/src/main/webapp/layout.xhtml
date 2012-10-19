@@ -76,23 +76,21 @@
         </div>
 
         <div class="container-fluid">
-            <div class="row-fluid">
-                <p:ajaxStatus id="ajaxStatus" styleClass="span2 offset5">
-                    <f:facet name="start">
-                        Loading...
-                    </f:facet>
-                    <f:facet name="complete">
-                        <h:outputText value="" />
-                    </f:facet>
-                </p:ajaxStatus>
+            <p:ajaxStatus id="ajaxStatus" styleClass="span2 offset5">
+                <f:facet name="start">
+                    Loading...
+                </f:facet>
+                <f:facet name="complete">
+                    <h:outputText value="" />
+                </f:facet>
+            </p:ajaxStatus>
 
-                <p:dialog modal="false" widgetVar="statusDialog" draggable="false" closable="false" maximizable="false" resizable="false" minimizable="false">
-                    <p:outputPanel>
-                        <p:graphicImage url="/images/spinner.gif" alt="Please wait" />
-                        <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&nbsp;wait..." />
-                    </p:outputPanel>
-                </p:dialog>
-            </div>
+            <p:dialog modal="false" widgetVar="statusDialog" draggable="false" closable="false" maximizable="false" resizable="false" minimizable="false">
+                <p:outputPanel>
+                    <p:graphicImage url="/images/spinner.gif" alt="Please wait" />
+                    <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&nbsp;wait..." />
+                </p:outputPanel>
+            </p:dialog>
 
             <div class="row-fluid">
                     <p:panel>
