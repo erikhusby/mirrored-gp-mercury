@@ -214,6 +214,13 @@ public class Product implements Serializable {
 //        this.riskContingencies = riskContingencies;
 //    }
 
+    public boolean isPriceItemDefault(PriceItem priceItem) {
+        if (defaultPriceItem == priceItem) return true;
+
+        if (defaultPriceItem == null) return false;
+
+        return defaultPriceItem.equals(priceItem);
+    }
 
     @Override
     public boolean equals(Object o) {

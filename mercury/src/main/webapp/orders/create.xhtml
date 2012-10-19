@@ -77,7 +77,7 @@
                     <p:outputLabel for="product" value="Product" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="product" value="#{productOrderDetail.productOrder.product}"
-                                        completeMethod="#{productsBean.getProductCompletions}"
+                                        completeMethod="#{productList.getProductCompletions}"
                                         forceSelection="true"
                                         var="product"
                                         itemLabel="#{product.productName}"

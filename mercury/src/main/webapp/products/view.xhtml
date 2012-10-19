@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<body>
+
+<h:link outcome="/security/login" value="Athena"/>
+&gt;
+<h:link outcome="list" value="Products"/>
+&gt;
+#{productView.product.partNumber}
+
+<ui:composition template="/layout.xhtml">
+    <ui:define name="title">View Product</ui:define>
+    <ui:define name="metadata">
+        <f:metadata>
+            <f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}"/>
+        </f:metadata>
+    </ui:define>
+    <ui:define name="body">
+
+        <h:form id="productForm" styleClass="form-horizontal form-readonly" >
+
+                <div class="control-group">
+                    <label class="control-label">Part Number</label>
+                    <div class="controls">
+                        <div class="form-value">#{productView.product.partNumber} (<a href="http://link/to/product_sheet/#{productView.product.partNumber}.pdf">Product Sheet PDF</a>)</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Name</label>
+                    <div class="controls">
+                        <div class="form-value">#{productView.product.productName}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Product Family</label>
+                    <div class="controls">
+                        <div class="form-value">#{productView.product.productFamily.displayName}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Availability Date</label>
+                    <div class="controls">
+                        <div class="form-value">#{productView.availabilityDate}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Discontinued Date</label>
+                    <div class="controls">
+                        <div class="form-value">#{productView.discontinuedDate}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Description</label>
+                    <div class="controls">
+                        <div class="form-value">#{productView.product.description}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Deliverables</label>
+                    <div class="controls">
+                        <div class="form-value">#{productView.product.deliverables}</div>
+                    </div>
+                </div>
+
+
+                <p:dataTable value="#{productView.addOns}" var="addOn" >
+                    <f:facet name="header">
+                        <h:outputText value="Add Ons" />
+                    </f:facet>
+
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Part Number"/>
+                        </f:facet>
+                        <h:link outcome="view" value="#{addOn.partNumber}">
+                            <f:param name="product" value="#{addOn.businessKey}"/>
+                        </h:link>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Name"/>
+                        </f:facet>
+                        <h:outputText value="#{addOn.productName}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Product Family"/>
+                        </f:facet>
+                        <h:outputText value="#{addOn.productFamily.displayName}"/>
+                    </p:column>
+
+                </p:dataTable>
+
+
+                <p:dataTable value="#{productView.priceItems}" var="priceItem" >
+                    <f:facet name="header">
+                        <h:outputText value="Price Items" />
+                    </f:facet>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Platform"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.platform}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Category"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.category}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Name"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.name}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Default?"/>
+                        </f:facet>
+                        <h:outputText
+                                value='#{productView.product.isPriceItemDefault(priceItem) ? "Yes" : "No"}'/>
+                    </p:column>
+            </p:dataTable>
+
+        </h:form>
+
+        <h:link value="Edit Product" outcome="create?includeViewParams=true"/>
+    </ui:define>
+</ui:composition>
+</body>
+</html>
