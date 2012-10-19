@@ -48,8 +48,6 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     private String sampleStatus;
 
-    private static final String SEPARATOR = ",";
-
     public static final String SEPARATOR = ",";
     /*
      * Split sample input on whitespace or commas. This treats multiple commas as a single comma.
