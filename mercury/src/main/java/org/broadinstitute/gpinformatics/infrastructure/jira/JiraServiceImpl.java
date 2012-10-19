@@ -209,7 +209,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     @Override
     public Map<String, CustomFieldDefinition> getCustomFields ( ) throws IOException {
-        String urlString = getBaseUrl() + "/issue/field";
+        String urlString = getBaseUrl() + "/field";
 
         String jsonResponse =
                 getJerseyClient ( ).resource ( urlString ).get ( String.class );

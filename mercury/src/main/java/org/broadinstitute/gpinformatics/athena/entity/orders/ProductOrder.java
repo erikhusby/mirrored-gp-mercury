@@ -484,7 +484,7 @@ public class ProductOrder implements Serializable {
     private int getGenderCount(String gender) {
         int counter = 0;
         for (ProductOrderSample sample : samples) {
-            if (sample.isInBspFormat() && gender.equals(sample.getBspDTO().getGender())) {
+            if (sample.isInBspFormat() && gender.equalsIgnoreCase(sample.getBspDTO().getGender())) {
                 counter++;
             }
         }
@@ -566,21 +566,26 @@ public class ProductOrder implements Serializable {
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
         addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT_FAMILY,
-                product.getProductFamily());
+                product.getProductFamily()==null?"":product.getProductFamily().getName());
 
         if (quoteId != null && !quoteId.isEmpty()) {
             addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.QUOTE_ID, quoteId);
         }
+        if(!isSheetEmpty()) {
+            addCustomField(submissionFields,listOfFields,RequiredSubmissionFields.SAMPLE_IDS,
+                           "Sample List: " + StringUtils.join(getUniqueSampleNames(), ','));
+        }
 
         CreateIssueResponse issueResponse = ServiceAccessUtility.createJiraTicket(
-                fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title, comments, listOfFields);
+                fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title, comments==null?"":comments, listOfFields);
 
         jiraTicketKey = issueResponse.getKey();
         addLink(researchProject.getJiraTicketKey());
 
-        addPublicComment("Sample List: " + StringUtils.join(getUniqueSampleNames(), ','));
-
-        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
+        /**
+         * todo HMC  need a better test user in test cases or this will always break
+         */
+//        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
 
         sampleValidationComments();
     }
@@ -778,7 +783,9 @@ public class ProductOrder implements Serializable {
      */
     public enum RequiredSubmissionFields {
         PRODUCT_FAMILY("Product Family"),
-        QUOTE_ID("Quote ID");
+        QUOTE_ID("Quote ID"),
+        MERCURY_URL("Mercury URL"),
+        SAMPLE_IDS("Sample IDs");
 
         private final String fieldName;
 

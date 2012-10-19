@@ -23,11 +23,13 @@ public class JiraCustomFieldsUtil {
             new String[] {PROTOCOL, WORK_REQUEST_IDS, GSSR_IDS,
                           ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName(),
                           ProductOrder.RequiredSubmissionFields.QUOTE_ID.getFieldName(),
-                          ResearchProject.RequiredSubmissionFields.Funding_Source.getFieldName(),
-                          ResearchProject.RequiredSubmissionFields.IRB_Engaged.getFieldName(),
-                          ResearchProject.RequiredSubmissionFields.IRB_IACUC_Number.getFieldName(),
-                          ResearchProject.RequiredSubmissionFields.Cohorts.getFieldName(),
-                          ResearchProject.RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()};
+                          ResearchProject.RequiredSubmissionFields.FUNDING_SOURCE.getFieldName(),
+                          ResearchProject.RequiredSubmissionFields.IRB_ENGAGED.getFieldName(),
+                          ResearchProject.RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName(),
+                          ResearchProject.RequiredSubmissionFields.COHORTS.getFieldName()
+//                    ,
+//                          ResearchProject.RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()
+            };
 
     /**
      * Returns a map of Field name (from {@link #REQUIRED_FIELD_NAMES}) to actual field definition {@link CustomFieldDefinition}.
