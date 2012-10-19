@@ -161,7 +161,7 @@ public class ProductOrderForm extends AbstractJsfBean {
      * Load local state before bringing up the UI.
      */
     public void load() {
-        productOrderDetail.load();
+        //productOrderDetail.load();
     }
 
     public void loadFundsRemaining() {

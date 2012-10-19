@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRes
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
 import org.hibernate.envers.Audited;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -195,7 +194,7 @@ public class ProductOrder implements Serializable {
      * @param jiraTicketKeyIn a {@link String} that represents the unique key to the Jira Ticket to which the current
      *                        Product Order is associated
      */
-    public void setJiraTicketKey(@NotNull String jiraTicketKeyIn) {
+    public void setJiraTicketKey(@Nonnull String jiraTicketKeyIn) {
         if (jiraTicketKeyIn == null) {
             throw new NullPointerException("Jira Ticket Key cannot be null");
         }

@@ -35,6 +35,7 @@ public class ProductOrderBean {
         if (allProductOrders == null) {
             allProductOrders = productOrderDao.findAll();
         }
+
         return allProductOrders;
     }
 

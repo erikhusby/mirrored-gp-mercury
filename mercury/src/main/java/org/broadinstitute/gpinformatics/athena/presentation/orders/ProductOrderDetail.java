@@ -43,12 +43,6 @@ public class ProductOrderDetail extends AbstractJsfBean {
         }
     }
 
-    public void load() {
-        if ((productOrder == null) && !StringUtils.isBlank(productOrderKey)) {
-            productOrder = productOrderDao.findByBusinessKey(productOrderKey);
-        }
-    }
-
     public String getProductOrderKey() {
         return productOrderKey;
     }

@@ -134,10 +134,10 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <h:link outcome="list" value="Cancel"/>
+                                <p:commandButton value="Save" action="#{researchProjectForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{researchProjectForm.save}" ajax="false" styleClass="ui-priority-primary"/>
+                                <h:link outcome="list" value="Cancel"/>
                             </div>
                         </div>
                     </div>
