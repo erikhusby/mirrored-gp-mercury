@@ -134,7 +134,10 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <h:link outcome="list" value="Cancel"/>
+                                <h:link outcome="list" value="Cancel" rendered="#{researchProjectDetail.project.researchProjectId == null}"/>
+                                <h:link outcome="view" value="Cancel" rendered="#{researchProjectDetail.project.researchProjectId != null}">
+                                    <f:param name="researchProject" value="#{researchProjectDetail.project.businessKey}"/>
+                                </h:link>
                             </div>
                             <div class="span1">
                                 <p:commandButton value="Save" action="#{researchProjectForm.save}" ajax="false" styleClass="ui-priority-primary"/>
