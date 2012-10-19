@@ -26,8 +26,8 @@ import java.util.List;
 @RequestScoped
 public class ProductsBean extends AbstractJsfBean implements Serializable {
 
-    @Inject
-    private DataTableFilteredValuesBean filteredValuesBean;
+//    @Inject
+//    private DataTableFilteredValuesBean filteredValuesBean;
 
     @Inject
     private ProductDao productDao;
@@ -46,9 +46,9 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
      * Hook the JSF preRenderView event to explicitly initiate a long-running conversation in the conversation scoped
      * {@link DataTableFilteredValuesBean}
      */
-    public void onPreRenderView() {
-        filteredValuesBean.beginConversation();
-    }
+//    public void onPreRenderView() {
+//        filteredValuesBean.beginConversation();
+//    }
 
 
     public ProductsDataModel getProductsDataModel() {
@@ -184,13 +184,13 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
         this.selectedProduct = selectedProduct;
     }
 
-    public List<Product> getFilteredProducts() {
-        return filteredValuesBean.getFilteredValues();
-    }
+//    public List<Product> getFilteredProducts() {
+//        return filteredValuesBean.getFilteredValues();
+//    }
 
-    public void setFilteredProducts(List<Product> filteredProducts) {
-        filteredValuesBean.setFilteredValues(filteredProducts);
-    }
+//    public void setFilteredProducts(List<Product> filteredProducts) {
+//        filteredValuesBean.setFilteredValues(filteredProducts);
+//    }
 
     public List<Product> getSelectedProductAddOns() {
         return selectedProductAddOns;

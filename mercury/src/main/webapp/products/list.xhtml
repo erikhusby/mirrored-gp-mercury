@@ -13,9 +13,6 @@
 </h:head>
 <h:body>
 <ui:composition template="/layout.xhtml">
-    <ui:define name="metadata">
-        <f:event type="preRenderView" listener="#{productsBean.onPreRenderView}" />
-    </ui:define>
 
     <ui:define name="title">Products</ui:define>
     <ui:define name="body">
@@ -33,7 +30,6 @@
                          scrollable="true"
                          scrollHeight="200"
                          resizableColumns="true"
-                         filteredValue="#{productsBean.filteredProducts}"
                          emptyMessage="No products found containing search text"
                          selection="#{productsBean.selectedProduct}"
                          selectionMode="single">
@@ -56,15 +52,15 @@
 
                      http://code.google.com/p/primefaces/issues/detail?id=4671&can=1
                       -->
-                <f:facet name="header">
-                        <p:outputPanel styleClass="pull-right">
-                            <h:outputText value=" Search "/>
-                            <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
-                        </p:outputPanel>
-                </f:facet>
+                <!--<f:facet name="header">-->
+                        <!--<p:outputPanel styleClass="pull-right">-->
+                            <!--<h:outputText value=" Search "/>-->
+                            <!--<p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>-->
+                        <!--</p:outputPanel>-->
+                <!--</f:facet>-->
 
-                <p:column sortBy="#{product.partNumber}" sortFunction="#{productsBean.compare}"
-                          filterBy="#{product.partNumber}" filterStyleClass="hide" width="250">
+                <p:column sortBy="#{product.partNumber}" sortFunction="#{productsBean.compare}" width="250">
+                          <!--filterBy="#{product.partNumber}" filterStyleClass="hide">-->
                     <f:facet name="header">
                         <h:outputText value="Part Number" />
                     </f:facet>
@@ -72,16 +68,16 @@
                     <h:outputText value="#{product.partNumber}" />
                 </p:column>
 
-                <p:column sortBy="#{product.productName}" sortFunction="#{productsBean.compare}"
-                          filterBy="#{product.productName}" filterStyleClass="hide" width="200">
+                <p:column sortBy="#{product.productName}" sortFunction="#{productsBean.compare}" width="200">
+                          <!--filterBy="#{product.productName}" filterStyleClass="hide">-->
                     <f:facet name="header">
                         <h:outputText value="Name" />
                     </f:facet>
                     <h:outputText value="#{product.productName}" />
                 </p:column>
 
-                <p:column sortBy="#{product.productFamily.displayName}" sortFunction="#{productsBean.compare}"
-                          filterBy="#{product.productFamily.displayName}" filterStyleClass="hide" width="250">
+                <p:column sortBy="#{product.productFamily.displayName}" sortFunction="#{productsBean.compare}" width="250">
+                          <!--filterBy="#{product.productFamily.displayName}" filterStyleClass="hide">-->
                     <f:facet name="header">
                         <h:outputText value="Product Family" />
                     </f:facet>
