@@ -40,7 +40,7 @@
                 <div class="control-group">
                     <p:outputLabel for="synopsis" value="Synopsis" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="50" rows="3" required="true"/>
+                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="100" maxlength="4000" rows="5" required="true"/>
                         <p:watermark for="synopsis" value="Enter scientific background of the research project in this space"/>
                         <p:message for="synopsis"/>
                     </div>
