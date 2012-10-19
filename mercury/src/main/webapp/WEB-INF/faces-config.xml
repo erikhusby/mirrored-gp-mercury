@@ -11,4 +11,9 @@
             <var>msg</var>
         </resource-bundle>
     </application>
+
+    <factory>
+        <exception-handler-factory>org.primefaces.extensions.component.ajaxerrorhandler.AjaxExceptionHandlerFactory</exception-handler-factory>
+    </factory>
+
 </faces-config>
