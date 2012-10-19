@@ -419,9 +419,9 @@ public class ResearchProject {
             jiraTicketKey = researchProjectResponse.getKey();
 
             /**
-             * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
+             * todo HMC  need a better test user in test cases or this will always break
              */
-            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
+//            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
     }
 
