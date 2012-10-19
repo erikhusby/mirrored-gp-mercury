@@ -22,6 +22,7 @@ git tag -l
 git checkout master
 git merge QA_PROD -m "REL-000 Update pom.xml with new version"
 git branch -d QA_PROD
+git push origin :QA_PROD
 git fetch origin +master
-git push origin master
+#git push origin master
 
