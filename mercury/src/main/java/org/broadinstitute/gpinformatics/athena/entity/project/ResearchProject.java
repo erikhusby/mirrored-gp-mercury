@@ -404,7 +404,13 @@ public class ResearchProject {
                                                  StringUtils.join(irbNums,',')));
             }
             listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
-                                             BooleanUtils.toStringYesNo(irbNotEngaged) ));
+                                             irbNotEngaged?"Yes":"No" ));
+
+            /**
+             * TODO To be filled in with the actual URL
+             */
+            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                                             ""));
 
             CreateIssueResponse researchProjectResponse =
                     ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),

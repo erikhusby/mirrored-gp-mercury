@@ -25,7 +25,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test (groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderContainerTest extends ContainerTest {
 
-    private static final Long TEST_CREATOR = 10L;
+    private static final Long TEST_CREATOR = 13715L;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -70,7 +70,7 @@ public class ProductOrderContainerTest extends ContainerTest {
 
         testOrder.submitProductOrder();
 
-        testOrder.closeProductOrder();
+//        testOrder.closeProductOrder();
 
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
 
@@ -91,12 +91,12 @@ public class ProductOrderContainerTest extends ContainerTest {
         Assert.assertEquals ( 0 , testOrder.getDuplicateCount());
         Assert.assertEquals ( 0 , testOrder.getBspSampleCount ( ));
 
-        try {
-            testOrder.getUniqueParticipantCount();
-            Assert.fail();
-        } catch (IllegalStateException ise) {
-
-        }
+//        try {
+//            testOrder.getUniqueParticipantCount();
+//            Assert.fail();
+//        } catch (IllegalStateException ise) {
+//
+//        }
 
 
     }
@@ -104,7 +104,7 @@ public class ProductOrderContainerTest extends ContainerTest {
     public static ResearchProject createDummyResearchProject ( String researchProjectTitle ) {
         ResearchProject dummyProject = new ResearchProject (1L, researchProjectTitle,"Simple test object for unit tests", true);
 
-        dummyProject.setJiraTicketKey("RP-123");
+        dummyProject.setJiraTicketKey("RP-1");
 
         return dummyProject ;
     }
