@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -10,6 +11,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Date;
+import java.util.List;
 
 @Named
 @RequestScoped
@@ -17,6 +19,9 @@ public class ProductDetail extends AbstractJsfBean {
 
     @Inject
     private ProductDao productDao;
+
+    @Inject
+    private ProductFamilyDao productFamilyDao;
 
     private Product product;
     private String productName;
@@ -49,6 +54,11 @@ public class ProductDetail extends AbstractJsfBean {
             product = productDao.findByPartNumber(partNumber);
         }
     }
+
+    public List<ProductFamily> getProductFamilies() {
+           return productFamilyDao.findAll();
+    }
+
 
     public Product getProduct() {
         return product;
