@@ -172,7 +172,7 @@ public class ExomeExpressEndToEndTest {
             // grab the jira custom field definitions
             final Map<String, CustomFieldDefinition> requiredFieldsMap = JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraService);
             Assert.assertFalse(requiredFieldsMap.isEmpty());
-            Assert.assertEquals(requiredFieldsMap.size(), 10);
+            Assert.assertEquals(requiredFieldsMap.size(), 9);
 
 
             final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!");

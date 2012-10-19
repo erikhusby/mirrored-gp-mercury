@@ -82,9 +82,9 @@ public class CustomFieldJsonParser {
             String fieldName = (String)field.get(NAME);
             Boolean required = false;  //Leaving false for now until can better come up with a solution.
 
-            if (((String)field.get(CUSTOM_FIELD_INDICATOR)).equals(String.valueOf(true).toLowerCase())) {
+//            if ((Boolean)field.get(CUSTOM_FIELD_INDICATOR)) {
                 customFields.put(fieldName, new CustomFieldDefinition(fieldId,fieldName,required));
-            }
+//            }
 
             /*
             This needs a good way to account for different types (String, textfield, multi-select, etc.)
