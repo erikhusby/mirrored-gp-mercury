@@ -43,12 +43,10 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     // Cached state, visible but not editable.
 
-    /** Processed list of sample names */
-    private List<String> sampleIds = new ArrayList<String>();
-
     private String sampleStatus;
 
-    public static final String SEPARATOR = ",";
+    private static final String SEPARATOR = ",";
+
     /*
      * Split sample input on whitespace or commas. This treats multiple commas as a single comma.
      */
