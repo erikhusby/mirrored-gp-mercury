@@ -2,19 +2,14 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.DataTableFilteredValuesBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-import org.primefaces.event.SelectEvent;
-import org.primefaces.event.UnselectEvent;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,33 +17,25 @@ import java.util.List;
 /**
  * Backing bean for Products list/view and CRUD pages
  */
-@Named
+@Named("productList")
 @RequestScoped
-public class ProductsBean extends AbstractJsfBean implements Serializable {
+public class ProductListBean extends AbstractJsfBean implements Serializable {
 
-//    @Inject
-//    private DataTableFilteredValuesBean filteredValuesBean;
+    @Inject
+    private DataTableFilteredValuesBean filteredValuesBean;
 
     @Inject
     private ProductDao productDao;
 
-    private Product selectedProduct;
-
     private ProductsDataModel productsDataModel;
-
-    private List<Product> selectedProductAddOns;
-
-    private List<PriceItem> selectedProductPriceItems;
-
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
 
     /**
      * Hook the JSF preRenderView event to explicitly initiate a long-running conversation in the conversation scoped
      * {@link DataTableFilteredValuesBean}
      */
-//    public void onPreRenderView() {
-//        filteredValuesBean.beginConversation();
-//    }
+    public void onPreRenderView() {
+        filteredValuesBean.beginConversation();
+    }
 
 
     public ProductsDataModel getProductsDataModel() {
@@ -69,23 +56,6 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
     }
 
 
-    /**
-     * Row selection handler
-     */
-    public void onRowSelect(SelectEvent event) {
-        selectedProduct = (Product) event.getObject();
-        selectedProductAddOns = new ArrayList<Product>(selectedProduct.getAddOns());
-        selectedProductPriceItems = new ArrayList<PriceItem>(selectedProduct.getPriceItems());
-    }
-
-
-    /**
-     * Row deselection handler
-     */
-    public void onRowUnselect(UnselectEvent ignored) {
-        selectedProduct = null;
-    }
-
 
     /**
      * Generic comparison method for column sorts.  Assumes passed in parameters implement {@link Comparable}
@@ -101,6 +71,16 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
             return 1;
 
         return ((Comparable) o1).compareTo(o2);
+    }
+
+
+    public List<Product> getFilteredValues() {
+        return filteredValuesBean.getFilteredValues();
+    }
+
+
+    public void setFilteredValues(List<Product> filteredValues) {
+        filteredValuesBean.setFilteredValues(filteredValues);
     }
 
     /**
@@ -131,72 +111,4 @@ public class ProductsBean extends AbstractJsfBean implements Serializable {
     }
 
 
-    public Product getSelectedProduct() {
-        return selectedProduct;
-    }
-
-
-    /**
-     * Handle nulls and date formatting
-     *
-     * @return
-     */
-    public String getSelectedProductAvailabilityDate() {
-        if (selectedProduct == null || selectedProduct.getAvailabilityDate() == null) {
-            return "";
-        }
-
-        return DATE_FORMAT.format(selectedProduct.getAvailabilityDate());
-    }
-
-    /**
-     * Handle nulls and date formatting
-     *
-     * @return
-     */
-    public String getSelectedProductDiscontinuedDate() {
-        if (selectedProduct == null || selectedProduct.getDiscontinuedDate() == null) {
-            return "";
-        }
-
-        return DATE_FORMAT.format(selectedProduct.getDiscontinuedDate());
-    }
-
-
-    public boolean isPriceItemDefaultForSelected(PriceItem priceItem) {
-        if (selectedProduct == null) {
-            return false;
-        }
-
-        if (selectedProduct.getDefaultPriceItem() == null && priceItem == null) {
-            return true;
-        }
-
-        if (selectedProduct.getDefaultPriceItem() == null || priceItem == null) {
-            return false;
-        }
-
-        return (selectedProduct.getDefaultPriceItem().equals(priceItem));
-
-    }
-
-    public void setSelectedProduct(Product selectedProduct) {
-        this.selectedProduct = selectedProduct;
-    }
-
-//    public List<Product> getFilteredProducts() {
-//        return filteredValuesBean.getFilteredValues();
-//    }
-
-//    public void setFilteredProducts(List<Product> filteredProducts) {
-//        filteredValuesBean.setFilteredValues(filteredProducts);
-//    }
-
-    public List<Product> getSelectedProductAddOns() {
-        return selectedProductAddOns;
-    }
-
-    public List<PriceItem> getSelectedProductPriceItems() {
-        return selectedProductPriceItems;
-    }
 }
