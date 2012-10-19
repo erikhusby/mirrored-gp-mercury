@@ -313,12 +313,13 @@ public class ResearchProject {
     }
 
     public void setProjectManagers(Long[] personIds) {
-        Set<Long> ids = new HashSet<Long>(Arrays.asList(personIds));
+        Set<Long> currentIds = new HashSet<Long>(Arrays.asList(getPeople(RoleType.PM)));
+        Set<Long> newIds = new HashSet<Long>(Arrays.asList(personIds));
 
         Set<ProjectPerson> peopleToRemove = new HashSet<ProjectPerson>();
         for (ProjectPerson person : associatedPeople) {
             if (person.getRole().equals(RoleType.PM)) {
-                if (!ids.contains(person.getPersonId())) {
+                if (!newIds.contains(person.getPersonId())) {
                     peopleToRemove.add(person);
                 }
             }
@@ -326,7 +327,16 @@ public class ResearchProject {
 
         Set<ProjectPerson> peopleToAdd = new HashSet<ProjectPerson>();
         for (Long personId : personIds) {
+            if (!currentIds.contains(personId)) {
+                peopleToAdd.add(new ProjectPerson(this, RoleType.PM, personId));
+            }
+        }
 
+        for (ProjectPerson person : peopleToRemove) {
+            associatedPeople.remove(person);
+        }
+        for (ProjectPerson person : peopleToAdd) {
+            associatedPeople.add(person);
         }
     }
 

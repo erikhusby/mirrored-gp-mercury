@@ -155,7 +155,13 @@ public class ResearchProjectForm extends AbstractJsfBean {
     public String edit() {
         // TODO: try to do away with merge
         // TODO: manage changes in personnel
-        researchProjectDao.getEntityManager().merge(detail.getProject());
+        List<Long> projectManagerIds = new ArrayList<Long>();
+        for (BspUser projectManager : projectManagers) {
+            projectManagerIds.add(projectManager.getUserId());
+        }
+        ResearchProject project = detail.getProject();
+        project.setProjectManagers(projectManagerIds.toArray(new Long[projectManagerIds.size()]));
+        researchProjectDao.getEntityManager().merge(project);
         return redirect("list");
     }
 
