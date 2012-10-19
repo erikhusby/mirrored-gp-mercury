@@ -15,10 +15,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -40,6 +37,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     // Add state that can be edited here.
 
     /** Raw text of sample list to be edited. */
+    // FIXME: use null to indicate no change, vs removing all samples on PDO.
     @Nonnull
     private String sampleIDsText = "";
 
@@ -50,7 +48,7 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     private String sampleStatus;
 
-    private Quote quote;
+    private static final String SEPARATOR = ",";
 
     public static final String SEPARATOR = ",";
     /*
@@ -60,6 +58,9 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     @Nonnull
     public String getSampleIDsText() {
+        if (sampleIDsText.isEmpty()) {
+            dialogPrepareToShow();
+        }
         return sampleIDsText;
     }
 
@@ -76,13 +77,20 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     public String getFundsRemaining() {
-        if (quote != null) {
-            String fundsRemainingString = quote.getQuoteFunding().getFundsRemaining();
+        String quoteId = productOrderDetail.getProductOrder().getQuoteId();
+        if (!StringUtils.isBlank(quoteId)) {
             try {
-                double fundsRemaining = Double.parseDouble(fundsRemainingString);
-                return NumberFormat.getCurrencyInstance().format(fundsRemaining);
-            } catch (NumberFormatException e) {
-                return fundsRemainingString;
+                Quote quote = quoteService.getQuoteFromQuoteServer(quoteId);
+                String fundsRemainingString = quote.getQuoteFunding().getFundsRemaining();
+                try {
+                    double fundsRemaining = Double.parseDouble(fundsRemainingString);
+                    return NumberFormat.getCurrencyInstance().format(fundsRemaining);
+                } catch (NumberFormatException e) {
+                    return fundsRemainingString;
+                }
+            } catch (Exception e) {
+                String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", quoteId);
+                addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
             }
         }
         return "";
@@ -91,88 +99,84 @@ public class ProductOrderForm extends AbstractJsfBean {
     /**
      * Prepare to show sample edit dialog by converting current list of samples to a single string.
      */
-    private void dialogPrepareContents() {
-        if (productOrderDetail != null && productOrderDetail.getProductOrder() != null) {
-            StringBuilder sb = new StringBuilder();
-            String separator = "";
-            List<ProductOrderSample> samples = productOrderDetail.getProductOrder().getSamples();
-            for (ProductOrderSample sample : samples) {
-                sb.append(separator).append(sample.getSampleName());
-                separator = SEPARATOR + " ";
-            }
-            sampleIDsText = sb.toString();
+    private List<String> dialogConvertOrderSamplesToList() {
+        if (productOrderDetail == null || productOrderDetail.getProductOrder() == null) {
+            return Collections.emptyList();
         }
+        List<ProductOrderSample> samples = productOrderDetail.getProductOrder().getSamples();
+        List<String> sampleIds = new ArrayList<String>(samples.size());
+        for (ProductOrderSample sample : samples) {
+            sampleIds.add(sample.getSampleName());
+        }
+        return sampleIds;
     }
 
     /**
      * Update sample edit dialog's status using the dialog's current text.
      */
-    private void dialogUpdateStatus() {
+    private void dialogUpdateStatus(List<String> sampleIds) {
         Set<String> sampleSet = new HashSet<String>(sampleIds);
         sampleStatus = MessageFormat.format(
                 "{0} Sample{0, choice, 0#s|1#|1<s}, {1} Duplicate{1, choice, 0#s|1#|1<s}",
                 sampleIds.size(), sampleIds.size() - sampleSet.size());
     }
 
-    public void dialogSampleIdsChanged() {
-        dialogProcessText();
-        // Do this every time?
+    private void dialogUpdateSampleText(List<String> sampleIds) {
         sampleIDsText = StringUtils.join(sampleIds, SEPARATOR + " ");
-        dialogUpdateStatus();
+        dialogUpdateStatus(sampleIds);
+    }
+
+    public void dialogSampleTextChanged() {
+        dialogUpdateSampleText(dialogConvertTextToList());
     }
 
     /**
      * Process the text in the dialog and convert to a list of sample names.
      */
-    private void dialogProcessText() {
+    private List<String> dialogConvertTextToList() {
         String[] samples =  SPLIT_PATTERN.split(sampleIDsText, 0);
         if (samples.length == 1 && samples[0].isEmpty()) {
             // Handle empty string case.
             samples = new String[0];
         }
-        sampleIds.clear();
+        List<String> sampleIds = new ArrayList<String>(samples.length);
         for (String sample : samples) {
             if (!StringUtils.isBlank(sample)) {
                 // FIXME: should only uppercase BSP IDs?
                 sampleIds.add(sample.trim().toUpperCase());
             }
         }
+        return sampleIds;
+    }
+
+    public void dialogCancel() {
+        sampleIDsText = "";
     }
 
     /**
      * Commit the sample dialog.  Convert the dialog's sample names into a list of sample objects, and
      * replace the sample objects in the current product order with the new list.
      */
-    public void dialogCommit() {
-        dialogProcessText();
+    public List<ProductOrderSample> dialogConvertTextToOrderSamples() {
+        List<String> sampleIds = dialogConvertTextToList();
         List<ProductOrderSample> orderSamples = new ArrayList<ProductOrderSample>(sampleIds.size());
         for (String sampleId : sampleIds) {
             orderSamples.add(new ProductOrderSample(sampleId));
         }
-        productOrderDetail.getProductOrder().setSamples(orderSamples);
+        return orderSamples;
     }
 
     public void dialogPrepareToShow() {
-        dialogPrepareContents();
-        dialogUpdateStatus();
+        dialogUpdateSampleText(dialogConvertOrderSamplesToList());
     }
 
     /**
      * Load local state before bringing up the UI.
      */
     public void load() {
-        //productOrderDetail.load();
-    }
-
-    public void loadFundsRemaining() {
-        String quoteId = productOrderDetail.getProductOrder().getQuoteId();
-        if (quoteId != null) {
-            try {
-                quote = quoteService.getQuoteFromQuoteServer(quoteId);
-            } catch (Exception e) {
-                String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", quoteId);
-                addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
-            }
+        // If present, copy sample ID list into Product Order object.
+        if (!StringUtils.isBlank(sampleIDsText)) {
+            productOrderDetail.getProductOrder().setSamples(dialogConvertTextToOrderSamples());
         }
     }
 

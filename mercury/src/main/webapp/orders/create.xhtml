@@ -14,10 +14,9 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="researchProjectKey" value="#{productOrderDetail.researchProjectKey}" />
-                <f:event type="preValidate" listener="#{productOrderDetail.initEmpty}"/>
-                <f:event type="preRenderView" listener="#{productOrderForm.load}" />
+                <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
             </f:metadata>
+            <f:event type="preRenderView" listener="#{productOrderForm.load}" />
         </ui:define>
 
         <ui:define name="body">
@@ -25,7 +24,7 @@
                 <h:form id="sampleDialogForm" prependId="false">
                     <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.sampleIDsText}" cols="80" rows="20">
                         <p:ajax update="samplesDialogStatus,samplesDialogInput"
-                                listener="#{productOrderForm.dialogSampleIdsChanged}"/>
+                                listener="#{productOrderForm.dialogSampleTextChanged}"/>
                     </p:inputTextarea>
                     <br/>
                     <h:outputText id="samplesDialogStatus" value="#{productOrderForm.sampleStatus}"/>
@@ -33,11 +32,11 @@
                         <div class="controls">
                             <div class="row-fluid">
                                 <div class="span1">
-                                    <p:commandButton value="Cancel" onclick="samplesDialog.hide()"/>
+                                    <p:commandButton value="Cancel" onclick="samplesDialog.hide()"
+                                                     actionListener="#{productOrderForm.dialogCancel}"/>
                                 </div>
                                 <div class="span1">
-                                    <p:commandButton value="OK" onclick="samplesDialog.hide()"
-                                                     actionListener="#{productOrderForm.dialogCommit}"
+                                    <p:commandButton update=":form:sampleTable" value="OK" onclick="samplesDialog.hide()"
                                                      styleClass="ui-priority-primary"/>
                                 </div>
                             </div>
@@ -95,7 +94,7 @@
                     <p:outputLabel for="quote" value="Quote" styleClass="control-label"/>
                     <div class="controls">
                         <p:inputText id="quote" value="#{productOrderDetail.productOrder.quoteId}" size="50" required="true">
-                            <p:ajax update="fundsRemaining" listener="#{productOrderForm.loadFundsRemaining}"/>
+                            <p:ajax update="fundsRemaining"/>
                         </p:inputText>
                         <p:watermark for="quote" value="Enter Quote ID"/>
                         <p:message for="quote"/>
@@ -115,9 +114,8 @@
                 <div class="control-group">
                     <h:outputText value="Samples" styleClass="control-label"/>
                     <div class="controls">
-                        <p:commandButton value="Edit Sample List..." onclick="samplesDialog.show()">
-                            <p:ajax listener="#{productOrderForm.dialogPrepareToShow}"/>
-                        </p:commandButton>
+                        <p:commandButton immediate="true" update=":sampleDialogForm"
+                                         value="Edit Sample List..." onclick="samplesDialog.show()"/>
                     </div>
                 </div>
 
@@ -145,12 +143,12 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productOrderForm.save}" ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Save" action="#{productOrderForm.save}"
+                                                 ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">
                                 <h:link outcome="list" value="Cancel"/>
-                            </div>
-
+                            </div>                            
                         </div>
                     </div>
                 </div>
