@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -24,13 +23,11 @@ import org.hibernate.envers.NotAudited;
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -40,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,7 +49,7 @@ import java.util.logging.Logger;
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
 @BatchSize(size = 50)
-public abstract class LabVessel implements Starter {
+public abstract class LabVessel {
 
     private final static Logger logger = Logger.getLogger(LabVessel.class.getName());
 
@@ -71,10 +69,6 @@ public abstract class LabVessel implements Starter {
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "mercury")
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private LabVessel readBucketAuthority;
-
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
@@ -103,7 +97,6 @@ public abstract class LabVessel implements Starter {
     @OneToMany // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
-
 
     @Embedded
     private UserRemarks userRemarks;
@@ -364,7 +357,20 @@ public abstract class LabVessel implements Starter {
      * StateChange applied during lab work.
      * @return
      */
-    public abstract Set<SampleInstance> getSampleInstances();
+    public Set<SampleInstance> getSampleInstances() {
+        Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
+
+        if (isSampleAuthority()) {
+            for (MercurySample mercurySample : mercurySamples) {
+                sampleInstances.add(new SampleInstance(mercurySample, null, null, null));
+            }
+        } else {
+            for (VesselContainer<?> vesselContainer : this.getContainers()) {
+                sampleInstances.addAll(vesselContainer.getSampleInstancesAtPosition(vesselContainer.getPositionOfVessel(this)));
+            }
+        }
+        return sampleInstances;
+    }
 
     /**
      * I'm avoiding parent/child semantics
@@ -482,12 +488,7 @@ public abstract class LabVessel implements Starter {
     public abstract Float getConcentration();
 
     public boolean isSampleAuthority() {
-        return false;
-    }
-
-    @Override
-    public boolean isAliquotExpected() {
-        return false;
+        return !mercurySamples.isEmpty();
     }
 
     /**
@@ -530,25 +531,13 @@ public abstract class LabVessel implements Starter {
         return isSingleSample;
     }
 
-    @Override
     public void addLabBatch(LabBatch labBatch) {
         labBatches.add(labBatch);
     }
 
-    @Override
     public Set<LabBatch> getLabBatches() {
         return labBatches;
     }
-
-    /**
-     * Does this container know what it's sample metadata is?
-     * Or does it need to look back in the event graph?
-     * @return
-     */
-    public boolean hasSampleMetadata() {
-        throw new RuntimeException("not implemented");
-    }
-
 
     /**
      * Walk the chain of custody back until it can be

@@ -10,10 +10,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
@@ -80,7 +79,8 @@ public class BettalimsMessageResourceTest extends ContainerTest {
             String barcode = "R" + testPrefix + rackPosition;
 
             String bspStock = "SM-" +  testPrefix + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", /*projectPlan, */null));
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(null, bspStock));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
             twoDBarcodedTubeDAO.persist(bspAliquot);

@@ -262,7 +262,7 @@ public class LabEventHandler {
     private void updateSampleStatus(LabEvent event) {
         for (LabVessel target: event.getTargetLabVessels()) {
             for (SampleInstance sampleInstance: target.getSampleInstances()) {
-                sampleInstance.getStartingSample().logNote(new StatusNote(event.getEventName()));
+//                sampleInstance.getStartingSample().logNote(new StatusNote(event.getEventName()));
             }
         }
     }

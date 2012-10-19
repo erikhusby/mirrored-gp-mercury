@@ -4,9 +4,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 /**
@@ -55,7 +54,7 @@ public class AliquotReceiver {
     }
 
     //TODO .. aliquot should be Starter rather than BSPSampleAuthorityTwoDTube
-    public BSPPlatingRequest receiveAliquot(StartingSample source,
+    public BSPPlatingRequest receiveAliquot(MercurySample source,
                                             LabVessel aliquot,
                                             BSPPlatingReceipt receipt) {
         BSPPlatingRequest platingRequest = resolveAliquotToPlatingRequest(source,aliquot,receipt);
@@ -84,10 +83,10 @@ public class AliquotReceiver {
     /**
      * At the moment we get one {@link BSPPlatingReceipt receipt} per batch
      * of aliquots.  In other words, we get a {@link BSPPlatingReceipt receipt} for
-     * each plate, not for each {@link Goop}.  Ideally this will
-     * change so we'll be able to map more reliably between an {@link BaseGoop} and
+     * each plate, not for each Goop.  Ideally this will
+     * change so we'll be able to map more reliably between an BaseGoop and
      * a {@link BSPPlatingRequest}, and thereby know more accurately
-     * what the {@link org.broadinstitute.gpinformatics.mercury.entity.project.Project} the {@link BaseGoop} is for.
+     * what the Project the BaseGoop is for.
      * 
      * In the meantime, we guess a bit with volumes and concentration.
      * @param aliquot
@@ -130,13 +129,14 @@ public class AliquotReceiver {
 
     /**
      *
+     *
      * @param source
      * @param aliquot
      * @param platingReceipt
      * @return
      */
-    private BSPPlatingRequest resolveAliquotToPlatingRequest(StartingSample source,
-                                                             Starter aliquot,
+    private BSPPlatingRequest resolveAliquotToPlatingRequest(MercurySample source,
+                                                             LabVessel aliquot,
                                                              BSPPlatingReceipt platingReceipt) {
         if (aliquot == null) {
             throw new IllegalArgumentException("aliquot must be non-null in AliquotReceiver.resolveAliquotToPlatingRequest");
@@ -149,7 +149,7 @@ public class AliquotReceiver {
         for (BSPPlatingRequest possibleRequest : platingReceipt.getPlatingRequests()) {
             if (!possibleRequest.isFulfilled()) {
                 String requestedSource = possibleRequest.getSampleName();
-                if (source.getLabel().equalsIgnoreCase(requestedSource)) {
+                if (source.getSampleKey().equalsIgnoreCase(requestedSource)) {
                     // one could argue that we should also do a "best match"
                     // across concentration and volume, but I don't think that
                     // matters here because we're not linking any LC or sequencing

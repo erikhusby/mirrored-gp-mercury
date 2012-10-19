@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
@@ -25,8 +24,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -121,7 +120,8 @@ public class LabEventTest {
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + rackPosition;
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", /*projectPlan, */null));
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(null, bspStock));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
         }
@@ -198,10 +198,9 @@ public class LabEventTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", /*projectPlan, */null));
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(null, bspStock));
             mapBarcodeToTube.put(barcode,bspAliquot);
-
-
         }
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
@@ -302,7 +301,8 @@ public class LabEventTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", /*projectPlan, */null));
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(null, bspStock));
             mapBarcodeToTube.put(barcode,bspAliquot);
         }
 
@@ -688,8 +688,8 @@ public class LabEventTest {
                     mapBarcodeToTube.size(), "Wrong number of sample instances");
             Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
-            Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(),
-                    mapBarcodeToTube.values().iterator().next().getSampleInstances().iterator().next().getStartingSample().getSampleName(), "Wrong sample");
+            Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleKey(),
+                    mapBarcodeToTube.values().iterator().next().getSampleInstances().iterator().next().getStartingSample().getSampleKey(), "Wrong sample");
 
             // ShearingQC
             validateWorkflow(workflowDescription, "ShearingQC", shearingCleanupPlate);
@@ -895,8 +895,8 @@ public class LabEventTest {
                     shearingPlate.getSampleInstances().size(), "Wrong number of sample instances");
             Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
-            Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(),
-                    shearingPlate.getSampleInstances().iterator().next().getStartingSample().getSampleName(), "Wrong sample");
+            Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleKey(),
+                    shearingPlate.getSampleInstances().iterator().next().getStartingSample().getSampleKey(), "Wrong sample");
             return this;
         }
     }
@@ -1170,8 +1170,8 @@ public class LabEventTest {
                     pondRegRack.getSampleInstances().size(), "Wrong number of sample instances");
             Set<String> sampleNames = new HashSet<String>();
             for (SampleInstance preSelPoolSampleInstance : preSelPoolSampleInstances) {
-                if(!sampleNames.add(preSelPoolSampleInstance.getStartingSample().getSampleName())) {
-                    Assert.fail("Duplicate sample " + preSelPoolSampleInstance.getStartingSample().getSampleName());
+                if(!sampleNames.add(preSelPoolSampleInstance.getStartingSample().getSampleKey())) {
+                    Assert.fail("Duplicate sample " + preSelPoolSampleInstance.getStartingSample().getSampleKey());
                 }
             }
             Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);

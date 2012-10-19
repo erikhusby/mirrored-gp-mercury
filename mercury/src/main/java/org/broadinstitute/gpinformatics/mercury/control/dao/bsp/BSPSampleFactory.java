@@ -4,10 +4,8 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BSPPlatingReceiptDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.AliquotReceiver;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -40,7 +38,7 @@ public class BSPSampleFactory {
     private static final Float WATER_CONTROL_CONCENTARTION = 0F;
 
     public List<LabVessel> receiveBSPAliquots(BSPPlatingReceipt bspReceipt,
-                                              Map<String, StartingSample> aliquotSourceMap,
+                                              Map<String, MercurySample> aliquotSourceMap,
                                               Map<String, BSPSampleDTO> bspControlSampleDataMap)
             throws Exception {
 
@@ -61,20 +59,20 @@ public class BSPSampleFactory {
             String sampleName = "SM-" + bareId;
 
             //get ProjectPlan from startingSample
-            StartingSample startingSample = aliquotSourceMap.get(sampleLSID);
+            MercurySample startingSample = aliquotSourceMap.get(sampleLSID);
             if (startingSample == null) {
                 throw new Exception("failed to lookup starting sample for sample : " + sampleLSID);
             }
 //            ProjectPlan projectPlan = startingSample.getRootProjectPlan();
 
-            StartingSample aliquot = new BSPStartingSample(sampleName/*, projectPlan*/);
-            LabVessel bspAliquot = new BSPSampleAuthorityTwoDTube(aliquot);
+//            StartingSample aliquot = new BSPStartingSample(sampleName/*, projectPlan*/);
+//            LabVessel bspAliquot = new BSPSampleAuthorityTwoDTube(aliquot);
 //            projectPlan.addAliquotForStarter(startingSample, bspAliquot);
 
-            bspAliquots.add(bspAliquot);
+//            bspAliquots.add(bspAliquot);
             AliquotReceiver aliquotReceiver = new AliquotReceiver();
 
-            aliquotReceiver.receiveAliquot(startingSample, bspAliquot, bspReceipt);
+//            aliquotReceiver.receiveAliquot(startingSample, bspAliquot, bspReceipt);
 
             //TODO .. need any LabEvent Message ????
         }
@@ -83,16 +81,16 @@ public class BSPSampleFactory {
             Iterator<String> controlSampleItr = bspControlSampleDataMap.keySet().iterator();
             while (controlSampleItr.hasNext()) {
                 String controlName = sampleItr.next();
-                StartingSample aliquot = new BSPStartingSample(controlName, null);//?? ProjectPlan
-                LabVessel bspAliquot = new BSPSampleAuthorityTwoDTube(aliquot);
-                bspAliquots.add(bspAliquot);
+//                StartingSample aliquot = new BSPStartingSample(controlName, null);//?? ProjectPlan
+//                LabVessel bspAliquot = new BSPSampleAuthorityTwoDTube(aliquot);
+//                bspAliquots.add(bspAliquot);
             }
         }
 
         return bspAliquots;
     }
 
-    public List<BSPPlatingRequest> buildBSPPlatingRequests(Map<StartingSample, AliquotParameters> starterMap)
+    public List<BSPPlatingRequest> buildBSPPlatingRequests(Map<MercurySample, AliquotParameters> starterMap)
             throws Exception {
 
         List<BSPPlatingRequest> bspPlatingRequests = new ArrayList<BSPPlatingRequest>();
@@ -101,11 +99,11 @@ public class BSPSampleFactory {
             throw new IllegalArgumentException("Null or empty Starter list ");
         }
 
-        Iterator<StartingSample> starterIterator = starterMap.keySet().iterator();
+        Iterator<MercurySample> starterIterator = starterMap.keySet().iterator();
         while (starterIterator.hasNext()) {
-            StartingSample starter = starterIterator.next();
+            MercurySample starter = starterIterator.next();
             AliquotParameters parameters = starterMap.get(starter);
-            platingRequest = new BSPPlatingRequest(starter.getSampleName(), parameters);
+            platingRequest = new BSPPlatingRequest(starter.getSampleKey(), parameters);
             bspPlatingRequests.add(platingRequest);
 
             //TODO .. check back ..addToProjectPlan ??
@@ -140,7 +138,6 @@ public class BSPSampleFactory {
 
     /**
      * @param positiveControlMap
-     * @param projectPlan
      * @param negControlCount
      * @param negControlVolume
      * @param posControlQuote

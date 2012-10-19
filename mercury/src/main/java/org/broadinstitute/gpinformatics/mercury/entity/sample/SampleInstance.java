@@ -97,7 +97,7 @@ public class SampleInstance  {
 
     private static Log gLog = LogFactory.getLog(SampleInstance.class);
 
-    private StartingSample sample;
+    private MercurySample sample;
 
     private GSP_CONTROL_ROLE controlRole;
 
@@ -107,7 +107,7 @@ public class SampleInstance  {
 
     private List<Reagent> reagents = new ArrayList<Reagent>();
 
-    public SampleInstance(StartingSample sample,
+    public SampleInstance(MercurySample sample,
             GSP_CONTROL_ROLE controlRole,
 //            ProjectPlan projectPlan,
             MolecularState molecularState,
@@ -139,7 +139,7 @@ public class SampleInstance  {
      * model, except that it would actually work)
      * @return
      */
-    public StartingSample getStartingSample() {
+    public MercurySample getStartingSample() {
         return sample;
     }
 
@@ -206,7 +206,7 @@ public class SampleInstance  {
     }
 
     /**
-     * This seems at odds with {@link org.broadinstitute.gpinformatics.mercury.entity.project.Project#getWorkflowDescription(SampleInstance)}.
+     * This seems at odds with Project#getWorkflowDescription(SampleInstance)}.
      * We already declared the expected {@link org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription} up at
      * the project, right?
      *

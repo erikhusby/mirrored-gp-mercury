@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.entity.bsp;
 
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.*;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -13,10 +13,10 @@ public class BSPSampleTest {
     public void test_patient_id_integration() {
         BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(new BSPSampleSearchServiceStub());
         String sampleName = "SM-12CO4";
-        BSPStartingSample bspSample = new BSPStartingSample(sampleName,
+        MercurySample bspSample = new MercurySample(null, sampleName,
 //                null,
                 fetcher.fetchSingleSampleFromBSP(sampleName));
-        String patientId = bspSample.getPatientId();
+        String patientId = bspSample.getBspSampleDTO().getPatientId();
 
         Assert.assertNotNull(patientId);
         Assert.assertEquals("PT-2LK3",patientId);

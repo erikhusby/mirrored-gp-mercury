@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bsp;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -37,7 +38,7 @@ public class DBFreeBSPSampleTest {
         ).andReturn(resultColumns).atLeastOnce();
 
         EasyMock.replay(service);
-        BSPStartingSample sample = new BSPStartingSample(sampleName,/*null,*/new BSPSampleDataFetcher(service).fetchSingleSampleFromBSP(sampleName));
-        Assert.assertEquals(resultColumns.iterator().next()[0], sample.getPatientId());
+        MercurySample sample = new MercurySample(null, sampleName,/*null,*/new BSPSampleDataFetcher(service).fetchSingleSampleFromBSP(sampleName));
+        Assert.assertEquals(resultColumns.iterator().next()[0], sample.getBspSampleDTO().getPatientId());
     }
 }

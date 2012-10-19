@@ -1,10 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -21,7 +18,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -41,10 +37,6 @@ public class LabBatch {
     private Long labBatchId;
 
     public static final String LCSET_PROJECT_PREFIX = "LCSET";
-
-    @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "mercury")
-    private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
@@ -92,7 +84,7 @@ public class LabBatch {
 
     public LabBatch(
             String batchName,
-            Set<Starter> starters) {
+            Set<LabVessel> starters) {
         if (batchName == null) {
             throw new NullPointerException("BatchName cannot be null");
         }
@@ -100,8 +92,8 @@ public class LabBatch {
             throw new NullPointerException("starters cannot be null");
         }
         this.batchName = batchName;
-        for (Starter starter : starters) {
-            addStarter(starter);
+        for (LabVessel starter : starters) {
+            addLabVessel(starter);
         }
     }
 
@@ -115,25 +107,16 @@ public class LabBatch {
 //        return projectPlan;
 //    }
 
-    public Set<Starter> getStarters() {
-        Set<Starter> starters = new HashSet<Starter>();
-        starters.addAll(startingSamples);
-        starters.addAll(startingLabVessels);
-        return Collections.unmodifiableSet(starters);
+    public Set<LabVessel> getStartingLabVessels() {
+        return startingLabVessels;
     }
 
-    public void addStarter(Starter starter) {
-        if (starter == null) {
+    public void addLabVessel(LabVessel labVessel) {
+        if (labVessel == null) {
             throw new NullPointerException("vessel cannot be null.");
         }
-        if(OrmUtil.proxySafeIsInstance(starter, StartingSample.class)) {
-            startingSamples.add(OrmUtil.proxySafeCast(starter, StartingSample.class));
-        } else if(OrmUtil.proxySafeIsInstance(starter, LabVessel.class)) {
-            startingLabVessels.add(OrmUtil.proxySafeCast(starter, LabVessel.class));
-        } else {
-            throw new RuntimeException("Unexpected subclass " + starter.getClass());
-        }
-        starter.addLabBatch(this);
+        startingLabVessels.add(labVessel);
+        labVessel.addLabBatch(this);
     }
 
     public boolean getActive() {

@@ -40,7 +40,7 @@ public class RegistrationJaxbConverter {
 
         for(SampleInstance currSample:tubeIn.getSampleInstances()) {
             final RegistrationSample sampleInstance = new RegistrationSample();
-            sampleInstance.setBspContextReference(currSample.getStartingSample().getSampleName());
+            sampleInstance.setBspContextReference(currSample.getStartingSample().getSampleKey());
             sampleInstance.setTechnology(SequencingTechnology.ILLUMINA);
 
             for(Reagent sampleReagent:currSample.getReagents()) {

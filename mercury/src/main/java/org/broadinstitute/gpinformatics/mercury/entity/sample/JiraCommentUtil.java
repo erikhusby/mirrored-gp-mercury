@@ -102,7 +102,7 @@ public class JiraCommentUtil {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
 //        final Map<Project,Collection<String>> samplesByProject = new HashMap<Project,Collection<String>>();
-        final Collection<StartingSample> allStarters = new HashSet<StartingSample>();
+        final Collection<MercurySample> allStarters = new HashSet<MercurySample>();
 
         for (LabVessel vessel : labVessels) {
             for (SampleInstance samInstance: vessel.getSampleInstances()) {

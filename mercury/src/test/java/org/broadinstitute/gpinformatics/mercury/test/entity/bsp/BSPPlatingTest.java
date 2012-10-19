@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingReq
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.quote.ApprovalStatus;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.FundingLevel;
@@ -17,13 +16,8 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory
 import org.broadinstitute.gpinformatics.mercury.entity.billing.Quote;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
-import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -32,7 +26,6 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -71,13 +64,13 @@ public class BSPPlatingTest extends ContainerTest {
                 new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI"))), ApprovalStatus.FUNDED));
 //        projectPlan.setQuote(billingQuote);
 
-        StartingSample startingSample = new BSPStartingSample(masterSample1/*, projectPlan*/);
+        MercurySample startingSample = new MercurySample(masterSample1, null, null/*, projectPlan*/);
 //        projectPlan.addStarter(startingSample);
 
-        StartingSample startingSample2 = new BSPStartingSample(masterSample2/*, projectPlan*/);
+        MercurySample startingSample2 = new MercurySample(masterSample2, null, null/*, projectPlan*/);
 //        projectPlan.addStarter(startingSample2);
 
-        Map<StartingSample, AliquotParameters> starterMap = new HashMap<StartingSample, AliquotParameters>();
+        Map<MercurySample, AliquotParameters> starterMap = new HashMap<MercurySample, AliquotParameters>();
 //        for (Starter starter : projectPlan.getStarters()) {
 //            starterMap.put((StartingSample) starter, new AliquotParameters(projectPlan, 1.9f, 1.6f));
 //        }
@@ -120,10 +113,10 @@ public class BSPPlatingTest extends ContainerTest {
                 new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI"))), ApprovalStatus.FUNDED));
 //        projectPlan.setQuote(billingQuote);
 
-        StartingSample startingSample = new BSPStartingSample(masterSample1/*, projectPlan*/);
+        MercurySample startingSample = new MercurySample(masterSample1, null, null/*, projectPlan*/);
 //        projectPlan.addStarter(startingSample);
 
-        StartingSample startingSample2 = new BSPStartingSample(masterSample2/*, projectPlan*/);
+        MercurySample startingSample2 = new MercurySample(masterSample2, null, null/*, projectPlan*/);
 //        projectPlan.addStarter(startingSample2);
 
 //        BSPPlatingReceipt bspReceipt = buildTestReceipt(projectPlan);
@@ -173,11 +166,11 @@ public class BSPPlatingTest extends ContainerTest {
 //        Assert.assertEquals(starters.size(), 2, "Project Plan should have 2 starters");
 //        Assert.assertEquals(starters.size(), bspReceipt.getPlatingRequests().size(), "Project Plan should have same starters as BSP Plating Receipt");
         //for now hardcode
-        Map<String, StartingSample> aliquotSourceMap = new HashMap<String, StartingSample>();
+        Map<String, MercurySample> aliquotSourceMap = new HashMap<String, MercurySample>();
         Collection<BSPPlatingRequest> bspPlatingRequests = bspReceipt.getPlatingRequests();
         String stockName = null;
         String aliquotLSID = null;
-        StartingSample bspStock = null;
+        MercurySample bspStock = null;
         for (BSPPlatingRequest bspRequest : bspPlatingRequests) {
             stockName = bspRequest.getSampleName();
             String[] stockNameChunks = stockName.split("-"); //assuming stockName is in format SM-99999
@@ -206,15 +199,15 @@ public class BSPPlatingTest extends ContainerTest {
         //now iterate through these aliquots, do some asserts and see if we can navigate back to requests.
         Assert.assertNotNull(bspAliquots);
 //        Assert.assertEquals(bspAliquots.size(), starters.size(), "BSP Aliquot size should match Staters size");
-        for (Starter aliquot : bspAliquots) {
+        for (LabVessel aliquot : bspAliquots) {
             Assert.assertTrue(aliquot.getLabel().contains("Aliquot"));
             //check the source stock sample of each aliquot
-            BSPSampleAuthorityTwoDTube bspAliquot = (BSPSampleAuthorityTwoDTube) aliquot;
+//            BSPSampleAuthorityTwoDTube bspAliquot = (BSPSampleAuthorityTwoDTube) aliquot;
 //            Project testProject = bspAliquot.getAllProjects().iterator().next();
             //Assert.assertEquals("BSPExportTestingProject", testProject.getProjectName());
 //            Assert.assertEquals(projectPlan.getProject().getProjectName(), testProject.getProjectName());
             //navigate from aliquot to ----> BSPStartingSample - !!
-            StartingSample stockAliquot = bspAliquot.getSampleInstances().iterator().next().getStartingSample();
+            MercurySample stockAliquot = aliquot.getSampleInstances().iterator().next().getStartingSample();
             Assert.assertNotNull(stockAliquot);
 //            ProjectPlan projPlan = stockAliquot.getRootProjectPlan();
 //            Assert.assertNotNull(projPlan);

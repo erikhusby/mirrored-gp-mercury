@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingResponse;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.project.*;
@@ -16,10 +15,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -35,7 +34,8 @@ public class EndToEndTest  {
         // name itself.  More often we'll expect to see pre-pooled "samples",
         // in which case the BSP stock id will actually have multiple
         // component collaborator samples.
-        BSPSampleAuthorityTwoDTube stockSample = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(sampleName, /*projectPlan,*/null));
+        TwoDBarcodedTube stockSample = new TwoDBarcodedTube(tubeBarcode);
+        stockSample.addSample(new MercurySample(null, sampleName));
         return stockSample;
     }
     
@@ -198,7 +198,7 @@ public class EndToEndTest  {
 
     private void checkForSampleProjectData(SequencingRun srun,
                                           /*BasicProjectPlan projectPlan,*/
-                                          StartingSample sam,
+                                          MercurySample sam,
                                           int numberOfSampleSheetsPerSample/*,
                                           MolecularEnvelope expectedEnvelope*/) {
         boolean foundSample = false;

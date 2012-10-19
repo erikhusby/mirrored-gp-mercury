@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.Failure;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -30,10 +29,6 @@ public class TwoDBarcodedTube extends LabVessel {
 
     private static Log gLog = LogFactory.getLog(TwoDBarcodedTube.class);
     
-    // todo jmt why is this never assigned?
-    @Transient
-    private StartingSample startingSample;
-
     public TwoDBarcodedTube(String twoDBarcode) {
         super(twoDBarcode);
         if (twoDBarcode == null) {
@@ -105,20 +100,6 @@ public class TwoDBarcodedTube extends LabVessel {
     }
 
     @Override
-    public Set<SampleInstance> getSampleInstances() {
-        Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
-
-        if (startingSample == null) {
-            for (VesselContainer<?> vesselContainer : this.getContainers()) {
-                sampleInstances.addAll(vesselContainer.getSampleInstancesAtPosition(vesselContainer.getPositionOfVessel(this)));
-            }
-        } else {
-            sampleInstances = startingSample.getSampleInstances();
-        }
-        return sampleInstances;
-    }
-
-    @Override
     public Float getVolume() {
         throw new RuntimeException("I haven't been written yet.");
     }
@@ -127,10 +108,4 @@ public class TwoDBarcodedTube extends LabVessel {
     public Float getConcentration() {
         throw new RuntimeException("I haven't been written yet.");
     }
-
-    @Override
-    public boolean isSampleAuthority() {
-        return startingSample != null;
-    }
-
 }

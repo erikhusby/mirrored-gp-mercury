@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -11,6 +12,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -31,9 +33,18 @@ public class MercurySample {
     @Index(name = "ix_ms_sample_key")
     private String sampleKey;
 
+    @Transient
+    private BSPSampleDTO bspSampleDTO;
+
     public MercurySample(String productOrderKey, String sampleKey) {
         this.productOrderKey = productOrderKey;
         this.sampleKey = sampleKey;
+    }
+
+    public MercurySample(String productOrderKey, String sampleKey, BSPSampleDTO bspSampleDTO) {
+        this.productOrderKey = productOrderKey;
+        this.sampleKey = sampleKey;
+        this.bspSampleDTO = bspSampleDTO;
     }
 
     /** For JPA */
@@ -46,6 +57,10 @@ public class MercurySample {
 
     public String getSampleKey() {
         return sampleKey;
+    }
+
+    public BSPSampleDTO getBspSampleDTO() {
+        return bspSampleDTO;
     }
 
     @Override

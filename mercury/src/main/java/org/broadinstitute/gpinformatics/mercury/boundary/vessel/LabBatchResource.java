@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -79,7 +79,7 @@ public class LabBatchResource {
 
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
             Map<MercurySample, MercurySample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
-        Set<Starter> starters = new HashSet<Starter>();
+        Set<LabVessel> starters = new HashSet<LabVessel>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
             if (twoDBarcodedTube == null) {
@@ -94,7 +94,7 @@ public class LabBatchResource {
             }
 
 //            if (tubeBean.getSampleBarcode() == null) {
-//                starters.add(twoDBarcodedTube);
+                starters.add(twoDBarcodedTube);
 //            } else {
 //                BSPStartingSample bspStartingSample = mapBarcodeToSample.get(tubeBean.getSampleBarcode());
 //                if(bspStartingSample == null) {

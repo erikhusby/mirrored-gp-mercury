@@ -9,8 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
 
@@ -171,13 +171,13 @@ public class VesselContainer<T extends LabVessel> {
      * Traverses transfers to find the single sample libraries.
      */
     static class SingleSampleLibraryCriteria implements TransferTraverserCriteria {
-        private final Map<StartingSample,Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<StartingSample, Collection<LabVessel>>();
+        private final Map<MercurySample, Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<MercurySample, Collection<LabVessel>>();
 
         @Override
         public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labVessel != null) {
                 for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
-                    StartingSample startingSample = sampleInstance.getStartingSample();
+                    MercurySample startingSample = sampleInstance.getStartingSample();
 //                    if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
 //                        if (!singleSampleLibrariesForInstance.containsKey(startingSample)) {
 //                            singleSampleLibrariesForInstance.put(startingSample,new HashSet<LabVessel>());
@@ -189,7 +189,7 @@ public class VesselContainer<T extends LabVessel> {
             return TraversalControl.ContinueTraversing;
         }
 
-        public Map<StartingSample,Collection<LabVessel>> getSingleSampleLibraries() {
+        public Map<MercurySample,Collection<LabVessel>> getSingleSampleLibraries() {
             return singleSampleLibrariesForInstance;
         }
     }
@@ -207,7 +207,7 @@ public class VesselContainer<T extends LabVessel> {
      * @param position
      * @return
      */
-    public Map<StartingSample,Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
+    public Map<MercurySample,Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
         SingleSampleLibraryCriteria singleSampleLibraryCriteria = new SingleSampleLibraryCriteria();
 
         evaluateCriteria(position, singleSampleLibraryCriteria, TraversalDirection.Ancestors, null, 0);
