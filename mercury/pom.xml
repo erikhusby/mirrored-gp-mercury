@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.4-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -1633,7 +1633,7 @@
                     <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
                     <useReleaseProfile>false</useReleaseProfile>
                     <scmCommentPrefix>[REL-000 Production Release] </scmCommentPrefix>
-                    <arguments>-D!DefaultProfile</arguments>
+                    <arguments>-X</arguments>
                 </configuration>
             </plugin>
 
