@@ -23,6 +23,7 @@ public class ProductDetail extends AbstractJsfBean {
     private Product product;
     private String productName;
     private ProductFamily productFamily;
+    private Long productFamilyId;
     private String partNumber;
     private String description;
     private Date availabilityDate;
@@ -35,21 +36,25 @@ public class ProductDetail extends AbstractJsfBean {
 
 
     public void initEmptyProduct() {
-
         if ((partNumber != null) && !StringUtils.isBlank(partNumber)) {
             product = productDao.findByBusinessKey(partNumber);
-            if ( product != null ) {
-                productName = product.getProductName();
-                productFamily = product.getProductFamily();
-                description = product.getDescription();
-                availabilityDate = product.getAvailabilityDate();
-                discontinuedDate = product.getDiscontinuedDate();
-                samplesPerWeek = product.getSamplesPerWeek();
-                inputRequirements = product.getInputRequirements();
-                deliverables = product.getDeliverables();
-                expectedCycleTimeHours =convertCycleTimeSecondsToHours(product.getExpectedCycleTimeSeconds());
-                guaranteedCycleTimeHours =convertCycleTimeSecondsToHours(product.getGuaranteedCycleTimeSeconds());
-            }
+            initProductDetailsFromProduct(product);
+        }
+    }
+
+    private void initProductDetailsFromProduct(Product product) {
+        if ( product != null ) {
+            productName = product.getProductName();
+            partNumber = product.getPartNumber();
+            productFamily = product.getProductFamily();
+            description = product.getDescription();
+            availabilityDate = product.getAvailabilityDate();
+            discontinuedDate = product.getDiscontinuedDate();
+            samplesPerWeek = product.getSamplesPerWeek();
+            inputRequirements = product.getInputRequirements();
+            deliverables = product.getDeliverables();
+            expectedCycleTimeHours =convertCycleTimeSecondsToHours(product.getExpectedCycleTimeSeconds());
+            guaranteedCycleTimeHours =convertCycleTimeSecondsToHours(product.getGuaranteedCycleTimeSeconds());
         }
     }
 
@@ -71,6 +76,11 @@ public class ProductDetail extends AbstractJsfBean {
         return product;
     }
 
+    public void setProduct(final Product product) {
+        this.product = product;
+        initProductDetailsFromProduct(product);
+    }
+
     public String getProductName() {
         return productName;
     }
@@ -85,6 +95,13 @@ public class ProductDetail extends AbstractJsfBean {
 
     public void setProductFamily(final ProductFamily productFamily) {
         this.productFamily = productFamily;
+    }
+    public Long getProductFamilyId() {
+        return productFamilyId;
+    }
+
+    public void setProductFamilyId(final Long productFamilyId) {
+        this.productFamilyId = productFamilyId;
     }
 
     public String getPartNumber() {

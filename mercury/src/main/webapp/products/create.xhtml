@@ -30,7 +30,7 @@
                         <p:selectOneMenu id="productFamily" value="#{productDetail.productFamily}">
                             <p:watermark for="description" value="Select the Product family"/>
                             <f:selectItem itemLabel="Select the Product family" itemValue="" />
-                            <f:selectItems value="#{productBean.productFamilySelectItems}" var="fam" itemValue="#{fam.productFamily}" itemLabel="#{fam.displayName}" required="true" converter="#{productFamilyConverter}"/>
+                            <f:selectItems value="#{productBean.productFamilySelectItems}" var="fam" itemValue="#{fam.productFamilyId}" itemLabel="#{fam.displayName}" required="true" converter="#{productFamilyConverter}"/>
                             <!--<f:selectItems value="#{productDetail.productFamilies}"  var="fam" itemValue="#{fam.productFamilyId}" itemLabel="#{fam.displayName}" required="true" />-->
                         </p:selectOneMenu>
                         <!--<p:autoComplete id="productFamily" value="#{productForm.productFamily}" completeMethod="#{productBean.productFamilies}" var="fam" itemLabel="#{fam.displayName}" itemValue="#{fam}" converter="#{productFamilyConverter}"/>-->

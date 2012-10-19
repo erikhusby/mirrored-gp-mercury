@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
@@ -39,7 +40,7 @@ public class ProductForm extends AbstractJsfBean {
 
     public String create() {
 
-        Product product =  new Product(detail.getProductName(), detail.getProductFamily(), detail.getDescription(),
+        Product product =  new Product(detail.getProductName(), getProductFamilyById(detail.getProductFamilyId()), detail.getDescription(),
                 detail.getPartNumber(), detail.getAvailabilityDate(), detail.getDiscontinuedDate(),
                 convertCycleTimeHoursToSeconds(detail.getExpectedCycleTimeHours()),
                 convertCycleTimeHoursToSeconds(detail.getGuaranteedCycleTimeHours()),
@@ -53,6 +54,10 @@ public class ProductForm extends AbstractJsfBean {
         //TODO hmc add more info in the details param
         addInfoMessage("Product created.", "Product " + product.getPartNumber() + " has been created.");
         return redirect("list");
+    }
+
+    private ProductFamily getProductFamilyById(Long productFamilyId) {
+        return productFamilyDao.find(productFamilyId);
     }
 
     // TODO under construction not working nor tested.
