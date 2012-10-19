@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
@@ -12,10 +13,12 @@ import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
+import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
+import javax.faces.validator.ValidatorException;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,11 +66,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
     private List<Long> irbs;
 
     public void initForm() {
-        // Only initialize the form on postback. Otherwise, we'll leave the form as the user submitted it.
+        // Only initialize the form if not a postback. Otherwise, we'll leave the form as the user submitted it.
         if (!facesContext.isPostback()) {
 
             // Add current user as a PM only if this is a new research project being created
-            if (detail.getProject().getResearchProjectId() == null) {
+            if (isCreating()) {
                 projectManagers = new ArrayList<BspUser>();
                 projectManagers.add(userBean.getBspUser());
             } else {
@@ -91,8 +94,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
     }
 
     public String save() {
-        ResearchProject project = detail.getProject();
-        if (project.getResearchProjectId() == null) {
+        if (isCreating()) {
             return create();
         } else {
             return edit();
@@ -151,6 +153,28 @@ public class ResearchProjectForm extends AbstractJsfBean {
             }
         }
     }
+
+    public void validateTitle(FacesContext context, UIComponent component, Object title) throws ValidatorException {
+        if (researchProjectDao.findByTitle((String) title) != null) {
+
+            if (isCreating() || hasTitleChanged((String) title)) {
+                FacesMessage message =
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Name Not Unique", "There is already a research project with this name");
+                throw new ValidatorException(message);            }
+        }
+    }
+
+    public boolean hasTitleChanged(String newValue) {
+        // title is a string
+        String projectTitle = detail.getProject().getTitle();
+       return (!StringUtils.isBlank(newValue) || !StringUtils.isBlank(projectTitle)) && (!newValue.equals(projectTitle));
+    }
+
+    private boolean isCreating() {
+        return detail.getProject().getResearchProjectId() == null;
+    }
+
 
     public String edit() {
         // TODO: try to do away with merge
