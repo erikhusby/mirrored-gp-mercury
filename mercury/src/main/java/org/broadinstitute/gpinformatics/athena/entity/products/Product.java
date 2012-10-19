@@ -35,6 +35,7 @@ public class Product implements Serializable {
     @Column(length = 2000)
     private String description;
 
+    @Column(unique = true)
     private String partNumber;
     private Date availabilityDate;
     private Date discontinuedDate;
