@@ -312,6 +312,24 @@ public class ResearchProject {
         return getPeople(RoleType.PM);
     }
 
+    public void setProjectManagers(Long[] personIds) {
+        Set<Long> ids = new HashSet<Long>(Arrays.asList(personIds));
+
+        Set<ProjectPerson> peopleToRemove = new HashSet<ProjectPerson>();
+        for (ProjectPerson person : associatedPeople) {
+            if (person.getRole().equals(RoleType.PM)) {
+                if (!ids.contains(person.getPersonId())) {
+                    peopleToRemove.add(person);
+                }
+            }
+        }
+
+        Set<ProjectPerson> peopleToAdd = new HashSet<ProjectPerson>();
+        for (Long personId : personIds) {
+
+        }
+    }
+
     public Long[] getBroadPIs() {
         return getPeople(RoleType.BROAD_PI);
     }
