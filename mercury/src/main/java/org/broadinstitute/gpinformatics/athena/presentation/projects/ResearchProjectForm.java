@@ -15,7 +15,6 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -154,15 +153,21 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
     public String edit() {
         // TODO: try to do away with merge
-        // TODO: manage changes in personnel
-        List<Long> projectManagerIds = new ArrayList<Long>();
-        for (BspUser projectManager : projectManagers) {
-            projectManagerIds.add(projectManager.getUserId());
-        }
         ResearchProject project = detail.getProject();
-        project.setProjectManagers(projectManagerIds.toArray(new Long[projectManagerIds.size()]));
+        updatePeople(project, RoleType.PM, projectManagers);
+        updatePeople(project, RoleType.BROAD_PI, broadPIs);
+        updatePeople(project, RoleType.SCIENTIST, scientists);
+        updatePeople(project, RoleType.EXTERNAL, externalCollaborators);
         researchProjectDao.getEntityManager().merge(project);
         return redirect("list");
+    }
+
+    private void updatePeople(ResearchProject project, RoleType role, List<BspUser> people) {
+        List<Long> projectManagerIds = new ArrayList<Long>();
+        for (BspUser projectManager : people) {
+            projectManagerIds.add(projectManager.getUserId());
+        }
+        project.updatePeople(role, projectManagerIds.toArray(new Long[projectManagerIds.size()]));
     }
 
     public List<Long> completeFundingSource(String query) {
