@@ -13,64 +13,68 @@
         <ui:define name="title">View Product Order</ui:define>
         <ui:define name="metadata">
             <f:metadata>
-                <f:event type="preRenderView" listener="#{productOrderDetail.load}" />
-                <f:viewParam name="productOrderKey" value="#{productOrderDetail.productOrderKey}" />
+
+                <f:viewParam name="productOrderKey" value="#{productOrderDetail.productOrder}" converter="#{productOrderConverter}" />
             </f:metadata>
         </ui:define>
         <ui:define name="body">
             <h:form styleClass="view-horizontal">
                 <div class="row-fluid" style="margin-bottom: 30px;">
+                    <!--
                     <p:commandButton value="Close Out" action="create" ajax="false" styleClass="btn">
                         <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
                     </p:commandButton>
                     &nbsp;
+                    -->
                     <p:commandButton value="Copy" action="create" ajax="false" styleClass="btn">
                         <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
                     </p:commandButton>
                     &nbsp;
+                    <!--
                     <p:splitButton value="  More Actions  ">
                         <p:menuitem value="Get Quote Template" action="create" icon="ui-icon-folder-open"/>
                         <p:menuitem value="Update Billing" action="create" icon="ui-icon-arrowrefresh-1-e"/>
                     </p:splitButton>
+                    -->
                 </div>
 
                 <div class="row-fluid">
                     <div class="control-group">
-                        <span class="control-label label">Order Barcode</span>
+                        <span class="control-label label-form">Order Barcode</span>
                         <span class="controls">
-                            <h:outputLink value="http://prodinfojira.broadinstitute.org/jira/browse/#{productOrderDetail.productOrder.jiraTicketKey}" class="external">
+                            <h:outputLink target="_new" value="http://prodinfojira.broadinstitute.org/jira/browse/#{productOrderDetail.productOrder.jiraTicketKey}" class="external">
                                 <h:outputText value="#{productOrderDetail.productOrder.jiraTicketKey}" />
                             </h:outputLink>
                         </span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label">Product</span>
+                        <span class="control-label label-form">Product</span>
                         <span class="controls">#{productOrderDetail.productOrder.title}</span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label">Quote ID</span>
+                        <span class="control-label label-form">Quote ID</span>
                         <span class="controls">
-                            <h:outputLink value="#{QuoteConfig.url(QuoteConfig.SINGLE_NUMERIC_QUOTE)}#{productOrderDetail.productOrder.quoteId}" class="external">
+                            <h:outputLink target="_new" value="#{QuoteConfig.url(QuoteConfig.SINGLE_NUMERIC_QUOTE)}#{productOrderDetail.productOrder.quoteId}" class="external">
                                 <h:outputText value="#{productOrderDetail.productOrder.quoteId}" />
                             </h:outputLink>
                         </span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label">Comments</span>
+                        <span class="control-label label-form">Comments</span>
                         <span class="controls">#{productOrderDetail.productOrder.comments}</span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label">Samples</span>
+                        <span class="control-label label-form">Samples</span>
                         <span class="controls">#{productOrderDetail.productOrder.sampleSummary}</span>
                     </div>
 
                     <p/>
 
-                    <div class="row">
+                    <div class="row-fluid">
                         <div class="pull-right ui-widget-header" style="padding: 5px;">
                             <span class="ui-icon ui-icon-folder-open" style="float:left;">&nbsp;</span>
                             <h:outputText value=" Export all data as: " />
@@ -97,7 +101,7 @@
 
                     <p:dataTable id="sampleData"
                                  value="#{productOrderDetail.productOrder.samples}"
-                                 filteredValue="#{productOrderBean.filteredSamples}"
+                                 filteredValue="#{productOrderFilterBean.filteredSamples}"
                                  var="sample"
                                  paginator="true"
                                  paginatorAlwaysVisible='false'
@@ -116,7 +120,7 @@
                         <p:column headerText="Participant ID">
                             #{sample.bspDTO.patientId}
                         </p:column>
-                        <p:column headerText="Status" filterBy="#{sample.billingStatus.displayName}" filterOptions="#{productOrderBean.allSampleStatuses}" filterMatchMode="exact">
+                        <p:column headerText="Status" filterBy="#{sample.billingStatus}" filterOptions="#{productOrderBean.allSampleStatuses}" filterMatchMode="exact">
                             #{sample.billingStatus.displayName}
                         </p:column>
                         <p:column headerText="Eligible">

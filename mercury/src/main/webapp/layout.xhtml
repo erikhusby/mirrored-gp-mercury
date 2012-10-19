@@ -76,61 +76,58 @@
         </div>
 
         <div class="container-fluid">
-            <div class="row-fluid">
-                <p:ajaxStatus id="ajaxStatus" styleClass="span2 offset5">
-                    <f:facet name="start">
-                        Loading...
-                    </f:facet>
-                    <f:facet name="complete">
-                        <h:outputText value="" />
-                    </f:facet>
-                </p:ajaxStatus>
+            <p:ajaxStatus id="ajaxStatus" styleClass="span2 offset5">
+                <f:facet name="start">
+                    Loading...
+                </f:facet>
+                <f:facet name="complete">
+                    <h:outputText value="" />
+                </f:facet>
+            </p:ajaxStatus>
 
-                <pe:ajaxErrorHandler
-                        title="Server Error: {error-name}"
-                        button="Close"
-                        widgetVar="ajaxErrorHandler" buttonOnclick="ajaxErrorHandler.hide()">
-                    <f:facet name="body">
-                        <div>
-                            <h:form>
-                                <p:tabView>
-                                    <p:tab title="Message">
-                                        Error message: {error-message}
-                                    </p:tab>
-                                    <p:tab title="Detail">
-                                        <div style="overflow: auto; height: 300px; width: 700px;">
-                                            <pre style="font-size: 10px">{error-stacktrace}</pre>
-                                        </div>
-                                    </p:tab>
-                                </p:tabView>
-                            </h:form>
-                        </div>
-                    </f:facet>
-                </pe:ajaxErrorHandler>
+            <pe:ajaxErrorHandler
+                    title="Server Error: {error-name}"
+                    button="Close"
+                    widgetVar="ajaxErrorHandler" buttonOnclick="ajaxErrorHandler.hide()">
+                <f:facet name="body">
+                    <div>
+                        <h:form>
+                            <p:tabView>
+                                <p:tab title="Message">
+                                    Error message: {error-message}
+                                </p:tab>
+                                <p:tab title="Detail">
+                                    <div style="overflow: auto; height: 300px; width: 700px;">
+                                        <pre style="font-size: 10px">{error-stacktrace}</pre>
+                                    </div>
+                                </p:tab>
+                            </p:tabView>
+                        </h:form>
+                    </div>
+                </f:facet>
+            </pe:ajaxErrorHandler>
 
-                <p:dialog modal="false" widgetVar="statusDialog" draggable="false" closable="false" maximizable="false" resizable="false" minimizable="false">
-                    <p:outputPanel>
-                        <p:graphicImage url="/images/spinner.gif" alt="Please wait" />
-                        <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&nbsp;wait..." />
-                    </p:outputPanel>
-                </p:dialog>
-            </div>
+            <p:dialog modal="false" widgetVar="statusDialog" draggable="false" closable="false" maximizable="false" resizable="false" minimizable="false">
+                <p:outputPanel>
+                    <p:graphicImage url="/images/spinner.gif" alt="Please wait" />
+                    <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&nbsp;wait..." />
+                </p:outputPanel>
+            </p:dialog>
 
             <div class="row-fluid">
-                    <p:panel>
-                        <f:facet name="header"><span id="panelTitle"><ui:insert name="title"/></span></f:facet>
+                <p:panel>
+                    <f:facet name="header"><span id="panelTitle"><ui:insert name="title"/></span></f:facet>
 
-                        <!-- show messages/errors -->
-                        <p:messages autoUpdate="true" severity="fatal" />
-                        <p:messages autoUpdate="true" severity="error" />
-                        <p:messages autoUpdate="true" severity="warn" />
-                        <p:messages autoUpdate="true" severity="info" />
+                    <!-- show messages/errors -->
+                    <p:messages autoUpdate="true" severity="fatal" />
+                    <p:messages autoUpdate="true" severity="error" />
+                    <p:messages autoUpdate="true" severity="warn" />
+                    <p:messages autoUpdate="true" severity="info" />
 
-                        <ui:insert name="body"/>
-                    </p:panel>
+                    <ui:insert name="body"/>
+                </p:panel>
             </div>
         </div>
-
         <footer>
             <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.<br/>
                Genomics Platform. <ui:include src="administration/buildInfo.xhtml"/></p>

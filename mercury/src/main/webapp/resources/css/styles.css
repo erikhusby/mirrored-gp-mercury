@@ -61,3 +61,8 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 .form-value { font-size: 12px; padding: 5px 7px; }
 
 .hide, .ui-datatable .ui-filter-column .hide { display: none; visibility: hidden; }
+
+.label-form { background-color: #f0f0f0; color: #333333; border-radius: 5px; padding-right: 3px; }
+
+.ac-dropdown-text { font-size: small; }
+.ac-dropdown-subtext { font-size: smaller; font-style: italic; }
