@@ -16,13 +16,18 @@ git checkout QA
 git checkout -b QA_PROD
 cd mercury
 mvn -P\!DefaultProfile --batch-mode release:prepare release:perform
-git status
-git branch -a
-git tag -l
-git checkout master
-git merge QA_PROD -m "REL-000 Update pom.xml with new version"
-git branch -d QA_PROD
-git push origin :QA_PROD
-git fetch origin +master
-#git push origin master
+if [ $? -eq 0 ] ; then
+    git status
+    git branch -a
+    git tag -l
+    git checkout master
+    git merge QA_PROD -m "REL-000 Update pom.xml with new version"
+    git branch -d QA_PROD
+    git push origin :QA_PROD
+    git fetch origin +master
+    #git push origin master
+else
+    echo "Release failed"
+    exit 1
+fi
 
