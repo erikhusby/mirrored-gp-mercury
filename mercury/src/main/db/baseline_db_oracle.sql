@@ -59,9 +59,9 @@
 
     drop table mercury.lab_batch_aud cascade constraints;
 
-    drop table mercury.lab_batch_starting_samples cascade constraints;
-
-    drop table mercury.lab_batch_starting_samples_aud cascade constraints;
+--     drop table mercury.lab_batch_starting_samples cascade constraints;
+--
+--     drop table mercury.lab_batch_starting_samples_aud cascade constraints;
 
     drop table mercury.lab_event cascade constraints;
 
@@ -181,9 +181,9 @@
 
     drop table mercury.sequencing_run_aud cascade constraints;
 
-    drop table mercury.starting_sample cascade constraints;
-
-    drop table mercury.starting_sample_aud cascade constraints;
+--     drop table mercury.starting_sample cascade constraints;
+--
+--     drop table mercury.starting_sample_aud cascade constraints;
 
 --     drop table mercury.state_change cascade constraints;
 --
@@ -265,7 +265,7 @@
 
     drop sequence mercury.SEQ_SEQUENCING_RUN;
 
-    drop sequence mercury.SEQ_STARTING_SAMPLE;
+--     drop sequence mercury.SEQ_STARTING_SAMPLE;
 
 --     drop sequence mercury.SEQ_STATE_CHANGE;
 
@@ -583,19 +583,19 @@
         primary key (lab_batch_id, rev)
     );
 
-    create table mercury.lab_batch_starting_samples (
-        lab_batch number(19,0) not null,
-        starting_samples number(19,0) not null,
-        primary key (lab_batch, starting_samples)
-    );
-
-    create table mercury.lab_batch_starting_samples_aud (
-        rev number(19,0) not null,
-        lab_batch number(19,0) not null,
-        starting_samples number(19,0) not null,
-        revtype number(3,0),
-        primary key (rev, lab_batch, starting_samples)
-    );
+--     create table mercury.lab_batch_starting_samples (
+--         lab_batch number(19,0) not null,
+--         starting_samples number(19,0) not null,
+--         primary key (lab_batch, starting_samples)
+--     );
+--
+--     create table mercury.lab_batch_starting_samples_aud (
+--         rev number(19,0) not null,
+--         lab_batch number(19,0) not null,
+--         starting_samples number(19,0) not null,
+--         revtype number(3,0),
+--         primary key (rev, lab_batch, starting_samples)
+--     );
 
     create table mercury.lab_event (
         dtype varchar2(31 char) not null,
@@ -658,8 +658,8 @@
         molecular_state number(19,0),
 --        project number(19,0),
 --        project_authority number(19,0),
-        read_bucket_authority number(19,0),
-        aliquot number(19,0),
+--         read_bucket_authority number(19,0),
+--         aliquot number(19,0),
         plate number(19,0),
         primary key (lab_vessel_id),
         unique (label)
@@ -675,10 +675,10 @@
         molecular_state number(19,0),
 --        project number(19,0),
 --        project_authority number(19,0),
-        read_bucket_authority number(19,0),
+--         read_bucket_authority number(19,0),
         digest varchar2(255 char),
         rack_type varchar2(255 char),
-        aliquot number(19,0),
+--         aliquot number(19,0),
         vessel_position varchar2(255 char),
         plate number(19,0),
         plate_type varchar2(255 char),
@@ -1116,25 +1116,25 @@
         primary key (sequencing_run_id, rev)
     );
 
-    create table mercury.starting_sample (
-        dtype varchar2(31 char) not null,
-        sample_id number(19,0) not null,
-        sample_name varchar2(255 char),
-        bsp_sample_authority_twodtube number(19,0),
---        project_plan number(19,0),
-        primary key (sample_id)
-    );
-
-    create table mercury.starting_sample_aud (
-        dtype varchar2(31 char) not null,
-        sample_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
-        sample_name varchar2(255 char),
-        bsp_sample_authority_twodtube number(19,0),
---        project_plan number(19,0),
-        primary key (sample_id, rev)
-    );
+--     create table mercury.starting_sample (
+--         dtype varchar2(31 char) not null,
+--         sample_id number(19,0) not null,
+--         sample_name varchar2(255 char),
+--         bsp_sample_authority_twodtube number(19,0),
+-- --        project_plan number(19,0),
+--         primary key (sample_id)
+--     );
+--
+--     create table mercury.starting_sample_aud (
+--         dtype varchar2(31 char) not null,
+--         sample_id number(19,0) not null,
+--         rev number(19,0) not null,
+--         revtype number(3,0),
+--         sample_name varchar2(255 char),
+--         bsp_sample_authority_twodtube number(19,0),
+-- --        project_plan number(19,0),
+--         primary key (sample_id, rev)
+--     );
 
 --     create table mercury.state_change (
 --         state_change_id number(19,0) not null,
@@ -1431,20 +1431,20 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.lab_batch_starting_samples
-        add constraint FK6D18FC61A1B8F5BF
-        foreign key (lab_batch)
-        references mercury.lab_batch;
-
-    alter table mercury.lab_batch_starting_samples
-        add constraint FK6D18FC61AD133513
-        foreign key (starting_samples)
-        references mercury.starting_sample;
-
-    alter table mercury.lab_batch_starting_samples_aud
-        add constraint FK5BE8DD28A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.lab_batch_starting_samples
+--         add constraint FK6D18FC61A1B8F5BF
+--         foreign key (lab_batch)
+--         references mercury.lab_batch;
+--
+--     alter table mercury.lab_batch_starting_samples
+--         add constraint FK6D18FC61AD133513
+--         foreign key (starting_samples)
+--         references mercury.starting_sample;
+--
+--     alter table mercury.lab_batch_starting_samples_aud
+--         add constraint FK5BE8DD28A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
     alter table mercury.lab_event
         add constraint FKD1365968A1B8F5BF
@@ -1486,20 +1486,20 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.lab_vessel
-        add constraint FK71AE15281149B707
-        foreign key (read_bucket_authority)
-        references mercury.lab_vessel;
+--     alter table mercury.lab_vessel
+--         add constraint FK71AE15281149B707
+--         foreign key (read_bucket_authority)
+--         references mercury.lab_vessel;
 /*
     alter table mercury.lab_vessel
         add constraint FK71AE15286E580798
         foreign key (project)
         references mercury.project;
 */
-    alter table mercury.lab_vessel
-        add constraint FK71AE152876284BB0
-        foreign key (aliquot)
-        references mercury.starting_sample;
+--     alter table mercury.lab_vessel
+--         add constraint FK71AE152876284BB0
+--         foreign key (aliquot)
+--         references mercury.starting_sample;
 
     alter table mercury.lab_vessel
         add constraint FK71AE1528A095034B
@@ -1866,20 +1866,20 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.starting_sample
-        add constraint FK18C9CA8979B8E476
-        foreign key (bsp_sample_authority_twodtube)
-        references mercury.lab_vessel;
+--     alter table mercury.starting_sample
+--         add constraint FK18C9CA8979B8E476
+--         foreign key (bsp_sample_authority_twodtube)
+--         references mercury.lab_vessel;
 /*
     alter table mercury.starting_sample
         add constraint FK18C9CA895DAC64D7
         foreign key (project_plan)
         references mercury.project_plan;
 */
-    alter table mercury.starting_sample_aud
-        add constraint FKB28C07FA8A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.starting_sample_aud
+--         add constraint FKB28C07FA8A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
 --     alter table mercury.state_change_aud
 --         add constraint FK7F42220F8A39BE24
@@ -2077,7 +2077,7 @@
 
     create sequence mercury.SEQ_SEQUENCING_RUN start with 1 increment by 50;
 
-    create sequence mercury.SEQ_STARTING_SAMPLE start with 1 increment by 50;
+--     create sequence mercury.SEQ_STARTING_SAMPLE start with 1 increment by 50;
 
 --     create sequence mercury.SEQ_STATE_CHANGE start with 1 increment by 50;
 
