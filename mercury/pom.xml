@@ -1633,7 +1633,7 @@
                     <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
                     <useReleaseProfile>false</useReleaseProfile>
                     <scmCommentPrefix>[REL-000 Production Release] </scmCommentPrefix>
-                    <arguments>-X</arguments>
+                    <!--<arguments>-X</arguments>-->
                 </configuration>
             </plugin>
 
