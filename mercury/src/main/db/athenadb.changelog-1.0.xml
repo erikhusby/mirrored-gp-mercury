@@ -176,12 +176,15 @@
         </createIndex>
     </changeSet>
 
-
     <changeSet id="GPLIM-69-5" author="mccrory">
         <dropColumn tableName="research_project_aud" schemaName="athena" columnName="status"/>
         <addColumn tableName="research_project_aud" schemaName="athena">
             <column name="status" type="varchar(30)"/>
         </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-90-1" author="hrafal">
+        <modifyDataType tableName="research_project" schemaName="athena" columnName="SYNOPSIS" newDataType="varchar(4000)"/>
     </changeSet>
 
 </databaseChangeLog>

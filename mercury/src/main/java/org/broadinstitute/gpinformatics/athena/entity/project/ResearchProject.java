@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang3.StringUtils;
@@ -75,7 +74,7 @@ public class ResearchProject {
     @Index(name = "ix_rp_title")
     private String title;
 
-    @Column(name = "SYNOPSIS", nullable = false)
+    @Column(name = "SYNOPSIS", nullable = false, length = 4000)
     private String synopsis;
 
     @Column(name = "IRB_NOT_ENGAGED", nullable = false)
