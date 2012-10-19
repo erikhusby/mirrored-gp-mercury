@@ -43,7 +43,7 @@ public class ProductBean {
      *
      * @return list of product families
      */
-    public List<SelectItem> getAllProductFamilies() {
+    public List<SelectItem> getProductFamilies() {
         List<SelectItem> items = new ArrayList<SelectItem>();
         Set<String> aList = new HashSet<String>();
         for (ProductFamily productFamily :  productFamilyDao.findAll()) {

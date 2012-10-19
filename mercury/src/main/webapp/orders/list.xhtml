@@ -14,10 +14,14 @@
 
         <ui:define name="body">
             <h:form>
-                <p><p:commandButton value="New Product Order" action="create?faces-redirect=true" ajax="false" styleClass="btn"/></p>
-            </h:form>
-
-            <p:dataTable value="#{productOrderBean.allProductOrders}" var="order">
+            <div class="row">
+                <h:link value="New Product Order" outcome="create" styleClass="pull-right"/>
+            </div>
+            <p:dataTable value="#{productOrderBean.allProductOrders}"
+                         filteredValue="#{productOrderBean.filteredProductOrders}"
+                         sortBy="#{order.createdDate}"
+                         sortOrder="descending"
+                         var="order">
                 <p:column headerText="Name" sortBy="#{order.title}">
                     <h:link outcome="view" value="#{order.title}">
                         <f:param name="productOrderKey" value="#{order.businessKey}"/>
@@ -48,7 +52,7 @@
                     #{order.sampleSummary}
                 </p:column>
             </p:dataTable>
-
+            </h:form>
         </ui:define>
     </ui:composition>
 </body>

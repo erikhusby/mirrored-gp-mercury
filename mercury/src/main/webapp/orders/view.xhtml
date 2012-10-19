@@ -13,8 +13,8 @@
         <ui:define name="title">View Product Order</ui:define>
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="productOrderKey" value="#{productOrderDetail.productOrderKey}" />
                 <f:event type="preRenderView" listener="#{productOrderDetail.load}" />
+                <f:viewParam name="productOrderKey" value="#{productOrderDetail.productOrderKey}" />
             </f:metadata>
         </ui:define>
         <ui:define name="body">
@@ -36,48 +36,36 @@
 
                 <div class="row-fluid">
                     <div class="control-group">
-                        <span class="control-label">Order Barcode</span>
-                        <span class="controls input-xlarge uneditable-input">
-                            <h:link outcome="http://prodinfojira.broadinstitute.org/jira/browse/#{productOrderDetail.productOrder.jiraTicketKey}"
-                                    value="#{productOrderDetail.productOrder.jiraTicketKey}"/>
+                        <span class="control-label label">Order Barcode</span>
+                        <span class="controls">
+                            <h:outputLink value="http://prodinfojira.broadinstitute.org/jira/browse/#{productOrderDetail.productOrder.jiraTicketKey}" class="external">
+                                <h:outputText value="#{productOrderDetail.productOrder.jiraTicketKey}" />
+                            </h:outputLink>
                         </span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label">Product</span>
-                        <span class="controls input-xlarge uneditable-input">#{productOrderDetail.productOrder.title}</span>
+                        <span class="control-label label">Product</span>
+                        <span class="controls">#{productOrderDetail.productOrder.title}</span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label">Quote ID</span>
-                        <span class="controls input-xlarge uneditable-input">
-                            <h:link outcome="https://www.broadinstitute.org/quotes/TODO/"
-                                    value="#{productOrderDetail.productOrder.quoteId}"/>
+                        <span class="control-label label">Quote ID</span>
+                        <span class="controls">
+                            <h:outputLink value="#{QuoteConfig.url(QuoteConfig.SINGLE_NUMERIC_QUOTE)}#{productOrderDetail.productOrder.quoteId}" class="external">
+                                <h:outputText value="#{productOrderDetail.productOrder.quoteId}" />
+                            </h:outputLink>
                         </span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label">Comments</span>
-                        <span class="controls input-xlarge uneditable-input">#{productOrderDetail.productOrder.comments}</span>
+                        <span class="control-label label">Comments</span>
+                        <span class="controls">#{productOrderDetail.productOrder.comments}</span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label">Samples</span>
+                        <span class="control-label label">Samples</span>
                         <span class="controls">#{productOrderDetail.productOrder.sampleSummary}</span>
-                    </div>
-
-                    <p/>
-
-                    <div class="row-fluid">
-                        <div class="pull-left">
-                            <span>Status</span>
-                            <span>
-                                <p:selectOneMenu id="selectedStatus" value="">
-                                    <f:selectItem itemLabel="Status" itemValue="" />
-                                    <f:selectItems value="#{productOrderBean.allSampleStatuses}" />
-                                </p:selectOneMenu>
-                            </span>
-                        </div>
                     </div>
 
                     <p/>
@@ -89,7 +77,11 @@
 
                             <p:commandLink title="Click to download all sample data as a Microsoft Excel file">
                                 <h:outputText value="Excel"/>
-                                <p:dataExporter type="xls" target="sampleData" fileName="#{productOrderDetail.productOrder.title}" />
+                                <p:dataExporter
+                                        type="xls"
+                                        pageOnly = "false"
+                                        target="sampleData"
+                                        fileName="#{productOrderDetail.productOrder.title}" />
                             </p:commandLink>
                             &nbsp;
                             <p:commandLink title="Click to download all sample data as a CSV file">
@@ -97,8 +89,7 @@
                                 <p:dataExporter
                                         type="csv"
                                         pageOnly = "false"
-                                        encoding = "UTF-8"
-                                        target="samples"
+                                        target="sampleData"
                                         fileName="#{productOrderDetail.productOrder.title}" />
                             </p:commandLink>
                         </div>
@@ -106,39 +97,42 @@
 
                     <p:dataTable id="sampleData"
                                  value="#{productOrderDetail.productOrder.samples}"
+                                 filteredValue="#{productOrderBean.filteredSamples}"
                                  var="sample"
                                  paginator="true"
                                  paginatorAlwaysVisible='false'
                                  rows="100"
-                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                                  rowsPerPageTemplate="50,100,250,1000">
                         <f:facet name="header">
                             Samples
                         </f:facet>
 
                         <p:column headerText="ID">
-                            <h:link url="http://bsp/TODO" value="#{sample.sampleName}"/>
+                            <h:outputLink value="http://bsp.broadinstitute.org/BSP/samplesearch/SampleSummary.action?sampleId=#{sample.sampleName}" class="external">
+                                <h:outputText value="#{sample.sampleName}" />
+                            </h:outputLink>
                         </p:column>
                         <p:column headerText="Participant ID">
                             #{sample.bspDTO.patientId}
                         </p:column>
-                        <p:column headerText="Status">
-                            #{sample.billingStatus}
+                        <p:column headerText="Status" filterBy="#{sample.billingStatus.displayName}" filterOptions="#{productOrderBean.allSampleStatuses}" filterMatchMode="exact">
+                            #{sample.billingStatus.displayName}
                         </p:column>
                         <p:column headerText="Eligible">
-                            ???
+                            &nbsp;
                         </p:column>
                         <p:column headerText="Billed">
-                            ???
+                            &nbsp;
                         </p:column>
                         <p:column headerText="Abandoned">
-
+                            &nbsp;
                         </p:column>
                         <p:column headerText="Price Item 1">
-                            ???
+                            &nbsp;
                         </p:column>
                         <p:column headerText="Price Item 2">
-                            ???
+                            &nbsp;
                         </p:column>
                         <p:column headerText="Comment">
                             #{sample.sampleComment}

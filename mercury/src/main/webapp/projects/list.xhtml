@@ -13,10 +13,15 @@
         <ui:define name="title">Research Projects</ui:define>
         <ui:define name="body">
             <h:form>
-                <div style="text-align: right">
-                    <h:link value="New Research Project" outcome="create"/>
+                <div class="row">
+                    <h:link value="New Research Project" outcome="create" styleClass="pull-right"/>
                 </div>
-                <p:dataTable value="#{researchProjectBean.allResearchProjects}" var="project" sortBy="#{project.createdDate}" sortOrder="descending" filteredValue="#{researchProjectBean.filteredResearchProjects}">
+
+                <p:dataTable value="#{researchProjectBean.allResearchProjects}"
+                             var="project"
+                             sortBy="#{project.createdDate}"
+                             sortOrder="descending"
+                             filteredValue="#{researchProjectBean.filteredResearchProjects}">
 
                     <p:column headerText="Name" sortBy="#{project.title}">
                         <h:link outcome="view" value="#{project.title}">
@@ -50,9 +55,6 @@
                         </h:outputText>
                     </p:column>
                 </p:dataTable>
-
-                <!-- TODO: fill in action for new product order view -->
-                <!--<p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>-->
             </h:form>
         </ui:define>
     </ui:composition>
