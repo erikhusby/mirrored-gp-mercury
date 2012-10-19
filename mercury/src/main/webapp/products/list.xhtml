@@ -40,8 +40,8 @@
                     <!--</p:outputPanel>-->
                 <!--</f:facet>-->
 
-                <p:column sortBy="#{product.partNumber}" sortFunction="#{productList.compare}"
-                          filterBy="#{product.partNumber}" filterStyleClass="hide">
+                <p:column sortBy="#{product.partNumber}" sortFunction="#{productList.compare}">
+                          <!--filterBy="#{product.partNumber}" filterStyleClass="hide">-->
                     <f:facet name="header">
                         <h:outputText value="Part Number" />
                     </f:facet>
@@ -52,16 +52,16 @@
                     </h:link>
                 </p:column>
 
-                <p:column sortBy="#{product.productName}" sortFunction="#{productList.compare}"
-                          filterBy="#{product.productName}" filterStyleClass="hide">
+                <p:column sortBy="#{product.productName}" sortFunction="#{productList.compare}">
+                          <!--filterBy="#{product.productName}" filterStyleClass="hide">-->
                     <f:facet name="header">
                         <h:outputText value="Name" />
                     </f:facet>
                     <h:outputText value="#{product.productName}" />
                 </p:column>
 
-                <p:column sortBy="#{product.productFamily.displayName}" sortFunction="#{productList.compare}"
-                          filterBy="#{product.productFamily.displayName}" filterStyleClass="hide">
+                <p:column sortBy="#{product.productFamily.displayName}" sortFunction="#{productList.compare}">
+                          <!--filterBy="#{product.productFamily.displayName}" filterStyleClass="hide">-->
                     <f:facet name="header">
                         <h:outputText value="Product Family" />
                     </f:facet>

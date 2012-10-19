@@ -815,6 +815,19 @@
                 <scope>import</scope>
             </dependency>
 -->
+            <dependency>
+                <groupId>org.primefaces.extensions</groupId>
+                <artifactId>primefaces-extensions</artifactId>
+                <version>0.6.1</version>
+            </dependency>
+
+            <!-- primefaces-extensions has a dependency on primefaces, so use this to control the version of primefaces we depend on -->
+            <!-- see: http://code.google.com/p/primefaces-extensions/wiki/GettingStarted -->
+            <dependency>
+                <groupId>org.primefaces</groupId>
+                <artifactId>primefaces</artifactId>
+                <version>3.4.1</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -973,7 +986,11 @@
         <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
-            <version>3.4.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.primefaces.extensions</groupId>
+            <artifactId>primefaces-extensions</artifactId>
         </dependency>
 
         <dependency>
