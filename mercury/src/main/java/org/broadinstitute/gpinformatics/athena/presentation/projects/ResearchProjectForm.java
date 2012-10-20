@@ -175,7 +175,6 @@ public class ResearchProjectForm extends AbstractJsfBean {
         return detail.getProject().getResearchProjectId() == null;
     }
 
-
     public String edit() {
         // TODO: try to do away with merge
         ResearchProject project = detail.getProject();
