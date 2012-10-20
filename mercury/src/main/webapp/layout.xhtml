@@ -64,7 +64,7 @@
                                 |
                                 <h:outputText value="#{request.getRemoteUser()}" styleClass="badge"/>
                                 |
-                                <h:outputText value="#{userLogin.deployment}" styleClass="badge badge-warning" /> <!-- styleClass="#{userLogin.deploymentBadgeStyle}" /> -->
+                                <h:outputText value="#{userLogin.deployment}" styleClass="#{userLogin.deploymentBadgeStyle}" />
                                 |
                                 <p:commandLink action="#{logoutHandler.logout}" value="Sign out" />
                             </h:form>
