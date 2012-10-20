@@ -105,7 +105,7 @@ public abstract class LabVessel {
     /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
     private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
 
     protected LabVessel(String label) {
