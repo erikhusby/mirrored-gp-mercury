@@ -257,7 +257,8 @@ public class VesselContainer<T extends LabVessel> {
                     for (SampleInstance sampleInstance : sampleInstances) {
                         MolecularState molecularState = sampleInstance.getMolecularState();
                         if(molecularState == null) {
-                            LabEventType labEventType = ((GenericLabEvent) labEvent).getLabEventType();
+                            GenericLabEvent genericLabEvent = OrmUtil.proxySafeCast(labEvent, GenericLabEvent.class) ;
+                            LabEventType labEventType = genericLabEvent.getLabEventType();
                             molecularState = new MolecularState(labEventType.getNucleicAcidType(), labEventType.getTargetStrand());
                         }
                         sampleInstance.setMolecularState(molecularState);
