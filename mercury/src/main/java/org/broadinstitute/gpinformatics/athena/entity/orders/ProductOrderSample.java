@@ -1,9 +1,14 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -15,53 +20,54 @@ import java.util.regex.Pattern;
  * a billableItem and an optionally comment which may be in most cases empty but on
  * occasion can actually have a value to describe "exceptions" that occur for a particular sample.
  *
- * <p/>
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 8/28/12
- * Time: 10:26 AM
+ * @author mccrory
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name= "PRODUCT_ORDER_SAMPLE", schema = "athena")
 public class ProductOrderSample implements Serializable {
-
     @Id
-    @SequenceGenerator(name="SEQ_ORDER_SAMPLE", schema = "athena", sequenceName="SEQ_ORDER_SAMPLE")
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_ORDER_SAMPLE")
+    @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ORDER_SAMPLE")
     private Long productOrderSampleId;
 
     public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
+
+    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile(BSP_SAMPLE_FORMAT_REGEX);
+
     static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
+
+    @Index(name = "ix_pos_sample_name")
+    @Column(nullable = false)
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
+
     private BillingStatus billingStatus = BillingStatus.NotYetBilled;
+
     private String sampleComment;
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrderSample")
     private Set<BillableItem> billableItems = new HashSet<BillableItem>();
 
+    @Index(name = "ix_pos_product_order")
     @ManyToOne
     private ProductOrder productOrder;
 
     @Transient
-    private BSPSampleDTO bspDTO;
+    private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
+
+    @Transient
+    private boolean hasBspDTOBeenInitialized;
 
     ProductOrderSample() {
     }
 
-    public ProductOrderSample(String sampleName) {
+    public ProductOrderSample(@Nonnull String sampleName) {
         this.sampleName = sampleName;
     }
 
-//    public OrderSample(String sampleName, BSPSampleDTO bspDTO) {
-//        this.sampleName = sampleName;
-//        this.bspDTO = bspDTO;
-//    }
-
-
-    public ProductOrderSample(final String sampleName, final BSPSampleDTO bspDTO, final ProductOrder productOrder) {
+    public ProductOrderSample(@Nonnull String sampleName, @Nonnull BSPSampleDTO bspDTO, ProductOrder productOrder) {
         this.sampleName = sampleName;
-        this.bspDTO = bspDTO;
+        setBspDTO(bspDTO);
         this.productOrder = productOrder;
     }
 
@@ -81,21 +87,24 @@ public class ProductOrderSample implements Serializable {
         return sampleComment;
     }
 
-    public void setSampleComment(String comment) {
-        this.sampleComment = comment;
+    public void setSampleComment(String sampleComment) {
+        this.sampleComment = sampleComment;
     }
 
-    private BSPSampleDTO getBspDTO() {
-        if ( isInBspFormat() && ! hasBSPDTOBeenInitialized() ) {
-            //TODO
-            // initialize DTO ?
-            throw new RuntimeException("Not yet Implemented.");
+    public boolean needsBspMetaData() {
+        return isInBspFormat() && !hasBspDTOBeenInitialized;
+    }
+
+    public BSPSampleDTO getBspDTO() {
+        if (!hasBspDTOBeenInitialized) {
+            if (isInBspFormat()) {
+                bspDTO = ServiceAccessUtility.getSampleDtoByName(getSampleName());
+            } else {
+                bspDTO = BSPSampleDTO.DUMMY;
+            }
+            hasBspDTOBeenInitialized = true;
         }
         return bspDTO;
-    }
-
-    public boolean hasBSPDTOBeenInitialized() {
-        return bspDTO != null;
     }
 
     public Set<BillableItem> getBillableItems() {
@@ -106,155 +115,46 @@ public class ProductOrderSample implements Serializable {
         billableItems.add(billableItem);
     }
 
-    public void setBspDTO(BSPSampleDTO bspDTO) {
+    public void setBspDTO(@Nonnull BSPSampleDTO bspDTO) {
+        if (bspDTO == null) {
+            throw new NullPointerException("BSP Sample DTO cannot be null");
+        }
         this.bspDTO = bspDTO;
+        hasBspDTOBeenInitialized = true;
     }
 
     public boolean isInBspFormat() {
-        return isInBspFormat( getSampleName() );
+        return isInBspFormat(sampleName);
     }
 
-    public static boolean isInBspFormat(String sampleName) {
-        if (StringUtils.isBlank(sampleName)) {
-            return false;
+    public static boolean isInBspFormat(@Nonnull String sampleName) {
+        if (sampleName == null) {
+            throw new NullPointerException("Sample name cannot be null");
         }
-        return Pattern.matches(ProductOrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
-    }
 
-    // Methods delegated to the DTO
-    public String getVolume() throws IllegalStateException {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getVolume();
+        return !StringUtils.isBlank(sampleName)
+                && Pattern.matches(ProductOrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
     }
-
-    public String getConcentration() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getConcentration();
-    }
-
-    public String getRootSample() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getRootSample();
-    }
-
-    public String getStockSample() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getStockSample();
-    }
-
-    public String getCollection() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getCollection();
-    }
-
-    public String getCollaboratorsSampleName() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getCollaboratorsSampleName();
-    }
-
-    public String getContainerId() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getContainerId();
-    }
-
-    public String getParticipantId() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getPatientId();
-    }
-
-    public String getOrganism() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getOrganism();
-    }
-
-    public String getStockAtExport() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getStockAtExport();
-    }
-
-    public Boolean isPositiveControl() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().isPositiveControl();
-    }
-
-    public Boolean isNegativeControl() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().isNegativeControl();
-    }
-
-    public String getSampleLsid() {
-        if (! isInBspFormat() ) {
-            throw ILLEGAL_STATE_EXCEPTION;
-        }
-        return getBspDTO().getSampleLsid();
-    }
-
-    public String getGender() {
-        //TODO hmc
-        throw new RuntimeException("Not yet Implemented.");
-    }
-
-    public String getDisease() {
-        //TODO hmc
-        throw new RuntimeException("Not yet Implemented.");
-    }
-
-    public String getSampleType() {
-        //TODO hmc
-        throw new RuntimeException("Not yet Implemented.");
-    }
-
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ProductOrderSample)) return false;
-
-        final ProductOrderSample that = (ProductOrderSample) o;
-
-        if (billableItems != null ? !billableItems.equals(that.billableItems) : that.billableItems != null)
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ProductOrderSample)) {
             return false;
-        if (billingStatus != that.billingStatus) return false;
-        if (bspDTO != null ? !bspDTO.equals(that.bspDTO) : that.bspDTO != null) return false;
-        if (sampleComment != null ? !sampleComment.equals(that.sampleComment) : that.sampleComment != null) return false;
-        if (!productOrder.equals(that.productOrder)) return false;
-        if (!sampleName.equals(that.sampleName)) return false;
+        }
 
-        return true;
+        ProductOrderSample that = (ProductOrderSample) o;
+        return new EqualsBuilder().append(sampleName, that.sampleName).append(billingStatus, that.billingStatus)
+                .append(sampleComment, that.sampleComment).append(billableItems, that.billableItems)
+                .append(productOrder, that.productOrder).append(bspDTO, that.bspDTO).build();
     }
 
     @Override
     public int hashCode() {
-        int result = sampleName.hashCode();
-        result = 31 * result + billingStatus.hashCode();
-        result = 31 * result + (sampleComment != null ? sampleComment.hashCode() : 0);
-        result = 31 * result + (billableItems != null ? billableItems.hashCode() : 0);
-        result = 31 * result + productOrder.hashCode();
-        result = 31 * result + (bspDTO != null ? bspDTO.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder().append(sampleName).append(billingStatus)
+                .append(sampleComment).append(billableItems).append(productOrder)
+                .append(bspDTO).build();
     }
 }

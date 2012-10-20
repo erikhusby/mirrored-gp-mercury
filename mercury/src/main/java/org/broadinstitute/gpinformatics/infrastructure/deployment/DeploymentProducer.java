@@ -11,9 +11,6 @@ import javax.inject.Inject;
 import javax.naming.NamingException;
 import java.io.Serializable;
 
-
-@Startup
-@Singleton
 /**
  * This class is responsible for looking up the value of <pre>MERCURY_DEPLOYMENT</pre> from JNDI or the JNDI environment.
  * The former is set in Glassfish Custom JNDI resources (resource type is String, name = 'value', value is one of
@@ -23,33 +20,25 @@ import java.io.Serializable;
  * {@link Startup} and {@link Singleton}, so it will do this JNDI lookup on artifact deployment.  Failure to resolve
  * MERCURY_DEPLOYMENT or have the value match one of DEV, TEST, QA, PROD, or STUBBY is a fatal error that will halt
  * deployment.
- *
  */
+@Startup
+@Singleton
 public class DeploymentProducer implements Serializable {
-
-
     public static final String MERCURY_DEPLOYMENT = "MERCURY_DEPLOYMENT";
-
 
     @Inject
     private Log log;
 
-
     @Inject
     private JNDIResolver jndiResolver;
 
-
     private Deployment deployment;
-
 
     @PostConstruct
     public void init() {
-
         String deploymentString = null;
 
-
         try {
-
             // NamingException lookup failures checked below if MERCURY_DEPLOYMENT is not found
             deploymentString = jndiResolver.lookupProperty(MERCURY_DEPLOYMENT);
 
@@ -58,32 +47,21 @@ public class DeploymentProducer implements Serializable {
             deployment = Deployment.valueOf(deploymentString);
 
             log.info("Mercury deployment specified in JNDI, set to " + deploymentString);
-
-
-        }
-
-        catch (NamingException e) {
-
+        } catch (NamingException e) {
             // This represents a failure to find the property in JNDI at all.  Per 2012-06-13 Exome Express meeting
             // we are treating this as a Big Deal and aborting the deployment by throwing a RuntimeException.
             log.error("JNDI lookup of " + MERCURY_DEPLOYMENT + " property failed! " + e);
-            throw new RuntimeException(e);
-        }
-
-        catch (NullPointerException e) {
+            // throw new RuntimeException(e);
+        } catch (NullPointerException e) {
+            log.error("JNDI lookup of " + MERCURY_DEPLOYMENT + " failed, found " + MERCURY_DEPLOYMENT + "=" + deploymentString);
+            log.error(e);
+            throw e;
+        } catch (IllegalArgumentException e) {
             log.error("JNDI lookup of " + MERCURY_DEPLOYMENT + " failed, found " + MERCURY_DEPLOYMENT + "=" + deploymentString);
             log.error(e);
             throw e;
         }
-
-        catch (IllegalArgumentException e) {
-            log.error("JNDI lookup of " + MERCURY_DEPLOYMENT + " failed, found " + MERCURY_DEPLOYMENT + "=" + deploymentString);
-            log.error(e);
-            throw e;
-        }
-
     }
-
 
     @Produces
     public Deployment produce() {

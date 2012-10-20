@@ -8,33 +8,78 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:p="http://primefaces.org/ui">
-<body>
+
+<h:head>
+    <title>Athena Product List</title>
+</h:head>
+
+<h:body>
 <ui:composition template="/layout.xhtml">
+    <ui:define name="metadata">
+        <f:event type="preRenderView" listener="#{productList.onPreRenderView}" />
+    </ui:define>
+
     <ui:define name="title">Products</ui:define>
     <ui:define name="body">
 
-        <!-- per the mockups, clicking a row in this table will view the Product Details -->
-        <p:dataTable value="#{productBean.topLevelProducts}" var="product">
-            <p:column headerText="Part #">
-                #{product.partNumber}
-            </p:column>
+        <h:form id="productList">
 
-            <p:column headerText="Name">
-                #{product.productName}
-            </p:column>
+            <p:dataTable value="#{productList.productsDataModel}"
+                         var="product"
+                         id="dataTable"
+                         widgetVar="dataTable"
+                         filteredValue="#{productList.filteredValues}"
+                         emptyMessage="No products found containing search text">
 
-            <p:column headerText="Description">
-                #{product.description}
-            </p:column>
+                <!-- even with ajax selection gone the global filter still lags by one event... -->
 
-        </p:dataTable>
+                <!--<f:facet name="header">-->
+                    <!--<p:outputPanel styleClass="pull-right">-->
+                        <!--<h:outputText value=" Search "/>-->
+                        <!--<p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>-->
+                    <!--</p:outputPanel>-->
+                <!--</f:facet>-->
 
-        <h:form>
-            <p><p:commandButton value="New Product..." action="create?faces-redirect=true" ajax="false"/></p>
-            <!-- TODO: fill in action for new product order view -->
-            <p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>
+                <p:column sortBy="#{product.partNumber}" sortFunction="#{productList.compare}">
+                          <!--filterBy="#{product.partNumber}" filterStyleClass="hide">-->
+                    <f:facet name="header">
+                        <h:outputText value="Part Number" />
+                    </f:facet>
+
+                    <!--<h:outputText value="#{product.partNumber}" />-->
+                    <h:link outcome="view" value="#{product.partNumber}">
+                        <f:param name="product" value="#{product.businessKey}"/>
+                    </h:link>
+                </p:column>
+
+                <p:column sortBy="#{product.productName}" sortFunction="#{productList.compare}">
+                          <!--filterBy="#{product.productName}" filterStyleClass="hide">-->
+                    <f:facet name="header">
+                        <h:outputText value="Name" />
+                    </f:facet>
+                    <h:outputText value="#{product.productName}" />
+                </p:column>
+
+                <p:column sortBy="#{product.productFamily.displayName}" sortFunction="#{productList.compare}">
+                          <!--filterBy="#{product.productFamily.displayName}" filterStyleClass="hide">-->
+                    <f:facet name="header">
+                        <h:outputText value="Product Family" />
+                    </f:facet>
+                    <h:outputText value="#{product.productFamily.displayName}" />
+                </p:column>
+
+                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productList.compare}" >
+                    <h:outputText value='#{product.topLevelProduct ? "Yes" : "No"}' />
+                </p:column>
+
+                <p:column headerText="Available?" sortBy="#{product.available}" sortFunction="#{productList.compare}" >
+                    <h:outputText value='#{product.available ? "Yes" : "No"}'/>
+                </p:column>
+
+            </p:dataTable>
         </h:form>
+
     </ui:define>
 </ui:composition>
-</body>
+</h:body>
 </html>

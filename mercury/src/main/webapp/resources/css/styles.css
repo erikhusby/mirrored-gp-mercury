@@ -10,60 +10,59 @@
  * use, misuse, or functionality.
  */
 body { padding-bottom: 40px; font-size: 12px; }
-footer { font-size: 0.75em; text-align: center; padding-top: 20px; }
-
-#ajaxStatus_start {
-    background-color: #004478;
-    color: #ffffff;
-    left: 0;
-    padding: 5px;
-    position: fixed;
-    top: 0;
-}
+footer { font-size: 10px; text-align: center; padding-top: 20px; }
 
 /* Override Bootstrap's opinion that links should not be underlined. */
-a { text-decoration: underline; }
+a { text-decoration: underline; color: #0088CC; }
+a.external{background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
+
+label, input, button, select, textarea { font-size: 12px }
+
+#ajaxStatus_start { background-color: #0088CC; color: #ffffff; left: 0; padding: 5px; position: fixed; top: 0; left: 50% }
 
 /* Override PrimeFaces's Bootstrap theme opinion that links in widgets should be default text color. */
-.ui-widget-content a { color: #08C; }
+.ui-widget-content a { color: #0088CC; !important }
 
 /* Make p:autoComplete's input field a little wider to fit longer watermarks. */
-.ui-autocomplete-multiple .ui-autocomplete-input-token input {
-    width: 160px;
-}
+.ui-autocomplete-multiple .ui-autocomplete-input-token input {  width: 160px; }
 
 /* Tighten vertical spacing of Bootstrap horizontal forms. */
-.form-horizontal .control-group {
-    margin-bottom: 12px;
-}
+.form-horizontal .control-group { margin-bottom: 12px; }
 
-/* Right-justify p:dataTable content. E.g.: <h:outputText value="..." styleClass="dataTable-align-right" */
-.ui-datatable-data td .align-right {
-    float: right;
-}
+/* Right-justify p:dataTable content. E.g.: <h:outputText value="..." styleClass="dataTable-align-right"/> */
+.ui-datatable-data td .align-right { float: right; }
+
+/* Fix bug with PrimeFaces Bootstrap theme: http://forum.primefaces.org/viewtopic.php?f=9&t=25031 */
+.ui-widget-content input.ui-state-error, .ui-widget-content textarea.ui-state-error { color: black; }
+
+.controls .ui-message-error { display: inline-block; }
+
+/* Change error label style to more closely match Bootstrap. */
+label.ui-state-error, .ui-widget-content label.ui-state-error { background: white; color: #B94A48 }
+
+/* Fix bug with PrimeFaces Bootstrap theme: http://forum.primefaces.org/viewtopic.php?f=9&t=25031 */
+.ui-widget-content input.ui-state-error, .ui-widget-content textarea.ui-state-error { color: black; }
+
+.controls .ui-message-error { display: inline-block; }
+
+/* Change error label style to more closely match Bootstrap. */
+label.ui-state-error, .ui-widget-content label.ui-state-error { background: white; color: #B94A48 }
 
 .pass-section { font-weight: bold; }
 .pass-label { font-style: italic; padding-right: 10px; }
 .pass-data { }
 
+.view-horizontal .control-group { margin-bottom: 20px; *zoom: 1; }
+.view-horizontal .control-label { float: left; width: 160px; text-align: right; }
+.view-horizontal .controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; height: 15px; padding-bottom: 5px; }
+.view-horizontal .control-group { margin-bottom: 1px; }
 
-.view-horizontal .control-group {
-    margin-bottom: 20px;
-    *zoom: 1;
-}
+.form-readonly .control-group { margin-bottom: 0px; }
+.form-value { font-size: 12px; padding: 5px 7px; }
 
-.view-horizontal .control-label {
-    float: left;
-    width: 160px;
-    text-align: right;
-}
+.hide, .ui-datatable .ui-filter-column .hide { display: none; visibility: hidden; }
 
-.view-horizontal .controls {
-    padding-left: 3px;
-    padding-right: 3px;
-    border-width: 1px;
-    display: inline-block;
-    margin-left: 15px;
-    height: 15px;
-    padding-bottom: 5px;
-}
+.label-form { background-color: #f0f0f0; color: #333333; border-radius: 5px; padding-right: 3px; }
+
+.ac-dropdown-text { font-size: small; }
+.ac-dropdown-subtext { font-size: smaller; font-style: italic; }

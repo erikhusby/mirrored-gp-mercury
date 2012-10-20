@@ -16,6 +16,11 @@
     </context-param>
 
     <context-param>
+        <param-name>javax.faces.DATETIMECONVERTER_DEFAULT_TIMEZONE_IS_SYSTEM_TIMEZONE</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
+    <context-param>
         <param-name>primefaces.THEME</param-name>
         <param-value>bootstrap</param-value>
     </context-param>
@@ -203,4 +208,16 @@
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
+    <session-config>
+		<session-timeout>480</session-timeout>
+	</session-config>
+
+    <error-page>
+        <error-code>500</error-code>
+        <location>/error.xhtml</location>
+    </error-page>
+    <error-page>
+       <exception-type>java.lang.Exception</exception-type>
+       <location>/error.xhtml</location>
+    </error-page>
 </web-app>

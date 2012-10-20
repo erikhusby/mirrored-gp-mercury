@@ -44,25 +44,31 @@ public class ResearchProjectResourceTest extends ContainerTest {
         // Only do this if the server is calling this and thus, injection worked
         if (researchProjectResource != null) {
             testTitle = "MyResearchProject_" + UUID.randomUUID();
-            ResearchProject researchProject =
-                    new ResearchProject(TEST_CREATOR, testTitle, "To study stuff.", ResearchProject.IRB_NOT_ENGAGED);
-            researchProject.setJiraTicketKey(testTitle);
-
-            researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant_" + UUID.randomUUID()));
-            researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO_" + UUID.randomUUID()));
-
-            researchProject.addIrbNumber(
-                new ResearchProjectIRB(researchProject, FARBER, "irb123_" + UUID.randomUUID()));
-            researchProject.addIrbNumber(
-                new ResearchProjectIRB(researchProject, BROAD, "irb456_" + UUID.randomUUID()));
-
-            researchProject.addPerson(RoleType.SCIENTIST, TestScientist1);
-            researchProject.addPerson(RoleType.SCIENTIST, TestScientist2);
+            ResearchProject researchProject = createDummyResearchProject(testTitle);
 
             researchProjectDao.persist(researchProject);
 
             testResearchProjectId = researchProject.getResearchProjectId();
         }
+    }
+
+    public static ResearchProject createDummyResearchProject(String title) {
+        ResearchProject researchProject =
+                new ResearchProject(TEST_CREATOR, title, "To study stuff.", ResearchProject.IRB_NOT_ENGAGED);
+        researchProject.setJiraTicketKey(title);
+
+        researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant_" + UUID.randomUUID()));
+        researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO_" + UUID.randomUUID()));
+
+        researchProject.addIrbNumber(
+            new ResearchProjectIRB(researchProject, FARBER, "irb123_" + UUID.randomUUID()));
+        researchProject.addIrbNumber(
+            new ResearchProjectIRB(researchProject, BROAD, "irb456_" + UUID.randomUUID()));
+
+        researchProject.addPerson(RoleType.SCIENTIST, TestScientist1);
+        researchProject.addPerson(RoleType.SCIENTIST, TestScientist2);
+
+        return researchProject;
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -87,6 +93,6 @@ public class ResearchProjectResourceTest extends ContainerTest {
         List<ResearchProject> researchProjects =
                 researchProjectResource.findAllResearchProjectsByCreator(TEST_CREATOR);
         Assert.assertNotNull(researchProjects);
-        Assert.assertEquals(researchProjects.size(), 1);
+        Assert.assertFalse(researchProjects.isEmpty());
     }
 }

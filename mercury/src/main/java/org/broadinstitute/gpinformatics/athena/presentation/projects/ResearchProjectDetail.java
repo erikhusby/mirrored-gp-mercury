@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
+import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Arrays;
@@ -21,35 +22,19 @@ import java.util.List;
 @RequestScoped
 public class ResearchProjectDetail extends AbstractJsfBean {
 
-    @Inject
-    private ResearchProjectDao researchProjectDao;
-
-    private String researchProjectTitle;
-
     private ResearchProject project;
 
-    private String[] selectedPersonnel;
-
+    // TODO: move to form?
     public void initEmptyProject() {
         project = new ResearchProject();
     }
 
-    public void loadProject() {
-        if ((project == null) && !StringUtils.isBlank(researchProjectTitle)) {
-            project = researchProjectDao.findByTitle(researchProjectTitle);
-        }
-    }
-
-    public String getResearchProjectTitle() {
-        return researchProjectTitle;
-    }
-
-    public void setResearchProjectTitle(String researchProjectTitle) {
-        this.researchProjectTitle = researchProjectTitle;
-    }
-
     public ResearchProject getProject() {
         return project;
+    }
+
+    public void setProject(ResearchProject project) {
+        this.project = project;
     }
 
     public String getSponsoredScientists() {
@@ -70,13 +55,5 @@ public class ResearchProjectDetail extends AbstractJsfBean {
 
     public String getIrbNumberString() {
         return StringUtils.join(project.getIrbNumbers(), ", ");
-    }
-
-    public String[] getSelectedPersonnel() {
-        return selectedPersonnel;
-    }
-
-    public void setSelectedPersonnel(String[] selectedPersonnel) {
-        this.selectedPersonnel = selectedPersonnel;
     }
 }

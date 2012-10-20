@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+<body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">#{productDetail.partNumber == null ? 'Create' : 'Edit'} Product</ui:define>
+
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}"/>
+                <f:event type="preValidate" listener="#{productDetail.initEmptyProduct}"/>
+                <f:event type="preRenderView" listener="#{productForm.initForm}"/>
+            </f:metadata>
+        </ui:define>
+
+        <ui:define name="body">
+            <h:form id="form" prependId="false" styleClass="form-horizontal">
+
+                <div class="control-group">
+                    <!-- TODO hook up the productFamily, see below -->
+                    <p:outputLabel for="productFamily" value="Product Family" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:selectOneMenu id="productFamily" value="#{productDetail.productFamily}">
+                            <p:watermark for="description" value="Select the Product family"/>
+                            <f:selectItem itemLabel="Select the Product family" itemValue="" />
+                            <f:selectItems value="#{productBean.productFamilySelectItems}" var="fam" itemValue="#{fam.productFamilyId}" itemLabel="#{fam.displayName}" required="true" converter="#{productFamilyConverter}"/>
+                            <!--<f:selectItems value="#{productDetail.productFamilies}"  var="fam" itemValue="#{fam.productFamilyId}" itemLabel="#{fam.displayName}" required="true" />-->
+                        </p:selectOneMenu>
+                        <!--<p:autoComplete id="productFamily" value="#{productForm.productFamily}" completeMethod="#{productBean.productFamilies}" var="fam" itemLabel="#{fam.displayName}" itemValue="#{fam}" converter="#{productFamilyConverter}"/>-->
+                        <!--<p:watermark for="productFamily" value="Type a Product Family Name"/>-->
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="name" value="Product Name" styleClass="control-label" />
+                    <div class="controls">
+                        <p:inputText id="name" value="#{productDetail.productName}" size="50" required="true"/>
+                        <p:watermark for="name" value="Enter the name of the new product"/>
+                        <p:message for="name"/>
+                    </div>
+                </div>
+
+
+                <div class="control-group">
+                    <p:outputLabel for="description" value="Product Description" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputTextarea id="description" value="#{productDetail.description}" cols="50" rows="3" required="true"/>
+                        <p:watermark for="description" value="Enter the description of the product"/>
+                        <p:message for="description"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="partNumber" value="Part Number" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="partNumber" value="#{productDetail.partNumber}" size="50" required="true"/>
+                        <p:watermark for="partNumber" value="Enter the part number of this product"/>
+                        <p:message for="partNumber"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="availabilityDate" value="Availability Date" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:calendar value="#{productDetail.availabilityDate}" id="availabilityDate" size="50" required="true"/>
+                        <p:watermark for="availabilityDate" value="Click here to select a date"/>
+                        <p:message for="availabilityDate"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="discontinuedDate" value="Discontinued Date" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:calendar value="#{productDetail.discontinuedDate}" id="discontinuedDate" size="50"/>
+                        <p:watermark for="discontinuedDate" value="Click here to select a date"/>
+                        <p:message for="discontinuedDate"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="deliverables" value="Deliverables" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputTextarea id="deliverables" value="#{productDetail.deliverables}" cols="50" rows="3"/>
+                        <p:watermark for="deliverables" value="Enter the deliverables for this product"/>
+                        <p:message for="deliverables"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="inputRequirements" value="Input Requirements" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputTextarea id="inputRequirements" value="#{productDetail.inputRequirements}" cols="50" rows="3"/>
+                        <p:watermark for="inputRequirements" value="Enter the input requirements for this product"/>
+                        <p:message for="inputRequirements"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="expectedCycleTimeHours" value="Expected Cycle Time (Hours)" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="expectedCycleTimeHours" value="#{productDetail.expectedCycleTimeHours}" size="50" required="false"/>
+                        <p:watermark for="expectedCycleTimeHours" value="Enter the expected cycle time in hours"/>
+                        <p:message for="expectedCycleTimeHours"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="guaranteedCycleTimeHours" value="Guaranteed Cycle Time (Hours)" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="guaranteedCycleTimeHours" value="#{productDetail.guaranteedCycleTimeHours}" size="50" required="false"/>
+                        <p:watermark for="guaranteedCycleTimeHours" value="Enter the guaranteed cycle time in hours"/>
+                        <p:message for="guaranteedCycleTimeHours"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="samplesPerWeek" value="Samples Per Week" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="samplesPerWeek" value="#{productDetail.samplesPerWeek}" size="50" required="false"/>
+                        <p:watermark for="samplesPerWeek" value="Enter the number of samples"/>
+                        <p:message for="samplesPerWeek"/>
+                    </div>
+                </div>
+
+
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="row-fluid">
+                            <div class="span1">
+                                <p:commandButton value="Save" action="#{productForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+</body>
+</html>

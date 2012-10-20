@@ -129,4 +129,80 @@ public class PlasticToProductOrderTest {
         // 3. dev
     }
 
+    /**
+     * Get some unindexed samples from bsp, then apply indexes for them.
+     * Does the PDO mapping find the right thing?
+     */
+    @Test(enabled = false)
+    public void test_incoming_sample_unindexed_index_added_in_workflow() {
+        fail();
+    }
+
+    /**
+     * Gin up some pre-indexed samples, run through an exome
+     * workflow and verify that the right PDOs are found.
+     */
+    @Test(enabled = false)
+    public void test_incoming_sample_indexed_already() {
+        fail();
+    }
+
+    /**
+     * Put the same sample into the bucket twice, one for PDO x
+     * and one for PDO y.  After they're pooled halfway through
+     * and exome workflow, does the code find the right
+     * PDO for each sample?
+     */
+    @Test(enabled = false)
+    public void test_sample_in_bucket_for_two_different_pdos() {
+        fail();
+    }
+
+    /**
+     * Put two different samples into a bucket, each with a different
+     * PDO.  Pool them in an exome workflow.  Does the code
+     * find the right PDO for each sample?
+     */
+    @Test(enabled = false)
+    public void test_pool_across_pdos() {
+        fail();
+    }
+
+    /**
+     * Take an unindexed sample and run it through
+     * the exome workflow, adding an index along the way.
+     * At a point in the event graph after the indexing,
+     * create a {@link LabEvent} that sets a different
+     * {@link LabEvent#productOrder}, and then apply some
+     * events and transfers after that.  The branch
+     * below this is considered a dev branch.
+     *
+     * Does the code map the stuff on the dev branch
+     * to the dev PDO?  Does the stuff on the earlier
+     * production branch map to the production PDO?
+     */
+    @Test(enabled = false)
+    public void test_development_branch() {
+        fail();
+    }
+
+    /**
+     * Given 3 samples from 3 different PDOs, run
+     * a workflow that pools two of them.  Then
+     * do a few transfers and add the third
+     * sample to the pool at a later step.
+     * Does the pool find the right PDO for each
+     * of the 3 samples?  For an interim vessel
+     * that contains only two samples, does the
+     * code find the right 2 samples and map them
+     * to the right PDOs?
+     */
+    @Test(enabled = false)
+    public void test_multistep_pooling() {
+        fail();
+    }
+
+
+
+
 }

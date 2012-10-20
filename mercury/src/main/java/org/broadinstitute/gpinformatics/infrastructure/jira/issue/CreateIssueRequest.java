@@ -77,7 +77,7 @@ public class CreateIssueRequest  {
 
             Whole_Exome_HybSel("Whole Exome (HybSel)"),
             Product_Order("Product Order"),
-            Research_Project("Reasearch Project");
+            Research_Project("Research Project");
 
             private final String jiraName;
 

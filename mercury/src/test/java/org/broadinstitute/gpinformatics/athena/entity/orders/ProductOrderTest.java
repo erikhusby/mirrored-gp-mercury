@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectTest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.meanbean.test.BeanTester;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -23,6 +24,8 @@ import java.util.*;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderTest {
 
+    private static final Long TEST_CREATOR = 10L;
+
     private static final String PDO_JIRA_KEY = "PDO-1";
     private ProductOrder productOrder;
 
@@ -36,19 +39,24 @@ public class ProductOrderTest {
                                     PriceItem.Name.EXOME_EXPRESS, "testQuoteId");
         Product dummyProduct = createDummyProduct();
         dummyProduct.addPriceItem(priceItem);
-        ProductOrder order = new ProductOrder("title",
+        ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
                 new ArrayList<ProductOrderSample>(), "quote", dummyProduct,
                 ResearchProjectTest.createDummyResearchProject());
 
         ProductOrderSample sample = new ProductOrderSample("SM-1234");
         sample.addBillableItem(new BillableItem(priceItem, new BigDecimal("1")));
-        order.addSample(sample);
+        order.setSamples(Collections.singletonList(sample));
 
         return order;
     }
 
     @AfterMethod
     public void tearDown() throws Exception {
+    }
+
+    @Test
+    public void test_basic_beaniness() {
+        new BeanTester().testBean(ProductOrder.class);
     }
 
     @Test
@@ -104,41 +112,41 @@ public class ProductOrderTest {
 
     @Test
     public void testGetUniqueSampleCount() throws Exception {
-        productOrder = new ProductOrder("title", sixBspSamplesNoDupes, "quote", null, null);
-        Assert.assertEquals(productOrder.getUniqueSampleCount(), 6);
+        productOrder = new ProductOrder( TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
+        Assert.assertEquals(productOrder.getUniqueSampleCount ( ), 6);
 
-        productOrder = new ProductOrder("title", fourBspSamplesWithDupes, "quote", null, null);
+        productOrder = new ProductOrder( TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
         Assert.assertEquals(productOrder.getUniqueSampleCount(), 4);
 
     }
 
     @Test
     public void testGetTotalSampleCount() throws Exception {
-        productOrder = new ProductOrder("title", sixBspSamplesNoDupes, "quote", null, null);
-        Assert.assertEquals(productOrder.getTotalSampleCount(), 6);
+        productOrder = new ProductOrder( TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
+        Assert.assertEquals ( productOrder.getTotalSampleCount ( ), 6 );
 
-        productOrder = new ProductOrder("title", fourBspSamplesWithDupes, "quote", null, null);
-        Assert.assertEquals(productOrder.getTotalSampleCount(), 6);
+        productOrder = new ProductOrder( TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
+        Assert.assertEquals ( productOrder.getTotalSampleCount ( ), 6 );
     }
 
     @Test
     public void testGetDuplicateCount() throws Exception {
-        productOrder = new ProductOrder("title", fourBspSamplesWithDupes, "quote", null, null);
+        productOrder = new ProductOrder( TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
         Assert.assertEquals(productOrder.getDuplicateCount(), 2);
     }
 
     @Test
     public void testAreAllSampleBSPFormat() throws Exception {
-        productOrder = new ProductOrder("title", fourBspSamplesWithDupes, "quote", null, null);
+        productOrder = new ProductOrder( TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
         Assert.assertTrue(productOrder.areAllSampleBSPFormat());
 
-        productOrder = new ProductOrder("title", sixBspSamplesNoDupes, "quote", null, null);
+        productOrder = new ProductOrder( TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
         Assert.assertTrue(productOrder.areAllSampleBSPFormat());
 
-        productOrder = new ProductOrder("title", nonBspSampleProducts, "quote", null, null);
+        productOrder = new ProductOrder( TEST_CREATOR, "title", nonBspSampleProducts, "quote", null, null);
         Assert.assertFalse(productOrder.areAllSampleBSPFormat());
 
-        productOrder = new ProductOrder("title", sixMixedSampleProducts, "quote", null, null);
+        productOrder = new ProductOrder( TEST_CREATOR, "title", sixMixedSampleProducts, "quote", null, null);
         Assert.assertFalse(productOrder.areAllSampleBSPFormat());
     }
 

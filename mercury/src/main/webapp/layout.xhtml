@@ -2,7 +2,7 @@
 <!--
   ~ The Broad Institute
   ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
-  ~ This software and its documentation are copyright 2011 by the
+  ~ This software and its documentation are copyright 2012 by the
   ~ Broad Institute/Massachusetts Institute of Technology. All rights are
   ~ reserved.
   ~
@@ -10,9 +10,7 @@
   ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
   ~ use, misuse, or functionality.
   -->
-<!DOCTYPE html
-        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -20,7 +18,7 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:p="http://primefaces.org/ui"
       xmlns:sqltg="http://sequel.broadinstitute.org/tags"
-      xmlns:vt="http://java.sun.com/jsf/composite/login">
+      xmlns:pe="http://primefaces.org/ui/extensions">
 
 <!--
   Base JSF page template to be used in the "template" attribure of
@@ -34,74 +32,109 @@
 <f:view contentType="text/html">
     <ui:insert name="metadata"/>
     <h:head>
-        <!--<link href='http://fonts.googleapis.com/css?family=Lato|Arvo|PT+Sans|Cantarell|Open+Sans' rel='stylesheet' type='text/css'/>-->
         <h:outputStylesheet library="css" name="bootstrap.css"/>
         <h:outputStylesheet library="css" name="primefaces_bootstrap_fixes.css"/>
         <h:outputStylesheet library="css" name="styles.css"/>
-        <title>Athena : <ui:insert name="title"/></title>
+        <link rel="shortcut icon" type="image/x-icon" href="#{request.contextPath}/favicon.ico"/>
+        <title>Mercury | <ui:insert name="title"/></title>
         <ui:insert name="head"/>
+
+        <script type="text/javascript" src="http://prodinfojira.broadinstitute.org/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
+        <script type="text/javascript">window.ATL_JQ_PAGE_PROPS =  {
+            "triggerFunction": function(showCollectorDialog) {
+                jQuery("#jiraProblem").click(function(e) {
+                    e.preventDefault();
+                    showCollectorDialog();
+                });
+            }};</script>
     </h:head>
     <h:body>
-
-        <div class="navbar navbar-static-top">
+        <div class="navbar">
             <div class="navbar-inner">
                 <div class="container-fluid">
+                    <div class="row-fluid">
+                        <div class="brand">
+                            <p:graphicImage url="/images/broad_logo.png" alt="Broad Institute"/>
+                            <h:link outcome="/index" style="padding-left: 50px;text-decoration: none; font-variant: small-caps; font-size: 1.2em"><p:graphicImage url="/images/mercury_helmet.png" alt="Mercury Helmet"/> Mercury</h:link>
+                        </div>
 
-                    <div class="brand"><p:graphicImage url="/images/broad_logo.png" alt="Broad Institute"/> <h:link outcome="/index" style="padding-left: 20px;">Athena</h:link></div>
-                    <div class="nav-collapse pull-right">
                         <sqltg:isLoggedIn>
-                            <h:form>
-                                <h:commandLink action="#{logoutHandler.logout}" value="Logout"/>
+                            <h:form styleClass="navbar-form pull-right">
+                                <span id="jiraProblem" class="badge badge-warning" style="cursor: help;" title="Click here to send a bug report or feedback">Feedback?</span>
+                                |
+                                <h:outputText value="#{request.getRemoteUser()}" styleClass="badge"/>
+                                |
+                                <p:commandLink action="#{logoutHandler.logout}" value="Sign out" />
                             </h:form>
                         </sqltg:isLoggedIn>
                     </div>
                 </div>
             </div>
+            <div class="row-fluid">
+                <ui:include src="navigation.xhtml"></ui:include>
+            </div>
         </div>
 
         <div class="container-fluid">
+            <p:ajaxStatus id="ajaxStatus" styleClass="span2 offset5">
+                <f:facet name="start">
+                    Loading...
+                </f:facet>
+                <f:facet name="complete">
+                    <h:outputText value="" />
+                </f:facet>
+            </p:ajaxStatus>
+
+            <pe:ajaxErrorHandler
+                    title="Server Error: {error-name}"
+                    button="Close"
+                    widgetVar="ajaxErrorHandler" buttonOnclick="ajaxErrorHandler.hide()">
+                <f:facet name="body">
+                    <div>
+                        <h:form>
+                            <p:tabView>
+                                <p:tab title="Message">
+                                    Error message: {error-message}
+                                </p:tab>
+                                <p:tab title="Detail">
+                                    <div style="overflow: auto; height: 300px; width: 700px;">
+                                        <pre style="font-size: 10px">{error-stacktrace}</pre>
+                                    </div>
+                                </p:tab>
+                            </p:tabView>
+                        </h:form>
+                    </div>
+                </f:facet>
+            </pe:ajaxErrorHandler>
+
+            <p:dialog modal="false" widgetVar="statusDialog" draggable="false" closable="false" maximizable="false" resizable="false" minimizable="false">
+                <p:outputPanel>
+                    <p:graphicImage url="/images/spinner.gif" alt="Please wait" />
+                    <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&nbsp;wait..." />
+                </p:outputPanel>
+            </p:dialog>
+
             <div class="row-fluid">
-                <div class="span12">
-                    <ui:include src="navigation.xhtml"></ui:include>
-                </div>
+                <p:panel>
+                    <f:facet name="header"><span id="panelTitle"><ui:insert name="title"/></span></f:facet>
 
-                <p:ajaxStatus id="ajaxStatus">
-                    <f:facet name="start">
-                        Loading...
-                    </f:facet>
-                    <f:facet name="complete">
-                        <h:outputText value="" />
-                    </f:facet>
-                </p:ajaxStatus>
+                    <!-- show messages/errors -->
+                    <p:messages autoUpdate="true" severity="fatal" />
+                    <p:messages autoUpdate="true" severity="error" />
+                    <p:messages autoUpdate="true" severity="warn" />
+                    <p:messages autoUpdate="true" severity="info" />
 
-                <p:dialog modal="false" widgetVar="statusDialog" draggable="false" closable="false" maximizable="false" resizable="false" minimizable="false">
-                    <p:outputPanel>
-                        <p:graphicImage url="/images/spinner.gif" />
-                        <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&nbsp;wait..." />
-                    </p:outputPanel>
-                </p:dialog>
+                    <ui:insert name="body"/>
+                </p:panel>
             </div>
-
-            <div class="row-fluid">
-                    <p:panel>
-                            <f:facet name="header"><span id="panelTitle"><ui:insert name="title"/></span></f:facet>
-
-                            <!-- show messages/errors -->
-                            <p:messages severity="error" />
-                            <p:messages severity="warn" />
-                            <p:messages severity="info" />
-
-                            <ui:insert name="body"/>
-                    </p:panel>
-            </div>
-
-            <footer>
-                Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.
-            </footer>
-
         </div>
+        <footer>
+            <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or disclosure is permitted.<br/>
+               Genomics Platform. <ui:include src="administration/buildInfo.xhtml"/></p>
+        </footer>
 
         <ui:debug/>
+
     </h:body>
 </f:view>
 </html>

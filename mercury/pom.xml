@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
@@ -42,7 +40,8 @@
         <connection>scm:git|${git.url}</connection>
         <developerConnection>scm:git|${git.url}</developerConnection>
         <url>${git.browseUrl}</url>
-    </scm>
+      <tag>HEAD</tag>
+  </scm>
 
     <distributionManagement>
         <site>
@@ -62,24 +61,6 @@
             </roles>
         </developer>
     </developers>
-
-    <!--
-    Glassfish 3.1.2 lists a decommissioned maven repository
-    (maven.glassfish.org). To get around the checksum errors that this causes,
-    developers must add this to their settings.xml until such time as we use a
-    version of glassfish where the POM has been fixed to not include the old
-    repository:
-
-    <mirrors>
-        <mirror>
-            <id>maven-central</id>
-            <url>http://repo1.maven.org/maven2/</url>
-            <mirrorOf>glassfish-repo-archive</mirrorOf>
-        </mirror>
-    </mirrors>
-
-    See: https://blogs.oracle.com/theaquarium/entry/some_maven_related_changes_when
-    -->
 
     <repositories>
         <repository>
@@ -182,20 +163,10 @@
         <site.path>/prodinfo/releng/m2-projects</site.path>
 
         <seam.version>3.1.0.Final</seam.version>
-        <!--<jersey.version>1.8</jersey.version>-->
-        <!--<jersey.version>1.12</jersey.version>-->
-
-        <!--
-
-             Jersey 1.11 is supplied with Glassfish 3.1.2.  If I specify any version other than this in the POM,
-             deploy to GF 3.1.2, and run a code path that calls Client.create(), that call seems to never return.
-
-             From inspecting the stack of the never-returning worker thread, this seems to be an OGSi issue.
-             I think the call should either find the desired version of Jersey or it should fail with an error,
-             but instead it seems to search endlessly.
-
-        -->
         <jersey.version>1.11</jersey.version>
+
+        <oracle.version>6-11.2.0.1.0</oracle.version>
+        <postgresql.version>9.1-901.jdbc4</postgresql.version>
 
         <jbossas_7.version>7.1.1.Final</jbossas_7.version>
 
@@ -204,7 +175,19 @@
         was not really possible.
         -->
         <tests.excludedGroups>UI</tests.excludedGroups>
-        <tests.groups/>
+        <tests.groups />
+
+        <build.resultKey>LOCAL</build.resultKey>
+        <build.buildTimeStamp>now</build.buildTimeStamp>
+
+        <!-- Default Postgres Database settings for Liquibase and Maven SQL Plugin-->
+        <database>postgres</database>
+        <database.driver>org.postgresql.Driver</database.driver>
+        <database.url>jdbc:postgresql://localhost/postgres</database.url>
+        <mercury.password>mercury_dev</mercury.password>
+        <athena.password>athena_dev</athena.password>
+        <database.delimiterType>normal</database.delimiterType>
+
     </properties>
 
     <profiles>
@@ -396,8 +379,7 @@
                                                This yields a namespace definition on the form
                                                <xs:schema ... xmlns:[toPrefix]="[uri]" ... />
 
-                                               (I.e: <xs:schema ... xmlns:some="http://some/namespace"
-                                                                    xmlns:xs="http://www.w3.org/2001/XMLSchema"> )
+                                               (I.e: <xs:schema ... xmlns:some="http://some/namespace" xmlns:xs="http://www.w3.org/2001/XMLSchema"> )
 
                                                ... and transforms relevant xml schema elements to use the provided namespace prefix:
 
@@ -498,14 +480,16 @@
             <profile>
                 <id>Tests.UI</id>
                 <properties>
-                    <tests.excludedGroups/>
+                    <tests.excludedGroups />
                     <tests.groups>UI,arquillian</tests.groups>
                 </properties>
             </profile>
         <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
             <id>JavaEE</id>
-
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <dependencies>
                 <dependency>
                     <groupId>javax</groupId>
@@ -545,79 +529,6 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-log4j12</artifactId>
                     <version>1.6.4</version>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
-            <id>Arquillian-Glassfish</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>org.jboss.arquillian.container</groupId>
-                    <artifactId>arquillian-glassfish-embedded-3.1</artifactId>
-                    <version>1.0.0.CR3</version>
-                    <scope>test</scope>
-                </dependency>
-<!-- Possible workaround for problem discussed at https://community.jboss.org/message/729907
-                <dependency>
-                    <groupId>javax.enterprise</groupId>
-                    <artifactId>cdi-api</artifactId>
-                    <version>1.0</version>
-                    <scope>provided</scope>
-                </dependency>
--->
-                <dependency>
-                    <groupId>org.glassfish.main.extras</groupId>
-                    <artifactId>glassfish-embedded-all</artifactId>
-                    <version>3.1.2</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
-            <id>Arquillian-Glassfish-Managed</id>
-            <dependencies>
-                <!-- For Arquillian managed JEE containers, use org.jboss.spec:jboss-javaee-6.0 in lieu of javax:javaee-api.
-                     see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
-                -->
-                <dependency>
-                    <groupId>org.jboss.spec</groupId>
-                    <artifactId>jboss-javaee-6.0</artifactId>
-                    <version>1.0.0.Final</version>
-                    <type>pom</type>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.jboss.arquillian.container</groupId>
-                    <artifactId>arquillian-glassfish-managed-3.1</artifactId>
-                    <version>1.0.0.CR3</version>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
-            <id>Arquillian-Glassfish-Remote</id>
-            <dependencies>
-                <!-- For Arquillian managed JEE containers, use org.jboss.spec:jboss-javaee-6.0 in lieu of javax:javaee-api.
-                     see: https://community.jboss.org/wiki/WhatsTheCauseOfThisExceptionJavalangClassFormatErrorAbsentCode
-                -->
-                <dependency>
-                    <groupId>org.jboss.spec</groupId>
-                    <artifactId>jboss-javaee-6.0</artifactId>
-                    <version>1.0.0.Final</version>
-                    <type>pom</type>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.jboss.arquillian.container</groupId>
-                    <artifactId>arquillian-glassfish-remote-3.1</artifactId>
-                    <version>1.0.0.CR3</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
@@ -704,52 +615,7 @@
         </profile>
 
         <profile>
-            <id>Run-Embedded</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.glassfish.main.extras</groupId>
-                    <artifactId>glassfish-embedded-all</artifactId>
-                    <version>3.1.2</version>
-                    <scope>provided</scope>
-                </dependency>
-            </dependencies>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.glassfish.embedded</groupId>
-                        <artifactId>maven-embedded-glassfish-plugin</artifactId>
-                        <configuration>
-                            <app>${project.build.directory}/${project.build.finalName}.war</app>
-                            <port>${glassfish.httpPort}</port>
-                            <contextRoot>/</contextRoot>
-                            <autoDelete>true</autoDelete>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
             <id>DEV</id>
-            <properties>
-                <glassfish.home>${user.home}/glassfish3</glassfish.home>
-                <glassfish.adminPort>4848</glassfish.adminPort>
-                <glassfish.httpPort>8080</glassfish.httpPort>
-            </properties>
             <build>
                 <testResources>
                     <testResource>
@@ -769,6 +635,16 @@
         </profile>
         <profile>
             <id>BUILD</id>
+            <properties>
+                <!--  Oracle Dev database -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</database.url>
+                <mercury.password>mercury_dev</mercury.password>
+                <athena.password>athena_dev</athena.password>
+            </properties>
             <build>
                 <testResources>
                     <testResource>
@@ -785,46 +661,54 @@
                         </includes>
                     </testResource>
                 </testResources>
-	    </build>
+	        </build>
         </profile>
 
         <profile>
             <id>QA</id>
+            <properties>
+                <!-- Oracle Dev -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
+                <mercury.password>mercury_qa</mercury.password>
+                <athena.password>athena_qa</athena.password>
+            </properties>
         </profile>
         <profile>
             <id>PROD</id>
             <properties>
-                <glassfish.home>/prodinfolocal/glassfish3</glassfish.home>
-                <glassfish.adminPort>4848</glassfish.adminPort>
-                <glassfish.httpPort>8090</glassfish.httpPort>
-                <glassfish.domain>domain1</glassfish.domain>
-                <glassfish.host>seqlims.broadinstitute.org</glassfish.host>
-            </properties>
+                <!-- Oracle Dev -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
 
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@gpinfoprod:1521:gpinfprd</database.url>
+                <mercury.password>mercury_prod</mercury.password>
+                <athena.password>athena_prod</athena.password>
+            </properties>
         </profile>
 
         <profile>
-            <id>LiquibaseMercury</id>
+            <id>Liquibase</id>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.liquibase</groupId>
                         <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.1</version>
+                        <version>2.0.5</version>
                         <executions>
                             <execution>
+                                <id>Mercury</id>
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/mercurydb.changelog-1.0.xml</changeLogFile>
-                                    <!-- todo jmt decide how best to have different parameters for different databases -->
-<!--
-                                    <driver>org.postgresql.Driver</driver>
-                                    <url>jdbc:postgresql://localhost/postgres</url>
--->
-                                    <driver>oracle.jdbc.driver.OracleDriver</driver>
-                                    <url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</url>
+                                    <driver>${database.driver}</driver>
+                                    <url>${database.url}</url>
                                     <username>mercury</username>
-                                    <password>mercury_dev</password>
+                                    <password>${mercury.password}</password>
                                     <defaultSchemaName>mercury</defaultSchemaName>
                                     <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                                 </configuration>
@@ -832,33 +716,15 @@
                                     <goal>update</goal>
                                 </goals>
                             </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>LiquibaseAthena</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.liquibase</groupId>
-                        <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.1</version>
-                        <executions>
                             <execution>
+                                <id>Athena</id>
                                 <phase>process-resources</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/athenadb.changelog-1.0.xml</changeLogFile>
-                                    <!-- todo jmt decide how best to have different parameters for different databases -->
-<!--
-                                    <driver>org.postgresql.Driver</driver>
-                                    <url>jdbc:postgresql://localhost/postgres</url>
--->
-                                    <driver>oracle.jdbc.driver.OracleDriver</driver>
-                                    <url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</url>
+                                    <driver>${database.driver}</driver>
+                                    <url>${database.url}</url>
                                     <username>athena</username>
-                                    <password>athena_dev</password>
+                                    <password>${athena.password}</password>
                                     <defaultSchemaName>athena</defaultSchemaName>
                                     <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                                 </configuration>
@@ -868,10 +734,46 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>sql-maven-plugin</artifactId>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.oracle</groupId>
+                                <artifactId>ojdbc</artifactId>
+                                <version>${oracle.version}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>postgresql</groupId>
+                                <artifactId>postgresql</artifactId>
+                                <version>${postgresql.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <driver>${database.driver}</driver>
+                            <url>${database.url}</url>
+                            <username>athena</username>
+                            <password>${athena.password}</password>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>Apply Athena Grants</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <delimiterType>${database.delimiterType}</delimiterType>
+                                    <srcFiles>
+                                        <srcFile>src/main/db/athena-${database}-grants.sql</srcFile>
+                                    </srcFiles>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
-
     </profiles>
 
     <dependencyManagement>
@@ -913,6 +815,19 @@
                 <scope>import</scope>
             </dependency>
 -->
+            <dependency>
+                <groupId>org.primefaces.extensions</groupId>
+                <artifactId>primefaces-extensions</artifactId>
+                <version>0.6.1</version>
+            </dependency>
+
+            <!-- primefaces-extensions has a dependency on primefaces, so use this to control the version of primefaces we depend on -->
+            <!-- see: http://code.google.com/p/primefaces-extensions/wiki/GettingStarted -->
+            <dependency>
+                <groupId>org.primefaces</groupId>
+                <artifactId>primefaces</artifactId>
+                <version>3.4.1</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -1071,7 +986,11 @@
         <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
-            <version>3.4.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.primefaces.extensions</groupId>
+            <artifactId>primefaces-extensions</artifactId>
         </dependency>
 
         <dependency>
@@ -1111,73 +1030,7 @@
         </dependency>
 -->
 
-        <!-- Various dependencies of seam-faces that don't get included transitively for some reason.
-             These are true required dependencies because seam-faces throws exceptions when they aren't present.
-             We may be able to remove these if we start using maven 3. -->
-        <!-- Or, they may only be needed for Glassfish: https://community.jboss.org/message/729907 -->
-<!--
-        <dependency>
-            <groupId>org.jboss.solder</groupId>
-            <artifactId>solder-logging</artifactId>
-            <version>3.1.1.Final</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-            <version>3.1.0.GA</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.ocpsoft</groupId>
-            <artifactId>prettyfaces-jsf2</artifactId>
-        </dependency>
-
-        <dependency>
-           <groupId>joda-time</groupId>
-           <artifactId>joda-time</artifactId>
-        </dependency>
-
-        <dependency>
-           <groupId>org.jboss.seam.security</groupId>
-           <artifactId>seam-security</artifactId>
-           <scope>runtime</scope>
-        </dependency>
--->
         <!-- END seam-faces -->
-
-        <!-- disable when deploying to JBoss AS 7 -->
-<!--
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-crypto</artifactId>
-            <version>2.3.3.Final</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-cdi</artifactId>
-            <version>2.3.3.Final</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.jboss.resteasy</groupId>
-                    <artifactId>resteasy-jaxrs</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jackson-provider</artifactId>
-            <version>2.0.1.GA</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jaxb-provider</artifactId>
-            <version>2.2.0.GA</version>
-        </dependency>
--->
 
         <dependency>
             <groupId>log4j</groupId>
@@ -1231,13 +1084,13 @@
         <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>9.1-901.jdbc4</version>
+            <version>${postgresql.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>ojdbc</artifactId>
-            <version>6-11.2.0.1.0</version>
+            <version>${oracle.version}</version>
         </dependency>
 
         <dependency>
@@ -1341,6 +1194,13 @@
         	<artifactId>annotations</artifactId>
         	<version>9.0.4</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.meanbean</groupId>
+            <artifactId>meanbean</artifactId>
+            <version>2.0.3</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -1382,17 +1242,6 @@
                     <artifactId>maven-pmd-plugin</artifactId>
                     <version>2.7.1</version>
                 </plugin>
-                <plugin>
-                    <groupId>org.glassfish.embedded</groupId>
-                    <artifactId>maven-embedded-glassfish-plugin</artifactId>
-                    <version>3.1.2</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.glassfish.maven.plugin</groupId>
-                    <artifactId>maven-glassfish-plugin</artifactId>
-                    <version>2.1</version>
-                </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -1412,7 +1261,16 @@
                     <version>7.1.1.Final</version>
                 </plugin>
 
-
+                <plugin>
+                    <groupId>org.liquibase</groupId>
+                    <artifactId>liquibase-maven-plugin</artifactId>
+                    <version>2.0.5</version>
+                </plugin>
+                <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>sql-maven-plugin</artifactId>
+                        <version>1.5</version>
+                </plugin>
                 <!--
                                 <plugin>
                                     <artifactId>maven-dependency-plugin</artifactId>
@@ -1623,11 +1481,6 @@
                         <artifactId>hibernate-entitymanager</artifactId>
                         <version>4.1.3.Final</version>
                     </dependency>
-                    <dependency>
-                        <groupId>org.glassfish.main.extras</groupId>
-                        <artifactId>glassfish-embedded-all</artifactId>
-                        <version>3.1.2</version>
-                    </dependency>
                 </dependencies>
             </plugin>
 
@@ -1775,8 +1628,11 @@
                         <configuration>
                             <target>
                                 <propertyfile file="${pom.basedir}/target/version.properties">
-                                    <entry key="project.version" type="string" value="${project.version}"
-                                           operation="="/>
+                                    <entry key="project.version" type="string" value="${project.version}" operation="=" />
+                                </propertyfile>
+                                <propertyfile file="${pom.basedir}/target/classes/build.properties">
+                                    <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
+                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}" operation="=" />
                                 </propertyfile>
                             </target>
                         </configuration>
@@ -1790,10 +1646,11 @@
                 <configuration>
                     <tagNameFormat>@{project.version}</tagNameFormat>
                     <preparationGoals>clean validate</preparationGoals>
-                    <goals>validate</goals>
+                    <goals>help:active-profiles validate</goals>
                     <allowTimestampedSnapshots>true</allowTimestampedSnapshots>
                     <useReleaseProfile>false</useReleaseProfile>
-                    <scmCommentPrefix>[Release]</scmCommentPrefix>
+                    <scmCommentPrefix>[REL-000 Production Release] </scmCommentPrefix>
+                    <!--<arguments>-X</arguments>-->
                 </configuration>
             </plugin>
 

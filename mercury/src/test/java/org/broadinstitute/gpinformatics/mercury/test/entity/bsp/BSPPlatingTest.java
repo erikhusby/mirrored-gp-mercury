@@ -61,7 +61,8 @@ public class BSPPlatingTest extends ContainerTest {
 
         String quoteString = "DNA385";
         Quote billingQuote = new Quote(quoteString,
-                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI"))), ApprovalStatus.FUNDED));
+                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100",
+                        new Funding(Funding.FUNDS_RESERVATION, "NCI", "NCI"))), ApprovalStatus.FUNDED));
 //        projectPlan.setQuote(billingQuote);
 
         MercurySample startingSample = new MercurySample(masterSample1, null, null/*, projectPlan*/);
@@ -110,7 +111,7 @@ public class BSPPlatingTest extends ContainerTest {
 
         String quoteString = "DNA385";
         Quote billingQuote = new org.broadinstitute.gpinformatics.mercury.entity.billing.Quote(quoteString,
-                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI"))), ApprovalStatus.FUNDED));
+                new org.broadinstitute.gpinformatics.infrastructure.quote.Quote(quoteString, new QuoteFunding(new FundingLevel("100", new Funding(Funding.FUNDS_RESERVATION, "NCI", "NCI"))), ApprovalStatus.FUNDED));
 //        projectPlan.setQuote(billingQuote);
 
         MercurySample startingSample = new MercurySample(masterSample1, null, null/*, projectPlan*/);
