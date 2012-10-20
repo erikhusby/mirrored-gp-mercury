@@ -25,6 +25,11 @@
         </ui:define>
         <ui:define name="body">
 
+            <div class="row">
+                <h:link value="Edit Project" outcome="create?includeViewParams=true" styleClass="pull-right"/>
+            </div>
+
+
             <!-- Name -->
             <h:form styleClass="form-horizontal form-readonly">
                 <div class="control-group">
@@ -159,8 +164,6 @@
                     </p:column>
                 </p:dataTable>
             </h:form>
-
-            <h:link value="Edit Project" outcome="create?includeViewParams=true"/>
         </ui:define>
     </ui:composition>
 </body>
