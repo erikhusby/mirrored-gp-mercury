@@ -29,7 +29,7 @@
                     <div class="controls">
                         <p:inputText id="name"
                                      value="#{researchProjectDetail.project.title}" size="50" required="true"
-                                     valueChangeListener="#{researchProjectForm.titleChanged}"
+                                     maxlength="4000"
                                      validator="#{researchProjectForm.validateTitle}"/>
                         <p:watermark for="name" value="Enter the name of the research project"/>
                         <p:message for="name"/>
