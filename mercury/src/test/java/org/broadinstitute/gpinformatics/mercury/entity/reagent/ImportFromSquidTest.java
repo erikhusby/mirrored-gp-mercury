@@ -240,7 +240,7 @@ public class ImportFromSquidTest extends ContainerTest {
                 tubeBeans = new ArrayList<TubeBean>();
                 labBatch = new LabBatchBean(lcSet, workflowName, tubeBeans);
             }
-            tubeBeans.add(new TubeBean(tubeBarcode, sampleBarcode));
+            tubeBeans.add(new TubeBean(tubeBarcode, sampleBarcode, lcSet));
         }
     }
 

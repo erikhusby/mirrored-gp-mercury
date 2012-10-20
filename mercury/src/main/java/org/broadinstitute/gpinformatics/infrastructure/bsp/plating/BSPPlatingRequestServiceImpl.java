@@ -518,7 +518,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
             SeqWorkRequestAliquot aliquot = new SeqWorkRequestAliquot(request.getSampleName(),
                     request.getAliquotParameters().getTargetVolume(),
                     request.getAliquotParameters().getTargetConcentration(),
-                    request.getAliquotParameters().getProjectPlan().getQuoteDTO(quoteService).getAlphanumericId()
+                    null //request.getAliquotParameters().getProjectPlan().getQuoteDTO(quoteService).getAlphanumericId()
             );
 
             bspStocks.add(aliquot);

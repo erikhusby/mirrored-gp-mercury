@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.designation;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
-import org.broadinstitute.gpinformatics.mercury.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 /**
@@ -21,7 +20,7 @@ public class LibraryRegistrationSOAPServiceStub implements LibraryRegistrationSO
     }
 
     @Override
-    public void registerForDesignation(String libraryName, PassBackedProjectPlan projectPlanIn,
+    public void registerForDesignation(String libraryName, /*PassBackedProjectPlan projectPlanIn,*/
                                        boolean needsControlLane) {
 
     }

@@ -2,18 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularEnvelope;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReadBucket;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -92,7 +85,7 @@ import java.util.List;
  * The unique key of a SampleAliquotInstance
  * is the {@Link SampleAliquot} and the
  * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState}.  You can have the same
- * {@link Goop} in a {@link SampleSheet} or
+ * Goop in a SampleSheet or
  * a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}, in which case they'll
  * have to have different {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState}.
  * */
@@ -104,26 +97,24 @@ public class SampleInstance  {
 
     private static Log gLog = LogFactory.getLog(SampleInstance.class);
 
-    private StartingSample sample;
+    private MercurySample sample;
 
     private GSP_CONTROL_ROLE controlRole;
 
-    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
-
-    private Collection<ReadBucket> readBuckets = new HashSet<ReadBucket>();
+//    private Collection<ProjectPlan> projectPlans = new HashSet<ProjectPlan>();
 
     private MolecularState molecularState;
 
     private List<Reagent> reagents = new ArrayList<Reagent>();
 
-    public SampleInstance(StartingSample sample,
+    public SampleInstance(MercurySample sample,
             GSP_CONTROL_ROLE controlRole,
-            ProjectPlan projectPlan,
+//            ProjectPlan projectPlan,
             MolecularState molecularState,
             WorkflowDescription workflowDescription) {
         this.sample = sample;
         this.controlRole = controlRole;
-        projectPlans.add(projectPlan);
+//        projectPlans.add(projectPlan);
         this.molecularState = molecularState;
     }
 
@@ -148,7 +139,7 @@ public class SampleInstance  {
      * model, except that it would actually work)
      * @return
      */
-    public StartingSample getStartingSample() {
+    public MercurySample getStartingSample() {
         return sample;
     }
 
@@ -181,25 +172,25 @@ public class SampleInstance  {
      * {@link #getAllProjectPlans()}.
      * @return
      */
-    public ProjectPlan getSingleProjectPlan() {
-        if (projectPlans.isEmpty()) {
-            return null;
-        }
-        else if (projectPlans.size() <= 1) {
-            return projectPlans.iterator().next();
-        }
-        else {
-            throw new RuntimeException("There are " + projectPlans.size() + " possible project plans for " + this);
-        }
-    }
+//    public ProjectPlan getSingleProjectPlan() {
+//        if (projectPlans.isEmpty()) {
+//            return null;
+//        }
+//        else if (projectPlans.size() <= 1) {
+//            return projectPlans.iterator().next();
+//        }
+//        else {
+//            throw new RuntimeException("There are " + projectPlans.size() + " possible project plans for " + this);
+//        }
+//    }
 
     /**
      * @see #getSingleProjectPlan()
      * @return
      */
-    public Collection<ProjectPlan> getAllProjectPlans() {
-        return projectPlans;
-    }
+//    public Collection<ProjectPlan> getAllProjectPlans() {
+//        return projectPlans;
+//    }
 
     /**
      * What is the molecular state  of this
@@ -215,7 +206,7 @@ public class SampleInstance  {
     }
 
     /**
-     * This seems at odds with {@link org.broadinstitute.gpinformatics.mercury.entity.project.Project#getWorkflowDescription(SampleInstance)}.
+     * This seems at odds with Project#getWorkflowDescription(SampleInstance)}.
      * We already declared the expected {@link org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription} up at
      * the project, right?
      *
@@ -238,53 +229,12 @@ public class SampleInstance  {
      */
     //public WorkflowDescription getWorkflowDescription();
 
-    public Collection<ReadBucket> getReadBuckets() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    /**
-     * Based the entry/exit of a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel} into
-     * or out of a {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue}, Mercury has the
-     * ability to "override" the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan} for a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}
-     * at a particular spot in the worklow.  This method is how
-     * your override the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan}.
-     * @param projectPlan
-     */
-    public void resetProjectPlan(BasicProjectPlan projectPlan) {
-        if (projectPlan == null) {
-            throw new RuntimeException("Cannot reset projectPlan to null.");
-        }
-        projectPlans.clear();
-        projectPlans.add(projectPlan);
-    }
-
     public void addReagent(Reagent reagent) {
         reagents.add(reagent);
     }
 
     public List<Reagent> getReagents() {
         return reagents;
-    }
-
-    public void applyChange(StateChange change) {
-        if (change != null) {
-            if (change.getControlRole() != null) {
-                controlRole = change.getControlRole();
-            }
-            if (change.getProjectPlanOverride() != null) {
-                projectPlans.add(change.getProjectPlanOverride());
-            }
-            if (change.getReadBucketOverrides() != null) {
-                readBuckets.clear();
-                readBuckets.addAll(change.getReadBucketOverrides());
-            }
-            if (change.getMolecularState() != null) {
-                if (change.getMolecularState().getMolecularEnvelope() != null) {
-                    MolecularEnvelope envelopeDelta = change.getMolecularState().getMolecularEnvelope();
-                    getMolecularState().getMolecularEnvelope().surroundWith(envelopeDelta);
-                }
-            }
-        }
     }
 
 }

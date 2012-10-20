@@ -6,13 +6,12 @@ import org.broadinstitute.gpinformatics.mercury.boundary.squid.RegistrationSampl
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequencingPlanDetails;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequencingTechnology;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.Strandedness;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 
 import java.util.HashSet;
@@ -31,17 +30,17 @@ import java.util.Set;
 public class RegistrationJaxbConverter {
 
 
-    public static SequelLibrary squidify(TwoDBarcodedTube tubeIn, ProjectPlan planIn) {
+    public static SequelLibrary squidify(TwoDBarcodedTube tubeIn/*, ProjectPlan planIn*/) {
 
         final SequelLibrary registerLibrary = new SequelLibrary();
         registerLibrary.setLibraryName(tubeIn.getLabCentricName());
         registerLibrary.setReceptacleBarcode(tubeIn.getLabel());
 
-        Set<MolecularState.STRANDEDNESS> strandednessesState = new HashSet<MolecularState.STRANDEDNESS>();
+        Set<Strandedness> strandednessesState = new HashSet<Strandedness>();
 
         for(SampleInstance currSample:tubeIn.getSampleInstances()) {
             final RegistrationSample sampleInstance = new RegistrationSample();
-            sampleInstance.setBspContextReference(currSample.getStartingSample().getSampleName());
+            sampleInstance.setBspContextReference(currSample.getStartingSample().getSampleKey());
             sampleInstance.setTechnology(SequencingTechnology.ILLUMINA);
 
             for(Reagent sampleReagent:currSample.getReagents()) {
@@ -95,13 +94,13 @@ public class RegistrationJaxbConverter {
                                                "Double stranded.  There should not be a mixture");
         }
 
-        registerLibrary.setSingleStrandInd(MolecularState.STRANDEDNESS.SINGLE_STRANDED.equals(
+        registerLibrary.setSingleStrandInd(Strandedness.SINGLE_STRANDED.equals(
                 strandednessesState.iterator().next()));
 
         SequencingPlanDetails details = new SequencingPlanDetails();
 
-        details.setNumberOfLanes(planIn.getLaneCoverage());
-        details.setReadLength(planIn.getReadLength());
+//        details.setNumberOfLanes(planIn.getLaneCoverage());
+//        details.setReadLength(planIn.getReadLength());
 
         registerLibrary.setPlanDetails(details);
 
