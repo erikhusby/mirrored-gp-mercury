@@ -187,4 +187,8 @@
         <modifyDataType tableName="research_project" schemaName="athena" columnName="SYNOPSIS" newDataType="varchar(4000)"/>
     </changeSet>
 
+    <changeSet id="GPLIM-90-2" author="hrafal">
+        <modifyDataType tableName="research_project_aud" schemaName="athena" columnName="SYNOPSIS" newDataType="varchar(4000)"/>
+    </changeSet>
+
 </databaseChangeLog>
