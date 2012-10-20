@@ -50,7 +50,12 @@
                 <div class="control-group">
                     <p:outputLabel for="projectManagers" value="Project Managers" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true" required="true" requiredMessage="There must be at least one project manager."/>
+                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true" required="true" requiredMessage="There must be at least one project manager.">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                            </p:column>
+                        </p:autoComplete>
                         <p:watermark for="projectManagers" value="Type name to search"/>
                         <p:message for="projectManagers"/>
                     </div>
@@ -60,7 +65,12 @@
                 <div class="control-group">
                     <p:outputLabel for="broadPIs" value="Broad PIs" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="broadPIs" value="#{researchProjectForm.broadPIs}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true"/>
+                        <p:autoComplete id="broadPIs" value="#{researchProjectForm.broadPIs}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                            </p:column>
+                        </p:autoComplete>
                         <p:watermark for="broadPIs" value="Type name to search"/>
                     </div>
                 </div>
@@ -69,7 +79,12 @@
                 <div class="control-group">
                     <p:outputLabel for="scientists" value="Scientists" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true"/>
+                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                            </p:column>
+                        </p:autoComplete>
                         <p:watermark for="scientists" value="Type name to search"/>
                     </div>
                 </div>
@@ -78,7 +93,12 @@
                 <div class="control-group">
                     <p:outputLabel for="externalCollaborators" value="External Collaborators" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="externalCollaborators" value="#{researchProjectForm.externalCollaborators}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true"/>
+                        <p:autoComplete id="externalCollaborators" value="#{researchProjectForm.externalCollaborators}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                            </p:column>
+                        </p:autoComplete>
                         <p:watermark for="externalCollaborators" value="Type name to search"/>
                     </div>
                 </div>

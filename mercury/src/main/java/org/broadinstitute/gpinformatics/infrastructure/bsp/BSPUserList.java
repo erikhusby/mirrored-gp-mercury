@@ -75,7 +75,10 @@ public class BSPUserList {
         String lowerQuery = query.toLowerCase();
         List<BspUser> results = new ArrayList<BspUser>();
         for (BspUser user : users) {
-            if (user.getFirstName().toLowerCase().contains(lowerQuery) || user.getLastName().toLowerCase().contains(lowerQuery) || user.getUsername().contains(lowerQuery)) {
+            if (user.getFirstName().toLowerCase().contains(lowerQuery) ||
+                user.getLastName().toLowerCase().contains(lowerQuery) ||
+                user.getUsername().contains(lowerQuery) ||
+                    user.getEmail().contains(lowerQuery)) {
                 results.add(user);
             }
         }
