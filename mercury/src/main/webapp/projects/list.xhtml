@@ -23,14 +23,14 @@
                              sortOrder="descending"
                              filteredValue="#{researchProjectBean.filteredResearchProjects}">
 
+                    <p:column headerText="ID" sortBy="#{project.jiraTicketKey}">
+                        #{project.jiraTicketKey}
+                    </p:column>
+
                     <p:column headerText="Name" sortBy="#{project.title}">
                         <h:link outcome="view" value="#{project.title}">
                             <f:param name="researchProject" value="#{project.businessKey}"/>
                         </h:link>
-                    </p:column>
-
-                    <p:column headerText="ID" sortBy="#{project.jiraTicketKey}">
-                        #{project.jiraTicketKey}
                     </p:column>
 
                     <p:column headerText="Owner" filterBy="#{project.createdBy}" filterOptions="#{researchProjectBean.allProjectOwners}" filterMatchMode="exact">
@@ -41,12 +41,8 @@
                         #{project.status}
                     </p:column>
 
-                    <p:column headerText="# of&lt;br&gt;Orders">
+                    <p:column headerText="# of&lt;br&gt;Orders" sortBy="#{project.productOrders.size()}">
                         <h:outputText value="#{project.productOrders.size()}" styleClass="align-right"/>
-                    </p:column>
-
-                    <p:column headerText="Synopsis">
-                        #{project.synopsis}
                     </p:column>
 
                     <p:column headerText="Created Date" sortBy="#{project.createdDate}">
