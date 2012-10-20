@@ -47,7 +47,7 @@ public class BSPPlatingTest extends ContainerTest {
         log = LogFactory.getLog(BSPPlatingTest.class);
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = true)
+    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
     public void testIssueBSPPlating() throws Exception {
 
         platingService = new BSPPlatingRequestServiceStub();
