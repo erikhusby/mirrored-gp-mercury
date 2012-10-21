@@ -30,6 +30,7 @@ import java.util.TreeMap;
  * A Test to import molecular indexes and LCSETs from Squid.  This prepares an empty database to accept messages.  This must
  * be in the same package as MolecularIndexingScheme, because it uses package visible methods on that class.
  * Use the following VM options: -Xmx1G -XX:MaxPermSize=128M.
+ * todo jmt also needs org.jboss.remoting-jmx.timeout=600?
  * As of August 2012, the test takes about 20 minutes to run.
  */
 public class ImportFromSquidTest extends ContainerTest {

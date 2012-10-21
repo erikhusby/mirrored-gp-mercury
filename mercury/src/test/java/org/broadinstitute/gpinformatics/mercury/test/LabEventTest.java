@@ -1375,9 +1375,9 @@ public class LabEventTest {
             baitTubeBarcode = "Bait" + testPrefix;
             String baitSetupBarcode = "BaitSetup" + testPrefix;
             baitSetupJaxb = bettaLimsMessageFactory.buildTubeToPlate("BaitSetup", baitTubeBarcode,
-                    baitSetupBarcode);
+                    baitSetupBarcode, LabEventFactory.PHYS_TYPE_EPPENDORF_96, LabEventFactory.SECTION_ALL_96, "tube");
             BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
-            bettaLIMSMessage3.setReceptaclePlateTransferEvent(baitSetupJaxb);
+            bettaLIMSMessage3.getReceptaclePlateTransferEvent().add(baitSetupJaxb);
             messageList.add(bettaLIMSMessage3);
             bettaLimsMessageFactory.advanceTime();
 

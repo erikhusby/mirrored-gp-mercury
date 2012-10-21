@@ -7,6 +7,7 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  * Used to import batches of tubes from Squid and BSP
+ * todo jmt need to support DBA cards too
  */
 @XmlRootElement(namespace = Namespaces.VESSEL)
 @XmlType(namespace = Namespaces.VESSEL)
