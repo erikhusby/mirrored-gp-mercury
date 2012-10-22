@@ -7,6 +7,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.BeforeMethod;
 
 import java.net.URL;
@@ -28,7 +29,7 @@ import static org.testng.Assert.fail;
  *
  * @author breilly
  */
-public abstract class RestServiceContainerTest extends ContainerTest {
+public abstract class RestServiceContainerTest extends Arquillian {
 
     private static final String SERVLET_MAPPING_PREFIX = "rest";
 

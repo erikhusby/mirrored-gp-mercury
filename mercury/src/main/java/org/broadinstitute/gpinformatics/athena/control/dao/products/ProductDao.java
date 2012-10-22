@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.criteria.*;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.List;
  * Dao for {@link Product}s, supporting the browse and CRUD UIs.
  *
  */
-public class ProductDao extends GenericDao {
+public class ProductDao extends GenericDao implements Serializable {
 
     /**
      * Preferring strong types to booleans

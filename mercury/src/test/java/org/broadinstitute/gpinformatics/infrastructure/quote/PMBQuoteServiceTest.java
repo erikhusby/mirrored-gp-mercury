@@ -4,24 +4,43 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
  * Based on test from Mercury
  */
 
+import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 
-// TODO PMB disabling this test since the "mock" pmb quote service is not mock at all, it extends the real impl
-// and then fails when running container-free since the real impl doesn't get its required dependencies injected
-@Test(groups = {TestGroups.DATABASE_FREE})
-public class PMBQuoteServiceTest {
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+public class PMBQuoteServiceTest extends Arquillian {
 
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV);
+    }
+
+    @Inject
+    private PMBQuoteService pmbQuoteService;
+
+
+    @Inject
+    private Log log;
+
+
+    // test works but the method under test doesn't seem to be used so why slow down our builds
     @Test(enabled = false)
     public void test_get_a_quote() throws Exception {
-        PMBQuoteService servicePMB = new MockPMBQuoteServiceImpl();
-        Quote quote = servicePMB.getQuoteByAlphaId("DNA23H");
+
+        Quote quote = pmbQuoteService.getQuoteByAlphaId("DNA23H");
 
         Assert.assertNotNull(quote);
         Assert.assertEquals("NIAID (CO 5035331)", quote.getName());
@@ -30,18 +49,18 @@ public class PMBQuoteServiceTest {
         Assert.assertEquals(Funding.FUNDS_RESERVATION,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
         Assert.assertEquals("DNA23H",quote.getAlphanumericId());
 
-        quote = servicePMB.getQuoteByAlphaId("DNA3A9");
+        quote = pmbQuoteService.getQuoteByAlphaId("DNA3A9");
         Assert.assertEquals("HARVARD UNIVERSITY",quote.getQuoteFunding().getFundingLevel().getFunding().getInstitute());
         Assert.assertEquals(Funding.PURCHASE_ORDER,quote.getQuoteFunding().getFundingLevel().getFunding().getFundingType());
         Assert.assertEquals("DNA3A9",quote.getAlphanumericId());
 
     }
 
+    // test works but the method under test doesn't seem to be used so why slow down our builds
     @Test(enabled = false)
     public void test_get_all_quotes_for_sequencing() throws Exception {
 
-        PMBQuoteService servicePMB = new MockPMBQuoteServiceImpl();
-        Quotes quotes = servicePMB.getAllQuotes();
+        Quotes quotes = pmbQuoteService.getAllQuotes();
 
         Assert.assertNotNull(quotes);
         Assert.assertFalse(quotes.getQuotes().isEmpty());
@@ -66,9 +85,37 @@ public class PMBQuoteServiceTest {
 
             }
         }
-        Assert.assertEquals(fundingTypes.size(), 3);   // includes null fundingType
+        Assert.assertEquals(fundingTypes.size(), 2);   // includes null fundingType
         Assert.assertTrue(fundingTypes.contains(Funding.FUNDS_RESERVATION));
         Assert.assertTrue(fundingTypes.contains(Funding.PURCHASE_ORDER));
+    }
+
+
+    // this method needs to work for retrieving price items but something is wrong:
+    //
+    // java.lang.AssertionError: javax.ws.rs.WebApplicationException: javax.xml.bind.UnmarshalException:
+    // unexpected element (uri:"", local:"response"). Expected elements are <{}PriceItem>,<{}PriceList>
+    //
+    // at the command line either of the following works fine, but I have not been able to get this test to run even
+    // with Jersey redirects enabled
+    //
+    // curl --location --user 'rnordin@broadinstitute.org:Squ1d_us3r' 'http://quoteqa.broadinstitute.org:8080/quotes/ws/portals/private/get_price_list'
+    // curl --user 'rnordin@broadinstitute.org:Squ1d_us3r' 'http://quoteqa.broadinstitute.org:8080/quotes/rest/price_list/10
+
+    @Test(enabled = false)
+    public void testPriceItems() {
+
+        try {
+            for (QuotePlatformType quotePlatformType : QuotePlatformType.values()) {
+                log.info("Beginning fetch for " + quotePlatformType);
+                pmbQuoteService.getPlatformPriceItems(quotePlatformType);
+                log.info("Ending fetch for " + quotePlatformType);
+            }
+        }
+        catch (Exception e) {
+            Assert.fail(e.toString());
+        }
+
     }
 
 }

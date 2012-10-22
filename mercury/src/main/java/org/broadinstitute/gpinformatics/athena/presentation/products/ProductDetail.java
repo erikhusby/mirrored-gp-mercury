@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -11,57 +10,75 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Date;
-import java.util.List;
 
 @Named
 @RequestScoped
 public class ProductDetail extends AbstractJsfBean {
 
-    @Inject
-    private ProductDao productDao;
+    public static final int ONE_HOUR_IN_SECONDS = 3600;
 
     @Inject
-    private ProductFamilyDao productFamilyDao;
+    private ProductDao productDao;
 
     private Product product;
     private String productName;
     private ProductFamily productFamily;
-    private String description;
+    private Long productFamilyId;
     private String partNumber;
-    //TODO hmc
+    private String description;
     private Date availabilityDate;
     private Date discontinuedDate;
-    private Integer expectedCycleTimeSeconds;
-    private Integer guaranteedCycleTimeSeconds;
     private Integer samplesPerWeek;
     private String inputRequirements;
     private String deliverables;
-    private boolean topLevelProduct;
-    private String workflowName;
+    private Integer expectedCycleTimeHours;
+    private Integer guaranteedCycleTimeHours;
 
 
     public void initEmptyProduct() {
-        //TODO hmc
-        product =
-        new Product("productName", new ProductFamily("ProductFamily"), "description",
-                    "partNumber", new Date(), new Date(), 12345678, 123456, 100, "inputRequirements", "deliverables",
-                    true, "workflowName");
-    }
-
-    public void loadProduct() {
-        //TODO hmc
-        if ((product == null) && !StringUtils.isBlank(partNumber)) {
-            product = productDao.findByPartNumber(partNumber);
+        if ((partNumber != null) && !StringUtils.isBlank(partNumber)) {
+            product = productDao.findByBusinessKey(partNumber);
+            initProductDetailsFromProduct(product);
         }
     }
 
-    public List<ProductFamily> getProductFamilies() {
-           return productFamilyDao.findAll();
+    private void initProductDetailsFromProduct(Product product) {
+        if ( product != null ) {
+            productName = product.getProductName();
+            partNumber = product.getPartNumber();
+            productFamily = product.getProductFamily();
+            description = product.getDescription();
+            availabilityDate = product.getAvailabilityDate();
+            discontinuedDate = product.getDiscontinuedDate();
+            samplesPerWeek = product.getSamplesPerWeek();
+            inputRequirements = product.getInputRequirements();
+            deliverables = product.getDeliverables();
+            expectedCycleTimeHours =convertCycleTimeSecondsToHours(product.getExpectedCycleTimeSeconds());
+            guaranteedCycleTimeHours =convertCycleTimeSecondsToHours(product.getGuaranteedCycleTimeSeconds());
+        }
     }
 
+    /**
+     * Converts cycle times from seconds to hours.
+     * This method rounds down to the nearest hour
+     * @param cycleTimeSeconds
+     * @return the number of hours.
+     */
+    private int convertCycleTimeSecondsToHours(Integer cycleTimeSeconds) {
+        Integer cycleTimeHours = 0;
+        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_HOUR_IN_SECONDS ) {
+            cycleTimeHours =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_HOUR_IN_SECONDS)) / ONE_HOUR_IN_SECONDS;
+        }
+        return cycleTimeHours;
+    }
 
     public Product getProduct() {
         return product;
+    }
+
+    public void setProduct(final Product product) {
+        this.product = product;
+        initProductDetailsFromProduct(product);
     }
 
     public String getProductName() {
@@ -79,13 +96,12 @@ public class ProductDetail extends AbstractJsfBean {
     public void setProductFamily(final ProductFamily productFamily) {
         this.productFamily = productFamily;
     }
-
-    public String getDescription() {
-        return description;
+    public Long getProductFamilyId() {
+        return productFamilyId;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
+    public void setProductFamilyId(final Long productFamilyId) {
+        this.productFamilyId = productFamilyId;
     }
 
     public String getPartNumber() {
@@ -94,6 +110,14 @@ public class ProductDetail extends AbstractJsfBean {
 
     public void setPartNumber(final String partNumber) {
         this.partNumber = partNumber;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(final String description) {
+        this.description = description;
     }
 
     public Date getAvailabilityDate() {
@@ -110,22 +134,6 @@ public class ProductDetail extends AbstractJsfBean {
 
     public void setDiscontinuedDate(final Date discontinuedDate) {
         this.discontinuedDate = discontinuedDate;
-    }
-
-    public Integer getExpectedCycleTimeSeconds() {
-        return expectedCycleTimeSeconds;
-    }
-
-    public void setExpectedCycleTimeSeconds(final Integer expectedCycleTimeSeconds) {
-        this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
-    }
-
-    public Integer getGuaranteedCycleTimeSeconds() {
-        return guaranteedCycleTimeSeconds;
-    }
-
-    public void setGuaranteedCycleTimeSeconds(final Integer guaranteedCycleTimeSeconds) {
-        this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
     }
 
     public Integer getSamplesPerWeek() {
@@ -152,19 +160,20 @@ public class ProductDetail extends AbstractJsfBean {
         this.deliverables = deliverables;
     }
 
-    public boolean isTopLevelProduct() {
-        return topLevelProduct;
+
+    public Integer getExpectedCycleTimeHours() {
+        return expectedCycleTimeHours;
+    }
+    public void setExpectedCycleTimeHours(final Integer expectedCycleTimeHours) {
+        this.expectedCycleTimeHours = expectedCycleTimeHours;
     }
 
-    public void setTopLevelProduct(final boolean topLevelProduct) {
-        this.topLevelProduct = topLevelProduct;
+    public Integer getGuaranteedCycleTimeHours() {
+        return guaranteedCycleTimeHours;
+    }
+    public void setGuaranteedCycleTimeHours(final Integer guaranteedCycleTimeHours) {
+        this.guaranteedCycleTimeHours = guaranteedCycleTimeHours;
     }
 
-    public String getWorkflowName() {
-        return workflowName;
-    }
 
-    public void setWorkflowName(final String workflowName) {
-        this.workflowName = workflowName;
-    }
 }

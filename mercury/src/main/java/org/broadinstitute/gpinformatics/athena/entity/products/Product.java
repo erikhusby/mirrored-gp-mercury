@@ -29,12 +29,13 @@ public class Product implements Serializable {
 
     private String productName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
     private ProductFamily productFamily;
 
     @Column(length = 2000)
     private String description;
 
+    @Column(unique = true)
     private String partNumber;
     private Date availabilityDate;
     private Date discontinuedDate;
@@ -52,7 +53,7 @@ public class Product implements Serializable {
      * Whether this Product should show as a top-level product */
     private boolean topLevelProduct;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
     private PriceItem defaultPriceItem;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
@@ -214,6 +215,13 @@ public class Product implements Serializable {
 //        this.riskContingencies = riskContingencies;
 //    }
 
+    public boolean isPriceItemDefault(PriceItem priceItem) {
+        if (defaultPriceItem == priceItem) return true;
+
+        if (defaultPriceItem == null) return false;
+
+        return defaultPriceItem.equals(priceItem);
+    }
 
     @Override
     public boolean equals(Object o) {

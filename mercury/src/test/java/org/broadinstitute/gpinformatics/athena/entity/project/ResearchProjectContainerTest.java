@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
@@ -19,7 +20,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  *         Time: 7:50 AM
  */
 @Test (groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
-public class ResearchProjectContainerTest extends ContainerTest{
+public class ResearchProjectContainerTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {

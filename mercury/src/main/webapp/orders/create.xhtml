@@ -22,22 +22,23 @@
         <ui:define name="body">
             <p:dialog header="Enter Samples" widgetVar="samplesDialog" modal="true" onShow="">
                 <h:form id="sampleDialogForm" prependId="false">
-                    <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.sampleIDsText}" cols="80" rows="20">
+                    <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.dialog.sampleIDsText}" cols="80" rows="20">
                         <p:ajax update="samplesDialogStatus,samplesDialogInput"
-                                listener="#{productOrderForm.dialogSampleTextChanged}"/>
+                                listener="#{productOrderForm.dialog.sampleTextChanged}"/>
                     </p:inputTextarea>
                     <br/>
-                    <h:outputText id="samplesDialogStatus" value="#{productOrderForm.sampleStatus}"/>
+                    <h:outputText id="samplesDialogStatus" value="#{productOrderForm.dialog.sampleStatus}"/>
                     <div class="control-group">
                         <div class="controls">
                             <div class="row-fluid">
                                 <div class="span1">
-                                    <p:commandButton value="Cancel" onclick="samplesDialog.hide()"
-                                                     actionListener="#{productOrderForm.dialogCancel}"/>
+                                    <p:commandButton update=":form:sampleTable" value="OK" onclick="samplesDialog.hide()"
+                                                     actionListener="#{productOrderForm.dialog.commit}"
+                                                     styleClass="btn btn-primary"/>
                                 </div>
                                 <div class="span1">
-                                    <p:commandButton update=":form:sampleTable" value="OK" onclick="samplesDialog.hide()"
-                                                     styleClass="ui-priority-primary"/>
+                                    <p:commandButton value="Cancel" onclick="samplesDialog.hide()"
+                                                     styleClass="btn"/>
                                 </div>
                             </div>
                         </div>
@@ -76,7 +77,7 @@
                     <p:outputLabel for="product" value="Product" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="product" value="#{productOrderDetail.productOrder.product}"
-                                        completeMethod="#{productsBean.getProductCompletions}"
+                                        completeMethod="#{productList.getProductCompletions}"
                                         forceSelection="true"
                                         var="product"
                                         itemLabel="#{product.productName}"
@@ -118,6 +119,8 @@
                                          value="Edit Sample List..." onclick="samplesDialog.show()"/>
                     </div>
                 </div>
+
+                <h:inputHidden value="#{productOrderForm.editIdsCache}"/>
 
                 <div class="row-fluid">
                     <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample">
