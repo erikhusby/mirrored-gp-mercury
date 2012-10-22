@@ -92,7 +92,7 @@ todo jmt fix this
                 throw new ResourceException(e.getMessage(), 201);
             } else {
 */
-                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
 /*
             }
 */
