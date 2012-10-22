@@ -40,6 +40,15 @@ public class ProductForm extends AbstractJsfBean {
         }
     }
 
+
+    public String save() {
+        if (detail.getProduct() == null ) {
+            return create();
+        } else {
+            return edit();
+        }
+    }
+
     public String create() {
 
         Product product =  new Product(detail.getProductName(), getProductFamilyById(detail.getProductFamilyId()), detail.getDescription(),
@@ -57,7 +66,7 @@ public class ProductForm extends AbstractJsfBean {
                 errorMessage = MessageFormat.format("The Product Part-Number ''{0}'' is not unique.", detail.getPartNumber());
             }
             addErrorMessage("Product not Created.", errorMessage, errorMessage + ": " + e);
-            return redirect("error");
+            return "create";
         }
 
         addInfoMessage("Product created.", "Product " + product.getPartNumber() + " has been created.");
@@ -70,7 +79,9 @@ public class ProductForm extends AbstractJsfBean {
 
     // TODO under construction not working nor tested.
     public String edit() {
-        throw new RuntimeException("Not yet Implemented");
+        String errorMessage = MessageFormat.format("Ability to saving an existing Product is Not yet Implemented.", null);
+        addErrorMessage("Product not Created.", errorMessage, errorMessage + ": " + new RuntimeException("Not yet Implemented"));
+        return "create";
 //        productDao.getEntityManager().merge(detail.getProduct());
 //        return redirect("list");
     }

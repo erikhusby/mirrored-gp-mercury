@@ -14,7 +14,7 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}"/>
+                <f:viewParam name="product" value="#{productDetail.product}" converter="#{productConverter}"/>
                 <f:event type="preValidate" listener="#{productDetail.initEmptyProduct}"/>
                 <f:event type="preRenderView" listener="#{productForm.initForm}"/>
             </f:metadata>
@@ -134,7 +134,7 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productForm.create}" ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">
                                 <h:link outcome="list" value="Cancel"/>
