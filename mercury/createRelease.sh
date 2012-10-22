@@ -8,10 +8,10 @@
 if [ -d "release" ] ; then
     rm -rf release
 fi
-mkdir target
+mkdir release
 
-git clone ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git target
-cd target
+git clone ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git release
+cd release
 git checkout QA
 git checkout -b QA_PROD
 cd mercury
