@@ -10,8 +10,8 @@ public class BSPSampleDTO implements Serializable {
     public final static String TUMOR_IND = "Tumor";
     public final static String NORMAL_IND = "Normal";
 
-    public final static String FEMALE_IND = "FEMALE";
-    public final static String MALE_IND = "MALE";
+    public final static String FEMALE_IND = "Female";
+    public final static String MALE_IND = "Male";
 
     public final static String ACTIVE_IND = "Active Stock";
 

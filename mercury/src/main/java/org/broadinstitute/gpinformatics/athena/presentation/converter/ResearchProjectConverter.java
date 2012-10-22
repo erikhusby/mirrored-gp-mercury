@@ -11,7 +11,6 @@ import javax.inject.Named;
 
 @Named
 public class ResearchProjectConverter implements Converter {
-
     @Inject
     private ResearchProjectDao researchProjectDao;
 

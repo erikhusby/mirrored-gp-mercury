@@ -13,10 +13,19 @@
         <ui:define name="title">Research Projects</ui:define>
         <ui:define name="body">
             <h:form>
-                <div style="text-align: right">
-                    <h:link value="New Research Project" outcome="create"/>
+                <div class="row">
+                    <h:link value="New Research Project" outcome="create" styleClass="pull-right"/>
                 </div>
-                <p:dataTable value="#{researchProjectBean.allResearchProjects}" var="project" sortBy="#{project.createdDate}" sortOrder="descending" filteredValue="#{researchProjectBean.filteredResearchProjects}">
+
+                <p:dataTable value="#{researchProjectBean.allResearchProjects}"
+                             var="project"
+                             sortBy="#{project.createdDate}"
+                             sortOrder="descending"
+                             filteredValue="#{researchProjectBean.filteredResearchProjects}">
+
+                    <p:column headerText="ID" sortBy="#{project.jiraTicketKey}">
+                        #{project.jiraTicketKey}
+                    </p:column>
 
                     <p:column headerText="Name" sortBy="#{project.title}">
                         <h:link outcome="view" value="#{project.title}">
@@ -24,35 +33,25 @@
                         </h:link>
                     </p:column>
 
-                    <p:column headerText="ID" sortBy="#{project.jiraTicketKey}">
-                        #{project.jiraTicketKey}
-                    </p:column>
-
-                    <p:column headerText="Owner" filterBy="#{project.createdBy}" filterOptions="#{researchProjectBean.allProjectOwners}" filterMatchMode="exact">
-                        #{userListBean.getUser(project.createdBy)}
-                    </p:column>
-
                     <p:column headerText="Status" filterBy="#{project.status}" filterOptions="#{researchProjectBean.allProjectStatuses}" filterMatchMode="exact">
                         #{project.status}
                     </p:column>
 
-                    <p:column headerText="# of&lt;br&gt;Orders">
-                        <h:outputText value="#{project.productOrders.size()}" styleClass="align-right"/>
+                    <p:column headerText="Owner" filterBy="#{project.createdBy}" filterOptions="#{researchProjectBean.allProjectOwners}" filterMatchMode="exact">
+                        #{userListBean.getUserFullName(project.createdBy)}
                     </p:column>
 
-                    <p:column headerText="Synopsis">
-                        #{project.synopsis}
-                    </p:column>
-
-                    <p:column headerText="Created Date" sortBy="#{project.createdDate}">
-                        <h:outputText value="#{project.createdDate}">
+                    <p:column headerText="Updated" sortBy="#{project.modifiedDate}">
+                        <h:outputText value="#{project.modifiedDate}">
                             <f:convertDateTime type="both" timeStyle="short"/>
                         </h:outputText>
                     </p:column>
-                </p:dataTable>
 
-                <!-- TODO: fill in action for new product order view -->
-                <!--<p><p:commandButton value="New Product Order..." action="TODO?faces-redirect=true" ajax="false"/></p>-->
+                    <p:column headerText="# of&lt;br&gt;Orders" sortBy="#{project.productOrders.size()}">
+                        <h:outputText value="#{project.productOrders.size()}" styleClass="align-right"/>
+                    </p:column>
+
+                </p:dataTable>
             </h:form>
         </ui:define>
     </ui:composition>

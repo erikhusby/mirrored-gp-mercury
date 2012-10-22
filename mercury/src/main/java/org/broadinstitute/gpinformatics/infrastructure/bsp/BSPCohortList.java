@@ -85,7 +85,7 @@ public class BSPCohortList {
                      ((cohort.getCohortId().toLowerCase().contains(lowerQuery) ||
                        cohort.getName().toLowerCase().contains(lowerQuery) ||
                        cohort.getGroup().toLowerCase().contains(lowerQuery) ||
-                       cohort.getCategory().contains(lowerQuery)))) {
+                       cohort.getCategory().toLowerCase().contains(lowerQuery)))) {
                     results.add(cohort);
                 }
             }
@@ -108,7 +108,7 @@ public class BSPCohortList {
                 if (cohort.getCohortId().toLowerCase().contains(lowerQuery) ||
                     cohort.getName().toLowerCase().contains(lowerQuery) ||
                     cohort.getGroup().toLowerCase().contains(lowerQuery) ||
-                    cohort.getCategory().contains(lowerQuery)) {
+                    cohort.getCategory().toLowerCase().contains(lowerQuery)) {
                     results.add(cohort);
                 }
             }

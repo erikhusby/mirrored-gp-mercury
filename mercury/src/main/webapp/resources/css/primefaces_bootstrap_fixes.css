@@ -12,7 +12,7 @@
 }
 
 /* Fix bug with p:menubar and bootstrap theme. */
-.ui-menu.ui-widget li > .ui-menuitem-link { padding-right: 1px; }
+.ui-menu.ui-widget li > a.ui-menuitem-link { padding-right: 1px; }
 
 /* Fix p:autoComplete input selector to be specific enough to always hide Bootstrap's border. Shows up with autoComplete (possibly limited to multiple) when validation fails, even on other inputs in the form. */
 li.ui-autocomplete-input-token input { border: 0 none; width: 140px; outline: medium none; background-color: transparent; margin: 2px; }
@@ -22,3 +22,6 @@ li.ui-autocomplete-input-token input { border: 0 none; width: 140px; outline: me
 
 /* Let PrimeFaces control the width of inputs instead of Bootstrap. */
 input, textarea, .uneditable-input { width: auto; }
+
+/* Tone down the boxing around the label on a form. */
+.ui-state-error { border: none;}

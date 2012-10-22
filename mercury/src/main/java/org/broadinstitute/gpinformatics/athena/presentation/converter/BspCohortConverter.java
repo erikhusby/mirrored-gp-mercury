@@ -9,18 +9,15 @@ import javax.faces.convert.Converter;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-/**
- * @author breilly
- */
 @Named
 public class BspCohortConverter implements Converter {
 
     @Inject
-    private BSPCohortList userList;
+    private BSPCohortList cohortList;
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
-        return userList.getById(value);
+        return cohortList.getById(value);
     }
 
     @Override

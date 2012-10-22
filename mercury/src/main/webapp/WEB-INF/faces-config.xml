@@ -6,6 +6,14 @@
               version="2.0">
 
     <application>
-        <message-bundle>org.broadinstitute.gpinformatics.Messages</message-bundle>
+        <resource-bundle>
+            <base-name>org.broadinstitute.gpinformatics.Messages</base-name>
+            <var>msg</var>
+        </resource-bundle>
     </application>
+
+    <factory>
+        <exception-handler-factory>org.primefaces.extensions.component.ajaxerrorhandler.AjaxExceptionHandlerFactory</exception-handler-factory>
+    </factory>
+
 </faces-config>

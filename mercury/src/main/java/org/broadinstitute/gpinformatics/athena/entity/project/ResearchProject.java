@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +24,7 @@ import java.util.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject {
 
     public static final boolean IRB_ENGAGED = false;
@@ -54,34 +53,35 @@ public class ResearchProject {
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
     private Long researchProjectId;
 
-    @Column(nullable = false)
+    @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status = Status.Open;
 
     // creation/modification information
-    @Column(nullable = false)
+    @Column(name = "CREATED_DATE", nullable = false)
     private Date createdDate;
 
-    @Column(nullable = false)
+    @Column(name = "CREATED_BY", nullable = false)
     private Long createdBy;
 
-    @Column(nullable = false)
+    @Column(name = "MODIFIED_DATE", nullable = false)
     private Date modifiedDate;
 
-    @Column(nullable = false)
+    @Column(name = "MODIFIED_BY", nullable = false)
     private Long modifiedBy;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "TITLE", unique = true, nullable = false)
     @Index(name = "ix_rp_title")
     private String title;
 
-    @Column(nullable = false)
+    @Column(name = "SYNOPSIS", nullable = false, length = 4000)
     private String synopsis;
 
+    @Column(name = "IRB_NOT_ENGAGED", nullable = false)
     private boolean irbNotEngaged = IRB_ENGAGED;
 
     // People related to the project
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<ProjectPerson> associatedPeople;
 
     // Information about externally managed items
@@ -103,6 +103,7 @@ public class ResearchProject {
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
     public String getBusinessKey() {
+        // TODO: change to jiraTicketKey once it's populated
         return title;
     }
 
@@ -284,7 +285,7 @@ public class ResearchProject {
         irbNumbers.remove(irbNumber);
     }
 
-    public void addPerson(RoleType role, Long personId) {
+    public void addPerson(RoleType role, long personId) {
         if (associatedPeople == null) {
             associatedPeople = new HashSet<ProjectPerson>();
         }
@@ -310,16 +311,56 @@ public class ResearchProject {
         return getPeople(RoleType.PM);
     }
 
+    public void updateProjectManagers(Long[] personIds) {
+        updatePeople(RoleType.PM, personIds);
+    }
+
     public Long[] getBroadPIs() {
         return getPeople(RoleType.BROAD_PI);
+    }
+
+    public void updateBroadPIs(Long[] personIds) {
+        updatePeople(RoleType.BROAD_PI, personIds);
     }
 
     public Long[] getScientists() {
         return getPeople(RoleType.SCIENTIST);
     }
 
+    public void updateScientists(Long[] personIds) {
+        updatePeople(RoleType.SCIENTIST, personIds);
+    }
+
     public Long[] getExternalCollaborators() {
         return getPeople ( RoleType.EXTERNAL );
+    }
+
+    public void updateExternalCollaborators(Long[] personIds) {
+        updatePeople(RoleType.EXTERNAL, personIds);
+    }
+
+    public void updatePeople(RoleType role, Long[] personIds) {
+        Set<Long> currentIds = new HashSet<Long>(Arrays.asList(getPeople(role)));
+        Set<Long> newIds = new HashSet<Long>(Arrays.asList(personIds));
+
+        Set<ProjectPerson> peopleToRemove = new HashSet<ProjectPerson>();
+        for (ProjectPerson person : associatedPeople) {
+            if (person.getRole().equals(role)) {
+                if (!newIds.contains(person.getPersonId())) {
+                    peopleToRemove.add(person);
+                }
+            }
+        }
+
+        Set<ProjectPerson> peopleToAdd = new HashSet<ProjectPerson>();
+        for (Long personId : personIds) {
+            if (!currentIds.contains(personId)) {
+                peopleToAdd.add(new ProjectPerson(this, role, personId));
+            }
+        }
+
+        associatedPeople.removeAll(peopleToRemove);
+        associatedPeople.addAll(peopleToAdd);
     }
 
     public String[] getFundingIds() {
@@ -368,54 +409,59 @@ public class ResearchProject {
 
     public void submit() throws IOException {
 
-        Map<String, CustomFieldDefinition> submissionFields =
-                ServiceAccessUtility.getJiraCustomFields ( );
+        if (jiraTicketKey == null) {
+            Map<String, CustomFieldDefinition> submissionFields =
+                    ServiceAccessUtility.getJiraCustomFields ( );
 
-        List<CustomField> listOfFields = new ArrayList<CustomField>();
+            List<CustomField> listOfFields = new ArrayList<CustomField>();
 
-        listOfFields.add(new CustomField(submissionFields.get(
-                RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()),
-                ServiceAccessUtility.getBspUserForId(associatedPeople.iterator().next().getPersonId())));
+            if(!sampleCohorts.isEmpty()) {
+                List<String> cohortNames = new ArrayList<String>();
 
-        if(!sampleCohorts.isEmpty()) {
-            List<String> cohortNames = new ArrayList<String>();
-
-            for(ResearchProjectCohort cohort:sampleCohorts) {
-                cohortNames.add(cohort.getCohortId());
+                for(ResearchProjectCohort cohort:sampleCohorts) {
+                    cohortNames.add(cohort.getCohortId());
+                }
+                listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.COHORTS.getFieldName()),
+                                                 StringUtils.join(cohortNames,',')));
             }
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Cohorts.getFieldName()),
-                                             StringUtils.join(cohortNames,',')));
-        }
-        if(!projectFunding.isEmpty()) {
-            List<String> fundingSources = new ArrayList<String>();
-            for(ResearchProjectFunding fundingSrc:projectFunding) {
-                fundingSources.add(fundingSrc.getFundingId());
+            if(!projectFunding.isEmpty()) {
+                List<String> fundingSources = new ArrayList<String>();
+                for(ResearchProjectFunding fundingSrc:projectFunding) {
+                    fundingSources.add(fundingSrc.getFundingId());
+                }
+
+            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.FUNDING_SOURCE.getFieldName()),
+                                                 StringUtils.join(fundingSources,',')));
             }
+            if(!irbNumbers.isEmpty()) {
+                List<String> irbNums = new ArrayList<String>();
+                for(ResearchProjectIRB irb:irbNumbers ){
+                    irbNums.add(irb.getIrb());
+                }
+                listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
 
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.Funding_Source.getFieldName()),
-                                             StringUtils.join(fundingSources,',')));
-        }
-        if(!irbNumbers.isEmpty()) {
-            List<String> irbNums = new ArrayList<String>();
-            for(ResearchProjectIRB irb:irbNumbers ){
-                irbNums.add(irb.getIrb());
+                                                 StringUtils.join(irbNums,',')));
             }
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_Number.getFieldName()),
-                                             StringUtils.join(irbNums,',')));
+            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
+                                             irbNotEngaged?"Yes":"No" ));
+
+            /**
+             * TODO To be filled in with the actual URL
+             */
+            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                                             ""));
+
+            CreateIssueResponse researchProjectResponse =
+                    ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
+                                                          title, synopsis, listOfFields);
+
+            jiraTicketKey = researchProjectResponse.getKey();
+
+            /**
+             * todo HMC  need a better test user in test cases or this will always break
+             */
+//            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
-        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_Engaged.getFieldName()),
-                                         BooleanUtils.toStringYesNo(irbNotEngaged) ));
-
-        CreateIssueResponse researchProjectResponse =
-                ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
-                                                      title, synopsis, listOfFields);
-
-        jiraTicketKey = researchProjectResponse.getKey();
-
-        /**
-         * TODO SGM --  When the service to retrieve BSP People is implemented, add current user ID here.
-         */
-        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
     }
 
     public void addPublicComment(String comment) throws IOException{
@@ -463,11 +509,12 @@ public class ResearchProject {
      */
     public enum RequiredSubmissionFields {
 
-        Sponsoring_Scientist("Sponsoring Scientist"),
-        Cohorts("Cohort(s)"),
-        Funding_Source("Funding Source"),
-        IRB_IACUC_Number("IRB/IACUC Number"),
-        IRB_Engaged("IRB Engaged?");
+//        Sponsoring_Scientist("Sponsoring Scientist"),
+        COHORTS("Cohort(s)"),
+        FUNDING_SOURCE("Funding Source"),
+        IRB_IACUC_NUMBER("IRB/IACUCs"),
+        IRB_ENGAGED("IRB Engaged?"),
+        MERCURY_URL("Mercury URL");
 
         private String fieldName;
 

@@ -26,7 +26,9 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         SINGLE_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
         ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
         ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
-        ALL_PRICE_ITEMS("/quotes/ws/portals/private/get_price_list"),
+//        ALL_PRICE_ITEMS("/quotes/ws/portals/private/get_price_list"),
+        // the URL below is what the URL above redirects to, but the test fails either way
+        ALL_PRICE_ITEMS("/quotes/rest/price_list/10"),
         REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
         //TODO this next enum value will be removed soon.
         SINGLE_NUMERIC_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_ids=")
@@ -48,7 +50,8 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
     @Inject
     private QuoteConfig quoteConfig;
 
-    public PMBQuoteServiceImpl() {}
+    public PMBQuoteServiceImpl() {
+    }
 
     public PMBQuoteServiceImpl( QuoteConfig quoteConfig ) {
         this.quoteConfig = quoteConfig;
@@ -64,7 +67,6 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         specifyHttpAuthCredentials(client, quoteConfig);
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }
-
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {

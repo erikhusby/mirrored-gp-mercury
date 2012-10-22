@@ -25,17 +25,21 @@
         </ui:define>
         <ui:define name="body">
 
+            <div class="row">
+                <h:link value="Edit Project" outcome="create?includeViewParams=true" styleClass="pull-right"/>
+            </div>
+
             <!-- Name -->
             <h:form styleClass="form-horizontal form-readonly">
                 <div class="control-group">
-                    <label class="control-label">Project</label>
+                    <label class="control-label label-form">Project</label>
                     <div class="controls">
                         <div class="form-value">#{researchProjectDetail.project.title}</div>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <label class="control-label">ID</label>
+                    <label class="control-label label-form">ID</label>
                     <div class="controls">
                         <div class="form-value">#{researchProjectDetail.project.jiraTicketKey}</div>
                     </div>
@@ -43,7 +47,7 @@
 
                 <!-- Synopsis -->
                 <div class="control-group">
-                    <label class="control-label">Synopsis</label>
+                    <label class="control-label label-form">Synopsis</label>
                     <div class="controls">
                         <div class="form-value">#{researchProjectDetail.project.synopsis}</div>
                     </div>
@@ -51,7 +55,7 @@
 
                 <!-- Project Managers -->
                 <div class="control-group">
-                    <label class="control-label">Project Managers</label>
+                    <label class="control-label label-form">Project Managers</label>
                     <div class="controls">
                         <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.projectManagers)}</div>
                     </div>
@@ -59,7 +63,7 @@
 
                 <!-- Broad PIs -->
                 <div class="control-group">
-                    <label class="control-label">Broad PIs</label>
+                    <label class="control-label label-form">Broad PIs</label>
                     <div class="controls">
                         <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.broadPIs)}</div>
                     </div>
@@ -67,7 +71,7 @@
 
                 <!-- Scientists -->
                 <div class="control-group">
-                    <label class="control-label">Sponsoring Scientists</label>
+                    <label class="control-label label-form">Sponsoring Scientists</label>
                     <div class="controls">
                         <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.scientists)}</div>
                     </div>
@@ -75,17 +79,17 @@
 
                 <!-- External Collaborators -->
                 <div class="control-group">
-                    <label class="control-label">External Collaborators</label>
+                    <label class="control-label label-form">External Collaborators</label>
                     <div class="controls">
                         <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.externalCollaborators)}</div>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <label class="control-label">Created</label>
+                    <label class="control-label label-form">Created</label>
                     <div class="controls">
                         <div class="form-value">
-                            By #{userListBean.getUser(researchProjectDetail.project.createdBy)} on
+                            By #{userListBean.getUserFullName(researchProjectDetail.project.createdBy)} on
                             <h:outputText value="#{researchProjectDetail.project.createdDate}">
                                 <f:convertDateTime type="date"/>
                             </h:outputText>
@@ -94,35 +98,35 @@
                 </div>
 
                 <div class="control-group">
-                    <label class="control-label">Funding Sources</label>
+                    <label class="control-label label-form">Funding Sources</label>
                     <div class="controls">
-                        <div class="form-value">#{researchProjectDetail.fundingSources}</div>
+                        <div class="form-value">#{fundingListBean.getFundingListString(researchProjectDetail.project.fundingIds)}</div>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <label class="control-label">Sample Cohorts</label>
+                    <label class="control-label label-form">Sample Cohorts</label>
                     <div class="controls">
                         <div class="form-value">#{cohortListBean.getCohortListString(researchProjectDetail.project.cohortIds)}</div>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <label class="control-label">IRB Not Engaged</label>
+                    <label class="control-label label-form">IRB Not Engaged</label>
                     <div class="controls">
                         <div class="form-value">#{researchProjectDetail.project.irbNotEngaged}</div>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <label class="control-label">IRB/IACUC</label>
+                    <label class="control-label label-form">IRB/IACUC</label>
                     <div class="controls">
                         <div class="form-value">#{researchProjectDetail.irbNumberString}</div>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <label class="control-label">IRB/IACUC Notes</label>
+                    <label class="control-label label-form">IRB/IACUC Notes</label>
                     <div class="controls">
                         <div class="form-value">#{researchProjectDetail.project.irbNotes}</div>
                     </div>
@@ -130,14 +134,43 @@
 
                 <br/>
 
-                <p:dataTable value="#{researchProjectDetail.project.productOrders}" var="order" filteredValue="#{productOrderBean.filteredProductOrders}">
+                <div class="row-fluid">
+                    <div class="pull-right ui-widget-header" style="padding: 5px;">
+                        <span class="ui-icon ui-icon-folder-open" style="float:left;">&nbsp;</span>
+                        <h:outputText value=" Export all data as: " />
+
+                        <p:commandLink title="Click to download all project order data as a Microsoft Excel file">
+                            <h:outputText value="Excel"/>
+                            <p:dataExporter
+                                    type="xls"
+                                    pageOnly = "false"
+                                    target="orderData"
+                                    fileName="#{researchProjectDetail.project.title}" />
+                        </p:commandLink>
+                        &nbsp;
+                        <p:commandLink title="Click to download all project order data as a CSV file">
+                            <h:outputText value="CSV"/>
+                            <p:dataExporter
+                                    type="csv"
+                                    pageOnly = "false"
+                                    target="orderData"
+                                    fileName="#{researchProjectDetail.project.title}" />
+                        </p:commandLink>
+                    </div>
+                </div>
+
+                <p:dataTable id="orderData" value="#{researchProjectDetail.project.productOrders}" var="order" filteredValue="#{productOrderBean.filteredProductOrders}">
+                    <f:facet name="header">
+                        Orders
+                    </f:facet>
+
+                    <p:column headerText="Name">
+                        #{order.title}
+                    </p:column>
                     <p:column headerText="Product ID">
                         <h:link outcome="/orders/view" value="#{order.jiraTicketKey}">
                             <f:param name="productOrderKey" value="#{order.businessKey}"/>
                         </h:link>
-                    </p:column>
-                    <p:column headerText="Name">
-                        #{order.title}
                     </p:column>
                     <p:column headerText="Product">
                         #{order.product.productName}
@@ -145,22 +178,17 @@
                     <p:column headerText="Status" sortBy="#{order.orderStatus}" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
                         #{order.orderStatus}
                     </p:column>
-                    <p:column headerText="Date Created">
-                        #{order.createdDate}
+                    <p:column headerText="Owner">
+                        #{userListBean.getUserFullName(order.createdBy)}
                     </p:column>
-                    <p:column headerText="Date Updated">
+                    <p:column headerText="Updated">
                         #{order.modifiedDate}
                     </p:column>
                     <p:column headerText="Samples">
                         #{order.sampleSummary}
                     </p:column>
-                    <p:column headerText="Program PM">
-                        #{userListBean.getUserListString(order.createdBy)}
-                    </p:column>
                 </p:dataTable>
             </h:form>
-
-            <h:link value="Edit Project" outcome="create?includeViewParams=true"/>
         </ui:define>
     </ui:composition>
 </body>

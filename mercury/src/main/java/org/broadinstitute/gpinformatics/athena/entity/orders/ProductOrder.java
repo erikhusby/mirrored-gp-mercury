@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRes
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
 import org.hibernate.envers.Audited;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -37,7 +36,7 @@ import java.util.*;
  */
 @Entity
 @Audited
-@Table(schema = "athena")
+@Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements Serializable {
     private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
@@ -82,6 +81,10 @@ public class ProductOrder implements Serializable {
         return jiraTicketKey;
     }
 
+    public boolean isInDB() {
+        return productOrderId != null;
+    }
+
     /**
      * Default no-arg constructor
      */
@@ -91,8 +94,8 @@ public class ProductOrder implements Serializable {
     /**
      * Constructor called when creating a new ProductOrder.
      */
-    public ProductOrder(long createdBy, ResearchProject researchProject) {
-        this(createdBy, "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
+    public ProductOrder(@Nonnull BspUser createdBy, ResearchProject researchProject) {
+        this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
     }
 
     /**
@@ -191,7 +194,7 @@ public class ProductOrder implements Serializable {
      * @param jiraTicketKeyIn a {@link String} that represents the unique key to the Jira Ticket to which the current
      *                        Product Order is associated
      */
-    public void setJiraTicketKey(@NotNull String jiraTicketKeyIn) {
+    public void setJiraTicketKey(@Nonnull String jiraTicketKeyIn) {
         if (jiraTicketKeyIn == null) {
             throw new NullPointerException("Jira Ticket Key cannot be null");
         }
@@ -480,7 +483,7 @@ public class ProductOrder implements Serializable {
     private int getGenderCount(String gender) {
         int counter = 0;
         for (ProductOrderSample sample : samples) {
-            if (sample.isInBspFormat() && gender.equals(sample.getBspDTO().getGender())) {
+            if (sample.isInBspFormat() && gender.equalsIgnoreCase(sample.getBspDTO().getGender())) {
                 counter++;
             }
         }
@@ -562,21 +565,26 @@ public class ProductOrder implements Serializable {
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
         addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT_FAMILY,
-                product.getProductFamily());
+                product.getProductFamily()==null?"":product.getProductFamily().getName());
 
         if (quoteId != null && !quoteId.isEmpty()) {
             addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.QUOTE_ID, quoteId);
         }
+        if(!isSheetEmpty()) {
+            addCustomField(submissionFields,listOfFields,RequiredSubmissionFields.SAMPLE_IDS,
+                           "Sample List: " + StringUtils.join(getUniqueSampleNames(), ','));
+        }
 
         CreateIssueResponse issueResponse = ServiceAccessUtility.createJiraTicket(
-                fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title, comments, listOfFields);
+                fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title, comments==null?"":comments, listOfFields);
 
         jiraTicketKey = issueResponse.getKey();
         addLink(researchProject.getJiraTicketKey());
 
-        addPublicComment("Sample List: " + StringUtils.join(getUniqueSampleNames(), ','));
-
-        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
+        /**
+         * todo HMC  need a better test user in test cases or this will always break
+         */
+//        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
 
         sampleValidationComments();
     }
@@ -774,7 +782,9 @@ public class ProductOrder implements Serializable {
      */
     public enum RequiredSubmissionFields {
         PRODUCT_FAMILY("Product Family"),
-        QUOTE_ID("Quote ID");
+        QUOTE_ID("Quote ID"),
+        MERCURY_URL("Mercury URL"),
+        SAMPLE_IDS("Sample IDs");
 
         private final String fieldName;
 

@@ -1,16 +1,22 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.*;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
+import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
+import javax.faces.validator.ValidatorException;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
@@ -22,6 +28,9 @@ import java.util.List;
 @Named
 @RequestScoped
 public class ResearchProjectForm extends AbstractJsfBean {
+
+    @Inject
+    private Log log;
 
     @Inject
     private ResearchProjectDetail detail;
@@ -49,8 +58,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
     private List<BspUser> externalCollaborators;
 
-    // TODO: integrate with real quotes
-    private List<Long> fundingSources;
+    private List<Funding> fundingSources;
 
     private List<Cohort> sampleCohorts;
 
@@ -58,11 +66,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
     private List<Long> irbs;
 
     public void initForm() {
-        // Only initialize the form on postback. Otherwise, we'll leave the form as the user submitted it.
+        // Only initialize the form if not a postback. Otherwise, we'll leave the form as the user submitted it.
         if (!facesContext.isPostback()) {
 
             // Add current user as a PM only if this is a new research project being created
-            if (detail.getProject().getResearchProjectId() == null) {
+            if (isCreating()) {
                 projectManagers = new ArrayList<BspUser>();
                 projectManagers.add(userBean.getBspUser());
             } else {
@@ -86,8 +94,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
     }
 
     public String save() {
-        ResearchProject project = detail.getProject();
-        if (project.getResearchProjectId() == null) {
+        if (isCreating()) {
             return create();
         } else {
             return edit();
@@ -104,8 +111,8 @@ public class ResearchProjectForm extends AbstractJsfBean {
         addPeople(project, RoleType.EXTERNAL, externalCollaborators);
 
         if (fundingSources != null) {
-            for (Long fundingSource : fundingSources) {
-                project.addFunding(new ResearchProjectFunding(project, fundingSource.toString()));
+            for (Funding fundingSource : fundingSources) {
+                project.addFunding(new ResearchProjectFunding(project, fundingSource.getFundingTypeAndName()));
             }
         }
 
@@ -124,6 +131,16 @@ public class ResearchProjectForm extends AbstractJsfBean {
         project.setCreatedBy(userBean.getBspUser().getUserId());
         project.recordModification(userBean.getBspUser().getUserId());
 
+/* disabled until JIRA issue creation is working
+        try {
+            project.submit();
+        } catch (IOException e) {
+            log.error("Error creating JIRA ticket for research project", e);
+            addErrorMessage("Error creating JIRA issue", "Unable to create JIRA issue: " + e.getMessage());
+            // redisplay create view
+            return null;
+        }
+*/
         researchProjectDao.persist(project);
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
         return redirect("list");
@@ -137,11 +154,44 @@ public class ResearchProjectForm extends AbstractJsfBean {
         }
     }
 
+    public void validateTitle(FacesContext context, UIComponent component, Object title) throws ValidatorException {
+        if (researchProjectDao.findByTitle((String) title) != null) {
+
+            if (isCreating() || hasTitleChanged((String) title)) {
+                FacesMessage message =
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                        "Name Not Unique", "There is already a research project with this name");
+                throw new ValidatorException(message);            }
+        }
+    }
+
+    public boolean hasTitleChanged(String newValue) {
+        // title is a string
+        String projectTitle = detail.getProject().getTitle();
+       return (!StringUtils.isBlank(newValue) || !StringUtils.isBlank(projectTitle)) && (!newValue.equals(projectTitle));
+    }
+
+    private boolean isCreating() {
+        return detail.getProject().getResearchProjectId() == null;
+    }
+
     public String edit() {
         // TODO: try to do away with merge
-        // TODO: manage changes in personnel
-        researchProjectDao.getEntityManager().merge(detail.getProject());
+        ResearchProject project = detail.getProject();
+        updatePeople(project, RoleType.PM, projectManagers);
+        updatePeople(project, RoleType.BROAD_PI, broadPIs);
+        updatePeople(project, RoleType.SCIENTIST, scientists);
+        updatePeople(project, RoleType.EXTERNAL, externalCollaborators);
+        researchProjectDao.getEntityManager().merge(project);
         return redirect("list");
+    }
+
+    private void updatePeople(ResearchProject project, RoleType role, List<BspUser> people) {
+        List<Long> projectManagerIds = new ArrayList<Long>();
+        for (BspUser projectManager : people) {
+            projectManagerIds.add(projectManager.getUserId());
+        }
+        project.updatePeople(role, projectManagerIds.toArray(new Long[projectManagerIds.size()]));
     }
 
     public List<Long> completeFundingSource(String query) {
@@ -196,11 +246,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
         this.externalCollaborators = externalCollaborators;
     }
 
-    public List<Long> getFundingSources() {
+    public List<Funding> getFundingSources() {
         return fundingSources;
     }
 
-    public void setFundingSources(List<Long> fundingSources) {
+    public void setFundingSources(List<Funding> fundingSources) {
         this.fundingSources = fundingSources;
     }
 

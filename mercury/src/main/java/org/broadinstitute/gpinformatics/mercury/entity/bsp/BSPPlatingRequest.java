@@ -28,7 +28,7 @@ public class BSPPlatingRequest {
         this.sampleName = sampleName;
         isFulfilled = false;
         this.aliquotParameters = aliquotParameters;
-        aliquotParameters.getProjectPlan().addPlatingRequest(this);
+//        aliquotParameters.getProjectPlan().addPlatingRequest(this);
     }
 
 

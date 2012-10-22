@@ -61,7 +61,9 @@ public class Cohort {
         return new HashCodeBuilder().append(getCohortId()).toHashCode();
     }
 
-    public static class CohortComparator implements Comparator<Cohort> {
+    public static final CohortByIdComparator COHORT_BY_ID = new CohortByIdComparator();
+
+    public static class CohortByIdComparator implements Comparator<Cohort> {
         @Override
         public int compare(Cohort cohort, Cohort cohort1) {
             Integer nullCohort = nullCompare(cohort, cohort1);

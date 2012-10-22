@@ -4,12 +4,14 @@ import org.broadinstitute.gpinformatics.athena.boundary.BoundaryUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.BillingStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.SessionScoped;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.Serializable;
 import java.util.List;
 
 @Named
@@ -33,6 +35,7 @@ public class ProductOrderBean {
         if (allProductOrders == null) {
             allProductOrders = productOrderDao.findAll();
         }
+
         return allProductOrders;
     }
 
@@ -61,4 +64,5 @@ public class ProductOrderBean {
     public void setFilteredProductOrders(List<ProductOrder> filteredProductOrders) {
         this.filteredProductOrders = filteredProductOrders;
     }
+
 }

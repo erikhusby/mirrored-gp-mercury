@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -117,8 +116,8 @@ public abstract class LabEvent {
 
     private String quoteServerBatchId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private BasicProjectPlan projectPlanOverride;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    private BasicProjectPlan projectPlanOverride;
 
     @Transient
     // transient because ARZ hasn't figured out the tests for this.  work in progress.
@@ -305,20 +304,20 @@ public abstract class LabEvent {
      * the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan} referenced by {@link org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample#getRootProjectPlan()}
      * @param projectPlan
      */
-    public void setProjectPlanOverride(BasicProjectPlan projectPlan) {
-        if (projectPlan == null) {
-            throw new RuntimeException("projectPlan override cannot be null.");
-        }
-        this.projectPlanOverride = projectPlan;
-    }
+//    public void setProjectPlanOverride(BasicProjectPlan projectPlan) {
+//        if (projectPlan == null) {
+//            throw new RuntimeException("projectPlan override cannot be null.");
+//        }
+//        this.projectPlanOverride = projectPlan;
+//    }
 
     /**
      * See {@link #setProjectPlanOverride(org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan)}.
      * @return
      */
-    public BasicProjectPlan getProjectPlanOverride() {
-        return projectPlanOverride;
-    }
+//    public BasicProjectPlan getProjectPlanOverride() {
+//        return projectPlanOverride;
+//    }
 
     public void setEventLocation(String eventLocation) {
         this.eventLocation = eventLocation;

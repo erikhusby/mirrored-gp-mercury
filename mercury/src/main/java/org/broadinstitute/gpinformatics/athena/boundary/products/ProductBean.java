@@ -43,13 +43,21 @@ public class ProductBean {
      *
      * @return list of product families
      */
-    public List<SelectItem> getAllProductFamilies() {
+    public List<SelectItem> getProductFamilySelectItems() {
         List<SelectItem> items = new ArrayList<SelectItem>();
         Set<String> aList = new HashSet<String>();
         for (ProductFamily productFamily :  productFamilyDao.findAll()) {
             items.add(new SelectItem(productFamily.getProductFamilyId(), productFamily.getName()));
         }
         return items;
+    }
+
+//    public List<SelectItem> getAllProductFamilies() {
+//        return BoundaryUtils.buildEnumFilterList(ProductFamily.ProductFamilyName.values());
+//    }
+
+    public List<ProductFamily> getProductFamilies() {
+        return  productFamilyDao.findAll();
     }
 
 

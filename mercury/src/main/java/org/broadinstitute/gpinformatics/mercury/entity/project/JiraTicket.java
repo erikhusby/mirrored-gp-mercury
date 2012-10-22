@@ -10,12 +10,9 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Audited
@@ -29,8 +26,8 @@ public class JiraTicket {
     @Id
     private String ticketId;
 
-    @OneToMany(mappedBy = "jiraTicket")
-    private Set<Project> projects = new HashSet<Project>();
+//    @OneToMany(mappedBy = "jiraTicket")
+//    private Set<Project> projects = new HashSet<Project>();
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private LabBatch labBatch;
@@ -116,9 +113,9 @@ public class JiraTicket {
         return result;
     }
 
-    public Set<Project> getProjects() {
-        return projects;
-    }
+//    public Set<Project> getProjects() {
+//        return projects;
+//    }
 
     public LabBatch getLabBatch() {
         return labBatch;
