@@ -178,7 +178,7 @@
         <tests.groups />
 
         <build.resultKey>LOCAL</build.resultKey>
-        <build.buildTimeStamp>now</build.buildTimeStamp>
+        <build.buildTimeStamp>${maven.build.timestamp}</build.buildTimeStamp>
 
         <!-- Default Postgres Database settings for Liquibase and Maven SQL Plugin-->
         <database>postgres</database>
@@ -1606,6 +1606,7 @@
                             <directory>${project.basedir}/local</directory>
                             <includes>
                                 <include>mercury-config-local.yaml</include>
+                                <include>target/version.properties</include>
                             </includes>
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
@@ -1631,6 +1632,7 @@
                             <target>
                                 <propertyfile file="${pom.basedir}/target/version.properties">
                                     <entry key="project.version" type="string" value="${project.version}" operation="=" />
+                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}" operation="=" />
                                 </propertyfile>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
                                     <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />
