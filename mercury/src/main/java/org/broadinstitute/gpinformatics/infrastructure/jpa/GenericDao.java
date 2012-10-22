@@ -1,18 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
-import javax.ejb.EJBTransactionRolledbackException;
+import org.hibernate.exception.ConstraintViolationException;
+
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.SingularAttribute;
-import javax.transaction.RollbackException;
 import java.util.Collections;
 import java.util.List;
 
@@ -163,10 +162,16 @@ public class GenericDao {
     }
 
     public static boolean IsConstraintViolationException(final Exception e) {
-        return (e instanceof EJBTransactionRolledbackException) &&
-                (e.getCause() != null) && ( e.getCause() instanceof RollbackException) &&
-                (e.getCause().getCause() != null) && ( e.getCause().getCause() instanceof PersistenceException) &&
-                (e.getCause().getCause().getCause() != null ) && ( e.getCause().getCause().getCause() instanceof org.hibernate.exception.ConstraintViolationException);
+
+        Throwable currentCause = e;
+        while (currentCause != null) {
+            if (currentCause instanceof ConstraintViolationException) {
+                return true;
+            }
+            currentCause = currentCause.getCause();
+        }
+
+        return false;
     }
 
 }
