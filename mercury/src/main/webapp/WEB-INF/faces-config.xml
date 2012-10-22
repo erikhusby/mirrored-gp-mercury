@@ -6,10 +6,7 @@
               version="2.0">
 
     <application>
-        <resource-bundle>
-            <base-name>org.broadinstitute.gpinformatics.Messages</base-name>
-            <var>msg</var>
-        </resource-bundle>
+        <message-bundle>org.broadinstitute.gpinformatics.Messages</message-bundle>
     </application>
 
     <factory>
