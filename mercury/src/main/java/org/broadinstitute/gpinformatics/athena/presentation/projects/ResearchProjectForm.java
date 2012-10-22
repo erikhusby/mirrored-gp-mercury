@@ -148,7 +148,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 errorMessage = MessageFormat.format("The project name ''{0}'' is not unique. Project not created", detail.getProject().getTitle());
             }
             addErrorMessage("name", errorMessage, "Name is not unique.");
-            return "create";
+            return null;
         }
 
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
@@ -183,7 +183,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 errorMessage = MessageFormat.format("The project name ''{0}'' is not unique. Project not updated.", detail.getProject().getTitle());
             }
             addErrorMessage("name", errorMessage, "Name is not unique");
-            return "create";
+            return null;
         }
 
         return redirect("list");
