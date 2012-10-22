@@ -16,7 +16,9 @@ public class ResearchProjectConverter implements Converter {
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
-        return researchProjectDao.findByBusinessKey(value);
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(value);
+        researchProject.setOriginalTitle(researchProject.getTitle());
+        return researchProject;
     }
 
     @Override

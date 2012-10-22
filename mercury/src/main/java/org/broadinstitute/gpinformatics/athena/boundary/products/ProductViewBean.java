@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
@@ -9,6 +10,8 @@ import javax.inject.Named;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Named("productView")
@@ -32,7 +35,16 @@ public class ProductViewBean {
             return new ArrayList<Product>();
         }
 
-        return new ArrayList<Product>(product.getAddOns());
+        ArrayList<Product> addOns = new ArrayList<Product>(product.getAddOns());
+        Collections.sort(addOns, new Comparator<Product>() {
+            @Override
+            public int compare(Product priceItem, Product priceItem1) {
+                CompareToBuilder builder = new CompareToBuilder();
+                return builder.build();
+            }
+        });
+
+        return addOns;
     }
 
 
@@ -41,7 +53,20 @@ public class ProductViewBean {
             return new ArrayList<PriceItem>();
         }
 
-        return new ArrayList<PriceItem>(product.getPriceItems());
+        ArrayList<PriceItem> priceItems = new ArrayList<PriceItem>(product.getPriceItems());
+        Collections.sort(priceItems, new Comparator<PriceItem>() {
+            @Override
+            public int compare(PriceItem priceItem, PriceItem priceItem1) {
+                CompareToBuilder builder = new CompareToBuilder();
+                builder.append(priceItem.getPlatform(), priceItem1.getPlatform());
+                builder.append(priceItem.getCategory(), priceItem1.getCategory());
+                builder.append(priceItem.getName(), priceItem1.getName());
+
+                return builder.build();
+            }
+        });
+
+        return priceItems;
     }
 
 
@@ -49,6 +74,8 @@ public class ProductViewBean {
         if (product == null || product.getAvailabilityDate() == null) {
             return "";
         }
+
+
 
         return DATE_FORMAT.format(product.getAvailabilityDate());
     }
