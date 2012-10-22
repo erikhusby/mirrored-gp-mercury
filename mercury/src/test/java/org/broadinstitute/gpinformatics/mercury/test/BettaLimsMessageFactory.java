@@ -98,15 +98,22 @@ public class BettaLimsMessageFactory {
         }
     }
 
-    public ReceptaclePlateTransferEvent buildTubeToPlate(String eventType, String sourceTubeBarcode, String targetPlateBarcode) {
+    public ReceptaclePlateTransferEvent buildTubeToPlate(String eventType, String sourceTubeBarcode,
+            String targetPlateBarcode, String physType, String section, String receptacleType) {
         try {
             ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
             setStationEventData(eventType, receptaclePlateTransferEvent);
 
             ReceptacleType sourceReceptacle = new ReceptacleType();
             sourceReceptacle.setBarcode(sourceTubeBarcode);
+            sourceReceptacle.setReceptacleType(receptacleType);
             receptaclePlateTransferEvent.setSourceReceptacle(sourceReceptacle);
-            receptaclePlateTransferEvent.setDestinationPlate(buildPlate(targetPlateBarcode));
+
+            PlateType plate = new PlateType();
+            plate.setBarcode(targetPlateBarcode);
+            plate.setPhysType(physType);
+            plate.setSection(section);
+            receptaclePlateTransferEvent.setDestinationPlate(plate);
 
             return receptaclePlateTransferEvent;
         } catch (DatatypeConfigurationException e) {
