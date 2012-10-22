@@ -119,9 +119,12 @@ public abstract class LabEvent {
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    private BasicProjectPlan projectPlanOverride;
 
+    /**
+     * Business Key of a product order to which this event is associated
+     */
     @Transient
     // transient because ARZ hasn't figured out the tests for this.  work in progress.
-    private ProductOrderId productOrder;
+    private String poBusinessKey;
 
     public abstract LabEventName getEventName();
 
@@ -388,11 +391,11 @@ todo jmt adder methods
      * Most events will return null.
      * @return
      */
-    public ProductOrderId getProductOrderId() {
-        return productOrder;
+    public String getProductOrderId() {
+        return poBusinessKey;
     }
 
-    public void setProductOrderId(ProductOrderId productOrder) {
-        this.productOrder = productOrder;
+    public void setProductOrderId(String productOrder) {
+        this.poBusinessKey = productOrder;
     }
 }

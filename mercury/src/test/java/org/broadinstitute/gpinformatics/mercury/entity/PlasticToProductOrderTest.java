@@ -29,7 +29,7 @@ public class PlasticToProductOrderTest {
 
     @Test(groups = {TestGroups.DATABASE_FREE},enabled = false)
     public void test_simple_tube_in_rack_maps_to_pdo() {
-        Bucket bucket = new Bucket();
+        Bucket bucket = new Bucket("Start");
         BucketResource bucketResource = new BucketResource();
         BettaLimsMessageFactory messageFactory = new BettaLimsMessageFactory();
         LabEventFactory eventFactory = new LabEventFactory(new PersonDAO());
@@ -43,7 +43,9 @@ public class PlasticToProductOrderTest {
         barcodeToTubeMap.put(tube.getLabel(),tube);
 
 
-        PlateTransferEventType plateXfer = messageFactory.buildRackToPlate(LabEventType.POND_REGISTRATION.getName(),"RackBarcode",barcodeToTubeMap.keySet(),destinationPlateBarcode);
+        PlateTransferEventType plateXfer = messageFactory.buildRackToPlate ( LabEventType.POND_REGISTRATION.getName (),
+                                                                             "RackBarcode", barcodeToTubeMap.keySet (),
+                                                                             destinationPlateBarcode );
 
 
         LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree(plateXfer, barcodeToTubeMap, null);
@@ -53,8 +55,8 @@ public class PlasticToProductOrderTest {
         BucketEntry bucketEntry = bucketResource.add(tube, productOrder,bucket);
         assertTrue(bucket.contains(bucketEntry));
 
-        final Map<LabVessel,ProductOrderId> samplePOMapFromAthena = new HashMap<LabVessel, ProductOrderId>();
-        samplePOMapFromAthena.put(bucketEntry.getLabVessel(),bucketEntry.getProductOrderId());
+        final Map<LabVessel,String> samplePOMapFromAthena = new HashMap<LabVessel, String>();
+        samplePOMapFromAthena.put(bucketEntry.getLabVessel(),bucketEntry.getPoBusinessKey ());
 
         bucketResource.start(bucketEntry);
 
@@ -75,7 +77,7 @@ public class PlasticToProductOrderTest {
         // container pulled from the bucket, and the LabEvent calls out
         // a PDO for each sample
         // here we set the order explicitly, but this should be done by bucketResource.start()
-        rackToPlateTransfer.setProductOrderId(productOrder);
+        rackToPlateTransfer.setProductOrderId(productOrder.getBusinessKey());
 
         // put the tubes in a rack
 
@@ -173,7 +175,7 @@ public class PlasticToProductOrderTest {
      * the exome workflow, adding an index along the way.
      * At a point in the event graph after the indexing,
      * create a {@link LabEvent} that sets a different
-     * {@link LabEvent#productOrder}, and then apply some
+     * {@link LabEvent#poBusinessKey}, and then apply some
      * events and transfers after that.  The branch
      * below this is considered a dev branch.
      *
