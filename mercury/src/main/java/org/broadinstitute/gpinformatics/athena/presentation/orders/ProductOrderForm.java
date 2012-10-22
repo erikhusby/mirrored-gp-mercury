@@ -9,8 +9,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.enterprise.context.RequestScoped;
+import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.text.MessageFormat;
@@ -34,42 +34,36 @@ public class ProductOrderForm extends AbstractJsfBean {
     @Inject
     private QuoteService quoteService;
 
+    @Inject
+    private FacesContext facesContext;
+
     // Add state that can be edited here.
 
     /** Raw text of sample list to be edited. */
-    // FIXME: use null to indicate no change, vs removing all samples on PDO.
-    @Nonnull
-    private String sampleIDsText = "";
-
-    // Cached state, visible but not editable.
-
-    private String sampleStatus;
+    private String editIdsCache;
 
     private static final String SEPARATOR = ",";
+
+    private final Dialog dialog = new Dialog();
 
     /*
      * Split sample input on whitespace or commas. This treats multiple commas as a single comma.
      */
     private static final Pattern SPLIT_PATTERN = Pattern.compile("[" + SEPARATOR + "\\s]+");
 
-    @Nonnull
-    public String getSampleIDsText() {
-        if (sampleIDsText.isEmpty()) {
-            dialogPrepareToShow();
-        }
-        return sampleIDsText;
+    /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
+    private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
+
+    public String getEditIdsCache() {
+        return editIdsCache;
     }
 
-    public void setSampleIDsText(@Nullable String sampleIDsText) {
-        if (sampleIDsText == null) {
-            this.sampleIDsText = "";
-        } else {
-            this.sampleIDsText = sampleIDsText;
-        }
+    public void setEditIdsCache(String editIdsCache) {
+        this.editIdsCache = editIdsCache;
     }
 
-    public String getSampleStatus() {
-        return sampleStatus;
+    public Dialog getDialog() {
+        return dialog;
     }
 
     public String getFundsRemaining() {
@@ -93,9 +87,9 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     /**
-     * Prepare to show sample edit dialog by converting current list of samples to a single string.
+     * Convert current list of samples to a single string.
      */
-    private List<String> dialogConvertOrderSamplesToList() {
+    private List<String> convertOrderSamplesToList() {
         if (productOrderDetail == null || productOrderDetail.getProductOrder() == null) {
             return Collections.emptyList();
         }
@@ -108,29 +102,13 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     /**
-     * Update sample edit dialog's status using the dialog's current text.
-     */
-    private void dialogUpdateStatus(List<String> sampleIds) {
-        Set<String> sampleSet = new HashSet<String>(sampleIds);
-        sampleStatus = MessageFormat.format(
-                "{0} Sample{0, choice, 0#s|1#|1<s}, {1} Duplicate{1, choice, 0#s|1#|1<s}",
-                sampleIds.size(), sampleIds.size() - sampleSet.size());
-    }
-
-    private void dialogUpdateSampleText(List<String> sampleIds) {
-        sampleIDsText = StringUtils.join(sampleIds, SEPARATOR + " ");
-        dialogUpdateStatus(sampleIds);
-    }
-
-    public void dialogSampleTextChanged() {
-        dialogUpdateSampleText(dialogConvertTextToList());
-    }
-
-    /**
      * Process the text in the dialog and convert to a list of sample names.
      */
-    private List<String> dialogConvertTextToList() {
-        String[] samples =  SPLIT_PATTERN.split(sampleIDsText, 0);
+    private static List<String> convertTextToList(String text) {
+        if (text == null) {
+            return Collections.emptyList();
+        }
+        String[] samples =  SPLIT_PATTERN.split(text, 0);
         if (samples.length == 1 && samples[0].isEmpty()) {
             // Handle empty string case.
             samples = new String[0];
@@ -138,23 +116,22 @@ public class ProductOrderForm extends AbstractJsfBean {
         List<String> sampleIds = new ArrayList<String>(samples.length);
         for (String sample : samples) {
             if (!StringUtils.isBlank(sample)) {
-                // FIXME: should only uppercase BSP IDs?
-                sampleIds.add(sample.trim().toUpperCase());
+                sample = sample.trim();
+                if (UPPERCASE_PATTERN.matcher(sample).matches()) {
+                    sample = sample.toUpperCase();
+                }
+                sampleIds.add(sample);
             }
         }
         return sampleIds;
     }
 
-    public void dialogCancel() {
-        sampleIDsText = "";
-    }
-
     /**
-     * Commit the sample dialog.  Convert the dialog's sample names into a list of sample objects, and
-     * replace the sample objects in the current product order with the new list.
+     * Convert the sample names into a list of sample objects, and replace the sample objects in the current product
+     * order with the new list.
      */
-    public List<ProductOrderSample> dialogConvertTextToOrderSamples() {
-        List<String> sampleIds = dialogConvertTextToList();
+    public List<ProductOrderSample> convertTextToOrderSamples(@Nonnull String text) {
+        List<String> sampleIds = convertTextToList(text);
         List<ProductOrderSample> orderSamples = new ArrayList<ProductOrderSample>(sampleIds.size());
         for (String sampleId : sampleIds) {
             orderSamples.add(new ProductOrderSample(sampleId));
@@ -162,17 +139,68 @@ public class ProductOrderForm extends AbstractJsfBean {
         return orderSamples;
     }
 
-    public void dialogPrepareToShow() {
-        dialogUpdateSampleText(dialogConvertOrderSamplesToList());
+    /**
+     * Class that contains operations specific to the sample list dialog.
+     *
+     * The edited sample list has three states:
+     * 1 the database state, read from the current product order, used to display table
+     * 2 the committed edited state, not shown to user
+     * 3 the uncommitted edited state, used in dialog
+     *
+     * Here are the operations we need to support, and the data flow for each.
+     * - first ever page load: 1 => 2; subsequent page loads 2 => 1
+     * - save to database: 2 => 1 (automatic due to page load)
+     * - show dialog: 2 => 3
+     * - confirm dialog: 3 => 2
+     * - the user can make changes to (3) by typing in the dialog.
+     * - both (2) and (3) are stored in the JSF form data. (1) is stored in the database.
+     */
+    public class Dialog {
+        private String sampleIDsText = "";
+
+        private String sampleStatus;
+
+        public String getSampleStatus() {
+            return sampleStatus;
+        }
+
+        public String getSampleIDsText() {
+            //noinspection StringEquality
+            if (sampleIDsText != editIdsCache) {
+                sampleIDsText = editIdsCache;
+                sampleTextChanged();
+            }
+            return sampleIDsText;
+        }
+
+        public void setSampleIDsText(String sampleIDsText) {
+            this.sampleIDsText = sampleIDsText;
+        }
+
+        public void sampleTextChanged() {
+            List<String> sampleIds = convertTextToList(sampleIDsText);
+            sampleIDsText = StringUtils.join(sampleIds, SEPARATOR + " ");
+            Set<String> sampleSet = new HashSet<String>(sampleIds);
+            sampleStatus = MessageFormat.format(
+                    "{0} Sample{0, choice, 0#s|1#|1<s}, {1} Duplicate{1, choice, 0#s|1#|1<s}",
+                    sampleIds.size(), sampleIds.size() - sampleSet.size());
+        }
+
+        public void commit() {
+            editIdsCache = sampleIDsText;
+        }
     }
 
     /**
      * Load local state before bringing up the UI.
      */
     public void load() {
-        // If present, copy sample ID list into Product Order object.
-        if (!StringUtils.isBlank(sampleIDsText)) {
-            productOrderDetail.getProductOrder().setSamples(dialogConvertTextToOrderSamples());
+        if (facesContext.isPostback()) {
+            // Restoring the view, replace entity state with form state.
+            productOrderDetail.getProductOrder().setSamples(convertTextToOrderSamples(editIdsCache));
+        } else {
+            // First time, load from entity state.
+            editIdsCache = StringUtils.join(convertOrderSamplesToList(), SEPARATOR + " ");
         }
     }
 

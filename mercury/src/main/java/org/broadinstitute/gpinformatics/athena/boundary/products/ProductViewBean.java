@@ -2,13 +2,16 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItemComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Named("productView")
@@ -32,7 +35,10 @@ public class ProductViewBean {
             return new ArrayList<Product>();
         }
 
-        return new ArrayList<Product>(product.getAddOns());
+        ArrayList<Product> addOns = new ArrayList<Product>(product.getAddOns());
+        Collections.sort(addOns, new ProductComparator());
+
+        return addOns;
     }
 
 
@@ -41,7 +47,10 @@ public class ProductViewBean {
             return new ArrayList<PriceItem>();
         }
 
-        return new ArrayList<PriceItem>(product.getPriceItems());
+        ArrayList<PriceItem> priceItems = new ArrayList<PriceItem>(product.getPriceItems());
+        Collections.sort(priceItems, new PriceItemComparator());
+
+        return priceItems;
     }
 
 
