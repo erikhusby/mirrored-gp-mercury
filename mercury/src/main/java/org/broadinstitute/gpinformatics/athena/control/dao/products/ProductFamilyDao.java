@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 
@@ -29,4 +30,14 @@ public class ProductFamilyDao extends GenericDao {
     public ProductFamily find(ProductFamily.ProductFamilyName productFamilyName) {
         return findSingle(ProductFamily.class, ProductFamily_.name, productFamilyName.name());
     }
+
+    /**
+     * Find a ProductFamily by it's primary key identifier
+     * @param productFamilyId
+     * @return
+     */
+    public ProductFamily find(@NotNull Long productFamilyId) {
+        return findSingle(ProductFamily.class, ProductFamily_.productFamilyId, productFamilyId);
+    }
+
 }

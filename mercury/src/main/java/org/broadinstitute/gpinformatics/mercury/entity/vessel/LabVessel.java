@@ -7,33 +7,27 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StateChange;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingLibraryAnnotation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
-import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -43,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -54,7 +49,7 @@ import java.util.logging.Logger;
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
 @BatchSize(size = 50)
-public abstract class LabVessel implements Starter {
+public abstract class LabVessel {
 
     private final static Logger logger = Logger.getLogger(LabVessel.class.getName());
 
@@ -71,22 +66,9 @@ public abstract class LabVessel implements Starter {
     @JoinTable(schema = "mercury")
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private MolecularState molecularState;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Project project;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private LabVessel projectAuthority;
-
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "mercury")
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private LabVessel readBucketAuthority;
-
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
@@ -112,6 +94,10 @@ public abstract class LabVessel implements Starter {
     @OneToMany(mappedBy = "inPlaceLabVessel")
     private Set<LabEvent> inPlaceLabEvents = new HashSet<LabEvent>();
 
+    @OneToMany // todo jmt should this have mappedBy?
+    @JoinTable(schema = "mercury")
+    private Collection<StatusNote> notes = new HashSet<StatusNote>();
+
     @Embedded
     private UserRemarks userRemarks;
 
@@ -119,11 +105,8 @@ public abstract class LabVessel implements Starter {
     /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
     private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
 
-    @Transient
-    /**
-     * marked transient because arz hasn't gotten far enough to turn on db for this
-     */
-    private Set<SampleMetadata> samples = new HashSet<SampleMetadata>();
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
 
     protected LabVessel(String label) {
         this.label = label;
@@ -294,6 +277,7 @@ public abstract class LabVessel implements Starter {
      */
     public abstract Set<LabEvent> getTransfersTo();
 
+/*
     public void addNoteToProjects(String message) {
         Collection<Project> ticketsToNotify = new HashSet<Project>();
         for (SampleInstance sampleInstance : getSampleInstances()) {
@@ -307,6 +291,7 @@ public abstract class LabVessel implements Starter {
             project.addJiraComment(message);
         }
     }
+*/
 
     /**
      * When a {@link org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket} is created for a
@@ -369,10 +354,23 @@ public abstract class LabVessel implements Starter {
     /**
      * Probably a transient that computes the {@link SampleInstance} data
      * on-the-fly by walking the history and applying the
-     * {@link StateChange}s applied during lab work.
+     * StateChange applied during lab work.
      * @return
      */
-    public abstract Set<SampleInstance> getSampleInstances();
+    public Set<SampleInstance> getSampleInstances() {
+        Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
+
+        if (isSampleAuthority()) {
+            for (MercurySample mercurySample : mercurySamples) {
+                sampleInstances.add(new SampleInstance(mercurySample, null, null, null));
+            }
+        } else {
+            for (VesselContainer<?> vesselContainer : this.getContainers()) {
+                sampleInstances.addAll(vesselContainer.getSampleInstancesAtPosition(vesselContainer.getPositionOfVessel(this)));
+            }
+        }
+        return sampleInstances;
+    }
 
     /**
      * I'm avoiding parent/child semantics
@@ -442,7 +440,7 @@ public abstract class LabVessel implements Starter {
      * calling {@link org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance#getAllProjectPlans()}
      * @return
      */
-    public abstract Collection<Project> getAllProjects();
+//    public abstract Collection<Project> getAllProjects();
 
 
     /**
@@ -454,7 +452,9 @@ public abstract class LabVessel implements Starter {
      * For informational use only.  Can be volatile.
      * @return
      */
-    public abstract StatusNote getLatestNote();
+    public StatusNote getLatestNote() {
+        throw new RuntimeException("I haven't been written yet.");
+    }
 
     /**
      * Reporting will want to look at aliquot-level
@@ -474,26 +474,26 @@ public abstract class LabVessel implements Starter {
      * a sample centric manner.
      * @param statusNote
      */
-    public abstract void logNote(StatusNote statusNote);
+    public void logNote(StatusNote statusNote) {
+//        logger.info(statusNote);
+        this.notes.add(statusNote);
+    }
 
-    public abstract Collection<StatusNote> getAllStatusNotes();
+    public Collection<StatusNote> getAllStatusNotes() {
+        return this.notes;
+    }
 
     public abstract Float getVolume();
 
     public abstract Float getConcentration();
 
     public boolean isSampleAuthority() {
-        return false;
-    }
-
-    @Override
-    public boolean isAliquotExpected() {
-        return false;
+        return !mercurySamples.isEmpty();
     }
 
     /**
      * In the context of the given {@link WorkflowDescription}, are there any
-     * events for this vessel which are annotated as {@link WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY}?
+     * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
      * @param workflowDescription
      * @return
      */
@@ -531,25 +531,13 @@ public abstract class LabVessel implements Starter {
         return isSingleSample;
     }
 
-    @Override
     public void addLabBatch(LabBatch labBatch) {
         labBatches.add(labBatch);
     }
 
-    @Override
     public Set<LabBatch> getLabBatches() {
         return labBatches;
     }
-
-    /**
-     * Does this container know what it's sample metadata is?
-     * Or does it need to look back in the event graph?
-     * @return
-     */
-    public boolean hasSampleMetadata() {
-        throw new RuntimeException("not implemented");
-    }
-
 
     /**
      * Walk the chain of custody back until it can be
@@ -577,12 +565,12 @@ public abstract class LabVessel implements Starter {
      * uploaded for "walk up" sequencing.
      * @return
      */
-    public Set<SampleMetadata> getSamples() {
+    public Set<MercurySample> getMercurySamples() {
         // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
         // in reality, the implementation would walk back to all roots,
         // detecting vessels along the way where hasSampleMetadata is true.
-        if (!samples.isEmpty()) {
-            return samples;
+        if (!mercurySamples.isEmpty()) {
+            return mercurySamples;
         }
         // else walk transfers
         throw new RuntimeException("history traversal for empty samples list not implemented");
@@ -593,10 +581,14 @@ public abstract class LabVessel implements Starter {
      * For vessels that have been pushed over from BSP, we set
      * the list of samples.  Otherwise, the list of samples
      * is empty and is derived from a walk through event history.
-     * @param samples
+     * @param mercurySample
      */
-    public void setSamples(Set<SampleMetadata> samples) {
-        this.samples = samples;
+    public void addSample(MercurySample mercurySample) {
+        this.mercurySamples.add(mercurySample);
+    }
+
+    public void addAllSamples(Set<MercurySample> mercurySamples) {
+        this.mercurySamples.addAll(mercurySamples);
     }
 }
 

@@ -29,7 +29,7 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
 
-public class IlluminaRunResourceTest extends ContainerTest {
+public class IlluminaRunResourceTest extends Arquillian {
 
     @Inject
     IlluminaRunResource runLaneResource;

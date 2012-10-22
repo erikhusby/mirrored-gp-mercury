@@ -202,8 +202,8 @@ public class LabEventFactory {
             persistLabEvent(uniqueEvents, labEvent);
             labEvents.add(labEvent);
         }
-        if (bettaLIMSMessage.getReceptaclePlateTransferEvent() != null) {
-            LabEvent labEvent = buildFromBettaLims(bettaLIMSMessage.getReceptaclePlateTransferEvent());
+        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
+            LabEvent labEvent = buildFromBettaLims(receptaclePlateTransferEvent);
             persistLabEvent(uniqueEvents, labEvent);
             labEvents.add(labEvent);
         }

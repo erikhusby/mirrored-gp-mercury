@@ -2,6 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -44,6 +48,9 @@ public class BettalimsMessageResource {
     @Inject
     private LabEventHandler labEventHandler;
 
+    @Inject
+    private Deployment deployment;
+
     /**
      * Accepts a message from (typically) a liquid handling deck
      * @param message the text of the message
@@ -52,8 +59,9 @@ public class BettalimsMessageResource {
     @Consumes({MediaType.APPLICATION_XML})
     public Response processMessage(String message) {
         Date now = new Date();
-        // todo jmt make this configurable
-        MessageStore messageStore = new MessageStore("c:/temp/mercury/messages");
+        DeckMessagesConfig deckMessagesConfig = (DeckMessagesConfig) MercuryConfiguration.getInstance().getConfig(
+                DeckMessagesConfig.class, deployment);
+        MessageStore messageStore = new MessageStore(deckMessagesConfig.getMessageStoreDirRoot());
         try {
             messageStore.store(message, now);
 

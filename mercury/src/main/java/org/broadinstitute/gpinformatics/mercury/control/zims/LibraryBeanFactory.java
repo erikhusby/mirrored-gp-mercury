@@ -1,12 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -38,15 +36,15 @@ public class LibraryBeanFactory {
         RunCartridge runCartridge = illuminaSequencingRun.getSampleCartridge().iterator().next();
         StripTube stripTube = (StripTube) runCartridge.getTransfersTo().iterator().next().getSourceLabVessels().iterator().next();
 //        Set<SampleInstance> sampleInstances = stripTube.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.TUBE1);
-        Map<StartingSample,Collection<LabVessel>> singleSampleLibrariesForInstance = stripTube.getVesselContainer().getSingleSampleAncestors(VesselPosition.TUBE1);
+        Map<MercurySample,Collection<LabVessel>> singleSampleLibrariesForInstance = stripTube.getVesselContainer().getSingleSampleAncestors(VesselPosition.TUBE1);
 
-        for (Map.Entry<StartingSample, Collection<LabVessel>> entry : singleSampleLibrariesForInstance.entrySet()) {
+        for (Map.Entry<MercurySample, Collection<LabVessel>> entry : singleSampleLibrariesForInstance.entrySet()) {
             Collection<LabVessel> singleSampleLibraries = entry.getValue();
             if (singleSampleLibraries.isEmpty()) {
-                throw new RuntimeException("Could not find single sample libraries for " + entry.getKey().getSampleName());
+                throw new RuntimeException("Could not find single sample libraries for " + entry.getKey().getSampleKey());
             }
             else if (singleSampleLibraries.size() > 1) {
-                throw new RuntimeException("There are " + singleSampleLibraries.size() + " possible single sample libraries for " + entry.getKey().getSampleName());
+                throw new RuntimeException("There are " + singleSampleLibraries.size() + " possible single sample libraries for " + entry.getKey().getSampleKey());
             }
 
             LabVessel singleSampleLibrary = singleSampleLibraries.iterator().next();
@@ -54,12 +52,12 @@ public class LibraryBeanFactory {
 //            Project project = sampleInstances.iterator().next().getSingleProjectPlan().getProject();
             SampleInstance sampleInstance = singleSampleLibrary.getSampleInstances().iterator().next();
 
-            Project project = sampleInstance.getSingleProjectPlan().getProject();
+//            Project project = sampleInstance.getSingleProjectPlan().getProject();
             // todo jmt is this downcast legitimate
-            BSPStartingSample bspStartingSample = (BSPStartingSample) sampleInstance.getStartingSample();
+            MercurySample bspStartingSample = sampleInstance.getStartingSample();
             libraries.add(new LibraryBean(
                     libraryName/*String library*/,
-                    project.getProjectName()/*String project*/,
+                    null,//project.getProjectName()/*String project*/,
                     null/*String initiative*/,
                     null/*Long workRequest*/,
                     null/*MolecularIndexingScheme indexingScheme*/,
@@ -73,7 +71,7 @@ public class LibraryBeanFactory {
                     null/*String organism*/,
                     null/*String species*/,
                     null/*String strain*/,
-                    bspStartingSample.getBspDTO().getSampleLsid()/*String sampleLSID*/,
+                    null/*bspStartingSample.getBspDTO().getSampleLsid()*//*String sampleLSID*/,
                     null/*String tissueType*/,
                     null/*String expectedPlasmid*/,
                     null/*String aligner*/,

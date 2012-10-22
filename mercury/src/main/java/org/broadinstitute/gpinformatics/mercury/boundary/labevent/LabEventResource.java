@@ -118,7 +118,7 @@ public class LabEventResource {
             if (labVessel != null) {
                 if(labVessel.getTransfersTo().isEmpty()) {
                     for (LabBatch labBatch : labVessel.getLabBatches()) {
-                        if(labBatch.getStarters().contains(labVessel)) {
+                        if(labBatch.getStartingLabVessels().contains(labVessel)) {
                             starter = labVessel;
                             return TraversalControl.StopTraversing;
                         }

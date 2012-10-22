@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.designation;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.LibraryRegistrationPortType;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
-import org.broadinstitute.gpinformatics.mercury.entity.project.PassBackedProjectPlan;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
@@ -62,14 +61,14 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
     }
 
     @Override
-    public void registerForDesignation(String libraryName, PassBackedProjectPlan projectPlanIn,
+    public void registerForDesignation(String libraryName, /*PassBackedProjectPlan projectPlanIn,*/
                                        boolean needsControlLane) {
 
         int readLength = 0;
         int lanes = 0;
 
-        lanes = projectPlanIn.getLaneCoverage();
-        readLength = projectPlanIn.getReadLength();
+//        lanes = projectPlanIn.getLaneCoverage();
+//        readLength = projectPlanIn.getReadLength();
 
         squidCall().registerForDesignation(libraryName, lanes, readLength, needsControlLane);
     }

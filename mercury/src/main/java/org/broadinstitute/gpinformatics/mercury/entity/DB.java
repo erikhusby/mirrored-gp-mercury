@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.AuthorizedRole;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.PageAuthorization;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -28,7 +27,7 @@ public class DB implements Serializable {
     private static final String LAB_MANAGER_ROLE = "Mercury-LabManagers";
     private static final long serialVersionUID = 3344014380008589366L;
 
-    private final Map<String, Project> projects = new HashMap<String, Project>();
+//    private final Map<String, Project> projects = new HashMap<String, Project>();
     private final Map<String, WorkflowDescription> workflowDescriptions = new HashMap<String, WorkflowDescription>();
     private final Map<String, PageAuthorization> pageAuthorizationMap = new HashMap<String, PageAuthorization>();
     private final Map<String, AuthorizedRole> authorizedRoleMap = new HashMap<String, AuthorizedRole>();
@@ -42,27 +41,27 @@ public class DB implements Serializable {
 
     // Project
 
-    public void addProject(Project project) {
-        if (StringUtils.isBlank(project.getProjectName())) {
-            throw new IllegalArgumentException("Non-null constraint violation: Project.projectName");
-        }
-        if (projects.containsKey(project.getProjectName())) {
-            throw new IllegalArgumentException("Unique constraint violation: Project.projectName");
-        }
-        projects.put(project.getProjectName(), project);
-    }
+//    public void addProject(Project project) {
+//        if (StringUtils.isBlank(project.getProjectName())) {
+//            throw new IllegalArgumentException("Non-null constraint violation: Project.projectName");
+//        }
+//        if (projects.containsKey(project.getProjectName())) {
+//            throw new IllegalArgumentException("Unique constraint violation: Project.projectName");
+//        }
+//        projects.put(project.getProjectName(), project);
+//    }
 
-    public Collection<Project> getAllProjects() {
-        return Collections.unmodifiableCollection(projects.values());
-    }
-
-    public Project findByProjectName(String projectName) {
-        return projects.get(projectName);
-    }
-
-    public void removeProject(String projectName) {
-        projects.remove(projectName);
-    }
+//    public Collection<Project> getAllProjects() {
+//        return Collections.unmodifiableCollection(projects.values());
+//    }
+//
+//    public Project findByProjectName(String projectName) {
+//        return projects.get(projectName);
+//    }
+//
+//    public void removeProject(String projectName) {
+//        projects.remove(projectName);
+//    }
 
     // WorkflowDescription
 
