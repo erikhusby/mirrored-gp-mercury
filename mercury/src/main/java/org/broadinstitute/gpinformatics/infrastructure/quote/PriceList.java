@@ -5,10 +5,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.Collection;
 
-@XmlRootElement(name = "PriceList")
+@XmlRootElement(name = "response")
 public class PriceList {
     
-    @XmlElement(name = "PriceItem")
+    @XmlElement(name = "priceItem")
     private Collection<PriceItem> prices = new ArrayList<PriceItem>();
     
     public PriceList() {}
