@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource;
@@ -108,6 +109,7 @@ public class SamplesPicoEndToEndTest {
         private PlateTransferEventType picoDilutionTransferJaxbA1;
         private PlateTransferEventType picoDilutionTransferJaxbA2;
         private PlateTransferEventType picoDilutionTransferJaxbB1;
+        private PlateEventType picoBufferAdditionJaxb;
         private PlateTransferEventType picoMicrofluorTransferJaxb;
         private PlateTransferEventType picoStandardsTransferCol2Jaxb;
         private PlateTransferEventType picoStandardsTransferCol4Jaxb;
@@ -168,6 +170,14 @@ public class SamplesPicoEndToEndTest {
             messageList.add(bettaLIMSMessage2);
 
 */
+            // plateEvent PicoBufferAddition
+            picoBufferAdditionJaxb = bettaLimsMessageFactory.buildPlateEvent("PicoBufferAddition",
+                    picoDilutionPlateBarcode);
+            BettaLIMSMessage picoBufferAdditionMessage = new BettaLIMSMessage();
+            picoBufferAdditionMessage.getPlateEvent().add(picoBufferAdditionJaxb);
+            messageList.add(picoBufferAdditionMessage);
+            bettaLimsMessageFactory.advanceTime();
+
             // PicoMicrofluorTransfer
             String picoMicrofluorPlateBarcode = "PicoMicrofluorPlate" + timestamp;
             picoMicrofluorTransferJaxb = bettaLimsMessageFactory.buildPlateToPlate(
