@@ -9,6 +9,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
@@ -37,6 +38,9 @@ public class UserLogin extends AbstractJsfBean {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private Deployment deployment;
 
     public String getUsername() {
         return username;
@@ -86,4 +90,24 @@ public class UserLogin extends AbstractJsfBean {
 
         return targetPage;
     }
+
+    public String getDeployment() {
+        return deployment.name();
+    }
+
+
+    public String getDeploymentBadgeStyle() {
+        switch (deployment) {
+            case DEV:
+            case TEST:
+                return "badge badge-success";
+            case QA:
+                return "badge badge-warning";
+            case PROD:
+                return "badge badge-important";
+            default:
+                throw new RuntimeException("Unrecognized deployment: " + deployment);
+        }
+    }
+
 }

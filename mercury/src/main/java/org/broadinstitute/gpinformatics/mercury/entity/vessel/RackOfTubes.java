@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
@@ -134,11 +133,6 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
     @Override
     public Set<SampleInstance> getSampleInstances() {
         return this.getVesselContainer().getSampleInstances();
-    }
-
-    @Override
-    public Collection<Project> getAllProjects() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

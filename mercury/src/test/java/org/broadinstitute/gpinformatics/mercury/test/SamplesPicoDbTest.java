@@ -36,7 +36,7 @@ public class SamplesPicoDbTest extends ContainerTest {
 
         ArrayList<TubeBean> tubeBeans = new ArrayList<TubeBean>();
         for(int i = 1; i <= 96; i++) {
-            tubeBeans.add(new TubeBean("PICO" + i + "_" + timestamp, null));
+            tubeBeans.add(new TubeBean("PICO" + i + "_" + timestamp, null, null));
         }
         String batchId = "BP-" + timestamp;
         LabBatchBean labBatchBean = new LabBatchBean(batchId, null, tubeBeans);

@@ -89,6 +89,7 @@
 
     <!-- JAX-WS -->
 
+<!--
     <servlet>
         <servlet-name>PASSService</servlet-name>
         <servlet-class>org.broadinstitute.gpinformatics.mercury.boundary.pass.PassServiceImpl</servlet-class>
@@ -106,6 +107,7 @@
         <servlet-name>SampleKitService</servlet-name>
         <url-pattern>/SampleKit</url-pattern>
     </servlet-mapping>
+-->
 
     <!-- JAX-RS -->
 
