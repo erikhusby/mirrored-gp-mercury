@@ -4,12 +4,14 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.text.MessageFormat;
 
 @Named
 @RequestScoped
@@ -47,11 +49,17 @@ public class ProductForm extends AbstractJsfBean {
                 detail.getSamplesPerWeek(), detail.getInputRequirements(), detail.getDeliverables(), DEFAULT_TOP_LEVEL,
                 DEFAULT_WORKFLOW_NAME);
 
-        //TODO hmc under construction
+        try {
+            productDao.persist(product);
+        } catch (Exception e ) {
+            String errorMessage = MessageFormat.format("Unknown exception occurred while persisting Product.", null);
+            if (GenericDao.IsConstraintViolationException(e)) {
+                errorMessage = MessageFormat.format("The Product Part-Number ''{0}'' is not unique.", detail.getPartNumber());
+            }
+            addErrorMessage("Product not Created.", errorMessage, errorMessage + ": " + e);
+            return redirect("error");
+        }
 
-        productDao.persist(product);
-
-        //TODO hmc add more info in the details param
         addInfoMessage("Product created.", "Product " + product.getPartNumber() + " has been created.");
         return redirect("list");
     }
@@ -75,7 +83,6 @@ public class ProductForm extends AbstractJsfBean {
     private int convertCycleTimeHoursToSeconds(Integer cycleTimeHours) {
         return ( cycleTimeHours == null ? 0 : cycleTimeHours * ProductDetail.ONE_HOUR_IN_SECONDS);
     }
-
 
 
 }

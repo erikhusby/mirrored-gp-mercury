@@ -1,15 +1,18 @@
 package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
+import javax.ejb.EJBTransactionRolledbackException;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.SingularAttribute;
+import javax.transaction.RollbackException;
 import java.util.Collections;
 import java.util.List;
 
@@ -158,4 +161,12 @@ public class GenericDao {
             Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
         return findListByList(entity, singularAttribute, Collections.singletonList(value));
     }
+
+    public static boolean IsConstraintViolationException(final Exception e) {
+        return (e instanceof EJBTransactionRolledbackException) &&
+                (e.getCause() != null) && ( e.getCause() instanceof RollbackException) &&
+                (e.getCause().getCause() != null) && ( e.getCause().getCause() instanceof PersistenceException) &&
+                (e.getCause().getCause().getCause() != null ) && ( e.getCause().getCause().getCause() instanceof org.hibernate.exception.ConstraintViolationException);
+    }
+
 }
