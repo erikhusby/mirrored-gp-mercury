@@ -184,4 +184,53 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-95" author="athomson">
+        <preConditions>
+            <dbms type="oracle" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <createView viewName="PMB_RESEARCH_PROJECT" replaceIfExists="true">
+            select research_project_id "RESEARCH_PROJECT_ID",
+            title "RESEARCH_PROJECT_NAME",
+            decode(CREATED_BY,
+            7222,'burtt',
+            7064,'carrie',
+            7086,'caubin',
+            7095,'dbmirel',
+            7130,'dfarlow',
+            7066,'kmurray',
+            7074,'laurena',
+            8174,'mharden',
+            8187,'namrata',
+            11078,'shefler',
+            8781,'ebevil',
+            8915,'egelfand',
+            8541,'enickers',
+            10439,'rbell',
+            'athomson') "CREATED_BY",
+            created_date "CREATED_ON",
+            decode(MODIFIED_BY,
+            7222,'burtt',
+            7064,'carrie',
+            7086,'caubin',
+            7095,'dbmirel',
+            7130,'dfarlow',
+            7066,'kmurray',
+            7074,'laurena',
+            8174,'mharden',
+            8187,'namrata',
+            11078,'shefler',
+            8781,'ebevil',
+            8915,'egelfand',
+            8541,'enickers',
+            10439,'rbell',
+            'athomson') "UPDATED_BY",
+            modified_date "UPDATED_BY_ON"
+            from research_project
+        </createView>
+        <rollback>
+               <dropView viewName="PMB_RESEARCH_PROJECT"/>
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>
