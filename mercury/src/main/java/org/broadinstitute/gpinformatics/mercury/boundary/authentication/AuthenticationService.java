@@ -72,6 +72,17 @@ public class AuthenticationService {
         authorizationDao.persist(page);
     }
 
+    public void removePageAuthorization(String pagePathIn) {
+
+        PageAuthorization foundPage = authorizationDao.findPageAuthorizationByPage(pagePathIn);
+
+        if ( null == foundPage ) {
+            throw new SequelServiceException("This Page is not currently registered");
+        }
+
+        authorizationDao.removePageAuthorization(foundPage);
+    }
+
     /**
      *
      * isPageProtected uses the authorization registrations to determine whether a page is protected.  if there is no
@@ -126,6 +137,19 @@ public class AuthenticationService {
         for(String currRole:rolesIn) {
             authorization.addRoleAccess(roleDao.findRoleByName(currRole));
         }
+    }
+
+    public void removeRolesFromPage(String pagePath, Collection<String> rolesIn) {
+        PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
+
+        if(null == authorization) {
+            throw new SequelServiceException("This Page is not currently registered");
+        }
+
+        for(String currRole:rolesIn) {
+            authorization.removeRoleAccess(roleDao.findRoleByName(currRole));
+        }
+
     }
 
     /**
