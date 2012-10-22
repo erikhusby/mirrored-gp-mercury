@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.billing;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -58,7 +58,7 @@ public class Quote {
      * @param event the event that triggered the work
      * @param quoteServerBatchId the batch id assigned by the quote server
      */
-    public void addWorkItem(Collection<StartingSample> samples,
+    public void addWorkItem(Collection<MercurySample> samples,
                             double numWorkItems,
                             LabEvent event,
                             String quoteServerBatchId) {

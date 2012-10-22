@@ -1,45 +1,39 @@
 #!/bin/bash
 #
-# Deploy SequeL to seqlims
+# Perform a Production release of Mercury
 #
-# Usage: prodDeployRelease.sh RELEASE_ID
+# Usage: Release.sh
 #
-if [ $# -eq 1 ]
-then
-    RELEASEID=$1
-else
-    RELEASEID="1.0-SNAPSHOT"
-fi
+HOST="vseqlims.broadinstitute.org"
+APP_NAME="Mercury"
+WATCHERS="mhusby@broadinstitute.org"
+#andrew@broadinstitute.org "
 
-HOST="seqlims.broadinstitute.org"
-ADMIN_PORT=4848
-ADMIN_USER=admin
-WAR_FILE="target/SequeL-$RELEASEID.war"
-APP_NAME="SequeL"
-DOMAIN="domain1"
-WATCHERS="mhusby@broadinstitute.org andrew@broadinstitute.org mcovarr@broadinstitute.org epolk@broadinstitute.org breilly@broadinstitute.org sampath@broadinstitute.org thompson@broadinstitute.org "
-#AS_INSTALL="/prodinfolocal/glassfish3"
-doRemote() {
-    echo "Remote: $@"
-    ssh releng@$HOST $@
-}
+if [ -d "target" ] ; then
+    rm -rf target
+fi
+mkdir target
+
+git clone ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git target
+cd target
+git checkout QA
+git checkout -b QA_PROD
+cd mercury
+mvn -P\!DefaultProfile --batch-mode -DdryRun=run release:prepare release:perform
+cd target/checkout
+mvn -PPROD -DskipTests package
+exit 0
+
+
 
 if [ -e $WAR_FILE ] ; then
-    OPTIONS="--host $HOST --port $ADMIN_PORT --user $ADMIN_USER --echo=true --passwordfile $AS_INSTALL/seqlims-passwords.txt"
-
-    asadmin $OPTIONS undeploy $APP_NAME
-    asadmin $OPTIONS restart-domain
-#    doRemote asadmin start-domain $DOMAIN
-    asadmin $OPTIONS deploy --name $APP_NAME --upload=true $WAR_FILE
-    asadmin $OPTIONS list-applications
-
-    MAILTXT=/tmp/sequel.txt
+    MAILTXT=/tmp/mecury.txt
     cat >$MAILTXT <<EOF
 
-    Sequel $RELEASEID has been deployed to $HOST/$APP_NAME
+    Mercury $RELEASEID has been deployed to $HOST/$APP_NAME
 
 EOF
-    mail -s "SequeL deployed to $HOST" $WATCHERS < $MAILTXT
+    mail -s "$APP_NAMEL deployed to $HOST" $WATCHERS < $MAILTXT
 else
     echo "Unable to deploy non-existant $WAR_FILE"
 fi

@@ -23,37 +23,34 @@
                              sortOrder="descending"
                              filteredValue="#{researchProjectBean.filteredResearchProjects}">
 
+                    <p:column headerText="ID" sortBy="#{project.jiraTicketKey}">
+                        #{project.jiraTicketKey}
+                    </p:column>
+
                     <p:column headerText="Name" sortBy="#{project.title}">
                         <h:link outcome="view" value="#{project.title}">
                             <f:param name="researchProject" value="#{project.businessKey}"/>
                         </h:link>
                     </p:column>
 
-                    <p:column headerText="ID" sortBy="#{project.jiraTicketKey}">
-                        #{project.jiraTicketKey}
+                    <p:column headerText="Status" filterBy="#{project.status}" filterOptions="#{researchProjectBean.allProjectStatuses}" filterMatchMode="exact">
+                        #{project.status}
                     </p:column>
 
                     <p:column headerText="Owner" filterBy="#{project.createdBy}" filterOptions="#{researchProjectBean.allProjectOwners}" filterMatchMode="exact">
                         #{userListBean.getUserFullName(project.createdBy)}
                     </p:column>
 
-                    <p:column headerText="Status" filterBy="#{project.status}" filterOptions="#{researchProjectBean.allProjectStatuses}" filterMatchMode="exact">
-                        #{project.status}
-                    </p:column>
-
-                    <p:column headerText="# of&lt;br&gt;Orders">
-                        <h:outputText value="#{project.productOrders.size()}" styleClass="align-right"/>
-                    </p:column>
-
-                    <p:column headerText="Synopsis">
-                        #{project.synopsis}
-                    </p:column>
-
-                    <p:column headerText="Created Date" sortBy="#{project.createdDate}">
-                        <h:outputText value="#{project.createdDate}">
+                    <p:column headerText="Updated" sortBy="#{project.modifiedDate}">
+                        <h:outputText value="#{project.modifiedDate}">
                             <f:convertDateTime type="both" timeStyle="short"/>
                         </h:outputText>
                     </p:column>
+
+                    <p:column headerText="# of&lt;br&gt;Orders" sortBy="#{project.productOrders.size()}">
+                        <h:outputText value="#{project.productOrders.size()}" styleClass="align-right"/>
+                    </p:column>
+
                 </p:dataTable>
             </h:form>
         </ui:define>

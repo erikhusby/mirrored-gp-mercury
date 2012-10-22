@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 
@@ -114,11 +113,6 @@ public class IlluminaRunChamber extends RunChamber {
             sequencerReagents.addAll(event.getReagents());
         }
         return sequencerReagents;
-    }
-
-    @Override
-    public Collection<Project> getAllProjects() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

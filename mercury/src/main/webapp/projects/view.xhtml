@@ -25,6 +25,10 @@
         </ui:define>
         <ui:define name="body">
 
+            <div class="row">
+                <h:link value="Edit Project" outcome="create?includeViewParams=true" styleClass="pull-right"/>
+            </div>
+
             <!-- Name -->
             <h:form styleClass="form-horizontal form-readonly">
                 <div class="control-group">
@@ -130,14 +134,43 @@
 
                 <br/>
 
-                <p:dataTable value="#{researchProjectDetail.project.productOrders}" var="order" filteredValue="#{productOrderBean.filteredProductOrders}">
+                <div class="row-fluid">
+                    <div class="pull-right ui-widget-header" style="padding: 5px;">
+                        <span class="ui-icon ui-icon-folder-open" style="float:left;">&nbsp;</span>
+                        <h:outputText value=" Export all data as: " />
+
+                        <p:commandLink title="Click to download all project order data as a Microsoft Excel file">
+                            <h:outputText value="Excel"/>
+                            <p:dataExporter
+                                    type="xls"
+                                    pageOnly = "false"
+                                    target="orderData"
+                                    fileName="#{researchProjectDetail.project.title}" />
+                        </p:commandLink>
+                        &nbsp;
+                        <p:commandLink title="Click to download all project order data as a CSV file">
+                            <h:outputText value="CSV"/>
+                            <p:dataExporter
+                                    type="csv"
+                                    pageOnly = "false"
+                                    target="orderData"
+                                    fileName="#{researchProjectDetail.project.title}" />
+                        </p:commandLink>
+                    </div>
+                </div>
+
+                <p:dataTable id="orderData" value="#{researchProjectDetail.project.productOrders}" var="order" filteredValue="#{productOrderBean.filteredProductOrders}">
+                    <f:facet name="header">
+                        Orders
+                    </f:facet>
+
+                    <p:column headerText="Name">
+                        #{order.title}
+                    </p:column>
                     <p:column headerText="Product ID">
                         <h:link outcome="/orders/view" value="#{order.jiraTicketKey}">
                             <f:param name="productOrderKey" value="#{order.businessKey}"/>
                         </h:link>
-                    </p:column>
-                    <p:column headerText="Name">
-                        #{order.title}
                     </p:column>
                     <p:column headerText="Product">
                         #{order.product.productName}
@@ -145,22 +178,17 @@
                     <p:column headerText="Status" sortBy="#{order.orderStatus}" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
                         #{order.orderStatus}
                     </p:column>
-                    <p:column headerText="Date Created">
-                        #{order.createdDate}
+                    <p:column headerText="Owner">
+                        #{userListBean.getUserFullName(order.createdBy)}
                     </p:column>
-                    <p:column headerText="Date Updated">
+                    <p:column headerText="Updated">
                         #{order.modifiedDate}
                     </p:column>
                     <p:column headerText="Samples">
                         #{order.sampleSummary}
                     </p:column>
-                    <p:column headerText="Program PM">
-                        #{userListBean.getUserListString(order.createdBy)}
-                    </p:column>
                 </p:dataTable>
             </h:form>
-
-            <h:link value="Edit Project" outcome="create?includeViewParams=true"/>
         </ui:define>
     </ui:composition>
 </body>

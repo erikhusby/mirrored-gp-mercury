@@ -1,11 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -22,7 +18,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -44,10 +39,6 @@ public class LabBatch {
     public static final String LCSET_PROJECT_PREFIX = "LCSET";
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    @JoinTable(schema = "mercury")
-    private Set<StartingSample> startingSamples = new HashSet<StartingSample>();
-
-    @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
     @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels")
     private Set<LabVessel> startingLabVessels = new HashSet<LabVessel>();
@@ -59,8 +50,8 @@ public class LabBatch {
     @ManyToOne(fetch = FetchType.LAZY)
     private JiraTicket jiraTicket;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private ProjectPlan projectPlan;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    private ProjectPlan projectPlan;
 
     // todo jmt get Hibernate to sort this
     @OneToMany(mappedBy = "labBatch")
@@ -72,28 +63,28 @@ public class LabBatch {
      * @param batchName
      * @param starters
      */
-    public LabBatch(ProjectPlan projectPlan,
-                    String batchName,
-                    Set<Starter> starters) {
-        if (projectPlan == null) {
-            throw new NullPointerException("ProjectPlan cannot be null.");
-        }
-        if (batchName == null) {
-            throw new NullPointerException("BatchName cannot be null");
-        }
-        if (starters == null) {
-            throw new NullPointerException("starters cannot be null");
-        }
-        this.projectPlan = projectPlan;
-        this.batchName = batchName;
-        for (Starter starter : starters) {
-            addStarter(starter);
-        }
-    }
+//    public LabBatch(ProjectPlan projectPlan,
+//                    String batchName,
+//                    Set<Starter> starters) {
+//        if (projectPlan == null) {
+//            throw new NullPointerException("ProjectPlan cannot be null.");
+//        }
+//        if (batchName == null) {
+//            throw new NullPointerException("BatchName cannot be null");
+//        }
+//        if (starters == null) {
+//            throw new NullPointerException("starters cannot be null");
+//        }
+//        this.projectPlan = projectPlan;
+//        this.batchName = batchName;
+//        for (Starter starter : starters) {
+//            addStarter(starter);
+//        }
+//    }
 
     public LabBatch(
             String batchName,
-            Set<Starter> starters) {
+            Set<LabVessel> starters) {
         if (batchName == null) {
             throw new NullPointerException("BatchName cannot be null");
         }
@@ -101,8 +92,8 @@ public class LabBatch {
             throw new NullPointerException("starters cannot be null");
         }
         this.batchName = batchName;
-        for (Starter starter : starters) {
-            addStarter(starter);
+        for (LabVessel starter : starters) {
+            addLabVessel(starter);
         }
     }
 
@@ -110,31 +101,22 @@ public class LabBatch {
     protected LabBatch() {
     }
 
-    public ProjectPlan getProjectPlan() {
-        // todo could have different project plans per
-        // starter, make this a map accessible by Starter.
-        return projectPlan;
+//    public ProjectPlan getProjectPlan() {
+//        // todo could have different project plans per
+//        // starter, make this a map accessible by Starter.
+//        return projectPlan;
+//    }
+
+    public Set<LabVessel> getStartingLabVessels() {
+        return startingLabVessels;
     }
 
-    public Set<Starter> getStarters() {
-        Set<Starter> starters = new HashSet<Starter>();
-        starters.addAll(startingSamples);
-        starters.addAll(startingLabVessels);
-        return Collections.unmodifiableSet(starters);
-    }
-
-    public void addStarter(Starter starter) {
-        if (starter == null) {
+    public void addLabVessel(LabVessel labVessel) {
+        if (labVessel == null) {
             throw new NullPointerException("vessel cannot be null.");
         }
-        if(OrmUtil.proxySafeIsInstance(starter, StartingSample.class)) {
-            startingSamples.add(OrmUtil.proxySafeCast(starter, StartingSample.class));
-        } else if(OrmUtil.proxySafeIsInstance(starter, LabVessel.class)) {
-            startingLabVessels.add(OrmUtil.proxySafeCast(starter, LabVessel.class));
-        } else {
-            throw new RuntimeException("Unexpected subclass " + starter.getClass());
-        }
-        starter.addLabBatch(this);
+        startingLabVessels.add(labVessel);
+        labVessel.addLabBatch(this);
     }
 
     public boolean getActive() {
@@ -157,13 +139,13 @@ public class LabBatch {
         return jiraTicket;
     }
 
-    public void setProjectPlanOverride(LabVessel vessel,ProjectPlan planOverride) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
+//    public void setProjectPlanOverride(LabVessel vessel,ProjectPlan planOverride) {
+//        throw new RuntimeException("I haven't been written yet.");
+//    }
 
-    public ProjectPlan getProjectPlanOverride(LabVessel labVessel) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
+//    public ProjectPlan getProjectPlanOverride(LabVessel labVessel) {
+//        throw new RuntimeException("I haven't been written yet.");
+//    }
 
     public Set<GenericLabEvent> getLabEvents() {
         return labEvents;
