@@ -9,18 +9,18 @@ import java.util.Collection;
 public class PriceList {
     
     @XmlElement(name = "priceItem")
-    private Collection<PriceItem> prices = new ArrayList<PriceItem>();
+    private Collection<PriceItem> priceItems = new ArrayList<PriceItem>();
     
     public PriceList() {}
     
-    public Collection<PriceItem> getPriceList() {
-        return prices;
+    public Collection<PriceItem> getPriceItems() {
+        return priceItems;
     }
     
     public void add(PriceItem priceItem) {
         if (priceItem == null) {
              throw new NullPointerException("priceItem cannot be null."); 
         }
-        prices.add(priceItem);
+        priceItems.add(priceItem);
     }
 }
