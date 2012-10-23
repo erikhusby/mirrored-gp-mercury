@@ -226,11 +226,11 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
     }
 
 
-    protected PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
+    public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
 
         String url = url( Endpoint.ALL_PRICE_ITEMS );
         WebResource resource = getJerseyClient().resource(url);
-        PriceList prices = null;
+        PriceList prices;
         try
         {
             prices = resource.accept(MediaType.APPLICATION_XML).get(PriceList.class);

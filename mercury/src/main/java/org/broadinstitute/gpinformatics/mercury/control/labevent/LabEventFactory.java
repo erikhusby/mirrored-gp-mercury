@@ -405,7 +405,12 @@ public class LabEventFactory {
     */
     public LabEvent buildFromBettaLims(PlateEventType plateEventType) {
         if(plateEventType.getPositionMap() == null) {
-            StaticPlate staticPlate = staticPlateDAO.findByBarcode(plateEventType.getPlate().getBarcode());
+            PlateType plate = plateEventType.getPlate();
+            if(plate == null) {
+                // todo jmt why isn't this error caught in JAXB?
+                throw new RuntimeException("No plate element in plateEvent");
+            }
+            StaticPlate staticPlate = staticPlateDAO.findByBarcode(plate.getBarcode());
             return buildFromBettaLimsPlateEventDbFree(plateEventType, staticPlate);
         } else {
             RackOfTubes rackOfTubes = fetchRack(plateEventType.getPositionMap());

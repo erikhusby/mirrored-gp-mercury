@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "PriceItem")
+@XmlRootElement(name = "priceItem")
 public class PriceItem {
 
     public static final String GSP_PLATFORM_NAME = QuotePlatformType.SEQ.getPlatformName();

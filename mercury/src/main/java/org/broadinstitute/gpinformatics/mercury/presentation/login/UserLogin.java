@@ -91,11 +91,6 @@ public class UserLogin extends AbstractJsfBean {
         return targetPage;
     }
 
-    public String getDeployment() {
-        return deployment.name();
-    }
-
-
     public String getDeploymentBadgeStyle() {
         switch (deployment) {
             case DEV:
