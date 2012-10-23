@@ -201,29 +201,33 @@ public class MercuryConfiguration {
         // only do this once if it's not defined
         if (MERCURY_BUILD_INFO == null) {
             InputStream in = null;
+            Properties props = new Properties();
+            String buildDate = "";
             try {
                 in = getClass().getResourceAsStream("/" + versionFilename);
 
                 if (in != null) {
-                    Properties props = new Properties();
                     props.load(in);
 
                     MERCURY_BUILD_INFO = "Version " + props.getProperty("build.resultKey");
 
-                    String buildDate = props.getProperty("build.buildTimeStamp");
-                    Date date = new SimpleDateFormat("yyyyMMdd-hhmm").parse(buildDate);
+                    buildDate = props.getProperty("build.buildTimeStamp");
+                    Date date = new SimpleDateFormat("yyyyMMdd-HHmm").parse(buildDate);
 
                     MERCURY_BUILD_INFO += " built on " + new SimpleDateFormat("yyyy/MM/dd hh:mm a").format(date);
                 } else {
                     throw new RuntimeException("Cannot find version file " + versionFilename);
                 }
             } catch (IOException ioe) {
-                IOUtils.closeQuietly(in);
                 MERCURY_BUILD_INFO = "Unknown build - problematic " + versionFilename;
                 throw new RuntimeException("Problem reading version file " + versionFilename);
             } catch (ParseException e) {
+                // problem parsing the maven build date, use it's default one
+                if ((buildDate != null) && !buildDate.isEmpty()) {
+                   MERCURY_BUILD_INFO += " built on " + buildDate;    
+                }        
+            } finally {
                 IOUtils.closeQuietly(in);
-                throw new RuntimeException("Problem reading build date in the version file " + versionFilename);
             }
 
         }
