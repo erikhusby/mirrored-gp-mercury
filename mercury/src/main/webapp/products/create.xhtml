@@ -127,6 +127,21 @@
 
 
                 <div class="control-group">
+                    <p:outputLabel for="addOns" value="Add Ons" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}" var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}" converter="#{productConverter}" multiple="true">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{product.productName} #{product.partNumber}</div>
+                                <div class="ac-dropdown-subtext">#{product.inputRequirements}</div>
+                            </p:column>
+                        </p:autoComplete>
+                        <p:watermark for="addOns" value="Type Product Name to search"/>
+                        <p:message for="addOns"/>
+                    </div>
+                </div>
+
+
+                <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
