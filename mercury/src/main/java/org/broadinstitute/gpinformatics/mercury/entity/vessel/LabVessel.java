@@ -33,12 +33,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -217,6 +212,11 @@ public abstract class LabVessel {
         this.containersCount++;
     }
 
+    //Utility method for getting containers as a list so they can be displayed in a display table column
+    public List<VesselContainer<?>> getContainersList() {
+        return new ArrayList<VesselContainer<?>>(getContainers());
+    }
+
     public Set<VesselContainer<?>> getContainers() {
         Set<VesselContainer<?>> vesselContainers = new HashSet<VesselContainer<?>>();
         if(containersCount != null && containersCount > 0) {
@@ -340,15 +340,25 @@ public abstract class LabVessel {
     public abstract CONTAINER_TYPE getType();
 
     public enum CONTAINER_TYPE {
-        STATIC_PLATE,
-        PLATE_WELL,
-        RACK_OF_TUBES,
-        TUBE,
-        FLOWCELL,
-        STRIP_TUBE,
-        STRIP_TUBE_WELL,
-        PACBIO_PLATE,
-        ILLUMINA_RUN_CHAMBER
+        STATIC_PLATE("Plate"),
+        PLATE_WELL("Plate Well"),
+        RACK_OF_TUBES("Tube Rack"),
+        TUBE("Tube"),
+        FLOWCELL("Flowcell"),
+        STRIP_TUBE("Strip Tube"),
+        STRIP_TUBE_WELL("Strip Tube Well"),
+        PACBIO_PLATE("PacBio Plate"),
+        ILLUMINA_RUN_CHAMBER("Illumina Run Chamber");
+
+        private String name;
+
+        CONTAINER_TYPE(String name){
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
     /**

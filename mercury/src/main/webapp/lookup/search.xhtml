@@ -26,9 +26,9 @@
                                          styleClass="ui-priority-primary"/>
                     </div>
                 </div>
-                </h:form>
+            </h:form>
             <h:form>
-                <p:dataTable var="searchResult" value="#{lookup.resultBeans}" dynamic="true">
+                <p:dataTable var="searchResult" value="#{lookup.foundVessels}" dynamic="true">
                     <f:facet name="header">
                         Barcode Search Results
                     </f:facet>
@@ -37,6 +37,28 @@
                             <h:outputText value="Label"/>
                         </f:facet>
                         <h:outputText value="#{searchResult.label}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Type"/>
+                        </f:facet>
+                        <h:outputText value="#{searchResult.type.name}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Contained In"/>
+                        </f:facet>
+                        <ui:repeat value="#{searchResult.containersList}" var="container">
+                            <h:outputText value="#{container.embedder.label}"/>
+                        </ui:repeat>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Position"/>
+                        </f:facet>
+                        <ui:repeat value="#{searchResult.containersList}" var="container">
+                            <h:outputText value="#{container.getPositionOfVessel(searchResult)}"/>
+                        </ui:repeat>
                     </p:column>
                     <p:column sortBy="#{searchResult.createdOn}">
                         <f:facet name="header">
