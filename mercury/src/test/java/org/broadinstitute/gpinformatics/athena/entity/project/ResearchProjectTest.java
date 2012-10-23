@@ -24,7 +24,7 @@ public class ResearchProjectTest {
     }
 
     public static ResearchProject createDummyResearchProject() {
-        ResearchProject researchProject = new ResearchProject(13715L, "MyResearchProject", "To study stuff.", ResearchProject.IRB_ENGAGED);
+        ResearchProject researchProject = new ResearchProject(10950L, "MyResearchProject", "To study stuff.", ResearchProject.IRB_ENGAGED);
 
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant"));
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO"));

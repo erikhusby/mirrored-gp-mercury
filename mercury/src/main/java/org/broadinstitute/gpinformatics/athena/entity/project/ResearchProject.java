@@ -275,6 +275,10 @@ public class ResearchProject {
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {
+        if (irbNumbers == null) {
+            irbNumbers = new HashSet<ResearchProjectIRB>();
+        }
+
         irbNumbers.add(irbNumber);
     }
 
@@ -283,6 +287,10 @@ public class ResearchProject {
     }
 
     public void addPerson(RoleType role, long personId) {
+        if (associatedPeople == null) {
+            associatedPeople = new HashSet<ProjectPerson>();
+        }
+
         associatedPeople.add(new ProjectPerson(this, role, personId));
     }
 
