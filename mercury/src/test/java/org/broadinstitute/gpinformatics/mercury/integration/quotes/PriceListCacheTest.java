@@ -22,7 +22,7 @@ public class PriceListCacheTest {
 
         PriceListCache cache = new PriceListCache(priceList);
         
-        Collection<PriceItem> priceItems = cache.getGSPPriceList();
+        Collection<PriceItem> priceItems = cache.getGSPPriceItems();
         
         Assert.assertEquals(2, priceItems.size());
 
@@ -33,9 +33,9 @@ public class PriceListCacheTest {
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_gsp_prices() throws Exception {
         PriceListCache cache = new PriceListCache(new QuoteServiceStub().getAllPriceItems());
-        Assert.assertFalse(cache.getGSPPriceList().isEmpty());
+        Assert.assertFalse(cache.getGSPPriceItems().isEmpty());
 
-        for (PriceItem priceItem : cache.getGSPPriceList()) {
+        for (PriceItem priceItem : cache.getGSPPriceItems()) {
             Assert.assertTrue(QuotePlatformType.SEQ.getPlatformName().equalsIgnoreCase(priceItem.getPlatform()));
             System.out.println(priceItem.getName());
         }

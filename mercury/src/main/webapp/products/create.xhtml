@@ -23,6 +23,35 @@
         <ui:define name="body">
             <h:form id="form" prependId="false" styleClass="form-horizontal">
 
+                <!-- referencing PriceListCache directly from EL -->
+                <h:outputText value="I think there are #{priceListCache.priceItems.size()} prices in the world" />
+
+                <!-- referencing PriceListCache as injected into backing bean -->
+                <p:dataTable value="#{productDetail.first5PriceItems}" var="priceItem" >
+                    <f:facet name="header">
+                        <h:outputText value="Price Items" />
+                    </f:facet>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Platform"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.platform}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Category"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.categoryName}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Name"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.name}"/>
+                    </p:column>
+                </p:dataTable>
+
+
                 <div class="control-group">
                     <!-- TODO hook up the productFamily, see below -->
                     <p:outputLabel for="productFamily" value="Product Family" styleClass="control-label"/>

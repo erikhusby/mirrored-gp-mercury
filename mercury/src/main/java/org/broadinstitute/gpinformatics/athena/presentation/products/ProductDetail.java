@@ -4,12 +4,17 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @Named
 @RequestScoped
@@ -19,6 +24,9 @@ public class ProductDetail extends AbstractJsfBean {
 
     @Inject
     private ProductDao productDao;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     private Product product;
     private String productName;
@@ -33,6 +41,11 @@ public class ProductDetail extends AbstractJsfBean {
     private String deliverables;
     private Integer expectedCycleTimeHours;
     private Integer guaranteedCycleTimeHours;
+
+
+    public List<PriceItem> getFirst5PriceItems() {
+        return new ArrayList<PriceItem>(priceListCache.getPriceItems()).subList(0, 5);
+    }
 
 
     public void initEmptyProduct() {
