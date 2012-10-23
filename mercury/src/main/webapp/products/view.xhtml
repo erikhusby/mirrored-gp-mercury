@@ -58,6 +58,14 @@
             </div>
 
             <div class="control-group">
+                <label class="control-label">Top Level Product</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.topLevelProduct ? "Yes" : "No"}</div>
+                </div>
+            </div>
+
+
+            <div class="control-group">
                 <label class="control-label">Availability Date</label>
                 <div class="controls">
                     <div class="form-value">#{productView.availabilityDate}</div>
@@ -93,15 +101,12 @@
                 </div>
             </div>
 
-            <!-- TODO hmc add cycle times, convert seconds to hours -->
-
             <div class="control-group">
                 <label class="control-label">Expected Cycle Time (Hours)</label>
                 <div class="controls">
                     <div class="form-value">#{productView.expectedCycleTimeHours}</div>
                 </div>
             </div>
-
 
             <div class="control-group">
                 <label class="control-label">Guaranteed Cycle Time (Hours)</label>

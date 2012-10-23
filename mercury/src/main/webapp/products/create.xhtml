@@ -63,6 +63,16 @@
                 </div>
 
                 <div class="control-group">
+                    <p:outputLabel for="topLevel" value="Top Level Product" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:watermark for="topLevel" value="Is this a top level product ?"/>
+                        <p:selectBooleanCheckbox id="topLevel" value="#{productForm.product.topLevelProduct}" />
+                        <p:message for="topLevel"/>
+                    </div>
+                </div>
+
+
+                <div class="control-group">
                     <p:outputLabel for="availabilityDate" value="Availability Date" styleClass="control-label"/>
                     <div class="controls">
                         <p:calendar value="#{productForm.product.availabilityDate}" id="availabilityDate" size="50" required="true"/>
