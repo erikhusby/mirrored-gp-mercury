@@ -15,9 +15,9 @@
         <ui:define name="metadata">
             <f:metadata>
                 <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}"/>
-                <f:event type="preValidate" listener="#{productForm.initForm}"/>
-                <f:event type="preRenderView" listener="#{productForm.initForm}"/>
+                <f:event type="preValidate" listener="#{productForm.initEmptyProduct}"/>
             </f:metadata>
+            <f:event type="preRenderView" listener="#{productForm.initForm}"/>
         </ui:define>
 
         <ui:define name="body">
@@ -27,20 +27,17 @@
                     <!-- TODO hook up the productFamily, see below -->
                     <p:outputLabel for="productFamily" value="Product Family" styleClass="control-label"/>
                     <div class="controls">
-                        <p:selectOneMenu id="productFamily" value="#{productForm.productFamily}" converter="#{productFamilyConverter}">
-                            <p:watermark for="productFamily" value="Select the Product family"/>
-                            <f:selectItems value="#{productForm.productFamilySelectItems}" var="fam" itemValue="#{fam}" converter="#{ProductFamilyConverter}"/>
-                            <!--<f:selectItems value="#{productForm.productFamilies}" var="fam" itemValue="#{fam}" itemLabel="#{fam.name}" required="true" converter="#{productFamilyConverter}"/>-->
+                        <p:selectOneMenu id="productFamily" value="#{productForm.product.productFamily}" converter="#{productFamilyConverter}" required="true">
+                            <f:selectItem itemLabel="Select a ProductFamily" itemValue="" />
+                            <f:selectItems value="#{productForm.productFamilies}" var="fam" itemLabel="#{fam.displayName}"  itemValue="#{fam}" />
                         </p:selectOneMenu>
-                        <!--<p:autoComplete id="productFamily" value="#{productForm.productFamily}" completeMethod="#{productBean.productFamilies}" var="fam" itemLabel="#{fam.displayName}" itemValue="#{fam}" converter="#{productFamilyConverter}"/>-->
-                        <!--<p:watermark for="productFamily" value="Type a Product Family Name"/>-->
                     </div>
                 </div>
 
                 <div class="control-group">
                     <p:outputLabel for="productName" value="Product Name" styleClass="control-label" />
                     <div class="controls">
-                        <p:inputText id="productName" value="#{productForm.productName}" size="50" required="true"/>
+                        <p:inputText id="productName" value="#{productForm.product.productName}" size="50" required="true"/>
                         <p:watermark for="productName" value="Enter the name of the new product"/>
                         <p:message for="productName"/>
                     </div>
@@ -50,7 +47,7 @@
                 <div class="control-group">
                     <p:outputLabel for="description" value="Product Description" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="description" value="#{productForm.description}" cols="50" rows="3" required="true"/>
+                        <p:inputTextarea id="description" value="#{productForm.product.description}" cols="50" rows="3" required="true"/>
                         <p:watermark for="description" value="Enter the description of the product"/>
                         <p:message for="description"/>
                     </div>
@@ -59,7 +56,7 @@
                 <div class="control-group">
                     <p:outputLabel for="partNumber" value="Part Number" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="partNumber" value="#{productForm.partNumber}" size="50" required="true"/>
+                        <p:inputText id="partNumber" value="#{productForm.product.partNumber}" size="50" required="true"/>
                         <p:watermark for="partNumber" value="Enter the part number of this product"/>
                         <p:message for="partNumber"/>
                     </div>
@@ -68,7 +65,7 @@
                 <div class="control-group">
                     <p:outputLabel for="availabilityDate" value="Availability Date" styleClass="control-label"/>
                     <div class="controls">
-                        <p:calendar value="#{productForm.availabilityDate}" id="availabilityDate" size="50" required="true"/>
+                        <p:calendar value="#{productForm.product.availabilityDate}" id="availabilityDate" size="50" required="true"/>
                         <p:watermark for="availabilityDate" value="Click here to select a date"/>
                         <p:message for="availabilityDate"/>
                     </div>
@@ -77,7 +74,7 @@
                 <div class="control-group">
                     <p:outputLabel for="discontinuedDate" value="Discontinued Date" styleClass="control-label"/>
                     <div class="controls">
-                        <p:calendar value="#{productForm.discontinuedDate}" id="discontinuedDate" size="50"/>
+                        <p:calendar value="#{productForm.product.discontinuedDate}" id="discontinuedDate" size="50"/>
                         <p:watermark for="discontinuedDate" value="Click here to select a date"/>
                         <p:message for="discontinuedDate"/>
                     </div>
@@ -86,7 +83,7 @@
                 <div class="control-group">
                     <p:outputLabel for="deliverables" value="Deliverables" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="deliverables" value="#{productForm.deliverables}" cols="50" rows="3"/>
+                        <p:inputTextarea id="deliverables" value="#{productForm.product.deliverables}" cols="50" rows="3"/>
                         <p:watermark for="deliverables" value="Enter the deliverables for this product"/>
                         <p:message for="deliverables"/>
                     </div>
@@ -95,7 +92,7 @@
                 <div class="control-group">
                     <p:outputLabel for="inputRequirements" value="Input Requirements" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="inputRequirements" value="#{productForm.inputRequirements}" cols="50" rows="3"/>
+                        <p:inputTextarea id="inputRequirements" value="#{productForm.product.inputRequirements}" cols="50" rows="3"/>
                         <p:watermark for="inputRequirements" value="Enter the input requirements for this product"/>
                         <p:message for="inputRequirements"/>
                     </div>
@@ -122,7 +119,7 @@
                 <div class="control-group">
                     <p:outputLabel for="samplesPerWeek" value="Samples Per Week" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="samplesPerWeek" value="#{productForm.samplesPerWeek}" size="50" required="false"/>
+                        <p:inputText id="samplesPerWeek" value="#{productForm.product.samplesPerWeek}" size="50" required="false"/>
                         <p:watermark for="samplesPerWeek" value="Enter the number of samples"/>
                         <p:message for="samplesPerWeek"/>
                     </div>
