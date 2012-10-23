@@ -58,17 +58,19 @@
                             <h:link outcome="/index" style="padding-left: 50px;text-decoration: none; font-variant: small-caps; font-size: 1.2em"><p:graphicImage url="/images/mercury_helmet.png" alt="Mercury Helmet"/> Mercury</h:link>
                         </div>
 
-                        <sqltg:isLoggedIn>
                             <h:form styleClass="navbar-form pull-right">
                                 <span id="jiraProblem" class="badge badge-warning" style="cursor: help;" title="Click here to send a bug report or feedback">Feedback?</span>
+                                <sqltg:isLoggedIn>
                                 |
                                 <h:outputText value="#{request.getRemoteUser()}" styleClass="badge"/>
+                                </sqltg:isLoggedIn>
                                 |
-                                <h:outputText value="#{userLogin.deployment}" styleClass="#{userLogin.deploymentBadgeStyle}" />
+                                <h:outputText value="#{userLogin.deployment}" styleClass="#{userLogin.deploymentBadgeStyle}" />  
+                                <sqltg:isLoggedIn>
                                 |
                                 <p:commandLink action="#{logoutHandler.logout}" value="Sign out" />
-                            </h:form>
-                        </sqltg:isLoggedIn>
+                                </sqltg:isLoggedIn>
+                            </h:form>                        
                     </div>
                 </div>
             </div>
