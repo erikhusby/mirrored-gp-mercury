@@ -6,8 +6,10 @@ public class CustomField {
 
     private final Object value;
 
+    private final SingleFieldType fieldType;
 
-    public CustomField(CustomFieldDefinition fieldDefinition,Object value) {
+
+    public CustomField ( CustomFieldDefinition fieldDefinition, Object value, SingleFieldType fieldType ) {
         if (fieldDefinition == null) {
             throw new NullPointerException("fieldDefinition cannot be null");
         }
@@ -16,6 +18,7 @@ public class CustomField {
         }
         this.definition = fieldDefinition;
         this.value = value;
+        this.fieldType = fieldType;
     }
 
     public CustomFieldDefinition getFieldDefinition() {
@@ -25,4 +28,15 @@ public class CustomField {
     public Object getValue() {
         return value;
     }
+
+    public SingleFieldType getFieldType () {
+        return fieldType;
+    }
+
+    public enum SingleFieldType {
+        TEXT,
+        RADIO_BUTTON,
+        SINGLE_SELECT;
+    }
+
 }

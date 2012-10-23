@@ -82,22 +82,23 @@ public class ResearchProject {
 
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ProjectPerson> associatedPeople;
+    private Set<ProjectPerson> associatedPeople = new HashSet<ProjectPerson>();
 
     // Information about externally managed items
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectCohort> sampleCohorts;
+    private Set<ResearchProjectCohort> sampleCohorts = new HashSet<ResearchProjectCohort>();
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectFunding> projectFunding;
+    private Set<ResearchProjectFunding> projectFunding = new HashSet<ResearchProjectFunding>();
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectIRB> irbNumbers;
+    private Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
+
 
     private String irbNotes;
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private List<ProductOrder> productOrders;
+    private List<ProductOrder> productOrders = new ArrayList<ProductOrder>();
 
     @Index(name = "ix_rp_jira")
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
@@ -105,9 +106,14 @@ public class ResearchProject {
     @Transient
     private String originalTitle;   // This is used for edit to keep track of changes to the object.
 
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalTitle = title;
+    }
+
     public String getBusinessKey() {
-        // TODO: change to jiraTicketKey once it's populated
-        return title;
+        return jiraTicketKey;
     }
 
     /**
@@ -126,8 +132,6 @@ public class ResearchProject {
      * @param irbNotEngaged Is this project set up for NO IRB?
      */
     public ResearchProject(Long creator, String title, String synopsis, boolean irbNotEngaged) {
-        sampleCohorts = new HashSet<ResearchProjectCohort>();
-        productOrders = new ArrayList<ProductOrder>();
         createdDate = new Date();
         modifiedDate = createdDate;
         irbNotes = "";
@@ -348,7 +352,7 @@ public class ResearchProject {
 
         Set<ProjectPerson> peopleToRemove = new HashSet<ProjectPerson>();
         for (ProjectPerson person : associatedPeople) {
-            if (person.getRole().equals(role)) {
+            if (person.getRole() == role) {
                 if (!newIds.contains(person.getPersonId())) {
                     peopleToRemove.add(person);
                 }
@@ -383,10 +387,6 @@ public class ResearchProject {
     }
 
     public void addFunding(ResearchProjectFunding funding) {
-        if (projectFunding == null) {
-            projectFunding = new HashSet<ResearchProjectFunding>();
-        }
-
         projectFunding.add(funding);
     }
 
@@ -424,67 +424,65 @@ public class ResearchProject {
                 for(ResearchProjectCohort cohort:sampleCohorts) {
                     cohortNames.add(cohort.getCohortId());
                 }
+
                 listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.COHORTS.getFieldName()),
-                                                 StringUtils.join(cohortNames,',')));
+                                                 StringUtils.join(cohortNames,','), CustomField.SingleFieldType.TEXT ));
             }
-            if(!projectFunding.isEmpty()) {
+
+            if (!projectFunding.isEmpty()) {
                 List<String> fundingSources = new ArrayList<String>();
                 for(ResearchProjectFunding fundingSrc:projectFunding) {
                     fundingSources.add(fundingSrc.getFundingId());
                 }
 
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.FUNDING_SOURCE.getFieldName()),
-                                                 StringUtils.join(fundingSources,',')));
+                listOfFields.add(
+                        new CustomField(submissionFields.get(RequiredSubmissionFields.FUNDING_SOURCE.getFieldName()),
+                                        StringUtils.join(fundingSources,','),
+                                        CustomField.SingleFieldType.TEXT ));
             }
-            if(!irbNumbers.isEmpty()) {
+
+            if (!irbNumbers.isEmpty()) {
                 List<String> irbNums = new ArrayList<String>();
-                for(ResearchProjectIRB irb:irbNumbers ){
+                for(ResearchProjectIRB irb:irbNumbers ) {
                     irbNums.add(irb.getIrb());
                 }
-                listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
 
-                                                 StringUtils.join(irbNums,',')));
+                listOfFields.add(
+                        new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
+                                        StringUtils.join(irbNums,','), CustomField.SingleFieldType.TEXT ));
             }
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
-                                             irbNotEngaged?"Yes":"No" ));
 
-            /**
-             * TODO To be filled in with the actual URL
-             */
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
-                                             ""));
+            listOfFields.add(
+                    new CustomField (submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
+                                     irbNotEngaged?"Yes":"No" , CustomField.SingleFieldType.RADIO_BUTTON));
+
+            listOfFields.add(
+                    new CustomField(submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                                    "", CustomField.SingleFieldType.TEXT ));
 
             CreateIssueResponse researchProjectResponse =
                     ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
                                                           title, synopsis, listOfFields);
 
             jiraTicketKey = researchProjectResponse.getKey();
-
-            /**
-             * todo HMC  need a better test user in test cases or this will always break
-             */
-//            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
+            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
     }
 
     public void addPublicComment(String comment) throws IOException{
-        ServiceAccessUtility.addJiraComment ( jiraTicketKey, comment );
+        ServiceAccessUtility.addJiraComment(jiraTicketKey, comment);
     }
 
     public void addWatcher(String personLoginId) throws IOException {
-        ServiceAccessUtility.addJiraWatcher ( jiraTicketKey, personLoginId );
+        ServiceAccessUtility.addJiraWatcher(jiraTicketKey, personLoginId);
     }
 
     public void addLink(String targetIssueKey) throws IOException {
-        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
+        ServiceAccessUtility.addJiraPublicLink(AddIssueLinkRequest.LinkType.Related, jiraTicketKey, targetIssueKey);
     }
 
     public String getOriginalTitle() {
         return originalTitle;
-    }
-
-    public void setOriginalTitle(String originalTitle) {
-        this.originalTitle = originalTitle;
     }
 
     /**

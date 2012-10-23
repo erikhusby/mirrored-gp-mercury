@@ -230,6 +230,17 @@ public class ProductOrder implements Serializable {
     }
 
     /**
+     * Use the BSP Manager to load the bsp data for every sample in this product order.
+     */
+    public void loadBspData() {
+        if (needsBspMetaData()) {
+            Map<String, BSPSampleDTO> bspSampleMetaData =
+                    ServiceAccessUtility.getSampleDtoByNames(getUniqueSampleNames());
+            updateBspMetaData(bspSampleMetaData);
+        }
+    }
+
+    /**
      * getUniqueParticipantCount provides the summation of all unique participants represented in the list of samples
      * registered to this product order
      *
@@ -238,15 +249,8 @@ public class ProductOrder implements Serializable {
      */
     public int getUniqueParticipantCount() {
         Set<String> uniqueParticipants = new HashSet<String>();
-
         if (!isSheetEmpty()) {
-            if (needsBspMetaData()) {
-
-                Map<String, BSPSampleDTO> bspSampleMetaData =
-                        ServiceAccessUtility.getSampleDtoByNames(getUniqueSampleNames());
-                updateBspMetaData(bspSampleMetaData);
-            }
-
+            loadBspData();
             for (ProductOrderSample productOrderSample : samples) {
                 String participantId = productOrderSample.getBspDTO().getPatientId();
                 if (StringUtils.isNotBlank(participantId)) {
@@ -483,7 +487,7 @@ public class ProductOrder implements Serializable {
     private int getGenderCount(String gender) {
         int counter = 0;
         for (ProductOrderSample sample : samples) {
-            if (sample.isInBspFormat() && gender.equalsIgnoreCase(sample.getBspDTO().getGender())) {
+            if (sample.isInBspFormat() && gender.equalsIgnoreCase ( sample.getBspDTO ().getGender () )) {
                 counter++;
             }
         }
@@ -544,7 +548,7 @@ public class ProductOrder implements Serializable {
 
     private static void addCustomField(Map<String, CustomFieldDefinition> submissionFields,
                                        List<CustomField> list, RequiredSubmissionFields field, Object value) {
-        list.add(new CustomField(submissionFields.get(field.getFieldName()), value));
+        list.add(new CustomField(submissionFields.get(field.getFieldName()), value, CustomField.SingleFieldType.TEXT ));
     }
 
     /**
@@ -565,7 +569,7 @@ public class ProductOrder implements Serializable {
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
         addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT_FAMILY,
-                product.getProductFamily()==null?"":product.getProductFamily().getName());
+                product.getProductFamily()==null?"":product.getProductFamily().getName ());
 
         if (quoteId != null && !quoteId.isEmpty()) {
             addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.QUOTE_ID, quoteId);
@@ -584,7 +588,7 @@ public class ProductOrder implements Serializable {
         /**
          * todo HMC  need a better test user in test cases or this will always break
          */
-//        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
+        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
 
         sampleValidationComments();
     }
