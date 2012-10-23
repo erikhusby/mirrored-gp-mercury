@@ -1,12 +1,15 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
@@ -23,10 +26,20 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
 
     @Inject
     private ProductDao productDao;
+
     @Inject
     private ProductFamilyDao productFamilyDao;
+
+    @Inject
+    private PriceItemDao priceItemDao;
+
     @Inject
     private FacesContext facesContext;
+
+    @Inject
+    private Log logger;
+
+    private List<PriceItem> selectedPriceItems;
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
@@ -65,13 +78,32 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
 
     public String create() {
         try {
-            for ( Product aProduct : addOns ) {
-                product.addAddOn( aProduct );
+            if (addOns != null) {
+                for (Product aProduct : addOns) {
+                    product.addAddOn(aProduct);
+                }
+            }
+
+            if (selectedPriceItems != null) {
+                for (PriceItem priceItem : selectedPriceItems) {
+                    // quite sure this is not the right way to do this, restructure as necessary
+                    org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
+                            priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+                    if (entity == null) {
+                        entity = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
+                                priceItem.getPlatformName(),
+                                priceItem.getCategoryName(),
+                                priceItem.getName()
+                        );
+                    }
+                    product.addPriceItem(entity);
+                }
             }
             productDao.persist(product);
             addInfoMessage("Product created.", "Product " + product.getPartNumber() + " has been created.");
         } catch (Exception e ) {
-            String errorMessage = MessageFormat.format("Unknown exception occurred while persisting Product.", null);
+            String errorMessage = MessageFormat.format("Unknown exception occurred while persisting Product.", e.getMessage());
+            logger.error("Exception while persisting Product: " + e);
             if (GenericDao.IsConstraintViolationException(e)) {
                 errorMessage = MessageFormat.format("The Product Part-Number ''{0}'' is not unique.", product.getPartNumber());
             }
@@ -110,7 +142,7 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
         return convertCycleTimeSecondsToHours (product.getExpectedCycleTimeSeconds()) ;
     }
     public void setExpectedCycleTimeHours(final Integer expectedCycleTimeHours) {
-        product.setExpectedCycleTimeSeconds( convertCycleTimeHoursToSeconds( expectedCycleTimeHours ) );
+        product.setExpectedCycleTimeSeconds(convertCycleTimeHoursToSeconds(expectedCycleTimeHours));
     }
 
     public Integer getGuaranteedCycleTimeHours() {
@@ -162,5 +194,11 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
     }
 
 
+    public List<PriceItem> getSelectedPriceItems() {
+        return selectedPriceItems;
+    }
 
+    public void setSelectedPriceItems(List<PriceItem> selectedPriceItems) {
+        this.selectedPriceItems = selectedPriceItems;
+    }
 }

@@ -135,6 +135,21 @@
                     </div>
                 </div>
 
+                <div class="control-group">
+                    <p:outputLabel for="priceItems" value="Price Items" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="priceItems" value="#{productForm.selectedPriceItems}"
+                                        completeMethod="#{priceListCache.searchPriceItems}" var="priceItem"
+                                        itemLabel="#{priceItem.name}"
+                                        itemValue="#{priceItem}" converter="#{priceItemConverter}" multiple="true">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name}</div>
+                            </p:column>
+                        </p:autoComplete>
+                        <p:watermark for="priceItems" value="Type text to search"/>
+                    </div>
+                </div>
+
 
                 <div class="control-group">
                     <p:outputLabel for="addOns" value="Add Ons" styleClass="control-label"/>
