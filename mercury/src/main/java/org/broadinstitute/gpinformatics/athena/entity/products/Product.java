@@ -66,11 +66,6 @@ public class Product implements Serializable {
 
     private String workflowName;
 
-    // MLC This reaches into Orders and I don't want to step on what Hugh is currently working on in GPLIM-45
-    // @OneToMany
-    // private List<RiskContingency> riskContingencies;
-
-
     /**
      * JPA package visible no arg constructor
      *
@@ -175,6 +170,55 @@ public class Product implements Serializable {
         return priceItems;
     }
 
+
+    public void setProductName(final String productName) {
+        this.productName = productName;
+    }
+
+    public void setProductFamily(final ProductFamily productFamily) {
+        this.productFamily = productFamily;
+    }
+
+    public void setDescription(final String description) {
+        this.description = description;
+    }
+
+    public void setAvailabilityDate(final Date availabilityDate) {
+        this.availabilityDate = availabilityDate;
+        this.availabilityDate = availabilityDate;
+    }
+
+    public void setDiscontinuedDate(final Date discontinuedDate) {
+        this.discontinuedDate = discontinuedDate;
+    }
+
+    public void setExpectedCycleTimeSeconds(final Integer expectedCycleTimeSeconds) {
+        this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
+    }
+
+    public void setGuaranteedCycleTimeSeconds(final Integer guaranteedCycleTimeSeconds) {
+        this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
+    }
+
+    public void setSamplesPerWeek(final Integer samplesPerWeek) {
+        this.samplesPerWeek = samplesPerWeek;
+    }
+
+    public void setInputRequirements(final String inputRequirements) {
+        this.inputRequirements = inputRequirements;
+    }
+
+    public void setDeliverables(final String deliverables) {
+        this.deliverables = deliverables;
+    }
+
+    public void setTopLevelProduct(final boolean topLevelProduct) {
+        this.topLevelProduct = topLevelProduct;
+    }
+
+    public void setWorkflowName(final String workflowName) {
+        this.workflowName = workflowName;
+    }
 
     public void addPriceItem(PriceItem priceItem) {
 
