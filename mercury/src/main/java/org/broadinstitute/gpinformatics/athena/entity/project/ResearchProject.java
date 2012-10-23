@@ -418,46 +418,48 @@ public class ResearchProject {
                 for(ResearchProjectCohort cohort:sampleCohorts) {
                     cohortNames.add(cohort.getCohortId());
                 }
+
                 listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.COHORTS.getFieldName()),
-                                                 StringUtils.join(cohortNames,',')));
+                                                 StringUtils.join(cohortNames,','), CustomField.SingleFieldType.TEXT ));
             }
-            if(!projectFunding.isEmpty()) {
+
+            if (!projectFunding.isEmpty()) {
                 List<String> fundingSources = new ArrayList<String>();
                 for(ResearchProjectFunding fundingSrc:projectFunding) {
                     fundingSources.add(fundingSrc.getFundingId());
                 }
 
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.FUNDING_SOURCE.getFieldName()),
-                                                 StringUtils.join(fundingSources,',')));
+                listOfFields.add(
+                        new CustomField(submissionFields.get(RequiredSubmissionFields.FUNDING_SOURCE.getFieldName()),
+                                        StringUtils.join(fundingSources,','),
+                                        CustomField.SingleFieldType.TEXT ));
             }
-            if(!irbNumbers.isEmpty()) {
+
+            if (!irbNumbers.isEmpty()) {
                 List<String> irbNums = new ArrayList<String>();
-                for(ResearchProjectIRB irb:irbNumbers ){
+                for(ResearchProjectIRB irb:irbNumbers ) {
                     irbNums.add(irb.getIrb());
                 }
-                listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
 
-                                                 StringUtils.join(irbNums,',')));
+                listOfFields.add(
+                        new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
+                                        StringUtils.join(irbNums,','), CustomField.SingleFieldType.TEXT ));
             }
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
-                                             irbNotEngaged?"Yes":"No" ));
 
-            /**
-             * TODO To be filled in with the actual URL
-             */
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
-                                             ""));
+            listOfFields.add(
+                    new CustomField (submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
+                                     irbNotEngaged?"Yes":"No" , CustomField.SingleFieldType.RADIO_BUTTON));
+
+            listOfFields.add(
+                    new CustomField(submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                                    "", CustomField.SingleFieldType.TEXT ));
 
             CreateIssueResponse researchProjectResponse =
                     ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
                                                           title, synopsis, listOfFields);
 
             jiraTicketKey = researchProjectResponse.getKey();
-
-            /**
-             * todo HMC  need a better test user in test cases or this will always break
-             */
-//            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
+            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
     }
 
