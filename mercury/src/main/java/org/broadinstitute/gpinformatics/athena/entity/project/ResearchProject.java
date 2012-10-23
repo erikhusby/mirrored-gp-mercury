@@ -82,22 +82,23 @@ public class ResearchProject {
 
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ProjectPerson> associatedPeople;
+    private Set<ProjectPerson> associatedPeople = new HashSet<ProjectPerson>();
 
     // Information about externally managed items
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectCohort> sampleCohorts;
+    private Set<ResearchProjectCohort> sampleCohorts = new HashSet<ResearchProjectCohort>();
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectFunding> projectFunding;
+    private Set<ResearchProjectFunding> projectFunding = new HashSet<ResearchProjectFunding>();
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectIRB> irbNumbers;
+    private Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
+
 
     private String irbNotes;
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private List<ProductOrder> productOrders;
+    private List<ProductOrder> productOrders = new ArrayList<ProductOrder>();
 
     @Index(name = "ix_rp_jira")
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
@@ -106,8 +107,7 @@ public class ResearchProject {
     private String originalTitle;   // This is used for edit to keep track of changes to the object.
 
     public String getBusinessKey() {
-        // TODO: change to jiraTicketKey once it's populated
-        return title;
+        return jiraTicketKey;
     }
 
     /**
@@ -126,8 +126,6 @@ public class ResearchProject {
      * @param irbNotEngaged Is this project set up for NO IRB?
      */
     public ResearchProject(Long creator, String title, String synopsis, boolean irbNotEngaged) {
-        sampleCohorts = new HashSet<ResearchProjectCohort>();
-        productOrders = new ArrayList<ProductOrder>();
         createdDate = new Date();
         modifiedDate = createdDate;
         irbNotes = "";
@@ -277,10 +275,6 @@ public class ResearchProject {
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {
-        if (irbNumbers == null) {
-            irbNumbers = new HashSet<ResearchProjectIRB>();
-        }
-
         irbNumbers.add(irbNumber);
     }
 
@@ -289,10 +283,6 @@ public class ResearchProject {
     }
 
     public void addPerson(RoleType role, long personId) {
-        if (associatedPeople == null) {
-            associatedPeople = new HashSet<ProjectPerson>();
-        }
-
         associatedPeople.add(new ProjectPerson(this, role, personId));
     }
 
@@ -383,10 +373,6 @@ public class ResearchProject {
     }
 
     public void addFunding(ResearchProjectFunding funding) {
-        if (projectFunding == null) {
-            projectFunding = new HashSet<ResearchProjectFunding>();
-        }
-
         projectFunding.add(funding);
     }
 
