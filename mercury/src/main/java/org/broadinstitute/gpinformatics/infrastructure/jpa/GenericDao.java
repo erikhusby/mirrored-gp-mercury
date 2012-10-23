@@ -1,14 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import javax.persistence.metamodel.SingularAttribute;
 import java.util.Collections;
 import java.util.List;
@@ -158,4 +159,20 @@ public class GenericDao {
             Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
         return findListByList(entity, singularAttribute, Collections.singletonList(value));
     }
+
+    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListWithWildcard(
+                Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, String value) {
+            CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+            CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
+            Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
+            criteriaQuery.select(root);
+            Predicate valuePredicate = criteriaBuilder.like(root.get(singularAttribute).as(String.class), "%" +
+                value + "%");
+            criteriaQuery.where(valuePredicate);
+            try {
+                return getEntityManager().createQuery(criteriaQuery).getResultList();
+            } catch (NoResultException ignored) {
+                return Collections.emptyList();
+            }
+        }
 }

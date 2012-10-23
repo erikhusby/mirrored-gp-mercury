@@ -75,21 +75,21 @@
         <wsdl:part name="creator" type="xsd:string" />
     </wsdl:message>
     <wsdl:message name="ResponseSearchPassesByCreatorMessage">
-        <wsdl:part name="results" type="sqtopic:SummarizedPassListResult" />
+        <wsdl:part name="resultBeans" type="sqtopic:SummarizedPassListResult" />
     </wsdl:message>
 
     <wsdl:message name="RequestSearchPassesMessage">
     </wsdl:message>
 
     <wsdl:message name="ResponseSearchPassesMessage">
-        <wsdl:part name="results" type="sqtopic:SummarizedPassListResult" />
+        <wsdl:part name="resultBeans" type="sqtopic:SummarizedPassListResult" />
     </wsdl:message>
 
     <wsdl:message name="RequestSearchPassesByResearchProjectMessage">
         <wsdl:part name="researchProject" type="xsd:string" />
     </wsdl:message>
     <wsdl:message name="ResponseSearchPassesByResearchProjectMessage">
-        <wsdl:part name="results" type="sqtopic:SummarizedPassListResult" />
+        <wsdl:part name="resultBeans" type="sqtopic:SummarizedPassListResult" />
     </wsdl:message>
 
 

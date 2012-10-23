@@ -126,14 +126,7 @@ public class LabEventTest {
         BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
 
         // starting rack
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
-            String barcode = "R" + rackPosition;
-            String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
-            mapBarcodeToTube.put(barcode,bspAliquot);
-
-        }
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildTubeRack(projectPlan);
 
         // Messaging
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
@@ -189,6 +182,17 @@ public class LabEventTest {
 //        Controller.stopCPURecording();
     }
 
+    public static Map<String, TwoDBarcodedTube> buildTubeRack(BasicProjectPlan projectPlan) {
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
+            String barcode = "R" + rackPosition;
+            String bspStock = "SM-" + rackPosition;
+            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
+            mapBarcodeToTube.put(barcode,bspAliquot);
+        }
+        return mapBarcodeToTube;
+    }
+
     /**
      * Build object graph for Whole Genome Shotgun messages, verify chain of events.
      */
@@ -202,16 +206,7 @@ public class LabEventTest {
         BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
-            String barcode = "R" + rackPosition;
-
-            String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
-            mapBarcodeToTube.put(barcode,bspAliquot);
-
-
-        }
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildTubeRack(projectPlan);
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();

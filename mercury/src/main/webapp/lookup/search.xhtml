@@ -1,23 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Created by IntelliJ IDEA.
-  User: jcarey
-  Date: 10/22/12
-  Time: 10:05 AM
--->
+
 <!DOCTYPE html
         PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html">
-
-<h:head>
-    <title>Simple JSF Facelets page</title>
-</h:head>
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui" xmlns:f="http://java.sun.com/jsf/core">
 
 <h:body>
-    Place your content here
-</h:body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">
+            Barcode Lookup
+        </ui:define>
+        <ui:define name="body">
+            <h:form>
+                <div class="control-group">
+                    <p:outputLabel for="name" value="Barcode" styleClass="control-label"/>
 
+                    <div class="controls">
+                        <p:inputText id="name" value="#{lookup.barcode}" size="50"/>
+                        <p:watermark for="name" value="Enter the barcode to search for"/>
+                        <p:commandButton value="Search" action="#{lookup.barcodeSearch}" ajax="false"
+                                         styleClass="ui-priority-primary"/>
+                    </div>
+                </div>
+                </h:form>
+            <h:form>
+                <p:dataTable var="searchResult" value="#{lookup.resultBeans}" dynamic="true">
+                    <f:facet name="header">
+                        Barcode Search Results
+                    </f:facet>
+                    <p:column sortBy="#{searchResult.label}">
+                        <f:facet name="header">
+                            <h:outputText value="Label"/>
+                        </f:facet>
+                        <h:outputText value="#{searchResult.label}"/>
+                    </p:column>
+                    <p:column sortBy="#{searchResult.createdOn}">
+                        <f:facet name="header">
+                            <h:outputText value="Creation Date"/>
+                        </f:facet>
+                        <h:outputText value="#{searchResult.createdOn}"/>
+                    </p:column>
+                </p:dataTable>
+
+            </h:form>
+        </ui:define>
+    </ui:composition>
+</h:body>
 </html>

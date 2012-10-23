@@ -27,7 +27,7 @@
     <container qualifier="dev" default="true">
         <configuration>
             <!-- Enter your value for $JBOSS_HOME below -->
-            <property name="jbossHome">/Users/mccrory/Downloads/jboss-as-7.1.1.Final</property>
+            <property name="jbossHome">C:\\devel\\jboss-as-7.1.1.Final</property>
         </configuration>
     </container>
 

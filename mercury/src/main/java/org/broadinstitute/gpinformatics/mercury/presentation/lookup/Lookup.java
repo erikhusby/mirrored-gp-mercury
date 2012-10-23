@@ -1,18 +1,45 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.lookup;
 
-/**
- * Created by IntelliJ IDEA.
- * User: jcarey
- * Date: 10/22/12
- * Time: 10:10 AM
- * <p/>
- * The Broad Institute
- * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2012 by the
- * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
- * <p/>
- * This software is supplied without any warranty or guaranteed support whatsoever. Neither
- * the Broad Institute nor MIT can be responsible for its use, misuse, or functionality.
- */
-public class Lookup {
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+
+import javax.enterprise.context.RequestScoped;
+import javax.faces.bean.ViewScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+@Named
+@ViewScoped
+public class Lookup extends AbstractJsfBean implements Serializable {
+    private String barcode;
+    private List<StaticPlate> resultBeans;
+    @Inject
+    private LabVesselDao labVesselDao;
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
+    }
+
+    public String barcodeSearch() {
+        String targetPage = "/lookup/search";
+        resultBeans = labVesselDao.findByBarcode(barcode);
+        return targetPage;
+    }
+
+    public List<StaticPlate> getResultBeans() {
+        return resultBeans;
+    }
+
+    public void setResultBeans(List<StaticPlate> resultBeans) {
+        this.resultBeans = resultBeans;
+    }
 }
