@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.infrastructure.DataTableFilteredValuesBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
@@ -11,6 +12,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -40,7 +42,6 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
 
     public ProductsDataModel getProductsDataModel() {
 
-
         if (productsDataModel == null) {
             // "lazy" load, except this bean is request scoped so we end up creating a new ProductsDataModel
             // for every request, including column sorts and each character typed into the search filter.
@@ -49,12 +50,14 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
             // The ProductDao find method can be modified to left join fetch these associations, but the JPA criteria
             // API has some issues with left join fetching efficiently (it selects every column twice per
             // http://stackoverflow.com/questions/4511368/jpa-2-criteria-fetch-path-navigation).
-            productsDataModel = new ProductsDataModel(productDao.findProducts());
+            List<Product> products = productDao.findProducts();
+            Collections.sort(products, new ProductComparator());
+
+            productsDataModel = new ProductsDataModel(products);
         }
 
         return productsDataModel;
     }
-
 
 
     /**

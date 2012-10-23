@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
+import org.hibernate.exception.ConstraintViolationException;
+
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -158,4 +160,18 @@ public class GenericDao {
             Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
         return findListByList(entity, singularAttribute, Collections.singletonList(value));
     }
+
+    public static boolean IsConstraintViolationException(final Exception e) {
+
+        Throwable currentCause = e;
+        while (currentCause != null) {
+            if (currentCause instanceof ConstraintViolationException) {
+                return true;
+            }
+            currentCause = currentCause.getCause();
+        }
+
+        return false;
+    }
+
 }

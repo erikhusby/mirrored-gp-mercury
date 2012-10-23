@@ -44,7 +44,7 @@ public class SolexaRunResource {
             illuminaSequencingRun = registerRun(solexaRunBean);
         } catch (Exception e) {
             LOG.error("Failed to process run", e);
-            throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         URI createdUri = uriInfo.getAbsolutePathBuilder().path(illuminaSequencingRun.getRunName()).build();
         return Response.created(createdUri).entity(new SolexaRunBean(illuminaSequencingRun)).build();

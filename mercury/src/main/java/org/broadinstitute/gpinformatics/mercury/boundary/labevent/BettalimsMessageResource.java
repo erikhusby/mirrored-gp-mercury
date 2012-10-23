@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -92,7 +91,7 @@ todo jmt fix this
                 throw new ResourceException(e.getMessage(), 201);
             } else {
 */
-                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
 /*
             }
 */

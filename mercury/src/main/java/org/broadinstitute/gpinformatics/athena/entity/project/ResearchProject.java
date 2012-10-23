@@ -102,6 +102,9 @@ public class ResearchProject {
     @Index(name = "ix_rp_jira")
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
+    @Transient
+    private String originalTitle;   // This is used for edit to keep track of changes to the object.
+
     public String getBusinessKey() {
         // TODO: change to jiraTicketKey once it's populated
         return title;
@@ -474,6 +477,14 @@ public class ResearchProject {
 
     public void addLink(String targetIssueKey) throws IOException {
         ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
+    }
+
+    public String getOriginalTitle() {
+        return originalTitle;
+    }
+
+    public void setOriginalTitle(String originalTitle) {
+        this.originalTitle = originalTitle;
     }
 
     /**
