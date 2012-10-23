@@ -22,6 +22,7 @@ if [ $? -eq 0 ] ; then
     git tag -l
     pushd target/checkout
     git tag -a -m "Current Production" --force PROD HEAD
+    git push origin PROD
     popd
     git checkout master
     git merge QA_PROD -m "REL-000 Update pom.xml with new version"
