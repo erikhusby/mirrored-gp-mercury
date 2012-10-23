@@ -65,7 +65,7 @@
                                 <h:outputText value="#{request.getRemoteUser()}" styleClass="badge"/>
                                 </sqltg:isLoggedIn>
                                 |
-                                <h:outputText value="#{userLogin.deployment}" styleClass="#{userLogin.deploymentBadgeStyle}" />  
+                                <h:outputText value="#{buildInfoBean.deployment}" styleClass="#{userLogin.deploymentBadgeStyle}" />  
                                 <sqltg:isLoggedIn>
                                 |
                                 <p:commandLink action="#{logoutHandler.logout}" value="Sign out" />
