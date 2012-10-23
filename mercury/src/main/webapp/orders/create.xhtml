@@ -22,18 +22,22 @@
         <ui:define name="body">
             <p:dialog header="Enter Samples" widgetVar="samplesDialog" modal="true" onShow="">
                 <h:form id="sampleDialogForm" prependId="false">
-                    <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.dialog.sampleIDsText}" cols="80" rows="20">
+                    <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.samplesDialog.text}" cols="80"
+                                     rows="20"
+                                     autoResize="false"
+                            >
                         <p:ajax update="samplesDialogStatus,samplesDialogInput"
-                                listener="#{productOrderForm.dialog.sampleTextChanged}"/>
+                                listener="#{productOrderForm.samplesDialog.textChanged}"/>
                     </p:inputTextarea>
                     <br/>
-                    <h:outputText id="samplesDialogStatus" value="#{productOrderForm.dialog.sampleStatus}"/>
+                    <h:outputText id="samplesDialogStatus" value="#{productOrderForm.samplesDialog.status}"/>
                     <div class="control-group">
                         <div class="controls">
                             <div class="row-fluid">
                                 <div class="span1">
-                                    <p:commandButton update=":form:sampleTable" value="OK" onclick="samplesDialog.hide()"
-                                                     actionListener="#{productOrderForm.dialog.commit}"
+                                    <p:commandButton update=":form:sampleTable, :form:idCache" value="OK"
+                                                     onclick="samplesDialog.hide()"
+                                                     actionListener="#{productOrderForm.samplesDialog.commit}"
                                                      styleClass="btn btn-primary"/>
                                 </div>
                                 <div class="span1">
@@ -116,11 +120,12 @@
                     <h:outputText value="Samples" styleClass="control-label"/>
                     <div class="controls">
                         <p:commandButton immediate="true" update=":sampleDialogForm"
-                                         value="Edit Sample List..." onclick="samplesDialog.show()"/>
+                                         value="Edit Sample List..." onclick="samplesDialog.show()"
+                                         actionListener="#{productOrderForm.samplesDialog.prepareToShow}"/>
                     </div>
                 </div>
 
-                <h:inputHidden value="#{productOrderForm.editIdsCache}"/>
+                <h:inputHidden id="idCache" binding="#{productOrderForm.editIdsCacheBinding}"/>
 
                 <div class="row-fluid">
                     <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample">

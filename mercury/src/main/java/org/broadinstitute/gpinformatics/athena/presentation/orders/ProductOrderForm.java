@@ -10,9 +10,11 @@ import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
+import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -37,14 +39,17 @@ public class ProductOrderForm extends AbstractJsfBean {
     @Inject
     private FacesContext facesContext;
 
-    // Add state that can be edited here.
+    /**
+     * This is required to get the editIdsCache value in the case where we want to skip the process
+     * validations lifecycle.  This is to avoid validating components when we bring up the edit samples dialog.
+     */
+    private UIInput editIdsCacheBinding;
 
-    /** Raw text of sample list to be edited. */
-    private String editIdsCache;
+    // Add state that can be edited here.
 
     private static final String SEPARATOR = ",";
 
-    private final Dialog dialog = new Dialog();
+    private final SamplesDialog samplesDialog = new SamplesDialog();
 
     /*
      * Split sample input on whitespace or commas. This treats multiple commas as a single comma.
@@ -54,16 +59,24 @@ public class ProductOrderForm extends AbstractJsfBean {
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
-    public String getEditIdsCache() {
-        return editIdsCache;
+    public UIInput getEditIdsCacheBinding() {
+        return editIdsCacheBinding;
     }
 
-    public void setEditIdsCache(String editIdsCache) {
-        this.editIdsCache = editIdsCache;
+    public void setEditIdsCacheBinding(UIInput editIdsCacheBinding) {
+        this.editIdsCacheBinding = editIdsCacheBinding;
     }
 
-    public Dialog getDialog() {
-        return dialog;
+    private String getEditIdsCache() {
+        return String.valueOf(editIdsCacheBinding.getValue());
+    }
+
+    private void setEditIdsCache(String s) {
+        editIdsCacheBinding.setValue(s);
+    }
+
+    public SamplesDialog getSamplesDialog() {
+        return samplesDialog;
     }
 
     public String getFundsRemaining() {
@@ -140,54 +153,55 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     /**
-     * Class that contains operations specific to the sample list dialog.
+     * Class that contains operations specific to the sample list samplesDialog.
      *
      * The edited sample list has three states:
      * 1 the database state, read from the current product order, used to display table
      * 2 the committed edited state, not shown to user
-     * 3 the uncommitted edited state, used in dialog
+     * 3 the uncommitted edited state, used in samplesDialog
      *
      * Here are the operations we need to support, and the data flow for each.
      * - first ever page load: 1 => 2; subsequent page loads 2 => 1
      * - save to database: 2 => 1 (automatic due to page load)
-     * - show dialog: 2 => 3
-     * - confirm dialog: 3 => 2
-     * - the user can make changes to (3) by typing in the dialog.
+     * - show samplesDialog: 2 => 3
+     * - confirm samplesDialog: 3 => 2
+     * - the user can make changes to (3) by typing in the samplesDialog.
      * - both (2) and (3) are stored in the JSF form data. (1) is stored in the database.
      */
-    public class Dialog {
-        private String sampleIDsText = "";
+    public class SamplesDialog {
+        private String text = "";
 
-        private String sampleStatus;
+        private String status;
 
-        public String getSampleStatus() {
-            return sampleStatus;
+        public String getStatus() {
+            return status;
         }
 
-        public String getSampleIDsText() {
-            //noinspection StringEquality
-            if (sampleIDsText != editIdsCache) {
-                sampleIDsText = editIdsCache;
-                sampleTextChanged();
-            }
-            return sampleIDsText;
+        public String getText() {
+            return text;
         }
 
-        public void setSampleIDsText(String sampleIDsText) {
-            this.sampleIDsText = sampleIDsText;
+        public void setText(String text) {
+            this.text = text;
         }
 
-        public void sampleTextChanged() {
-            List<String> sampleIds = convertTextToList(sampleIDsText);
-            sampleIDsText = StringUtils.join(sampleIds, SEPARATOR + " ");
+        public void textChanged() {
+            List<String> sampleIds = convertTextToList(text);
+            text = StringUtils.join(sampleIds, SEPARATOR + " ");
             Set<String> sampleSet = new HashSet<String>(sampleIds);
-            sampleStatus = MessageFormat.format(
+            status = MessageFormat.format(
                     "{0} Sample{0, choice, 0#s|1#|1<s}, {1} Duplicate{1, choice, 0#s|1#|1<s}",
                     sampleIds.size(), sampleIds.size() - sampleSet.size());
         }
 
         public void commit() {
-            editIdsCache = sampleIDsText;
+            // 3 => 2
+            setEditIdsCache(text);
+        }
+
+        public void prepareToShow() {
+            // 2 => 3
+            text = getEditIdsCache();
         }
     }
 
@@ -197,19 +211,24 @@ public class ProductOrderForm extends AbstractJsfBean {
     public void load() {
         if (facesContext.isPostback()) {
             // Restoring the view, replace entity state with form state.
-            productOrderDetail.getProductOrder().setSamples(convertTextToOrderSamples(editIdsCache));
+            // 2 => 1
+            productOrderDetail.getProductOrder().setSamples(convertTextToOrderSamples(getEditIdsCache()));
         } else {
             // First time, load from entity state.
-            editIdsCache = StringUtils.join(convertOrderSamplesToList(), SEPARATOR + " ");
+            // 1 => 2
+            setEditIdsCache(StringUtils.join(convertOrderSamplesToList(), SEPARATOR + " "));
         }
     }
 
-    public String save() {
+    // FIXME: handle db store errors, JIRA server errors here.
+    public String save() throws IOException {
         ProductOrder order = productOrderDetail.getProductOrder();
         String action = order.isInDB() ? "modified" : "created";
+        order.submitProductOrder();
         productOrderDao.persist(order);
         addInfoMessage(MessageFormat.format("Product Order {0}.", action),
-                MessageFormat.format("Product Order ''{0}'' has been {1}.", order.getTitle(), action));
+                MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
+                        order.getTitle(), order.getJiraTicketKey(), action));
         return redirect("list");
     }
 }
