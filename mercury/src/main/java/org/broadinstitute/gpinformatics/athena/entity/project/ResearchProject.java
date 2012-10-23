@@ -105,6 +105,12 @@ public class ResearchProject {
     @Transient
     private String originalTitle;   // This is used for edit to keep track of changes to the object.
 
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalTitle = title;
+    }
+
     public String getBusinessKey() {
         // TODO: change to jiraTicketKey once it's populated
         return title;
@@ -348,7 +354,7 @@ public class ResearchProject {
 
         Set<ProjectPerson> peopleToRemove = new HashSet<ProjectPerson>();
         for (ProjectPerson person : associatedPeople) {
-            if (person.getRole().equals(role)) {
+            if (person.getRole() == role) {
                 if (!newIds.contains(person.getPersonId())) {
                     peopleToRemove.add(person);
                 }
@@ -468,23 +474,19 @@ public class ResearchProject {
     }
 
     public void addPublicComment(String comment) throws IOException{
-        ServiceAccessUtility.addJiraComment ( jiraTicketKey, comment );
+        ServiceAccessUtility.addJiraComment(jiraTicketKey, comment);
     }
 
     public void addWatcher(String personLoginId) throws IOException {
-        ServiceAccessUtility.addJiraWatcher ( jiraTicketKey, personLoginId );
+        ServiceAccessUtility.addJiraWatcher(jiraTicketKey, personLoginId);
     }
 
     public void addLink(String targetIssueKey) throws IOException {
-        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
+        ServiceAccessUtility.addJiraPublicLink(AddIssueLinkRequest.LinkType.Related, jiraTicketKey, targetIssueKey);
     }
 
     public String getOriginalTitle() {
         return originalTitle;
-    }
-
-    public void setOriginalTitle(String originalTitle) {
-        this.originalTitle = originalTitle;
     }
 
     /**
