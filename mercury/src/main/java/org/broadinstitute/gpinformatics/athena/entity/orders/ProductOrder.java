@@ -230,6 +230,17 @@ public class ProductOrder implements Serializable {
     }
 
     /**
+     * Use the BSP Manager to load the bsp data for every sample in this product order.
+     */
+    public void loadBspData() {
+        if (needsBspMetaData()) {
+            Map<String, BSPSampleDTO> bspSampleMetaData =
+                    ServiceAccessUtility.getSampleDtoByNames(getUniqueSampleNames());
+            updateBspMetaData(bspSampleMetaData);
+        }
+    }
+
+    /**
      * getUniqueParticipantCount provides the summation of all unique participants represented in the list of samples
      * registered to this product order
      *
@@ -238,15 +249,8 @@ public class ProductOrder implements Serializable {
      */
     public int getUniqueParticipantCount() {
         Set<String> uniqueParticipants = new HashSet<String>();
-
         if (!isSheetEmpty()) {
-            if (needsBspMetaData()) {
-
-                Map<String, BSPSampleDTO> bspSampleMetaData =
-                        ServiceAccessUtility.getSampleDtoByNames(getUniqueSampleNames());
-                updateBspMetaData(bspSampleMetaData);
-            }
-
+            loadBspData();
             for (ProductOrderSample productOrderSample : samples) {
                 String participantId = productOrderSample.getBspDTO().getPatientId();
                 if (StringUtils.isNotBlank(participantId)) {

@@ -16,7 +16,6 @@
             <f:metadata>
                 <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
             </f:metadata>
-            <f:event type="preRenderView" listener="#{productOrderForm.load}" />
         </ui:define>
 
         <ui:define name="body">
@@ -35,7 +34,7 @@
                         <div class="controls">
                             <div class="row-fluid">
                                 <div class="span1">
-                                    <p:commandButton update=":form:sampleTable, :form:idCache" value="OK"
+                                    <p:commandButton id="commitSamples" update=":form:sampleTable, :form:idCache" value="OK"
                                                      onclick="samplesDialog.hide()"
                                                      actionListener="#{productOrderForm.samplesDialog.commit}"
                                                      styleClass="btn btn-primary"/>
@@ -127,8 +126,11 @@
 
                 <h:inputHidden id="idCache" binding="#{productOrderForm.editIdsCacheBinding}"/>
 
+                <p:blockUI block="sampleTable" trigger=":sampleDialogForm:commitSamples"/>
+
                 <div class="row-fluid">
                     <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample">
+                        <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
                         <p:column headerText="ID">
                             #{sample.sampleName}
                         </p:column>
