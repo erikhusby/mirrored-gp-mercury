@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.apache.commons.lang.math.RandomUtils;
-import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResourceTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -33,9 +32,6 @@ public class ProductOrderDaoTest extends ContainerTest {
 
     private static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
     private static final long TEST_CREATOR_ID = 1L;
-
-    @Inject
-    private Log log;
 
     @Inject
     ProductOrderDao productOrderDao;
