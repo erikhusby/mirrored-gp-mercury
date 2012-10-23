@@ -251,14 +251,6 @@ public class Product implements Serializable {
                 (discontinuedDate == null || discontinuedDate.compareTo(now) > 0);
     }
 
-//    public List<RiskContingency> getRiskContingencies() {
-//        return riskContingencies;
-//    }
-//
-//    public void setRiskContingencies(List<RiskContingency> riskContingencies) {
-//        this.riskContingencies = riskContingencies;
-//    }
-
     public boolean isPriceItemDefault(PriceItem priceItem) {
         if (defaultPriceItem == priceItem) return true;
 

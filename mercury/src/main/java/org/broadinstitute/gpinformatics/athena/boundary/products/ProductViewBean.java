@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItemComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
+import org.broadinstitute.gpinformatics.athena.presentation.products.ProductForm;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
@@ -70,4 +71,20 @@ public class ProductViewBean {
 
         return DATE_FORMAT.format(product.getDiscontinuedDate());
     }
+
+
+    public Integer getExpectedCycleTimeHours() {
+        return ProductForm.convertCycleTimeSecondsToHours(product.getExpectedCycleTimeSeconds()) ;
+    }
+    public void setExpectedCycleTimeHours(final Integer expectedCycleTimeHours) {
+        product.setExpectedCycleTimeSeconds( ProductForm.convertCycleTimeHoursToSeconds(expectedCycleTimeHours) );
+    }
+
+    public Integer getGuaranteedCycleTimeHours() {
+        return ProductForm.convertCycleTimeSecondsToHours(product.getGuaranteedCycleTimeSeconds()) ;
+    }
+    public void setGuaranteedCycleTimeHours(final Integer guaranteedCycleTimeHours) {
+        product.setGuaranteedCycleTimeSeconds( ProductForm.convertCycleTimeHoursToSeconds(guaranteedCycleTimeHours) );
+    }
+
 }
