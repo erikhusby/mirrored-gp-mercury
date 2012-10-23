@@ -1,9 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.apache.commons.lang.math.RandomUtils;
+import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResourceTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -27,106 +31,122 @@ import java.util.UUID;
 @Test(enabled = true)
 public class ProductOrderDaoTest extends ContainerTest {
 
-    public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
+    private static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
+    private static final long TEST_CREATOR_ID = 1L;
+
+    @Inject
+    private Log log;
+
     @Inject
     ProductOrderDao productOrderDao;
 
     @Inject
     ResearchProjectDao researchProjectDao;
 
+    @Inject
+    ProductDao productDao;
+
+    private final String testResearchProjectKey = "TestResearchProject_" + UUID.randomUUID();
+    private final String testProductOrderKey = "DRAFT-" + UUID.randomUUID();
+
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         if (researchProjectDao != null) {
-            ResearchProject researchProject = ResearchProjectResourceTest.createDummyResearchProject("TestResearchProject_" + UUID.randomUUID());
-            researchProjectDao.persist(researchProject);
+            List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
+            if ((projectsList != null) && projectsList.isEmpty()) {
+                ResearchProject researchProject =
+                        ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
+                researchProjectDao.persist(researchProject);
+            }
         }
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
+        if (researchProjectDao == null) {
+            // Not running on the server, ignore.
+            return;
+        }
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(testResearchProjectKey);
+        if (researchProject != null) {
+            researchProjectDao.remove(researchProject);
+            researchProjectDao.flush();
+        }
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(testProductOrderKey);
+        if (productOrder != null) {
+            productOrderDao.remove(productOrder);
+            productOrderDao.flush();
+        }
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void  findOrders() {
-
-        // Find a research project in the DB
-        ResearchProject firstFoundResearchProject = null;
+    public void findOrders() {
+        // Find a research project in the DB.
         List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
-        if ((projectsList != null) && (projectsList.size() > 0 )) {
-            firstFoundResearchProject = projectsList.get(0);
-        } else {
-            Assert.fail("Could not find any research Projects in the Database. Need to create an ResearchProject in the DB.");
+        Assert.assertTrue(projectsList != null && !projectsList.isEmpty());
+        ResearchProject foundResearchProject = projectsList.get(RandomUtils.nextInt(projectsList.size()));
+
+        Product product = null;
+        List<Product> productsList = productDao.findProducts();
+        if (productsList != null && !productsList.isEmpty()) {
+            product = productsList.get(RandomUtils.nextInt(productsList.size()));
         }
 
         // Try to create a Product Order and persist it.
-        String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
-        //TODO hmc When there are products in the DB can then persist the Product wit the order.
         List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
         sampleList.add(new ProductOrderSample("MS-1111"));
         sampleList.add(new ProductOrderSample("MS-1112"));
-        ProductOrder newProductOrder = new ProductOrder(1L, testProductOrderTitle, sampleList, "quoteId", null, firstFoundResearchProject );
+        String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
+        ProductOrder newProductOrder = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, sampleList, "quoteId",
+                product, foundResearchProject);
+        newProductOrder.setJiraTicketKey(testProductOrderKey);
         productOrderDao.persist(newProductOrder);
         productOrderDao.flush();
         productOrderDao.clear();
 
         // Try to find the created ProductOrder by it's researchProject and title.
-        ProductOrder productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(firstFoundResearchProject, testProductOrderTitle);
+        ProductOrder productOrderFromDb =
+                productOrderDao.findByResearchProjectAndTitle(foundResearchProject, testProductOrderTitle);
         Assert.assertNotNull(productOrderFromDb);
         Assert.assertNotNull(productOrderFromDb.getTitle());
         Assert.assertEquals(testProductOrderTitle, productOrderFromDb.getTitle());
         Assert.assertEquals("quoteId", productOrderFromDb.getQuoteId());
-        Assert.assertEquals(0, productOrderFromDb.getTotalSampleCount() );
-        productOrderFromDb = null;
+        Assert.assertEquals(0, productOrderFromDb.getTotalSampleCount());
 
         // Try to find a non-existing ProductOrder
-        productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(firstFoundResearchProject, "NonExistingProductOrder_" + UUID.randomUUID());
-        Assert.assertNull(productOrderFromDb, "Should have thrown exception when trying to retrieve an non-existing product Order.");
-
-        System.out.println(" RP ID is " + firstFoundResearchProject.getResearchProjectId()  + " title is " + firstFoundResearchProject.getTitle());
+        productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(foundResearchProject,
+                "NonExistingProductOrder_" + UUID.randomUUID());
+        Assert.assertNull(productOrderFromDb,
+                "Should have thrown exception when trying to retrieve an non-existing product Order.");
 
         // Try to find an existing ProductOrder by ResearchProject
-        List<ProductOrder> orders = productOrderDao.findByResearchProject( firstFoundResearchProject );
+        List<ProductOrder> orders = productOrderDao.findByResearchProject(foundResearchProject);
         Assert.assertNotNull(orders);
-        if ( orders.size() > 0 ) {
+        if (!orders.isEmpty()) {
             productOrderFromDb = orders.get(0);
         }
         Assert.assertNotNull(productOrderFromDb);
-        productOrderFromDb = null;
-        orders = null;
-
-        // Delete all created Product Orders
-        // TODO hmc commented out for now.
-//        orders = productOrderDao.findAllOrders();
-//        for (ProductOrder foundProductOrder : orders) {
-//            if (foundProductOrder.getTitle().startsWith(TEST_ORDER_TITLE_PREFIX)) {
-//                productOrderDao.remove(foundProductOrder);
-//            }
-//        }
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void  findOrdersCreatedBy () {
-        List<ProductOrder> ordersCreatedbyList = null;
-        ordersCreatedbyList = productOrderDao.findByCreatedPersonId( 1L );
-        Assert.assertNotNull(ordersCreatedbyList);
-        Assert.assertTrue(ordersCreatedbyList.size() > 0 );
+    public void findOrdersCreatedBy() {
+        List<ProductOrder> orders = productOrderDao.findByCreatedPersonId(TEST_CREATOR_ID);
+        Assert.assertNotNull(orders);
+        Assert.assertFalse(orders.isEmpty());
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void  findOrdersModifiedBy () {
-        List<ProductOrder> ordersCreatedbyList = null;
-        ordersCreatedbyList = productOrderDao.findByModifiedPersonId(1L);
-        Assert.assertNotNull(ordersCreatedbyList);
-        Assert.assertTrue(ordersCreatedbyList.size() > 0 );
+    public void findOrdersModifiedBy() {
+        List<ProductOrder> orders = productOrderDao.findByModifiedPersonId(TEST_CREATOR_ID);
+        Assert.assertNotNull(orders);
+        Assert.assertFalse(orders.isEmpty());
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void  findAll () {
-        List<ProductOrder> ordersCreatedbyList = null;
-        ordersCreatedbyList = productOrderDao.findAll();
-        Assert.assertNotNull(ordersCreatedbyList);
-        Assert.assertTrue(ordersCreatedbyList.size() > 0 );
+    public void findAll() {
+        List<ProductOrder> orders = productOrderDao.findAll();
+        Assert.assertNotNull(orders);
+        Assert.assertFalse(orders.isEmpty());
     }
-
-
 }
