@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.converter;
 
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 
@@ -17,14 +18,19 @@ public class ProductFamilyConverter implements Converter {
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
-        ProductFamily.ProductFamilyName productFamilyName = ProductFamily.ProductFamilyName.valueOf(value);
-        return productFamilyDao.find(productFamilyName);
+        ProductFamily productFamily = null;
+        if (StringUtils.isNotBlank(value)) {
+            ProductFamily.ProductFamilyName productFamilyName = ProductFamily.ProductFamilyName.valueOf(value);
+            productFamily = productFamilyDao.find(productFamilyName);
+        }
+        return productFamily;
     }
 
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object object) {
-        if (object != null) {
-            return ((ProductFamily.ProductFamilyName) object).getDisplayName();
+        //TODO hmc should not need this extra check but cannot yet figure where the Long object is coming from
+        if ((object != null) && (object instanceof ProductFamily)) {
+            return ((ProductFamily) object).getName();
         }
         return "";
     }

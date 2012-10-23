@@ -487,7 +487,7 @@ public class ProductOrder implements Serializable {
     private int getGenderCount(String gender) {
         int counter = 0;
         for (ProductOrderSample sample : samples) {
-            if (sample.isInBspFormat() && gender.equalsIgnoreCase(sample.getBspDTO().getGender())) {
+            if (sample.isInBspFormat() && gender.equalsIgnoreCase ( sample.getBspDTO ().getGender () )) {
                 counter++;
             }
         }
@@ -548,7 +548,7 @@ public class ProductOrder implements Serializable {
 
     private static void addCustomField(Map<String, CustomFieldDefinition> submissionFields,
                                        List<CustomField> list, RequiredSubmissionFields field, Object value) {
-        list.add(new CustomField(submissionFields.get(field.getFieldName()), value));
+        list.add(new CustomField(submissionFields.get(field.getFieldName()), value, CustomField.SingleFieldType.TEXT ));
     }
 
     /**
@@ -569,7 +569,7 @@ public class ProductOrder implements Serializable {
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
         addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT_FAMILY,
-                product.getProductFamily()==null?"":product.getProductFamily().getName());
+                product.getProductFamily()==null?"":product.getProductFamily().getName ());
 
         if (quoteId != null && !quoteId.isEmpty()) {
             addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.QUOTE_ID, quoteId);
@@ -588,7 +588,7 @@ public class ProductOrder implements Serializable {
         /**
          * todo HMC  need a better test user in test cases or this will always break
          */
-//        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
+        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
 
         sampleValidationComments();
     }

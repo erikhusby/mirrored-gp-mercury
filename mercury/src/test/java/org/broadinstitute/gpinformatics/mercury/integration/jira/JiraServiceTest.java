@@ -2,11 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -49,8 +47,10 @@ public class JiraServiceTest {
 
             Collection<CustomField> customFieldList = new LinkedList<CustomField>();
 
-            customFieldList.add(new CustomField(requiredFields.get("Protocol"),"test protocol"));
-            customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"),"WR 1 Billion!"));
+            customFieldList.add(new CustomField(requiredFields.get("Protocol"),"test protocol",
+                                                CustomField.SingleFieldType.TEXT ));
+            customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"),"WR 1 Billion!",
+                                                CustomField.SingleFieldType.TEXT ));
 
 
                     //        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
@@ -86,7 +86,7 @@ public class JiraServiceTest {
 
 
             customFieldList.add(new CustomField(requiredFields.get(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()),
-                                                "Test Exome Express"));
+                                                "Test Exome Express", CustomField.SingleFieldType.TEXT ));
 
             final CreateIssueResponse createIssueResponse =
                     service.createIssue(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix(),

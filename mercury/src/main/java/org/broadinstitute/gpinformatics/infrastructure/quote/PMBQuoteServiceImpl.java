@@ -217,8 +217,8 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
 
         // get all the priceItems and then filter by platform name.
         PriceList allPrices = this.getAllPriceItems();
-        for ( PriceItem priceItem : allPrices.getPriceList() ) {
-            if (priceItem.getPlatform().equalsIgnoreCase( quotePlatformType.getPlatformName() )) {
+        for ( PriceItem priceItem : allPrices.getPriceItems() ) {
+            if (priceItem.getPlatformName().equalsIgnoreCase( quotePlatformType.getPlatformName() )) {
                 platformPrices.add(priceItem);
             }
         }

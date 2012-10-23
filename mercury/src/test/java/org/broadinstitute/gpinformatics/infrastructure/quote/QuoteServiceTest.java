@@ -36,7 +36,7 @@ public class QuoteServiceTest {
     public void test_get_all_price_items() throws Exception {
         QuoteService service = new QuoteServiceStub();
         PriceList priceList = service.getAllPriceItems();
-        Assert.assertFalse(priceList.getPriceList().isEmpty());
+        Assert.assertFalse(priceList.getPriceItems().isEmpty());
 
     }
 
