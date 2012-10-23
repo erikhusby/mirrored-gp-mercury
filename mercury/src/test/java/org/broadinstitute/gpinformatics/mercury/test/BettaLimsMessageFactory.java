@@ -43,6 +43,9 @@ public class BettaLimsMessageFactory {
             row--;
         }
         String columnString = String.valueOf(column);
+        if(columnString.length() == 1) {
+            columnString = "0" + columnString;
+        }
         return row + columnString;
     }
 

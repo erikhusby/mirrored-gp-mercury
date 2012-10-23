@@ -33,7 +33,8 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
         SageCassette("SageCassette", VesselGeometry.SAGE_CASSETTE),
         Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
         FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
-        Eppendorf384("Eppendorf384", VesselGeometry.G24x16);
+        Eppendorf384("Eppendorf384", VesselGeometry.G24x16),
+        NinetySixDeepWell("96DeepWell", VesselGeometry.G12x8);
 
         private String displayName;
         private VesselGeometry vesselGeometry;
@@ -55,7 +56,11 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
         }
 
         public static PlateType getByDisplayName(String displayName) {
-            return mapDisplayNameToType.get(displayName);
+            PlateType plateTypeLocal = mapDisplayNameToType.get(displayName);
+            if(plateTypeLocal == null) {
+                throw new RuntimeException("Failed to find plate type " + displayName);
+            }
+            return plateTypeLocal;
         }
 
         public VesselGeometry getVesselGeometry() {
