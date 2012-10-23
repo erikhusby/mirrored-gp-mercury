@@ -224,6 +224,34 @@ public enum LabEventType {
 
     PICO_STANDARDS_TRANSFER ("PicoStandardsTransfer", true, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    DBS_SAMPLE_PUNCH ("DBSSamplePunch", false, true,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    DBS_INCUBATION_MIX ("DBSIncubationMix", true, false,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    DBS_LYSIS_BUFFER ("DBSLysisBuffer", true, false,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    DBS_MAGNETIC_RESIN ("DBSMagneticResin", true, false,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    DBS_1ST_PURIFICATION ("DBS1stPurification", false, true,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    DBS_WASH_BUFFER ("DBSWashBuffer", true, false,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    DBS_2ND_PURIFICATION ("DBS2ndPurification", false, true,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    DBS_ELUTION_BUFFER ("DBSElutionBuffer", false, true,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    DBS_FINAL_TRANSFER ("DBSFinalTransfer", false, true,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
     ;
 
     private final String name;
