@@ -105,7 +105,7 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
         return convertCycleTimeSecondsToHours (product.getGuaranteedCycleTimeSeconds()) ;
     }
     public void setGuaranteedCycleTimeHours(final Integer guaranteedCycleTimeHours) {
-        product.setGuaranteedCycleTimeSeconds( convertCycleTimeHoursToSeconds( guaranteedCycleTimeHours ) );
+        product.setGuaranteedCycleTimeSeconds(convertCycleTimeHoursToSeconds(guaranteedCycleTimeHours));
     }
 
     /**
@@ -113,8 +113,12 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
      * @param cycleTimeHours
      * @return the number of seconds.
      */
-    public static int convertCycleTimeHoursToSeconds(Integer cycleTimeHours) {
-        return ( cycleTimeHours == null ? 0 : cycleTimeHours * ONE_HOUR_IN_SECONDS);
+    public static Integer convertCycleTimeHoursToSeconds(Integer cycleTimeHours) {
+        Integer cycleTimeSeconds = null;
+        if ( cycleTimeHours != null ) {
+            cycleTimeSeconds = ( cycleTimeHours == null ? 0 : cycleTimeHours.intValue() * ONE_HOUR_IN_SECONDS);
+        }
+        return cycleTimeSeconds;
     }
 
     /**
@@ -123,8 +127,8 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
      * @param cycleTimeSeconds
      * @return the number of hours.
      */
-    private int convertCycleTimeSecondsToHours(Integer cycleTimeSeconds) {
-        Integer cycleTimeHours = 0;
+    public static Integer convertCycleTimeSecondsToHours(Integer cycleTimeSeconds) {
+        Integer cycleTimeHours = null;
         if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_HOUR_IN_SECONDS ) {
             cycleTimeHours =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_HOUR_IN_SECONDS)) / ONE_HOUR_IN_SECONDS;
         }
