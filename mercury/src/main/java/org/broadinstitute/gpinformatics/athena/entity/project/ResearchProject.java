@@ -323,7 +323,7 @@ public class ResearchProject {
     }
 
     public void updateBroadPIs(Long[] personIds) {
-        updatePeople(RoleType.BROAD_PI, personIds);
+        updatePeople ( RoleType.BROAD_PI, personIds );
     }
 
     public Long[] getScientists() {
@@ -331,7 +331,7 @@ public class ResearchProject {
     }
 
     public void updateScientists(Long[] personIds) {
-        updatePeople(RoleType.SCIENTIST, personIds);
+        updatePeople ( RoleType.SCIENTIST, personIds );
     }
 
     public Long[] getExternalCollaborators() {
@@ -387,7 +387,7 @@ public class ResearchProject {
             projectFunding = new HashSet<ResearchProjectFunding>();
         }
 
-        projectFunding.add(funding);
+        projectFunding.add ( funding );
     }
 
     public void removeFunding(ResearchProjectFunding funding) {
@@ -425,7 +425,7 @@ public class ResearchProject {
                     cohortNames.add(cohort.getCohortId());
                 }
                 listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.COHORTS.getFieldName()),
-                                                 StringUtils.join(cohortNames,',')));
+                                                 StringUtils.join(cohortNames,','), CustomField.SingleFieldType.TEXT ));
             }
             if(!projectFunding.isEmpty()) {
                 List<String> fundingSources = new ArrayList<String>();
@@ -434,7 +434,8 @@ public class ResearchProject {
                 }
 
             listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.FUNDING_SOURCE.getFieldName()),
-                                                 StringUtils.join(fundingSources,',')));
+                                                 StringUtils.join(fundingSources,','),
+                                                 CustomField.SingleFieldType.TEXT ));
             }
             if(!irbNumbers.isEmpty()) {
                 List<String> irbNums = new ArrayList<String>();
@@ -443,16 +444,16 @@ public class ResearchProject {
                 }
                 listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
 
-                                                 StringUtils.join(irbNums,',')));
+                                                 StringUtils.join(irbNums,','), CustomField.SingleFieldType.TEXT ));
             }
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
-                                             irbNotEngaged?"Yes":"No" ));
+            listOfFields.add(new CustomField (submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
+                                             irbNotEngaged?"Yes":"No" , CustomField.SingleFieldType.RADIO_BUTTON));
 
             /**
              * TODO To be filled in with the actual URL
              */
             listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
-                                             ""));
+                                             "", CustomField.SingleFieldType.TEXT ));
 
             CreateIssueResponse researchProjectResponse =
                     ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
@@ -463,7 +464,7 @@ public class ResearchProject {
             /**
              * todo HMC  need a better test user in test cases or this will always break
              */
-//            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
+            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
     }
 
@@ -476,7 +477,7 @@ public class ResearchProject {
     }
 
     public void addLink(String targetIssueKey) throws IOException {
-        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
+        ServiceAccessUtility.addJiraPublicLink ( AddIssueLinkRequest.LinkType.Related, jiraTicketKey, targetIssueKey );
     }
 
     public String getOriginalTitle() {
