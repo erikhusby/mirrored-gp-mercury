@@ -192,7 +192,7 @@
         <modifyDataType tableName="research_project_aud" schemaName="athena" columnName="SYNOPSIS" newDataType="varchar(4000)"/>
     </changeSet>
 
-    <changeSet id="GPLIM-95" author="athomson">
+    <changeSet id="GPLIM-95-1" author="athomson">
         <preConditions>
             <dbms type="oracle" />
             <runningAs username="ATHENA" />
@@ -201,37 +201,37 @@
             select research_project_id "RESEARCH_PROJECT_ID",
             title "RESEARCH_PROJECT_NAME",
             decode(CREATED_BY,
-            7222,'burtt',
-            7064,'carrie',
-            7086,'caubin',
-            7095,'dbmirel',
-            7130,'dfarlow',
-            7066,'kmurray',
-            7074,'laurena',
-            8174,'mharden',
-            8187,'namrata',
-            11078,'shefler',
-            8781,'ebevil',
-            8915,'egelfand',
-            8541,'enickers',
-            10439,'rbell',
+            10671,'burtt',
+            10943,'carrie',
+            10965,'caubin',
+            10974,'dbmirel',
+            13,'dfarlow',
+            10637,'kmurray',
+            11137,'laurena',
+            11753,'mharden',
+            11732,'namrata',
+            11427,'shefler',
+            12280,'ebevil',
+            12398,'egelfand',
+            12043,'enickers',
+            13834,'rbell',
             'athomson') "CREATED_BY",
             created_date "CREATED_ON",
             decode(MODIFIED_BY,
-            7222,'burtt',
-            7064,'carrie',
-            7086,'caubin',
-            7095,'dbmirel',
-            7130,'dfarlow',
-            7066,'kmurray',
-            7074,'laurena',
-            8174,'mharden',
-            8187,'namrata',
-            11078,'shefler',
-            8781,'ebevil',
-            8915,'egelfand',
-            8541,'enickers',
-            10439,'rbell',
+            10671,'burtt',
+            10943,'carrie',
+            10965,'caubin',
+            10974,'dbmirel',
+            13,'dfarlow',
+            10637,'kmurray',
+            11137,'laurena',
+            11753,'mharden',
+            11732,'namrata',
+            11427,'shefler',
+            12280,'ebevil',
+            12398,'egelfand',
+            12043,'enickers',
+            13834,'rbell',
             'athomson') "UPDATED_BY",
             modified_date "UPDATED_BY_ON"
             from research_project
@@ -240,5 +240,124 @@
                <dropView viewName="PMB_RESEARCH_PROJECT"/>
         </rollback>
     </changeSet>
+
+    <changeSet id="GPLIM-95-2" author="athomson">
+    <preConditions>
+        <dbms type="oracle" />
+        <runningAs username="ATHENA" />
+    </preConditions>
+    <sql>
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (249,10943,to_timestamp('2012/07/26','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/07/26','yyyy/mm/dd'),'Lung Adenocarcinoma CIP','Lung Adenocarcinoma CIP',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (248,11137,to_timestamp('2012/07/24','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/07/24','yyyy/mm/dd'),'Resistance - Kantoff','Resistance - Kantoff',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (250,11732,to_timestamp('2012/07/27','yyyy/mm/dd'),null,null,11732,to_timestamp('2012/07/27','yyyy/mm/dd'),'Germline Cancers (NHGRI)','Germline Cancers (NHGRI)',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (251,11137,to_timestamp('2012/07/27','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/07/27','yyyy/mm/dd'),'Resistance NHGRI CIP','Resistance NHGRI CIP',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (252,11137,to_timestamp('2012/08/03','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/08/03','yyyy/mm/dd'),'Kantoff Resistance','Kantoff Resistance',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (81,10974,to_timestamp('2011/12/19','yyyy/mm/dd'),null,null,10974,to_timestamp('2011/12/19','yyyy/mm/dd'),'Short Stature','Short Stature',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (382,12398,to_timestamp('2011/12/12','yyyy/mm/dd'),null,null,12398,to_timestamp('2011/12/12','yyyy/mm/dd'),'CCLE','CCLE',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (383,12398,to_timestamp('2011/12/12','yyyy/mm/dd'),null,null,12398,to_timestamp('2011/12/12','yyyy/mm/dd'),'GTEx','GTEx',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (101,11137,to_timestamp('2012/01/12','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/01/12','yyyy/mm/dd'),'SIGMA Pediatric','SIGMA Pediatric',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (102,11137,to_timestamp('2012/01/12','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/01/12','yyyy/mm/dd'),'SIGMA Cervical','SIGMA Cervical',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (103,11137,to_timestamp('2012/01/12','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/01/12','yyyy/mm/dd'),'SIGMA Sarcoma','SIGMA Sarcoma',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (104,11137,to_timestamp('2012/01/17','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/01/17','yyyy/mm/dd'),'Kwiatkowski LAM','Kwiatkowski LAM',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (105,11732,to_timestamp('2012/01/17','yyyy/mm/dd'),null,null,11732,to_timestamp('2012/01/17','yyyy/mm/dd'),'1000 Genomes','1000 Genomes',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (121,10943,to_timestamp('2012/02/02','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/02/02','yyyy/mm/dd'),'TCGA','TCGA',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (122,11732,to_timestamp('2012/02/03','yyyy/mm/dd'),null,null,11732,to_timestamp('2012/02/03','yyyy/mm/dd'),'Lipid Extremes','Lipid Extremes',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (123,11732,to_timestamp('2012/02/16','yyyy/mm/dd'),null,null,11732,to_timestamp('2012/02/16','yyyy/mm/dd'),'Germline Cancers (Starr)','Germline Cancers (Starr)',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (141,11427,to_timestamp('2012/03/08','yyyy/mm/dd'),null,null,11427,to_timestamp('2012/03/08','yyyy/mm/dd'),'Resistance CIP','Resistance CIP',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (142,13,to_timestamp('2012/03/09','yyyy/mm/dd'),null,null,13,to_timestamp('2012/03/09','yyyy/mm/dd'),'ESP-GO Exome Chip','ESP-GO Exome Chip',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (167,11732,to_timestamp('2012/04/19','yyyy/mm/dd'),null,null,11732,to_timestamp('2012/04/19','yyyy/mm/dd'),'Mendelian Consortium','Mendelian Consortium',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (168,10612,to_timestamp('2012/04/24','yyyy/mm/dd'),null,null,10612,to_timestamp('2012/04/24','yyyy/mm/dd'),'Autism','Autism',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (169,12043,to_timestamp('2012/04/24','yyyy/mm/dd'),null,null,12043,to_timestamp('2012/04/24','yyyy/mm/dd'),'Large Cell Neuroendocrine Carcinoma THOMAS','Large Cell Neuroendocrine Carcinoma THOMAS',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (170,10612,to_timestamp('2012/04/24','yyyy/mm/dd'),null,null,10612,to_timestamp('2012/04/24','yyyy/mm/dd'),'Inflammatory Bowel Disease','Inflammatory Bowel Disease',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (171,11137,to_timestamp('2012/04/26','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/04/26','yyyy/mm/dd'),'Kwiatkowski SEGA','Kwiatkowski SEGA',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (253,13834,to_timestamp('2012/08/10','yyyy/mm/dd'),null,null,13834,to_timestamp('2012/08/10','yyyy/mm/dd'),'ADHD','ADHD',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (254,11137,to_timestamp('2012/08/14','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/08/14','yyyy/mm/dd'),'Novartis Resistance','Novartis Resistance',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (255,10943,to_timestamp('2012/08/15','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/08/15','yyyy/mm/dd'),'TCGA FFPE','TCGA FFPE',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (267,10974,to_timestamp('2012/08/31','yyyy/mm/dd'),null,null,10974,to_timestamp('2012/08/31','yyyy/mm/dd'),'Blood Pressure','Blood Pressure',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (268,13834,to_timestamp('2012/08/31','yyyy/mm/dd'),null,null,13834,to_timestamp('2012/08/31','yyyy/mm/dd'),'Genome Superstruct Project','Genome Superstruct Project',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (269,10974,to_timestamp('2012/08/31','yyyy/mm/dd'),null,null,10974,to_timestamp('2012/08/31','yyyy/mm/dd'),'GWASeq BrCa','GWASeq BrCa',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (270,10637,to_timestamp('2012/09/04','yyyy/mm/dd'),null,null,10637,to_timestamp('2012/09/04','yyyy/mm/dd'),'Skea','Skea',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (271,10965,to_timestamp('2012/09/04','yyyy/mm/dd'),null,null,10965,to_timestamp('2012/09/04','yyyy/mm/dd'),'CogDec DLPFC','CogDec DLPFC',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (272,12043,to_timestamp('2012/09/05','yyyy/mm/dd'),null,null,12043,to_timestamp('2012/09/05','yyyy/mm/dd'),'CIP_COLON_EPI','CIP_COLON_EPI',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (273,12043,to_timestamp('2012/09/07','yyyy/mm/dd'),null,null,12043,to_timestamp('2012/09/07','yyyy/mm/dd'),'Mouse_Melanoma_MDACC','Mouse_Melanoma_MDACC',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (274,11732,to_timestamp('2012/09/13','yyyy/mm/dd'),null,null,11732,to_timestamp('2012/09/13','yyyy/mm/dd'),'Stroke/MI','Stroke/MI',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (287,13834,to_timestamp('2012/09/26','yyyy/mm/dd'),null,null,13834,to_timestamp('2012/09/26','yyyy/mm/dd'),'Pato African American Trios','Pato African American Trios',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (288,10671,to_timestamp('2012/10/04','yyyy/mm/dd'),null,null,10671,to_timestamp('2012/10/04','yyyy/mm/dd'),'SIGMA_T2D','SIGMA_T2D',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (289,13834,to_timestamp('2012/10/05','yyyy/mm/dd'),null,null,13834,to_timestamp('2012/10/05','yyyy/mm/dd'),'Pato Caucasian Cohort','Pato Caucasian Cohort',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (290,11137,to_timestamp('2012/10/08','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/10/08','yyyy/mm/dd'),'Anderson Mastocytosis','Anderson Mastocytosis',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (291,12280,to_timestamp('2012/10/09','yyyy/mm/dd'),null,null,12280,to_timestamp('2012/10/09','yyyy/mm/dd'),'Kendler Irish Families','Kendler Irish Families',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (292,12280,to_timestamp('2012/10/12','yyyy/mm/dd'),null,null,12280,to_timestamp('2012/10/12','yyyy/mm/dd'),'Pato GPC','Pato GPC',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (163,11427,to_timestamp('2012/03/20','yyyy/mm/dd'),null,null,11427,to_timestamp('2012/03/20','yyyy/mm/dd'),'Esophageal CIP','Esophageal CIP',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (143,11427,to_timestamp('2012/03/12','yyyy/mm/dd'),null,null,11427,to_timestamp('2012/03/12','yyyy/mm/dd'),'Carcinoid','Carcinoid',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (144,11427,to_timestamp('2012/03/12','yyyy/mm/dd'),null,null,11427,to_timestamp('2012/03/12','yyyy/mm/dd'),'Fanconi Anemia','Fanconi Anemia',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (164,11427,to_timestamp('2012/03/20','yyyy/mm/dd'),null,null,11427,to_timestamp('2012/03/20','yyyy/mm/dd'),'Medulloblastoma CIP','Medulloblastoma CIP',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (165,11427,to_timestamp('2012/03/20','yyyy/mm/dd'),null,null,11427,to_timestamp('2012/03/20','yyyy/mm/dd'),'Neuroblastoma TARGET','Neuroblastoma TARGET',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (166,11427,to_timestamp('2012/03/20','yyyy/mm/dd'),null,null,11427,to_timestamp('2012/03/20','yyyy/mm/dd'),'Mouse CIP','Mouse CIP',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (231,10974,to_timestamp('2012/06/29','yyyy/mm/dd'),null,null,10974,to_timestamp('2012/06/29','yyyy/mm/dd'),'Anthropometric Extremes','Anthropometric Extremes',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (172,12043,to_timestamp('2012/05/01','yyyy/mm/dd'),null,null,12043,to_timestamp('2012/05/01','yyyy/mm/dd'),'CILIOPATHIES','CILIOPATHIES',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (173,10974,to_timestamp('2012/05/02','yyyy/mm/dd'),null,null,10974,to_timestamp('2012/05/02','yyyy/mm/dd'),'Rheumatoid Arthritis','Rheumatoid Arthritis',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (174,12043,to_timestamp('2012/05/08','yyyy/mm/dd'),null,null,12043,to_timestamp('2012/05/08','yyyy/mm/dd'),'BRAIN METS','BRAIN METS',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (175,11137,to_timestamp('2012/05/14','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/05/14','yyyy/mm/dd'),'SIGMA Breast Cancer Deep Dive','SIGMA Breast Cancer Deep Dive',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (176,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),'Cancer Cell Line Controls','Cancer Cell Line Controls',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (177,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),'SIGMA Rhabdoid','SIGMA Rhabdoid',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (178,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),'SIGMA Ewing Sarcoma','SIGMA Ewing Sarcoma',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (179,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),'SIGMA PPB','SIGMA PPB',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (180,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),'SIGMA JMML','SIGMA JMML',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (181,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),'SIGMA Osteosarcoma','SIGMA Osteosarcoma',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (182,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),'Meyerson Rhabdomyosarcoma','Meyerson Rhabdomyosarcoma',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (183,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/05/17','yyyy/mm/dd'),'SIGMA Head and Neck','SIGMA Head and Neck',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (184,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),null,null,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),'Sweden SCZ BP','Sweden SCZ BP',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (185,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),null,null,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),'Cardiff','Cardiff',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (186,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),null,null,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),'ICCBD','ICCBD',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (187,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),null,null,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),'LOGIC','LOGIC',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (188,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),null,null,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),'SMRI','SMRI',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (189,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),null,null,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),'Coriell','Coriell',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (190,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),null,null,10637,to_timestamp('2012/05/29','yyyy/mm/dd'),'Taiwanese Trios','Taiwanese Trios',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (207,10943,to_timestamp('2012/06/06','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/06','yyyy/mm/dd'),'Melanoma Immunity','Melanoma Immunity',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (208,11137,to_timestamp('2012/06/07','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/06/07','yyyy/mm/dd'),'Kwiatkowski Tuberous Sclerosis','Kwiatkowski Tuberous Sclerosis',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (209,13834,to_timestamp('2012/06/08','yyyy/mm/dd'),null,null,13834,to_timestamp('2012/06/08','yyyy/mm/dd'),'McLean','McLean',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (210,10974,to_timestamp('2012/06/12','yyyy/mm/dd'),null,null,10974,to_timestamp('2012/06/12','yyyy/mm/dd'),'GENEVA','GENEVA',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (211,11732,to_timestamp('2012/06/15','yyyy/mm/dd'),null,null,11732,to_timestamp('2012/06/15','yyyy/mm/dd'),'HIV - Host Genetics','HIV - Host Genetics',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (212,10612,to_timestamp('2012/06/18','yyyy/mm/dd'),null,null,10612,to_timestamp('2012/06/18','yyyy/mm/dd'),'SAEC','SAEC',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (213,10612,to_timestamp('2012/06/18','yyyy/mm/dd'),null,null,10612,to_timestamp('2012/06/18','yyyy/mm/dd'),'Daly_ATGU','Daly_ATGU',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (214,12043,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,12043,to_timestamp('2012/06/21','yyyy/mm/dd'),'Prostate Cancer CIP','Prostate Cancer CIP',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (215,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA BLCA','TCGA BLCA',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (216,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA LUAD','TCGA LUAD',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (217,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA LUSC','TCGA LUSC',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (218,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA THCA','TCGA THCA',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (219,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA HNSC','TCGA HNSC',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (220,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA PRAD','TCGA PRAD',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (221,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA STAD','TCGA STAD',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (222,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA GBM','TCGA GBM',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (223,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA LGG','TCGA LGG',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (224,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA PAAD','TCGA PAAD',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (225,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA CESC','TCGA CESC',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (226,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/21','yyyy/mm/dd'),'TCGA KIRC','TCGA KIRC',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (227,11137,to_timestamp('2012/06/25','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/06/25','yyyy/mm/dd'),'Salk Institute Mouse GBM','Salk Institute Mouse GBM',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (228,10943,to_timestamp('2012/06/26','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/26','yyyy/mm/dd'),'TCGA SKCM','TCGA SKCM',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (229,10943,to_timestamp('2012/06/26','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/26','yyyy/mm/dd'),'TCGA VALIDATION','TCGA VALIDATION',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (230,10943,to_timestamp('2012/06/26','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/06/26','yyyy/mm/dd'),'TCGA KIRP','TCGA KIRP',0,'Open');
+        Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (247,11753,to_timestamp('2012/07/24','yyyy/mm/dd'),null,null,11753,to_timestamp('2012/07/24','yyyy/mm/dd'),'Genotyping External','Genotyping External',0,'Open');
+    </sql>
+        <rollback>
+            <sql>
+                <![CDATA[delete from ATHENA.research_project where research_project_id > 80 and research_project_id < 384
+                ]]>
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet author="athomson" id="GPLIM-95-3">
+        <preConditions>
+            <dbms type="oracle" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            drop sequence athena.seq_research_project_index;
+            create sequence athena.seq_research_project_index start with 13000 increment by 50;
+        </sql>
+    </changeSet>
+
+
 
 </databaseChangeLog>
