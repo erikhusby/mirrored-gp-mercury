@@ -56,7 +56,6 @@ public class SamplesPicoEndToEndTest {
         // messaging
         SamplesPicoJaxbBuilder samplesPicoJaxbBuilder = new SamplesPicoJaxbBuilder(
                 new ArrayList<String>(mapBarcodeToTube.keySet()), labBatch.getBatchName(), "");
-        samplesPicoJaxbBuilder.buildJaxb();
         SamplesPicoEntityBuilder samplesPicoEntityBuilder = new SamplesPicoEntityBuilder(samplesPicoJaxbBuilder, labBatch, mapBarcodeToTube);
         samplesPicoEntityBuilder.buildEntities();
 
