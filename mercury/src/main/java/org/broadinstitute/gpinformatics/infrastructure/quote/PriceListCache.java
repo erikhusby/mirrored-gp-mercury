@@ -78,7 +78,7 @@ public class PriceListCache {
     public Collection<PriceItem> getPriceItemsByPlatform(QuotePlatformType quotePlatformType) {
         Collection<PriceItem> priceItems = new HashSet<PriceItem>();
         for (PriceItem priceItem : getPriceList().getPriceItems()) {
-            if (quotePlatformType.getPlatformName().equalsIgnoreCase(priceItem.getPlatform())) {
+            if (quotePlatformType.getPlatformName().equalsIgnoreCase(priceItem.getPlatformName())) {
                 priceItems.add(priceItem);
             }
         }

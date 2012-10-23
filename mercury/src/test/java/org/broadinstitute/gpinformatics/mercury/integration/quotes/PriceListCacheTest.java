@@ -36,7 +36,7 @@ public class PriceListCacheTest {
         Assert.assertFalse(cache.getGSPPriceItems().isEmpty());
 
         for (PriceItem priceItem : cache.getGSPPriceItems()) {
-            Assert.assertTrue(QuotePlatformType.SEQ.getPlatformName().equalsIgnoreCase(priceItem.getPlatform()));
+            Assert.assertTrue(QuotePlatformType.SEQ.getPlatformName().equalsIgnoreCase(priceItem.getPlatformName()));
             System.out.println(priceItem.getName());
         }
     }
