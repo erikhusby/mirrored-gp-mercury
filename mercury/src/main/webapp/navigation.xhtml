@@ -26,6 +26,10 @@
                 <p:menuitem value="List" outcome="/products/list" />
                 <p:menuitem value="Create" outcome="/products/create" />
             </p:submenu>
+
+            <p:submenu label="Search" icon="ui-icon-search">
+                <p:menuitem value="Barcode" outcome="/lookup/search" />
+            </p:submenu>
         </p:menubar>
 
         <sqltg:AuthorizeBlock roles="Sequel-Developers">

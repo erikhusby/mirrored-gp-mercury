@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
 import org.hibernate.exception.ConstraintViolationException;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -161,6 +163,19 @@ public class GenericDao {
         return findListByList(entity, singularAttribute, Collections.singletonList(value));
     }
 
+    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListWithWildcard(
+                Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, String value) {
+            CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+            CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
+            Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
+            criteriaQuery.select(root);
+            Predicate valuePredicate = criteriaBuilder.like(root.get(singularAttribute).as(String.class), "%" +
+                value + "%");
+            criteriaQuery.where(valuePredicate);
+            try {
+                return getEntityManager().createQuery(criteriaQuery).getResultList();
+            } catch (NoResultException ignored) {
+                return Collections.emptyList();
     public static boolean IsConstraintViolationException(final Exception e) {
 
         Throwable currentCause = e;
@@ -173,5 +188,7 @@ public class GenericDao {
 
         return false;
     }
+
+
 
 }
