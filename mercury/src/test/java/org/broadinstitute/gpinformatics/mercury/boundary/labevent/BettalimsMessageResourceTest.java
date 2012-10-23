@@ -47,7 +47,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
  * Test the web service
  */
 @SuppressWarnings("OverlyCoupledClass")
-public class BettalimsMessageResourceTest extends ContainerTest {
+public class BettalimsMessageResourceTest extends Arquillian {
 
     @Inject
     private BettalimsMessageResource bettalimsMessageResource;

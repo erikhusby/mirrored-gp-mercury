@@ -26,6 +26,8 @@
 
             <p:dataTable value="#{productList.productsDataModel}"
                          var="product"
+                         sortBy="#{product.partNumber}"
+                         sortOrder="ascending"
                          id="dataTable"
                          widgetVar="dataTable"
                          filteredValue="#{productList.filteredValues}"

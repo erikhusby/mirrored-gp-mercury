@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
@@ -8,17 +7,17 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.*;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
-import javax.faces.application.FacesMessage;
-import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
-import javax.faces.validator.ValidatorException;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -131,17 +130,25 @@ public class ResearchProjectForm extends AbstractJsfBean {
         project.setCreatedBy(userBean.getBspUser().getUserId());
         project.recordModification(userBean.getBspUser().getUserId());
 
-/* disabled until JIRA issue creation is working
         try {
             project.submit();
         } catch (IOException e) {
             log.error("Error creating JIRA ticket for research project", e);
             addErrorMessage("Error creating JIRA issue", "Unable to create JIRA issue: " + e.getMessage());
-            // redisplay create view
             return null;
         }
-*/
-        researchProjectDao.persist(project);
+
+        try {
+            researchProjectDao.persist(project);
+        } catch (Exception e ) {
+            String errorMessage = MessageFormat.format("Unknown exception occurred while persisting Product.", null);
+            if (GenericDao.IsConstraintViolationException(e)) {
+                errorMessage = MessageFormat.format("The project name ''{0}'' is not unique. Project not created", detail.getProject().getTitle());
+            }
+            addErrorMessage("name", errorMessage, "Name is not unique.");
+            return null;
+        }
+
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
         return redirect("list");
     }
@@ -152,23 +159,6 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 project.addPerson(role, projectManager.getUserId());
             }
         }
-    }
-
-    public void validateTitle(FacesContext context, UIComponent component, Object title) throws ValidatorException {
-        if (researchProjectDao.findByTitle((String) title) != null) {
-
-            if (isCreating() || hasTitleChanged((String) title)) {
-                FacesMessage message =
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                        "Name Not Unique", "There is already a research project with this name");
-                throw new ValidatorException(message);            }
-        }
-    }
-
-    public boolean hasTitleChanged(String newValue) {
-        // title is a string
-        String projectTitle = detail.getProject().getTitle();
-       return (!StringUtils.isBlank(newValue) || !StringUtils.isBlank(projectTitle)) && (!newValue.equals(projectTitle));
     }
 
     private boolean isCreating() {
@@ -182,16 +172,31 @@ public class ResearchProjectForm extends AbstractJsfBean {
         updatePeople(project, RoleType.BROAD_PI, broadPIs);
         updatePeople(project, RoleType.SCIENTIST, scientists);
         updatePeople(project, RoleType.EXTERNAL, externalCollaborators);
-        researchProjectDao.getEntityManager().merge(project);
+
+        try {
+            researchProjectDao.getEntityManager().merge(project);
+        } catch (Exception e ) {
+            String errorMessage = MessageFormat.format("Unknown exception occurred while persisting Product.", null);
+            if (GenericDao.IsConstraintViolationException(e)) {
+                errorMessage = MessageFormat.format("The project name ''{0}'' is not unique. Project not updated.", detail.getProject().getTitle());
+            }
+            addErrorMessage("name", errorMessage, "Name is not unique");
+            return null;
+        }
+
         return redirect("list");
     }
 
     private void updatePeople(ResearchProject project, RoleType role, List<BspUser> people) {
         List<Long> projectManagerIds = new ArrayList<Long>();
-        for (BspUser projectManager : people) {
-            projectManagerIds.add(projectManager.getUserId());
+        if (people != null) {
+            for (BspUser projectManager : people) {
+                projectManagerIds.add(projectManager.getUserId());
+            }
+            project.updatePeople(role, projectManagerIds.toArray(new Long[projectManagerIds.size()]));
+        } else {
+            project.updatePeople(role, new Long[0]);
         }
-        project.updatePeople(role, projectManagerIds.toArray(new Long[projectManagerIds.size()]));
     }
 
     public List<Long> completeFundingSource(String query) {

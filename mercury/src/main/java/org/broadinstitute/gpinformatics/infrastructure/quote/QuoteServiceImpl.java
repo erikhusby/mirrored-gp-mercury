@@ -60,7 +60,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
 
         params.add("quote_alpha_id", quote.getAlphanumericId());
-        params.add("platform_name", priceItem.getPlatform());
+        params.add("platform_name", priceItem.getPlatformName());
         params.add("category_name", priceItem.getCategoryName());
         params.add("price_item_name", priceItem.getName());
         params.add("quantity", Double.toString(numWorkUnits));

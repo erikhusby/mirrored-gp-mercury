@@ -176,14 +176,17 @@ public class ExomeExpressEndToEndTest {
             Assert.assertEquals(requiredFieldsMap.size(), 9);
 
 
-            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!");
+            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!",
+                                                                       CustomField.SingleFieldType.TEXT );
             // kludge: expect stock samples to have a different field name (like "BSP STOCKS") when this goes live.  until then, we'll call it GSSR.
             final StringBuilder stockSamplesBuilder = new StringBuilder();
             for (LabVessel starter : testLabBatch.getStartingLabVessels()) {
                 stockSamplesBuilder.append(" ").append(starter.getLabel());
             }
-            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString());
-            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world");
+            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString(),
+                                                                        CustomField.SingleFieldType.TEXT );
+            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world",
+                                                                    CustomField.SingleFieldType.TEXT );
 
             final Collection<CustomField> allCustomFields = new HashSet<CustomField>();
             allCustomFields.add(workRequestCustomField);

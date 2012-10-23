@@ -31,7 +31,14 @@ public class CreateJiraIssueFieldsSerializer extends JsonSerializer<Fields> {
     private void writeCustomFields(Fields fields,JsonGenerator jsonGenerator) throws IOException {
         for (CustomField customField : fields.getCustomFields()) {
             String jiraFieldName = customField.getFieldDefinition().getJiraCustomFieldId();
-            jsonGenerator.writeObjectField(jiraFieldName,customField.getValue());
+            if( CustomField.SingleFieldType.RADIO_BUTTON.equals(customField.getFieldType())) {
+                jsonGenerator.writeFieldName(jiraFieldName);
+                jsonGenerator.writeStartObject();
+                jsonGenerator.writeObjectField("value",customField.getValue());
+                jsonGenerator.writeEndObject();
+            } else {
+                jsonGenerator.writeObjectField(jiraFieldName,customField.getValue());
+            }
         }
     }
 

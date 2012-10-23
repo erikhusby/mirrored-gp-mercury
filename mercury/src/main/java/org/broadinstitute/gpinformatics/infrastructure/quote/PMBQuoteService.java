@@ -54,6 +54,9 @@ public interface PMBQuoteService {
     public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType) throws QuoteServerException, QuoteNotFoundException;
 
 
+    public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException;
+
+
     /**
      *  Method to return a list of all quotes
      */

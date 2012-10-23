@@ -3,6 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.presentation;
 import javax.annotation.Nullable;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.context.Flash;
 
 /**
  * Class to define some common useful functions to remove boiler plate code for JSF functionality.  This class is
@@ -11,6 +14,18 @@ import javax.faces.context.FacesContext;
 public abstract class AbstractJsfBean {
     public String redirect(String result) {
         return result + "?faces-redirect=true&includeViewParams=true";
+    }
+
+    /**
+     * Add a flash message so it can be used after a redirect.
+     *
+     * @param message the message to add
+     */
+    public static void addFlashMessage(String message) {
+        Flash flash = FacesContext.getCurrentInstance().getExternalContext().getFlash();
+        flash.setKeepMessages(true);
+        flash.setRedirect(true);
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(message));
     }
 
     /**

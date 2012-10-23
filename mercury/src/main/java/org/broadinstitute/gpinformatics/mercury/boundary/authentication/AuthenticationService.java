@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.authentication;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.SequelServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.authentication.AuthorizedRoleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.authentication.PageAuthorizationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.AuthorizedRole;
@@ -60,7 +60,7 @@ public class AuthenticationService {
     public void addNewPageAuthorization(String pagePathIn, Collection<String> authRoleIn) {
 
         if(null != authorizationDao.findPageAuthorizationByPage(pagePathIn)) {
-            throw new SequelServiceException("This Page is already registered");
+            throw new InformaticsServiceException ("This Page is already registered");
         }
 
         PageAuthorization page = new PageAuthorization(pagePathIn);
@@ -70,6 +70,17 @@ public class AuthenticationService {
         }
 
         authorizationDao.persist(page);
+    }
+
+    public void removePageAuthorization(String pagePathIn) {
+
+        PageAuthorization foundPage = authorizationDao.findPageAuthorizationByPage(pagePathIn);
+
+        if ( null == foundPage ) {
+            throw new InformaticsServiceException ("This Page is not currently registered");
+        }
+
+        authorizationDao.removePageAuthorization(foundPage);
     }
 
     /**
@@ -105,7 +116,7 @@ public class AuthenticationService {
      * @return
      */
     public PageAuthorization findByPage(String pagePath) {
-        return authorizationDao.findPageAuthorizationByPage(pagePath);
+        return authorizationDao.findPageAuthorizationByPage ( pagePath );
     }
 
     /**
@@ -120,12 +131,25 @@ public class AuthenticationService {
         PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
 
         if(null == authorization) {
-            throw new SequelServiceException("This Page is not currently registered");
+            throw new InformaticsServiceException ("This Page is not currently registered");
         }
 
         for(String currRole:rolesIn) {
             authorization.addRoleAccess(roleDao.findRoleByName(currRole));
         }
+    }
+
+    public void removeRolesFromPage(String pagePath, Collection<String> rolesIn) {
+        PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
+
+        if(null == authorization) {
+            throw new InformaticsServiceException ("This Page is not currently registered");
+        }
+
+        for(String currRole:rolesIn) {
+            authorization.removeRoleAccess ( roleDao.findRoleByName ( currRole ) );
+        }
+
     }
 
     /**
@@ -162,7 +186,7 @@ public class AuthenticationService {
     public void addNewRole(String roleName) {
 
         if(null != roleDao.findRoleByName(roleName)) {
-            throw new SequelServiceException("This role is already registered");
+            throw new InformaticsServiceException ("This role is already registered");
         }
 
         AuthorizedRole newRole = new AuthorizedRole(roleName);

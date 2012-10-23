@@ -91,31 +91,18 @@ public class PMBQuoteServiceTest extends Arquillian {
     }
 
 
-    // this method needs to work for retrieving price items but something is wrong:
-    //
-    // java.lang.AssertionError: javax.ws.rs.WebApplicationException: javax.xml.bind.UnmarshalException:
-    // unexpected element (uri:"", local:"response"). Expected elements are <{}PriceItem>,<{}PriceList>
-    //
-    // at the command line either of the following works fine, but I have not been able to get this test to run even
-    // with Jersey redirects enabled
-    //
     // curl --location --user 'rnordin@broadinstitute.org:Squ1d_us3r' 'http://quoteqa.broadinstitute.org:8080/quotes/ws/portals/private/get_price_list'
     // curl --user 'rnordin@broadinstitute.org:Squ1d_us3r' 'http://quoteqa.broadinstitute.org:8080/quotes/rest/price_list/10
 
-    @Test(enabled = false)
+    @Test
     public void testPriceItems() {
-
         try {
-            for (QuotePlatformType quotePlatformType : QuotePlatformType.values()) {
-                log.info("Beginning fetch for " + quotePlatformType);
-                pmbQuoteService.getPlatformPriceItems(quotePlatformType);
-                log.info("Ending fetch for " + quotePlatformType);
-            }
+            PriceList priceItems = pmbQuoteService.getAllPriceItems();
+            Assert.assertNotNull(priceItems);
+            Assert.assertTrue(priceItems.getPriceItems().size() > 100);
         }
         catch (Exception e) {
             Assert.fail(e.toString());
         }
-
     }
-
 }

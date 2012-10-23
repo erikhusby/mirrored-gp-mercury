@@ -16,28 +16,32 @@
             <f:metadata>
                 <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
             </f:metadata>
-            <f:event type="preRenderView" listener="#{productOrderForm.load}" />
         </ui:define>
 
         <ui:define name="body">
             <p:dialog header="Enter Samples" widgetVar="samplesDialog" modal="true" onShow="">
                 <h:form id="sampleDialogForm" prependId="false">
-                    <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.sampleIDsText}" cols="80" rows="20">
+                    <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.samplesDialog.text}" cols="80"
+                                     rows="20"
+                                     autoResize="false"
+                            >
                         <p:ajax update="samplesDialogStatus,samplesDialogInput"
-                                listener="#{productOrderForm.dialogSampleTextChanged}"/>
+                                listener="#{productOrderForm.samplesDialog.textChanged}"/>
                     </p:inputTextarea>
                     <br/>
-                    <h:outputText id="samplesDialogStatus" value="#{productOrderForm.sampleStatus}"/>
+                    <h:outputText id="samplesDialogStatus" value="#{productOrderForm.samplesDialog.status}"/>
                     <div class="control-group">
                         <div class="controls">
                             <div class="row-fluid">
                                 <div class="span1">
-                                    <p:commandButton value="Cancel" onclick="samplesDialog.hide()"
-                                                     actionListener="#{productOrderForm.dialogCancel}"/>
+                                    <p:commandButton id="commitSamples" update=":form:sampleTable, :form:idCache" value="OK"
+                                                     onclick="samplesDialog.hide()"
+                                                     actionListener="#{productOrderForm.samplesDialog.commit}"
+                                                     styleClass="btn btn-primary"/>
                                 </div>
                                 <div class="span1">
-                                    <p:commandButton update=":form:sampleTable" value="OK" onclick="samplesDialog.hide()"
-                                                     styleClass="ui-priority-primary"/>
+                                    <p:commandButton value="Cancel" onclick="samplesDialog.hide()"
+                                                     styleClass="btn"/>
                                 </div>
                             </div>
                         </div>
@@ -115,12 +119,18 @@
                     <h:outputText value="Samples" styleClass="control-label"/>
                     <div class="controls">
                         <p:commandButton immediate="true" update=":sampleDialogForm"
-                                         value="Edit Sample List..." onclick="samplesDialog.show()"/>
+                                         value="Edit Sample List..." onclick="samplesDialog.show()"
+                                         actionListener="#{productOrderForm.samplesDialog.prepareToShow}"/>
                     </div>
                 </div>
 
+                <h:inputHidden id="idCache" binding="#{productOrderForm.editIdsCacheBinding}"/>
+
+                <p:blockUI block="sampleTable" trigger=":sampleDialogForm:commitSamples"/>
+
                 <div class="row-fluid">
                     <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample">
+                        <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
                         <p:column headerText="ID">
                             #{sample.sampleName}
                         </p:column>
