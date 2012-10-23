@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -17,9 +21,14 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -154,4 +163,74 @@ public class LabBatch {
     public void setLabEvents(Set<GenericLabEvent> labEvents) {
         this.labEvents = labEvents;
     }
+
+
+    /**
+     * Submits the contents of this Lab Batch to Jira to create a new LCSET Ticket
+     */
+    public void submit() throws IOException{
+
+
+        Map<String, CustomFieldDefinition> submissionFields = ServiceAccessUtility.getJiraCustomFields();
+
+        List<CustomField> listOfFields = new ArrayList<CustomField> ();
+
+        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.PROTOCOL.getFieldName()),""));
+        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName()),""));
+
+        ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
+                                              batchName, "", listOfFields);
+
+    }
+
+    /**
+     * This is a helper method that binds a specific Jira project to an ProductOrder entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity.
+     *
+     * @return An enum of type
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     *         represents the Jira Project for Product Orders
+     */
+    @Transient
+    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
+        return CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX;
+    }
+
+    /**
+     * This is a helper method that binds a specific Jira Issue Type to an ProductOrder entity.  This
+     * makes it easier for a user of this object to interact with Jira for this entity.
+     *
+     * @return An enum of type
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     *         represents the Jira Issue Type for Product Orders
+     */
+    @Transient
+    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
+        return CreateIssueRequest.Fields.Issuetype.Product_Order;
+    }
+
+
+    /**
+     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
+     * for Product orders
+     *
+     */
+    public enum RequiredSubmissionFields {
+        PROTOCOL("Protocol"),
+        WORK_REQUEST_IDS("Work Request ID(s)"),
+        ;
+
+        private final String fieldName;
+
+        private RequiredSubmissionFields(String fieldNameIn) {
+            fieldName = fieldNameIn;
+        }
+
+        public String getFieldName() {
+            return fieldName;
+        }
+    }
+
+
+
 }

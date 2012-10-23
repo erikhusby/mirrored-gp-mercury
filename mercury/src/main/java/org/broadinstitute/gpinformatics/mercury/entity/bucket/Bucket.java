@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
+import clover.org.apache.commons.lang.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
@@ -12,6 +15,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -67,10 +71,25 @@ public class Bucket {
      */
     public void addEntry( BucketEntry newEntry ) {
         bucketEntries.add(newEntry);
+        newEntry.setBucketExistence(this);
+        //TODO  SGM Create some form of lab event for adding to bucket
     }
 
     public void removeEntry ( BucketEntry entryToRemove) {
         bucketEntries.remove(entryToRemove);
+        //TODO SGM create some form of lab event for removing from a bucket
+    }
+
+
+
+    public void createLabBatch(Set<LabVessel> entriesToBatch) throws IOException {
+
+        //TODO Retrieve info on PDOs
+
+        LabBatch newBatch = new LabBatch("",entriesToBatch);
+
+        newBatch.submit();
+
     }
 
 }

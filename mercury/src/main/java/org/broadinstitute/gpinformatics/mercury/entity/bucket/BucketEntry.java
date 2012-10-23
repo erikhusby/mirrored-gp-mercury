@@ -16,6 +16,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.util.Comparator;
+import java.util.Date;
 
 /**
  * An entry into a lab {@link Bucket}.  An entry is
@@ -26,7 +27,16 @@ import java.util.Comparator;
 @Entity
 @Audited
 @Table (schema = "mercury",name = "bucket_entry")
-public class BucketEntry {
+public class BucketEntry  {
+
+    public static final Comparator<BucketEntry> byDate = new Comparator<BucketEntry>() {
+        @Override
+        public int compare ( BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond ) {
+            int result = bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
+
+            return result;
+        }
+    };
 
     @SequenceGenerator (name = "SEQ_BUCKET_ENTRY", schema = "mercury",  sequenceName = "SEQ_BUCKET_ENTRY")
     @GeneratedValue (strategy = GenerationType.SEQUENCE, generator = "SEQ_BUCKET_ENTRY")
@@ -46,6 +56,9 @@ public class BucketEntry {
     @Column(name = "product_order_ranking")
     private Integer productOrderRanking;
 
+    @Column(name = "created_date", nullable = false)
+    private Date createdDate;
+
     public BucketEntry ( LabVessel labVesselIn, String poBusinessKey) {
         this(labVesselIn, poBusinessKey, null);
     }
@@ -54,6 +67,9 @@ public class BucketEntry {
         labVessel = labVesselIn;
         this.poBusinessKey = poBusinessKey;
         productOrderRanking = productOrderRankingIn;
+
+        createdDate = new Date();
+
     }
 
     public LabVessel getLabVessel() {
@@ -68,8 +84,16 @@ public class BucketEntry {
         return bucketExistence;
     }
 
+    public void setBucketExistence ( Bucket bucketExistenceIn ) {
+        bucketExistence = bucketExistenceIn;
+    }
+
     public Integer getProductOrderRanking () {
         return productOrderRanking;
+    }
+
+    public Date getCreatedDate () {
+        return createdDate;
     }
 
     @Override
