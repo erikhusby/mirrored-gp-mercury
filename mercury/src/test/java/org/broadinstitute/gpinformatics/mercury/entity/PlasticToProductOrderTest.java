@@ -77,7 +77,7 @@ public class PlasticToProductOrderTest {
         // container pulled from the bucket, and the LabEvent calls out
         // a PDO for each sample
         // here we set the order explicitly, but this should be done by bucketResource.start()
-        rackToPlateTransfer.setProductOrderId(productOrder.getBusinessKey());
+        rackToPlateTransfer.setProductOrderId(productOrder);
 
         // put the tubes in a rack
 

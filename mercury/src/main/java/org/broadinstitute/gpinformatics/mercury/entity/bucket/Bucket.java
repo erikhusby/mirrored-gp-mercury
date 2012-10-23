@@ -16,8 +16,11 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -25,7 +28,7 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table (schema = "mercury", uniqueConstraints = @UniqueConstraint (columnNames = {"bucketDefinition"}))
+@Table (schema = "mercury", uniqueConstraints = @UniqueConstraint (columnNames = {"bucket_definition_name"}))
 public class Bucket {
 
     // todo wire up to workflow definition
@@ -49,8 +52,11 @@ public class Bucket {
         return bucketDefinitionName;
     }
 
-    public Set<BucketEntry> getBucketEntries ( ) {
-        return Collections.unmodifiableSet( bucketEntries );
+    public Collection<BucketEntry> getBucketEntries () {
+
+        List setList = new ArrayList(bucketEntries);
+        Collections.sort(setList, BucketEntry.byDate);
+        return Collections.unmodifiableList ( setList );
     }
 
     /**
@@ -60,9 +66,7 @@ public class Bucket {
      * @return
      */
     public boolean contains(BucketEntry bucketEntry) {
-
         return bucketEntries.contains(bucketEntry);
-
     }
 
     /**
@@ -70,8 +74,15 @@ public class Bucket {
      * @param newEntry
      */
     public void addEntry( BucketEntry newEntry ) {
-        bucketEntries.add(newEntry);
         newEntry.setBucketExistence(this);
+        bucketEntries.add(newEntry);
+        //TODO  SGM Create some form of lab event for adding to bucket
+    }
+
+    public void addEntry(String productOrderKey, LabVessel vessel ) {
+        BucketEntry newEntry = new BucketEntry(vessel,productOrderKey);
+        newEntry.setBucketExistence(this);
+        bucketEntries.add(newEntry);
         //TODO  SGM Create some form of lab event for adding to bucket
     }
 
@@ -87,9 +98,7 @@ public class Bucket {
         //TODO Retrieve info on PDOs
 
         LabBatch newBatch = new LabBatch("",entriesToBatch);
-
         newBatch.submit();
-
     }
 
 }

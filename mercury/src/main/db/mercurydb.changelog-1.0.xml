@@ -61,10 +61,10 @@
             <column name="mercury_sample_id" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
-            <column name="product_order_key" type="varchar(255 char)">
+            <column name="product_order_key" type="varchar(255)">
                 <constraints nullable="true"/>
             </column>
-            <column name="sample_key" type="varchar(255 char)">
+            <column name="sample_key" type="varchar(255)">
                 <constraints nullable="true"/>
             </column>
         </createTable>
@@ -85,10 +85,10 @@
             <column name="revtype" type="number(3,0)">
                 <constraints nullable="true"/>
             </column>
-            <column name="product_order_key" type="varchar(255 char)">
+            <column name="product_order_key" type="varchar(255)">
                 <constraints nullable="true"/>
             </column>
-            <column name="sample_key" type="varchar(255 char)">
+            <column name="sample_key" type="varchar(255)">
                 <constraints nullable="true"/>
             </column>
         </createTable>
@@ -116,7 +116,7 @@
             <column name="bucket_id" type="number(19,0)">
                 <constraints nullable="false" />
             </column>
-            <column name="bucket_definition_name" type="varchar(255 char)">
+            <column name="bucket_definition_name" type="varchar(255)">
                 <constraints nullable="false" />
             </column>
         </createTable>
@@ -131,24 +131,87 @@
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
             </column>
-            <column name="revtype" type="number(3,0)">
+            <column name="revtype" type="number(19,0)">
                 <constraints nullable="true"/>
             </column>
-            <column name="bucket_definition_name" type="varchar(255 char)">
+            <column name="bucket_definition_name" type="varchar(255)">
                 <constraints nullable="false" />
             </column>
         </createTable>
-        <addPrimaryKey tableName="bucket" schemaName="mercury" columnNames="bucket_id, rev"/>
+        <addPrimaryKey tableName="bucket_aud" schemaName="mercury" columnNames="bucket_id, rev"/>
     </changeSet>
-    <changeSet id="GPLIM-22-4" author="scottmat">
+    <changeSet id="GPLIM-22-3" author="scottmat">
         <createTable tableName="bucket_entry" schemaName="mercury">
             <column name="bucket_entry_id" type="number(19,0)">
                 <constraints nullable="false" />
             </column>
             <column name="lab_vessel_id" type="number(19,0)">
+                <!-- Foreign key to LabVessels -->
                 <constraints nullable="false" />
-            </column>                           ß
+            </column>
+            <column name="po_business_key" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="bucket_existence_id" type="number(19,0)">
+                <!--foreign key to bucket -->
+                <constraints nullable="false" />
+            </column>
+            <column name="product_order_ranking" type="number(10,0)">
+                <constraints nullable="true" />
+            </column>
+            <column name="created_date" type="oracle.sql.TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
         </createTable>
+        <addPrimaryKey tableName="bucket_entry" schemaName="mercury" columnNames="bucket_entry_id" />
+        <createIndex tableName="bucket_entry" indexName="ix_be_lab_vessel_id">
+            <column name="lab_vessel_id"/>
+        </createIndex>
+        <createIndex tableName="bucket_entry" indexName="ix_be_bucket_existence_id">
+            <column name="bucket_existence_id"/>
+        </createIndex>
+        <createSequence sequenceName="SEQ_BUCKET_ENTRY" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-22-4" author="scottmat">
+        <createTable tableName="bucket_entry_aud" schemaName="mercury">
+            <column name="bucket_entry_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="lab_vessel_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="po_business_key" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="bucket_existence_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="product_order_ranking" type="number(10,0)">
+                <constraints nullable="true" />
+            </column>
+            <column name="created_date" type="oracle.sql.TIMESTAMP">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="bucket_entry_aud" schemaName="mercury" columnNames="bucket_entry_id, rev" />
+    </changeSet>
+    <changeSet id="GPLIM-22-5" author="scottmat">
+        <addForeignKeyConstraint baseTableName="bucket_entry" baseTableSchemaName="mercury"
+                                 baseColumnNames="lab_vessel_id"
+                                 constraintName="fk_be_lab_vessel_id"
+                                 referencedTableName="lab_vessel" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="lab_vessel_id"/>
+        <addForeignKeyConstraint baseTableName="bucket_entry" baseTableSchemaName="mercury"
+                                 baseColumnNames="bucket_existence_id"
+                                 constraintName="fk_be_bucket_existence_id"
+                                 referencedTableName="bucket" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="bucket_id"/>
     </changeSet>
 
 </databaseChangeLog>

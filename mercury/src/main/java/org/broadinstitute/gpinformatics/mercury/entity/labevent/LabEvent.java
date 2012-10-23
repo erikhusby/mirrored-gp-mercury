@@ -124,7 +124,7 @@ public abstract class LabEvent {
      */
     @Transient
     // transient because ARZ hasn't figured out the tests for this.  work in progress.
-    private String poBusinessKey;
+    private ProductOrderId productOrderId;
 
     public abstract LabEventName getEventName();
 
@@ -391,11 +391,11 @@ todo jmt adder methods
      * Most events will return null.
      * @return
      */
-    public String getProductOrderId() {
-        return poBusinessKey;
+    public ProductOrderId getProductOrderId() {
+        return productOrderId;
     }
 
-    public void setProductOrderId(String productOrder) {
-        this.poBusinessKey = productOrder;
+    public void setProductOrderId(ProductOrderId productOrder) {
+        this.productOrderId = productOrder;
     }
 }
