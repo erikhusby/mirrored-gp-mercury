@@ -16,6 +16,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -129,16 +130,13 @@ public class ResearchProjectForm extends AbstractJsfBean {
         project.setCreatedBy(userBean.getBspUser().getUserId());
         project.recordModification(userBean.getBspUser().getUserId());
 
-/* disabled until JIRA issue creation is working
         try {
             project.submit();
         } catch (IOException e) {
             log.error("Error creating JIRA ticket for research project", e);
             addErrorMessage("Error creating JIRA issue", "Unable to create JIRA issue: " + e.getMessage());
-            // redisplay create view
             return null;
         }
-*/
 
         try {
             researchProjectDao.persist(project);
