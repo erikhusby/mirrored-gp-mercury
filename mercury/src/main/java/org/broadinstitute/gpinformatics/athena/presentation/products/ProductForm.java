@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -14,7 +15,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.List;
+import java.util.*;
 
 @Named
 @RequestScoped
@@ -32,10 +33,14 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
     public static final int ONE_HOUR_IN_SECONDS = 3600;
     private Product product;
 
+    private List<Product> addOns;
+
+
     public void initForm() {
         if (!facesContext.isPostback()) {
             if  ((product.getPartNumber() != null) && !StringUtils.isBlank(product.getPartNumber())) {
                 product = productDao.findByBusinessKey(product.getPartNumber());
+                addOns.addAll( product.getAddOns() );
             }
         }
     }
@@ -43,6 +48,7 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
     public void initEmptyProduct() {
         product = new Product(null, null, null, null, null, null,
                 null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME);
+        addOns = new ArrayList<Product>();
     }
 
     public List<ProductFamily> getProductFamilies() {
@@ -59,6 +65,9 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
 
     public String create() {
         try {
+            for ( Product aProduct : addOns ) {
+                product.addAddOn( aProduct );
+            }
             productDao.persist(product);
             addInfoMessage("Product created.", "Product " + product.getPartNumber() + " has been created.");
         } catch (Exception e ) {
@@ -74,6 +83,9 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
 
     public String edit() {
         try {
+            for ( Product aProduct : addOns ) {
+                product.addAddOn( aProduct );
+            }
             productDao.getEntityManager().merge(getProduct());
             addInfoMessage("Product detail updated.", "Product " + getProduct().getPartNumber() + " has been updated.");
         } catch (Exception e ) {
@@ -108,6 +120,20 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
         product.setGuaranteedCycleTimeSeconds(convertCycleTimeHoursToSeconds(guaranteedCycleTimeHours));
     }
 
+
+    public List<Product> getAddOns() {
+        if (product == null) {
+            return new ArrayList<Product>();
+        }
+        ArrayList<Product> addOns = new ArrayList<Product>(product.getAddOns());
+        Collections.sort(addOns, new ProductComparator());
+        return addOns;
+    }
+
+    public void setAddOns(final List<Product> addOns) {
+        this.addOns = addOns;
+    }
+
     /**
      * Converts cycle times from hours to seconds.
      * @param cycleTimeHours
@@ -134,5 +160,7 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
         }
         return cycleTimeHours;
     }
+
+
 
 }
