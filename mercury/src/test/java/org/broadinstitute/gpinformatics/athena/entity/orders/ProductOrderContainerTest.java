@@ -25,7 +25,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test (groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderContainerTest extends Arquillian {
 
-    private static final Long TEST_CREATOR = 13715L;
+    private static final Long TEST_CREATOR = 10950L;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
