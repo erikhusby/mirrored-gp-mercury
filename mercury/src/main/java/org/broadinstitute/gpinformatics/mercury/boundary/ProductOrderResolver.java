@@ -34,10 +34,11 @@ public abstract class ProductOrderResolver {
      * The keys of the map are the {@link LabVessel root lab vessels}.  Some clients
      * may need to know the mapping between a root sample and its product orders, while
      * others might only flatten the list of {@link org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId product orders}.
+     *
      * @param labVessel
      * @return
      */
-    public abstract Map<LabVessel,ProductOrderId> findProductOrders(LabVessel labVessel);
+    public abstract Map<LabVessel, String> findProductOrders ( LabVessel labVessel );
 
     /**
      * What's the {@link WorkflowStepDef} for the given  {@link LabVessel}

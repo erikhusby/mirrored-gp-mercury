@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
-import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
@@ -28,7 +27,8 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table (schema = "mercury", uniqueConstraints = @UniqueConstraint (columnNames = {"bucket_definition_name"}))
+@Table (schema = "mercury", name = "bucket",
+        uniqueConstraints = @UniqueConstraint (columnNames = {"bucket_definition_name"}))
 public class Bucket {
 
     // todo wire up to workflow definition
@@ -43,6 +43,9 @@ public class Bucket {
 
     @Column ( name = "bucket_definition_name")
     private String bucketDefinitionName;
+
+    protected Bucket () {
+    }
 
     public Bucket ( @NotNull String bucketDefinitionIn ) {
         this.bucketDefinitionName = bucketDefinitionIn;
@@ -76,14 +79,18 @@ public class Bucket {
     public void addEntry( BucketEntry newEntry ) {
         newEntry.setBucketExistence(this);
         bucketEntries.add(newEntry);
+
+//        LabEventFactory.
         //TODO  SGM Create some form of lab event for adding to bucket
     }
 
-    public void addEntry(String productOrderKey, LabVessel vessel ) {
+    public BucketEntry addEntry ( String productOrderKey, LabVessel vessel ) {
         BucketEntry newEntry = new BucketEntry(vessel,productOrderKey);
         newEntry.setBucketExistence(this);
         bucketEntries.add(newEntry);
         //TODO  SGM Create some form of lab event for adding to bucket
+
+        return newEntry;
     }
 
     public void removeEntry ( BucketEntry entryToRemove) {

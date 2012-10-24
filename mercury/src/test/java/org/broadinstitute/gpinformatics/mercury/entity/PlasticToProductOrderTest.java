@@ -26,16 +26,18 @@ import static junit.framework.Assert.*;
 
 public class PlasticToProductOrderTest {
 
+    private static final String PRODUCT_ORDER_KEY = "PDO-1";
+    public static final String BUCKET_REFERENCE_NAME = "Start";
 
-    @Test(groups = {TestGroups.DATABASE_FREE},enabled = false)
+    @Test(groups = {TestGroups.DATABASE_FREE})
     public void test_simple_tube_in_rack_maps_to_pdo() {
-        Bucket bucket = new Bucket("Start");
-        BucketResource bucketResource = new BucketResource();
+        BucketResource bucketResource = new BucketResource( BUCKET_REFERENCE_NAME );
+        Bucket bucket = new Bucket(bucketResource.getBucketReferenceName());
         BettaLimsMessageFactory messageFactory = new BettaLimsMessageFactory();
         LabEventFactory eventFactory = new LabEventFactory(new PersonDAO());
 
         Set<MercurySample> rootSamples = new HashSet<MercurySample>();
-        rootSamples.add(new MercurySample("PO1", "TCGA123")); //StubSampleMetadata("TCGA123","Human",null));
+        rootSamples.add(new MercurySample(PRODUCT_ORDER_KEY, "TCGA123")); //StubSampleMetadata("TCGA123","Human",null));
         Map<String,TwoDBarcodedTube> barcodeToTubeMap = new HashMap<String, TwoDBarcodedTube>();
         String destinationPlateBarcode = "Plate0000";
         TwoDBarcodedTube tube = new TwoDBarcodedTube("0000");
@@ -50,7 +52,7 @@ public class PlasticToProductOrderTest {
 
         LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree(plateXfer, barcodeToTubeMap, null);
 
-        ProductOrderId productOrder = new ProductOrderId("PO1");
+        String productOrder = PRODUCT_ORDER_KEY;
 
         BucketEntry bucketEntry = bucketResource.add(tube, productOrder,bucket);
         assertTrue(bucket.contains(bucketEntry));
@@ -99,9 +101,9 @@ public class PlasticToProductOrderTest {
         source.setChainOfCustodyRoots(barcodeToTubeMap.values());
         source.addAllSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
 
-        Map<LabVessel,ProductOrderId> vesselPOMap = poResolver.findProductOrders(targetVessel);
+        Map<LabVessel,String> vesselPOMap = poResolver.findProductOrders(targetVessel);
 
-        for (Map.Entry<LabVessel, ProductOrderId> labVesselPO : vesselPOMap.entrySet()) {
+        for (Map.Entry<LabVessel, String> labVesselPO : vesselPOMap.entrySet()) {
             assertTrue(samplePOMapFromAthena.containsKey(labVesselPO.getKey())); // make sure that the LabVessel called out in the PO
                                                                                  // is found by the resolver
             Set<MercurySample> samples = labVesselPO.getKey().getMercurySamples();
