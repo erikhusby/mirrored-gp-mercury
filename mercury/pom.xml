@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -178,7 +178,7 @@
         <tests.groups />
 
         <build.resultKey>LOCAL</build.resultKey>
-        <build.buildTimeStamp>now</build.buildTimeStamp>
+        <build.buildTimeStamp>${maven.build.timestamp}</build.buildTimeStamp>
 
         <!-- Default Postgres Database settings for Liquibase and Maven SQL Plugin-->
         <database>postgres</database>
@@ -1599,13 +1599,14 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.2</version>
                 <configuration>
-                    <webappDirectory>${project.build.directory}/${artifactId}.war</webappDirectory>
+                    <webappDirectory>${project.build.directory}/${project.artifactId}.war</webappDirectory>
 <!-- We'll keep mercury-config-local.yaml in src/main/resources for now. We can add a local directory later if needed.
                     <webResources>
                         <resource>
                             <directory>${project.basedir}/local</directory>
                             <includes>
                                 <include>mercury-config-local.yaml</include>
+                                <include>target/version.properties</include>
                             </includes>
                             <targetPath>WEB-INF/classes</targetPath>
                         </resource>
@@ -1631,6 +1632,7 @@
                             <target>
                                 <propertyfile file="${pom.basedir}/target/version.properties">
                                     <entry key="project.version" type="string" value="${project.version}" operation="=" />
+                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}" operation="=" />
                                 </propertyfile>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
                                     <entry key="build.resultKey" type="string" value="${build.resultKey}" operation="=" />

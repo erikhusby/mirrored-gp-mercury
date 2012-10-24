@@ -20,7 +20,7 @@ public class ResearchProjectDao extends GenericDao {
     }
 
     public ResearchProject findByBusinessKey(String key) {
-        return findByTitle(key);
+        return findByJiraTicketKey(key);
     }
 
     public ResearchProject findByTitle(String title) {

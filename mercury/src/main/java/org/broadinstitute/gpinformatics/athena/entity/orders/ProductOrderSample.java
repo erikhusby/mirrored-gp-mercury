@@ -31,9 +31,7 @@ public class ProductOrderSample implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ORDER_SAMPLE")
     private Long productOrderSampleId;
 
-    public static final String BSP_SAMPLE_FORMAT_REGEX = "SM-[A-Z1-9]{4,6}";
-
-    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile(BSP_SAMPLE_FORMAT_REGEX);
+    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
     static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
 
@@ -133,7 +131,7 @@ public class ProductOrderSample implements Serializable {
         }
 
         return !StringUtils.isBlank(sampleName)
-                && Pattern.matches(ProductOrderSample.BSP_SAMPLE_FORMAT_REGEX, sampleName);
+                && BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
     }
 
     @Override

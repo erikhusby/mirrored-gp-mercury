@@ -2,13 +2,17 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItemComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
+import org.broadinstitute.gpinformatics.athena.presentation.products.ProductForm;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Named;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Named("productView")
@@ -32,7 +36,10 @@ public class ProductViewBean {
             return new ArrayList<Product>();
         }
 
-        return new ArrayList<Product>(product.getAddOns());
+        ArrayList<Product> addOns = new ArrayList<Product>(product.getAddOns());
+        Collections.sort(addOns, new ProductComparator());
+
+        return addOns;
     }
 
 
@@ -41,7 +48,10 @@ public class ProductViewBean {
             return new ArrayList<PriceItem>();
         }
 
-        return new ArrayList<PriceItem>(product.getPriceItems());
+        ArrayList<PriceItem> priceItems = new ArrayList<PriceItem>(product.getPriceItems());
+        Collections.sort(priceItems, new PriceItemComparator());
+
+        return priceItems;
     }
 
 
@@ -61,4 +71,20 @@ public class ProductViewBean {
 
         return DATE_FORMAT.format(product.getDiscontinuedDate());
     }
+
+
+    public Integer getExpectedCycleTimeHours() {
+        return ProductForm.convertCycleTimeSecondsToHours(product.getExpectedCycleTimeSeconds()) ;
+    }
+    public void setExpectedCycleTimeHours(final Integer expectedCycleTimeHours) {
+        product.setExpectedCycleTimeSeconds( ProductForm.convertCycleTimeHoursToSeconds(expectedCycleTimeHours) );
+    }
+
+    public Integer getGuaranteedCycleTimeHours() {
+        return ProductForm.convertCycleTimeSecondsToHours(product.getGuaranteedCycleTimeSeconds()) ;
+    }
+    public void setGuaranteedCycleTimeHours(final Integer guaranteedCycleTimeHours) {
+        product.setGuaranteedCycleTimeSeconds( ProductForm.convertCycleTimeHoursToSeconds(guaranteedCycleTimeHours) );
+    }
+
 }

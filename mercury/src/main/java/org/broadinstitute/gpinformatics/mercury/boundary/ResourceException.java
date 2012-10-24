@@ -8,7 +8,19 @@ import javax.ws.rs.core.Response;
  * An exception thrown by JAX-RS web services
  */
 public class ResourceException extends WebApplicationException {
-    public ResourceException(String message, int status) {
-        super(Response.status(status).entity(message).type(MediaType.TEXT_PLAIN_TYPE).build());
+    private String message;
+    private Response.Status status;
+
+    public ResourceException(String message, Response.Status status) {
+        this.message = message;
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public Response.Status getStatus() {
+        return status;
     }
 }

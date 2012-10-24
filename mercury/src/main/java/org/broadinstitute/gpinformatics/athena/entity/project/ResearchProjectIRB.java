@@ -35,6 +35,16 @@ public class ResearchProjectIRB {
         public String getName() {
             return name();
         }
+
+        public static IrbType findByDisplayName(String typeString) {
+            for (IrbType type : values()) {
+                if (type.displayName.equals(typeString)) {
+                    return type;
+                }
+            }
+
+            return null;
+        }
     }
 
     @Id

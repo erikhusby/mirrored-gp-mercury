@@ -37,118 +37,153 @@
 
 
             <div class="control-group">
-                    <label class="control-label">Part Number</label>
-                    <div class="controls">
-                        <div class="form-value">#{productView.product.partNumber} (<a href="http://link/to/product_sheet/#{productView.product.partNumber}.pdf">Product Sheet PDF</a>)</div>
-                    </div>
+                <label class="control-label">Part Number</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.partNumber} (<a href="http://link/to/product_sheet/#{productView.product.partNumber}.pdf">Product Sheet PDF</a>)</div>
                 </div>
+            </div>
 
-                <div class="control-group">
-                    <label class="control-label">Name</label>
-                    <div class="controls">
-                        <div class="form-value">#{productView.product.productName}</div>
-                    </div>
+            <div class="control-group">
+                <label class="control-label">Name</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.productName}</div>
                 </div>
+            </div>
 
-                <div class="control-group">
-                    <label class="control-label">Product Family</label>
-                    <div class="controls">
-                        <div class="form-value">#{productView.product.productFamily.displayName}</div>
-                    </div>
+            <div class="control-group">
+                <label class="control-label">Product Family</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.productFamily.displayName}</div>
                 </div>
+            </div>
 
-                <div class="control-group">
-                    <label class="control-label">Availability Date</label>
-                    <div class="controls">
-                        <div class="form-value">#{productView.availabilityDate}</div>
-                    </div>
+            <div class="control-group">
+                <label class="control-label">Top Level Product</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.topLevelProduct ? "Yes" : "No"}</div>
                 </div>
+            </div>
 
-                <div class="control-group">
-                    <label class="control-label">Discontinued Date</label>
-                    <div class="controls">
-                        <div class="form-value">#{productView.discontinuedDate}</div>
-                    </div>
+
+            <div class="control-group">
+                <label class="control-label">Availability Date</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.availabilityDate}</div>
                 </div>
+            </div>
 
-                <div class="control-group">
-                    <label class="control-label">Description</label>
-                    <div class="controls">
-                        <div class="form-value">#{productView.product.description}</div>
-                    </div>
+            <div class="control-group">
+                <label class="control-label">Discontinued Date</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.discontinuedDate}</div>
                 </div>
+            </div>
 
-                <div class="control-group">
-                    <label class="control-label">Deliverables</label>
-                    <div class="controls">
-                        <div class="form-value">#{productView.product.deliverables}</div>
-                    </div>
+            <div class="control-group">
+                <label class="control-label">Description</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.description}</div>
                 </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Deliverables</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.deliverables}</div>
+                </div>
+            </div>
 
 
-                <p:dataTable value="#{productView.addOns}" var="addOn" >
+            <div class="control-group">
+                <label class="control-label">Input Requirements</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.inputRequirements}</div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Expected Cycle Time (Hours)</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.expectedCycleTimeHours}</div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Guaranteed Cycle Time (Hours)</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.guaranteedCycleTimeHours}</div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">Samples Per Week</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.samplesPerWeek}</div>
+                </div>
+            </div>
+
+            <p:dataTable value="#{productView.addOns}" var="addOn" >
+                <f:facet name="header">
+                    <h:outputText value="Add Ons" />
+                </f:facet>
+
+                <p:column>  <!-- sortBy="#{addOn.partNumber}" sortFunction="#{productList.compare}"> -->
                     <f:facet name="header">
-                        <h:outputText value="Add Ons" />
+                        <h:outputText value="Part Number"/>
                     </f:facet>
-
-                    <p:column sortBy="#{addOn.partNumber}" sortFunction="#{productList.compare}">
-                        <f:facet name="header">
-                            <h:outputText value="Part Number"/>
-                        </f:facet>
-                        <h:link outcome="view" value="#{addOn.partNumber}">
-                            <f:param name="product" value="#{addOn.businessKey}"/>
-                        </h:link>
-                    </p:column>
-                    <p:column sortBy="#{addOn.productName}" sortFunction="#{productList.compare}">
-                        <f:facet name="header">
-                            <h:outputText value="Name"/>
-                        </f:facet>
-                        <h:outputText value="#{addOn.productName}"/>
-                    </p:column>
-                    <p:column sortBy="#{addOn.productFamily.displayName}" sortFunction="#{productList.compare}">
-                        <f:facet name="header">
-                            <h:outputText value="Product Family"/>
-                        </f:facet>
-                        <h:outputText value="#{addOn.productFamily.displayName}"/>
-                    </p:column>
-
-                </p:dataTable>
-
-
-                <p:dataTable value="#{productView.priceItems}" var="priceItem" >
+                    <h:link outcome="view" value="#{addOn.partNumber}">
+                        <f:param name="product" value="#{addOn.businessKey}"/>
+                    </h:link>
+                </p:column>
+                <p:column> <!-- sortBy="#{addOn.productName}" sortFunction="#{productList.compare}"> -->
                     <f:facet name="header">
-                        <h:outputText value="Price Items" />
+                        <h:outputText value="Name"/>
                     </f:facet>
-                    <p:column sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}">
-                        <f:facet name="header">
-                            <h:outputText value="Platform"/>
-                        </f:facet>
-                        <h:outputText value="#{priceItem.platform}"/>
-                    </p:column>
-                    <p:column sortBy="#{priceItem.category}" sortFunction="#{productList.compare}">
-                        <f:facet name="header">
-                            <h:outputText value="Category"/>
-                        </f:facet>
-                        <h:outputText value="#{priceItem.category}"/>
-                    </p:column>
-                    <p:column sortBy="#{priceItem.name}" sortFunction="#{productList.compare}">
-                        <f:facet name="header">
-                            <h:outputText value="Name"/>
-                        </f:facet>
-                        <h:outputText value="#{priceItem.name}"/>
-                    </p:column>
-                    <p:column>
-                        <f:facet name="header">
-                            <h:outputText value="Default?"/>
-                        </f:facet>
-                        <h:outputText
-                                value='#{productView.product.isPriceItemDefault(priceItem) ? "Yes" : "No"}'/>
-                    </p:column>
+                    <h:outputText value="#{addOn.productName}"/>
+                </p:column>
+                <p:column>  <!-- sortBy="#{addOn.productFamily.displayName}" sortFunction="#{productList.compare}"> -->
+                    <f:facet name="header">
+                        <h:outputText value="Product Family"/>
+                    </f:facet>
+                    <h:outputText value="#{addOn.productFamily.displayName}"/>
+                </p:column>
+
+            </p:dataTable>
+
+
+            <p:dataTable value="#{productView.priceItems}" var="priceItem" >
+                <f:facet name="header">
+                    <h:outputText value="Price Items" />
+                </f:facet>
+                <p:column> <!-- sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}"> -->
+                    <f:facet name="header">
+                        <h:outputText value="Platform"/>
+                    </f:facet>
+                    <h:outputText value="#{priceItem.platform}"/>
+                </p:column>
+                <p:column> <!-- sortBy="#{priceItem.category}" sortFunction="#{productList.compare}"> -->
+                    <f:facet name="header">
+                        <h:outputText value="Category"/>
+                    </f:facet>
+                    <h:outputText value="#{priceItem.category}"/>
+                </p:column>
+                <p:column> <!-- sortBy="#{priceItem.name}" sortFunction="#{productList.compare}"> -->
+                    <f:facet name="header">
+                        <h:outputText value="Name"/>
+                    </f:facet>
+                    <h:outputText value="#{priceItem.name}"/>
+                </p:column>
+                <p:column>
+                    <f:facet name="header">
+                        <h:outputText value="Default?"/>
+                    </f:facet>
+                    <h:outputText
+                            value='#{productView.product.isPriceItemDefault(priceItem) ? "Yes" : "No"}'/>
+                </p:column>
             </p:dataTable>
 
         </h:form>
 
-        <h:link value="Edit Product" outcome="create?includeViewParams=true"/>
     </ui:define>
 </ui:composition>
 </body>

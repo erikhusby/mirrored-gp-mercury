@@ -216,6 +216,9 @@ public enum LabEventType {
     PICO_DILUTION_TRANSFER ("PicoDilutionTransfer", true, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
+    PICO_BUFFER_ADDITION("PicoBufferAddition", true, true,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
     PICO_MICROFLUOR_TRANSFER("PicoMicrofluorTransfer", true, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 

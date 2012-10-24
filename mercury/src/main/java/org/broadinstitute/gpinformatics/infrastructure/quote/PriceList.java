@@ -5,22 +5,22 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.Collection;
 
-@XmlRootElement(name = "PriceList")
+@XmlRootElement(name = "response")
 public class PriceList {
     
-    @XmlElement(name = "PriceItem")
-    private Collection<PriceItem> prices = new ArrayList<PriceItem>();
+    @XmlElement(name = "priceItem")
+    private Collection<PriceItem> priceItems = new ArrayList<PriceItem>();
     
     public PriceList() {}
     
-    public Collection<PriceItem> getPriceList() {
-        return prices;
+    public Collection<PriceItem> getPriceItems() {
+        return priceItems;
     }
     
     public void add(PriceItem priceItem) {
         if (priceItem == null) {
              throw new NullPointerException("priceItem cannot be null."); 
         }
-        prices.add(priceItem);
+        priceItems.add(priceItem);
     }
 }

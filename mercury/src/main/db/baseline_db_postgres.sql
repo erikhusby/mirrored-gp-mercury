@@ -2541,3 +2541,6 @@
     create sequence mercury.seq_molecular_index start 1 increment 50;
 
     create sequence mercury.seq_molecular_indexing_scheme start 1 increment 50;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON mercury.rev_info to athena;
+GRANT USAGE on mercury.seq_rev_info to athena;

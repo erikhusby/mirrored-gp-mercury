@@ -217,8 +217,8 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
 
         // get all the priceItems and then filter by platform name.
         PriceList allPrices = this.getAllPriceItems();
-        for ( PriceItem priceItem : allPrices.getPriceList() ) {
-            if (priceItem.getPlatform().equalsIgnoreCase( quotePlatformType.getPlatformName() )) {
+        for ( PriceItem priceItem : allPrices.getPriceItems() ) {
+            if (priceItem.getPlatformName().equalsIgnoreCase( quotePlatformType.getPlatformName() )) {
                 platformPrices.add(priceItem);
             }
         }
@@ -226,11 +226,11 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
     }
 
 
-    protected PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
+    public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
 
         String url = url( Endpoint.ALL_PRICE_ITEMS );
         WebResource resource = getJerseyClient().resource(url);
-        PriceList prices = null;
+        PriceList prices;
         try
         {
             prices = resource.accept(MediaType.APPLICATION_XML).get(PriceList.class);

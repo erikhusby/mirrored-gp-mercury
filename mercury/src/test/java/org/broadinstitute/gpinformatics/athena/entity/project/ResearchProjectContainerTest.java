@@ -19,7 +19,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  *         Date: 10/12/12
  *         Time: 7:50 AM
  */
-@Test (groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+@Test (groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ResearchProjectContainerTest extends Arquillian {
 
     @Deployment

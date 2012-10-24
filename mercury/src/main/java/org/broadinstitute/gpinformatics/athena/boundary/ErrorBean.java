@@ -45,5 +45,4 @@ public class ErrorBean {
         Throwable throwable = (Throwable) map.get("javax.servlet.error.exception");
         return throwable.getMessage();
     }
-
 }
