@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -271,7 +272,7 @@ public class ResearchProject {
         if (irbNumbers != null) {
             String[] irbNumberList = new String[irbNumbers.size()];
             for (ResearchProjectIRB irb : irbNumbers) {
-                irbNumberList[i++] = irb.getIrb();
+                irbNumberList[i++] = irb.getIrb() + ": " + irb.getIrbType().getDisplayName();
             }
 
             return irbNumberList;
@@ -290,6 +291,10 @@ public class ResearchProject {
 
     public void removeIrbNumber(ResearchProjectIRB irbNumber) {
         irbNumbers.remove(irbNumber);
+    }
+
+    public void clearPeople() {
+        associatedPeople.clear();
     }
 
     public void addPerson(RoleType role, long personId) {
@@ -318,24 +323,12 @@ public class ResearchProject {
         return getPeople(RoleType.PM);
     }
 
-    public void updateProjectManagers(Long[] personIds) {
-        updatePeople(RoleType.PM, personIds);
-    }
-
     public Long[] getBroadPIs() {
         return getPeople(RoleType.BROAD_PI);
     }
 
-    public void updateBroadPIs(Long[] personIds) {
-        updatePeople(RoleType.BROAD_PI, personIds);
-    }
-
     public Long[] getScientists() {
         return getPeople(RoleType.SCIENTIST);
-    }
-
-    public void updateScientists(Long[] personIds) {
-        updatePeople(RoleType.SCIENTIST, personIds);
     }
 
     public Long[] getExternalCollaborators() {
