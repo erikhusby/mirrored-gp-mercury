@@ -812,8 +812,8 @@ public class ProductOrder implements Serializable {
     private enum TransitionStates {
         Complete("Complete"),
         Cancel("Cancel"),
-        Start_Progress("Start Progress"),
-        Put_On_Hold("Put On Hold");
+        StartProgress("Start Progress"),
+        PutOnHold("Put On Hold");
 
         private final String stateName;
 
