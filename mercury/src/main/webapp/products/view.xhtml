@@ -157,6 +157,12 @@
                 </f:facet>
                 <p:column> <!-- sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}"> -->
                     <f:facet name="header">
+                        <h:outputText value="Quote Server ID"/>
+                    </f:facet>
+                    <h:outputText value="#{priceItem.quoteServerId}"/>
+                </p:column>
+                <p:column> <!-- sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}"> -->
+                    <f:facet name="header">
                         <h:outputText value="Platform"/>
                     </f:facet>
                     <h:outputText value="#{priceItem.platform}"/>
