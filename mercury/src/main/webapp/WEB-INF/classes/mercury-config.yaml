@@ -159,7 +159,7 @@ mercury:
 
     DEV:
 
-      bsp:      QA
+      bsp:      DEV
       gap:      DEV
       jira:     TEST
       pmbridge: DEV
