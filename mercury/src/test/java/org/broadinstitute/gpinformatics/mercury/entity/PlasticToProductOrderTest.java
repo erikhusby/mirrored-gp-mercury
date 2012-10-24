@@ -24,12 +24,12 @@ import java.util.Set;
 
 import static junit.framework.Assert.*;
 
+@Test(groups = {TestGroups.DATABASE_FREE})
 public class PlasticToProductOrderTest {
 
     private static final String PRODUCT_ORDER_KEY = "PDO-1";
     public static final String BUCKET_REFERENCE_NAME = "Start";
 
-    @Test(groups = {TestGroups.DATABASE_FREE})
     public void test_simple_tube_in_rack_maps_to_pdo() {
         BucketResource bucketResource = new BucketResource( BUCKET_REFERENCE_NAME );
         Bucket bucket = new Bucket(bucketResource.getBucketReferenceName());

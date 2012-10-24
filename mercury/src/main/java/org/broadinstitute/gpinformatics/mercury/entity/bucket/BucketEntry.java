@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -31,9 +32,7 @@ public class BucketEntry  {
     public static final Comparator<BucketEntry> byDate = new Comparator<BucketEntry>() {
         @Override
         public int compare ( BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond ) {
-            int result = bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
-
-            return result;
+            return bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
         }
     };
 
@@ -58,11 +57,23 @@ public class BucketEntry  {
     @Column(name = "created_date", nullable = false)
     private Date createdDate;
 
+    protected BucketEntry () {
+    }
+
     public BucketEntry ( LabVessel labVesselIn, String poBusinessKey) {
         this(labVesselIn, poBusinessKey, null);
     }
 
-    public BucketEntry ( LabVessel labVesselIn, String poBusinessKey, Integer productOrderRankingIn ) {
+    public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey, Integer productOrderRankingIn ) {
+
+        if(null == labVesselIn) {
+            throw new NullPointerException("the Vessel should not be null");
+        }
+
+        if(null == poBusinessKey) {
+            throw new NullPointerException("The Product Order Business key should not be null");
+        }
+
         labVessel = labVesselIn;
         this.poBusinessKey = poBusinessKey;
         productOrderRanking = productOrderRankingIn;

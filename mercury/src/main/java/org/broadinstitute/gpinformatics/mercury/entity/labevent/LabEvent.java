@@ -63,7 +63,9 @@ import java.util.Set;
     // deltas in an aggregation in zamboni
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
+@Table(schema = "mercury",
+       uniqueConstraints = @UniqueConstraint(columnNames = {"event_location", "event_date", "disambiguator"}),
+       name = "lab_event")
 public abstract class LabEvent {
 
     public static final Comparator<GenericLabEvent> byEventDate = new Comparator<GenericLabEvent>() {
