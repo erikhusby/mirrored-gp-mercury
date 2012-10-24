@@ -27,11 +27,11 @@ import java.util.UUID;
  * Date: 10/9/12
  * Time: 3:47 PM
  */
-@Test(enabled = false)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderDaoTest extends ContainerTest {
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
-    public static final long TEST_CREATOR_ID = 1L;
+    public static final long TEST_CREATOR_ID = RandomUtils.nextInt(Integer.MAX_VALUE);
 
     @Inject
     ProductOrderDao productOrderDao;
@@ -45,6 +45,8 @@ public class ProductOrderDaoTest extends ContainerTest {
     private final String testResearchProjectKey = "TestResearchProject_" + UUID.randomUUID();
     private final String testProductOrderKey = "DRAFT-" + UUID.randomUUID();
 
+    ProductOrder order;
+
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
         if (researchProjectDao != null) {
@@ -54,6 +56,10 @@ public class ProductOrderDaoTest extends ContainerTest {
                         ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
                 researchProjectDao.persist(researchProject);
             }
+            order = createTestProductOrder();
+            productOrderDao.persist(order);
+            productOrderDao.flush();
+            productOrderDao.clear();
         }
     }
 
@@ -99,14 +105,8 @@ public class ProductOrderDaoTest extends ContainerTest {
         return newProductOrder;
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void findOrders() {
-        ProductOrder order = createTestProductOrder();
-        productOrderDao.persist(order);
-        productOrderDao.flush();
-        productOrderDao.clear();
-
-        // Try to find the created ProductOrder by it's researchProject and title.
+    public void testFindOrders() {
+        // Try to find the created ProductOrder by its researchProject and title.
         ProductOrder productOrderFromDb =
                 productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(), order.getTitle());
         Assert.assertNotNull(productOrderFromDb);
@@ -131,22 +131,19 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void findOrdersCreatedBy() {
+    public void testFindOrdersCreatedBy() {
         List<ProductOrder> orders = productOrderDao.findByCreatedPersonId(TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void findOrdersModifiedBy() {
+    public void testFindOrdersModifiedBy() {
         List<ProductOrder> orders = productOrderDao.findByModifiedPersonId(TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void findAll() {
+    public void testFindAll() {
         List<ProductOrder> orders = productOrderDao.findAll();
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
