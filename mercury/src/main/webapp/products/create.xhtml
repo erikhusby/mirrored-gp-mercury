@@ -10,7 +10,7 @@
       xmlns:f="http://java.sun.com/jsf/core">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">#{productForm.product == null ? 'Create' : 'Edit'} Product</ui:define>
+        <ui:define name="title">#{productForm.product.partNumber == null ? 'Create Product' : 'Edit Product Detail'} </ui:define>
 
         <ui:define name="metadata">
             <f:metadata>
@@ -141,7 +141,7 @@
                         <p:autoComplete id="priceItems" value="#{productForm.priceItems}"
                                         completeMethod="#{priceListCache.searchPriceItems}" var="priceItem"
                                         itemLabel="#{priceItem.name} (#{priceItem.id})"
-                                        itemValue="#{priceItem}" converter="#{priceItemConverter}" multiple="true">
+                                        itemValue="#{priceItem}" converter="#{priceItemConverter}" multiple="true" required="true" forceSelection="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name}</div>
                             </p:column>
@@ -154,14 +154,16 @@
                 <div class="control-group">
                     <p:outputLabel for="addOns" value="Add Ons" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}" var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}" converter="#{productConverter}" multiple="true">
+                        <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}"
+                                        var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}" converter="#{productConverter}" multiple="true" forceSelection="true">
                             <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{product.productName} #{product.partNumber}</div>
-                                <div class="ac-dropdown-subtext">Available:#{product.available ? "Yes" : "No"}</div>
+                                <div class="ac-dropdown-text">#{product.productName} - #{product.partNumber}</div>
+                                <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>
+                                <div class="ac-dropdown-subtext">#{product.productFamily}</div>
                                 <div class="ac-dropdown-subtext">#{product.inputRequirements}</div>
                             </p:column>
                         </p:autoComplete>
-                        <p:watermark for="addOns" value="Type Product Name to search"/>
+                        <p:watermark for="addOns" value="Type to search"/>
                         <p:message for="addOns"/>
                     </div>
                 </div>
