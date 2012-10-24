@@ -5,10 +5,12 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.*;
+import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -41,7 +43,13 @@ public class ResearchProjectForm extends AbstractJsfBean {
     private BSPUserList bspUserList;
 
     @Inject
+    private QuoteFundingList quoteFundingList;
+
+    @Inject
     private BSPCohortList cohortList;
+
+    @Inject
+    private IrbConverter irbConverter;
 
     @Inject
     private FacesContext facesContext;
@@ -61,8 +69,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
     private List<Cohort> sampleCohorts;
 
-    // TODO: change to a text field to be parsed as comma-separated
-    private List<Long> irbs;
+    private List<Irb> irbs;
 
     public void initForm() {
         // Only initialize the form if not a postback. Otherwise, we'll leave the form as the user submitted it.
@@ -77,8 +84,39 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 broadPIs = makeBspUserList(detail.getProject().getBroadPIs());
                 scientists = makeBspUserList(detail.getProject().getScientists());
                 externalCollaborators = makeBspUserList(detail.getProject().getExternalCollaborators());
+
+                fundingSources = makeFundingSources(detail.getProject().getFundingIds());
+                sampleCohorts = makeCohortList(detail.getProject().getCohortIds());
+                irbs = makeIrbs(detail.getProject().getIrbNumbers());
             }
         }
+    }
+
+    private List<Irb> makeIrbs(String[] irbNumbers) {
+        List<Irb> irbs = new ArrayList<Irb> ();
+        for (String irbNumber : irbNumbers) {
+            irbs.add((Irb) irbConverter.getAsObject(null, null, irbNumber));
+        }
+
+        return irbs;
+    }
+
+    private List<Funding> makeFundingSources(String[] fundingIds) {
+        List<Funding> fundingList = new ArrayList<Funding> ();
+        for (String fundingId : fundingIds) {
+            fundingList.add(quoteFundingList.getByFullString(fundingId));
+        }
+
+        return fundingList;
+    }
+
+    private List<Cohort> makeCohortList(String[] cohortIds) {
+        List<Cohort> cohorts = new ArrayList<Cohort> ();
+        for (String cohortId : cohortIds) {
+            cohorts.add(cohortList.getById(cohortId));
+        }
+
+        return cohorts;
     }
 
     private List<BspUser> makeBspUserList(Long[] userIds) {
@@ -104,10 +142,8 @@ public class ResearchProjectForm extends AbstractJsfBean {
         // TODO: move some of this logic down into boundary, or deeper!
 
         ResearchProject project = detail.getProject();
-        addPeople(project, RoleType.PM, projectManagers);
-        addPeople(project, RoleType.BROAD_PI, broadPIs);
-        addPeople(project, RoleType.SCIENTIST, scientists);
-        addPeople(project, RoleType.EXTERNAL, externalCollaborators);
+
+        addPeople(project);
 
         if (fundingSources != null) {
             for (Funding fundingSource : fundingSources) {
@@ -122,11 +158,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
         }
 
         if (irbs != null) {
-            for (Long irb : irbs) {
-                // TODO: use correct IRB type
-                project.addIrbNumber(new ResearchProjectIRB(project, ResearchProjectIRB.IrbType.OTHER, irb.toString()));
+            for (Irb irb : irbs) {
+                project.addIrbNumber(new ResearchProjectIRB(project, irb.getIrbType(), irb.getName()));
             }
         }
+
         project.setCreatedBy(userBean.getBspUser().getUserId());
         project.recordModification(userBean.getBspUser().getUserId());
 
@@ -150,7 +186,15 @@ public class ResearchProjectForm extends AbstractJsfBean {
         }
 
         addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
-        return redirect("list");
+        return "view";
+    }
+
+    private void addPeople(ResearchProject project) {
+        project.clearPeople();
+        addPeople(project, RoleType.PM, projectManagers);
+        addPeople(project, RoleType.BROAD_PI, broadPIs);
+        addPeople(project, RoleType.SCIENTIST, scientists);
+        addPeople(project, RoleType.EXTERNAL, externalCollaborators);
     }
 
     private void addPeople(ResearchProject project, RoleType role, List<BspUser> people) {
@@ -166,12 +210,13 @@ public class ResearchProjectForm extends AbstractJsfBean {
     }
 
     public String edit() {
-        // TODO: try to do away with merge
+
         ResearchProject project = detail.getProject();
-        updatePeople(project, RoleType.PM, projectManagers);
-        updatePeople(project, RoleType.BROAD_PI, broadPIs);
-        updatePeople(project, RoleType.SCIENTIST, scientists);
-        updatePeople(project, RoleType.EXTERNAL, externalCollaborators);
+        addPeople(project);
+
+        project.setCohorts(sampleCohorts);
+        project.setFunding(fundingSources);
+        project.setIrbs(irbs);
 
         try {
             researchProjectDao.getEntityManager().merge(project);
@@ -184,39 +229,17 @@ public class ResearchProjectForm extends AbstractJsfBean {
             return null;
         }
 
-        return redirect("list");
+        addInfoMessage("Research project updated.", "Research project \"" + project.getTitle() + "\" has been updated.");
+        return "view";
     }
 
-    private void updatePeople(ResearchProject project, RoleType role, List<BspUser> people) {
-        List<Long> projectManagerIds = new ArrayList<Long>();
-        if (people != null) {
-            for (BspUser projectManager : people) {
-                projectManagerIds.add(projectManager.getUserId());
-            }
-            project.updatePeople(role, projectManagerIds.toArray(new Long[projectManagerIds.size()]));
-        } else {
-            project.updatePeople(role, new Long[0]);
+    public List<Irb> completeIrbs(String query) {
+        List<Irb> irbsForQuery = new ArrayList<Irb>();
+        for (ResearchProjectIRB.IrbType type : ResearchProjectIRB.IrbType.values()) {
+            irbsForQuery.add(new Irb(query, type));
         }
-    }
 
-    public List<Long> completeFundingSource(String query) {
-        return generateIds(query, 5);
-    }
-
-    public List<Long> completeSampleCohorts(String query) {
-        return generateIds(query, 5);
-    }
-
-    public List<Long> completeIrbs(String query) {
-        return generateIds(query, 5);
-    }
-
-    private List<Long> generateIds(String prefix, int num) {
-        List<Long> ids = new ArrayList<Long>();
-        for (int i = 0; i < 3; i++) {
-            ids.add(Long.parseLong(prefix + i));
-        }
-        return ids;
+        return irbsForQuery;
     }
 
     public List<BspUser> getProjectManagers() {
@@ -267,11 +290,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
         this.sampleCohorts = sampleCohorts;
     }
 
-    public List<Long> getIrbs() {
+    public List<Irb> getIrbs() {
         return irbs;
     }
 
-    public void setIrbs(List<Long> irbs) {
+    public void setIrbs(List<Irb> irbs) {
         this.irbs = irbs;
     }
 }
