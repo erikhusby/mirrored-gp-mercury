@@ -755,10 +755,9 @@ public class ProductOrder implements Serializable {
                 for (ProductOrderSample sample : samples) {
                     Integer total = totals.get(sample.getBillingStatus());
                     if (total == null) {
-                        totals.put(sample.getBillingStatus(), 1);
-                    } else {
-                        ++total;
+                        total = 0;
                     }
+                    totals.put(sample.getBillingStatus(), ++total);
                 }
                 StringBuilder sb = new StringBuilder();
                 for (Map.Entry<BillingStatus, Integer> entry : totals.entrySet()) {
