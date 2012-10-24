@@ -147,7 +147,7 @@ public class ProductOrderForm extends AbstractJsfBean {
         List<String> sampleIds = convertTextToList(text);
         List<ProductOrderSample> orderSamples = new ArrayList<ProductOrderSample>(sampleIds.size());
         for (String sampleId : sampleIds) {
-            orderSamples.add(new ProductOrderSample(sampleId));
+            orderSamples.add(new ProductOrderSample(sampleId, productOrderDetail.getProductOrder()));
         }
         return orderSamples;
     }

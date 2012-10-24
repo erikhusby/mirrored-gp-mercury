@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 public class ProductOrderSampleContainerTest extends ContainerTest {
 
     public void testOrderSampleConstruction() {
-        ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN");
+        ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN", new ProductOrder());
 
         Assert.assertTrue(testSample.isInBspFormat());
 

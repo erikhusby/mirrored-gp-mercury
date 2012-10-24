@@ -30,8 +30,8 @@ import java.util.UUID;
 @Test(enabled = true)
 public class ProductOrderDaoTest extends ContainerTest {
 
-    private static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
-    private static final long TEST_CREATOR_ID = 1L;
+    public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
+    public static final long TEST_CREATOR_ID = 1L;
 
     @Inject
     ProductOrderDao productOrderDao;
@@ -76,8 +76,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void findOrders() {
+    public ProductOrder createTestProductOrder() {
         // Find a research project in the DB.
         List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
         Assert.assertTrue(projectsList != null && !projectsList.isEmpty());
@@ -91,38 +90,45 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         // Try to create a Product Order and persist it.
         List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
-        sampleList.add(new ProductOrderSample("MS-1111"));
-        sampleList.add(new ProductOrderSample("MS-1112"));
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
         ProductOrder newProductOrder = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, sampleList, "quoteId",
                 product, foundResearchProject);
+        sampleList.add(new ProductOrderSample("MS-1111", newProductOrder));
+        sampleList.add(new ProductOrderSample("MS-1112", newProductOrder));
         newProductOrder.setJiraTicketKey(testProductOrderKey);
-        productOrderDao.persist(newProductOrder);
+        return newProductOrder;
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void findOrders() {
+        ProductOrder order = createTestProductOrder();
+        productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
 
         // Try to find the created ProductOrder by it's researchProject and title.
         ProductOrder productOrderFromDb =
-                productOrderDao.findByResearchProjectAndTitle(foundResearchProject, testProductOrderTitle);
+                productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(), order.getTitle());
         Assert.assertNotNull(productOrderFromDb);
-        Assert.assertNotNull(productOrderFromDb.getTitle());
-        Assert.assertEquals(testProductOrderTitle, productOrderFromDb.getTitle());
-        Assert.assertEquals("quoteId", productOrderFromDb.getQuoteId());
-        Assert.assertEquals(0, productOrderFromDb.getTotalSampleCount());
+        Assert.assertEquals(productOrderFromDb.getTitle(), order.getTitle());
+        Assert.assertEquals(productOrderFromDb.getQuoteId(), order.getQuoteId());
+        Assert.assertEquals(productOrderFromDb.getTotalSampleCount(), order.getTotalSampleCount());
 
         // Try to find a non-existing ProductOrder
-        productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(foundResearchProject,
+        productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(),
                 "NonExistingProductOrder_" + UUID.randomUUID());
         Assert.assertNull(productOrderFromDb,
                 "Should have thrown exception when trying to retrieve an non-existing product Order.");
 
         // Try to find an existing ProductOrder by ResearchProject
-        List<ProductOrder> orders = productOrderDao.findByResearchProject(foundResearchProject);
+        List<ProductOrder> orders = productOrderDao.findByResearchProject(order.getResearchProject());
         Assert.assertNotNull(orders);
         if (!orders.isEmpty()) {
             productOrderFromDb = orders.get(0);
         }
         Assert.assertNotNull(productOrderFromDb);
+
+        Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)

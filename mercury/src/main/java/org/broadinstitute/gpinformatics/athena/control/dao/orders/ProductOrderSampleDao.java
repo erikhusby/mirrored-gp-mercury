@@ -26,22 +26,6 @@ public class ProductOrderSampleDao extends GenericDao {
      * @return
      */
     public List<ProductOrderSample> findByProductOrder(ProductOrder productOrder) {
-
-//        EntityManager entityManager = getEntityManager();
-//        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-//        CriteriaQuery<ProductOrderSample> criteriaQuery = criteriaBuilder.createQuery(ProductOrderSample.class);
-//        Root<ProductOrderSample> root = criteriaQuery.from(ProductOrderSample.class);
-//        criteriaQuery.where(criteriaBuilder.equal(root.get(ProductOrderSample_.productOrder), productOrder));
-//
-//        try {
-//            return entityManager.createQuery(criteriaQuery).getResultList();
-//        } catch (NoResultException ignored) {
-//            return Collections.emptyList();
-//        }
-
         return findList(ProductOrderSample.class, ProductOrderSample_.productOrder, productOrder);
-
     }
-
-
 }

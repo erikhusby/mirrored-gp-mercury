@@ -12,7 +12,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.HashSet;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -32,12 +31,13 @@ public class ProductOrderContainerTest extends Arquillian {
     }
 
     public static ProductOrder createSimpleProductOrder() {
-        return new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
-                ProductOrderTest.createSampleList("SM-1P3X9,SM-1P3WY,SM-1P3XN",
-                        new HashSet<BillableItem>()),
+        ProductOrder productOrder = new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
+                null,
                 "newQuote",
                 ProductOrderTest.createDummyProduct(),
                 createDummyResearchProject("Test Research Project"));
+        productOrder.setSamples(ProductOrderTest.createSampleList("SM-1P3X9,SM-1P3WY,SM-1P3XN", productOrder));
+        return productOrder;
     }
 
     public void testSimpleProductOrder() throws IOException, IllegalStateException{
@@ -82,11 +82,11 @@ public class ProductOrderContainerTest extends Arquillian {
 
         ProductOrder testOrder =
                 new ProductOrder(TEST_CREATOR, "containerTest Product Order Test2",
-                        ProductOrderTest.createSampleList("SM_12CO4,SM_1P3WY,SM_1P3XN",
-                                new HashSet<BillableItem>()),
+                        null,
                         "newQuote",
                         ProductOrderTest.createDummyProduct(),
                         createDummyResearchProject("Test Research Project"));
+        testOrder.setSamples(ProductOrderTest.createSampleList("SM_12CO4,SM_1P3WY,SM_1P3XN", testOrder));
 
         Assert.assertEquals(testOrder.getUniqueSampleCount(), 3);
 

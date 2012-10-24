@@ -71,7 +71,7 @@ public class ProductOrder implements Serializable {
 
     private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrder")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
     private List<ProductOrderSample> samples;
 
     @Transient
