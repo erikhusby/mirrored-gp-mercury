@@ -226,7 +226,7 @@ public class ProductOrderForm extends AbstractJsfBean {
         ProductOrder order = productOrderDetail.getProductOrder();
         order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
         String action = order.isInDB() ? "modified" : "created";
-        //order.submitProductOrder();
+        order.submitProductOrder();
         productOrderDao.persist(order);
         addInfoMessage(MessageFormat.format("Product Order {0}.", action),
                 MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
