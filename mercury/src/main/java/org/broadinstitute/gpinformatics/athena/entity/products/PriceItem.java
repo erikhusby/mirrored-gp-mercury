@@ -124,7 +124,8 @@ public class PriceItem implements Serializable {
      */
     PriceItem() {}
 
-    public PriceItem(@NotNull String platform, String category, @NotNull String name) {
+    public PriceItem(@NotNull String quoteServerId, @NotNull String platform, String category, @NotNull String name) {
+        this.quoteServerId = quoteServerId;
         this.platform = platform;
         this.category = category;
         this.name = name;
