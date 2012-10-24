@@ -512,9 +512,9 @@
 
     drop table if exists mercury.lab_batch_aud cascade;
 
---     drop table if exists mercury.lab_batch_starting_samples cascade;
---
---     drop table if exists mercury.lab_batch_starting_samples_aud cascade;
+    drop table if exists mercury.lab_batch_starting_samples cascade;
+
+    drop table if exists mercury.lab_batch_starting_samples_aud cascade;
 
     drop table if exists mercury.lab_event cascade;
 
@@ -544,9 +544,9 @@
 
     drop table if exists mercury.lab_vessel_tickets_created_aud cascade;
 
---     drop table if exists mercury.lab_work_queue cascade;
---
---     drop table if exists mercury.lab_work_queue_aud cascade;
+    drop table if exists mercury.lab_work_queue cascade;
+
+    drop table if exists mercury.lab_work_queue_aud cascade;
 
     drop table if exists mercury.lb_starting_lab_vessels cascade;
 
@@ -560,9 +560,9 @@
 
     drop table if exists mercury.lv_reagent_contents_aud cascade;
 
---     drop table if exists mercury.molecular_envelope cascade;
---
---     drop table if exists mercury.molecular_envelope_aud cascade;
+    drop table if exists mercury.molecular_envelope cascade;
+
+    drop table if exists mercury.molecular_envelope_aud cascade;
 
     drop table if exists mercury.molecular_index cascade;
 
@@ -576,18 +576,18 @@
 
     drop table if exists mercury.molecular_indexing_scheme_aud cascade;
 
---     drop table if exists mercury.molecular_state cascade;
---
---     drop table if exists mercury.molecular_state_aud cascade;
+    drop table if exists mercury.molecular_state cascade;
 
---     drop table if exists mercury.molecular_state_template cascade;
---
---     drop table if exists mercury.molecular_state_template_aud cascade;
+    drop table if exists mercury.molecular_state_aud cascade;
+
+    drop table if exists mercury.molecular_state_template cascade;
+
+    drop table if exists mercury.molecular_state_template_aud cascade;
 
     drop table if exists mercury.person cascade;
 
     drop table if exists mercury.person_aud cascade;
-/*
+
     drop table if exists mercury.pp_map_start_smpl_to_aliqt cascade;
 
     drop table if exists mercury.pp_map_start_smpl_to_aliqt_aud cascade;
@@ -611,7 +611,7 @@
     drop table if exists mercury.project_plan cascade;
 
     drop table if exists mercury.project_plan_aud cascade;
-*/
+
     drop table if exists mercury.quote cascade;
 
     drop table if exists mercury.quote_aud cascade;
@@ -634,13 +634,13 @@
 
     drop table if exists mercury.sequencing_run_aud cascade;
 
---     drop table if exists mercury.starting_sample cascade;
---
---     drop table if exists mercury.starting_sample_aud cascade;
+    drop table if exists mercury.starting_sample cascade;
 
---     drop table if exists mercury.state_change cascade;
---
---     drop table if exists mercury.state_change_aud cascade;
+    drop table if exists mercury.starting_sample_aud cascade;
+
+    drop table if exists mercury.state_change cascade;
+
+    drop table if exists mercury.state_change_aud cascade;
 
     drop table if exists mercury.status_note cascade;
 
@@ -698,29 +698,29 @@
 
     drop sequence mercury.SEQ_LAB_VESSEL;
 
---     drop sequence mercury.SEQ_LAB_WORK_QUEUE;
+    drop sequence mercury.SEQ_LAB_WORK_QUEUE;
 
---     drop sequence mercury.SEQ_MOLECULAR_ENVELOPE;
---
---     drop sequence mercury.SEQ_MOLECULAR_STATE;
+    drop sequence mercury.SEQ_MOLECULAR_ENVELOPE;
 
---     drop sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE;
+    drop sequence mercury.SEQ_MOLECULAR_STATE;
+
+    drop sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE;
 
     drop sequence mercury.SEQ_PERSON;
-/*
+
     drop sequence mercury.SEQ_PROJECT;
 
     drop sequence mercury.SEQ_PROJECT_PLAN;
-*/
+
     drop sequence mercury.SEQ_REAGENT;
 
     drop sequence mercury.SEQ_REV_INFO;
 
     drop sequence mercury.SEQ_SEQUENCING_RUN;
 
---     drop sequence mercury.SEQ_STARTING_SAMPLE;
+    drop sequence mercury.SEQ_STARTING_SAMPLE;
 
---     drop sequence mercury.SEQ_STATE_CHANGE;
+    drop sequence mercury.SEQ_STATE_CHANGE;
 
     drop sequence mercury.SEQ_VESSEL_TRANSFER;
 
@@ -731,25 +731,25 @@
     drop sequence mercury.seq_molecular_indexing_scheme;
 
     create table athena.billable_item (
-        billable_item_id number(19,0) not null,
+        billable_item_id numeric(19,0) not null,
         count numeric(19, 2),
-        price_item number(19,0),
-        product_order_sample number(19,0),
+        price_item numeric(19,0),
+        product_order_sample numeric(19,0),
         primary key (billable_item_id)
     );
 
     create table athena.billable_item_aud (
-        billable_item_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
+        billable_item_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         count numeric(19, 2),
-        price_item number(19,0),
-        product_order_sample number(19,0),
+        price_item numeric(19,0),
+        product_order_sample numeric(19,0),
         primary key (billable_item_id, rev)
     );
 
     create table athena.price_item (
-        price_item_id number(19,0) not null,
+        price_item_id numeric(19,0) not null,
         category varchar(255),
         name varchar(255),
         platform varchar(255),
@@ -759,9 +759,9 @@
     );
 
     create table athena.price_item_aud (
-        price_item_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
+        price_item_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         category varchar(255),
         name varchar(255),
         platform varchar(255),
@@ -770,230 +770,230 @@
     );
 
     create table athena.product (
-        product_id number(19,0) not null,
+        product_id numeric(19,0) not null,
         availability_date timestamp,
         deliverables varchar(2000),
         description varchar(2000),
         discontinued_date timestamp,
-        expected_cycle_time_seconds number(10,0),
-        guaranteed_cycle_time_seconds number(10,0),
+        expected_cycle_time_seconds numeric(10,0),
+        guaranteed_cycle_time_seconds numeric(10,0),
         input_requirements varchar(2000),
         part_number varchar(255),
         product_name varchar(255),
-        samples_per_week number(10,0),
-        top_level_product number(1,0) not null,
+        samples_per_week numeric(10,0),
+        top_level_product boolean not null,
         workflow_name varchar(255),
-        default_price_item number(19,0),
-        product_family number(19,0),
+        default_price_item numeric(19,0),
+        product_family numeric(19,0),
         primary key (product_id),
         unique (part_number)
     );
 
     create table athena.product_add_ons (
-        product number(19,0) not null,
-        add_ons number(19,0) not null,
+        product numeric(19,0) not null,
+        add_ons numeric(19,0) not null,
         primary key (product, add_ons)
     );
 
     create table athena.product_add_ons_aud (
-        rev number(19,0) not null,
-        product number(19,0) not null,
-        add_ons number(19,0) not null,
-        revtype number(3,0),
+        rev numeric(19,0) not null,
+        product numeric(19,0) not null,
+        add_ons numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, product, add_ons)
     );
 
     create table athena.product_aud (
-        product_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
+        product_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         availability_date timestamp,
         deliverables varchar(2000),
         description varchar(2000),
         discontinued_date timestamp,
-        expected_cycle_time_seconds number(10,0),
-        guaranteed_cycle_time_seconds number(10,0),
+        expected_cycle_time_seconds numeric(10,0),
+        guaranteed_cycle_time_seconds numeric(10,0),
         input_requirements varchar(2000),
         part_number varchar(255),
         product_name varchar(255),
-        samples_per_week number(10,0),
-        top_level_product number(1,0),
+        samples_per_week numeric(10,0),
+        top_level_product boolean,
         workflow_name varchar(255),
-        default_price_item number(19,0),
-        product_family number(19,0),
+        default_price_item numeric(19,0),
+        product_family numeric(19,0),
         primary key (product_id, rev)
     );
 
     create table athena.product_family (
-        product_family_id number(19,0) not null,
+        product_family_id numeric(19,0) not null,
         name varchar(255),
         primary key (product_family_id),
         unique (name)
     );
 
     create table athena.product_family_aud (
-        product_family_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
+        product_family_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         name varchar(255),
         primary key (product_family_id, rev)
     );
 
     create table athena.product_order (
-        product_order_id number(19,0) not null,
+        product_order_id numeric(19,0) not null,
         comments varchar(2000),
         jira_ticket_key varchar(255),
-        order_status number(10,0),
+        order_status numeric(10,0),
         quote_id varchar(255),
         title varchar(255) unique,
-        product number(19,0),
-        research_project number(19,0),
+        product numeric(19,0),
+        research_project numeric(19,0),
         primary key (product_order_id)
     );
 
     create table athena.product_order_aud (
-        product_order_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
+        product_order_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         comments varchar(2000),
         jira_ticket_key varchar(255),
-        order_status number(10,0),
+        order_status numeric(10,0),
         quote_id varchar(255),
         title varchar(255),
-        product number(19,0),
-        research_project number(19,0),
+        product numeric(19,0),
+        research_project numeric(19,0),
         primary key (product_order_id, rev)
     );
 
     create table athena.product_order_sample (
-        product_order_sample_id number(19,0) not null,
-        billing_status number(10,0),
+        product_order_sample_id numeric(19,0) not null,
+        billing_status numeric(10,0),
         sample_comment varchar(255),
         sample_name varchar(255),
-        product_order number(19,0),
+        product_order numeric(19,0),
         primary key (product_order_sample_id)
     );
 
     create table athena.product_order_sample_aud (
-        product_order_sample_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
-        billing_status number(10,0),
+        product_order_sample_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
+        billing_status numeric(10,0),
         sample_comment varchar(255),
         sample_name varchar(255),
-        product_order number(19,0),
+        product_order numeric(19,0),
         primary key (product_order_sample_id, rev)
     );
 
     create table athena.product_price_items (
-        product number(19,0) not null,
-        price_items number(19,0) not null,
+        product numeric(19,0) not null,
+        price_items numeric(19,0) not null,
         primary key (product, price_items)
     );
 
     create table athena.product_price_items_aud (
-        rev number(19,0) not null,
-        product number(19,0) not null,
-        price_items number(19,0) not null,
-        revtype number(3,0),
+        rev numeric(19,0) not null,
+        product numeric(19,0) not null,
+        price_items numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, product, price_items)
     );
 
     create table athena.project_person (
-        project_person_id number(19,0) not null,
-        person_id number(19,0),
-        role number(10,0),
-        research_project number(19,0),
+        project_person_id numeric(19,0) not null,
+        person_id numeric(19,0),
+        role numeric(10,0),
+        research_project numeric(19,0),
         primary key (project_person_id)
     );
 
     create table athena.project_person_aud (
-        project_person_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
-        person_id number(19,0),
-        role number(10,0),
-        research_project number(19,0),
+        project_person_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
+        person_id numeric(19,0),
+        role numeric(10,0),
+        research_project numeric(19,0),
         primary key (project_person_id, rev)
     );
 
     create table athena.research_project (
-        research_project_id number(19,0) not null,
-        created_by number(19,0),
+        research_project_id numeric(19,0) not null,
+        created_by numeric(19,0),
         created_date timestamp,
         irb_notes varchar(255),
         jira_ticket_key varchar(255),
-        modified_by number(19,0),
+        modified_by numeric(19,0),
         modified_date timestamp,
-        status number(10,0),
+        status numeric(10,0),
         synopsis varchar(255),
         title varchar(255) unique,
         primary key (research_project_id)
     );
 
     create table athena.research_project_aud (
-        research_project_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
-        created_by number(19,0),
+        research_project_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
+        created_by numeric(19,0),
         created_date timestamp,
         irb_notes varchar(255),
         jira_ticket_key varchar(255),
-        modified_by number(19,0),
+        modified_by numeric(19,0),
         modified_date timestamp,
-        status number(10,0),
+        status numeric(10,0),
         synopsis varchar(255),
         title varchar(255),
         primary key (research_project_id, rev)
     );
 
     create table athena.research_project_cohort (
-        research_project_cohort_id number(19,0) not null,
+        research_project_cohort_id numeric(19,0) not null,
         cohort_id varchar(255),
-        research_project number(19,0),
+        research_project numeric(19,0),
         primary key (research_project_cohort_id)
     );
 
     create table athena.research_project_cohort_aud (
-        research_project_cohort_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
+        research_project_cohort_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         cohort_id varchar(255),
-        research_project number(19,0),
+        research_project numeric(19,0),
         primary key (research_project_cohort_id, rev)
     );
 
     create table athena.research_project_funding (
-        research_project_funding_id number(19,0) not null,
+        research_project_funding_id numeric(19,0) not null,
         funding_id varchar(255),
-        research_project number(19,0),
+        research_project numeric(19,0),
         primary key (research_project_funding_id)
     );
 
     create table athena.research_project_funding_aud (
-        research_project_funding_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
+        research_project_funding_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         funding_id varchar(255),
-        research_project number(19,0),
+        research_project numeric(19,0),
         primary key (research_project_funding_id, rev)
     );
 
     create table athena.research_projectirb (
-        research_projectirbid number(19,0) not null,
+        research_projectirbid numeric(19,0) not null,
         irb varchar(255),
-        irb_type number(10,0),
-        research_project number(19,0),
+        irb_type numeric(10,0),
+        research_project numeric(19,0),
         primary key (research_projectirbid)
     );
 
     create table athena.research_projectirb_aud (
-        research_projectirbid number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
+        research_projectirbid numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         irb varchar(255),
-        irb_type number(10,0),
-        research_project number(19,0),
+        irb_type numeric(10,0),
+        research_project numeric(19,0),
         primary key (research_projectirbid, rev)
     );
 
@@ -1253,25 +1253,25 @@
         primary key (rev, lab_vessel, reagent_contents)
     );
 
-    create table mercury.molecular_envelope (
-        dtype varchar(31) not null,
-        molecular_envelope_id numeric(19,0) not null,
-        five_prime_seq varchar(255),
-        name varchar(255),
-        three_prime_seq varchar(255),
-        primary key (molecular_envelope_id)
-    );
-
-    create table mercury.molecular_envelope_aud (
-        dtype varchar(31) not null,
-        molecular_envelope_id numeric(19,0) not null,
-        rev numeric(19,0) not null,
-        revtype numeric(3,0),
-        five_prime_seq varchar(255),
-        name varchar(255),
-        three_prime_seq varchar(255),
-        primary key (molecular_envelope_id, rev)
-    );
+--     create table mercury.molecular_envelope (
+--         dtype varchar(31) not null,
+--         molecular_envelope_id numeric(19,0) not null,
+--         five_prime_seq varchar(255),
+--         name varchar(255),
+--         three_prime_seq varchar(255),
+--         primary key (molecular_envelope_id)
+--     );
+--
+--     create table mercury.molecular_envelope_aud (
+--         dtype varchar(31) not null,
+--         molecular_envelope_id numeric(19,0) not null,
+--         rev numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         five_prime_seq varchar(255),
+--         name varchar(255),
+--         three_prime_seq varchar(255),
+--         primary key (molecular_envelope_id, rev)
+--     );
 
     create table mercury.molecular_index (
         molecular_index_id numeric(19,0) not null,
