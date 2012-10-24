@@ -134,9 +134,12 @@
                 <div class="control-group">
                     <p:outputLabel for="irbs" value="IRB/IACUC Numbers" styleClass="control-label"/>
                     <div class="controls">
-                        <!-- TODO: tie into real IRBs? -->
-                        <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}" completeMethod="#{researchProjectForm.completeIrbs}" multiple="true"/>
-                        <p:watermark for="irbs" value="Type number to search"/>
+                        <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}" completeMethod="#{researchProjectForm.completeIrbs}" var="irb" itemLabel="#{irb.name}: #{irb.irbType.displayName}" itemValue="#{irb}" converter="#{irbConverter}" multiple="true">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{irb.name}: #{irb.irbType.displayName}</div>
+                            </p:column>
+                        </p:autoComplete>
+                        <p:watermark for="irbs" value="Type irb name"/>
                         <p>
                             <p:selectBooleanCheckbox id="irbEngaged" value="#{researchProjectDetail.project.irbNotEngaged}"/> <p:outputLabel for="irbEngaged" value="IRB Not Engaged" style="display: inline-block"/>
                         </p>

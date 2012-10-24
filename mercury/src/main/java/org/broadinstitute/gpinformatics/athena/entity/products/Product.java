@@ -185,7 +185,6 @@ public class Product implements Serializable {
 
     public void setAvailabilityDate(final Date availabilityDate) {
         this.availabilityDate = availabilityDate;
-        this.availabilityDate = availabilityDate;
     }
 
     public void setDiscontinuedDate(final Date discontinuedDate) {
@@ -250,14 +249,6 @@ public class Product implements Serializable {
         return availabilityDate != null && (availabilityDate.compareTo(now) < 0) &&
                 (discontinuedDate == null || discontinuedDate.compareTo(now) > 0);
     }
-
-//    public List<RiskContingency> getRiskContingencies() {
-//        return riskContingencies;
-//    }
-//
-//    public void setRiskContingencies(List<RiskContingency> riskContingencies) {
-//        this.riskContingencies = riskContingencies;
-//    }
 
     public boolean isPriceItemDefault(PriceItem priceItem) {
         if (defaultPriceItem == priceItem) return true;
