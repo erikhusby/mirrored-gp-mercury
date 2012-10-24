@@ -40,6 +40,9 @@ public class ResearchProjectForm extends AbstractJsfBean {
     private ResearchProjectDao researchProjectDao;
 
     @Inject
+    private ResearchProjectManager researchProjectManager;
+
+    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -148,6 +151,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
         project.setCreatedBy(userBean.getBspUser().getUserId());
         project.recordModification(userBean.getBspUser().getUserId());
 
+/*
         try {
             project.submit();
         } catch (IOException e) {
@@ -164,6 +168,13 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 errorMessage = MessageFormat.format("The project name ''{0}'' is not unique. Project not created", detail.getProject().getTitle());
             }
             addErrorMessage("name", errorMessage, "Name is not unique.");
+            return null;
+        }
+*/
+        try {
+            researchProjectManager.createResearchProject(project);
+        } catch (Exception e) {
+            addErrorMessage(e.getMessage(), e.getMessage());
             return null;
         }
 
@@ -192,6 +203,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
         ResearchProject project = detail.getProject();
         addCollections(project);
 
+/*
         try {
             researchProjectDao.getEntityManager().merge(project);
         } catch (Exception e ) {
@@ -200,6 +212,13 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 errorMessage = MessageFormat.format("The project name ''{0}'' is not unique. Project not updated.", detail.getProject().getTitle());
             }
             addErrorMessage("name", errorMessage, "Name is not unique");
+            return null;
+        }
+*/
+        try {
+            researchProjectManager.updateResearchProject(project);
+        } catch (Exception e) {
+            addErrorMessage(e.getMessage(), e.getMessage());
             return null;
         }
 

@@ -5,13 +5,19 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import java.util.List;
 
 /**
  * Queries for the research project.
+ *
+ * Transaction is NOT_SUPPORTED so as to apply to all find methods to help avoid the extended persistence context from
+ * eagerly joining any currently active transaction.
  */
 @Stateful
+@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
 @RequestScoped
 public class ResearchProjectDao extends GenericDao {
 

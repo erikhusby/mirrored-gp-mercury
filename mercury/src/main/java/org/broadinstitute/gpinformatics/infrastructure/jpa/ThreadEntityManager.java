@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.FlushModeType;
@@ -19,6 +21,15 @@ public class ThreadEntityManager {
     @PersistenceContext(type = PersistenceContextType.EXTENDED, unitName = "mercury_pu")
     private EntityManager entityManager;
 
+    /**
+     * Returns an entity manager for the request-scoped extended persistence context, configured for COMMIT flush mode.
+     * The transaction attribute of NOT_SUPPORTED helps prevent the persistence context from eagerly joining any
+     * currently active transaction, which would make any changes to managed entities eligible for flushing when the
+     * transaction commits.
+     *
+     * @return the persistence context
+     */
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public EntityManager getEntityManager() {
         // todo jmt find a way to set this in the configuration
         entityManager.setFlushMode(FlushModeType.COMMIT);
