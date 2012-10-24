@@ -157,6 +157,7 @@
                         <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}" var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}" converter="#{productConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{product.productName} #{product.partNumber}</div>
+                                <div class="ac-dropdown-subtext">Available:#{product.available ? "Yes" : "No"}</div>
                                 <div class="ac-dropdown-subtext">#{product.inputRequirements}</div>
                             </p:column>
                         </p:autoComplete>
