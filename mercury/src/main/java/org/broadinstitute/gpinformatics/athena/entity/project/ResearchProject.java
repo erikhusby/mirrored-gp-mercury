@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -83,18 +84,17 @@ public class ResearchProject {
 
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ProjectPerson> associatedPeople = new HashSet<ProjectPerson>();
+    private final Set<ProjectPerson> associatedPeople = new HashSet<ProjectPerson>();
 
     // Information about externally managed items
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ResearchProjectCohort> sampleCohorts = new HashSet<ResearchProjectCohort>();
+    private final Set<ResearchProjectCohort> sampleCohorts = new HashSet<ResearchProjectCohort>();
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ResearchProjectFunding> projectFunding = new HashSet<ResearchProjectFunding>();
+    private final Set<ResearchProjectFunding> projectFunding = new HashSet<ResearchProjectFunding>();
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
-
+    private final Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
 
     private String irbNotes;
 
@@ -282,26 +282,28 @@ public class ResearchProject {
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {
-        if (irbNumbers == null) {
-            irbNumbers = new HashSet<ResearchProjectIRB>();
-        }
-
         irbNumbers.add(irbNumber);
-    }
-
-    public void removeIrbNumber(ResearchProjectIRB irbNumber) {
-        irbNumbers.remove(irbNumber);
     }
 
     public void clearPeople() {
         associatedPeople.clear();
     }
 
-    public void addPerson(RoleType role, long personId) {
-        if (associatedPeople == null) {
-            associatedPeople = new HashSet<ProjectPerson>();
+    public void addPeople(RoleType role, List<BspUser> people) {
+        if (people != null) {
+            for (BspUser user : people) {
+                associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
+            }
         }
+    }
 
+    /**
+     * This addPerson should only be used for tests (until we mock up BSP Users better there.
+     *
+     * @param role The role of the person to add
+     * @param personId The user id for the person
+     */
+    public void addPerson(RoleType role, long personId) {
         associatedPeople.add(new ProjectPerson(this, role, personId));
     }
 
