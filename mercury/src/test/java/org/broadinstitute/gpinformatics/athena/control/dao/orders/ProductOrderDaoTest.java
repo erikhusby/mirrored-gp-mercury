@@ -99,7 +99,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         return newProductOrder;
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void findOrders() {
         ProductOrder order = createTestProductOrder();
         productOrderDao.persist(order);
@@ -131,21 +131,21 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void findOrdersCreatedBy() {
         List<ProductOrder> orders = productOrderDao.findByCreatedPersonId(TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void findOrdersModifiedBy() {
         List<ProductOrder> orders = productOrderDao.findByModifiedPersonId(TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void findAll() {
         List<ProductOrder> orders = productOrderDao.findAll();
         Assert.assertNotNull(orders);
