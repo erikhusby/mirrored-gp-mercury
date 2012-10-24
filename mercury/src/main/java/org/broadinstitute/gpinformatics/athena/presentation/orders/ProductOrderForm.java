@@ -218,15 +218,17 @@ public class ProductOrderForm extends AbstractJsfBean {
             // 1 => 2
             setEditIdsCache(StringUtils.join(convertOrderSamplesToList(), SEPARATOR + " "));
         }
-        productOrderDetail.getProductOrder().loadBspData();
+        productOrderDetail.load();
     }
 
     // FIXME: handle db store errors, JIRA server errors here.
     public String save() throws IOException {
         ProductOrder order = productOrderDetail.getProductOrder();
         order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
+        // DRAFT orders not yet supported; force state of new PDOs to Submitted.
+        order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         String action = order.isInDB() ? "modified" : "created";
-        //order.submitProductOrder();
+        order.submitProductOrder();
         productOrderDao.persist(order);
         addInfoMessage(MessageFormat.format("Product Order {0}.", action),
                 MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
