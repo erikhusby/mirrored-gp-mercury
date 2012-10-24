@@ -143,25 +143,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
         ResearchProject project = detail.getProject();
 
-        addPeople(project);
-
-        if (fundingSources != null) {
-            for (Funding fundingSource : fundingSources) {
-                project.addFunding(new ResearchProjectFunding(project, fundingSource.getFundingTypeAndName()));
-            }
-        }
-
-        if (sampleCohorts != null) {
-            for (Cohort cohort : sampleCohorts) {
-                project.addCohort(new ResearchProjectCohort(project, cohort.getCohortId()));
-            }
-        }
-
-        if (irbs != null) {
-            for (Irb irb : irbs) {
-                project.addIrbNumber(new ResearchProjectIRB(project, irb.getIrbType(), irb.getName()));
-            }
-        }
+        addCollections(project);
 
         project.setCreatedBy(userBean.getBspUser().getUserId());
         project.recordModification(userBean.getBspUser().getUserId());
@@ -189,20 +171,16 @@ public class ResearchProjectForm extends AbstractJsfBean {
         return "view";
     }
 
-    private void addPeople(ResearchProject project) {
+    private void addCollections(ResearchProject project) {
         project.clearPeople();
-        addPeople(project, RoleType.PM, projectManagers);
-        addPeople(project, RoleType.BROAD_PI, broadPIs);
-        addPeople(project, RoleType.SCIENTIST, scientists);
-        addPeople(project, RoleType.EXTERNAL, externalCollaborators);
-    }
+        project.addPeople(RoleType.PM, projectManagers);
+        project.addPeople(RoleType.BROAD_PI, broadPIs);
+        project.addPeople(RoleType.SCIENTIST, scientists);
+        project.addPeople(RoleType.EXTERNAL, externalCollaborators);
 
-    private void addPeople(ResearchProject project, RoleType role, List<BspUser> people) {
-        if (people != null) {
-            for (BspUser projectManager : people) {
-                project.addPerson(role, projectManager.getUserId());
-            }
-        }
+        project.populateCohorts(sampleCohorts);
+        project.populateFunding(fundingSources);
+        project.populateIrbs(irbs);
     }
 
     private boolean isCreating() {
@@ -212,11 +190,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
     public String edit() {
 
         ResearchProject project = detail.getProject();
-        addPeople(project);
-
-        project.populateCohorts(sampleCohorts);
-        project.populateFunding(fundingSources);
-        project.populateIrbs(irbs);
+        addCollections(project);
 
         try {
             researchProjectDao.getEntityManager().merge(project);
