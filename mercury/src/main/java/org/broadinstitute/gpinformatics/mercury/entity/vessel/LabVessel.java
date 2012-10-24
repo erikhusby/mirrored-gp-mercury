@@ -213,7 +213,7 @@ public abstract class LabVessel {
     }
 
     //Utility method for getting containers as a list so they can be displayed in a display table column
-    public List<VesselContainer<?>> getContainersList() {
+    public List<VesselContainer<?>> getContainerList() {
         return new ArrayList<VesselContainer<?>>(getContainers());
     }
 
@@ -382,6 +382,9 @@ public abstract class LabVessel {
         return sampleInstances;
     }
 
+    public List<SampleInstance> getSampleInstanceList() {
+        return new ArrayList<SampleInstance>(getSampleInstances());
+    }
     /**
      * I'm avoiding parent/child semantics
      * here deliberately to avoid confusion
