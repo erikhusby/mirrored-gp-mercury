@@ -185,7 +185,6 @@ public class Product implements Serializable {
 
     public void setAvailabilityDate(final Date availabilityDate) {
         this.availabilityDate = availabilityDate;
-        this.availabilityDate = availabilityDate;
     }
 
     public void setDiscontinuedDate(final Date discontinuedDate) {

@@ -56,6 +56,11 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
     }
 
     public String save() {
+        if (! dateRangeOkay()) {
+            String errorMessage = "Availability date must precede discontinued date.";
+            addErrorMessage("Date range invalid", errorMessage, errorMessage );
+            return "create";
+        }
         if (getProduct().getProductId() == null ) {
             return create();
         } else {
@@ -63,15 +68,22 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
         }
     }
 
+    private boolean dateRangeOkay() {
+        if ((product.getAvailabilityDate() != null ) &&
+                (product.getDiscontinuedDate() != null ) &&
+                (product.getAvailabilityDate().after(product.getDiscontinuedDate()))) {
+            return false;
+        }
+        return true;
+    }
+
     public String create() {
         try {
-            for ( Product aProduct : addOns ) {
-                product.addAddOn( aProduct );
-            }
+            addAllAddOnsToProduct();
             productDao.persist(product);
             addInfoMessage("Product created.", "Product " + product.getPartNumber() + " has been created.");
         } catch (Exception e ) {
-            String errorMessage = MessageFormat.format("Unknown exception occurred while persisting Product.", null);
+            String errorMessage = "Exception occurred - " + e.getMessage();
             if (GenericDao.IsConstraintViolationException(e)) {
                 errorMessage = MessageFormat.format("The Product Part-Number ''{0}'' is not unique.", product.getPartNumber());
             }
@@ -83,13 +95,11 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
 
     public String edit() {
         try {
-            for ( Product aProduct : addOns ) {
-                product.addAddOn( aProduct );
-            }
+            addAllAddOnsToProduct();
             productDao.getEntityManager().merge(getProduct());
             addInfoMessage("Product detail updated.", "Product " + getProduct().getPartNumber() + " has been updated.");
         } catch (Exception e ) {
-            String errorMessage = MessageFormat.format("Unknown exception occurred while persisting Product.", e);
+            String errorMessage = "Exception occurred - " + e.getMessage();
             if (GenericDao.IsConstraintViolationException(e)) {
                 errorMessage = MessageFormat.format("The Product Part-Number ''{0}'' is not unique.", product.getPartNumber());
             }
@@ -97,6 +107,21 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
             return "create";
         }
         return redirect("list");
+    }
+
+    private void addAllAddOnsToProduct() {
+        Date now = Calendar.getInstance().getTime();
+        if ( addOns != null) {
+            for ( Product aProductAddOn : addOns ) {
+                if ( aProductAddOn != null ) {
+                    if ( aProductAddOn.isAvailable() || aProductAddOn.getAvailabilityDate().after( now ) ) {
+                        product.addAddOn( aProductAddOn );
+                    } else {
+                        throw new RuntimeException("Product AddOn " + aProductAddOn.getPartNumber() + " is no longer available. Please remove it from the list.");
+                    }
+                }
+            }
+        }
     }
 
     public Product getProduct() {
