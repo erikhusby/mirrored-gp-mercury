@@ -184,8 +184,8 @@
         <database>postgres</database>
         <database.driver>org.postgresql.Driver</database.driver>
         <database.url>jdbc:postgresql://localhost/postgres</database.url>
-        <mercury.password>mercury_dev</mercury.password>
-        <athena.password>athena_dev</athena.password>
+        <mercury.password>mercury_local</mercury.password>
+        <athena.password>athena_local</athena.password>
         <database.delimiterType>normal</database.delimiterType>
 
     </properties>
