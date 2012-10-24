@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public enum LabEventType {
     PREFLIGHT_CLEANUP ("PreflightCleanup", true, true,
-            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
     PREFLIGHT_PICO_SETUP ("PreflightPicoSetup", true, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
@@ -26,7 +26,7 @@ public enum LabEventType {
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
     COVARIS_LOADED("CovarisLoaded", false, true,
-            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
     POST_SHEARING_TRANSFER_CLEANUP("PostShearingTransferCleanup", false, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
@@ -130,13 +130,13 @@ public enum LabEventType {
             Strandedness.SINGLE_STRANDED, NucleicAcid.DNA),
 
     FLOWCELL_LOADED ("FlowcellLoaded", true, false,
-            MolecularState.STRANDEDNESS.SINGLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+            Strandedness.SINGLE_STRANDED, NucleicAcid.DNA),
 
     SAGE_LOADING ("SageLoading", true, false,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
     SAGE_LOADED ("SageLoaded", true, false,
-            MolecularState.STRANDEDNESS.DOUBLE_STRANDED, MolecularState.DNA_OR_RNA.DNA),
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
     SAGE_UNLOADING ("SageUnloading", true, false,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),

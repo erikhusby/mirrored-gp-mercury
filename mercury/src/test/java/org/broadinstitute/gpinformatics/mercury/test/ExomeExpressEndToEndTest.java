@@ -278,20 +278,20 @@ public class ExomeExpressEndToEndTest {
             }
 
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
-                    workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     mapBarcodeToTube);//.invoke();
 
             LabEventTest.ShearingEntityBuilder shearingEntityBuilder = new LabEventTest.ShearingEntityBuilder(
-                    workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
+                    mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
                     labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
             LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LabEventTest.LibraryConstructionEntityBuilder(
-                    workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
                     shearingEntityBuilder.getShearingPlate(), mapBarcodeToTube.size()).invoke();
 
             LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new LabEventTest.HybridSelectionEntityBuilder(
-                    workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
@@ -329,7 +329,7 @@ public class ExomeExpressEndToEndTest {
 //
 //            }
 
-            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(workflowDescription,
+            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
                     bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(), hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes());
