@@ -17,7 +17,7 @@ import java.util.List;
  * eagerly joining any currently active transaction.
  */
 @Stateful
-@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class ResearchProjectDao extends GenericDao {
 

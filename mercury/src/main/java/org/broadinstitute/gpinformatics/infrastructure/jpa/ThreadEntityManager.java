@@ -23,13 +23,15 @@ public class ThreadEntityManager {
 
     /**
      * Returns an entity manager for the request-scoped extended persistence context, configured for COMMIT flush mode.
+     *
+     * TODO: fix documentation below once it's proven that SUPPORTS works and is the correct setting
      * The transaction attribute of NOT_SUPPORTED helps prevent the persistence context from eagerly joining any
      * currently active transaction, which would make any changes to managed entities eligible for flushing when the
      * transaction commits.
      *
      * @return the persistence context
      */
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public EntityManager getEntityManager() {
         // todo jmt find a way to set this in the configuration
         entityManager.setFlushMode(FlushModeType.COMMIT);

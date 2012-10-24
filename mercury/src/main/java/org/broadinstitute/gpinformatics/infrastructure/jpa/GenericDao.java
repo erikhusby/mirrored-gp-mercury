@@ -21,11 +21,11 @@ import java.util.List;
  * Superclass for Data Access Objects. Makes use of a request-scoped extended persistence context. Scoped session beans
  * can't be parameterized types (JSR-299 3.2), so this DAO can't be type-safe.
  *
- * Transaction is NOT_SUPPORTED so as to apply to all find methods to help avoid the extended persistence context from
- * eagerly joining any currently active transaction.
+ * Transaction is SUPPORTS so as to apply to all find methods to let them see any currently active transaction but not
+ * begin, and therefore commit (along with any changes queued up in the persistence context), their own transaction.
  */
 @Stateful
-@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class GenericDao {
 
@@ -50,7 +50,7 @@ public class GenericDao {
     /**
      * Clears the extended persistence context causing all managed entities to become detached.
      *
-     * Transaction is NOT_SUPPORTED (default).
+     * Transaction is SUPPORTS (default).
      */
     public void clear() {
         getEntityManager().clear();
@@ -103,7 +103,7 @@ public class GenericDao {
     /**
      * Returns an entity manager for the request-scoped extended persistence context.
      *
-     * Transaction is NOT_SUPPORTED (default).
+     * Transaction is SUPPORTS (default).
      *
      * @return the persistence context
      * @see org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager#getEntityManager()

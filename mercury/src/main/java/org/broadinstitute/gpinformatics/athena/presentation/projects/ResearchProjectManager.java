@@ -37,6 +37,13 @@ public class ResearchProjectManager {
     }
 
     public void updateResearchProject(ResearchProject project) {
+        if (!researchProjectDao.getEntityManager().contains(project)) {
+            researchProjectDao.getEntityManager().merge(project);
+        }
         researchProjectDao.saveAll();
+    }
+
+    public void deleteResearchProject(ResearchProject project) {
+        researchProjectDao.remove(project);
     }
 }
