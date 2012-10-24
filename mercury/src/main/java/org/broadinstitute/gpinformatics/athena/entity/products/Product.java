@@ -250,6 +250,14 @@ public class Product implements Serializable {
                 (discontinuedDate == null || discontinuedDate.compareTo(now) > 0);
     }
 
+    public boolean isAvailableNowOrLater() {
+        Date now = Calendar.getInstance().getTime();
+
+        // need this logic in the dao too
+        // available in the future
+        return availabilityDate != null && (isAvailable() || availabilityDate.compareTo(now) > 0);
+    }
+
     public boolean isPriceItemDefault(PriceItem priceItem) {
         if (defaultPriceItem == priceItem) return true;
 
