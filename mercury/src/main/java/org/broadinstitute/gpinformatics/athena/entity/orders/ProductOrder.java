@@ -417,7 +417,7 @@ public class ProductOrder implements Serializable {
         int fpCount = 0;
 
         for (ProductOrderSample productOrderSample : samples ) {
-            if (productOrderSample.isInBspFormat() && productOrderSample.getBspDTO().hasFingerprint()) {
+            if (productOrderSample.isInBspFormat() && productOrderSample.getBspDTO().getHasFingerprint()) {
                 fpCount++;
             }
         }

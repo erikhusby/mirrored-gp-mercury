@@ -134,17 +134,41 @@
                         <p:column headerText="ID">
                             #{sample.sampleName}
                         </p:column>
-
                         <p:column headerText="Participant">
                             #{sample.bspDTO.patientId}
                         </p:column>
-
+                        <p:column headerText="Collaborator Sample">
+                            #{sample.bspDTO.collaboratorsSampleName}
+                        </p:column>
+                        <p:column headerText="Collaborator Participant ID">
+                            #{sample.bspDTO.collaboratorParticipantId}
+                        </p:column>
                         <p:column headerText="Material">
                             #{sample.bspDTO.materialType}
                         </p:column>
-
                         <p:column headerText="Volume">
                             #{sample.bspDTO.volume}
+                        </p:column>
+                        <p:column headerText="Concentration">
+                            #{sample.bspDTO.concentration}
+                        </p:column>
+                        <p:column headerText="Total">
+                            #{sample.bspDTO.total}
+                        </p:column>
+                        <p:column headerText="Sample Type">
+                            #{sample.bspDTO.sampleType}
+                        </p:column>
+                        <p:column headerText="Primary Disease">
+                            #{sample.bspDTO.primaryDisease}
+                        </p:column>
+                        <p:column headerText="Gender">
+                            #{sample.bspDTO.gender}
+                        </p:column>
+                        <p:column headerText="Stock Type">
+                            #{sample.bspDTO.stockType}
+                        </p:column>
+                        <p:column headerText="Fingerprint Available">
+                            #{sample.bspDTO.hasFingerprint}
                         </p:column>
                     </p:dataTable>
                 </div>
