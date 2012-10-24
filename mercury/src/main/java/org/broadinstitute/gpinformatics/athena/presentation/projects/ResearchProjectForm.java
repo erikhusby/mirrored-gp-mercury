@@ -214,9 +214,9 @@ public class ResearchProjectForm extends AbstractJsfBean {
         ResearchProject project = detail.getProject();
         addPeople(project);
 
-        project.setCohorts(sampleCohorts);
-        project.setFunding(fundingSources);
-        project.setIrbs(irbs);
+        project.populateCohorts(sampleCohorts);
+        project.populateFunding(fundingSources);
+        project.populateIrbs(irbs);
 
         try {
             researchProjectDao.getEntityManager().merge(project);

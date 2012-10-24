@@ -335,7 +335,7 @@ public class ResearchProject {
         return getPeople ( RoleType.EXTERNAL );
     }
 
-    public void setFunding(Collection<Funding> fundingSet) {
+    public void populateFunding(Collection<Funding> fundingSet) {
         projectFunding.clear();
         if ((fundingSet != null) && !fundingSet.isEmpty()) {
             for (Funding funding : fundingSet) {
@@ -344,7 +344,7 @@ public class ResearchProject {
         }
     }
 
-    public void setIrbs(Collection<Irb> irbs) {
+    public void populateIrbs(Collection<Irb> irbs) {
         irbNumbers.clear();
         if ((irbs != null) && !irbs.isEmpty()) {
             for (Irb irb : irbs) {
@@ -353,7 +353,7 @@ public class ResearchProject {
         }
     }
 
-    public void setCohorts(Collection<Cohort> cohorts) {
+    public void populateCohorts(Collection<Cohort> cohorts) {
         sampleCohorts.clear();
         if ((cohorts != null) && !cohorts.isEmpty()) {
             for (Cohort cohort: cohorts) {
