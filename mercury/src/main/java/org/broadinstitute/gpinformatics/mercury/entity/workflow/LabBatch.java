@@ -175,8 +175,9 @@ public class LabBatch {
 
         List<CustomField> listOfFields = new ArrayList<CustomField> ();
 
-        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.PROTOCOL.getFieldName()),""));
-        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName()),""));
+        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.PROTOCOL.getFieldName()),"",
+                                         CustomField.SingleFieldType.TEXT));
+        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName()),"", CustomField.SingleFieldType.TEXT));
 
         ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
                                               batchName, "", listOfFields);
@@ -216,14 +217,37 @@ public class LabBatch {
      *
      */
     public enum RequiredSubmissionFields {
-        PROTOCOL("Protocol"),
-        WORK_REQUEST_IDS("Work Request ID(s)"),
+        PROTOCOL("Protocol", true ),
+
+        //Will not have WR ID info in Mercury.  Set to a Blank string
+        WORK_REQUEST_IDS("Work Request ID(s)", true ),
+        POOLING_STATUS("Pooling Status", true ),
+        PRIORITY("priority",false),
+        DUE_DATE("duedate", false),
+
+        //User comments at batch creation (Post Dec 1 addition)
+        IMPORTANT("Important", true),
+
+        // ??
+        NUMBER_OF_CONTROLS("Number of Controls", true),
+        NUMBER_OF_SAMPLES("Number of Samples", true),
+
+//        DO not set this value.  Leave at it's default (for now)
+        LIBRARY_QC_SEQUENCING_REQUIRED("Library QC Sequencing Required?",true),
+
+        //Radio Button custom field
+        PROGRESS_STATUS("Progress Status",true),
+
+        //List of Sample names
+        GSSR_IDS("GSSR ID(s)",true),
         ;
 
         private final String fieldName;
+        private final boolean customField;
 
-        private RequiredSubmissionFields(String fieldNameIn) {
+        private RequiredSubmissionFields ( String fieldNameIn, boolean customFieldInd ) {
             fieldName = fieldNameIn;
+            customField = customFieldInd;
         }
 
         public String getFieldName() {

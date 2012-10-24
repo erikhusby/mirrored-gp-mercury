@@ -175,7 +175,7 @@ public class PlasticToProductOrderTest {
      * the exome workflow, adding an index along the way.
      * At a point in the event graph after the indexing,
      * create a {@link LabEvent} that sets a different
-     * {@link LabEvent#poBusinessKey}, and then apply some
+     * {@link LabEvent#productOrder}, and then apply some
      * events and transfers after that.  The branch
      * below this is considered a dev branch.
      *
