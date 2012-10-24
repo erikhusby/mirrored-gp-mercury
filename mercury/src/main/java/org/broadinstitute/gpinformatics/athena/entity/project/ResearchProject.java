@@ -85,13 +85,13 @@ public class ResearchProject {
     private Set<ProjectPerson> associatedPeople = new HashSet<ProjectPerson>();
 
     // Information about externally managed items
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<ResearchProjectCohort> sampleCohorts = new HashSet<ResearchProjectCohort>();
 
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<ResearchProjectFunding> projectFunding = new HashSet<ResearchProjectFunding>();
 
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
 
 
@@ -342,32 +342,31 @@ public class ResearchProject {
         return getPeople ( RoleType.EXTERNAL );
     }
 
-    public void updateExternalCollaborators(Long[] personIds) {
-        updatePeople(RoleType.EXTERNAL, personIds);
+    public void setFunding(Collection<Funding> fundingSet) {
+        projectFunding.clear();
+        if ((fundingSet != null) && !fundingSet.isEmpty()) {
+            for (Funding funding : fundingSet) {
+                projectFunding.add(new ResearchProjectFunding(this, funding.getFundingTypeAndName()));
+            }
+        }
     }
 
-    public void updatePeople(RoleType role, Long[] personIds) {
-        Set<Long> currentIds = new HashSet<Long>(Arrays.asList(getPeople(role)));
-        Set<Long> newIds = new HashSet<Long>(Arrays.asList(personIds));
-
-        Set<ProjectPerson> peopleToRemove = new HashSet<ProjectPerson>();
-        for (ProjectPerson person : associatedPeople) {
-            if (person.getRole() == role) {
-                if (!newIds.contains(person.getPersonId())) {
-                    peopleToRemove.add(person);
-                }
+    public void setIrbs(Collection<Irb> irbs) {
+        irbNumbers.clear();
+        if ((irbs != null) && !irbs.isEmpty()) {
+            for (Irb irb : irbs) {
+                irbNumbers.add(new ResearchProjectIRB(this, irb.getIrbType(), irb.getName()));
             }
         }
+    }
 
-        Set<ProjectPerson> peopleToAdd = new HashSet<ProjectPerson>();
-        for (Long personId : personIds) {
-            if (!currentIds.contains(personId)) {
-                peopleToAdd.add(new ProjectPerson(this, role, personId));
+    public void setCohorts(Collection<Cohort> cohorts) {
+        sampleCohorts.clear();
+        if ((cohorts != null) && !cohorts.isEmpty()) {
+            for (Cohort cohort: cohorts) {
+                sampleCohorts.add(new ResearchProjectCohort(this, cohort.getCohortId()));
             }
         }
-
-        associatedPeople.removeAll(peopleToRemove);
-        associatedPeople.addAll(peopleToAdd);
     }
 
     public String[] getFundingIds() {
