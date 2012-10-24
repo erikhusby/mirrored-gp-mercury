@@ -27,7 +27,7 @@ import java.util.*;
  * Currently supports the concept associating a product with a set of samples withe a quote.
  * For more detail on the purpose of the ProductOrder, see the user stories listed on
  *
- * @see <a href="	https://confluence.broadinstitute.org/x/kwPGAg</a>
+ * @see <a href="https://confluence.broadinstitute.org/x/kwPGAg</a>
  *      <p/>
  *      Created by IntelliJ IDEA.
  *      User: mccrory
@@ -53,8 +53,9 @@ public class ProductOrder implements Serializable {
 
     private Long modifiedBy;
 
+    /** Unique title for the order */
     @Column(unique = true)
-    private String title;                       // Unique title for the order
+    private String title;
 
     @ManyToOne
     private ResearchProject researchProject;
@@ -64,12 +65,15 @@ public class ProductOrder implements Serializable {
 
     private OrderStatus orderStatus = OrderStatus.Draft;
 
-    private String quoteId;                     // Alphanumeric Id
+    /** Alphanumeric Id */
+    private String quoteId;
 
+    /** Additional comments of the order */
     @Column(length = 2000)
-    private String comments;                    // Additional comments of the order
+    private String comments;
 
-    private String jiraTicketKey;               // Reference to the Jira Ticket created when the order is submitted
+    /** Reference to the Jira Ticket created when the order is submitted */
+    private String jiraTicketKey;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
     private List<ProductOrderSample> samples;
@@ -99,20 +103,13 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * Constructor with mandatory fields
-     *
-     * @param creatorId
-     * @param title
-     * @param samples
-     * @param quoteId
-     * @param product
-     * @param researchProject
+     * Used for test purposes only.
      */
     public ProductOrder(@Nonnull Long creatorId, @Nonnull String title, List<ProductOrderSample> samples, String quoteId,
                         Product product, ResearchProject researchProject) {
-        this.createdBy = creatorId;
+        createdBy = creatorId;
         createdDate = new Date();
-        this.modifiedBy = this.createdBy;
+        modifiedBy = createdBy;
         modifiedDate = createdDate;
         this.title = title;
         this.samples = samples;
@@ -188,28 +185,24 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * setJiraTicketKey allows a user of this class to associate the key for the Jira Ticket which was created when the
-     * related ProductOrder was officially submitted
-     *
-     * @param jiraTicketKeyIn a {@link String} that represents the unique key to the Jira Ticket to which the current
-     *                        Product Order is associated
+     * Used for test purposes only.
      */
-    public void setJiraTicketKey(@Nonnull String jiraTicketKeyIn) {
-        if (jiraTicketKeyIn == null) {
+    public void setJiraTicketKey(@Nonnull String jiraTicketKey) {
+        if (jiraTicketKey == null) {
             throw new NullPointerException("Jira Ticket Key cannot be null");
         }
-        jiraTicketKey = jiraTicketKeyIn;
+        this.jiraTicketKey = jiraTicketKey;
     }
 
     public Date getCreatedDate() {
         return createdDate;
     }
 
-    public void setCreatedDate(Date createdDateIn) {
-        createdDate = createdDateIn;
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
     }
 
-    public Long getCreatedBy() {
+    public long getCreatedBy() {
         return createdBy;
     }
 
@@ -217,16 +210,16 @@ public class ProductOrder implements Serializable {
         return modifiedDate;
     }
 
-    public void setModifiedDate(Date modifiedDateIn) {
-        modifiedDate = modifiedDateIn;
+    public void setModifiedDate(Date modifiedDate) {
+        this.modifiedDate = modifiedDate;
     }
 
-    public Long getModifiedBy() {
+    public long getModifiedBy() {
         return modifiedBy;
     }
 
-    public void setModifiedBy(Long modifiedByIn) {
-        modifiedBy = modifiedByIn;
+    public void setModifiedBy(long modifiedBy) {
+        this.modifiedBy = modifiedBy;
     }
 
     /**
