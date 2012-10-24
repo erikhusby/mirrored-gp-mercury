@@ -193,7 +193,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-95-1" author="athomson">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <dbms type="oracle" />
             <runningAs username="ATHENA" />
         </preConditions>
@@ -242,7 +242,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-95-2" author="athomson">
-    <preConditions>
+    <preConditions onFail="MARK_RAN">
         <dbms type="oracle" />
         <runningAs username="ATHENA" />
     </preConditions>
@@ -348,7 +348,7 @@
     </changeSet>
 
     <changeSet author="athomson" id="GPLIM-95-3">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <dbms type="oracle" />
             <runningAs username="ATHENA" />
         </preConditions>
