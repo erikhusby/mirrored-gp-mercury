@@ -653,7 +653,7 @@
     drop table if exists mercury.workflow_description cascade;
 
     drop table if exists mercury.workflow_description_aud cascade;
-/*
+
     drop table if exists project_available_quotes cascade;
 
     drop table if exists project_available_quotes_aud cascade;
@@ -669,7 +669,7 @@
     drop table if exists project_project_plans cascade;
 
     drop table if exists project_project_plans_aud cascade;
-*/
+
     drop sequence athena.SEQ_BILLABLE_ITEM;
 
     drop sequence athena.SEQ_ORDER_SAMPLE;
@@ -1018,7 +1018,7 @@
     create table mercury.lab_batch (
         lab_batch_id numeric(19,0) not null,
         batch_name varchar(255),
-        is_active numeric(1,0) not null,
+        is_active boolean not null,
         jira_ticket varchar(255),
 --         project_plan numeric(19,0),
         primary key (lab_batch_id),
@@ -1030,7 +1030,7 @@
         rev numeric(19,0) not null,
         revtype numeric(3,0),
         batch_name varchar(255),
-        is_active numeric(1,0),
+        is_active boolean,
         jira_ticket varchar(255),
 --         project_plan numeric(19,0),
         primary key (lab_batch_id, rev)
@@ -1430,7 +1430,7 @@
     create table mercury.project (
         dtype varchar(31) not null,
         project_id numeric(19,0) not null,
-        active numeric(1,0) not null,
+        active boolean not null,
         project_name varchar(255),
         jira_ticket varchar(255),
         platform_owner numeric(19,0),
@@ -1442,7 +1442,7 @@
         project_id numeric(19,0) not null,
         rev numeric(19,0) not null,
         revtype numeric(3,0),
-        active numeric(1,0),
+        active boolean,
         project_name varchar(255),
         jira_ticket varchar(255),
         platform_owner numeric(19,0),
@@ -1550,7 +1550,7 @@
         run_barcode varchar(255),
         run_date timestamp,
         run_name varchar(255),
-        test_run numeric(1,0),
+        test_run boolean,
         operator numeric(19,0),
         primary key (sequencing_run_id)
     );
@@ -1564,7 +1564,7 @@
         run_barcode varchar(255),
         run_date timestamp,
         run_name varchar(255),
-        test_run numeric(1,0),
+        test_run boolean,
         operator numeric(19,0),
         primary key (sequencing_run_id, rev)
     );
@@ -2544,3 +2544,10 @@
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON mercury.rev_info to athena;
 GRANT USAGE on mercury.seq_rev_info to athena;
+
+select execute('alter table '||schemaname||'.'||tablename||' owner to '||schemaname||';')
+from pg_tables where schemaname in ('athena', 'mercury');
+
+select execute('alter table '||schms.nspname||'.'||seqs.relname||' owner to '||schms.nspname||';')
+from pg_class as seqs, pg_namespace as schms
+where schms.nspname in ('athena', 'mercury') and seqs.relkind = 'S' and schms.oid = seqs.relnamespace;
