@@ -242,10 +242,10 @@
     </changeSet>
 
     <changeSet id="GPLIM-95-2" author="athomson">
-    <preConditions onFail="MARK_RAN">
-        <dbms type="oracle" />
-        <runningAs username="ATHENA" />
-    </preConditions>
+    <!--<preConditions onFail="MARK_RAN">-->
+        <!--<dbms type="oracle" />-->
+        <!--<runningAs username="ATHENA" />-->
+    <!--</preConditions>-->
     <sql>
         Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (249,10943,to_timestamp('2012/07/26','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/07/26','yyyy/mm/dd'),'Lung Adenocarcinoma CIP','Lung Adenocarcinoma CIP',0,'Open');
         Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (248,11137,to_timestamp('2012/07/24','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/07/24','yyyy/mm/dd'),'Resistance - Kantoff','Resistance - Kantoff',0,'Open');
@@ -348,10 +348,10 @@
     </changeSet>
 
     <changeSet author="athomson" id="GPLIM-95-3">
-        <preConditions onFail="MARK_RAN">
-            <dbms type="oracle" />
-            <runningAs username="ATHENA" />
-        </preConditions>
+        <!--<preConditions onFail="MARK_RAN">-->
+            <!--<dbms type="oracle" />-->
+            <!--<runningAs username="ATHENA" />-->
+        <!--</preConditions>-->
         <sql>
             drop sequence athena.seq_research_project_index;
             create sequence athena.seq_research_project_index start with 13000 increment by 50;
