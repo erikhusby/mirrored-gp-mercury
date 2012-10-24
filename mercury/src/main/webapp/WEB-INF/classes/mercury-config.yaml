@@ -9,7 +9,7 @@ bsp:
 
       login:    seqsystem
       password: bspbsp
-      host:     gapdev2.broadinstitute.org
+      host:     gapdev.broadinstitute.org
       port:     8080
 
 
@@ -55,8 +55,15 @@ jira:
       password: squid
       host:     vsquid00.broadinstitute.org
       port:     8020
+      urlBase:      http://vsquid00.broadinstitute.org:8020
 
-    # not defining the PROD instance for now since we will not be referencing it yet
+    PROD:
+
+      login:    squid
+      password: squid
+      host:     labopsjira.broadinstitute.org
+#      port:     8020
+      urlBase:      https://labopsjira.broadinstitute.org
 
 
 
@@ -126,6 +133,22 @@ thrift:
 
 
 
+deckMsgs:
+
+    DEV:
+
+        messageStoreDirRoot: /seq/lims/mercury/dev
+#        jmsHost:
+#        jmsPort:
+#        jmsQueue:
+
+    QA:
+
+        messageStoreDirRoot: /seq/lims/mercury/qa
+
+    PROD:
+
+        messageStoreDirRoot: /seq/lims/mercury/prod
 
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
@@ -143,6 +166,7 @@ mercury:
       quote:    QA
       squid:    DEV
       thrift:   QA
+      deckMsgs: DEV
 
 
     TEST:
@@ -154,6 +178,7 @@ mercury:
       quote:    QA
       squid:    TEST
       thrift:   QA
+      deckMsgs: DEV
 
 
     QA:
@@ -165,6 +190,7 @@ mercury:
       quote:    QA
       squid:    QA
       thrift:   QA
+      deckMsgs: QA
 
 
     PROD:
@@ -178,4 +204,5 @@ mercury:
       #quote:    PROD
       squid:    PROD
       thrift:   PROD
+      deckMsgs: PROD
 

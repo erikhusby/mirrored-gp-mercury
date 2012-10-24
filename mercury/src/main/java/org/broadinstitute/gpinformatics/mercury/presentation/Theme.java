@@ -12,7 +12,7 @@ public class Theme {
         String theme;
 
         // default included with primefaces jar; no separate theme jar needed
-        theme = "aristo";
+        theme = "bootstrap";
 
         // other themes that require dependency on theme jar
 //        theme = "casablanca";

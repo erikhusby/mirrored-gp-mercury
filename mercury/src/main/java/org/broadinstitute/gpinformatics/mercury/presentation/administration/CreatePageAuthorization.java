@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -18,7 +19,6 @@ import java.util.List;
 @ManagedBean
 @RequestScoped
 public class CreatePageAuthorization extends AbstractJsfBean {
-
     @Inject private AuthenticationService authSvc;
 
     public String pagePath;
@@ -26,11 +26,9 @@ public class CreatePageAuthorization extends AbstractJsfBean {
 
 
     public String createNewPage() {
-
         String direction = "/administration/page_administration.xhtml";
 
         if(null != pagePath) {
-
             authSvc.addNewPageAuthorization(pagePath, assignedRole);
         }
 

@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+<body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">#{productForm.product == null ? 'Create' : 'Edit'} Product</ui:define>
+
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}"/>
+                <f:event type="preValidate" listener="#{productForm.initEmptyProduct}"/>
+            </f:metadata>
+            <f:event type="preRenderView" listener="#{productForm.initForm}"/>
+        </ui:define>
+
+        <ui:define name="body">
+            <h:form id="form" prependId="false" styleClass="form-horizontal">
+
+                <!-- referencing PriceListCache directly from EL -->
+                <h:outputText value="I think there are #{priceListCache.priceItems.size()} prices in the world" />
+
+                <!-- referencing PriceListCache as injected into backing bean -->
+                <p:dataTable value="#{productDetail.first5PriceItems}" var="priceItem" >
+                    <f:facet name="header">
+                        <h:outputText value="Price Items" />
+                    </f:facet>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Platform"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.platformName}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Category"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.categoryName}"/>
+                    </p:column>
+                    <p:column>
+                        <f:facet name="header">
+                            <h:outputText value="Name"/>
+                        </f:facet>
+                        <h:outputText value="#{priceItem.name}"/>
+                    </p:column>
+                </p:dataTable>
+
+
+                <div class="control-group">
+                    <!-- TODO hook up the productFamily, see below -->
+                    <p:outputLabel for="productFamily" value="Product Family" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:selectOneMenu id="productFamily" value="#{productForm.product.productFamily}" converter="#{productFamilyConverter}" required="true">
+                            <f:selectItem itemLabel="Select a ProductFamily" itemValue="" />
+                            <f:selectItems value="#{productForm.productFamilies}" var="fam" itemLabel="#{fam.displayName}"  itemValue="#{fam}" />
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="productName" value="Product Name" styleClass="control-label" />
+                    <div class="controls">
+                        <p:inputText id="productName" value="#{productForm.product.productName}" size="50" required="true"/>
+                        <p:watermark for="productName" value="Enter the name of the new product"/>
+                        <p:message for="productName"/>
+                    </div>
+                </div>
+
+
+                <div class="control-group">
+                    <p:outputLabel for="description" value="Product Description" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputTextarea id="description" value="#{productForm.product.description}" cols="50" rows="3" required="true"/>
+                        <p:watermark for="description" value="Enter the description of the product"/>
+                        <p:message for="description"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="partNumber" value="Part Number" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="partNumber" value="#{productForm.product.partNumber}" size="50" required="true"/>
+                        <p:watermark for="partNumber" value="Enter the part number of this product"/>
+                        <p:message for="partNumber"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="availabilityDate" value="Availability Date" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:calendar value="#{productForm.product.availabilityDate}" id="availabilityDate" size="50" required="true"/>
+                        <p:watermark for="availabilityDate" value="Click here to select a date"/>
+                        <p:message for="availabilityDate"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="discontinuedDate" value="Discontinued Date" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:calendar value="#{productForm.product.discontinuedDate}" id="discontinuedDate" size="50"/>
+                        <p:watermark for="discontinuedDate" value="Click here to select a date"/>
+                        <p:message for="discontinuedDate"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="deliverables" value="Deliverables" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputTextarea id="deliverables" value="#{productForm.product.deliverables}" cols="50" rows="3"/>
+                        <p:watermark for="deliverables" value="Enter the deliverables for this product"/>
+                        <p:message for="deliverables"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="inputRequirements" value="Input Requirements" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputTextarea id="inputRequirements" value="#{productForm.product.inputRequirements}" cols="50" rows="3"/>
+                        <p:watermark for="inputRequirements" value="Enter the input requirements for this product"/>
+                        <p:message for="inputRequirements"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="expectedCycleTimeHours" value="Expected Cycle Time (Hours)" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="expectedCycleTimeHours" value="#{productForm.expectedCycleTimeHours}" size="50" required="false"/>
+                        <p:watermark for="expectedCycleTimeHours" value="Enter the expected cycle time in hours"/>
+                        <p:message for="expectedCycleTimeHours"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="guaranteedCycleTimeHours" value="Guaranteed Cycle Time (Hours)" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="guaranteedCycleTimeHours" value="#{productForm.guaranteedCycleTimeHours}" size="50" required="false"/>
+                        <p:watermark for="guaranteedCycleTimeHours" value="Enter the guaranteed cycle time in hours"/>
+                        <p:message for="guaranteedCycleTimeHours"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="samplesPerWeek" value="Samples Per Week" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="samplesPerWeek" value="#{productForm.product.samplesPerWeek}" size="50" required="false"/>
+                        <p:watermark for="samplesPerWeek" value="Enter the number of samples"/>
+                        <p:message for="samplesPerWeek"/>
+                    </div>
+                </div>
+
+
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="row-fluid">
+                            <div class="span1">
+                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+</body>
+</html>

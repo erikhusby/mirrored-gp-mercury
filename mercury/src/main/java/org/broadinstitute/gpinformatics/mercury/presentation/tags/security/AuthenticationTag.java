@@ -14,7 +14,6 @@ import java.io.IOException;
  *         Time: 3:03 PM
  */
 public abstract class AuthenticationTag extends SecureTagHandler {
-
     protected AuthenticationTag(TagConfig tagConfigIn) {
         super(tagConfigIn);
     }
@@ -41,12 +40,10 @@ public abstract class AuthenticationTag extends SecureTagHandler {
      * @return
      */
     protected boolean showTagBody() {
-
        if(checkAuthentication()) {
            return true;
        } else {
            return false;
        }
-
     }
 }

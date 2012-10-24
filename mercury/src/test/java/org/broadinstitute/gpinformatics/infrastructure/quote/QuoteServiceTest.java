@@ -20,7 +20,7 @@ public class QuoteServiceTest {
 
     @BeforeClass
     private void setupLargeQuoteAndPriceItem() {
-        quote = new Quote("DNA4JD",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI"))), ApprovalStatus.FUNDED);
+        quote = new Quote("DNA4JD",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI"))), ApprovalStatus.FUNDED);
         priceItem = new PriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","bannan","DNA Sequencing");
     }
 
@@ -36,7 +36,7 @@ public class QuoteServiceTest {
     public void test_get_all_price_items() throws Exception {
         QuoteService service = new QuoteServiceStub();
         PriceList priceList = service.getAllPriceItems();
-        Assert.assertFalse(priceList.getPriceList().isEmpty());
+        Assert.assertFalse(priceList.getPriceItems().isEmpty());
 
     }
 

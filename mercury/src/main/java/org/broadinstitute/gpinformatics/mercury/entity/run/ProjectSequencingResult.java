@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
-
 import java.util.Collection;
 
 public class ProjectSequencingResult implements SequencingResult {
@@ -12,9 +10,9 @@ public class ProjectSequencingResult implements SequencingResult {
      * only pertains to this project.
      * @param project
      */
-    public ProjectSequencingResult(Project project) {
-
-    }
+//    public ProjectSequencingResult(Project project) {
+//
+//    }
 
     /**
      * Gives you run information that is only relevant

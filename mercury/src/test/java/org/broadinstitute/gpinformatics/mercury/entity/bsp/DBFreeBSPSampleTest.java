@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bsp;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -21,10 +22,20 @@ public class DBFreeBSPSampleTest {
         BSPSampleSearchService service = EasyMock.createMock(BSPSampleSearchService.class);
         Collection<String> samplesNames = new ArrayList<String>();
         String sampleName = "Sample1";
-        resultColumns.add(new String[] {"Bill the Cat","2",sampleName,"4","5","6","7","8","9"});
+        resultColumns.add(new String[] {"Bill the Cat","2",sampleName,"4","5","6","7",
+                                        "8","9","10","11","12","13","14","15","16","17","18","19"});
         samplesNames.add(sampleName);
         EasyMock.expect(service.runSampleSearch(
                 (Collection<String>) EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
                 (BSPSampleSearchColumn)EasyMock.anyObject(),
                 (BSPSampleSearchColumn)EasyMock.anyObject(),
                 (BSPSampleSearchColumn)EasyMock.anyObject(),
@@ -37,7 +48,7 @@ public class DBFreeBSPSampleTest {
         ).andReturn(resultColumns).atLeastOnce();
 
         EasyMock.replay(service);
-        BSPStartingSample sample = new BSPStartingSample(sampleName,null,new BSPSampleDataFetcher(service).fetchSingleSampleFromBSP(sampleName));
-        Assert.assertEquals(resultColumns.iterator().next()[0], sample.getPatientId());
+        MercurySample sample = new MercurySample(null, sampleName,/*null,*/new BSPSampleDataFetcher(service).fetchSingleSampleFromBSP(sampleName));
+        Assert.assertEquals(resultColumns.iterator().next()[0], sample.getBspSampleDTO().getPatientId());
     }
 }

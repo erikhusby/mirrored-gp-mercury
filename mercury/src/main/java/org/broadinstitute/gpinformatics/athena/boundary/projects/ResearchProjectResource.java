@@ -1,133 +1,96 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDAO;
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjects;
+import org.jetbrains.annotations.NotNull;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.regex.Pattern;
+import java.util.List;
 
 /**
- * Restful webservice to list the research project info.
- * Used by Squid, PMBridge reports, perhaps BSP and Quotes.
- * <p/>
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 4/17/12
- * Time: 5:16 PM
+ * Restful webservice to
+ * list the athena research project info.
  */
 @Path("/researchProjects")
 @Stateless
 public class ResearchProjectResource {
 
     @Inject
-    private ResearchProjectDAO researchProjectDAO;
+    private ResearchProjectDao researchProjectDao;
 
     @GET
-    @Path("{researchProjectId}")
+    @Path("{researchProjectTitle}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public ResearchProject findResearchProjectByTitle(@PathParam("researchProjectTitle") String researchProjectTitle) {
+        return findRPByTitle(researchProjectTitle);
+    }
+
+    @GET
+    @Path("{researchProjectTitle}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public ResearchProject findResearchProjectById(@PathParam("researchProjectId") String researchProjectId) {
         return findRPById(researchProjectId);
-
-
     }
 
-    private ResearchProject findRPById(final String researchProjectId) {
-        // Check for content
-        if (StringUtils.isBlank(researchProjectId)) {
-            throw new RuntimeException("ResearchProject Id is invalid.");
-        }
-
-        // check is it a number
-        boolean isNumeric = Pattern.matches("[\\d]+", researchProjectId);
-        if (!isNumeric) {
-            throw new RuntimeException("ResearchProject Id is not numeric.");
-        }
-        Long researchProjectNum = Long.parseLong(researchProjectId);
-
+    /**
+     * Get the research project by the project title.
+     *
+     * @param researchProjectTitle The name given to the research project being looked up
+     *
+     * @return null if not found, otherwise the matching research project
+     */
+    private ResearchProject findRPByTitle(@NotNull String researchProjectTitle) {
         // Try to find research project by number
-        ResearchProject researchProject = researchProjectDAO.findById(researchProjectNum);
-
-        if (researchProject == null) {
-            throw new RuntimeException("Could not retrieve research project with id " + researchProjectId);
-        }
-        return researchProject;
+        return researchProjectDao.findByTitle(researchProjectTitle);
     }
 
-
-    // For testing in a browser - dev only !!
-    @GET
-    @Path("{researchProjectId}")
-    @Produces({MediaType.TEXT_HTML})
-    public ResearchProject findResearchProjectByIdHtml(@PathParam("researchProjectId") String researchProjectId) {
-
-        // Check for content
-        return findRPById(researchProjectId);
+    /**
+     * Get the research project by the id (jira ticket key). If not found, returns null.
+     *
+     * @param jiraTicketKey The jira ticket key for the research project.
+     *
+     * @return null if not found, otherwise the matching research project
+     */
+    private ResearchProject findRPById(@NotNull String jiraTicketKey) {
+        return researchProjectDao.findByJiraTicketKey(jiraTicketKey);
     }
-
 
     /**
      * Method to GET the list of research projects. Optionally filter this by the user who created them if the creator
      * param is supplied.
      *
-     * @param creator
-     * @return
+     * @param creatorId The createdBy to look up, If null, gets all research projects
+     *
+     * @return The research projects that match
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ResearchProjects findAllResearchProjects(@MatrixParam("creator") String creator) {
+    public List<ResearchProject> findAllResearchProjectsByCreator(@MatrixParam("creator") Long creatorId) {
 
-        ArrayList<String> results = new ArrayList<String>();
-        ArrayList<ResearchProject> foundProjects = null;
-        boolean creatorSupplied = (StringUtils.isNotBlank(creator) ? true : false);
+        List<ResearchProject> foundProjects;
 
-        if (creatorSupplied) {
-            foundProjects = researchProjectDAO.findResearchProjectsByOwner(creator);
+        if ((creatorId != null) && (creatorId > 0)) {
+            foundProjects = researchProjectDao.findResearchProjectsByOwner(creatorId);
         } else {
-            foundProjects = researchProjectDAO.findAllResearchProjects();
+            foundProjects = researchProjectDao.findAllResearchProjects();
         }
 
-//        ResearchProjects researchProjects = null;
-//        if ( foundProjects != null && foundProjects.size() > 0 ) {
-//            StringBuilder msgBuffer = new StringBuilder("Could not retrieve any research projects");
-//            if ( creatorSupplied) {
-//                msgBuffer.append( " for user " + creator);
-//            }
-//            throw new RuntimeException(msgBuffer.toString());
-//        }
-
-//        //Get all the sequencing experiments from "sequid" for this user.
-//        List<ExperimentRequestSummary> expRequestSummaries = sequencingService.getRequestSummariesByCreator(person);
-//
-//        //Get all the gap experiments from GAP for this user.
-//        List<ExperimentRequestSummary> expRequestSummaries = sequencingService.getRequestSummariesByCreator(person);
-//
-//        //Get all of the research project from
-//
-//        //For each summary get the corresponding research project.
-
-        return new ResearchProjects(foundProjects);
+        return foundProjects;
 
     }
 
-
-//    public Collection<ResearchProject> findResearchProjects(Person person) {
-//        return null;  //To change body of implemented methods use File | Settings | File Templates.
-//    }
-//
-//
-//    @Override
-//    public ResearchProject createResearchProject(Person creator, Name title, ResearchProjectId id, String synopsis) {
-//
-//        ResearchProject researchProject = new ResearchProject( creator, title, id, synopsis  );
-//
-//        return researchProject;
-//    }
-
-
+    /**
+     * Method to GET the list of research projects. Optionally filter this by the user who created them if the creator
+     * param is supplied.
+     *
+     * @return The research projects that match
+     */
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public List<ResearchProject> findAllResearchProjects() {
+        return researchProjectDao.findAllResearchProjects();
+    }
 }

@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class BettaLimsMessageFactory {
         return row + columnString;
     }
 
-    public PlateTransferEventType buildRackToPlate(String eventType, String rackBarcode, List<String> tubeBarcodes,
+    public PlateTransferEventType buildRackToPlate(String eventType, String rackBarcode, Collection<String> tubeBarcodes,
             String plateBarcode) {
         try {
             PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
@@ -97,15 +98,22 @@ public class BettaLimsMessageFactory {
         }
     }
 
-    public ReceptaclePlateTransferEvent buildTubeToPlate(String eventType, String sourceTubeBarcode, String targetPlateBarcode) {
+    public ReceptaclePlateTransferEvent buildTubeToPlate(String eventType, String sourceTubeBarcode,
+            String targetPlateBarcode, String physType, String section, String receptacleType) {
         try {
             ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
             setStationEventData(eventType, receptaclePlateTransferEvent);
 
             ReceptacleType sourceReceptacle = new ReceptacleType();
             sourceReceptacle.setBarcode(sourceTubeBarcode);
+            sourceReceptacle.setReceptacleType(receptacleType);
             receptaclePlateTransferEvent.setSourceReceptacle(sourceReceptacle);
-            receptaclePlateTransferEvent.setDestinationPlate(buildPlate(targetPlateBarcode));
+
+            PlateType plate = new PlateType();
+            plate.setBarcode(targetPlateBarcode);
+            plate.setPhysType(physType);
+            plate.setSection(section);
+            receptaclePlateTransferEvent.setDestinationPlate(plate);
 
             return receptaclePlateTransferEvent;
         } catch (DatatypeConfigurationException e) {
@@ -307,7 +315,7 @@ public class BettaLimsMessageFactory {
         return rack;
     }
 
-    private PositionMapType buildPositionMap(String rackBarcode, List<String> tubeBarcodes) {
+    private PositionMapType buildPositionMap(String rackBarcode, Collection<String> tubeBarcodes) {
         PositionMapType positionMap = new PositionMapType();
         int rackPosition = 1;
         for (String barcode : tubeBarcodes) {

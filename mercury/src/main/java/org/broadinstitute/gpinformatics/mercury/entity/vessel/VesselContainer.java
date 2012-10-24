@@ -8,11 +8,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ProjectPlan;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Starter;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
 
@@ -49,7 +47,7 @@ public class VesselContainer<T extends LabVessel> {
     * striptube holds tubes, tubes can't be removed, don't have barcodes. */
     @ManyToMany(targetEntity = LabVessel.class, cascade = CascadeType.PERSIST)
     // have to specify name, generated name is too long for Oracle
-    @JoinTable(name = "lv_map_position_to_vessel")
+    @JoinTable(schema = "mercury", name = "lv_map_position_to_vessel")
     @MapKeyEnumerated(EnumType.STRING)
     // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")
@@ -84,14 +82,14 @@ public class VesselContainer<T extends LabVessel> {
         return (T) this.mapPositionToVessel.get(position);
     }
 
-    private static void applyProjectPlanOverrideIfPresent(LabEvent event,
-            Collection<SampleInstance> sampleInstances) {
-        if (event.getProjectPlanOverride() != null) {
-            for (SampleInstance sampleInstance : sampleInstances) {
-                sampleInstance.resetProjectPlan(event.getProjectPlanOverride());
-            }
-        }
-    }
+//    private static void applyProjectPlanOverrideIfPresent(LabEvent event,
+//            Collection<SampleInstance> sampleInstances) {
+//        if (event.getProjectPlanOverride() != null) {
+//            for (SampleInstance sampleInstance : sampleInstances) {
+//                sampleInstance.resetProjectPlan(event.getProjectPlanOverride());
+//            }
+//        }
+//    }
 
     public Set<LabEvent> getTransfersFrom() {
         Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
@@ -142,17 +140,17 @@ public class VesselContainer<T extends LabVessel> {
                     labBatchesAtHopCount.get(hopCount).addAll(labBatches);
                 }
                 for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
-                    for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-                        for (Starter starter : projectPlan.getStarters()) {
-                            Collection<LabBatch> labBatchesForStarter = starter.getLabBatches();
-                            if (!labBatchesForStarter.isEmpty()) {
-                                if (!labBatchesAtHopCount.containsKey(STARTER_INDEX)) {
-                                    labBatchesAtHopCount.put(STARTER_INDEX,new HashSet<LabBatch>());
-                                }
-                                labBatchesAtHopCount.get(STARTER_INDEX).addAll(labBatchesForStarter);
-                            }
-                        }
-                    }
+//                    for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+//                        for (Starter starter : projectPlan.getStarters()) {
+//                            Collection<LabBatch> labBatchesForStarter = starter.getLabBatches();
+//                            if (!labBatchesForStarter.isEmpty()) {
+//                                if (!labBatchesAtHopCount.containsKey(STARTER_INDEX)) {
+//                                    labBatchesAtHopCount.put(STARTER_INDEX,new HashSet<LabBatch>());
+//                                }
+//                                labBatchesAtHopCount.get(STARTER_INDEX).addAll(labBatchesForStarter);
+//                            }
+//                        }
+//                    }
                 }
             }
             return TraversalControl.ContinueTraversing;
@@ -173,25 +171,25 @@ public class VesselContainer<T extends LabVessel> {
      * Traverses transfers to find the single sample libraries.
      */
     static class SingleSampleLibraryCriteria implements TransferTraverserCriteria {
-        private final Map<StartingSample,Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<StartingSample, Collection<LabVessel>>();
+        private final Map<MercurySample, Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<MercurySample, Collection<LabVessel>>();
 
         @Override
         public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labVessel != null) {
                 for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
-                    StartingSample startingSample = sampleInstance.getStartingSample();
-                    if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
-                        if (!singleSampleLibrariesForInstance.containsKey(startingSample)) {
-                            singleSampleLibrariesForInstance.put(startingSample,new HashSet<LabVessel>());
-                        }
-                        singleSampleLibrariesForInstance.get(startingSample).add(labVessel);
-                    }
+                    MercurySample startingSample = sampleInstance.getStartingSample();
+//                    if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
+//                        if (!singleSampleLibrariesForInstance.containsKey(startingSample)) {
+//                            singleSampleLibrariesForInstance.put(startingSample,new HashSet<LabVessel>());
+//                        }
+//                        singleSampleLibrariesForInstance.get(startingSample).add(labVessel);
+//                    }
                 }
             }
             return TraversalControl.ContinueTraversing;
         }
 
-        public Map<StartingSample,Collection<LabVessel>> getSingleSampleLibraries() {
+        public Map<MercurySample,Collection<LabVessel>> getSingleSampleLibraries() {
             return singleSampleLibrariesForInstance;
         }
     }
@@ -209,7 +207,7 @@ public class VesselContainer<T extends LabVessel> {
      * @param position
      * @return
      */
-    public Map<StartingSample,Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
+    public Map<MercurySample,Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
         SingleSampleLibraryCriteria singleSampleLibraryCriteria = new SingleSampleLibraryCriteria();
 
         evaluateCriteria(position, singleSampleLibraryCriteria, TraversalDirection.Ancestors, null, 0);
@@ -238,7 +236,7 @@ public class VesselContainer<T extends LabVessel> {
                     reagents.addAll(labVessel.getReagentContents());
                 }
                 if (labEvent != null) {
-                    applyProjectPlanOverrideIfPresent(labEvent, sampleInstances);
+//                    applyProjectPlanOverrideIfPresent(labEvent, sampleInstances);
                 }
             }
             if(labEvent != null && this.labEvent == null) {
@@ -259,7 +257,8 @@ public class VesselContainer<T extends LabVessel> {
                     for (SampleInstance sampleInstance : sampleInstances) {
                         MolecularState molecularState = sampleInstance.getMolecularState();
                         if(molecularState == null) {
-                            LabEventType labEventType = ((GenericLabEvent) labEvent).getLabEventType();
+                            GenericLabEvent genericLabEvent = OrmUtil.proxySafeCast(labEvent, GenericLabEvent.class) ;
+                            LabEventType labEventType = genericLabEvent.getLabEventType();
                             molecularState = new MolecularState(labEventType.getNucleicAcidType(), labEventType.getTargetStrand());
                         }
                         sampleInstance.setMolecularState(molecularState);
@@ -393,7 +392,7 @@ public class VesselContainer<T extends LabVessel> {
                         sampleInstances.addAll(OrmUtil.proxySafeCast(sourceLabVessel,
                                 VesselContainerEmbedder.class).getVesselContainer().getSampleInstances());
                         // todo arz fix this, probably by using LabBatch properly
-                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
+//                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                     }
                 }
             }

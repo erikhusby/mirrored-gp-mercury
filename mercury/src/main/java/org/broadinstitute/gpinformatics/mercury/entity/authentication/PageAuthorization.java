@@ -57,6 +57,10 @@ public class PageAuthorization {
         this.roleAccess.add(newRoleIn);
     }
 
+    public void removeRoleAccess(AuthorizedRole oldRole) {
+        this.roleAccess.remove(oldRole);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)

@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
@@ -10,8 +9,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -28,18 +26,9 @@ import java.util.Set;
 /**
  * A rack of tubes
  */
-@NamedQueries({
-        @NamedQuery(
-                name = "RackOfTubes.fetchByDigest",
-                query = "select r from RackOfTubes r where digest = :digest"
-        ),
-        @NamedQuery(
-                name = "RackOfTubes.fetchByLabel",
-                query = "select r from RackOfTubes r where label = :label"
-        )
-})
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class RackOfTubes extends LabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
 
     public enum RackType {
@@ -147,11 +136,6 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
     }
 
     @Override
-    public Collection<Project> getAllProjects() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public StatusNote getLatestNote() {
         throw new RuntimeException("I haven't been written yet.");
     }
@@ -197,6 +181,13 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
 
     public void setVesselContainer(VesselContainer<TwoDBarcodedTube> vesselContainer) {
         this.vesselContainer = vesselContainer;
+    }
+
+    public void addTube(TwoDBarcodedTube tube,VesselPosition wellLocation) {
+        if (vesselContainer.getVesselAtPosition(wellLocation) != null) {
+            throw new RuntimeException(vesselContainer.getVesselAtPosition(wellLocation) + " is already in position " + wellLocation + " on rack " + getLabel());
+        }
+        vesselContainer.addContainedVessel(tube,wellLocation);
     }
 
 /*

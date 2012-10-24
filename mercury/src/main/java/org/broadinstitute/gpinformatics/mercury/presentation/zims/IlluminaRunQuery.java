@@ -29,8 +29,7 @@ import java.util.Map;
  */
 @Named
 @ConversationScoped
-public class IlluminaRunQuery extends AbstractJsfBean {
-
+public class IlluminaRunQuery extends AbstractJsfBean implements Serializable {
     @Inject
     private IlluminaRunResource illuminaRunResource;
 
@@ -190,7 +189,6 @@ public class IlluminaRunQuery extends AbstractJsfBean {
     }
 
     public static class ColumnModel implements Serializable {
-
         private String header;
         private String property;
         private String expression;

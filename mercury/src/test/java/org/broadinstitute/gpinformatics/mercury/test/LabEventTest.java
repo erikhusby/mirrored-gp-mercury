@@ -10,29 +10,22 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.WorkQueueDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPStartingSample;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProject;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
-import org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BSPSampleAuthorityTwoDTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -43,9 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -54,7 +45,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -119,11 +109,11 @@ public class LabEventTest {
 //        Controller.startCPURecording(true);
 
         // Project and workflow
-        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
+//        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("HS", null,
                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         workflowDescription.initFromFile("HybridSelectionV2.bpmn");
-        BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
+//        BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
 
         // Bucket entry has Sample, Vessel and ProductOrder.  ProductOrder has workflow.
 
@@ -132,7 +122,8 @@ public class LabEventTest {
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + rackPosition;
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(null, bspStock));
             mapBarcodeToTube.put(barcode,bspAliquot);
 
         }
@@ -141,7 +132,7 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
+        LabEventHandler labEventHandler = new LabEventHandler();
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(workflowDescription,
                 bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
@@ -198,10 +189,10 @@ public class LabEventTest {
     public void testWholeGenomeShotgun() {
 //        Controller.startCPURecording(true);
 
-        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
+//        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
         workflowDescription.initFromFile("WholeGenomeShotgun.bpmn");
-        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
+//        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
@@ -209,16 +200,15 @@ public class LabEventTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(null, bspStock));
             mapBarcodeToTube.put(barcode,bspAliquot);
-
-
         }
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
+        LabEventHandler labEventHandler = new LabEventHandler();
 
         // todo jmt fix preflight
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(workflowDescription,
@@ -303,9 +293,9 @@ public class LabEventTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void testFluidigm() {
-        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
+//        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
+//        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
@@ -313,14 +303,15 @@ public class LabEventTest {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            BSPSampleAuthorityTwoDTube bspAliquot = new BSPSampleAuthorityTwoDTube(new BSPStartingSample(bspStock + ".aliquot", projectPlan, null));
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(null, bspStock));
             mapBarcodeToTube.put(barcode,bspAliquot);
         }
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler(createMockWorkQueueDAO());
+        LabEventHandler labEventHandler = new LabEventHandler();
         BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke();
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageFactory, labEventFactory,
                 labEventHandler, mapBarcodeToTube, buildIndexPlate.getIndexPlate());
@@ -699,8 +690,8 @@ public class LabEventTest {
                     mapBarcodeToTube.size(), "Wrong number of sample instances");
             Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
-            Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleName(),
-                    mapBarcodeToTube.values().iterator().next().getSampleInstances().iterator().next().getStartingSample().getSampleName(), "Wrong sample");
+            Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleKey(),
+                    mapBarcodeToTube.values().iterator().next().getSampleInstances().iterator().next().getStartingSample().getSampleKey(), "Wrong sample");
 
             // ShearingQC
             validateWorkflow(workflowDescription, "ShearingQC", shearingCleanupPlate);
@@ -906,8 +897,8 @@ public class LabEventTest {
                     shearingPlate.getSampleInstances().size(), "Wrong number of sample instances");
             Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
-            Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleName(),
-                    shearingPlate.getSampleInstances().iterator().next().getStartingSample().getSampleName(), "Wrong sample");
+            Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleKey(),
+                    shearingPlate.getSampleInstances().iterator().next().getStartingSample().getSampleKey(), "Wrong sample");
             return this;
         }
     }
@@ -1181,8 +1172,8 @@ public class LabEventTest {
                     pondRegRack.getSampleInstances().size(), "Wrong number of sample instances");
             Set<String> sampleNames = new HashSet<String>();
             for (SampleInstance preSelPoolSampleInstance : preSelPoolSampleInstances) {
-                if(!sampleNames.add(preSelPoolSampleInstance.getStartingSample().getSampleName())) {
-                    Assert.fail("Duplicate sample " + preSelPoolSampleInstance.getStartingSample().getSampleName());
+                if(!sampleNames.add(preSelPoolSampleInstance.getStartingSample().getSampleKey())) {
+                    Assert.fail("Duplicate sample " + preSelPoolSampleInstance.getStartingSample().getSampleKey());
                 }
             }
             Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
@@ -1252,7 +1243,7 @@ public class LabEventTest {
 
     public static TwoDBarcodedTube buildBaitTube(String tubeBarcode) {
         TwoDBarcodedTube baitTube = new TwoDBarcodedTube(tubeBarcode);
-        baitTube.addReagent(new GenericReagent("BaitSet", "xyz", null));
+        baitTube.addReagent(new GenericReagent("BaitSet", "xyz"));
         return baitTube;
     }
 
@@ -1386,9 +1377,9 @@ public class LabEventTest {
             baitTubeBarcode = "Bait" + testPrefix;
             String baitSetupBarcode = "BaitSetup" + testPrefix;
             baitSetupJaxb = bettaLimsMessageFactory.buildTubeToPlate("BaitSetup", baitTubeBarcode,
-                    baitSetupBarcode);
+                    baitSetupBarcode, LabEventFactory.PHYS_TYPE_EPPENDORF_96, LabEventFactory.SECTION_ALL_96, "tube");
             BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
-            bettaLIMSMessage3.setReceptaclePlateTransferEvent(baitSetupJaxb);
+            bettaLIMSMessage3.getReceptaclePlateTransferEvent().add(baitSetupJaxb);
             messageList.add(bettaLIMSMessage3);
             bettaLimsMessageFactory.advanceTime();
 
@@ -1686,16 +1677,5 @@ public class LabEventTest {
 
             return this;
         }
-    }
-
-    private WorkQueueDAO createMockWorkQueueDAO() {
-        WorkQueueDAO workQueueDAO = EasyMock.createMock(WorkQueueDAO.class);
-        EasyMock.expect(workQueueDAO.getPendingQueues(
-                (LabVessel)EasyMock.anyObject(),
-                (WorkflowDescription)EasyMock.anyObject()
-        )).andReturn(Collections.<LabWorkQueue>emptySet()).anyTimes();
-
-        EasyMock.replay(workQueueDAO);
-        return workQueueDAO;
     }
 }

@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
+//import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
@@ -10,6 +10,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 import java.util.Collection;
 import java.util.Set;
 
@@ -17,14 +18,9 @@ import java.util.Set;
  * Represents a strip tube, several tubes molded into a single piece of plasticware, e.g. 8 tubes in the same formation
  * as a rack column.  The Strip tube has a barcode, but each constituent tube does not.
  */
-@NamedQueries({
-        @NamedQuery(
-                name = "StripTube.findByBarcode",
-                query = "select s from StripTube s where label = :barcode"
-        )
-})
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class StripTube extends LabVessel implements VesselContainerEmbedder<StripTubeWell> {
 
     protected StripTube() {
@@ -91,11 +87,6 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
 
     @Override
     public Collection<LabEvent> getEvents() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Collection<Project> getAllProjects() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

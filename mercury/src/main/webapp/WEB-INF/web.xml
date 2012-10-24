@@ -16,8 +16,13 @@
     </context-param>
 
     <context-param>
+        <param-name>javax.faces.DATETIMECONVERTER_DEFAULT_TIMEZONE_IS_SYSTEM_TIMEZONE</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
+    <context-param>
         <param-name>primefaces.THEME</param-name>
-        <param-value>#{theme.theme}</param-value>
+        <param-value>bootstrap</param-value>
     </context-param>
 
     <servlet>
@@ -84,6 +89,7 @@
 
     <!-- JAX-WS -->
 
+<!--
     <servlet>
         <servlet-name>PASSService</servlet-name>
         <servlet-class>org.broadinstitute.gpinformatics.mercury.boundary.pass.PassServiceImpl</servlet-class>
@@ -101,6 +107,7 @@
         <servlet-name>SampleKitService</servlet-name>
         <url-pattern>/SampleKit</url-pattern>
     </servlet-mapping>
+-->
 
     <!-- JAX-RS -->
 
@@ -154,20 +161,8 @@
             <url-pattern>/dummy-url/*</url-pattern>
         </web-resource-collection>
         <auth-constraint>
-            <role-name>Mercury-Admins</role-name>
-            <role-name>Mercury-LabUsers</role-name>
-            <role-name>Mercury-LabManagers</role-name>
-            <role-name>Mercury-ProjectManagers</role-name>
-            <role-name>Mercury-Developers</role-name>
-            <role-name>PMBAdmins</role-name>
-            <role-name>PMBUsers</role-name>
         </auth-constraint>
     </security-constraint>
-
-<!--    <login-config>
-        <auth-method>BASIC</auth-method>
-        <realm-name>other</realm-name>
-    </login-config>-->
 
     <security-role>
         <role-name>Mercury-Admins</role-name>
@@ -184,18 +179,11 @@
     <security-role>
         <role-name>Mercury-Developers</role-name>
     </security-role>
-    <security-role>
-        <role-name>PMBAdmins</role-name>
-    </security-role>
-    <security-role>
-        <role-name>PMBUsers</role-name>
-    </security-role>
-
 
     <welcome-file-list>
-        <!--<welcome-file>/summary/summary.xhtml</welcome-file>-->
         <welcome-file>/index.xhtml</welcome-file>
     </welcome-file-list>
+
     <login-config>
         <auth-method>FORM</auth-method>
         <realm-name>crowd_custom_realm</realm-name>
@@ -222,19 +210,16 @@
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
-    <!--<filter-mapping>-->
-        <!--<filter-name>AuthorizationFilter</filter-name>-->
-        <!--<url-pattern>*.xhtml</url-pattern>-->
-        <!--<dispatcher>REQUEST</dispatcher>-->
-    <!--</filter-mapping>-->
+    <session-config>
+		<session-timeout>480</session-timeout>
+	</session-config>
 
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>Dummy</web-resource-name>
-            <url-pattern>/Dummy/*</url-pattern>
-        </web-resource-collection>
-        <auth-constraint>
-        </auth-constraint>
-    </security-constraint>
-
+    <error-page>
+        <error-code>500</error-code>
+        <location>/error.xhtml</location>
+    </error-page>
+    <error-page>
+       <exception-type>java.lang.Exception</exception-type>
+       <location>/error.xhtml</location>
+    </error-page>
 </web-app>

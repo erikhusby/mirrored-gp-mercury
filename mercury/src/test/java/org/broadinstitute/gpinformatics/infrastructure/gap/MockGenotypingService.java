@@ -1,10 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.gap;
 
-import org.broadinstitute.gpinformatics.athena.entity.experiments.ExperimentRequestSummary;
-import org.broadinstitute.gpinformatics.athena.entity.experiments.gap.GapExperimentRequest;
-import org.broadinstitute.gpinformatics.athena.entity.person.Person;
-import org.broadinstitute.gpinformatics.infrastructure.SubmissionException;
-import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.infrastructure.experiments.ExperimentRequestSummary;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.enterprise.inject.Alternative;
 import java.util.List;
@@ -20,27 +17,6 @@ public class MockGenotypingService implements GenotypingService {
 
 
     public MockGenotypingService() {
-    }
-
-    @Override
-    public GapExperimentRequest getPlatformRequest(final ExperimentRequestSummary experimentRequestSummary) {
-        //TODO
-        throw new IllegalStateException("Not Yet Implemented");
-        //return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public GapExperimentRequest saveExperimentRequest(final Person programMgr, final GapExperimentRequest gapExperimentRequest) throws ValidationException, SubmissionException {
-        //TODO
-        throw new IllegalStateException("Not Yet Implemented");
-        //return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public GapExperimentRequest submitExperimentRequest(final Person programMgr, final GapExperimentRequest gapExperimentRequest) throws ValidationException, SubmissionException {
-        //TODO
-        throw new IllegalStateException("Not Yet Implemented");
-        //return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
@@ -79,23 +55,7 @@ public class MockGenotypingService implements GenotypingService {
         return ObjectMarshaller.unmarshall(Platforms.class, PLATFORM_XML_SOURCE);
     }
 
-    //    protected Client getJerseyClient() {
-//
-//        DefaultClientConfig clientConfig = new DefaultClientConfig();
-//        customizeConfig(clientConfig);
-//
-//        Client mockClient = EasyMock.createMock(  Client.class ).create( clientConfig );
-//        WebResource mockWebResource = EasyMock.createMock(WebResource.class);
-//        EasyMock.reset(mockClient);
-//        EasyMock.reset(mockWebResource);
-//        EasyMock.expect( mockClient.resource((String) EasyMock.anyObject()) ).andReturn( (WebResource) EasyMock.anyObject() ).atLeastOnce();
-//
-//        EasyMock.replay(mockClient);
-//
-//        customizeClient(mockClient);
-//
-//        return mockClient;
-//    }
+
 
 
 }

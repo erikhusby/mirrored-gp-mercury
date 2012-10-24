@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -12,11 +12,13 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.util.Collection;
 import java.util.Comparator;
@@ -61,7 +63,7 @@ import java.util.Set;
     // deltas in an aggregation in zamboni
 @Entity
 @Audited
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
 public abstract class LabEvent {
 
     public static final Comparator<GenericLabEvent> byEventDate = new Comparator<GenericLabEvent>() {
@@ -76,7 +78,7 @@ public abstract class LabEvent {
     };
 
     @Id
-    @SequenceGenerator(name = "SEQ_LAB_EVENT", sequenceName = "SEQ_LAB_EVENT")
+    @SequenceGenerator(name = "SEQ_LAB_EVENT", schema = "mercury", sequenceName = "SEQ_LAB_EVENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_EVENT")
     private Long labEventId;
 
@@ -90,6 +92,7 @@ public abstract class LabEvent {
     private Long disambiguator = 0L;
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury")
     private Set<Reagent> reagents = new HashSet<Reagent>();
 
     // todo jmt a single transfer superclass that permits all section, position, vessel combinations
@@ -113,9 +116,12 @@ public abstract class LabEvent {
 
     private String quoteServerBatchId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private BasicProjectPlan projectPlanOverride;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    private BasicProjectPlan projectPlanOverride;
 
+    @Transient
+    // transient because ARZ hasn't figured out the tests for this.  work in progress.
+    private ProductOrderId productOrder;
 
     public abstract LabEventName getEventName();
 
@@ -298,20 +304,20 @@ public abstract class LabEvent {
      * the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan} referenced by {@link org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample#getRootProjectPlan()}
      * @param projectPlan
      */
-    public void setProjectPlanOverride(BasicProjectPlan projectPlan) {
-        if (projectPlan == null) {
-            throw new RuntimeException("projectPlan override cannot be null.");
-        }
-        this.projectPlanOverride = projectPlan;
-    }
+//    public void setProjectPlanOverride(BasicProjectPlan projectPlan) {
+//        if (projectPlan == null) {
+//            throw new RuntimeException("projectPlan override cannot be null.");
+//        }
+//        this.projectPlanOverride = projectPlan;
+//    }
 
     /**
      * See {@link #setProjectPlanOverride(org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan)}.
      * @return
      */
-    public BasicProjectPlan getProjectPlanOverride() {
-        return projectPlanOverride;
-    }
+//    public BasicProjectPlan getProjectPlanOverride() {
+//        return projectPlanOverride;
+//    }
 
     public void setEventLocation(String eventLocation) {
         this.eventLocation = eventLocation;
@@ -367,5 +373,26 @@ todo jmt adder methods
      */
     public void setIsSingleSampleLibrary(boolean isSingleSampleLibrary) {
 
+    }
+
+    /**
+     * When vessels are placed in a bucket, an association is made
+     * between the vessel and the PO that is driving the work.  When
+     * vessels are pulled out of a bucket, we record an event.  That
+     * event associates zero or one {@link ProductOrderId product orders}.
+     *
+     * This method is the way to mark the transfer graph such that all
+     * downstream nodes are considered to be "for" the product order
+     * returned here.
+     *
+     * Most events will return null.
+     * @return
+     */
+    public ProductOrderId getProductOrderId() {
+        return productOrder;
+    }
+
+    public void setProductOrderId(ProductOrderId productOrder) {
+        this.productOrder = productOrder;
     }
 }

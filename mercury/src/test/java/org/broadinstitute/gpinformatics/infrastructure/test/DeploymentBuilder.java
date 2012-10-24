@@ -33,12 +33,21 @@ public class DeploymentBuilder {
      * @return
      */
     public static WebArchive buildMercuryWar(Deployment deployment) {
+        return buildMercuryWar(deployment, "dev");
+    }
+
+    /**
+     * Allows caller to specify environments for remote systems, and for the database
+     * @param deployment maps to settings in mercury-config.yaml
+     * @param dataSourceEnvironment which datasources to use: dev, qa or prod
+     * @return war
+     */
+    public static WebArchive buildMercuryWar(Deployment deployment, String dataSourceEnvironment) {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, MERCURY_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
-                .addAsWebInfResource(new File("src/test/resources/mercury-dev-ds.xml"))
-                // todo jmt switch this back to dev
-                .addAsWebInfResource(new File("src/test/resources/squid-prod-ds.xml"))
+                .addAsWebInfResource(new File("src/test/resources/mercury-" + dataSourceEnvironment + "-ds.xml"))
+                .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
                 // TODO PMB
                 // TODO MLC this misses infrastucture and athena

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.labevent;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;

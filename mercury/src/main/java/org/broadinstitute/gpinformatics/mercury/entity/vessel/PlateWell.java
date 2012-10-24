@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
@@ -11,10 +10,12 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import java.util.Collection;
 import java.util.Set;
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class PlateWell extends LabVessel {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -60,11 +61,6 @@ public class PlateWell extends LabVessel {
     @Override
     public Set<SampleInstance> getSampleInstances() {
         return this.plate.getVesselContainer().getSampleInstancesAtPosition(this.vesselPosition);
-    }
-
-    @Override
-    public Collection<Project> getAllProjects() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

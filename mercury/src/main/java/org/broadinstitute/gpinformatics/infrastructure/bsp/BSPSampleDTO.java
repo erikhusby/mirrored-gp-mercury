@@ -3,10 +3,18 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import java.io.Serializable;
 
 /**
- * A simple DTO for fetching commonly used
- * data from BSP.
+ * A simple DTO for fetching commonly used data from BSP.
  */
 public class BSPSampleDTO implements Serializable {
+
+    public final static String TUMOR_IND = "Tumor";
+    public final static String NORMAL_IND = "Normal";
+
+    public final static String FEMALE_IND = "Female";
+    public final static String MALE_IND = "Male";
+
+    public final static String ACTIVE_IND = "Active Stock";
+
 
     private final String patientId;
 
@@ -32,22 +40,43 @@ public class BSPSampleDTO implements Serializable {
 
     private final String sampleLsid;
 
+    private final String collaboratorParticipantId;
+
+    private final String materialType;
+
+    private final String total;
+
+    private final String sampleType;
+
+    private final String primaryDisease;
+
+    private final String gender;
+
+    private final String stockType;
+
+    private final String fingerprint;
+
+    private final String containerId;
+
+
+    /**
+     * Use this when no valid DTO is present, to avoid null checks
+     */
+    public static final BSPSampleDTO DUMMY =
+            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
+
     // collaborator?
     // species vs organism?
     // strain?
     // tissueType?
 
-    public BSPSampleDTO(String containerId,
-                        String stockSample,
-                        String rootSample,
-                        String aliquotSample,
-                        String patientId,
-                        String organism,
-                        String collaboratorsSampleName,
-                        String collection,
-                        String volume,
-                        String concentration,
-                        String sampleLsid) {
+    public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
+                        String patientId, String organism, String collaboratorsSampleName, String collection,
+                        String volume, String concentration, String sampleLsid, String collaboratorParticipantIdIn,
+                        String materialTypeIn, String totalIn, String sampleTypeIn, String primaryDiseaseIn,
+                        String genderIn, String stockTypeIn, String fingerprintIn) {
+
+        this.containerId = containerId;
         this.stockSample = stockSample;
         this.rootSample = rootSample;
         this.patientId = patientId;
@@ -57,6 +86,14 @@ public class BSPSampleDTO implements Serializable {
         this.concentration = concentration;
         this.organism = organism;
         this.sampleLsid = sampleLsid;
+        this.collaboratorParticipantId = collaboratorParticipantIdIn;
+        this.materialType = materialTypeIn;
+        this.total = totalIn;
+        this.sampleType = sampleTypeIn;
+        this.primaryDisease = primaryDiseaseIn;
+        this.gender = genderIn;
+        this.stockType = stockTypeIn;
+        this.fingerprint = fingerprintIn;
         this.stockAtExport = null;
         this.positiveControl = false;
         this.negativeControl = false;
@@ -129,7 +166,7 @@ public class BSPSampleDTO implements Serializable {
     }
 
     public String getContainerId() {
-        throw new RuntimeException("not implemented yet.");
+        return containerId;
     }
 
     public String getPatientId() {
@@ -141,18 +178,80 @@ public class BSPSampleDTO implements Serializable {
     }
 
     public String getStockAtExport() {
-        return stockAtExport;
+        throw new RuntimeException("not implemented yet.");
+//        return stockAtExport;
     }
 
     public Boolean isPositiveControl() {
-        return positiveControl;
+        throw new RuntimeException("not implemented yet.");
+//        return positiveControl;
     }
 
     public Boolean isNegativeControl() {
-        return negativeControl;
+        throw new RuntimeException("not implemented yet.");
+
+//        return negativeControl;
     }
 
     public String getSampleLsid() {
         return sampleLsid;
+    }
+
+    public Boolean getPositiveControl() {
+        throw new RuntimeException("not implemented yet.");
+    }
+
+    public Boolean getNegativeControl() {
+        throw new RuntimeException("not implemented yet.");
+    }
+
+    public String getCollaboratorParticipantId() {
+        return collaboratorParticipantId;
+    }
+
+    public String getMaterialType() {
+        return materialType;
+    }
+
+    public String getTotal() {
+        return total;
+    }
+
+    public String getSampleType() {
+        return sampleType;
+    }
+
+    public String getPrimaryDisease() {
+        return primaryDisease;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public String getStockType() {
+        return stockType;
+    }
+
+    public String getFingerprint() {
+        return fingerprint;
+    }
+
+    public boolean isTumor() {
+        return TUMOR_IND.equals(sampleType);
+    }
+
+    public boolean isSampleReceived() {
+        return ((null != getRootSample()) && (!getRootSample().isEmpty()));
+    }
+
+    public boolean isActiveStock() {
+        return ((null != getStockType()) &&
+                (getStockType().equals(ACTIVE_IND)));
+    }
+
+    public boolean hasFingerprint() {
+        return ((null != getFingerprint()) &&
+                (!getFingerprint().isEmpty()));
     }
 }

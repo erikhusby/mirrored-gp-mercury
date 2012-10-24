@@ -6,82 +6,103 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
  *         Time: 1:35 PM
  */
 
-//import com.atlassian.crowd.application.jaas.CrowdLoginModule;
-
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 
-import javax.faces.application.FacesMessage;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.RequestScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
-import javax.security.auth.login.LoginException;
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
-@ManagedBean
+//@javax.faces.bean.ManagedBean
+//@javax.faces.bean.RequestScoped
+@Named
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
+    private String username;
 
-    private String userName;
     private String password;
 
-    private Log loginLogger = LogFactory.getLog(UserLogin.class);
+    @Inject
+    private Log logger;
 
+    @Inject
+    private UserBean userBean;
 
-    public String getUserName() {
-        return userName;
+    @Inject
+    private BSPUserList bspUserList;
+
+    @Inject
+    private Deployment deployment;
+
+    public String getUsername() {
+        return username;
     }
 
-    public void setUserName(String userNameIn) {
-        userName = userNameIn;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {
         return password;
     }
 
-    public void setPassword(String passwordIn) {
-        password = passwordIn;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String authenticateUser() {
-
         String targetPage = "/index";
+        FacesContext context = FacesContext.getCurrentInstance();
 
         try {
-
-            authenticate();
-            FacesContext context = FacesContext.getCurrentInstance();
             HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
-            String previouslyTargettedPage = (String)request.getAttribute("targetted_page");
-            if(null != previouslyTargettedPage ) {
-                targetPage =previouslyTargettedPage;
-            }
-        } catch (LoginException le) {
 
-            loginLogger.error("LoginException Retrieved: ",le);
-            FacesContext.getCurrentInstance()
-                        .addMessage(null, new FacesMessage("The username and password combination entered was not able to be authenticated."));
-            targetPage = "/security/login";
+            request.login(username, password);
+            BspUser bspUser = bspUserList.getByUsername(username);
+            if (bspUser != null) {
+                userBean.setBspUser(bspUser);
+            } else {
+                // FIXME: Temporarily map unknown users to the BSP tester user. Will need to handle this in userBean.
+                userBean.setBspUser(bspUserList.getByUsername("tester"));
+                // reuse exception handling below
+                //throw new ServletException("Login error: couldn't find BspUser: " + username);
+            }
+            addInfoMessage("Welcome back!", "Sign in successful");
+
+            String previouslyTargetedPage = (String)request.getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
+
+            if (previouslyTargetedPage != null) {
+                targetPage = previouslyTargetedPage;
+            }
         } catch (ServletException le) {
-            loginLogger.error("ServletExcpetion Retrieved: ",le);
-            FacesContext.getCurrentInstance()
-                        .addMessage(null, new FacesMessage("The username and password combination entered was not able to be authenticated."));
-            targetPage = "/security/login";
+            logger.error("ServletException Retrieved: ", le);
+            addErrorMessage("The username and password you entered is incorrect.  Please try again.", "Authentication error");
+            targetPage = AuthorizationFilter.LOGIN_PAGE;
         }
 
         return targetPage;
     }
 
-
-    private void authenticate() throws LoginException, ServletException {
-
-        HttpServletRequest request = (HttpServletRequest )FacesContext.getCurrentInstance().getExternalContext().getRequest();
-
-        request.login(userName, password);
-
+    public String getDeploymentBadgeStyle() {
+        switch (deployment) {
+            case DEV:
+            case TEST:
+                return "badge badge-success";
+            case QA:
+                return "badge badge-warning";
+            case PROD:
+                return "badge badge-important";
+            default:
+                throw new RuntimeException("Unrecognized deployment: " + deployment);
+        }
     }
 
 }

@@ -5,21 +5,41 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:sqltg="http://sequel.broadinstitute.org/tags">
 <body>
-    <ui:composition>
-        <h:link outcome="/index">Home</h:link>
-        <ul>
-            <li><h:link outcome="/projects/list">Projects</h:link></li>
-            <li><h:link outcome="/zims/illuminaRunQuery">Illumina Run Query</h:link></li>
-            <li><h:link outcome="/pass/dashboard">PASS Dashboard</h:link></li>
-        </ul>
+<ui:composition>
+    <h:form>
+        <p:menubar style="padding:0px;" autoDisplay="false">
+            <p:submenu label="Projects" outcome="/projects/list" icon="ui-icon-home">
+                <p:menuitem value="List" outcome="/projects/list" />
+                <p:menuitem value="Create" outcome="/projects/create" />
+            </p:submenu>
+
+            <p:submenu label="Orders" icon="ui-icon-cart">
+                <p:menuitem value="List" outcome="/orders/list" />
+                <p:menuitem value="Create" outcome="/orders/create" />
+            </p:submenu>
+
+            <p:submenu label="Products" icon="ui-icon-tag">
+                <p:menuitem value="List" outcome="/products/list" />
+                <p:menuitem value="Create" outcome="/products/create" />
+            </p:submenu>
+        </p:menubar>
+
         <sqltg:AuthorizeBlock roles="Sequel-Developers">
-        <ul>
-            <li><h:link outcome="/administration/page_administration.xhtml">Page Administration</h:link> </li>
-        </ul>
+            <p:submenu label="Admin" icon="ui-icon-gear">
+                <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
+            </p:submenu>
         </sqltg:AuthorizeBlock>
-    </ui:composition>
+
+    </h:form>
+
+<!--
+    <p:menuitem value="Illumina Run Query" outcome="/zims/illuminaRunQuery" />
+    <p:menuitem value="PASS Dashboard" outcome="/pass/dashboard" />
+-->
+</ui:composition>
 </body>
 </html>

@@ -7,9 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -22,12 +21,7 @@ import java.util.Map;
  */
 @Entity
 @Audited
-@NamedQueries({
-        @NamedQuery(
-                name="MolecularIndex.findBySequence",
-                query="FROM MolecularIndex WHERE sequence = :sequence"
-        )
-})
+@Table(schema = "mercury")
 public class MolecularIndex implements Serializable {
     public static final long serialVersionUID = 2011122101l;
 
@@ -41,7 +35,7 @@ public class MolecularIndex implements Serializable {
     }
     private static final Integer EMPTY_INDEX = new Integer(4);
 
-    private Long id;
+    private Long molecularIndexId;
 
     private String sequence;
 
@@ -58,19 +52,18 @@ public class MolecularIndex implements Serializable {
         this.setSequence(sequence);
     }
 
-    // todo jmt why allocationSize = 1?
     @Id
-    @SequenceGenerator(name="seq_molecular_index", sequenceName="seq_molecular_index", allocationSize = 1)
+    @SequenceGenerator(name="seq_molecular_index", schema = "mercury", sequenceName="seq_molecular_index")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_index")
-    @Column(name = "id")
+    @Column(name = "molecular_index_id")
     @SuppressWarnings("unused")
-    private Long getId() {
-        return id;
+    private Long getMolecularIndexId() {
+        return molecularIndexId;
     }
 
     @SuppressWarnings("unused")
-    private void setId(final Long id) {
-        this.id = id;
+    private void setMolecularIndexId(final Long molecularIndexId) {
+        this.molecularIndexId = molecularIndexId;
     }
 
     /**

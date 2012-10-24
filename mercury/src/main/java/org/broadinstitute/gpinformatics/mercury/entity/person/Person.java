@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.person;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -7,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 /**
  * Let's make a very simple person model
@@ -32,10 +35,11 @@ import javax.persistence.SequenceGenerator;
  */
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class Person {
 
     @Id
-    @SequenceGenerator(name = "SEQ_PERSON", sequenceName = "SEQ_PERSON")
+    @SequenceGenerator(name = "SEQ_PERSON", schema = "mercury", sequenceName = "SEQ_PERSON")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PERSON")
     private Long personId;
 
@@ -92,6 +96,23 @@ public class Person {
      */
     public Iterable<PageAccess> getPageAccess() {
         throw new RuntimeException("Method not yet implemented.");
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if ( (this == other ) ) return true;
+        if ( !(other instanceof Person) ) return false;
+        Person castOther = (Person) other;
+        return new EqualsBuilder().append(username, castOther.username).isEquals();
+    }
+
+    /**
+     *
+     * @return int
+     */
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(username).toHashCode();
     }
 
 }

@@ -23,7 +23,9 @@ public enum BSPSampleSearchColumn {
     ROOT_SAMPLE("Root Sample(s)"),
     COLLECTION("Collection"),
     STOCK_SAMPLE("Stock Sample"),
-    PARENT_SAMPLES("Parent Sample(s)")
+    PARENT_SAMPLES("Parent Sample(s)"),
+    CONTAINER_ID("Container"),
+    CONTAINER_NAME("Container Name")
     ;
     
     private final String columnName;

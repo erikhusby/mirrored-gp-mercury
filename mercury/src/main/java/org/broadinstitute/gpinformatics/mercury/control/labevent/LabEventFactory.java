@@ -90,6 +90,12 @@ public class LabEventFactory {
     @Inject
     private LabBatchDAO labBatchDAO;
 
+    public LabEventFactory() {}
+
+    public LabEventFactory(PersonDAO personDAO) {
+        this.personDAO = personDAO;
+    }
+
     public interface LabEventRefDataFetcher {
         Person getOperator(String userId);
         LabBatch getLabBatch(String labBatchName);
@@ -196,8 +202,8 @@ public class LabEventFactory {
             persistLabEvent(uniqueEvents, labEvent);
             labEvents.add(labEvent);
         }
-        if (bettaLIMSMessage.getReceptaclePlateTransferEvent() != null) {
-            LabEvent labEvent = buildFromBettaLims(bettaLIMSMessage.getReceptaclePlateTransferEvent());
+        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
+            LabEvent labEvent = buildFromBettaLims(receptaclePlateTransferEvent);
             persistLabEvent(uniqueEvents, labEvent);
             labEvents.add(labEvent);
         }
@@ -271,13 +277,7 @@ public class LabEventFactory {
                     VesselPosition.getByName(receptacleType.getPosition()), receptacleType.getBarcode()));
         }
         String digest = RackOfTubes.makeDigest(positionBarcodeList);
-        List<RackOfTubes> racksOfTubes = rackOfTubesDao.findByDigest(digest);
-        RackOfTubes rackOfTubes = null;
-        // todo jmt handle digest collision
-        if(!racksOfTubes.isEmpty()) {
-            rackOfTubes = racksOfTubes.get(0);
-        }
-        return rackOfTubes;
+        return rackOfTubesDao.findByDigest(digest);
     }
 
     /**
@@ -405,7 +405,12 @@ public class LabEventFactory {
     */
     public LabEvent buildFromBettaLims(PlateEventType plateEventType) {
         if(plateEventType.getPositionMap() == null) {
-            StaticPlate staticPlate = staticPlateDAO.findByBarcode(plateEventType.getPlate().getBarcode());
+            PlateType plate = plateEventType.getPlate();
+            if(plate == null) {
+                // todo jmt why isn't this error caught in JAXB?
+                throw new RuntimeException("No plate element in plateEvent");
+            }
+            StaticPlate staticPlate = staticPlateDAO.findByBarcode(plate.getBarcode());
             return buildFromBettaLimsPlateEventDbFree(plateEventType, staticPlate);
         } else {
             RackOfTubes rackOfTubes = fetchRack(plateEventType.getPositionMap());

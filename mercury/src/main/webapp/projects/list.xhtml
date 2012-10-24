@@ -10,23 +10,49 @@
       xmlns:p="http://primefaces.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">Projects</ui:define>
+        <ui:define name="title">Research Projects</ui:define>
         <ui:define name="body">
-            <p:dataTable value="#{projectList.allProjects}" var="project">
-                <p:column headerText="Project Name">
-                    <h:link outcome="detail" value="#{project.projectName}">
-                        <f:param name="projectName" value="#{project.projectName}"/>
-                    </h:link>
-                </p:column>
-                <p:column headerText="Active Status">
-                    #{project.active ? 'Active' : 'Inactive'}
-                </p:column>
-                <p:column headerText="Priority">
-                    #{project.priority}
-                </p:column>
-            </p:dataTable>
+            <h:form>
+                <div class="row">
+                    <h:link value="New Research Project" outcome="create" styleClass="pull-right"/>
+                </div>
 
-            <p><h:link outcome="create">Start a New Project...</h:link></p>
+                <p:dataTable value="#{researchProjectBean.allResearchProjects}"
+                             var="project"
+                             sortBy="#{project.createdDate}"
+                             sortOrder="descending"
+                             filteredValue="#{researchProjectBean.filteredResearchProjects}">
+
+                    <p:column headerText="ID" sortBy="#{project.jiraTicketKey}">
+                        #{project.jiraTicketKey}
+                    </p:column>
+
+                    <p:column headerText="Name" sortBy="#{project.title}">
+                        <h:link outcome="view" value="#{project.title}">
+                            <f:param name="researchProject" value="#{project.businessKey}"/>
+                        </h:link>
+                    </p:column>
+
+                    <p:column headerText="Status" filterBy="#{project.status}" filterOptions="#{researchProjectBean.allProjectStatuses}" filterMatchMode="exact">
+                        #{project.status}
+                    </p:column>
+
+                    <p:column headerText="Owner" filterBy="#{project.createdBy}" filterOptions="#{researchProjectBean.allProjectOwners}" filterMatchMode="exact">
+                        #{userListBean.getUserFullName(project.createdBy)}
+                    </p:column>
+
+                    <p:column headerText="Updated" sortBy="#{project.modifiedDate}">
+                        <h:outputText value="#{project.modifiedDate}">
+                            <f:convertDateTime type="both" timeStyle="short"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="# of&lt;br&gt;Orders" sortBy="#{project.productOrders.size()}">
+                        <h:outputText value="#{project.productOrders.size()}" styleClass="align-right"/>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
         </ui:define>
     </ui:composition>
 </body>

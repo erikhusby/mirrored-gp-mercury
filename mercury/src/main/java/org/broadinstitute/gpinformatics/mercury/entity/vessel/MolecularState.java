@@ -1,16 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.hibernate.envers.Audited;
-
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.SequenceGenerator;
 import java.io.Serializable;
 
 /**
@@ -41,40 +30,31 @@ import java.io.Serializable;
  * LabEvents and LabWorkQueues both make use of expected
  * molecular state.
  */
-@Entity
-@Audited
+//@Entity
+//@Audited
+//@Table(schema = "mercury")
 public class MolecularState implements Serializable {
 
-    @Id
-    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE", sequenceName = "SEQ_MOLECULAR_STATE")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE")
-    private Long molecularStateId;
+//    @Id
+//    @SequenceGenerator(name = "SEQ_MOLECULAR_STATE", schema = "mercury", sequenceName = "SEQ_MOLECULAR_STATE")
+//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MOLECULAR_STATE")
+//    private Long molecularStateId;
 
-    public enum DNA_OR_RNA {
-        DNA,
-        RNA
-    };
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    private MolecularEnvelope molecularEnvelope;
 
-    public enum STRANDEDNESS {
-        DOUBLE_STRANDED,
-        SINGLE_STRANDED
-    }
+//    @Enumerated(EnumType.STRING)
+    private NucleicAcid nucleicAcidState;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private MolecularEnvelope molecularEnvelope;
+//    @Enumerated(EnumType.STRING)
+    private Strandedness strand;
 
-    @Enumerated(EnumType.STRING)
-    private DNA_OR_RNA nucleicAcidState;
-
-    @Enumerated(EnumType.STRING)
-    private STRANDEDNESS strand;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private MolecularStateTemplate molecularStateTemplate = new MolecularStateTemplate();
-
-    public MolecularState(DNA_OR_RNA nucleicAcidState, STRANDEDNESS strand) {
+    public MolecularState(NucleicAcid nucleicAcidState, Strandedness strand) {
         this.nucleicAcidState = nucleicAcidState;
         this.strand = strand;
+    }
+
+    MolecularState() {
     }
 
     /**
@@ -83,19 +63,19 @@ public class MolecularState implements Serializable {
      * envelope.
      * @return
      */
-    public MolecularEnvelope getMolecularEnvelope() {
-        return molecularEnvelope;
-    }
-
-    public void setMolecularEnvelope(MolecularEnvelope molecularEnvelopeDelta) {
-        molecularEnvelope = molecularEnvelopeDelta;
-    }
+//    public MolecularEnvelope getMolecularEnvelope() {
+//        return molecularEnvelope;
+//    }
+//
+//    public void setMolecularEnvelope(MolecularEnvelope molecularEnvelopeDelta) {
+//        molecularEnvelope = molecularEnvelopeDelta;
+//    }
 
     /**
      * Is the target sample in the evenlope DNA or RNA?
      * @return
      */
-    public DNA_OR_RNA getNucleicAcidState() {
+    public NucleicAcid getNucleicAcidState() {
         return nucleicAcidState;
     }
 
@@ -107,7 +87,7 @@ public class MolecularState implements Serializable {
      * or has it been denatured?
      * @return
      */
-    public STRANDEDNESS getStrand() {
+    public Strandedness getStrand() {
         return strand;
     }
 
@@ -130,15 +110,6 @@ public class MolecularState implements Serializable {
      */
     public Float getVolume() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    /**
-     * What's the generalized template used to determine
-     * whether a {@link Goop} has consistent state?
-     * @return
-     */
-    public MolecularStateTemplate getMolecularStateTemplate() {
-        return molecularStateTemplate;
     }
 
 }

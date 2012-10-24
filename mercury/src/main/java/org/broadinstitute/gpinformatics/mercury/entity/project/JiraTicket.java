@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.project;
 
 
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -10,24 +10,13 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
-@NamedQueries({
-        @NamedQuery(
-                name = "JiraTicket.fetchAllOrderByName",
-                query = "from JiraTicket j order by j.ticketName"),
-        @NamedQuery(
-                name = "JiraTicket.fetchByName",
-                query = "from JiraTicket j where j.ticketName = :ticketName")
-})
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class JiraTicket {
 
     public static final String TEST_PROJECT_PREFIX = "LCSET";
@@ -37,8 +26,8 @@ public class JiraTicket {
     @Id
     private String ticketId;
 
-    @OneToMany(mappedBy = "jiraTicket")
-    private Set<Project> projects = new HashSet<Project>();
+//    @OneToMany(mappedBy = "jiraTicket")
+//    private Set<Project> projects = new HashSet<Project>();
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private LabBatch labBatch;
@@ -46,6 +35,9 @@ public class JiraTicket {
     @Transient // todo arz make real hibernate relationship
     private JiraService jiraService;
 
+    /*
+    SGM -- Doesn't make sense to store the URL.  Can be derived on the front end using the Jira config
+     */
     private String browserUrl;
 
     public JiraTicket() {}
@@ -121,9 +113,9 @@ public class JiraTicket {
         return result;
     }
 
-    public Set<Project> getProjects() {
-        return projects;
-    }
+//    public Set<Project> getProjects() {
+//        return projects;
+//    }
 
     public LabBatch getLabBatch() {
         return labBatch;

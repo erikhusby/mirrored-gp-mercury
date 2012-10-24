@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
-import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
@@ -12,6 +11,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,14 +21,9 @@ import java.util.Set;
 /**
  * A traditional plate.
  */
-@NamedQueries(
-        @NamedQuery(
-                name = "StaticPlate.findByBarcode",
-                query = "select p from StaticPlate p where label = :barcode"
-        )
-)
 @Entity
 @Audited
+@Table(schema = "mercury")
 public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell>, Serializable {
 
     public enum PlateType {
@@ -121,11 +116,6 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
     @Override
     public Set<SampleInstance> getSampleInstances() {
         return this.vesselContainer.getSampleInstances();
-    }
-
-    @Override
-    public Collection<Project> getAllProjects() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

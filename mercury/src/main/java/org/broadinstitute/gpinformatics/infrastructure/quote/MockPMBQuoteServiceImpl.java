@@ -17,7 +17,8 @@ import java.util.regex.Pattern;
  * Time: 11:26 AM
  */
 @Alternative
-// TODO PMB review why extending impl
+// TODO PMB review why extending impl, this should probably go away
+@Deprecated
 public class MockPMBQuoteServiceImpl extends PMBQuoteServiceImpl {
 
     public static final String QUOTE_TEST_DATA_XML = "src/test/data/quote/quoteTestData.xml";

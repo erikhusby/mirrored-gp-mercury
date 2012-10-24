@@ -47,11 +47,37 @@ public class CreateIssueRequest  {
             }
         }
 
+        @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
+        public enum ProjectType {
+
+            LCSET_PROJECT_PREFIX("Illumina Library Construction Tracking", "LCSET"),
+            Product_Ordering("Product Ordering", "PDO"),
+            Research_Projects("Research Projects", "RP");
+
+            private final String projectName;
+            private final String keyPrefix;
+
+            private ProjectType(String projectNameIn, String keyPrefixIn) {
+                projectName = projectNameIn;
+                this.keyPrefix = keyPrefixIn;
+            }
+
+            public String getProjectName() {
+                return projectName;
+            }
+
+            public String getKeyPrefix() {
+                return keyPrefix;
+            }
+        }
+
 
         @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
         public enum Issuetype  {
 
-            Whole_Exome_HybSel("Whole Exome (HybSel)");
+            Whole_Exome_HybSel("Whole Exome (HybSel)"),
+            Product_Order("Product Order"),
+            Research_Project("Research Project");
 
             private final String jiraName;
 
@@ -134,8 +160,8 @@ public class CreateIssueRequest  {
     public CreateIssueRequest() {
         this.fields = new Fields();
         // todo arz move these out to JiraService params
-        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
-        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
+//        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
+//        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
     }
 
     public CreateIssueRequest(Collection<CustomField> customFields) {
