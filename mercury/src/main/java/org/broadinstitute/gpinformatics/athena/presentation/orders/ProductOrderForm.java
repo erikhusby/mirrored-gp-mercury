@@ -218,7 +218,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             // 1 => 2
             setEditIdsCache(StringUtils.join(convertOrderSamplesToList(), SEPARATOR + " "));
         }
-        productOrderDetail.getProductOrder().loadBspData();
+        productOrderDetail.load();
     }
 
     // FIXME: handle db store errors, JIRA server errors here.
