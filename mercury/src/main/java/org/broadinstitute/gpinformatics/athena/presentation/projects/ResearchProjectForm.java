@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectManager;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.*;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
@@ -33,9 +32,6 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
     @Inject
     private ResearchProjectDetail detail;
-
-    @Inject
-    private ResearchProjectDao researchProjectDao;
 
     @Inject
     private ResearchProjectManager researchProjectManager;
@@ -140,39 +136,16 @@ public class ResearchProjectForm extends AbstractJsfBean {
     }
 
     public String create() {
-        // TODO: move some of this logic down into boundary, or deeper!
-
         ResearchProject project = detail.getProject();
-
         addCollections(project);
 
         project.setCreatedBy(userBean.getBspUser().getUserId());
         project.recordModification(userBean.getBspUser().getUserId());
 
-/*
-        try {
-            project.submit();
-        } catch (IOException e) {
-            log.error("Error creating JIRA ticket for research project", e);
-            addErrorMessage("Error creating JIRA issue", "Unable to create JIRA issue: " + e.getMessage());
-            return null;
-        }
-
-        try {
-            researchProjectDao.persist(project);
-        } catch (Exception e ) {
-            String errorMessage = MessageFormat.format("Unknown exception occurred while persisting Product.", null);
-            if (GenericDao.IsConstraintViolationException(e)) {
-                errorMessage = MessageFormat.format("The project name ''{0}'' is not unique. Project not created", detail.getProject().getTitle());
-            }
-            addErrorMessage("name", errorMessage, "Name is not unique.");
-            return null;
-        }
-*/
         try {
             researchProjectManager.createResearchProject(project);
         } catch (Exception e) {
-            addErrorMessage(e.getMessage(), e.getMessage());
+            addErrorMessage(e.getMessage(), null);
             return null;
         }
 
@@ -197,26 +170,15 @@ public class ResearchProjectForm extends AbstractJsfBean {
     }
 
     public String edit() {
-
         ResearchProject project = detail.getProject();
         addCollections(project);
 
-/*
-        try {
-            researchProjectDao.getEntityManager().merge(project);
-        } catch (Exception e ) {
-            String errorMessage = MessageFormat.format("Unknown exception occurred while persisting Product.", null);
-            if (GenericDao.IsConstraintViolationException(e)) {
-                errorMessage = MessageFormat.format("The project name ''{0}'' is not unique. Project not updated.", detail.getProject().getTitle());
-            }
-            addErrorMessage("name", errorMessage, "Name is not unique");
-            return null;
-        }
-*/
+        project.recordModification(userBean.getBspUser().getUserId());
+
         try {
             researchProjectManager.updateResearchProject(project);
         } catch (Exception e) {
-            addErrorMessage(e.getMessage(), e.getMessage());
+            addErrorMessage(e.getMessage(), null);
             return null;
         }
 
