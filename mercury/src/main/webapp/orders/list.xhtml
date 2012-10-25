@@ -19,10 +19,10 @@
             </div>
             <p:dataTable value="#{productOrderBean.allProductOrders}"
                          filteredValue="#{productOrderBean.filteredProductOrders}"
-                         sortBy="#{order.createdDate}"
-                         sortOrder="descending"
+                         sortBy="#{order.title}"
+                         sortOrder="ascending"
                          var="order">
-                <p:column headerText="Name" sortBy="#{order.title}">
+                <p:column headerText="Name" sortBy="#{order.title}" sortingComparator="caseInsensitiveText">
                     <h:link outcome="view" value="#{order.title}">
                         <f:param name="productOrder" value="#{order.businessKey}"/>
                     </h:link>

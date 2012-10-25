@@ -180,7 +180,7 @@
                     <p:column headerText="Product">
                         #{order.product.productName}
                     </p:column>
-                    <p:column headerText="Status" sortBy="#{order.orderStatus}" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
+                    <p:column headerText="Status" sortBy="#{order.title}">
                         #{order.orderStatus}
                     </p:column>
                     <p:column headerText="Owner">
