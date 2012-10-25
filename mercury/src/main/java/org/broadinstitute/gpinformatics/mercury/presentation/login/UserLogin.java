@@ -98,19 +98,4 @@ public class UserLogin extends AbstractJsfBean {
 
         return redirect(targetPage);
     }
-
-    public String getDeploymentBadgeStyle() {
-        switch (deployment) {
-            case DEV:
-            case TEST:
-                return "badge badge-success";
-            case QA:
-                return "badge badge-warning";
-            case PROD:
-                return "badge badge-important";
-            default:
-                throw new RuntimeException("Unrecognized deployment: " + deployment);
-        }
-    }
-
 }
