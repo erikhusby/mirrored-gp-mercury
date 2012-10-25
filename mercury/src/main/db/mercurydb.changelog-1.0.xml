@@ -61,10 +61,10 @@
                 <column name="mercury_sample_id" type="number(19,0)">
                     <constraints nullable="false"/>
                 </column>
-                <column name="product_order_key" type="varchar(255 char)">
+                <column name="product_order_key" type="varchar(255)">
                     <constraints nullable="true"/>
                 </column>
-                <column name="sample_key" type="varchar(255 char)">
+                <column name="sample_key" type="varchar(255)">
                     <constraints nullable="true"/>
                 </column>
             </createTable>
@@ -85,10 +85,10 @@
                 <column name="revtype" type="number(3,0)">
                     <constraints nullable="true"/>
                 </column>
-                <column name="product_order_key" type="varchar(255 char)">
+                <column name="product_order_key" type="varchar(255)">
                     <constraints nullable="true"/>
                 </column>
-                <column name="sample_key" type="varchar(255 char)">
+                <column name="sample_key" type="varchar(255)">
                     <constraints nullable="true"/>
                 </column>
             </createTable>
