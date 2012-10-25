@@ -29,7 +29,7 @@ public class OrmUtil {
      * @param subClass subClass of interest
      * @return true if the {@link HibernateProxy}'s underlying class is an instance of the subclass
      */
-    public static boolean proxySafeIsInstance(Object obj, Class subClass) {
+    public static boolean proxySafeIsInstance(Object obj, Class<?> subClass) {
 
         if (obj instanceof HibernateProxy) {
             Object implementation = ((HibernateProxy) obj).getHibernateLazyInitializer().getImplementation();

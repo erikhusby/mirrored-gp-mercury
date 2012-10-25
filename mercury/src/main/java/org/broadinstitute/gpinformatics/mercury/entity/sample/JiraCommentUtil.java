@@ -40,11 +40,11 @@ public class JiraCommentUtil {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
 
-        final Set<JiraTicket> tickets = new HashSet<JiraTicket>();
+        Set<JiraTicket> tickets = new HashSet<JiraTicket>();
         for (LabVessel vessel : vessels) {
             // todo arz talk to jmt about this.  I don't think I'm doing it right.
             if (OrmUtil.proxySafeIsInstance(vessel, VesselContainerEmbedder.class)) {
-                VesselContainerEmbedder<? extends LabVessel> embedder = OrmUtil.proxySafeCast(vessel,VesselContainerEmbedder.class);
+                VesselContainerEmbedder<?> embedder = OrmUtil.proxySafeCast(vessel, VesselContainerEmbedder.class);
                 for (VesselPosition position: embedder.getVesselContainer().getPositions()) {
                     Collection<LabBatch> batches = embedder.getVesselContainer().getNearestLabBatches(position);
                     if (batches != null) {
@@ -102,7 +102,7 @@ public class JiraCommentUtil {
                                                    JiraTicket ticket) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
-        final Collection<MercurySample> allStarters = new HashSet<MercurySample>();
+        Collection<MercurySample> allStarters = new HashSet<MercurySample>();
 
         for (LabVessel vessel : labVessels) {
             for (SampleInstance samInstance: vessel.getSampleInstances()) {
