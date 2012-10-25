@@ -13,6 +13,7 @@ import javax.inject.Named;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 
@@ -113,5 +114,18 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         return list;
     }
 
+        // TODO hmc may not be the best way to do this
+    public List<Product> searchProduct(String query) {
+        List<Product> allProducts = productDao.findProducts();
+        List<Product> products = new ArrayList<Product>();
+        for ( Product product : allProducts ) {
+            if ((product.getPartNumber().contains(query) || product.getProductName().contains( query) ||
+                    product.getProductFamily().getName().toUpperCase().contains( query.toUpperCase() )
+            ) && ( product.isAvailable() || product.getAvailabilityDate().after( new Date() )) ) {
+                products.add( product );
+            }
+        }
+        return products;
+    }
 
 }

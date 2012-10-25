@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
-import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectDetail;
@@ -50,5 +49,11 @@ public class ProductOrderDetail {
 
     public void setProductOrder(ProductOrder productOrder) {
         this.productOrder = productOrder;
+    }
+
+    public void load() {
+        if (productOrder != null) {
+            productOrder.loadBspData();
+        }
     }
 }

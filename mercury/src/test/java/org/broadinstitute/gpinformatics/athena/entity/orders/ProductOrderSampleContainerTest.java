@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 public class ProductOrderSampleContainerTest extends ContainerTest {
 
     public void testOrderSampleConstruction() {
-        ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN");
+        ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN", new ProductOrder());
 
         Assert.assertTrue(testSample.isInBspFormat());
 
@@ -35,7 +35,7 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_LSID, testSample.getBspDTO().getSampleLsid());
 
 
-            Assert.assertTrue(testSample.getBspDTO().hasFingerprint());
+            Assert.assertTrue(testSample.getBspDTO().getHasFingerprint());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_COLLAB_PID, testSample.getBspDTO().getCollaboratorParticipantId());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_MAT_TYPE, testSample.getBspDTO().getMaterialType());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_DNA, testSample.getBspDTO().getTotal());

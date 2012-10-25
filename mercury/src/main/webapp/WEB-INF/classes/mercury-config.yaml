@@ -125,6 +125,10 @@ thrift:
       host: seqtest04
       port: 9090
 
+    TEST:
+
+      host: prodinfobuild
+      port: 9090
 
     PROD:
 
@@ -159,7 +163,7 @@ mercury:
 
     DEV:
 
-      bsp:      QA
+      bsp:      DEV
       gap:      DEV
       jira:     TEST
       pmbridge: DEV
@@ -177,7 +181,7 @@ mercury:
       pmbridge: DEV
       quote:    QA
       squid:    TEST
-      thrift:   QA
+      thrift:   TEST
       deckMsgs: DEV
 
 

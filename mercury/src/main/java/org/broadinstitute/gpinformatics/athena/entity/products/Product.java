@@ -185,7 +185,6 @@ public class Product implements Serializable {
 
     public void setAvailabilityDate(final Date availabilityDate) {
         this.availabilityDate = availabilityDate;
-        this.availabilityDate = availabilityDate;
     }
 
     public void setDiscontinuedDate(final Date discontinuedDate) {
@@ -249,6 +248,14 @@ public class Product implements Serializable {
         // available in the past and not yet discontinued
         return availabilityDate != null && (availabilityDate.compareTo(now) < 0) &&
                 (discontinuedDate == null || discontinuedDate.compareTo(now) > 0);
+    }
+
+    public boolean isAvailableNowOrLater() {
+        Date now = Calendar.getInstance().getTime();
+
+        // need this logic in the dao too
+        // available in the future
+        return availabilityDate != null && (isAvailable() || availabilityDate.compareTo(now) > 0);
     }
 
     public boolean isPriceItemDefault(PriceItem priceItem) {

@@ -19,8 +19,8 @@
 
                 <p:dataTable value="#{researchProjectBean.allResearchProjects}"
                              var="project"
-                             sortBy="#{project.createdDate}"
-                             sortOrder="descending"
+                             sortBy="#{project.title}"
+                             sortOrder="ascending"
                              filteredValue="#{researchProjectBean.filteredResearchProjects}">
 
                     <p:column headerText="ID" sortBy="#{project.jiraTicketKey}">

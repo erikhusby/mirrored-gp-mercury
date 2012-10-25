@@ -124,8 +124,15 @@ public class PriceItem implements Serializable {
      */
     PriceItem() {}
 
+    public PriceItem(@NotNull String quoteServerId, @NotNull String platform, String category, @NotNull String name) {
+        this.quoteServerId = quoteServerId;
+        this.platform = platform;
+        this.category = category;
+        this.name = name;
+    }
 
-    public PriceItem(@NotNull Platform platform, @NotNull Category category, @NotNull Name name,
+
+    public PriceItem(@NotNull Platform platform, Category category, @NotNull Name name,
                      @NotNull String quoteServerId) {
 
         if (platform == null) {
