@@ -8,7 +8,9 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core" xmlns:c="http://java.sun.com/jsp/jstl/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://java.sun.com/jsf/composite/container"
+        >
 <h:body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">
@@ -30,9 +32,6 @@
                     <f:facet name="header">
                         Barcode Search Results
                     </f:facet>
-                    <p:column style="width:2%">
-                        <p:rowToggler/>
-                    </p:column>
                     <p:column sortBy="#{searchResult.label}">
                         <f:facet name="header">
                             <h:outputText value="Label"/>
@@ -70,6 +69,7 @@
                         <ui:repeat value="#{searchResult.containerList}" var="container">
                             <h:commandLink action="#{lookupBean.barcodeSearch(container.embedder.label)}"
                                            value="#{container.embedder.label}"/>
+                            <h:commandButton value="Show Plate" action="#{containerBean.loadVessel(container.embedder)}"/>
                             <br/>
                         </ui:repeat>
                     </p:column>
@@ -88,16 +88,8 @@
                         </f:facet>
                         <h:outputText value="#{searchResult.createdOn}"/>
                     </p:column>
-                    <p:rowExpansion>
-                        <h:panelGrid id="display" columns="12" cellpadding="1"
-                                     styleClass=" ui-widget-content grid">
-
-                            <h:outputText value="Plate Layout"/>
-                            <h:outputText id="plate" value="test"/>
-                        </h:panelGrid>
-                    </p:rowExpansion>
                 </p:dataTable>
-
+                 <b:container container="#{container.embedder}" />
             </h:form>
         </ui:define>
     </ui:composition>

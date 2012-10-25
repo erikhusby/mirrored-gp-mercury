@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:cc="http://java.sun.com/jsf/composite"
+      xmlns:p="http://primefaces.org/ui">
+
+<cc:interface>
+    <cc:attribute name="container" required="true"/>
+</cc:interface>
+<cc:implementation>
+    <h:outputStylesheet library="css" name="container.css" target="head" />
+    <p:dataGrid var="well" columns="#{containerBean.columns}" rows="#{containerBean.container.sampleInstanceList.size()}"
+                value="#{containerBean.container.sampleInstanceList}" styleClass="ui-container">
+        <p:panel>
+            <h:outputText value="#{well.startingSample.sampleKey}" style="font-size: smaller;" />
+        </p:panel>
+    </p:dataGrid>
+</cc:implementation>
+</html>
