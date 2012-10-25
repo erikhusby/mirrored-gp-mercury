@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -37,9 +38,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import javax.inject.Inject;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -796,4 +799,43 @@ public class LabEventFactory {
     public void setLabEventRefDataFetcher(LabEventRefDataFetcher labEventRefDataFetcher) {
         this.labEventRefDataFetcher = labEventRefDataFetcher;
     }
+
+
+    public Collection<GenericLabEvent> buildFromBatchRequestsDBFree ( Map<String, List<LabVessel>> pdoToVessels,
+                                                                      Person actor, LabBatch batchIn ) {
+
+        long workCounter = 0L;
+
+        List<GenericLabEvent> fullEventList = new LinkedList<GenericLabEvent> ();
+
+        for ( Map.Entry<String, List<LabVessel>> mapEntry : pdoToVessels.entrySet () ) {
+            List<GenericLabEvent> events = new LinkedList<GenericLabEvent> ();
+            for ( LabVessel currVessel : mapEntry.getValue () ) {
+                GenericLabEvent currEvent = createFromBatchItems ( mapEntry.getKey (), currVessel, workCounter++, actor,
+                                                                    LabEventType.BUCKET_EXIT );
+                currEvent.setLabBatch(batchIn);
+                events.add ( currEvent );
+            }
+
+            // TODO SGM Create Batch from list of vessels and the currently created Events
+            // TODO SGM Submit Batch to Create Jira Ticket
+            // TODO SGM link Batch Ticket to PDO ticket
+            fullEventList.addAll(events);
+        }
+
+        return fullEventList;
+    }
+
+    public GenericLabEvent createFromBatchItems ( String pdoKey, LabVessel batchItem, Long ambiguator, Person actor,
+                                           LabEventType eventType ) {
+        GenericLabEvent bucketMoveEvent = new GenericLabEvent ( eventType, new Date (),
+                                                         LabEvent.UI_EVENT_LOCATION, ambiguator,
+                                                         actor );
+        bucketMoveEvent.setInPlaceLabVessel ( batchItem );
+        bucketMoveEvent.setProductOrderId ( pdoKey );
+
+        return bucketMoveEvent;
+    }
+
+
 }

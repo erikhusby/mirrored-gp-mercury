@@ -50,7 +50,7 @@ public class CreateIssueRequest  {
         @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
         public enum ProjectType {
 
-            LCSET_PROJECT_PREFIX("Illumina Library Construction Tracking", "LCSET"),
+            LCSET ("Illumina Library Construction Tracking", "LCSET"),
             Product_Ordering("Product Ordering", "PDO"),
             Research_Projects("Research Projects", "RP");
 
@@ -75,9 +75,10 @@ public class CreateIssueRequest  {
         @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
         public enum Issuetype  {
 
-            Whole_Exome_HybSel("Whole Exome (HybSel)"),
-            Product_Order("Product Order"),
-            Research_Project("Research Project");
+            WHOLE_EXOME_HYBSEL ("Whole Exome (HybSel)"),
+            EXOME_EXPRESS("Exome Express"),
+            PRODUCT_ORDER ("Product Order"),
+            RESEARCH_PROJECT ("Research Project");
 
             private final String jiraName;
 

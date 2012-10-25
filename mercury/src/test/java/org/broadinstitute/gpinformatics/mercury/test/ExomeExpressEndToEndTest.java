@@ -141,7 +141,7 @@ public class ExomeExpressEndToEndTest {
             // todo when R3_725 comes out, revert to looking this up via the pass
             PriceItem priceItem = new PriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15", "Bananas", "DNA Sequencing");
             WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", priceItem,
-                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+                    CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
 
 //            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass, bspDataFetcher, baitsCache, priceItem);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
@@ -195,12 +195,12 @@ public class ExomeExpressEndToEndTest {
 
             for (LabBatch labBatch : labBatches) {
                 CreateIssueResponse createResponse = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
-                        CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
+                        CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL,
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
                 Assert.assertNotNull(createResponse);
                 Assert.assertNotNull(createResponse.getTicketName());
-                jiraTicket = new JiraTicket(jiraService, createResponse.getTicketName(), createResponse.getId());
+                jiraTicket = new JiraTicket( createResponse.getTicketName(), createResponse.getId());
                 labBatch.setJiraTicket(jiraTicket);
                 //labBatch.get
             }

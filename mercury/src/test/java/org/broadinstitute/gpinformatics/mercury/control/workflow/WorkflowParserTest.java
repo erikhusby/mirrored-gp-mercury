@@ -45,7 +45,7 @@ public class WorkflowParserTest {
             Assert.assertEquals(workflowParser.getMapNameToTransitionList().size(), 3, "Wrong number of transition names");
 
             WorkflowDescription workflowDescription = new WorkflowDescription("HS", null,
-                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+                    CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
             workflowDescription.initFromFile(bpmnDoc);
 
             Collection<WorkflowAnnotation> workflowAnnotations = workflowDescription.getAnnotations("PreflightNormalization");

@@ -334,7 +334,6 @@ public abstract class LabVessel {
 
     public void addInPlaceEvent(LabEvent labEvent) {
         this.inPlaceLabEvents.add(labEvent);
-        labEvent.setInPlaceLabVessel(this);
     }
 
     public abstract CONTAINER_TYPE getType();

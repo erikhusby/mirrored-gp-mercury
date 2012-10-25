@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectTest;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.test.BeanTester;
@@ -12,7 +9,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -24,30 +20,14 @@ import java.util.*;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderTest {
 
-    private static final Long TEST_CREATOR = 10L;
+    private static final Long TEST_CREATOR = 1111L;
 
     private static final String PDO_JIRA_KEY = "PDO-1";
     private ProductOrder productOrder;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        productOrder = createDummyProductOrder();
-    }
-
-    public static ProductOrder createDummyProductOrder() {
-        PriceItem priceItem = new PriceItem(PriceItem.Platform.GP, PriceItem.Category.EXOME_SEQUENCING_ANALYSIS,
-                                    PriceItem.Name.EXOME_EXPRESS, "testQuoteId");
-        Product dummyProduct = createDummyProduct();
-        dummyProduct.addPriceItem(priceItem);
-        ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
-                new ArrayList<ProductOrderSample>(), "quote", dummyProduct,
-                ResearchProjectTest.createDummyResearchProject());
-
-        ProductOrderSample sample = new ProductOrderSample("SM-1234", order);
-        sample.addBillableItem(new BillableItem(priceItem, new BigDecimal("1")));
-        order.setSamples(Collections.singletonList(sample));
-
-        return order;
+        productOrder = AthenaClientServiceStub.createDummyProductOrder ();
     }
 
     @AfterMethod
@@ -77,7 +57,7 @@ public class ProductOrderTest {
 
         Assert.assertNull(productOrder.getJiraTicketKey());
 
-        Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.Product_Order);
+        Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER );
 
         Assert.assertEquals(productOrder.fetchJiraProject(), CreateIssueRequest.Fields.ProjectType.Product_Ordering);
 
@@ -86,12 +66,6 @@ public class ProductOrderTest {
         Assert.assertNotNull(productOrder.getJiraTicketKey());
 
         Assert.assertEquals(productOrder.getJiraTicketKey(), PDO_JIRA_KEY);
-    }
-
-    public static Product createDummyProduct() {
-        return new Product("productName", new ProductFamily("ProductFamily"), "description",
-            "partNumber", new Date(), new Date(), 12345678, 123456, 100, "inputRequirements", "deliverables",
-            true, "workflowName");
     }
 
     private final List<ProductOrderSample> sixBspSamplesNoDupes =

@@ -286,7 +286,7 @@ public class ResearchProject {
     }
 
     public void clearPeople() {
-        associatedPeople.clear();
+        associatedPeople.clear ();
     }
 
     public void addPeople(RoleType role, List<BspUser> people) {
@@ -503,7 +503,7 @@ public class ResearchProject {
      */
     @Transient
     public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
-        return CreateIssueRequest.Fields.Issuetype.Research_Project;
+        return CreateIssueRequest.Fields.Issuetype.RESEARCH_PROJECT;
     }
 
     /**

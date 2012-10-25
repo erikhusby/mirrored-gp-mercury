@@ -47,4 +47,8 @@ public class WorkflowStepDef {
         labEventTypes.add(labEventType);
         return this;
     }
+
+    public String getName () {
+        return name;
+    }
 }

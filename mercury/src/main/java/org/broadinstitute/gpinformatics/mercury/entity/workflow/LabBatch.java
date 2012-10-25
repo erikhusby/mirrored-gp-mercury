@@ -4,6 +4,8 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -168,20 +170,30 @@ public class LabBatch {
     /**
      * Submits the contents of this Lab Batch to Jira to create a new LCSET Ticket
      */
-    public void submit() throws IOException{
+    public void submit () throws IOException {
 
 
-        Map<String, CustomFieldDefinition> submissionFields = ServiceAccessUtility.getJiraCustomFields();
+        Map<String, CustomFieldDefinition> submissionFields = ServiceAccessUtility.getJiraCustomFields ();
 
         List<CustomField> listOfFields = new ArrayList<CustomField> ();
 
-        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.PROTOCOL.getFieldName()),"",
-                                         CustomField.SingleFieldType.TEXT));
-        listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName()),"", CustomField.SingleFieldType.TEXT));
+        listOfFields.add ( new CustomField ( submissionFields.get ( RequiredSubmissionFields.PROTOCOL.getFieldName () ),
+                                             "", CustomField.SingleFieldType.TEXT ) );
+        listOfFields.add ( new CustomField ( submissionFields.get (
+                RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName () ), "", CustomField.SingleFieldType.TEXT ) );
 
-        ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
-                                              batchName, "", listOfFields);
+        CreateIssueResponse batchTicket = ServiceAccessUtility.createJiraTicket ( fetchJiraProject ().getKeyPrefix (),
+                                                                                  fetchJiraIssueType (), batchName, "",
+                                                                                  listOfFields );
 
+        this.setJiraTicket ( new JiraTicket ( batchTicket.getTicketName (), batchTicket.getTicketName () ) );
+        jiraTicket.setLabBatch ( this );
+    }
+
+    public void addJiraLink (String targetTicketKey) throws IOException {
+
+        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related ,this.jiraTicket.getTicketName(),
+                                                targetTicketKey);
     }
 
     /**
@@ -194,7 +206,7 @@ public class LabBatch {
      */
     @Transient
     public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
-        return CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX;
+        return CreateIssueRequest.Fields.ProjectType.LCSET;
     }
 
     /**
@@ -207,7 +219,7 @@ public class LabBatch {
      */
     @Transient
     public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
-        return CreateIssueRequest.Fields.Issuetype.Product_Order;
+        return CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL;
     }
 
 

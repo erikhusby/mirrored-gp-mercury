@@ -4,7 +4,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -79,7 +78,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 //        Project project = new BasicProject(testPrefix + "LabEventTesting", new JiraTicket(new JiraServiceStub(),
 //                "TP-" + testPrefix, testPrefix));
         WorkflowDescription workflowDescription = new WorkflowDescription("WGS" + testPrefix,null,
-                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+                CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
 //        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {

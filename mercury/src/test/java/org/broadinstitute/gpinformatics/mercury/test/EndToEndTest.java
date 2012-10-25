@@ -55,7 +55,7 @@ public class EndToEndTest  {
         PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars", QuotePlatformType.SEQ.getPlatformName());
         final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
                 null,
-                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+                CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
 //        Project project = new BasicProject("Project1",new JiraTicket(new JiraServiceStub(),"TP-0","0"));
 //        BasicProjectPlan plan1 = new BasicProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS", null,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 //        Project project2 = new BasicProject("Project2", new JiraTicket(new JiraServiceStub(),"TP-1","1"));

@@ -111,7 +111,7 @@ public class LabEventTest {
         // Project and workflow
 //        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
         WorkflowDescription workflowDescription = new WorkflowDescription("HS", null,
-                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+                CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
         workflowDescription.initFromFile("HybridSelectionV2.bpmn");
 //        BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
 
@@ -188,7 +188,7 @@ public class LabEventTest {
 //        Controller.startCPURecording(true);
 
 //        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
         workflowDescription.initFromFile("WholeGenomeShotgun.bpmn");
 //        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
@@ -292,7 +292,7 @@ public class LabEventTest {
     @Test(groups = {DATABASE_FREE})
     public void testFluidigm() {
 //        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
 //        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack

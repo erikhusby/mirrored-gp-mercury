@@ -64,9 +64,11 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "mercury",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"event_location", "event_date", "disambiguator"}),
+       uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}),
        name = "lab_event")
 public abstract class LabEvent {
+
+    public static final String UI_EVENT_LOCATION = "User Interface";
 
     public static final Comparator<GenericLabEvent> byEventDate = new Comparator<GenericLabEvent>() {
         @Override
@@ -365,6 +367,7 @@ todo jmt adder methods
 
     public void setInPlaceLabVessel(LabVessel inPlaceLabVessel) {
         this.inPlaceLabVessel = inPlaceLabVessel;
+        this.inPlaceLabVessel.addInPlaceEvent(this);
     }
 
     /**

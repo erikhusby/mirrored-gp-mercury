@@ -4,7 +4,6 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -42,8 +41,8 @@ public class JiraServiceTest {
 
             Map<String, CustomFieldDefinition> requiredFields=
                     service.getRequiredFields(new CreateIssueRequest.Fields.Project(
-                            CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
-                                              CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+                            CreateIssueRequest.Fields.ProjectType.LCSET.getKeyPrefix()),
+                                              CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
 
             Collection<CustomField> customFieldList = new LinkedList<CustomField>();
 
@@ -58,8 +57,8 @@ public class JiraServiceTest {
 
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX,
-                                        CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
+                    service.createIssue( CreateIssueRequest.Fields.ProjectType.LCSET.getKeyPrefix(),
+                                        CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL,
                                         "Summary created from Mercury", "Description created from Mercury",
                                         customFieldList);
 
@@ -80,7 +79,7 @@ public class JiraServiceTest {
         try {
             Map<String, CustomFieldDefinition> requiredFields =
                 service.getRequiredFields(new CreateIssueRequest.Fields.Project(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix()),
-                                                              CreateIssueRequest.Fields.Issuetype.Product_Order);
+                                                              CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER );
 
             Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()));
 
@@ -90,7 +89,7 @@ public class JiraServiceTest {
 
             final CreateIssueResponse createIssueResponse =
                     service.createIssue(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix(),
-                                        CreateIssueRequest.Fields.Issuetype.Product_Order,
+                                        CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER,
                                         "Athena Test case:::  Test new Summary Addition",
                                         "Athena Test Case:  Test description setting",customFieldList);
             final String pdoJiraKey = createIssueResponse.getTicketName();
@@ -160,8 +159,8 @@ public class JiraServiceTest {
         setUp();
         Map<String, CustomFieldDefinition> customFields = null;
         customFields = service.getRequiredFields(new CreateIssueRequest.Fields.Project(
-                CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
-                                                 CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+                CreateIssueRequest.Fields.ProjectType.LCSET.getKeyPrefix()),
+                                                 CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;
         for (CustomFieldDefinition customField : customFields.values()) {
