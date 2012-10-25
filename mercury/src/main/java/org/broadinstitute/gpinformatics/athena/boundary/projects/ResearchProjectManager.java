@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.presentation.projects;
+package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
