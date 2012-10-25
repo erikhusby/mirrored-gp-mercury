@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.presentation;
+package org.broadinstitute.gpinformatics.athena.presentation.links;
 
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
 
