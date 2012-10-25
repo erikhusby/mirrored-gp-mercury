@@ -190,10 +190,36 @@ public class LabBatch {
         jiraTicket.setLabBatch ( this );
     }
 
+    /**
+     * addPublicComment Allows a user to create a jira comment for this product order
+     *
+     * @param comment comment to set in Jira
+     * @throws IOException
+     */
+    public void addPublicComment(String comment) throws IOException {
+        jiraTicket.addComment(comment);
+    }
+
+    /**
+     * addWatcher allows a user to add a user as a watcher of the Jira ticket associated with this product order
+     *
+     * @param personLoginId Broad User Id
+     * @throws IOException
+     */
+    public void addWatcher(String personLoginId) throws IOException {
+        jiraTicket.addWatcher(personLoginId);
+    }
+
+    /**
+     * addLink allows a user to link this the jira ticket associated with this product order with another Jira Ticket
+     *
+     * @param targetTicketKey Unique Jira Key of the Jira ticket to which this product order's Jira Ticket will be
+     *                       linked
+     * @throws IOException
+     */
     public void addJiraLink (String targetTicketKey) throws IOException {
 
-        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related ,this.jiraTicket.getTicketName(),
-                                                targetTicketKey);
+        jiraTicket.addJiraLink(targetTicketKey);
     }
 
     /**

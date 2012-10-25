@@ -94,9 +94,11 @@ public class BucketResource {
             currEntry.getBucketExistence().removeEntry(currEntry);
         }
 
-
 //        try {
 //            bucketBatch.submit();
+//            for(String pdo:pdoKeyToVesselMap.keySet()) {
+//                bucketBatch.addJiraLink(pdo);
+//            }
 //        } catch (IOException ioe ) {
 //            LOG.error("Error attempting to create Lab Batch in Jira");
 //            throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);

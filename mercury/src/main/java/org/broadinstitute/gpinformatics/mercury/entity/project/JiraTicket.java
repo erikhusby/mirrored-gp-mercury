@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.project;
 
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
@@ -47,7 +48,7 @@ public class JiraTicket {
         }
         this.ticketName = ticketName;
         this.ticketId = ticketId;
-        this.browserUrl = ServiceAccessUtility.getTicketUrl(ticketName);
+        this.browserUrl = ServiceAccessUtility.getTicketUrl ( ticketName );
     }
 
     /**
@@ -80,6 +81,28 @@ public class JiraTicket {
         }
     }
 
+    /**
+     * addWatcher allows a user to add a user as a watcher of the Jira ticket associated with this product order
+     *
+     * @param personLoginId Broad User Id
+     * @throws IOException
+     */
+    public void addWatcher(String personLoginId) throws IOException {
+        ServiceAccessUtility.addJiraWatcher(ticketName, personLoginId);
+    }
+
+    /**
+     * addLink allows a user to link this the jira ticket associated with this product order with another Jira Ticket
+     *
+     * @param targetTicketKey Unique Jira Key of the Jira ticket to which this product order's Jira Ticket will be
+     *                       linked
+     * @throws IOException
+     */
+    public void addJiraLink (String targetTicketKey) throws IOException {
+
+        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related ,ticketName,
+                                                targetTicketKey);
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
