@@ -38,6 +38,14 @@ public class WorkflowProcessDefVersion {
         return workflowStepDefs;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public Date getEffectiveDate() {
+        return effectiveDate;
+    }
+
     /** At a QC review, the user needs to know the options for re-entry */
     public List<WorkflowStepDef> getReEntryPoints() {
         List<WorkflowStepDef> reEntryPoints = new ArrayList<WorkflowStepDef>();

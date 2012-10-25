@@ -1,11 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlIDREF;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A version of a product workflow definition
@@ -21,6 +25,8 @@ public class ProductWorkflowDefVersion {
     private List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<WorkflowProcessDef>();
 
     private List<String> entryPointsUsed = new ArrayList<String>();
+    private transient Map<String, LabEventNode> mapNameToLabEvent;
+    private transient LabEventNode rootLabEventNode;
 
     /** For JAXB */
     ProductWorkflowDefVersion() {
@@ -55,11 +61,74 @@ public class ProductWorkflowDefVersion {
         this.entryPointsUsed.add(entryPoint);
     }
 
+    public LabEventNode getRootLabEventNode() {
+        return rootLabEventNode;
+    }
+
     public List<WorkflowBucketDef> getBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<WorkflowBucketDef>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
-            workflowBucketDefs.addAll(workflowProcessDef.getCurrentVersion().getBuckets());
+            workflowBucketDefs.addAll(workflowProcessDef.getEffectiveVersion().getBuckets());
         }
         return workflowBucketDefs;
+    }
+
+    static class LabEventNode {
+        LabEventType labEventType;
+        List<LabEventNode> predecessors = new ArrayList<LabEventNode>();
+        List<LabEventNode> successors = new ArrayList<LabEventNode>();
+
+        LabEventNode(LabEventType labEventType) {
+            this.labEventType = labEventType;
+        }
+
+        public LabEventType getLabEventType() {
+            return labEventType;
+        }
+
+        public List<LabEventNode> getPredecessors() {
+            return predecessors;
+        }
+
+        public List<LabEventNode> getSuccessors() {
+            return successors;
+        }
+
+        void addPredecessor(LabEventNode predecessor) {
+            predecessors.add(predecessor);
+        }
+
+        void addSuccessor(LabEventNode successor) {
+            successors.add(successor);
+        }
+    }
+
+    public void buildLabEventGraph() {
+        LabEventNode previousNode = null;
+        for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
+            WorkflowProcessDefVersion effectiveProcessDef = workflowProcessDef.getEffectiveVersion();
+            for (WorkflowStepDef workflowStepDef : effectiveProcessDef.getWorkflowStepDefs()) {
+                for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
+                    LabEventNode labEventNode = new LabEventNode(labEventType);
+                    mapNameToLabEvent.put(labEventType.getName(), labEventNode);
+                    if(rootLabEventNode == null) {
+                        rootLabEventNode = labEventNode;
+                    }
+                    if (previousNode != null) {
+                        labEventNode.addPredecessor(previousNode);
+                        previousNode.addSuccessor(labEventNode);
+                    }
+                    previousNode = labEventNode;
+                }
+            }
+        }
+    }
+
+    public LabEventNode findStepByEventType(String eventTypeName) {
+        if (mapNameToLabEvent == null) {
+            mapNameToLabEvent = new HashMap<String, LabEventNode>();
+            buildLabEventGraph();
+        }
+        return mapNameToLabEvent.get(eventTypeName);
     }
 }

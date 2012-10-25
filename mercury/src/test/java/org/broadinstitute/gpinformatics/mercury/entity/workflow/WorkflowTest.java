@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.testng.annotations.Test;
 
@@ -91,10 +92,20 @@ public class WorkflowTest {
         } catch (JAXBException e) {
             throw new RuntimeException(e);
         }
-
-        parseWorkflow();
     }
 
+    @Test
+    public void testGraph() {
+        WorkflowLoader workflowLoader = new WorkflowLoader();
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        for (ProductWorkflowDef productWorkflowDef : workflowConfig.getProductWorkflowDefs()) {
+            ProductWorkflowDefVersion effectiveVersion = productWorkflowDef.getEffectiveVersion();
+            effectiveVersion.buildLabEventGraph();
+            effectiveVersion.getRootLabEventNode();
+        }
+
+    }
+/*
     public void parseWorkflow() {
         try {
             JAXBContext jc = JAXBContext.newInstance(WorkflowConfig.class, WorkflowBucketDef.class);
@@ -106,4 +117,5 @@ public class WorkflowTest {
             throw new RuntimeException(e);
         }
     }
+*/
 }

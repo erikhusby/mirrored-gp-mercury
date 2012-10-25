@@ -4,7 +4,9 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Container for all workflow definition objects
@@ -18,6 +20,8 @@ public class WorkflowConfig {
 
     /** List of product workflows, each composed of process definitions */
     private List<ProductWorkflowDef> productWorkflowDefs = new ArrayList<ProductWorkflowDef>();
+
+    private transient Map<String, ProductWorkflowDef> mapNameToWorkflow;
 
     public List<WorkflowProcessDef> getWorkflowProcessDefs() {
         return workflowProcessDefs;
@@ -33,5 +37,19 @@ public class WorkflowConfig {
 
     void addProductWorkflowDef(ProductWorkflowDef productWorkflowDef) {
         this.productWorkflowDefs.add(productWorkflowDef);
+    }
+
+    public ProductWorkflowDef getWorkflowByName(String workflowName) {
+        if (mapNameToWorkflow == null) {
+            mapNameToWorkflow = new HashMap<String, ProductWorkflowDef>();
+            for (ProductWorkflowDef productWorkflowDef : productWorkflowDefs) {
+                mapNameToWorkflow.put(productWorkflowDef.getName(), productWorkflowDef);
+            }
+        }
+        ProductWorkflowDef productWorkflowDef = mapNameToWorkflow.get(workflowName);
+        if(productWorkflowDef == null) {
+            throw new RuntimeException("Failed to find workflow " + workflowName);
+        }
+        return productWorkflowDef;
     }
 }

@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -42,6 +43,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -458,6 +461,18 @@ public class LabEventTest {
     }
 
     private static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
+        WorkflowLoader workflowLoader = new WorkflowLoader();
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        for (LabVessel labVessel : labVessels) {
+            for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
+                sampleInstance.getStartingSample().getProductOrderKey();
+                // get workflow name from product order
+                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName("");
+                productWorkflowDef.validate(labVessel, nextEventTypeName);
+            }
+
+        }
+
 //        List<String> errors = workflowDescription.validate(labVessels, nextEventTypeName);
 //        if(!errors.isEmpty()) {
 //            Assert.fail(errors.get(0));
