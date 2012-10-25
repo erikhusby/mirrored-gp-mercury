@@ -20,9 +20,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
-//@javax.faces.bean.ManagedBean
-//@javax.faces.bean.RequestScoped
 @Named
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
@@ -41,6 +40,9 @@ public class UserLogin extends AbstractJsfBean {
 
     @Inject
     private Deployment deployment;
+
+    @Inject
+    private FacesContext facesContext;
 
     public String getUsername() {
         return username;
@@ -77,10 +79,16 @@ public class UserLogin extends AbstractJsfBean {
             }
             addInfoMessage("Welcome back!", "Sign in successful");
 
-            String previouslyTargetedPage = (String)request.getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
+            String previouslyTargetedPage = (String)request.getSession().getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
 
             if (previouslyTargetedPage != null) {
-                targetPage = previouslyTargetedPage;
+                request.getSession().setAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE, null);
+                try {
+                    facesContext.getExternalContext().redirect(previouslyTargetedPage);
+                    return null;
+                } catch (IOException e) {
+                    logger.warn("Could not redirect to: " + previouslyTargetedPage, e);
+                }
             }
         } catch (ServletException le) {
             logger.error("ServletException Retrieved: ", le);
@@ -88,21 +96,6 @@ public class UserLogin extends AbstractJsfBean {
             targetPage = AuthorizationFilter.LOGIN_PAGE;
         }
 
-        return targetPage;
+        return redirect(targetPage);
     }
-
-    public String getDeploymentBadgeStyle() {
-        switch (deployment) {
-            case DEV:
-            case TEST:
-                return "badge badge-success";
-            case QA:
-                return "badge badge-warning";
-            case PROD:
-                return "badge badge-important";
-            default:
-                throw new RuntimeException("Unrecognized deployment: " + deployment);
-        }
-    }
-
 }

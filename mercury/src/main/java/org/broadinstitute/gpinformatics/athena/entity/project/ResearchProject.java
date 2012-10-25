@@ -32,6 +32,10 @@ public class ResearchProject {
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
 
+    public boolean hasJiraTicketKey() {
+        return !StringUtils.isBlank(jiraTicketKey);
+    }
+
     public enum Status implements StatusType {
         Open, Archived;
 

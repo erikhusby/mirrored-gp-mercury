@@ -24,7 +24,10 @@
                              filteredValue="#{researchProjectBean.filteredResearchProjects}">
 
                     <p:column headerText="ID" sortBy="#{project.jiraTicketKey}">
-                        #{project.jiraTicketKey}
+                        <h:outputLink rendered="#{project.hasJiraTicketKey()}" target="_new"
+                                      value="#{jiraLink.browseUrl(project.jiraTicketKey)}" class="external">
+                            <h:outputText value="#{project.jiraTicketKey}" />
+                        </h:outputLink>
                     </p:column>
 
                     <p:column headerText="Name" sortBy="#{project.title}">

@@ -29,7 +29,10 @@
                 </p:column>
 
                 <p:column headerText="ID" sortBy="#{order.jiraTicketKey}">
-                    #{order.jiraTicketKey}
+                    <h:outputLink target="_new" value="#{jiraLink.browseUrl(order.jiraTicketKey)}"
+                                  class="external" rendered="#{order.hasJiraTicketKey()}" >
+                        <h:outputText value="#{order.jiraTicketKey}" />
+                    </h:outputLink>
                 </p:column>
 
                 <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">

@@ -834,4 +834,8 @@ public class ProductOrder implements Serializable {
         result = 31 * result + (researchProject != null ? researchProject.hashCode() : 0);
         return result;
     }
+
+    public boolean hasJiraTicketKey() {
+        return !StringUtils.isBlank(jiraTicketKey);
+    }
 }
