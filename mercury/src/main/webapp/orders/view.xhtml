@@ -69,7 +69,7 @@
 
                     <div class="control-group">
                         <span class="control-label label-form">Samples</span>
-                        <span class="controls">#{productOrderDetail.productOrder.sampleSummary}</span>
+                        <span class="controls">#{productOrderDetail.productOrder.sampleBillingSummary}</span>
                     </div>
 
                     <p/>
@@ -99,6 +99,10 @@
                         </div>
                     </div>
 
+
+                    <p:panel id="sampleValidation" header="Summary">
+                        <h:outputText value="#{productOrderDetail.productOrder.sampleValidationComments}"/>
+                    </p:panel>
                     <p:dataTable id="sampleData"
                                  value="#{productOrderDetail.productOrder.samples}"
                                  filteredValue="#{productOrderFilterBean.filteredSamples}"

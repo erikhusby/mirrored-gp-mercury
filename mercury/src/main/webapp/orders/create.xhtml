@@ -34,7 +34,9 @@
                         <div class="controls">
                             <div class="row-fluid">
                                 <div class="span1">
-                                    <p:commandButton id="commitSamples" update=":form:sampleTable, :form:idCache" value="OK"
+                                    <p:commandButton id="commitSamples"
+                                                     update=":form:sampleTable, :form:sampleValidation, :form:idCache"
+                                                     value="OK"
                                                      onclick="samplesDialog.hide()"
                                                      actionListener="#{productOrderForm.samplesDialog.commit}"
                                                      styleClass="btn btn-primary"/>
@@ -70,6 +72,7 @@
                                         converter="#{researchProjectConverter}"
                                         dropdown="true"
                                         required="true"
+                                        scrollHeight="250"
                                         size="50"/>
                         <p:watermark for="researchProject" value="Type name to search"/>
                         <p:message for="researchProject"/>
@@ -88,6 +91,7 @@
                                         converter="#{productConverter}"
                                         dropdown="true"
                                         required="true"
+                                        scrollHeight="250"
                                         size="50"/>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>
@@ -124,9 +128,16 @@
                     </div>
                 </div>
 
+
+
                 <h:inputHidden id="idCache" binding="#{productOrderForm.editIdsCacheBinding}"/>
 
                 <p:blockUI block="sampleTable" trigger=":sampleDialogForm:commitSamples"/>
+                <p:blockUI block="sampleValidation" trigger=":sampleDialogForm:commitSamples"/>
+
+                <p:panel id="sampleValidation" header="Summary">
+                    <h:outputText value="#{productOrderDetail.productOrder.sampleValidationComments}"/>
+                </p:panel>
 
                 <div class="row-fluid">
                     <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample">
