@@ -13,8 +13,7 @@
         <ui:define name="title">View Product Order</ui:define>
         <ui:define name="metadata">
             <f:metadata>
-
-                <f:viewParam name="productOrderKey" value="#{productOrderDetail.productOrder}" converter="#{productOrderConverter}" />
+                <f:viewParam name="productOrder" value="#{productOrderDetail.productOrder}" converter="#{productOrderConverter}" />
             </f:metadata>
         </ui:define>
         <ui:define name="body">

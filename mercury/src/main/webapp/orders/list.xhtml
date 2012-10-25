@@ -24,7 +24,7 @@
                          var="order">
                 <p:column headerText="Name" sortBy="#{order.title}">
                     <h:link outcome="view" value="#{order.title}">
-                        <f:param name="productOrderKey" value="#{order.businessKey}"/>
+                        <f:param name="productOrder" value="#{order.businessKey}"/>
                     </h:link>
                 </p:column>
 
