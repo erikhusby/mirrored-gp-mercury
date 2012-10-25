@@ -31,7 +31,7 @@
             <workflowStepDefs>
                 <name>Preflight Normalization</name>
                 <labEventTypes>PREFLIGHT_NORMALIZATION</labEventTypes>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>

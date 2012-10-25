@@ -71,12 +71,30 @@ public class TwoDBarcodedTube extends LabVessel {
 
     @Override
     public Set<LabEvent> getTransfersFrom() {
-        return Collections.emptySet();
+        Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
+        for (VesselContainer<?> vesselContainer : getContainers()) {
+            transfersFrom.addAll(vesselContainer.getTransfersFrom());
+        }
+        return transfersFrom;
     }
 
     @Override
     public Set<LabEvent> getTransfersTo() {
-        return Collections.emptySet();
+        Set<LabEvent> transfersTo = new HashSet<LabEvent>();
+        for (VesselContainer<?> vesselContainer : getContainers()) {
+            transfersTo.addAll(vesselContainer.getTransfersTo());
+        }
+        return transfersTo;
+    }
+
+    @Override
+    public Set<LabEvent> getInPlaceEvents() {
+        Set<LabEvent> inPlaceEvents = new HashSet<LabEvent>();
+        for (VesselContainer<?> vesselContainer : getContainers()) {
+            // todo jmt fix this
+//            inPlaceEvents.addAll(vesselContainer.getTransfersTo());
+        }
+        return inPlaceEvents;
     }
 
     @Override

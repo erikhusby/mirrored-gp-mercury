@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -8,7 +10,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The workflow definition for a product, composed of processes
@@ -50,9 +54,58 @@ public class ProductWorkflowDef {
         if(labEventNode == null) {
             errors.add("Failed to find " + nextEventTypeName + " in " + name + " version " + effectiveWorkflowDef.getVersion());
         } else {
-            labEventNode.getPredecessors();
+            Set<String> actualEventNames = new HashSet<String>();
+            boolean found = false;
+
+            boolean start = labEventNode.getPredecessors().size() == 0;
+            Set<String> validPredecessorEventNames = new HashSet<String>();
+            for (ProductWorkflowDefVersion.LabEventNode predecessorNode : labEventNode.getPredecessors()) {
+                validPredecessorEventNames.add(predecessorNode.getLabEventType().getName());
+                // todo jmt recurse
+                if(predecessorNode.isOptional()) {
+                    start = predecessorNode.getPredecessors().size() == 0;
+                    for (ProductWorkflowDefVersion.LabEventNode predPredEventNode : predecessorNode.getPredecessors()) {
+                        validPredecessorEventNames.add(predPredEventNode.getLabEventType().getName());
+                    }
+                }
+            }
+
+            found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                    found, labVessel.getTransfersFrom());
+
+            if (!found) {
+                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                        found, labVessel.getTransfersTo());
+            }
+            if(!found) {
+                found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
+                        found, labVessel.getInPlaceEvents());
+            }
+            if(!found && !start) {
+                errors.add("Vessel " + labVessel.getLabCentricName() + " has actual events " + actualEventNames +
+                        ", but none are predecessors to " + nextEventTypeName + ": " + validPredecessorEventNames);
+            }
         }
         return errors;
+    }
+
+    private boolean validateTransfers(String nextEventTypeName, List<String> errors, Set<String> validPredecessorEventNames,
+            LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers) {
+        for (LabEvent labEvent : transfers) {
+            GenericLabEvent genericLabEvent = (GenericLabEvent) labEvent;
+            String actualEventName = genericLabEvent.getLabEventType().getName();
+            actualEventNames.add(actualEventName);
+/*
+            if(actualEventName.equals(nextEventTypeName)) {
+                errors.add("For vessel " + labVessel.getLabCentricName() + ", event " + nextEventTypeName + " has already occurred");
+            }
+*/
+            if(validPredecessorEventNames.contains(actualEventName)) {
+                found = true;
+                break;
+            }
+        }
+        return found;
     }
 
     public ProductWorkflowDefVersion getEffectiveVersion() {

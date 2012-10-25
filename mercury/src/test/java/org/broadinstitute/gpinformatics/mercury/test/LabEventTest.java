@@ -149,7 +149,7 @@ public class LabEventTest {
         LabEventHandler labEventHandler = new LabEventHandler();
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
-                bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
+                bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube).invoke();
 
         ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(mapBarcodeToTube,
                 bettaLimsMessageFactory, labEventFactory, labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
@@ -308,7 +308,7 @@ public class LabEventTest {
     @Test(groups = {DATABASE_FREE})
     public void testFluidigm() {
 //        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+//        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 //        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack
@@ -467,16 +467,13 @@ public class LabEventTest {
             for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
                 sampleInstance.getStartingSample().getProductOrderKey();
                 // get workflow name from product order
-                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName("");
-                productWorkflowDef.validate(labVessel, nextEventTypeName);
+                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName("Hybrid Selection");
+                List<String> errors = productWorkflowDef.validate(labVessel, nextEventTypeName);
+                if(!errors.isEmpty()) {
+                    Assert.fail(errors.get(0));
+                }
             }
-
         }
-
-//        List<String> errors = workflowDescription.validate(labVessels, nextEventTypeName);
-//        if(!errors.isEmpty()) {
-//            Assert.fail(errors.get(0));
-//        }
     }
 
     /**
@@ -510,6 +507,7 @@ public class LabEventTest {
             rackBarcode = preFlightJaxbBuilder.getRackBarcode();
 
             // PreflightPicoSetup 1
+            validateWorkflow("PreflightPicoSetup", mapBarcodeToTube.values());
             LabEvent preflightPicoSetup1Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                     preFlightJaxbBuilder.getPreflightPicoSetup1(), mapBarcodeToTube, null);
             labEventHandler.processEvent(preflightPicoSetup1Entity);
@@ -519,6 +517,7 @@ public class LabEventTest {
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
 
             // PreflightPicoSetup 2
+            validateWorkflow("PreflightPicoSetup", mapBarcodeToTube.values());
             LabEvent preflightPicoSetup2Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                     preFlightJaxbBuilder.getPreflightPicoSetup2(), mapBarcodeToTube, null);
             labEventHandler.processEvent(preflightPicoSetup2Entity);
@@ -528,15 +527,17 @@ public class LabEventTest {
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
 
             // PreflightNormalization
+            validateWorkflow("PreflightNormalization", mapBarcodeToTube.values());
             LabEvent preflightNormalization = labEventFactory.buildFromBettaLimsRackEventDbFree(
                     preFlightJaxbBuilder.getPreflightNormalization(), null, mapBarcodeToTube);
             labEventHandler.processEvent(preflightNormalization);
             // asserts
-            rackOfTubes = (RackOfTubes) preflightNormalization.getTargetLabVessels().iterator().next();
+            rackOfTubes = (RackOfTubes) preflightNormalization.getInPlaceLabVessel();
             Assert.assertEquals(rackOfTubes.getSampleInstances().size(),
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
 
             // PreflightPostNormPicoSetup 1
+            validateWorkflow("PreflightPostNormPicoSetup", mapBarcodeToTube.values());
             LabEvent preflightPostNormPicoSetup1Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                     preFlightJaxbBuilder.getPreflightPostNormPicoSetup1(), mapBarcodeToTube, null);
             labEventHandler.processEvent(preflightPostNormPicoSetup1Entity);
@@ -545,7 +546,8 @@ public class LabEventTest {
             Assert.assertEquals(preflightPostNormPicoSetup1Plate.getSampleInstances().size(),
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
 
-            // PreflightPicoSetup 2
+            // PreflightPostNormPicoSetup 2
+            validateWorkflow("PreflightPostNormPicoSetup", mapBarcodeToTube.values());
             LabEvent preflightPostNormPicoSetup2Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                     preFlightJaxbBuilder.getPreflightPostNormPicoSetup2(), mapBarcodeToTube, null);
             labEventHandler.processEvent(preflightPostNormPicoSetup2Entity);
@@ -1235,6 +1237,26 @@ public class LabEventTest {
             LabEvent gsWash2Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(hybridSelectionJaxbBuilder.getGsWash2Jaxb(), hybridizationPlate);
             labEventHandler.processEvent(gsWash2Entity);
 
+            // GSWash3
+            validateWorkflow("GSWash3", hybridizationPlate);
+            LabEvent gsWash3Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(hybridSelectionJaxbBuilder.getGsWash3Jaxb(), hybridizationPlate);
+            labEventHandler.processEvent(gsWash3Entity);
+
+            // GSWash4
+            validateWorkflow("GSWash4", hybridizationPlate);
+            LabEvent gsWash4Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(hybridSelectionJaxbBuilder.getGsWash4Jaxb(), hybridizationPlate);
+            labEventHandler.processEvent(gsWash4Entity);
+
+            // GSWash5
+            validateWorkflow("GSWash5", hybridizationPlate);
+            LabEvent gsWash5Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(hybridSelectionJaxbBuilder.getGsWash5Jaxb(), hybridizationPlate);
+            labEventHandler.processEvent(gsWash5Entity);
+
+            // GSWash6
+            validateWorkflow("GSWash6", hybridizationPlate);
+            LabEvent gsWash6Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(hybridSelectionJaxbBuilder.getGsWash6Jaxb(), hybridizationPlate);
+            labEventHandler.processEvent(gsWash6Entity);
+
             // CatchEnrichmentSetup
             validateWorkflow("CatchEnrichmentSetup", hybridizationPlate);
             LabEvent catchEnrichmentSetupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
@@ -1287,6 +1309,10 @@ public class LabEventTest {
         private PlateEventType apWashJaxb;
         private PlateEventType gsWash1Jaxb;
         private PlateEventType gsWash2Jaxb;
+        private PlateEventType gsWash3Jaxb;
+        private PlateEventType gsWash4Jaxb;
+        private PlateEventType gsWash5Jaxb;
+        private PlateEventType gsWash6Jaxb;
         private PlateEventType catchEnrichmentSetupJaxb;
         private PlateTransferEventType catchEnrichmentCleanupJaxb;
         private PlateTransferEventType normCatchJaxb;
@@ -1337,6 +1363,22 @@ public class LabEventTest {
 
         public PlateEventType getGsWash2Jaxb() {
             return gsWash2Jaxb;
+        }
+
+        public PlateEventType getGsWash3Jaxb() {
+            return gsWash3Jaxb;
+        }
+
+        public PlateEventType getGsWash4Jaxb() {
+            return gsWash4Jaxb;
+        }
+
+        public PlateEventType getGsWash5Jaxb() {
+            return gsWash5Jaxb;
+        }
+
+        public PlateEventType getGsWash6Jaxb() {
+            return gsWash6Jaxb;
         }
 
         public PlateEventType getCatchEnrichmentSetupJaxb() {
@@ -1430,6 +1472,30 @@ public class LabEventTest {
             BettaLIMSMessage bettaLIMSMessage8 = new BettaLIMSMessage();
             bettaLIMSMessage8.getPlateEvent().add(gsWash2Jaxb);
             messageList.add(bettaLIMSMessage8);
+            bettaLimsMessageFactory.advanceTime();
+
+            gsWash3Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash3", hybridizationPlateBarcode);
+            BettaLIMSMessage bettaLIMSMessage15 = new BettaLIMSMessage();
+            bettaLIMSMessage15.getPlateEvent().add(gsWash3Jaxb);
+            messageList.add(bettaLIMSMessage15);
+            bettaLimsMessageFactory.advanceTime();
+
+            gsWash4Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash4", hybridizationPlateBarcode);
+            BettaLIMSMessage bettaLIMSMessage12 = new BettaLIMSMessage();
+            bettaLIMSMessage12.getPlateEvent().add(gsWash4Jaxb);
+            messageList.add(bettaLIMSMessage12);
+            bettaLimsMessageFactory.advanceTime();
+
+            gsWash5Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash5", hybridizationPlateBarcode);
+            BettaLIMSMessage bettaLIMSMessage13 = new BettaLIMSMessage();
+            bettaLIMSMessage13.getPlateEvent().add(gsWash5Jaxb);
+            messageList.add(bettaLIMSMessage13);
+            bettaLimsMessageFactory.advanceTime();
+
+            gsWash6Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash6", hybridizationPlateBarcode);
+            BettaLIMSMessage bettaLIMSMessage14 = new BettaLIMSMessage();
+            bettaLIMSMessage14.getPlateEvent().add(gsWash6Jaxb);
+            messageList.add(bettaLIMSMessage14);
             bettaLimsMessageFactory.advanceTime();
 
             catchEnrichmentSetupJaxb = bettaLimsMessageFactory.buildPlateEvent("CatchEnrichmentSetup", hybridizationPlateBarcode);

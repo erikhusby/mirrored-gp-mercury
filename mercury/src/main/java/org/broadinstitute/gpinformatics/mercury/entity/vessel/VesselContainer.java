@@ -282,6 +282,7 @@ public class VesselContainer<T extends LabVessel> {
         return sampleInstanceCriteria.getSampleInstances();
     }
 
+    // todo jmt move this to LabVessel
     public void evaluateCriteria(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
             TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
        T vesselAtPosition = getVesselAtPosition(position);

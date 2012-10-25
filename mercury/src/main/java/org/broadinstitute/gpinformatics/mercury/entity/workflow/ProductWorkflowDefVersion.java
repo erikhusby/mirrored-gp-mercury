@@ -29,6 +29,7 @@ public class ProductWorkflowDefVersion {
     private transient LabEventNode rootLabEventNode;
 
     /** For JAXB */
+    @SuppressWarnings("UnusedDeclaration")
     ProductWorkflowDefVersion() {
     }
 
@@ -74,12 +75,14 @@ public class ProductWorkflowDefVersion {
     }
 
     static class LabEventNode {
-        LabEventType labEventType;
-        List<LabEventNode> predecessors = new ArrayList<LabEventNode>();
-        List<LabEventNode> successors = new ArrayList<LabEventNode>();
+        private LabEventType labEventType;
+        private boolean optional;
+        private List<LabEventNode> predecessors = new ArrayList<LabEventNode>();
+        private List<LabEventNode> successors = new ArrayList<LabEventNode>();
 
-        LabEventNode(LabEventType labEventType) {
+        LabEventNode(LabEventType labEventType, boolean optional) {
             this.labEventType = labEventType;
+            this.optional = optional;
         }
 
         public LabEventType getLabEventType() {
@@ -101,6 +104,10 @@ public class ProductWorkflowDefVersion {
         void addSuccessor(LabEventNode successor) {
             successors.add(successor);
         }
+
+        public boolean isOptional() {
+            return optional;
+        }
     }
 
     public void buildLabEventGraph() {
@@ -109,7 +116,8 @@ public class ProductWorkflowDefVersion {
             WorkflowProcessDefVersion effectiveProcessDef = workflowProcessDef.getEffectiveVersion();
             for (WorkflowStepDef workflowStepDef : effectiveProcessDef.getWorkflowStepDefs()) {
                 for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
-                    LabEventNode labEventNode = new LabEventNode(labEventType);
+                    // todo jmt optional should probably be on the message, not the step
+                    LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef.isOptional());
                     mapNameToLabEvent.put(labEventType.getName(), labEventNode);
                     if(rootLabEventNode == null) {
                         rootLabEventNode = labEventNode;
