@@ -342,9 +342,11 @@ public class ProductOrder implements Serializable {
         Map<String, BSPSampleDTO> bspSampleMetaData = ServiceAccessUtility.getSampleDtoByNames(uniqueNames);
         for (ProductOrderSample sample : getSamples()) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
-            if (bspSampleDTO != null) {
-                sample.setBspDTO(bspSampleDTO);
+            if (bspSampleDTO == null) {
+                // Need to use DUMMY here to avoid calling into to get the data a second time.
+                bspSampleDTO = BSPSampleDTO.DUMMY;
             }
+            sample.setBspDTO(bspSampleDTO);
         }
     }
 
@@ -627,11 +629,12 @@ public class ProductOrder implements Serializable {
         }
         if (!isSheetEmpty()) {
             addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.SAMPLE_IDS,
-                    "Sample List: " + StringUtils.join(getSampleNames(), ','));
+                    StringUtils.join(getSampleNames(), ','));
         }
 
         CreateIssueResponse issueResponse = ServiceAccessUtility.createJiraTicket(
-                fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title, comments==null?"":comments, listOfFields);
+                fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title,
+                comments == null ? "" : comments, listOfFields);
 
         jiraTicketKey = issueResponse.getKey();
         addLink(researchProject.getJiraTicketKey());
