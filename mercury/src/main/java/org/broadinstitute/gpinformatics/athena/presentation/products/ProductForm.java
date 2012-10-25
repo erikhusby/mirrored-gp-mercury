@@ -5,9 +5,8 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.products.*;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItemDTOComparator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -39,8 +38,6 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
     @Inject
     private Log logger;
 
-    private List<PriceItem> selectedPriceItems;
-
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
     public static final int ONE_HOUR_IN_SECONDS = 3600;
@@ -48,6 +45,7 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
 
     private List<Product> addOns;
 
+    private List<PriceItem> priceItems;
 
     public void initForm() {
         if (!facesContext.isPostback()) {
@@ -93,22 +91,8 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
     public String create() {
         try {
             addAllAddOnsToProduct();
+            addAllPriceItemsToProduct();
 
-            if (selectedPriceItems != null) {
-                for (PriceItem priceItem : selectedPriceItems) {
-                    // quite sure this is not the right way to do this, restructure as necessary
-                    org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
-                            priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
-                    if (entity == null) {
-                        entity = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
-                                priceItem.getPlatformName(),
-                                priceItem.getCategoryName(),
-                                priceItem.getName()
-                        );
-                    }
-                    product.addPriceItem(entity);
-                }
-            }
             productDao.persist(product);
             addInfoMessage("Product created.", "Product " + product.getPartNumber() + " has been created.");
         } catch (Exception e ) {
@@ -126,6 +110,8 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
     public String edit() {
         try {
             addAllAddOnsToProduct();
+            addAllPriceItemsToProduct();
+
             productDao.getEntityManager().merge(getProduct());
             addInfoMessage("Product detail updated.", "Product " + getProduct().getPartNumber() + " has been updated.");
         } catch (Exception e ) {
@@ -150,6 +136,26 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
                         throw new RuntimeException("Product AddOn " + aProductAddOn.getPartNumber() + " is no longer available. Please remove it from the list.");
                     }
                 }
+            }
+        }
+    }
+
+
+    private void addAllPriceItemsToProduct() {
+        if (priceItems != null) {
+            for (PriceItem priceItem : priceItems) {
+                // quite sure this is not the right way to do this, restructure as necessary
+                org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
+                        priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+                if (entity == null) {
+                    entity = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
+                            priceItem.getId(),
+                            priceItem.getPlatformName(),
+                            priceItem.getCategoryName(),
+                            priceItem.getName()
+                    );
+                }
+                product.addPriceItem(entity);
             }
         }
     }
@@ -185,8 +191,29 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
         return addOns;
     }
 
+
     public void setAddOns(final List<Product> addOns) {
         this.addOns = addOns;
+    }
+
+
+    public List<PriceItem> getPriceItems() {
+        if (product == null) {
+            return new ArrayList<PriceItem>();
+        }
+        List<PriceItem> priceItems = new ArrayList<PriceItem>();
+        // map entities to DTOs
+        for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity : product.getPriceItems()) {
+            PriceItem dtoPriceItem =
+                    new PriceItem(entity.getQuoteServerId(), entity.getPlatform(), entity.getCategory(), entity.getName());
+            priceItems.add(dtoPriceItem);
+        }
+        Collections.sort(priceItems, new PriceItemDTOComparator());
+        return priceItems;
+    }
+
+    public void setPriceItems(List<PriceItem> priceItems) {
+        this.priceItems = priceItems;
     }
 
     /**
@@ -217,11 +244,5 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
     }
 
 
-    public List<PriceItem> getSelectedPriceItems() {
-        return selectedPriceItems;
-    }
 
-    public void setSelectedPriceItems(List<PriceItem> selectedPriceItems) {
-        this.selectedPriceItems = selectedPriceItems;
-    }
 }

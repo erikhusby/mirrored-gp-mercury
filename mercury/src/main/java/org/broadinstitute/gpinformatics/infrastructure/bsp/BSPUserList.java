@@ -72,17 +72,30 @@ public class BSPUserList {
      * @return a list of matching users
      */
     public List<BspUser> find(String query) {
-        String lowerQuery = query.toLowerCase();
+        String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<BspUser> results = new ArrayList<BspUser>();
         for (BspUser user : users) {
-            if (user.getFirstName().toLowerCase().contains(lowerQuery) ||
-                user.getLastName().toLowerCase().contains(lowerQuery) ||
-                user.getUsername().contains(lowerQuery) ||
-                    user.getEmail().contains(lowerQuery)) {
+            boolean eachItemMatchesSomething = true;
+            for (String lowerQuery : lowerQueryItems) {
+                // If none of the fields match this item, then all items are not matched
+                if (!anyFieldMatches(lowerQuery, user)) {
+                    eachItemMatchesSomething = false;
+                }
+            }
+
+            if (eachItemMatchesSomething) {
                 results.add(user);
             }
         }
+
         return results;
+    }
+
+    private boolean anyFieldMatches(String lowerQuery, BspUser user) {
+        return user.getFirstName().toLowerCase().contains(lowerQuery) ||
+            user.getLastName().toLowerCase().contains(lowerQuery) ||
+            user.getUsername().contains(lowerQuery) ||
+                user.getEmail().contains(lowerQuery);
     }
 
     @Inject

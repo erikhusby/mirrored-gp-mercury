@@ -47,9 +47,9 @@ public class BillableItemDaoTest  extends ContainerTest {
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
         //TODO hmc When there are products in the DB can then persist the Product wit the order.
         List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
-        sampleList.add(new ProductOrderSample("MS-1111"));
-        sampleList.add(new ProductOrderSample("MS-1112"));
         ProductOrder newProductOrder = new ProductOrder(1L, testProductOrderTitle, sampleList, "quoteId", null, firstResearchProjectFound );
+        sampleList.add(new ProductOrderSample("MS-1111", newProductOrder));
+        sampleList.add(new ProductOrderSample("MS-1112", newProductOrder));
         productOrderDao.persist(newProductOrder);
         productOrderDao.flush();
         productOrderDao.clear();

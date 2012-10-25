@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 
 /**
@@ -72,9 +74,9 @@ public class BSPSampleDTO implements Serializable {
 
     public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
                         String patientId, String organism, String collaboratorsSampleName, String collection,
-                        String volume, String concentration, String sampleLsid, String collaboratorParticipantIdIn,
-                        String materialTypeIn, String totalIn, String sampleTypeIn, String primaryDiseaseIn,
-                        String genderIn, String stockTypeIn, String fingerprintIn) {
+                        String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
+                        String materialType, String total, String sampleType, String primaryDisease,
+                        String gender, String stockType, String fingerprint) {
 
         this.containerId = containerId;
         this.stockSample = stockSample;
@@ -86,17 +88,17 @@ public class BSPSampleDTO implements Serializable {
         this.concentration = concentration;
         this.organism = organism;
         this.sampleLsid = sampleLsid;
-        this.collaboratorParticipantId = collaboratorParticipantIdIn;
-        this.materialType = materialTypeIn;
-        this.total = totalIn;
-        this.sampleType = sampleTypeIn;
-        this.primaryDisease = primaryDiseaseIn;
-        this.gender = genderIn;
-        this.stockType = stockTypeIn;
-        this.fingerprint = fingerprintIn;
-        this.stockAtExport = null;
-        this.positiveControl = false;
-        this.negativeControl = false;
+        this.collaboratorParticipantId = collaboratorParticipantId;
+        this.materialType = materialType;
+        this.total = total;
+        this.sampleType = sampleType;
+        this.primaryDisease = primaryDisease;
+        this.gender = gender;
+        this.stockType = stockType;
+        this.fingerprint = fingerprint;
+        stockAtExport = null;
+        positiveControl = false;
+        negativeControl = false;
     }
 
 /*
@@ -242,16 +244,14 @@ public class BSPSampleDTO implements Serializable {
     }
 
     public boolean isSampleReceived() {
-        return ((null != getRootSample()) && (!getRootSample().isEmpty()));
+        return !StringUtils.isBlank(rootSample);
     }
 
     public boolean isActiveStock() {
-        return ((null != getStockType()) &&
-                (getStockType().equals(ACTIVE_IND)));
+        return (stockType != null) && (stockType.equals(ACTIVE_IND));
     }
 
-    public boolean hasFingerprint() {
-        return ((null != getFingerprint()) &&
-                (!getFingerprint().isEmpty()));
+    public boolean getHasFingerprint() {
+        return !StringUtils.isBlank(fingerprint);
     }
 }

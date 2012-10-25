@@ -29,19 +29,19 @@ public class GenericDao {
     }
 
     public void flush() {
-        this.threadEntityManager.getEntityManager().flush();
+        getEntityManager().flush();
     }
 
     public void clear() {
-        this.threadEntityManager.getEntityManager().clear();
+        getEntityManager().clear();
     }
 
     public void persist(Object entity) {
-        this.threadEntityManager.getEntityManager().persist(entity);
+        getEntityManager().persist(entity);
     }
 
     public void persistAll(List<?> entities) {
-        EntityManager entityManager = this.threadEntityManager.getEntityManager();
+        EntityManager entityManager = threadEntityManager.getEntityManager();
         for (Object entity : entities) {
             entityManager.persist(entity);
         }
