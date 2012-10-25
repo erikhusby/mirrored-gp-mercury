@@ -16,6 +16,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -34,46 +35,45 @@ public class ProductOrderDaoTest extends ContainerTest {
     public static final long TEST_CREATOR_ID = 1L;
 
     @Inject
-    ProductOrderDao productOrderDao;
+    private ProductOrderDao productOrderDao;
 
     @Inject
-    ResearchProjectDao researchProjectDao;
+    private ResearchProjectDao researchProjectDao;
 
     @Inject
-    ProductDao productDao;
+    private ProductDao productDao;
+
+    @Inject
+    private UserTransaction utx;
 
     private final String testResearchProjectKey = "TestResearchProject_" + UUID.randomUUID();
     private final String testProductOrderKey = "DRAFT-" + UUID.randomUUID();
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
-        if (researchProjectDao != null) {
-            List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
-            if ((projectsList != null) && projectsList.isEmpty()) {
-                ResearchProject researchProject =
-                        ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
-                researchProjectDao.persist(researchProject);
-            }
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.begin();
+
+        List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
+        if ((projectsList != null) && projectsList.isEmpty()) {
+            ResearchProject researchProject =
+                    ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
+            researchProjectDao.persist(researchProject);
         }
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        if (researchProjectDao == null) {
-            // Not running on the server, ignore.
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
             return;
         }
-        ResearchProject researchProject = researchProjectDao.findByBusinessKey(testResearchProjectKey);
-        if (researchProject != null) {
-            researchProjectDao.remove(researchProject);
-            researchProjectDao.flush();
-        }
 
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(testProductOrderKey);
-        if (productOrder != null) {
-            productOrderDao.remove(productOrder);
-            productOrderDao.flush();
-        }
+        utx.rollback();
     }
 
     public ProductOrder createTestProductOrder() {
@@ -133,6 +133,11 @@ public class ProductOrderDaoTest extends ContainerTest {
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void findOrdersCreatedBy() {
+        ProductOrder order = createTestProductOrder();
+        productOrderDao.persist(order);
+        productOrderDao.flush();
+        productOrderDao.clear();
+
         List<ProductOrder> orders = productOrderDao.findByCreatedPersonId(TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
@@ -140,6 +145,11 @@ public class ProductOrderDaoTest extends ContainerTest {
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void findOrdersModifiedBy() {
+        ProductOrder order = createTestProductOrder();
+        productOrderDao.persist(order);
+        productOrderDao.flush();
+        productOrderDao.clear();
+
         List<ProductOrder> orders = productOrderDao.findByModifiedPersonId(TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());

@@ -48,19 +48,22 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
-        // Ignore if not running on server
-        if (utx != null) {
-            utx.begin();
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
         }
+
+        utx.begin();
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        // Ignore if not running on server
-        if (utx != null) {
-            utx.rollback();
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
         }
 
+        utx.rollback();
     }
 
     // FIXME: refactor duplicate code, from here and ProductOrderDaoTest. Create an injectable object that creates

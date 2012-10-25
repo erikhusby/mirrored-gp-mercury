@@ -6,11 +6,14 @@ import org.apache.commons.collections15.Predicate;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -19,7 +22,7 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
 
 
-@Test
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductDaoTest extends ContainerTest {
 
     @Inject
@@ -27,6 +30,9 @@ public class ProductDaoTest extends ContainerTest {
 
     @Inject
     private ProductFamilyDao productFamilyDao;
+
+    @Inject
+    private UserTransaction utx;
 
     private List<Product> createdProducts;
 
@@ -117,19 +123,24 @@ public class ProductDaoTest extends ContainerTest {
         }
     }
 
-
-
-
-    @AfterMethod
-    public void afterMethod() {
-
-        if (createdProducts != null) {
-            for (Product product : createdProducts) {
-                dao.remove(product);
-            }
+    @BeforeMethod
+    public void beforeMethod() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
         }
 
-        createdProducts = null;
+        utx.begin();
+    }
+
+    @AfterMethod
+    public void afterMethod() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.rollback();
     }
 
 
@@ -173,6 +184,8 @@ public class ProductDaoTest extends ContainerTest {
         for (DatesAndAvailability datesAndAvailability : datesAndAvailabilities) {
             Product product = datesAndAvailability.createProduct();
             dao.persist(product);
+            dao.flush();
+            dao.clear();
             createdProducts.add(product);
 
             List<Product> products = dao.findProducts(ProductDao.AvailableProductsOnly.YES);
@@ -192,7 +205,10 @@ public class ProductDaoTest extends ContainerTest {
                 Assert.assertEquals(products.get(0), product, datesAndAvailability.toString());
             }
 
+            // merge product because it was detached because of previous dao.clear()
+            product = dao.getEntityManager().merge(product);
             dao.remove(product);
+            dao.flush();
             createdProducts.clear();
         }
 
