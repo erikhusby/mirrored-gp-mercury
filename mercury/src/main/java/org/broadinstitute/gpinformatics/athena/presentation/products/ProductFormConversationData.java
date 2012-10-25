@@ -115,11 +115,11 @@ public class ProductFormConversationData implements Serializable {
             defaultPriceItems = new ArrayList<PriceItem>();
         }
 
-        if (defaultPriceItems.size() > 0) {
-            defaultPriceItems.clear();
-        }
+        defaultPriceItems.clear();
 
-        defaultPriceItems.add(priceItem);
+        if (priceItem != null) {
+            defaultPriceItems.add(priceItem);
+        }
     }
 
     /**
