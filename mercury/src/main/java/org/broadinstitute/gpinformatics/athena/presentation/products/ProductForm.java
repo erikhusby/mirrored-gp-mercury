@@ -228,16 +228,14 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void addAllPriceItemsToProduct() {
 
-        if (conversationData.getPriceItems() != null) {
-            for (PriceItem priceItem : conversationData.getPriceItems()) {
-                product.addPriceItem(findEntity(priceItem));
+        for (PriceItem priceItem : conversationData.getPriceItems()) {
+
+            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);
+            product.addPriceItem(entity);
+
+            if (conversationData.getDefaultPriceItem().equals(priceItem)) {
+                product.setDefaultPriceItem(entity);
             }
-        }
-
-        if (conversationData.getDefaultPriceItem() != null) {
-
-            PriceItem priceItem = conversationData.getDefaultPriceItem();
-            product.setDefaultPriceItem(findEntity(priceItem));
         }
     }
 
