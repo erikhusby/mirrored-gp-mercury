@@ -29,7 +29,7 @@
                 </p:column>
 
                 <p:column headerText="ID" sortBy="#{order.jiraTicketKey}">
-                    <h:outputLink target="_new" value="#{jiraLink.browseUrl(order.jiraTicketKey)}"
+                    <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}"
                                   class="external" rendered="#{order.hasJiraTicketKey()}" >
                         <h:outputText value="#{order.jiraTicketKey}" />
                     </h:outputLink>
@@ -43,12 +43,14 @@
                     #{order.researchProject.title}
                 </p:column>
 
-                <p:column headerText="Owner">
-                    ???
+                <p:column headerText="Owner" filterBy="#{order.createdBy}" filterOptions="#{productOrderBean.allProjectOwners}" filterMatchMode="exact">
+                    #{userListBean.getUserFullName(order.createdBy)}
                 </p:column>
 
-                <p:column headerText="Updated">
-                    ???
+                <p:column headerText="Updated" sortBy="#{order.modifiedDate}">
+                    <h:outputText value="#{order.modifiedDate}">
+                        <f:convertDateTime type="both" timeStyle="short"/>
+                    </h:outputText>
                 </p:column>
 
                 <p:column headerText="Samples">
