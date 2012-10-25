@@ -100,6 +100,7 @@ public class ProductDaoTest extends ContainerTest {
                     3 * DAYS,                           // expected cycle time
                     4 * DAYS,                           // guaranteed cycle time
                     192,                                // samples per week
+                    96,                                 // min order size
                     "dummy input requirements",         // input requirements
                     "dummy deliverables",               // deliverables
                     false,                              // top level product
@@ -183,6 +184,7 @@ public class ProductDaoTest extends ContainerTest {
                     return "Test Data".equals(product.getProductName());
                 }
             });
+
 
             if (! datesAndAvailability.expectingAvailable) {
                 Assert.assertEquals(products.size(), 0);

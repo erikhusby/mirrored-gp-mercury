@@ -57,7 +57,7 @@ public class ProductForm extends AbstractJsfBean  implements Serializable {
     }
 
     public void initEmptyProduct() {
-        product = new Product(null, null, null, null, null, null,
+        product = new Product(null, null, null, null, null, null, null,
                 null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME);
         addOns = new ArrayList<Product>();
     }

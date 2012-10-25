@@ -136,6 +136,15 @@
                 </div>
 
                 <div class="control-group">
+                    <p:outputLabel for="minimumOrderSize" value="Minimum Order Size" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="minimumOrderSize" value="#{productForm.product.minimumOrderSize}" size="50" required="false"/>
+                        <p:watermark for="minimumOrderSize" value="Enter the minimum order size"/>
+                        <p:message for="minimumOrderSize"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <p:outputLabel for="priceItems" value="Price Items" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="priceItems" value="#{productForm.priceItems}"

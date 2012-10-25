@@ -42,6 +42,7 @@ public class Product implements Serializable {
     private Integer expectedCycleTimeSeconds;
     private Integer guaranteedCycleTimeSeconds;
     private Integer samplesPerWeek;
+    private Integer minimumOrderSize;
 
     @Column(length = 2000)
     private String inputRequirements;
@@ -82,6 +83,7 @@ public class Product implements Serializable {
                    Integer expectedCycleTimeSeconds,
                    Integer guaranteedCycleTimeSeconds,
                    Integer samplesPerWeek,
+                   Integer minimumOrderSize,
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
@@ -96,6 +98,7 @@ public class Product implements Serializable {
         this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
         this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
         this.samplesPerWeek = samplesPerWeek;
+        this.minimumOrderSize = minimumOrderSize;
         this.inputRequirements = inputRequirements;
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
@@ -201,6 +204,14 @@ public class Product implements Serializable {
 
     public void setSamplesPerWeek(final Integer samplesPerWeek) {
         this.samplesPerWeek = samplesPerWeek;
+    }
+
+    public Integer getMinimumOrderSize() {
+        return minimumOrderSize;
+    }
+
+    public void setMinimumOrderSize(final Integer minimumOrderSize) {
+        this.minimumOrderSize = minimumOrderSize;
     }
 
     public void setInputRequirements(final String inputRequirements) {
