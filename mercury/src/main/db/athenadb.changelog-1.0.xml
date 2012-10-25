@@ -242,10 +242,6 @@
     </changeSet>
 
     <changeSet id="GPLIM-95-2" author="athomson">
-    <!--<preConditions onFail="MARK_RAN">-->
-        <!--<dbms type="oracle" />-->
-        <!--<runningAs username="ATHENA" />-->
-    <!--</preConditions>-->
     <sql>
         Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (249,10943,to_timestamp('2012/07/26','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/07/26','yyyy/mm/dd'),'Lung Adenocarcinoma CIP','Lung Adenocarcinoma CIP',0,'Open');
         Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (248,11137,to_timestamp('2012/07/24','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/07/24','yyyy/mm/dd'),'Resistance - Kantoff','Resistance - Kantoff',0,'Open');
@@ -348,62 +344,10 @@
     </changeSet>
 
     <changeSet author="athomson" id="GPLIM-95-3">
-        <!--<preConditions onFail="MARK_RAN">-->
-            <!--<dbms type="oracle" />-->
-            <!--<runningAs username="ATHENA" />-->
-        <!--</preConditions>-->
         <sql>
             drop sequence athena.seq_research_project_index;
             create sequence athena.seq_research_project_index start with 13000 increment by 50;
         </sql>
     </changeSet>
-    <changeSet id="GPLIM-95-4" author="scottmat">
-        <preConditions onFail="MARK_RAN">
-            <dbms type="postgresql" />
-            <runningAs username="ATHENA" />
-        </preConditions>
-        <createView viewName="PMB_RESEARCH_PROJECT" replaceIfExists="true">
-            select research_project_id "RESEARCH_PROJECT_ID",
-                        title "RESEARCH_PROJECT_NAME",
-                        CASE CREATED_BY WHEN 10671 THEN 'burtt'
-                        WHEN 10943 THEN 'carrie'
-                        WHEN 10965  THEN 'caubin'
-                        WHEN 10974  THEN 'dbmirel'
-                        WHEN 13  THEN 'dfarlow'
-                        WHEN 10637  THEN 'kmurray'
-                        WHEN 11137 THEN 'laurena'
-                        WHEN 11753 THEN 'mharden'
-                        WHEN 11732 THEN 'namrata'
-                        WHEN 11427 THEN 'shefler'
-                        WHEN 12280 THEN 'ebevil'
-                        WHEN 12398 THEN 'egelfand'
-                        WHEN 12043 THEN 'enickers'
-                        WHEN 13834 THEN 'rbell'
-                        ELSE 'athomson' END "CREATED_BY",
-                        created_date "CREATED_ON",
-                        Case MODIFIED_BY
-                        WHEN 10671 THEN 'burtt'
-                        WHEN 10943 THEN 'carrie'
-                        WHEN 10965 THEN 'caubin'
-                        WHEN 10974 THEN 'dbmirel'
-                        WHEN 13 THEN 'dfarlow'
-                        WHEN 10637 THEN 'kmurray'
-                        WHEN 11137 THEN 'laurena'
-                        WHEN 11753 THEN 'mharden'
-                        WHEN 11732 THEN 'namrata'
-                        WHEN 11427 THEN 'shefler'
-                        WHEN 12280 THEN 'ebevil'
-                        WHEN 12398 THEN 'egelfand'
-                        WHEN 12043 THEN 'enickers'
-                        WHEN 13834 THEN 'rbell'
-                        ELSE 'athomson' END "UPDATED_BY",
-                        modified_date "UPDATED_BY_ON"
-                        from athena.research_project;
-        </createView>
-        <rollback>
-               <dropView viewName="PMB_RESEARCH_PROJECT"/>
-        </rollback>
-    </changeSet>
-
 
 </databaseChangeLog>
