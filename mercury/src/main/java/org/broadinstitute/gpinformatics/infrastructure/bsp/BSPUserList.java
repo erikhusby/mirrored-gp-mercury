@@ -91,7 +91,7 @@ public class BSPUserList {
         return results;
     }
 
-    private boolean anyFieldMatches(String lowerQuery, BspUser user) {
+    private static boolean anyFieldMatches(String lowerQuery, BspUser user) {
         return user.getFirstName().toLowerCase().contains(lowerQuery) ||
             user.getLastName().toLowerCase().contains(lowerQuery) ||
             user.getUsername().contains(lowerQuery) ||
