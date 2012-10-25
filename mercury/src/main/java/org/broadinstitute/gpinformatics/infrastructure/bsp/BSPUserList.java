@@ -5,13 +5,11 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 
+import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Application wide access to BSP's user list. The list is currently cached once at application startup. In the
@@ -139,5 +137,14 @@ public class BSPUserList {
         user.setLastName(lastName);
         user.setEmail(email);
         return user;
+    }
+
+    public List<SelectItem> getSelectItems(Set<BspUser> users) {
+        List<SelectItem> items = new ArrayList<SelectItem>();
+        items.add(new SelectItem("", "Any"));
+        for (BspUser user : users) {
+            items.add(new SelectItem(user.getUserId(), user.getFirstName() + " " + user.getLastName()));
+        }
+        return items;
     }
 }

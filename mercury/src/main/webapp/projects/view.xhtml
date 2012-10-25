@@ -42,7 +42,7 @@
                     <label class="control-label label-form">ID</label>
                     <div class="controls">
                         <div class="form-value">
-                            <h:outputLink target="_new" rendered="#{researchProjectDetail.project.hasJiraTicketKey()}"
+                            <h:outputLink target="JIRA" rendered="#{researchProjectDetail.project.hasJiraTicketKey()}"
                                           value="#{jiraLink.browseUrl(researchProjectDetail.project.jiraTicketKey)}" class="external">
                                 <h:outputText value="#{researchProjectDetail.project.jiraTicketKey}" />
                             </h:outputLink>
