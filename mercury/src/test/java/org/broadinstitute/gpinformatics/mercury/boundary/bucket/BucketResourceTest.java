@@ -70,17 +70,21 @@ public class BucketResourceTest extends ContainerTest {
 
         Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry1, testEntry2, testEntry3 ) );
 
-        Assert.assertTrue(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertTrue(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertTrue(testEntry3.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertTrue(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
+        Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
+        Assert.assertEquals(1, testEntry1.getLabVessel().getInPlaceEvents().size());
+        Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
+        Assert.assertEquals(1, testEntry2.getLabVessel().getInPlaceEvents().size());
+        Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEvents().isEmpty());
+        Assert.assertEquals(1, testEntry3.getLabVessel().getInPlaceEvents().size());
+        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
+        Assert.assertEquals(1, testEntry4.getLabVessel().getInPlaceEvents().size());
 
         resource.start(bucketBatch, howieTest);
 
         Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertTrue(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
+        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
 
         for(BucketEntry currEntry:bucketBatch) {
             boolean doesEventHavePDO = false;

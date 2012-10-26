@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -51,6 +52,7 @@ public class BucketResource {
     public BucketEntry add ( @Nonnull LabVessel vessel, @Nonnull String productOrder, @Nonnull Bucket bucket ) {
 
         BucketEntry newEntry = bucket.addEntry ( productOrder, vessel );
+        labEventFactory.createFromBatchItems( productOrder, vessel, 1L, null, LabEventType.BUCKET_ENTRY );
         try {
             ServiceAccessUtility.addJiraComment(productOrder, vessel.getLabCentricName() +
                     " added to bucket " + bucket.getBucketDefinitionName());
