@@ -1120,11 +1120,11 @@
         flowcell_barcode varchar(255),
         flowcell_type varchar(255),
         plate_type varchar(255),
-        molecular_state numeric(19,0),
+--         molecular_state numeric(19,0),
 --         project numeric(19,0),
 --         project_authority numeric(19,0),
 --         read_bucket_authority numeric(19,0),
---         plate numeric(19,0),
+        plate numeric(19,0),
 --         aliquot numeric(19,0),
         primary key (lab_vessel_id),
         unique (label)
@@ -1137,7 +1137,7 @@
         revtype numeric(3,0),
         created_on timestamp,
         label varchar(255),
-        molecular_state numeric(19,0),
+--         molecular_state numeric(19,0),
 --         project numeric(19,0),
 --         project_authority numeric(19,0),
 --         read_bucket_authority numeric(19,0),
@@ -1971,10 +1971,10 @@
         foreign key (plate)
         references mercury.lab_vessel;
 
-    alter table mercury.lab_vessel
-        add constraint FK71AE15286DE9BBF6
-        foreign key (molecular_state)
-        references mercury.molecular_state;
+--     alter table mercury.lab_vessel
+--         add constraint FK71AE15286DE9BBF6
+--         foreign key (molecular_state)
+--         references mercury.molecular_state;
 /*
     alter table mercury.lab_vessel
         add constraint FK71AE15283BA3A1ED
