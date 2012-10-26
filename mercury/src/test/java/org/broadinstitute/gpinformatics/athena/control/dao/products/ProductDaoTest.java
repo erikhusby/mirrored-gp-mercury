@@ -22,7 +22,7 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductDaoTest extends ContainerTest {
 
     @Inject
