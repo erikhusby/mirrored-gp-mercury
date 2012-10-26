@@ -93,29 +93,4 @@ public class WorkflowTest {
             throw new RuntimeException(e);
         }
     }
-
-    @Test
-    public void testGraph() {
-        WorkflowLoader workflowLoader = new WorkflowLoader();
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        for (ProductWorkflowDef productWorkflowDef : workflowConfig.getProductWorkflowDefs()) {
-            ProductWorkflowDefVersion effectiveVersion = productWorkflowDef.getEffectiveVersion();
-            effectiveVersion.buildLabEventGraph();
-            effectiveVersion.getRootLabEventNode();
-        }
-
-    }
-/*
-    public void parseWorkflow() {
-        try {
-            JAXBContext jc = JAXBContext.newInstance(WorkflowConfig.class, WorkflowBucketDef.class);
-            Unmarshaller unmarshaller = jc.createUnmarshaller();
-            WorkflowConfig workflowConfig = (WorkflowConfig) unmarshaller.unmarshal(
-                    Thread.currentThread().getContextClassLoader().getResourceAsStream("WorkflowConfig.xml"));
-            Assert.assertFalse("No workflow defs", workflowConfig.getProductWorkflowDefs().isEmpty());
-        } catch (JAXBException e) {
-            throw new RuntimeException(e);
-        }
-    }
-*/
 }
