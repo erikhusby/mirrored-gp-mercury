@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -68,15 +69,30 @@ public class BucketResource {
      * can also make this gesture when it processes a message.
      *
      * @param actor
+     * @param bucketEntries
+     *
      */
     public void start ( @Nonnull Collection<BucketEntry> bucketEntries, Person actor ) {
+        start(bucketEntries, actor, null);
+    }
+    /**
+     * Start the work for the given {@link BucketEntry entry}.  Lab users
+     * can make this gesture explicitly.  The
+     * {@link org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler handler}
+     * can also make this gesture when it processes a message.
+     *
+     * @param actor
+     * @param bucketEntries
+     * @param batchTicket
+     */
+    public void start ( @Nonnull Collection<BucketEntry> bucketEntries, Person actor , String batchTicket ) {
         /**
          * Side effect: create a {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent} for each
          * associated {@link LabVessel} and
          * set {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent#setProductOrderId(String)
          * the product order} based on what's in the {@link BucketEntry}
          *
-         * Create (if necessary) a new batch consisting of the
+         * Create (if necessary) a new batch
          */
 
         Map<String, List<LabVessel>> pdoKeyToVesselMap = new HashMap<String, List<LabVessel>> ();
@@ -101,10 +117,15 @@ public class BucketResource {
 
         for ( BucketEntry currEntry : bucketEntries ) {
             currEntry.getBucketExistence().removeEntry(currEntry);
+            //TODO SGM call DAO to delete bucket entries
         }
 
         try {
-            bucketBatch.submit();
+            if(null == batchTicket) {
+                bucketBatch.submit();
+            } else {
+                bucketBatch.setJiraTicket(new JiraTicket(batchTicket, batchTicket));
+            }
             for(String pdo:pdoKeyToVesselMap.keySet()) {
                 bucketBatch.addJiraLink(pdo);
                 ServiceAccessUtility.addJiraComment(pdo, "New Batch Created: " +
