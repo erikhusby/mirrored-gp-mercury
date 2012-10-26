@@ -281,7 +281,7 @@ public class ExomeExpressEndToEndTest {
                     mapBarcodeToTube);//.invoke();
 
             LabEventTest.ShearingEntityBuilder shearingEntityBuilder = new LabEventTest.ShearingEntityBuilder(
-                    mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
+                    mapBarcodeToTube, preFlightEntityBuilder.getRackOfTubes(), bettaLimsMessageFactory, labEventFactory,
                     labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
             LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LabEventTest.LibraryConstructionEntityBuilder(
