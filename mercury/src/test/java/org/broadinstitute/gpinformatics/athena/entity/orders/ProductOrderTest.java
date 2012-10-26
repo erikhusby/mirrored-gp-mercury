@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectTest;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.test.BeanTester;
@@ -154,7 +155,7 @@ public class ProductOrderTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         String[] sampleArray = sampleListStr.split(",");
         for (String sampleName : sampleArray) {
-            ProductOrderSample productOrderSample = new ProductOrderSample(sampleName, productOrder);
+            ProductOrderSample productOrderSample = new ProductOrderSample(sampleName, BSPSampleDTO.DUMMY, productOrder);
             productOrderSample.setSampleComment("athenaComment");
             for (BillableItem billableItem : billableItems) {
                 productOrderSample.addBillableItem(billableItem);
