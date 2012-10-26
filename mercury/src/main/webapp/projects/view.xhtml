@@ -41,7 +41,12 @@
                 <div class="control-group">
                     <label class="control-label label-form">ID</label>
                     <div class="controls">
-                        <div class="form-value">#{researchProjectDetail.project.jiraTicketKey}</div>
+                        <div class="form-value">
+                            <h:outputLink target="JIRA" rendered="#{researchProjectDetail.project.hasJiraTicketKey()}"
+                                          value="#{jiraLink.browseUrl(researchProjectDetail.project.jiraTicketKey)}" class="external">
+                                <h:outputText value="#{researchProjectDetail.project.jiraTicketKey}" />
+                            </h:outputLink>
+                        </div>
                     </div>
                 </div>
 
@@ -169,13 +174,13 @@
                     </p:column>
                     <p:column headerText="Product ID">
                         <h:link outcome="/orders/view" value="#{order.jiraTicketKey}">
-                            <f:param name="productOrderKey" value="#{order.businessKey}"/>
+                            <f:param name="productOrder" value="#{order.businessKey}"/>
                         </h:link>
                     </p:column>
                     <p:column headerText="Product">
                         #{order.product.productName}
                     </p:column>
-                    <p:column headerText="Status" sortBy="#{order.orderStatus}" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
+                    <p:column headerText="Status" sortBy="#{order.title}">
                         #{order.orderStatus}
                     </p:column>
                     <p:column headerText="Owner">
@@ -185,7 +190,7 @@
                         #{order.modifiedDate}
                     </p:column>
                     <p:column headerText="Samples">
-                        #{order.sampleSummary}
+                        #{order.sampleBillingSummary}
                     </p:column>
                 </p:dataTable>
             </h:form>

@@ -24,19 +24,8 @@ public class ProductOrderDetail {
     @Inject
     UserBean userBean;
 
-    /** Key used to look up this product order. */
-    private String productOrderKey;
-
     /** The product order we're currently displaying */
     private ProductOrder productOrder;
-
-    public String getProductOrderKey() {
-        return productOrderKey;
-    }
-
-    public void setProductOrderKey(String productOrderKey) {
-        this.productOrderKey = productOrderKey;
-    }
 
     public ProductOrder getProductOrder() {
         if (productOrder == null) {

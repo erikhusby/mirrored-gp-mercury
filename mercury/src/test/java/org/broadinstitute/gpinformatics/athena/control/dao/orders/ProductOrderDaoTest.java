@@ -16,6 +16,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -27,53 +28,58 @@ import java.util.UUID;
  * Date: 10/9/12
  * Time: 3:47 PM
  */
-@Test(enabled = true)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderDaoTest extends ContainerTest {
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
-    public static final long TEST_CREATOR_ID = 1L;
+    public static final long TEST_CREATOR_ID = RandomUtils.nextInt(Integer.MAX_VALUE);
 
     @Inject
-    ProductOrderDao productOrderDao;
+    private ProductOrderDao productOrderDao;
 
     @Inject
-    ResearchProjectDao researchProjectDao;
+    private ResearchProjectDao researchProjectDao;
 
     @Inject
-    ProductDao productDao;
+    private ProductDao productDao;
+
+    @Inject
+    private UserTransaction utx;
 
     private final String testResearchProjectKey = "TestResearchProject_" + UUID.randomUUID();
     private final String testProductOrderKey = "DRAFT-" + UUID.randomUUID();
 
+    ProductOrder order;
+
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
-        if (researchProjectDao != null) {
-            List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
-            if ((projectsList != null) && projectsList.isEmpty()) {
-                ResearchProject researchProject =
-                        ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
-                researchProjectDao.persist(researchProject);
-            }
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
         }
+
+        utx.begin();
+
+        List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
+        if ((projectsList != null) && projectsList.isEmpty()) {
+            ResearchProject researchProject =
+                    ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
+            researchProjectDao.persist(researchProject);
+        }
+        order = createTestProductOrder();
+        productOrderDao.persist(order);
+        productOrderDao.flush();
+        productOrderDao.clear();
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        if (researchProjectDao == null) {
-            // Not running on the server, ignore.
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
             return;
         }
-        ResearchProject researchProject = researchProjectDao.findByBusinessKey(testResearchProjectKey);
-        if (researchProject != null) {
-            researchProjectDao.remove(researchProject);
-            researchProjectDao.flush();
-        }
 
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(testProductOrderKey);
-        if (productOrder != null) {
-            productOrderDao.remove(productOrder);
-            productOrderDao.flush();
-        }
+        utx.rollback();
     }
 
     public ProductOrder createTestProductOrder() {
@@ -99,20 +105,15 @@ public class ProductOrderDaoTest extends ContainerTest {
         return newProductOrder;
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void findOrders() {
-        ProductOrder order = createTestProductOrder();
-        productOrderDao.persist(order);
-        productOrderDao.flush();
-        productOrderDao.clear();
-
-        // Try to find the created ProductOrder by it's researchProject and title.
+    public void testFindOrders() {
+        // Try to find the created ProductOrder by its researchProject and title.
         ProductOrder productOrderFromDb =
                 productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(), order.getTitle());
         Assert.assertNotNull(productOrderFromDb);
         Assert.assertEquals(productOrderFromDb.getTitle(), order.getTitle());
         Assert.assertEquals(productOrderFromDb.getQuoteId(), order.getQuoteId());
         Assert.assertEquals(productOrderFromDb.getTotalSampleCount(), order.getTotalSampleCount());
+        Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
 
         // Try to find a non-existing ProductOrder
         productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(),
@@ -127,26 +128,21 @@ public class ProductOrderDaoTest extends ContainerTest {
             productOrderFromDb = orders.get(0);
         }
         Assert.assertNotNull(productOrderFromDb);
-
-        Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void findOrdersCreatedBy() {
+    public void testFindOrdersCreatedBy() {
         List<ProductOrder> orders = productOrderDao.findByCreatedPersonId(TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void findOrdersModifiedBy() {
+    public void testFindOrdersModifiedBy() {
         List<ProductOrder> orders = productOrderDao.findByModifiedPersonId(TEST_CREATOR_ID);
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void findAll() {
+    public void testFindAll() {
         List<ProductOrder> orders = productOrderDao.findAll();
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());

@@ -77,21 +77,32 @@ public class BSPCohortList {
      * @return a list of matching users
      */
     public List<Cohort> findActive(String query) {
-        String lowerQuery = query.toLowerCase();
+
+        String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<Cohort> results = new ArrayList<Cohort>();
         if (getCohorts() != null) {
             for (Cohort cohort : getCohorts()) {
-                if (!cohort.isArchived()  &&
-                     ((cohort.getCohortId().toLowerCase().contains(lowerQuery) ||
-                       cohort.getName().toLowerCase().contains(lowerQuery) ||
-                       cohort.getGroup().toLowerCase().contains(lowerQuery) ||
-                       cohort.getCategory().toLowerCase().contains(lowerQuery)))) {
-                    results.add(cohort);
+                if (!cohort.isArchived()) {
+                    addCohortIfMatches(lowerQueryItems, results, cohort);
                 }
             }
         }
 
         return results;
+    }
+
+    private void addCohortIfMatches(String[] lowerQueryItems, List<Cohort> results, Cohort cohort) {
+        boolean eachItemMatchesSomething = true;
+        for (String lowerQuery : lowerQueryItems) {
+            // If none of the fields match this item, then all items are not matched
+            if (!anyFieldMatches(lowerQuery, cohort)) {
+                eachItemMatchesSomething = false;
+            }
+        }
+
+        if (eachItemMatchesSomething) {
+            results.add(cohort);
+        }
     }
 
     /**
@@ -101,19 +112,22 @@ public class BSPCohortList {
      * @return a list of matching users
      */
     public List<Cohort> find(String query) {
-        String lowerQuery = query.toLowerCase();
+
+        String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<Cohort> results = new ArrayList<Cohort>();
         if (getCohorts() != null) {
             for (Cohort cohort : getCohorts()) {
-                if (cohort.getCohortId().toLowerCase().contains(lowerQuery) ||
-                    cohort.getName().toLowerCase().contains(lowerQuery) ||
-                    cohort.getGroup().toLowerCase().contains(lowerQuery) ||
-                    cohort.getCategory().toLowerCase().contains(lowerQuery)) {
-                    results.add(cohort);
-                }
+                addCohortIfMatches(lowerQueryItems, results, cohort);
             }
         }
 
         return results;
+    }
+
+    private boolean anyFieldMatches(String lowerQuery, Cohort cohort) {
+        return cohort.getCohortId().toLowerCase().contains(lowerQuery) ||
+               cohort.getName().toLowerCase().contains(lowerQuery) ||
+               cohort.getGroup().toLowerCase().contains(lowerQuery) ||
+               cohort.getCategory().toLowerCase().contains(lowerQuery);
     }
 }

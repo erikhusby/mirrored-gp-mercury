@@ -13,8 +13,7 @@
         <ui:define name="title">View Product Order</ui:define>
         <ui:define name="metadata">
             <f:metadata>
-
-                <f:viewParam name="productOrderKey" value="#{productOrderDetail.productOrder}" converter="#{productOrderConverter}" />
+                <f:viewParam name="productOrder" value="#{productOrderDetail.productOrder}" converter="#{productOrderConverter}" />
             </f:metadata>
         </ui:define>
         <ui:define name="body">
@@ -25,12 +24,10 @@
                         <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
                     </p:commandButton>
                     &nbsp;
-                    -->
                     <p:commandButton value="Copy" action="create" ajax="false" styleClass="btn">
                         <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
                     </p:commandButton>
                     &nbsp;
-                    <!--
                     <p:splitButton value="  More Actions  ">
                         <p:menuitem value="Get Quote Template" action="create" icon="ui-icon-folder-open"/>
                         <p:menuitem value="Update Billing" action="create" icon="ui-icon-arrowrefresh-1-e"/>
@@ -42,7 +39,9 @@
                     <div class="control-group">
                         <span class="control-label label-form">Order Barcode</span>
                         <span class="controls">
-                            <h:outputLink target="_new" value="http://prodinfojira.broadinstitute.org/jira/browse/#{productOrderDetail.productOrder.jiraTicketKey}" class="external">
+                            <h:outputLink target="JIRA" class="external"
+                                          rendered="#{productOrderDetail.productOrder.hasJiraTicketKey()}"
+                                          value="#{jiraLink.browseUrl(productOrderDetail.productOrder.jiraTicketKey)}">
                                 <h:outputText value="#{productOrderDetail.productOrder.jiraTicketKey}" />
                             </h:outputLink>
                         </span>
@@ -56,7 +55,7 @@
                     <div class="control-group">
                         <span class="control-label label-form">Quote ID</span>
                         <span class="controls">
-                            <h:outputLink target="_new" value="#{QuoteConfig.url(QuoteConfig.SINGLE_NUMERIC_QUOTE)}#{productOrderDetail.productOrder.quoteId}" class="external">
+                            <h:outputLink target="_new" value="#{quoteLink.quoteUrl(productOrderDetail.productOrder.quoteId)}" class="external">
                                 <h:outputText value="#{productOrderDetail.productOrder.quoteId}" />
                             </h:outputLink>
                         </span>
@@ -69,7 +68,7 @@
 
                     <div class="control-group">
                         <span class="control-label label-form">Samples</span>
-                        <span class="controls">#{productOrderDetail.productOrder.sampleSummary}</span>
+                        <span class="controls">#{productOrderDetail.productOrder.sampleBillingSummary}</span>
                     </div>
 
                     <p/>
@@ -99,6 +98,10 @@
                         </div>
                     </div>
 
+
+                    <p:panel id="sampleValidation" header="Summary">
+                        <h:outputText value="#{productOrderDetail.productOrder.sampleValidationComments}"/>
+                    </p:panel>
                     <p:dataTable id="sampleData"
                                  value="#{productOrderDetail.productOrder.samples}"
                                  filteredValue="#{productOrderFilterBean.filteredSamples}"
@@ -114,14 +117,14 @@
                         </f:facet>
 
                         <p:column headerText="ID">
-                            <h:outputLink value="http://bsp.broadinstitute.org/BSP/samplesearch/SampleSummary.action?sampleId=#{sample.sampleName}" class="external">
+                            <h:outputLink target="BSP_SAMPLE" value="#{bspLink.sampleSearchUrl(sample.sampleName)}" class="external">
                                 <h:outputText value="#{sample.sampleName}" />
                             </h:outputLink>
                         </p:column>
                         <p:column headerText="Participant ID">
                             #{sample.bspDTO.patientId}
                         </p:column>
-                        <p:column headerText="Status" filterBy="#{sample.billingStatus}" filterOptions="#{productOrderBean.allSampleStatuses}" filterMatchMode="exact">
+                        <p:column headerText="Status">
                             #{sample.billingStatus.displayName}
                         </p:column>
                         <p:column headerText="Eligible">

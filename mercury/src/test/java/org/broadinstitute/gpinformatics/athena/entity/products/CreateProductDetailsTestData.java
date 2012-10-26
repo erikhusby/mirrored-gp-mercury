@@ -46,7 +46,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
     }
 
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void createTestData() {
 
         createProductFamilies();
@@ -102,6 +102,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
                 21 * DAYS,                             // guaranteed cycle time
 
                 188,                                   // samples per week
+                96,                                   // min order size
 
                                                        // input requirements
                 "Funding and compliance requirements must be in place - this includes a valid IRB or letter of " +
@@ -176,6 +177,8 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
                 360,                                   // samples per week
 
+                192,                                   // min order size
+
                                                        // input requirements
                 "Funding and compliance requirements must be in place - this includes a valid IRB or letter of " +
                 "non-engagement where needed\n" +
@@ -216,6 +219,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
              3 * DAYS,                                  // expected cycle time
              4 * DAYS,                                  // guaranteed cycle time
              192,                                       // samples per week
+             192,                                       // min order size
              "Same as before",                          // input requirements
              "Bigger BAM file",                         // deliverables
              false,                                     // top level product

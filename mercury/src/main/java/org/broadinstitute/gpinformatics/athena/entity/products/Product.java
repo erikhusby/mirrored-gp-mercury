@@ -42,6 +42,7 @@ public class Product implements Serializable {
     private Integer expectedCycleTimeSeconds;
     private Integer guaranteedCycleTimeSeconds;
     private Integer samplesPerWeek;
+    private Integer minimumOrderSize;
 
     @Column(length = 2000)
     private String inputRequirements;
@@ -82,6 +83,7 @@ public class Product implements Serializable {
                    Integer expectedCycleTimeSeconds,
                    Integer guaranteedCycleTimeSeconds,
                    Integer samplesPerWeek,
+                   Integer minimumOrderSize,
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
@@ -96,6 +98,7 @@ public class Product implements Serializable {
         this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
         this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
         this.samplesPerWeek = samplesPerWeek;
+        this.minimumOrderSize = minimumOrderSize;
         this.inputRequirements = inputRequirements;
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
@@ -203,6 +206,14 @@ public class Product implements Serializable {
         this.samplesPerWeek = samplesPerWeek;
     }
 
+    public Integer getMinimumOrderSize() {
+        return minimumOrderSize;
+    }
+
+    public void setMinimumOrderSize(final Integer minimumOrderSize) {
+        this.minimumOrderSize = minimumOrderSize;
+    }
+
     public void setInputRequirements(final String inputRequirements) {
         this.inputRequirements = inputRequirements;
     }
@@ -248,6 +259,14 @@ public class Product implements Serializable {
         // available in the past and not yet discontinued
         return availabilityDate != null && (availabilityDate.compareTo(now) < 0) &&
                 (discontinuedDate == null || discontinuedDate.compareTo(now) > 0);
+    }
+
+    public boolean isAvailableNowOrLater() {
+        Date now = Calendar.getInstance().getTime();
+
+        // need this logic in the dao too
+        // available in the future
+        return availabilityDate != null && (isAvailable() || availabilityDate.compareTo(now) > 0);
     }
 
     public boolean isPriceItemDefault(PriceItem priceItem) {
