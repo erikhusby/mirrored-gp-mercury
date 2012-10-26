@@ -2,19 +2,15 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.Failure;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingLibraryAnnotation;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -362,7 +358,7 @@ public abstract class LabVessel {
 
         if (isSampleAuthority()) {
             for (MercurySample mercurySample : mercurySamples) {
-                sampleInstances.add(new SampleInstance(mercurySample, null, null, null));
+                sampleInstances.add(new SampleInstance(mercurySample, null, null));
             }
         } else {
             for (VesselContainer<?> vesselContainer : this.getContainers()) {
@@ -497,6 +493,7 @@ public abstract class LabVessel {
      * @param workflowDescription
      * @return
      */
+/*
     public boolean isSingleSampleLibrary(WorkflowDescription workflowDescription) {
         if (workflowDescription == null) {
             throw new RuntimeException("workflowDescription cannot be null.");
@@ -530,6 +527,7 @@ public abstract class LabVessel {
         }
         return isSingleSample;
     }
+*/
 
     public void addLabBatch(LabBatch labBatch) {
         labBatches.add(labBatch);

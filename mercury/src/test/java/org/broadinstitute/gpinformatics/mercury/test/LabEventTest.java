@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -42,7 +41,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.Assert;
@@ -182,6 +180,7 @@ public class LabEventTest {
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
+        // todo jmt this now has 6 containers!
         VesselContainer<TwoDBarcodedTube> startingContainer = (VesselContainer<TwoDBarcodedTube>)
                 stringTwoDBarcodedTubeEntry.getValue().getContainers().iterator().next();
         startingContainer.evaluateCriteria(
@@ -204,8 +203,8 @@ public class LabEventTest {
 //        Controller.startCPURecording(true);
 
 //        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
-        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-        workflowDescription.initFromFile("WholeGenomeShotgun.bpmn");
+//        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+//        workflowDescription.initFromFile("WholeGenomeShotgun.bpmn");
 //        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
 
         // starting rack
@@ -224,9 +223,8 @@ public class LabEventTest {
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
         LabEventHandler labEventHandler = new LabEventHandler();
 
-        // todo jmt fix preflight
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
-                bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
+                bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube).invoke();
 
         ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(mapBarcodeToTube,
                 bettaLimsMessageFactory, labEventFactory, labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
