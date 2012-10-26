@@ -11,9 +11,11 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -39,19 +41,29 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
     @Inject
     ResearchProjectDao researchProjectDao;
 
+    @Inject
+    UserTransaction utx;
+
     private final String testProductOrderKey = "DRAFT-" + UUID.randomUUID();
+
+    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void setUp() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.begin();
+    }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        if (productOrderDao == null || testProductOrderKey == null) {
-            // Not running on the server, ignore.
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
             return;
         }
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(testProductOrderKey);
-        if (productOrder != null) {
-            productOrderDao.remove(productOrder);
-            productOrderDao.flush();
-        }
+
+        utx.rollback();
     }
 
     // FIXME: refactor duplicate code, from here and ProductOrderDaoTest. Create an injectable object that creates
