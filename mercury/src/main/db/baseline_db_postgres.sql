@@ -452,6 +452,12 @@
     alter table project_project_plans_aud
         drop constraint FK85E13A0F8A39BE24;
 
+    -- databasechangelog% are liquibase tables, liquibase will rebuild these on its first run
+
+    drop table if exists athena.databasechangelog cascade;
+
+    drop table if exists athena.databasechangeloglock cascade;
+
     drop table if exists athena.billable_item cascade;
 
     drop table if exists athena.billable_item_aud cascade;
@@ -503,6 +509,12 @@
     drop table if exists athena.research_projectirb cascade;
 
     drop table if exists athena.research_projectirb_aud cascade;
+
+    -- databasechangelog% are liquibase tables, liquibase will rebuild these on its first run
+
+    drop table if exists mercury.databasechangelog cascade;
+
+    drop table if exists mercury.databasechangeloglock cascade;
 
     drop table if exists mercury.jira_ticket cascade;
 
