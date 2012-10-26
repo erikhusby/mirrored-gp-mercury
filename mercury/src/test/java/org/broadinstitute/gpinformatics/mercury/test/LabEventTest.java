@@ -125,7 +125,7 @@ public class LabEventTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123",
                 new Product("Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000,
-                        20000, 100, null, null, true, "Hybrid Selection"),
+                        20000, 100, 40, null, null, true, "Hybrid Selection"),
                 new ResearchProject(101L, "Test RP", "Test synopsis", false));
 
         // starting rack
