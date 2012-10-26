@@ -69,6 +69,7 @@ public class LabEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
     public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
+    private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
 
     private final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher = new LabEventFactory.LabEventRefDataFetcher() {
         @Override
@@ -114,19 +115,14 @@ public class LabEventTest {
     public void testHybridSelection() {
 //        Controller.startCPURecording(true);
 
-        // Project and workflow
-//        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
-//        WorkflowDescription workflowDescription = new WorkflowDescription("HS", null,
-//                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-//        workflowDescription.initFromFile("HybridSelectionV2.bpmn");
-//        BasicProjectPlan projectPlan = new BasicProjectPlan(project,"To test hybrid selection", workflowDescription);
-
-        // Bucket entry has Sample, Vessel and ProductOrder.  ProductOrder has workflow.
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123",
                 new Product("Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000,
                         20000, 100, 40, null, null, true, "Hybrid Selection"),
                 new ResearchProject(101L, "Test RP", "Test synopsis", false));
+        String jiraTicketKey = "PD0-1";
+        productOrder.setJiraTicketKey(jiraTicketKey);
+        mapKeyToProductOrder.put(jiraTicketKey, productOrder);
 
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
@@ -135,9 +131,8 @@ public class LabEventTest {
             String bspStock = "SM-" + rackPosition;
             productOrderSamples.add(new ProductOrderSample(bspStock, productOrder));
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(null, bspStock));
+            bspAliquot.addSample(new MercurySample(jiraTicketKey, bspStock));
             mapBarcodeToTube.put(barcode,bspAliquot);
-
         }
 
         // Messaging
@@ -201,19 +196,22 @@ public class LabEventTest {
     public void testWholeGenomeShotgun() {
 //        Controller.startCPURecording(true);
 
-//        Project project = new BasicProject("LabEventTesting", new JiraTicket(new JiraServiceStub(),"TP-0","0"));
-//        WorkflowDescription workflowDescription = new WorkflowDescription("WGS", null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
-//        workflowDescription.initFromFile("WholeGenomeShotgun.bpmn");
-//        BasicProjectPlan projectPlan = new BasicProjectPlan(project, "To test whole genome shotgun", workflowDescription);
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123",
+                new Product("Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000,
+                        20000, 100, 40, null, null, true, "Whole Genome Shotgun"),
+                new ResearchProject(101L, "Test RP", "Test synopsis", false));
+        String jiraTicketKey = "PD0-2";
+        productOrder.setJiraTicketKey(jiraTicketKey);
+        mapKeyToProductOrder.put(jiraTicketKey, productOrder);
 
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + rackPosition;
-
             String bspStock = "SM-" + rackPosition;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(null, bspStock));
+            bspAliquot.addSample(new MercurySample(jiraTicketKey, bspStock));
             mapBarcodeToTube.put(barcode,bspAliquot);
         }
 
@@ -462,9 +460,9 @@ public class LabEventTest {
         WorkflowConfig workflowConfig = workflowLoader.load();
         for (LabVessel labVessel : labVessels) {
             for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
-                sampleInstance.getStartingSample().getProductOrderKey();
+                ProductOrder productOrder = mapKeyToProductOrder.get(sampleInstance.getStartingSample().getProductOrderKey());
                 // get workflow name from product order
-                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName("Hybrid Selection");
+                ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(productOrder.getProduct().getWorkflowName());
                 List<String> errors = productWorkflowDef.validate(labVessel, nextEventTypeName);
                 if(!errors.isEmpty()) {
                     Assert.fail(errors.get(0));
