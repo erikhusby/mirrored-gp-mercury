@@ -1659,21 +1659,21 @@
         primary key (vessel_transfer_id, rev)
     );
 
-    create table mercury.workflow_description (
-        workflow_description_id numeric(19,0) not null,
-        issue_type numeric(10,0),
-        workflow_name varchar(255),
-        primary key (workflow_description_id)
-    );
-
-    create table mercury.workflow_description_aud (
-        workflow_description_id numeric(19,0) not null,
-        rev numeric(19,0) not null,
-        revtype numeric(3,0),
-        issue_type numeric(10,0),
-        workflow_name varchar(255),
-        primary key (workflow_description_id, rev)
-    );
+--     create table mercury.workflow_description (
+--         workflow_description_id numeric(19,0) not null,
+--         issue_type numeric(10,0),
+--         workflow_name varchar(255),
+--         primary key (workflow_description_id)
+--     );
+--
+--     create table mercury.workflow_description_aud (
+--         workflow_description_id numeric(19,0) not null,
+--         rev numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         issue_type numeric(10,0),
+--         workflow_name varchar(255),
+--         primary key (workflow_description_id, rev)
+--     );
 /*
     create table project_available_quotes (
         project numeric(19,0) not null,
@@ -2429,10 +2429,10 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.workflow_description_aud
-        add constraint FK34339F6D8A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.workflow_description_aud
+--         add constraint FK34339F6D8A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 /*
     alter table project_available_quotes
         add constraint FK2E7B8C136E580798
@@ -2548,7 +2548,7 @@
 
     create sequence mercury.SEQ_VESSEL_TRANSFER start 1 increment 50;
 
-    create sequence mercury.SEQ_WORKFLOW_DESCRIPTION start 1 increment 50;
+--     create sequence mercury.SEQ_WORKFLOW_DESCRIPTION start 1 increment 50;
 
     create sequence mercury.seq_molecular_index start 1 increment 50;
 
