@@ -655,7 +655,7 @@
         vessel_position varchar2(255 char),
         digest varchar2(255 char),
         rack_type varchar2(255 char),
-        molecular_state number(19,0),
+--         molecular_state number(19,0),
 --        project number(19,0),
 --        project_authority number(19,0),
 --         read_bucket_authority number(19,0),
@@ -672,7 +672,7 @@
         revtype number(3,0),
         created_on timestamp,
         label varchar2(255 char),
-        molecular_state number(19,0),
+--         molecular_state number(19,0),
 --        project number(19,0),
 --        project_authority number(19,0),
 --         read_bucket_authority number(19,0),
@@ -1506,10 +1506,10 @@
         foreign key (plate)
         references mercury.lab_vessel;
 
-    alter table mercury.lab_vessel
-        add constraint FK71AE15286DE9BBF6
-        foreign key (molecular_state)
-        references mercury.molecular_state;
+--     alter table mercury.lab_vessel
+--         add constraint FK71AE15286DE9BBF6
+--         foreign key (molecular_state)
+--         references mercury.molecular_state;
 /*
     alter table mercury.lab_vessel
         add constraint FK71AE15283BA3A1ED
