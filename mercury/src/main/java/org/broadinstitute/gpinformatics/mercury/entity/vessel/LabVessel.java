@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.Failure;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
@@ -137,20 +136,6 @@ public abstract class LabVessel {
     }
 
     public Collection<LabMetric> getMetrics() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    /**
-     * A failure of any sort: quant, sequencing,
-     * smells bad, not the right size around the
-     * hips, etc.
-     * @param failureMode
-     */
-    public void addFailure(Failure failureMode) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    public Collection<Failure> getFailures() {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -294,7 +279,7 @@ public abstract class LabVessel {
      * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}, let's
      * remember that fact.  It'll be useful when someone wants
      * to know all the lab work that was done for
-     * a {@link org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample}.
+     * a StartingSample.
      * @param jiraTicket
      */
     public void addJiraTicket(JiraTicket jiraTicket) {
@@ -488,7 +473,7 @@ public abstract class LabVessel {
     }
 
     /**
-     * In the context of the given {@link WorkflowDescription}, are there any
+     * In the context of the given WorkflowDescription, are there any
      * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
      * @param workflowDescription
      * @return
