@@ -75,7 +75,6 @@ public class Bucket {
      * @param newEntry
      */
     public void addEntry( BucketEntry newEntry ) {
-//        newEntry.setBucketExistence(this);
         bucketEntries.add(newEntry);
 
     }
