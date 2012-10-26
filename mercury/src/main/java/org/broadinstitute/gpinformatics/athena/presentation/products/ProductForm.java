@@ -108,7 +108,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     public void initEmptyProduct() {
         product = new Product(null, null, null, null, null, null, null,
-                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME);
+                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
         addOns = new ArrayList<Product>();
     }
 

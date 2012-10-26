@@ -146,6 +146,15 @@
                 </div>
 
                 <div class="control-group">
+                    <p:outputLabel for="pdmOrderableOnly" value="PDM Orderable Only" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:watermark for="topLevel" value="Is this Product orderable only by Product Managers (PDMs) ?"/>
+                        <p:selectBooleanCheckbox id="pdmOrderableOnly" value="#{productForm.product.pdmOrderableOnly}" />
+                        <p:message for="pdmOrderableOnly"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <p:outputLabel for="priceItem" value="Price Items" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="priceItem" value="#{productForm.priceItems}"

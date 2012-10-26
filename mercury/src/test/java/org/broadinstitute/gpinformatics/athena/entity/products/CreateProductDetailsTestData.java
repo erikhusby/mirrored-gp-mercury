@@ -122,7 +122,8 @@ public class CreateProductDetailsTestData extends ContainerTest {
                 true,                                  // top level product
 
                 "EXEX-WF-2012.11.01"                   // workflow name
-        );
+                ,
+                false);
 
 
         exex.addPriceItem(labTimePriceItem);
@@ -192,8 +193,9 @@ public class CreateProductDetailsTestData extends ContainerTest {
                 true,                                  // top level product
 
                 "DNA_EXTRACT-WF-2012.11.01"            // workflow name
+                ,
 
-        );
+                false);
 
         dnaExtraction.addPriceItem(labTimePriceItem);
         dnaExtraction.addPriceItem(ifxTimePriceItem);
@@ -224,8 +226,9 @@ public class CreateProductDetailsTestData extends ContainerTest {
              "Bigger BAM file",                         // deliverables
              false,                                     // top level product
              "GP-ILLUMINA_SEQUENCING_ONLY-EXTRA_HISEQ_COVERAGE_2012.11.01" // quote server price item id
+                ,
 
-        );
+                false);
 
         extraCoverage.addPriceItem(labTimePriceItem);
         extraCoverage.addPriceItem(ifxTimePriceItem);

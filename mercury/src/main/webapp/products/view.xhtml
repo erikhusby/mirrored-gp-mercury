@@ -128,6 +128,14 @@
                 </div>
             </div>
 
+            <div class="control-group">
+                <label class="control-label">PDM Orderable Only?</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.pdmOrderableOnly ? "Yes" : "No"}</div>
+                </div>
+            </div>
+
+
             <p:dataTable value="#{productView.addOns}" var="addOn" >
                 <f:facet name="header">
                     <h:outputText value="Add Ons" />

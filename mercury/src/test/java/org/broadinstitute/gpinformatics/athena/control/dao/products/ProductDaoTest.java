@@ -134,7 +134,8 @@ public class ProductDaoTest extends ContainerTest {
                     "dummy deliverables",               // deliverables
                     false,                              // top level product
                     "dummy price item id"               // quote server price item id
-            );
+                    ,
+                    false);
 
             List<PriceItem> priceItems = priceItemDao.findAll();
             Assert.assertNotNull(priceItems);
