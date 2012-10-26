@@ -113,6 +113,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertEquals(productOrderFromDb.getTitle(), order.getTitle());
         Assert.assertEquals(productOrderFromDb.getQuoteId(), order.getQuoteId());
         Assert.assertEquals(productOrderFromDb.getTotalSampleCount(), order.getTotalSampleCount());
+        Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
 
         // Try to find a non-existing ProductOrder
         productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(),
@@ -127,8 +128,6 @@ public class ProductOrderDaoTest extends ContainerTest {
             productOrderFromDb = orders.get(0);
         }
         Assert.assertNotNull(productOrderFromDb);
-
-        Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)

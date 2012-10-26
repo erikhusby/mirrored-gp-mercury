@@ -13,8 +13,8 @@ import java.util.List;
 /**
  * Queries for the research project.
  *
- * Transaction is NOT_SUPPORTED so as to apply to all find methods to help avoid the extended persistence context from
- * eagerly joining any currently active transaction.
+ * Transaction is SUPPORTS so as to apply to all find methods to let them see any currently active transaction but not
+ * begin, and therefore commit (along with any changes queued up in the persistence context), their own transaction.
  */
 @Stateful
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)

@@ -59,11 +59,11 @@ public class GenericDao {
     /**
      * Adds the given object as a managed entity in the extended persistence context.
      *
-     * Transaction is MANDATORY because it is needed, but we don't want to start and commit a transaction at this level.
+     * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
      *
      * @param entity    the entity to persist
      */
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persist(Object entity) {
         getEntityManager().persist(entity);
     }
@@ -71,11 +71,11 @@ public class GenericDao {
     /**
      * Adds the given objects as a managed entities in the extended persistence context.
      *
-     * Transaction is MANDATORY because it is needed, but we don't want to start and commit a transaction at this level.
+     * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
      *
      * @param entities  the entities to persist
      */
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistAll(List<?> entities) {
         EntityManager entityManager = threadEntityManager.getEntityManager();
         for (Object entity : entities) {
@@ -83,19 +83,14 @@ public class GenericDao {
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
-    public void saveAll() {
-        threadEntityManager.getEntityManager().joinTransaction();
-    }
-
     /**
      * Marks the given entity for removal from the underlying data store.
      *
-     * Transaction is MANDATORY because it is needed, but we don't want to start and commit a transaction at this level.
+     * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
      *
      * @param entity    the entity to remove
      */
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void remove(Object entity) {
         getEntityManager().remove(entity);
     }
@@ -115,7 +110,7 @@ public class GenericDao {
     /**
      * Returns a criteria builder for the request-scoped extended persistence context.
      *
-     * TODO: determine if this should be NOT_SUPPORTED, SUPPORTS, or MANDATORY
+     * Transaction is SUPPORTS (default).
      *
      * @return the criteria builder
      */
