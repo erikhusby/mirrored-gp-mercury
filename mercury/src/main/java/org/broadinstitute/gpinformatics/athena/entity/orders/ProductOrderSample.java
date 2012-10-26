@@ -99,6 +99,15 @@ public class ProductOrderSample implements Serializable {
         return isInBspFormat() && !hasBspDTOBeenInitialized;
     }
 
+    /**
+     * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
+     */
+    public boolean bspMetaDataMissing() {
+        // Use == here, we want to match the exact object.
+        //noinspection ObjectEquality
+        return isInBspFormat() && hasBspDTOBeenInitialized && bspDTO == BSPSampleDTO.DUMMY;
+    }
+
     public BSPSampleDTO getBspDTO() {
         if (!hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {

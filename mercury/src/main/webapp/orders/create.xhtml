@@ -134,10 +134,13 @@
                 <p:blockUI block="sampleDisplay" trigger=":sampleDialogForm:commitSamples"/>
 
                 <h:panelGroup id="sampleDisplay">
-                    <p:panel header="Summary">
-                        <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
+                    <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
+                    <p:panel header="Summary" toggleable="true">
                         <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}"
                                     var="comment" itemType="none">
+                            #{comment}
+                        </p:dataList>
+                        <p:dataList value="#{productOrderForm.sampleValidationMessages}" var="comment" itemType="none">
                             #{comment}
                         </p:dataList>
                     </p:panel>

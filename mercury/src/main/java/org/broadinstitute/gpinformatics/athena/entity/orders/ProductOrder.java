@@ -96,7 +96,7 @@ public class ProductOrder implements Serializable {
     /**
      * Class that encapsulates counting samples and storing the results.
      */
-    class SampleCounts implements Serializable {
+    private class SampleCounts implements Serializable {
         private static final long serialVersionUID = -6031146789417566007L;
         private boolean countsValid;
         private int totalSampleCount;
@@ -104,6 +104,7 @@ public class ProductOrder implements Serializable {
         private int receivedSampleCount;
         private int activeSampleCount;
         private int hasFPCount;
+        private int missingBspMetaDataCount;
         private final Map<String, Integer> stockTypeCounts = new HashMap<String, Integer>();
         private final Map<String, Integer> primaryDiseaseCounts = new HashMap<String, Integer>();
         private final Map<String, Integer> genderCounts = new HashMap<String, Integer>();
@@ -133,6 +134,7 @@ public class ProductOrder implements Serializable {
             receivedSampleCount = 0;
             activeSampleCount = 0;
             hasFPCount = 0;
+            missingBspMetaDataCount = 0;
             stockTypeCounts.clear();
             primaryDiseaseCounts.clear();
             genderCounts.clear();
@@ -143,6 +145,10 @@ public class ProductOrder implements Serializable {
                 if (sampleSet.add(sample.getSampleName())) {
                     if (sample.isInBspFormat()) {
                         bspSampleCount++;
+
+                        if (sample.bspMetaDataMissing()) {
+                            missingBspMetaDataCount++;
+                        }
 
                         BSPSampleDTO bspDTO = sample.getBspDTO();
                         if (bspDTO.isSampleReceived()) {
@@ -582,6 +588,11 @@ public class ProductOrder implements Serializable {
     public int getActiveSampleCount() {
         counts.generateCounts();
         return counts.activeSampleCount;
+    }
+
+    public int getMissingBspMetaDataCount() {
+        counts.generateCounts();
+        return counts.missingBspMetaDataCount;
     }
 
     private static void addCustomField(Map<String, CustomFieldDefinition> submissionFields,
