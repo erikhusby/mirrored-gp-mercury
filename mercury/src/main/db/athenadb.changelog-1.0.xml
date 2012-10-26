@@ -373,16 +373,22 @@
     </changeSet>
 
 
-    <changeSet id="GPLIM-139-1" author="mcovarr">
+    <changeSet id="GPLIM-139-1.1" author="mcovarr">
         <sql>
             delete from athena.product_price_items where product in (
-                select product_id from athena.product where default_price_item is null
+            select product_id from athena.product where default_price_item is null
             )
         </sql>
         <sql>
             delete from athena.product_add_ons where product in (
-                select product_id from athena.product where default_price_item is null
+            select product_id from athena.product where default_price_item is null
             )
+        </sql>
+        <sql>
+            delete from athena.product_add_ons where add_ons in (
+            select product_id from athena.product where default_price_item is null
+            )
+
         </sql>
         <sql>
             delete from athena.product where default_price_item is null
