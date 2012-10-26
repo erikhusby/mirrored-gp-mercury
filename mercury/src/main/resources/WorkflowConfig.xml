@@ -194,54 +194,12 @@
             <workflowStepDefs>
                 <name>Capture</name>
                 <labEventTypes>AP_WASH</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>GS Wash 1</name>
                 <labEventTypes>GS_WASH_1</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>GS Wash 2</name>
                 <labEventTypes>GS_WASH_2</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>GS Wash 3</name>
                 <labEventTypes>GS_WASH_3</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>GS Wash 4</name>
                 <labEventTypes>GS_WASH_4</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>GS Wash 5</name>
                 <labEventTypes>GS_WASH_5</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>GS Wash 6</name>
                 <labEventTypes>GS_WASH_6</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Catch Enrichment Setup</name>
                 <labEventTypes>CATCH_ENRICHMENT_SETUP</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
