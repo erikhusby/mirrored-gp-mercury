@@ -7,9 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.annotations.Test;
 
-import javax.ejb.EJBException;
 import javax.inject.Inject;
-import javax.persistence.NoResultException;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.EXOME_SEQUENCING_ANALYSIS;
@@ -18,7 +16,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.
 import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Platform.GP;
 
 
-@Test(enabled = false)
+@Test
 public class PriceItemDaoTest extends ContainerTest {
 
     @Inject
@@ -52,13 +50,9 @@ public class PriceItemDaoTest extends ContainerTest {
         Assert.assertNotNull(priceItem);
 
 
-        try {
-            // deliberately mismatching the name to the other parameters
-            dao.find(GP, EXOME_SEQUENCING_ANALYSIS, DNA_EXTRACTION);
-        }
-        catch (EJBException ejbx) {
-            Assert.assertTrue(NoResultException.class.isAssignableFrom(ejbx.getCause().getClass()));
-        }
+        // deliberately mismatching the name to the other parameters
+        PriceItem missingPriceItem = dao.find(GP, EXOME_SEQUENCING_ANALYSIS, DNA_EXTRACTION);
+        Assert.assertNull(missingPriceItem);
 
     }
 
