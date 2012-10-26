@@ -135,7 +135,7 @@
                 <constraints nullable="true"/>
             </column>
             <column name="bucket_definition_name" type="varchar(255)">
-                <constraints nullable="false" />
+                <constraints nullable="true" />
             </column>
         </createTable>
         <addPrimaryKey tableName="bucket_aud" schemaName="mercury" columnNames="bucket_id, rev"/>
@@ -154,7 +154,7 @@
             </column>
             <column name="bucket_existence_id" type="number(19,0)">
                 <!--foreign key to bucket -->
-                <constraints nullable="false" />
+                <constraints nullable="true" />
             </column>
             <column name="product_order_ranking" type="number(10,0)">
                 <constraints nullable="true" />

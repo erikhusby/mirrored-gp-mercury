@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -51,8 +52,12 @@ public class BucketEntry  {
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private Bucket bucketExistence;
 
+    /*
+        TODO SGM:  Implement this as a separate join table to have the ranking associated directly with the Product
+        order, and not duplicated across bucket entries
+     */
     @Column(name = "product_order_ranking")
-    private Integer productOrderRanking;
+    private Integer productOrderRanking = 1;
 
     @Column(name = "created_date", nullable = false)
     private Date createdDate;
@@ -64,15 +69,8 @@ public class BucketEntry  {
         this(labVesselIn, poBusinessKey, null);
     }
 
-    public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey, Integer productOrderRankingIn ) {
-
-        if(null == labVesselIn) {
-            throw new NullPointerException("the Vessel should not be null");
-        }
-
-        if(null == poBusinessKey) {
-            throw new NullPointerException("The Product Order Business key should not be null");
-        }
+    public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey,
+                         @Nullable Integer productOrderRankingIn ) {
 
         labVessel = labVesselIn;
         this.poBusinessKey = poBusinessKey;
@@ -82,26 +80,43 @@ public class BucketEntry  {
 
     }
 
+    /**
+     * accessor for the Lab vessel associated with this entry into a bucket
+     * @return an instance of a lab vessel waiting to be processed
+     */
     public LabVessel getLabVessel() {
         return this.labVessel;
     }
 
+    /**
+     * accessor for the Business key of the product order associated with this entry in a bucket
+     * @return a representation of a product order associated with an item in a bucket waiting to be processed
+     */
     public String getPoBusinessKey() {
         return this.poBusinessKey;
     }
 
+    /**
+     * accessor for the bucket to which this entry is associated with
+     * @return a specific instance of a Bucket
+     */
     public Bucket getBucketExistence () {
         return bucketExistence;
     }
 
+    /**
+     * allows a user to associate a specific bucket instance with this bucket entry
+     *
+     * @param bucketExistenceIn a specific instance of a Bucket to associate with this entry
+     */
     public void setBucketExistence ( Bucket bucketExistenceIn ) {
         bucketExistence = bucketExistenceIn;
     }
 
-    public Integer getProductOrderRanking () {
-        return productOrderRanking;
-    }
-
+    /**
+     * accessor to retrieve the date of creation for this bucket entry
+     * @return date representing the date this entry was added to the bucket
+     */
     public Date getCreatedDate () {
         return createdDate;
     }

@@ -30,7 +30,7 @@ import java.util.Set;
 
 import static junit.framework.Assert.*;
 
-@Test(groups = {TestGroups.DATABASE_FREE})
+@Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
 public class PlasticToProductOrderTest {
 
     private static final String PRODUCT_ORDER_KEY = "PDO-1";

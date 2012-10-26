@@ -50,6 +50,14 @@ public class BucketResource {
     public BucketEntry add ( @Nonnull LabVessel vessel, @Nonnull String productOrder, @Nonnull Bucket bucket ) {
 
         BucketEntry newEntry = bucket.addEntry ( productOrder, vessel );
+        try {
+            ServiceAccessUtility.addJiraComment(productOrder, vessel.getLabCentricName() +
+                    " added to bucket " + bucket.getBucketDefinitionName());
+        } catch (IOException ioe) {
+            LOG.error("error attempting to add a jira comment for adding " +
+                      productOrder + ":"+vessel.getLabCentricName() + " to bucket " +
+                      bucket.getBucketDefinitionName(), ioe);
+        }
         return newEntry;
     }
 
@@ -61,7 +69,7 @@ public class BucketResource {
      *
      * @param actor
      */
-    public void start ( Collection<BucketEntry> bucketEntries, Person actor ) {
+    public void start ( @Nonnull Collection<BucketEntry> bucketEntries, Person actor ) {
         /**
          * Side effect: create a {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent} for each
          * associated {@link LabVessel} and
@@ -90,19 +98,23 @@ public class BucketResource {
         Set<GenericLabEvent> eventList = new HashSet<GenericLabEvent>();
         eventList.addAll(labEventFactory.buildFromBatchRequestsDBFree ( pdoKeyToVesselMap, actor, bucketBatch ));
 
+
         for ( BucketEntry currEntry : bucketEntries ) {
             currEntry.getBucketExistence().removeEntry(currEntry);
         }
 
-//        try {
-//            bucketBatch.submit();
-//            for(String pdo:pdoKeyToVesselMap.keySet()) {
-//                bucketBatch.addJiraLink(pdo);
-//            }
-//        } catch (IOException ioe ) {
-//            LOG.error("Error attempting to create Lab Batch in Jira");
-//            throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
-//        }
+        try {
+            bucketBatch.submit();
+            for(String pdo:pdoKeyToVesselMap.keySet()) {
+                bucketBatch.addJiraLink(pdo);
+                ServiceAccessUtility.addJiraComment(pdo, "New Batch Created: " +
+                        bucketBatch.getJiraTicket().getTicketName() + " " +bucketBatch.getBatchName());
+            }
+        } catch (IOException ioe ) {
+            LOG.error("Error attempting to create Lab Batch in Jira");
+            throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
+        }
+
     }
 
     /**
@@ -116,14 +128,21 @@ public class BucketResource {
      * @param reason      textual notes on why the thing is
      *                    being cancelled.
      */
-    public void cancel ( BucketEntry bucketEntry, Person user, String reason ) throws IOException {
+    public void cancel ( @Nonnull BucketEntry bucketEntry, Person user, String reason ){
 
         Bucket currentBucket = bucketEntry.getBucketExistence ();
 
         currentBucket.removeEntry ( bucketEntry );
 
+        try {
+
         ServiceAccessUtility.addJiraComment ( bucketEntry.getPoBusinessKey (), bucketEntry.getPoBusinessKey () + ":" +
                 bucketEntry.getLabVessel ().getLabCentricName () +
-                " Removed from bucket:: " + reason );
+                " Removed from bucket "+ bucketEntry.getBucketExistence().getBucketDefinitionName()+":: " + reason );
+        } catch (IOException ioe) {
+            LOG.error("Error attempting to create jira removal comment for " +
+                              bucketEntry.getPoBusinessKey() + " " +
+                              bucketEntry.getLabVessel().getLabCentricName(), ioe);
+        }
     }
 }

@@ -63,8 +63,7 @@ public class Bucket {
     }
 
     /**
-     * Does this bucket contain the given
-     * {@link BucketEntry}?
+     * Does this bucket contain the given {@link BucketEntry}?
      * @param bucketEntry
      * @return
      */
@@ -73,6 +72,7 @@ public class Bucket {
     }
 
     /**
+     * adds a new {@link BucketEntry} to the bucket
      *
      * @param newEntry
      */
@@ -80,32 +80,30 @@ public class Bucket {
         newEntry.setBucketExistence(this);
         bucketEntries.add(newEntry);
 
-//        LabEventFactory.
-        //TODO  SGM Create some form of lab event for adding to bucket
     }
 
+
+    /**
+     * Helper method to add a new item into the bucket
+     * @param productOrderKey Business key of a Product order to associate with the new entry
+     * @param vessel Lab Vessel to enter into the bucket.
+     * @return an instance of a Bucket entry which represents the lab vessel and the product order for that entry
+     */
     public BucketEntry addEntry ( String productOrderKey, LabVessel vessel ) {
         BucketEntry newEntry = new BucketEntry(vessel,productOrderKey);
         newEntry.setBucketExistence(this);
         bucketEntries.add(newEntry);
-        //TODO  SGM Create some form of lab event for adding to bucket
 
         return newEntry;
     }
 
+    /**
+     * Removes an item from bucket
+     * @param entryToRemove instance of a bucket entry to remove which represents the lab vessel and the product order
+     *                      for that entry
+     */
     public void removeEntry ( BucketEntry entryToRemove) {
         bucketEntries.remove(entryToRemove);
-        //TODO SGM create some form of lab event for removing from a bucket
-    }
-
-
-
-    public void createLabBatch(Set<LabVessel> entriesToBatch) throws IOException {
-
-        //TODO Retrieve info on PDOs
-
-        LabBatch newBatch = new LabBatch("",entriesToBatch);
-        newBatch.submit();
     }
 
 }
