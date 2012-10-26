@@ -174,7 +174,7 @@ public class ProductOrder implements Serializable {
 
         private void outputCounts(List<String> output, Map<String, Integer> counts, String label) {
             for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-                output.add(MessageFormat.format("{0}: {1} - count: {2}", label, entry.getKey(), entry.getValue()));
+                output.add(MessageFormat.format("{0} ''{1}'': {2}", label, entry.getKey(), entry.getValue()));
             }
         }
 
@@ -199,12 +199,16 @@ public class ProductOrder implements Serializable {
                     output.add("None of the samples come from BSP.");
                 }
             }
+            if (uniqueParticipantCount != 0) {
+                output.add(MessageFormat.format("Unique Participants: {0}", uniqueParticipantCount));
+            }
             if (receivedSampleCount != 0) {
                 output.add(MessageFormat.format("{0} samples are in RECEIVED state.", receivedSampleCount));
             }
-            outputCounts(output, stockTypeCounts, "Stock type");
-            outputCounts(output, primaryDiseaseCounts, "Primary disease");
+            outputCounts(output, stockTypeCounts, "Stock Type");
+            outputCounts(output, primaryDiseaseCounts, "Primary Disease");
             outputCounts(output, genderCounts, "Gender");
+            outputCounts(output, sampleTypeCounts, "Sample Type");
             if (hasFPCount != 0) {
                 output.add(MessageFormat.format("{0} samples have fingerprint data.", hasFPCount));
             }
