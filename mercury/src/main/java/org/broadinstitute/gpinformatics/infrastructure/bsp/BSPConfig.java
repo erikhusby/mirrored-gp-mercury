@@ -21,7 +21,6 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
 
     public BSPConfig() {}
 
-
     public String getLogin() {
         return login;
     }
@@ -52,5 +51,13 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public String getUrl(String suffix) {
+        return String.format("http://%s:%d/BSP/%s", getHost(), getPort(), suffix);
+    }
+
+    public String getWSUrl(String suffix) {
+        return String.format("http://%s:%d/ws/bsp/%s", getHost(), getPort(), suffix);
     }
 }

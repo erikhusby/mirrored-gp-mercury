@@ -17,7 +17,7 @@ import java.util.Set;
 @Singleton
 public class QuoteFundingList {
 
-    private Set<Funding> fundingList = null;
+    private Set<Funding> fundingList;
 
     @Inject
     private PMBQuoteService quoteService;

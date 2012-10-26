@@ -1,6 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectTest;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.test.BeanTester;
@@ -36,7 +41,7 @@ public class ProductOrderTest {
 
     @Test
     public void test_basic_beaniness() {
-        new BeanTester().testBean(ProductOrder.class);
+        new BeanTester().testBean ( ProductOrder.class );
     }
 
     @Test
@@ -69,16 +74,16 @@ public class ProductOrderTest {
     }
 
     private final List<ProductOrderSample> sixBspSamplesNoDupes =
-            createSampleList("SM-2ACGC,SM-2ABDD,SM-2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D", productOrder);
+            createDBFreeSampleList ( "SM-2ACGC,SM-2ABDD,SM-2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D", productOrder );
 
     private final List<ProductOrderSample> fourBspSamplesWithDupes =
-            createSampleList("SM-2ACGC,SM-2ABDD,SM-2ACGC,SM-2AB1B,SM-2ACJC,SM-2ACGC", productOrder);
+            createDBFreeSampleList ( "SM-2ACGC,SM-2ABDD,SM-2ACGC,SM-2AB1B,SM-2ACJC,SM-2ACGC", productOrder );
 
     private final List<ProductOrderSample> sixMixedSampleProducts =
-            createSampleList("SM-2ACGC,SM2ABDD,SM2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D", productOrder);
+            createDBFreeSampleList ( "SM-2ACGC,SM2ABDD,SM2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D", productOrder );
 
     private final List<ProductOrderSample> nonBspSampleProducts =
-            createSampleList("SSM-2ACGC1,SM--2ABDDD,SM-2AB,SM-2AB1B,SM-2ACJCACB,SM-SM-SM", productOrder);
+            createDBFreeSampleList("SSM-2ACGC1,SM--2ABDDD,SM-2AB,SM-2AB1B,SM-2ACJCACB,SM-SM-SM", productOrder);
 
     @Test
     public void testGetUniqueSampleCount() throws Exception {
@@ -92,16 +97,16 @@ public class ProductOrderTest {
     @Test
     public void testGetTotalSampleCount() throws Exception {
         productOrder = new ProductOrder(TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
-        Assert.assertEquals(productOrder.getTotalSampleCount(), 6);
+        Assert.assertEquals(productOrder.getTotalSampleCount (), 6);
 
         productOrder = new ProductOrder(TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
-        Assert.assertEquals(productOrder.getTotalSampleCount(), 6);
+        Assert.assertEquals(productOrder.getTotalSampleCount (), 6);
     }
 
     @Test
     public void testGetDuplicateCount() throws Exception {
         productOrder = new ProductOrder(TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
-        Assert.assertEquals(productOrder.getDuplicateCount(), 2);
+        Assert.assertEquals(productOrder.getDuplicateCount (), 2);
     }
 
     @Test
@@ -116,19 +121,30 @@ public class ProductOrderTest {
         Assert.assertFalse(productOrder.areAllSampleBSPFormat());
 
         productOrder = new ProductOrder(TEST_CREATOR, "title", sixMixedSampleProducts, "quote", null, null);
-        Assert.assertFalse(productOrder.areAllSampleBSPFormat());
+        Assert.assertFalse ( productOrder.areAllSampleBSPFormat () );
     }
 
     public static List<ProductOrderSample> createSampleList(String sampleListStr, ProductOrder productOrder) {
-        return createSampleList(sampleListStr, new HashSet<BillableItem>(), productOrder);
+        return createSampleList(sampleListStr, new HashSet<BillableItem>(), productOrder, false);
+    }
+
+    public static List<ProductOrderSample> createDBFreeSampleList(String sampleListStr, ProductOrder productOrder) {
+        return createSampleList(sampleListStr, new HashSet<BillableItem>(), productOrder, true);
     }
 
     public static List<ProductOrderSample> createSampleList(String sampleListStr,
-                                                            Set<BillableItem> billableItems, ProductOrder productOrder) {
+                                                            Set<BillableItem> billableItems,
+                                                            ProductOrder productOrder,
+                                                            boolean dbFree) {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         String[] sampleArray = sampleListStr.split(",");
         for (String sampleName : sampleArray) {
-            ProductOrderSample productOrderSample = new ProductOrderSample(sampleName, productOrder);
+            ProductOrderSample productOrderSample;
+            if (dbFree) {
+                productOrderSample = new ProductOrderSample(sampleName, productOrder, BSPSampleDTO.DUMMY);
+            } else {
+                productOrderSample = new ProductOrderSample(sampleName, productOrder);
+            }
             productOrderSample.setSampleComment("athenaComment");
             for (BillableItem billableItem : billableItems) {
                 productOrderSample.addBillableItem(billableItem);

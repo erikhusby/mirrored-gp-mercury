@@ -40,11 +40,9 @@ public class BSPSampleDataFetcher {
 
             if (sampleNameToDTO.isEmpty()) {
                 throw new RuntimeException("Could not find " + sampleName + " in bsp.");
-            }
-            else if (sampleNameToDTO.size() > 1) {
+            } else if (sampleNameToDTO.size() > 1) {
                 throw new RuntimeException("Found " + sampleNameToDTO.size() + " possible matches in bsp.");
-            }
-            else {
+            } else {
                 return sampleNameToDTO.entrySet().iterator().next().getValue();
             }
         }
@@ -62,8 +60,8 @@ public class BSPSampleDataFetcher {
         if (sampleNames.isEmpty()) {
             throw new RuntimeException("sampleNames is empty.  No samples to lookup.");
         }
-        final Map<String,BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
-        final List<String[]> results = getBSPResponse(sampleNames);
+        Map<String,BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
+        List<String[]> results = getBSPResponse(sampleNames);
 
         for (String[] result : results) {
             BSPSampleDTO bspDTO = toDTO(result);
@@ -73,10 +71,11 @@ public class BSPSampleDataFetcher {
                 if (sampleNames.contains(sampleName)) {
                     if (sampleName.equals(bspDTO.getStockSample()) || sampleName.equals(bspDTO.getRootSample())) {
                         sampleNames.remove(sampleName);
-                        sampleNameToDTO.put(sampleName,bspDTO);
-                    }
-                    else {
-                        throw new RuntimeException("Can't map bsp sample " + bspDTO.getStockSample() + " any of the " + sampleNames.size() + " queried samples");
+                        sampleNameToDTO.put(sampleName, bspDTO);
+                    } else {
+                        throw new RuntimeException(
+                                "Can't map bsp sample " + bspDTO.getStockSample() + " any of the " + sampleNames.size()
+                                + " queried samples");
                     }
                 }
             }
@@ -84,7 +83,7 @@ public class BSPSampleDataFetcher {
         return sampleNameToDTO;
     }
 
-    private BSPSampleDTO toDTO(String[] bspColumns) {
+    private static BSPSampleDTO toDTO(String[] bspColumns) {
         String patientId = null;
         String rootSample = null;
         String stockSample = null;

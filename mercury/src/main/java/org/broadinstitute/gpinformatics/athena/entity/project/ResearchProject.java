@@ -32,6 +32,10 @@ public class ResearchProject {
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
 
+    public boolean hasJiraTicketKey() {
+        return !StringUtils.isBlank(jiraTicketKey);
+    }
+
     public enum Status implements StatusType {
         Open, Archived;
 
@@ -516,7 +520,7 @@ public class ResearchProject {
         COHORTS("Cohort(s)"),
         FUNDING_SOURCE("Funding Source"),
         IRB_IACUC_NUMBER("IRB/IACUCs"),
-        IRB_ENGAGED("IRB Engaged?"),
+        IRB_ENGAGED("IRB Not Engaged?"),
         MERCURY_URL("Mercury URL");
 
         private String fieldName;

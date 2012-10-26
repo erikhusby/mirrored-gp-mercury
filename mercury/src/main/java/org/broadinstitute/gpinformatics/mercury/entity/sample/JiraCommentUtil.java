@@ -3,14 +3,15 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 // todo jmt this should be in control, or deleted
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.project.*;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Utility methods for sending human readable updates
@@ -39,11 +40,11 @@ public class JiraCommentUtil {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
 
-        final Set<JiraTicket> tickets = new HashSet<JiraTicket>();
+        Set<JiraTicket> tickets = new HashSet<JiraTicket>();
         for (LabVessel vessel : vessels) {
             // todo arz talk to jmt about this.  I don't think I'm doing it right.
             if (OrmUtil.proxySafeIsInstance(vessel, VesselContainerEmbedder.class)) {
-                VesselContainerEmbedder<? extends LabVessel> embedder = OrmUtil.proxySafeCast(vessel,VesselContainerEmbedder.class);
+                VesselContainerEmbedder<?> embedder = OrmUtil.proxySafeCast(vessel, VesselContainerEmbedder.class);
                 for (VesselPosition position: embedder.getVesselContainer().getPositions()) {
                     Collection<LabBatch> batches = embedder.getVesselContainer().getNearestLabBatches(position);
                     if (batches != null) {
@@ -101,19 +102,11 @@ public class JiraCommentUtil {
                                                    JiraTicket ticket) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
-//        final Map<Project,Collection<String>> samplesByProject = new HashMap<Project,Collection<String>>();
-        final Collection<MercurySample> allStarters = new HashSet<MercurySample>();
+        Collection<MercurySample> allStarters = new HashSet<MercurySample>();
 
         for (LabVessel vessel : labVessels) {
             for (SampleInstance samInstance: vessel.getSampleInstances()) {
-//                for (ProjectPlan projectPlan : samInstance.getAllProjectPlans()) {
-//                    Project p = projectPlan.getProject();
-//                    if (!samplesByProject.containsKey(p)) {
-//                        samplesByProject.put(p,new HashSet<String>());
-//                    }
-//                    samplesByProject.get(p).add(samInstance.getStartingSample().getSampleName());
-                    allStarters.add(samInstance.getStartingSample());
-//                }
+                allStarters.add(samInstance.getStartingSample());
             }
         }
 
@@ -121,17 +114,6 @@ public class JiraCommentUtil {
         messageBuilder.append("\n");
         messageBuilder.append("||Sample||Project||Owner||").append("\n");
 
-//        for (Map.Entry<Project,Collection<String>> entry: samplesByProject.entrySet()) {
-//            for (String sampleName: entry.getValue()) {
-//                String sampleURL = "[" + sampleName + "|http://gapqa01:8080/BSP/samplesearch/SampleSummary.action?sampleId=" + sampleName+ "]";
-//                Person projectOwner = entry.getKey().getPlatformOwner();
-//                String userName = null;
-//                if (projectOwner != null) {
-//                    userName = projectOwner.getLogin();
-//                }
-//                messageBuilder.append("|").append(sampleURL).append("|").append(entry.getKey().getProjectName()).append("|").append(userName).append("|").append("\n");
-//            }
-//        }
         messageBuilder.append("{panel}");
         ticket.addComment(messageBuilder.toString());
     }

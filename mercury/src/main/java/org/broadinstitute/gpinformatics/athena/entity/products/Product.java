@@ -29,7 +29,7 @@ public class Product implements Serializable {
 
     private String productName;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private ProductFamily productFamily;
 
     @Column(length = 2000)
@@ -42,6 +42,7 @@ public class Product implements Serializable {
     private Integer expectedCycleTimeSeconds;
     private Integer guaranteedCycleTimeSeconds;
     private Integer samplesPerWeek;
+    private Integer minimumOrderSize;
 
     @Column(length = 2000)
     private String inputRequirements;
@@ -53,7 +54,7 @@ public class Product implements Serializable {
      * Whether this Product should show as a top-level product */
     private boolean topLevelProduct;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private PriceItem defaultPriceItem;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
@@ -82,6 +83,7 @@ public class Product implements Serializable {
                    Integer expectedCycleTimeSeconds,
                    Integer guaranteedCycleTimeSeconds,
                    Integer samplesPerWeek,
+                   Integer minimumOrderSize,
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
@@ -96,6 +98,7 @@ public class Product implements Serializable {
         this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
         this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
         this.samplesPerWeek = samplesPerWeek;
+        this.minimumOrderSize = minimumOrderSize;
         this.inputRequirements = inputRequirements;
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
@@ -201,6 +204,14 @@ public class Product implements Serializable {
 
     public void setSamplesPerWeek(final Integer samplesPerWeek) {
         this.samplesPerWeek = samplesPerWeek;
+    }
+
+    public Integer getMinimumOrderSize() {
+        return minimumOrderSize;
+    }
+
+    public void setMinimumOrderSize(final Integer minimumOrderSize) {
+        this.minimumOrderSize = minimumOrderSize;
     }
 
     public void setInputRequirements(final String inputRequirements) {

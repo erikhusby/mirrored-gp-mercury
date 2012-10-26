@@ -8,7 +8,6 @@
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
-
     <!-- uncomment this to enable squid integration.
     copy your local squid_app subdirs to the "mercury"
     directory -->
@@ -177,7 +176,8 @@
         <tests.excludedGroups>UI</tests.excludedGroups>
         <tests.groups />
 
-        <build.resultKey>LOCAL</build.resultKey>
+        <build.resultKey>${project.version}</build.resultKey>
+        <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
         <build.buildTimeStamp>${maven.build.timestamp}</build.buildTimeStamp>
 
         <!-- Default Postgres Database settings for Liquibase and Maven SQL Plugin-->

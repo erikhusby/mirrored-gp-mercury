@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.infrastructure.jpa;
 import org.hibernate.exception.ConstraintViolationException;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -16,30 +18,64 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Superclass for Data Access Objects.  Managed beans can't be parameterized types, so this DAO can't be typesafe.
+ * Superclass for Data Access Objects. Makes use of a request-scoped extended persistence context. Scoped session beans
+ * can't be parameterized types (JSR-299 3.2), so this DAO can't be type-safe.
+ *
+ * Transaction is SUPPORTS so as to apply to all find methods to let them see any currently active transaction but not
+ * begin, and therefore commit (along with any changes queued up in the persistence context), their own transaction.
  */
 @Stateful
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class GenericDao {
+
     @Inject
     private ThreadEntityManager threadEntityManager;
 
+    // TODO: replace usages of this method with getEntityManager(), then remove this method
     public ThreadEntityManager getThreadEntityManager() {
         return threadEntityManager;
     }
 
+    /**
+     * Flushes changes in the extended persistence context to the database.
+     *
+     * Transaction is MANDATORY because flush does not make sense outside the context of a transaction.
+     */
+    @TransactionAttribute(TransactionAttributeType.MANDATORY)
     public void flush() {
         getEntityManager().flush();
     }
 
+    /**
+     * Clears the extended persistence context causing all managed entities to become detached.
+     *
+     * Transaction is SUPPORTS (default).
+     */
     public void clear() {
         getEntityManager().clear();
     }
 
+    /**
+     * Adds the given object as a managed entity in the extended persistence context.
+     *
+     * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
+     *
+     * @param entity    the entity to persist
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persist(Object entity) {
         getEntityManager().persist(entity);
     }
 
+    /**
+     * Adds the given objects as a managed entities in the extended persistence context.
+     *
+     * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
+     *
+     * @param entities  the entities to persist
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistAll(List<?> entities) {
         EntityManager entityManager = threadEntityManager.getEntityManager();
         for (Object entity : entities) {
@@ -47,14 +83,37 @@ public class GenericDao {
         }
     }
 
+    /**
+     * Marks the given entity for removal from the underlying data store.
+     *
+     * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
+     *
+     * @param entity    the entity to remove
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void remove(Object entity) {
         getEntityManager().remove(entity);
     }
 
+    /**
+     * Returns an entity manager for the request-scoped extended persistence context.
+     *
+     * Transaction is SUPPORTS (default).
+     *
+     * @return the persistence context
+     * @see org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager#getEntityManager()
+     */
     public EntityManager getEntityManager() {
         return threadEntityManager.getEntityManager();
     }
 
+    /**
+     * Returns a criteria builder for the request-scoped extended persistence context.
+     *
+     * Transaction is SUPPORTS (default).
+     *
+     * @return the criteria builder
+     */
     protected CriteriaBuilder getCriteriaBuilder() {
         return getEntityManager().getCriteriaBuilder();
     }

@@ -64,8 +64,12 @@ public class ProductOrderSample implements Serializable {
         this.productOrder = productOrder;
     }
 
-    public ProductOrderSample(@Nonnull String sampleName, @Nonnull BSPSampleDTO bspDTO,
-                              @Nonnull ProductOrder productOrder) {
+    /**
+     * Used for testing only.
+     */
+    public ProductOrderSample(@Nonnull String sampleName,
+                              @Nonnull ProductOrder productOrder,
+                              @Nonnull BSPSampleDTO bspDTO) {
         this.sampleName = sampleName;
         setBspDTO(bspDTO);
         this.productOrder = productOrder;

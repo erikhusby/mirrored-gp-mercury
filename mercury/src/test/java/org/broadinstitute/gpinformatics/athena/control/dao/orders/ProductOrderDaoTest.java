@@ -16,6 +16,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -34,13 +35,16 @@ public class ProductOrderDaoTest extends ContainerTest {
     public static final long TEST_CREATOR_ID = RandomUtils.nextInt(Integer.MAX_VALUE);
 
     @Inject
-    ProductOrderDao productOrderDao;
+    private ProductOrderDao productOrderDao;
 
     @Inject
-    ResearchProjectDao researchProjectDao;
+    private ResearchProjectDao researchProjectDao;
 
     @Inject
-    ProductDao productDao;
+    private ProductDao productDao;
+
+    @Inject
+    private UserTransaction utx;
 
     private final String testResearchProjectKey = "TestResearchProject_" + UUID.randomUUID();
     private final String testProductOrderKey = "DRAFT-" + UUID.randomUUID();
@@ -49,37 +53,33 @@ public class ProductOrderDaoTest extends ContainerTest {
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
-        if (researchProjectDao != null) {
-            List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
-            if ((projectsList != null) && projectsList.isEmpty()) {
-                ResearchProject researchProject =
-                        ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
-                researchProjectDao.persist(researchProject);
-            }
-            order = createTestProductOrder();
-            productOrderDao.persist(order);
-            productOrderDao.flush();
-            productOrderDao.clear();
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
         }
+
+        utx.begin();
+
+        List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
+        if ((projectsList != null) && projectsList.isEmpty()) {
+            ResearchProject researchProject =
+                    ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
+            researchProjectDao.persist(researchProject);
+        }
+        order = createTestProductOrder();
+        productOrderDao.persist(order);
+        productOrderDao.flush();
+        productOrderDao.clear();
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        if (researchProjectDao == null) {
-            // Not running on the server, ignore.
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
             return;
         }
-        ResearchProject researchProject = researchProjectDao.findByBusinessKey(testResearchProjectKey);
-        if (researchProject != null) {
-            researchProjectDao.remove(researchProject);
-            researchProjectDao.flush();
-        }
 
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(testProductOrderKey);
-        if (productOrder != null) {
-            productOrderDao.remove(productOrder);
-            productOrderDao.flush();
-        }
+        utx.rollback();
     }
 
     public ProductOrder createTestProductOrder() {
@@ -113,6 +113,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertEquals(productOrderFromDb.getTitle(), order.getTitle());
         Assert.assertEquals(productOrderFromDb.getQuoteId(), order.getQuoteId());
         Assert.assertEquals(productOrderFromDb.getTotalSampleCount(), order.getTotalSampleCount());
+        Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
 
         // Try to find a non-existing ProductOrder
         productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(),
@@ -127,8 +128,6 @@ public class ProductOrderDaoTest extends ContainerTest {
             productOrderFromDb = orders.get(0);
         }
         Assert.assertNotNull(productOrderFromDb);
-
-        Assert.assertEquals(productOrderFromDb.getSamples().size(), order.getSamples().size());
     }
 
     public void testFindOrdersCreatedBy() {

@@ -68,12 +68,7 @@ public class ResearchProjectBean implements Serializable {
             }
         }
 
-        List<SelectItem> items = new ArrayList<SelectItem>();
-        items.add(new SelectItem("", "Any"));
-        for (BspUser owner : owners) {
-            items.add(new SelectItem(owner.getUserId(), owner.getFirstName() + " " + owner.getLastName()));
-        }
-        return items;
+        return bspUserList.getSelectItems(owners);
     }
 
     /**

@@ -72,8 +72,11 @@ public class AuthorizationFilter implements Filter {
             if (user == null) {
                 logger.debug("User is not authenticated, redirecting to login page");
                 if (!pageUri.equals(LOGIN_PAGE)) {
-                    // FIXME: need to include request.getQueryString() in the saved URL.
-                    servletRequest.setAttribute(TARGET_PAGE_ATTRIBUTE, pageUri);
+                    StringBuilder requestedUrl = new StringBuilder(request.getRequestURL());
+                    if (request.getQueryString() != null) {
+                        requestedUrl.append("?").append(request.getQueryString());
+                    }
+                    request.getSession().setAttribute(TARGET_PAGE_ATTRIBUTE, requestedUrl.toString());
                 }
                 errorRedirect(servletRequest, servletResponse, LOGIN_PAGE);
                 return;

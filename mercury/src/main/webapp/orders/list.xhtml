@@ -19,17 +19,20 @@
             </div>
             <p:dataTable value="#{productOrderBean.allProductOrders}"
                          filteredValue="#{productOrderBean.filteredProductOrders}"
-                         sortBy="#{order.createdDate}"
-                         sortOrder="descending"
+                         sortBy="#{order.title}"
+                         sortOrder="ascending"
                          var="order">
-                <p:column headerText="Name" sortBy="#{order.title}">
+                <p:column headerText="Name" sortBy="#{order.title}" sortingComparator="caseInsensitiveText">
                     <h:link outcome="view" value="#{order.title}">
-                        <f:param name="productOrderKey" value="#{order.businessKey}"/>
+                        <f:param name="productOrder" value="#{order.businessKey}"/>
                     </h:link>
                 </p:column>
 
                 <p:column headerText="ID" sortBy="#{order.jiraTicketKey}">
-                    #{order.jiraTicketKey}
+                    <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}"
+                                  class="external" rendered="#{order.hasJiraTicketKey()}" >
+                        <h:outputText value="#{order.jiraTicketKey}" />
+                    </h:outputLink>
                 </p:column>
 
                 <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
@@ -40,16 +43,18 @@
                     #{order.researchProject.title}
                 </p:column>
 
-                <p:column headerText="Owner">
-                    ???
+                <p:column headerText="Owner" filterBy="#{order.createdBy}" filterOptions="#{productOrderBean.allProjectOwners}" filterMatchMode="exact">
+                    #{userListBean.getUserFullName(order.createdBy)}
                 </p:column>
 
-                <p:column headerText="Updated">
-                    ???
+                <p:column headerText="Updated" sortBy="#{order.modifiedDate}">
+                    <h:outputText value="#{order.modifiedDate}">
+                        <f:convertDateTime type="both" timeStyle="short"/>
+                    </h:outputText>
                 </p:column>
 
                 <p:column headerText="Samples">
-                    #{order.sampleSummary}
+                    #{order.sampleBillingSummary}
                 </p:column>
             </p:dataTable>
             </h:form>

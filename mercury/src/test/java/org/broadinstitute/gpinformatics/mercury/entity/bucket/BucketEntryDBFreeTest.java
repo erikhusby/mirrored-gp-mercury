@@ -14,10 +14,10 @@ import java.util.Date;
  *         Date: 10/26/12
  *         Time: 1:18 PM
  */
-@Test( groups = TestGroups.DATABASE_FREE)
-public class BucketEntryDBFreeTest extends Arquillian {
+public class BucketEntryDBFreeTest {
 
 
+    @Test( groups = TestGroups.DATABASE_FREE)
     public void testEntryCreation() {
 
         final String productOrder = "PO-1";
