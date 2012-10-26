@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Boundary bean for managing research projects.
  *
- * Transaction is TransactionAttribute.REQUIRED (default for EJBs) since these operations primarily deal with making
+ * Transaction is TransactionAttributeType.REQUIRED (default for EJBs) since these operations primarily deal with making
  * database changes. No explicit action needs to be taken to save any changes to managed entities (even those fetched
  * and modified outside of the transaction) because the extended persistence context is automatically propagated
  * through to this stateful session bean.
@@ -39,13 +39,8 @@ public class ResearchProjectManager {
     public void createResearchProject(ResearchProject project) throws ApplicationValidationException {
         validateUniqueProjectTitle(project);
 
-        // Create JIRA ticket first, since it is more likely to fail than persist
-        try {
-            project.submit();
-        } catch (IOException e) {
-            logger.error("Error creating JIRA ticket for research project", e);
-            throw new RuntimeException("Unable to create JIRA issue: " + e.getMessage(), e);
-        }
+        // Create JIRA issue first, since it is more likely to fail than persist
+        createJiraIssue(project);
 
         // Persist research project, which should succeed assuming all validation has been done up-front
         try {
@@ -83,6 +78,15 @@ public class ResearchProjectManager {
         ResearchProject existingProject = researchProjectDao.findByTitle(project.getTitle());
         if (existingProject != null && !existingProject.getResearchProjectId().equals(project.getResearchProjectId())) {
             throw new ApplicationValidationException("Research project name is already in use for another project.");
+        }
+    }
+
+    private void createJiraIssue(ResearchProject project) {
+        try {
+            project.submit();
+        } catch (IOException e) {
+            logger.error("Error creating JIRA ticket for research project", e);
+            throw new RuntimeException("Unable to create JIRA issue: " + e.getMessage(), e);
         }
     }
 }
