@@ -29,7 +29,7 @@ public class Product implements Serializable {
 
     private String productName;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private ProductFamily productFamily;
 
     @Column(length = 2000)
@@ -54,7 +54,7 @@ public class Product implements Serializable {
      * Whether this Product should show as a top-level product */
     private boolean topLevelProduct;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private PriceItem defaultPriceItem;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})

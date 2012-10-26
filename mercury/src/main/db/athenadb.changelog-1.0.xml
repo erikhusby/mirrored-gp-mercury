@@ -372,4 +372,29 @@
         </addColumn>
     </changeSet>
 
+
+    <changeSet id="GPLIM-139-1" author="mcovarr">
+        <sql>
+            delete from athena.product_price_items where product in (
+                select product_id from athena.product where default_price_item is null
+            )
+        </sql>
+        <sql>
+            delete from athena.product_add_ons where product in (
+                select product_id from athena.product where default_price_item is null
+            )
+        </sql>
+        <sql>
+            delete from athena.product where default_price_item is null
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-139-2" author="mcovarr">
+        <addNotNullConstraint columnName="default_price_item" tableName="product" schemaName="athena" />
+    </changeSet>
+
+    <changeSet id="GPLIM-139-3" author="mcovarr">
+        <addNotNullConstraint columnName="product_family" tableName="product" schemaName="athena" />
+    </changeSet>
+
 </databaseChangeLog>
