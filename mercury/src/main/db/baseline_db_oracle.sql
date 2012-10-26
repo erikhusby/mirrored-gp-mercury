@@ -2091,3 +2091,5 @@
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON mercury.rev_info to athena;
 GRANT SELECT on mercury.seq_rev_info to athena;
+
+grant references (rev_info_id) on mercury.rev_info to athena;
