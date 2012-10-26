@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -18,7 +19,7 @@ import java.util.List;
  */
 @Named
 @ApplicationScoped
-public class PriceListCache {
+public class PriceListCache implements Serializable {
     
     private PriceList priceList;
 
@@ -93,25 +94,29 @@ public class PriceListCache {
     }
 
 
-
-    public Collection<PriceItem> searchPriceItems(String query) {
-
+    public List<PriceItem> searchPriceItems(Collection<PriceItem> priceItems, String query) {
         List<PriceItem> results = new ArrayList<PriceItem>();
         String lowerQuery = query.toLowerCase();
 
         // Currently searching all price items, not filtering by platform or anything else
-        if (getPriceItems() != null) {
-            for (PriceItem priceItem : getPriceItems()) {
+        if (priceItems != null) {
+            for (PriceItem priceItem : priceItems) {
                 if (priceItem != null &&
                         ((priceItem.getPlatformName() != null && priceItem.getPlatformName().toLowerCase().contains(lowerQuery)) ||
-                         (priceItem.getCategoryName() != null && priceItem.getCategoryName().toLowerCase().contains(lowerQuery)) ||
-                         (priceItem.getName() != null && priceItem.getName().toLowerCase().contains(lowerQuery)))) {
+                                (priceItem.getCategoryName() != null && priceItem.getCategoryName().toLowerCase().contains(lowerQuery)) ||
+                                (priceItem.getName() != null && priceItem.getName().toLowerCase().contains(lowerQuery)))) {
                     results.add(priceItem);
                 }
             }
         }
 
         return results;
+
+    }
+
+
+    public List<PriceItem> searchPriceItems(String query) {
+        return searchPriceItems(getPriceItems(), query);
     }
 
 
