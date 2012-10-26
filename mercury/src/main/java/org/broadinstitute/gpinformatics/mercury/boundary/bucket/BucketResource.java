@@ -92,7 +92,7 @@ public class BucketResource {
 
         //TODO SGM Only do the following if this pull is NOT currently a batch
 
-        LabBatch bucketBatch = new LabBatch(/*TODO SGM Pull ProductOrder details to get title */"",
+        LabBatch bucketBatch = new LabBatch(/*TODO SGM Pull ProductOrder details to get title */" ",
                                             batchVessels);
 
         Set<GenericLabEvent> eventList = new HashSet<GenericLabEvent>();

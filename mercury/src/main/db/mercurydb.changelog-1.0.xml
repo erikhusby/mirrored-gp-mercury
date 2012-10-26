@@ -157,7 +157,7 @@
                 <constraints nullable="true" />
             </column>
             <column name="product_order_ranking" type="number(10,0)">
-                <constraints nullable="true" />
+                <constraints nullable="false" />
             </column>
             <column name="created_date" type="oracle.sql.TIMESTAMP">
                 <constraints nullable="false" />
@@ -193,7 +193,7 @@
                 <constraints nullable="false" />
             </column>
             <column name="product_order_ranking" type="number(10,0)">
-                <constraints nullable="true" />
+                <constraints nullable="false" />
             </column>
             <column name="created_date" type="oracle.sql.TIMESTAMP">
                 <constraints nullable="false" />

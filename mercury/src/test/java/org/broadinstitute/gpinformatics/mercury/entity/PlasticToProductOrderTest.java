@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity;
 
 
+import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
@@ -31,7 +33,7 @@ import java.util.Set;
 import static junit.framework.Assert.*;
 
 @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
-public class PlasticToProductOrderTest {
+public class PlasticToProductOrderTest extends ContainerTest {
 
     private static final String PRODUCT_ORDER_KEY = "PDO-1";
     public static final String BUCKET_REFERENCE_NAME = "Start";
@@ -61,7 +63,8 @@ public class PlasticToProductOrderTest {
                                                                              destinationPlateBarcode );
 
 
-        LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree(plateXfer, barcodeToTubeMap, null);
+        LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree ( plateXfer, barcodeToTubeMap,
+                                                                                          null );
 
         BucketEntry bucketEntry = bucketResource.add(tube, PRODUCT_ORDER_KEY, bucket);
         assertTrue(bucket.contains(bucketEntry));
@@ -73,8 +76,9 @@ public class PlasticToProductOrderTest {
         testEntries.add ( bucketEntry );
         bucketResource.start ( testEntries, new Person ( "hrafal", "Howard", "Rafal" ) );
 
+        Assert.assertFalse (bucketEntry.getLabVessel().getInPlaceEvents().isEmpty());
         boolean doesEventHavePDO = false;
-        for (LabEvent labEvent : bucketEntry.getLabVessel().getInPlaceEvents()) {
+        for (LabEvent labEvent : bucketEntry.getLabVessel().getInPlaceEvents ()) {
             if (labEvent.getProductOrderId()!= null) {
                 if (PRODUCT_ORDER_KEY.equals(labEvent.getProductOrderId())) {
                     doesEventHavePDO = true;
