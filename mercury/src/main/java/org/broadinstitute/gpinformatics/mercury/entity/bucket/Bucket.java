@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
@@ -14,7 +13,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -77,7 +75,7 @@ public class Bucket {
      * @param newEntry
      */
     public void addEntry( BucketEntry newEntry ) {
-        newEntry.setBucketExistence(this);
+//        newEntry.setBucketExistence(this);
         bucketEntries.add(newEntry);
 
     }
@@ -90,7 +88,7 @@ public class Bucket {
      * @return an instance of a Bucket entry which represents the lab vessel and the product order for that entry
      */
     public BucketEntry addEntry ( String productOrderKey, LabVessel vessel ) {
-        BucketEntry newEntry = new BucketEntry(vessel,productOrderKey);
+        BucketEntry newEntry = new BucketEntry(vessel,productOrderKey, null );
         newEntry.setBucketExistence(this);
         bucketEntries.add(newEntry);
 

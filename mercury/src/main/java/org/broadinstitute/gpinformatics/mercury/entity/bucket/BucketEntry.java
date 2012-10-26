@@ -65,16 +65,10 @@ public class BucketEntry  {
     protected BucketEntry () {
     }
 
-    public BucketEntry ( LabVessel labVesselIn, String poBusinessKey) {
-        this(labVesselIn, poBusinessKey, null);
-    }
-
-    public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey,
-                         @Nullable Integer productOrderRankingIn ) {
-
+    public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey, @Nonnull Bucket bucket ) {
         labVessel = labVesselIn;
         this.poBusinessKey = poBusinessKey;
-        productOrderRanking = productOrderRankingIn;
+        bucketExistence = bucket;
 
         createdDate = new Date();
 
@@ -119,6 +113,14 @@ public class BucketEntry  {
      */
     public Date getCreatedDate () {
         return createdDate;
+    }
+
+    public Integer getProductOrderRanking () {
+        return productOrderRanking;
+    }
+
+    public void setProductOrderRanking ( Integer productOrderRanking ) {
+        this.productOrderRanking = productOrderRanking;
     }
 
     @Override
