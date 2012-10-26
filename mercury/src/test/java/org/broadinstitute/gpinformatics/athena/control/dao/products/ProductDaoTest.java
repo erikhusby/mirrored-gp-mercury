@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
 import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.collections15.Predicate;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -10,11 +11,11 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
 
 
-@Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductDaoTest extends ContainerTest {
 
     @Inject
@@ -32,15 +33,37 @@ public class ProductDaoTest extends ContainerTest {
     private ProductFamilyDao productFamilyDao;
 
     @Inject
+    private PriceItemDao priceItemDao;
+
+    @Inject
     private UserTransaction utx;
 
-    private List<Product> createdProducts;
 
     public enum DateSpec {
         NULL,
         PAST,
         FUTURE
     }
+
+
+    @DataProvider(name = "availability")
+    public Object [][] datesAndAvailabilityDataProvider() {
+        return new Object [][] {
+                // availability dates must all be non-null and in the past
+                {new DatesAndAvailability(NULL, NULL, false)},
+                {new DatesAndAvailability(NULL, PAST, false)},
+                {new DatesAndAvailability(NULL, FUTURE, false)},
+                {new DatesAndAvailability(FUTURE, NULL, false)},
+                {new DatesAndAvailability(FUTURE, PAST, false)},
+                {new DatesAndAvailability(FUTURE, FUTURE, false)},
+                // discontinued date must be null or in the future
+                {new DatesAndAvailability(PAST, PAST, false)},
+                {new DatesAndAvailability(PAST, NULL, true)},
+                {new DatesAndAvailability(PAST, FUTURE, true)}
+        };
+
+    }
+
 
     private class DatesAndAvailability {
 
@@ -96,11 +119,11 @@ public class ProductDaoTest extends ContainerTest {
                 discontinuedDate = future.getTime();
             }
 
-            return new Product(
+            Product product = new Product(
                     "Test Data",                        // product name
                     generalProductsProductFamily,       // product family
                     "test data ",                       // description
-                    "dummy part number",                // part number
+                    "PN-ProductDaoTest",                // part number
                     availableDate,                      // availability date
                     discontinuedDate,                   // discontinued date
                     3 * DAYS,                           // expected cycle time
@@ -112,6 +135,15 @@ public class ProductDaoTest extends ContainerTest {
                     false,                              // top level product
                     "dummy price item id"               // quote server price item id
             );
+
+            List<PriceItem> priceItems = priceItemDao.findAll();
+            Assert.assertNotNull(priceItems);
+            Assert.assertTrue(priceItems.size() > 0);
+            product.setDefaultPriceItem(priceItems.get(0));
+            product.addPriceItem(priceItems.get(0));
+
+            return product;
+
         }
 
         @Override
@@ -164,56 +196,34 @@ public class ProductDaoTest extends ContainerTest {
     }
 
 
-    public void testFindAvailableProducts() {
+    /**
+     * Drive this from a data provider so we can roll back the transaction around each test scenario
+     *
+     * @param datesAndAvailability
+     */
+    @Test(dataProvider = "availability")
+    public void testFindAvailableProducts(DatesAndAvailability datesAndAvailability) {
 
-        DatesAndAvailability [] datesAndAvailabilities = new DatesAndAvailability [] {
-            // availability dates must all be non-null and in the past
-            new DatesAndAvailability(NULL, NULL, false),
-            new DatesAndAvailability(NULL, PAST, false),
-            new DatesAndAvailability(NULL, FUTURE, false),
-            new DatesAndAvailability(FUTURE, NULL, false),
-            new DatesAndAvailability(FUTURE, PAST, false),
-            new DatesAndAvailability(FUTURE, FUTURE, false),
-            // discontinued date must be null or in the future
-            new DatesAndAvailability(PAST, PAST, false),
-            new DatesAndAvailability(PAST, NULL, true),
-            new DatesAndAvailability(PAST, FUTURE, true)
-        };
+        Product product = datesAndAvailability.createProduct();
+        dao.persist(product);
+        dao.flush();
 
-        createdProducts = new ArrayList<Product>();
-
-        for (DatesAndAvailability datesAndAvailability : datesAndAvailabilities) {
-            Product product = datesAndAvailability.createProduct();
-            dao.persist(product);
-            dao.flush();
-            dao.clear();
-            createdProducts.add(product);
-
-            List<Product> products = dao.findProducts(ProductDao.AvailableProductsOnly.YES);
-            // filter out non test data
-            CollectionUtils.filter(products, new Predicate<Product>() {
-                @Override
-                public boolean evaluate(Product product) {
-                    return "Test Data".equals(product.getProductName());
-                }
-            });
-
-
-            if (! datesAndAvailability.expectingAvailable) {
-                Assert.assertEquals(products.size(), 0);
+        List<Product> products = dao.findProducts(ProductDao.AvailableProductsOnly.YES);
+        // filter out non test data
+        CollectionUtils.filter(products, new Predicate<Product>() {
+            @Override
+            public boolean evaluate(Product product) {
+                return "Test Data".equals(product.getProductName());
             }
-            else {
-                Assert.assertEquals(products.size(), 1, datesAndAvailability.toString());
-                Assert.assertEquals(products.get(0), product, datesAndAvailability.toString());
-            }
+        });
 
-            // merge product because it was detached because of previous dao.clear()
-            product = dao.getEntityManager().merge(product);
-            dao.remove(product);
-            dao.flush();
-            createdProducts.clear();
+
+        if (!datesAndAvailability.expectingAvailable) {
+            Assert.assertEquals(products.size(), 0);
+        } else {
+            Assert.assertEquals(products.size(), 1, datesAndAvailability.toString());
+            Assert.assertEquals(products.get(0), product, datesAndAvailability.toString());
         }
-
     }
 
 
