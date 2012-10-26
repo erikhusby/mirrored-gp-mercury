@@ -97,14 +97,29 @@ public class ProductOrder implements Serializable {
      * Class that encapsulates counting samples and storing the results.
      */
     class SampleCounts implements Serializable {
+        private static final long serialVersionUID = -6031146789417566007L;
         private boolean countsValid;
         private int totalSampleCount;
         private int bspSampleCount;
         private int receivedSampleCount;
         private int activeSampleCount;
+        private int hasFPCount;
+        private final Map<String, Integer> stockTypeCounts = new HashMap<String, Integer>();
+        private final Map<String, Integer> primaryDiseaseCounts = new HashMap<String, Integer>();
+        private final Map<String, Integer> genderCounts = new HashMap<String, Integer>();
+        private final Map<String, Integer> sampleTypeCounts = new HashMap<String, Integer>();
         private int uniqueSampleCount;
-        private Map<String, Integer> stockTypeCounts = new HashMap<String, Integer>();
         private int uniqueParticipantCount;
+
+        private void incrementCount(Map<String, Integer> countMap, String key) {
+            if (!StringUtils.isEmpty(key)) {
+                Integer count = countMap.get(key);
+                if (count == null) {
+                    count = 0;
+                }
+                countMap.put(key, count + 1);
+            }
+        }
 
         private void generateCounts() {
             if (countsValid) {
@@ -117,7 +132,10 @@ public class ProductOrder implements Serializable {
             bspSampleCount = 0;
             receivedSampleCount = 0;
             activeSampleCount = 0;
-            stockTypeCounts = new HashMap<String, Integer>();
+            hasFPCount = 0;
+            stockTypeCounts.clear();
+            primaryDiseaseCounts.clear();
+            genderCounts.clear();
             Set<String> sampleSet = new HashSet<String>(samples.size());
             Set<String> participantSet = new HashSet<String>();
 
@@ -134,18 +152,18 @@ public class ProductOrder implements Serializable {
                             activeSampleCount++;
                         }
 
-                        String stockType = bspDTO.getStockType();
-                        if (!StringUtils.isEmpty(stockType)) {
-                            Integer count = stockTypeCounts.get(stockType);
-                            if (count == null) {
-                                count = 0;
-                            }
-                            stockTypeCounts.put(stockType, count + 1);
-                        }
+                        incrementCount(stockTypeCounts, bspDTO.getStockType());
+
                         String participantId = bspDTO.getPatientId();
                         if (StringUtils.isNotBlank(participantId)) {
                             participantSet.add(participantId);
                         }
+                        incrementCount(primaryDiseaseCounts, bspDTO.getPrimaryDisease());
+                        incrementCount(genderCounts, bspDTO.getGender());
+                        if (bspDTO.getHasFingerprint()) {
+                            hasFPCount++;
+                        }
+                        incrementCount(sampleTypeCounts, bspDTO.getSampleType());
                     }
                 }
             }
@@ -154,29 +172,43 @@ public class ProductOrder implements Serializable {
             countsValid = true;
         }
 
+        private void outputCounts(StringBuilder sb, Map<String, Integer> counts, String label) {
+            for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+                sb.append(MessageFormat.format("{0}: {1} - count: {2}\n", label, entry.getKey(), entry.getValue()));
+            }
+        }
+
         public String formatAsText() {
             generateCounts();
 
             StringBuilder sb = new StringBuilder();
             if (totalSampleCount == 0) {
-                sb.append("0 Samples");
-            } else if (bspSampleCount == uniqueSampleCount) {
-                sb.append("All samples are BSP samples.");
+                sb.append("No Samples.");
+            } else {
+                sb.append(MessageFormat.format("Total Samples: {0}", totalSampleCount));
+                if (uniqueSampleCount != totalSampleCount) {
+                    sb.append(MessageFormat.format(" Unique Samples: {1}, Duplicate Samples: {1}",
+                            uniqueSampleCount, (totalSampleCount - uniqueSampleCount)));
+                }
                 sb.append("\n");
+                if (bspSampleCount == uniqueSampleCount) {
+                    sb.append("All samples are BSP samples.");
+                } else if (bspSampleCount != 0) {
+                    sb.append(MessageFormat.format("Of {0} unique samples, {1} are BSP samples and {2} are non-BSP.",
+                            uniqueSampleCount, bspSampleCount, uniqueSampleCount - bspSampleCount));
+                } else {
+                    sb.append("None of the samples come from BSP.");
+                }
+            }
+            if (receivedSampleCount != 0) {
                 sb.append(MessageFormat.format("{0} of {1} samples are in RECEIVED state.",
                         receivedSampleCount, totalSampleCount));
-                sb.append("\n");
-                sb.append(MessageFormat.format("{0} of {1} samples are Active stock.",
-                        activeSampleCount, totalSampleCount));
-                for (Map.Entry<String, Integer> entry : stockTypeCounts.entrySet()) {
-                    sb.append(MessageFormat.format("Stock type: {0}, count: {1}", entry.getKey(), entry.getValue()));
-                }
-            } else if (bspSampleCount != 0) {
-                sb.append(MessageFormat.format("Of {0} samples, {1} are BSP samples and {2} are non-BSP.",
-                        totalSampleCount, bspSampleCount,
-                        totalSampleCount - bspSampleCount));
-            } else {
-                sb.append("None of the samples come from BSP.");
+            }
+            outputCounts(sb, stockTypeCounts, "Stock type");
+            outputCounts(sb, primaryDiseaseCounts, "Primary disease");
+            outputCounts(sb, genderCounts, "Gender");
+            if (hasFPCount != 0) {
+                sb.append(MessageFormat.format("\n{0} samples have fingerprint data.", hasFPCount));
             }
 
             return sb.toString();
@@ -343,7 +375,6 @@ public class ProductOrder implements Serializable {
         for (ProductOrderSample sample : getSamples()) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
             if (bspSampleDTO == null) {
-                // Need to use DUMMY here to avoid calling into to get the data a second time.
                 bspSampleDTO = BSPSampleDTO.DUMMY;
             }
             sample.setBspDTO(bspSampleDTO);
@@ -415,30 +446,28 @@ public class ProductOrder implements Serializable {
         return counts.bspSampleCount;
     }
 
-    /**
-     * getTumorNormalCounts calculates both How many samples registered to this product order are tumor samples AND how
-     * many samples are normal (Non-tumor) samples
-     *
-     * @return An instance of a TumorNormalCount object which exposes both the tumor sample counts and normal sample
-     *         counts for the registered samples
-     */
-    public TumorNormalCount getTumorNormalCounts() {
-        return new TumorNormalCount(
-                getSampleTypeCount(BSPSampleDTO.TUMOR_IND),
-                getSampleTypeCount(BSPSampleDTO.NORMAL_IND));
+    public int getTumorCount() {
+        counts.generateCounts();
+        Integer count = counts.sampleTypeCounts.get(BSPSampleDTO.TUMOR_IND);
+        return count == null ? 0 : count;
     }
 
-    /**
-     * getMaleFemaleCounts calculates both how many samples registered to this product order are from Male participants
-     * and how many samples are from Female participants
-     *
-     * @return an instance of a MaleFemaleCount object which exposes both the Male participant sample counts and the
-     *         Female Participant counts
-     */
-    public MaleFemaleCount getMaleFemaleCounts() {
-        return new MaleFemaleCount(
-                getGenderCount(BSPSampleDTO.MALE_IND),
-                getGenderCount(BSPSampleDTO.FEMALE_IND));
+    public int getNormalCount() {
+        counts.generateCounts();
+        Integer count = counts.sampleTypeCounts.get(BSPSampleDTO.NORMAL_IND);
+        return count == null ? 0 : count;
+    }
+
+    public int getFemaleCount() {
+        counts.generateCounts();
+        Integer count = counts.genderCounts.get(BSPSampleDTO.FEMALE_IND);
+        return count == null ? 0 : count;
+    }
+
+    public int getMaleCount() {
+        counts.generateCounts();
+        Integer count = counts.genderCounts.get(BSPSampleDTO.MALE_IND);
+        return count == null ? 0 : count;
     }
 
     /**
@@ -498,14 +527,8 @@ public class ProductOrder implements Serializable {
      * @return a count of the samples that have a fingerprint
      */
     public int getFingerprintCount() {
-        int fpCount = 0;
-
-        for (ProductOrderSample productOrderSample : samples ) {
-            if (productOrderSample.isInBspFormat() && productOrderSample.getBspDTO().getHasFingerprint()) {
-                fpCount++;
-            }
-        }
-        return fpCount;
+        counts.generateCounts();
+        return counts.hasFPCount;
     }
 
     /**
@@ -518,46 +541,6 @@ public class ProductOrder implements Serializable {
     public Map<String, Integer> getCountsByStockType() {
         counts.generateCounts();
         return counts.stockTypeCounts;
-    }
-
-    /**
-     * getPrimaryDiseaseCount exposes the summation of each unique disease found in the list of samples registered to
-     * this product order
-     *
-     * @return a Map, indexed by the unique disease found, which gives a count of how many samples in the list of
-     *         product order samples, are related to that disease.
-     */
-    public Map<String, Integer> getPrimaryDiseaseCount() {
-        Map<String, Integer> uniqueDiseases = new HashMap<String, Integer>();
-
-        for (ProductOrderSample sample : samples) {
-            if (sample.isInBspFormat() &&
-                    !StringUtils.isEmpty(sample.getBspDTO().getPrimaryDisease())) {
-                if (!uniqueDiseases.containsKey(sample.getBspDTO().getPrimaryDisease())) {
-                    uniqueDiseases.put(sample.getBspDTO().getPrimaryDisease(), 0);
-                }
-                uniqueDiseases.put(sample.getBspDTO().getPrimaryDisease(), uniqueDiseases.get(sample.getBspDTO().getPrimaryDisease()) + 1);
-            }
-        }
-
-        return uniqueDiseases;
-    }
-
-    /**
-     * getGenderCount is a helper method to exposed the sum of all samples, registered to this product order, based on
-     * a given gender
-     *
-     * @param gender A string that represents the gender for which we wish to get a count
-     * @return a count of all samples for whom the participant's gener matches the one given
-     */
-    private int getGenderCount(String gender) {
-        int counter = 0;
-        for (ProductOrderSample sample : samples) {
-            if (sample.isInBspFormat() && gender.equalsIgnoreCase ( sample.getBspDTO ().getGender () )) {
-                counter++;
-            }
-        }
-        return counter;
     }
 
     /**

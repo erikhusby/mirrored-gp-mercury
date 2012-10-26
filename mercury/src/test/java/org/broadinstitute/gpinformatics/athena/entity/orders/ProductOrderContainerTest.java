@@ -46,14 +46,14 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Assert.assertEquals(3, testOrder.getUniqueParticipantCount());
         Assert.assertEquals(3, testOrder.getUniqueSampleCount());
-        Assert.assertEquals(0, testOrder.getTumorNormalCounts().getNormalCount());
-        Assert.assertEquals(0, testOrder.getTumorNormalCounts().getTumorCount());
+        Assert.assertEquals(0, testOrder.getNormalCount());
+        Assert.assertEquals(0, testOrder.getTumorCount());
 
         Assert.assertEquals(3, testOrder.getTotalSampleCount());
         Assert.assertEquals(0, testOrder.getDuplicateCount());
         Assert.assertEquals(3, testOrder.getBspSampleCount());
-        Assert.assertEquals(3, testOrder.getMaleFemaleCounts().getFemaleCount());
-        Assert.assertEquals(0, testOrder.getMaleFemaleCounts().getMaleCount());
+        Assert.assertEquals(3, testOrder.getFemaleCount());
+        Assert.assertEquals(0, testOrder.getMaleCount());
 
         Assert.assertEquals(3, testOrder.getFingerprintCount());
 
@@ -93,13 +93,6 @@ public class ProductOrderContainerTest extends Arquillian {
         Assert.assertEquals(3, testOrder.getTotalSampleCount());
         Assert.assertEquals(0, testOrder.getDuplicateCount());
         Assert.assertEquals(0, testOrder.getBspSampleCount());
-
-//        try {
-//            testOrder.getUniqueParticipantCount();
-//            Assert.fail();
-//        } catch (IllegalStateException ise) {
-//
-//        }
     }
 
     public static ResearchProject createDummyResearchProject(String researchProjectTitle) {
