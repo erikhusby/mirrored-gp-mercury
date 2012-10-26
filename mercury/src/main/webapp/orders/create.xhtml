@@ -23,8 +23,7 @@
                 <h:form id="sampleDialogForm" prependId="false">
                     <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.samplesDialog.text}" cols="80"
                                      rows="20"
-                                     autoResize="false"
-                            >
+                                     autoResize="false">
                         <p:ajax update="samplesDialogStatus,samplesDialogInput"
                                 listener="#{productOrderForm.samplesDialog.textChanged}"/>
                     </p:inputTextarea>
@@ -35,7 +34,7 @@
                             <div class="row-fluid">
                                 <div class="span1">
                                     <p:commandButton id="commitSamples"
-                                                     update=":form:sampleTable, :form:sampleValidation, :form:idCache"
+                                                     update=":form:sampleDisplay, :form:idCache"
                                                      value="OK"
                                                      onclick="samplesDialog.hide()"
                                                      actionListener="#{productOrderForm.samplesDialog.commit}"
@@ -132,57 +131,61 @@
 
                 <h:inputHidden id="idCache" binding="#{productOrderForm.editIdsCacheBinding}"/>
 
-                <p:blockUI block="sampleTable" trigger=":sampleDialogForm:commitSamples"/>
-                <p:blockUI block="sampleValidation" trigger=":sampleDialogForm:commitSamples"/>
+                <p:blockUI block="sampleDisplay" trigger=":sampleDialogForm:commitSamples"/>
 
-                <p:panel id="sampleValidation" header="Summary">
-                    <h:outputText value="#{productOrderDetail.productOrder.sampleValidationComments}"/>
-                </p:panel>
-
-                <div class="row-fluid">
-                    <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample">
+                <h:panelGroup id="sampleDisplay">
+                    <p:panel header="Summary">
                         <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
-                        <p:column headerText="ID">
-                            #{sample.sampleName}
-                        </p:column>
-                        <p:column headerText="Participant">
-                            #{sample.bspDTO.patientId}
-                        </p:column>
-                        <p:column headerText="Collaborator Sample">
-                            #{sample.bspDTO.collaboratorsSampleName}
-                        </p:column>
-                        <p:column headerText="Collaborator Participant ID">
-                            #{sample.bspDTO.collaboratorParticipantId}
-                        </p:column>
-                        <p:column headerText="Material">
-                            #{sample.bspDTO.materialType}
-                        </p:column>
-                        <p:column headerText="Volume">
-                            #{sample.bspDTO.volume}
-                        </p:column>
-                        <p:column headerText="Concentration">
-                            #{sample.bspDTO.concentration}
-                        </p:column>
-                        <p:column headerText="Total">
-                            #{sample.bspDTO.total}
-                        </p:column>
-                        <p:column headerText="Sample Type">
-                            #{sample.bspDTO.sampleType}
-                        </p:column>
-                        <p:column headerText="Primary Disease">
-                            #{sample.bspDTO.primaryDisease}
-                        </p:column>
-                        <p:column headerText="Gender">
-                            #{sample.bspDTO.gender}
-                        </p:column>
-                        <p:column headerText="Stock Type">
-                            #{sample.bspDTO.stockType}
-                        </p:column>
-                        <p:column headerText="Fingerprint Available">
-                            #{sample.bspDTO.hasFingerprint}
-                        </p:column>
-                    </p:dataTable>
-                </div>
+                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}"
+                                    var="comment" itemType="none">
+                            #{comment}
+                        </p:dataList>
+                    </p:panel>
+
+                    <div class="row-fluid">
+                        <p:dataTable value="#{productOrderDetail.productOrder.samples}" var="sample">
+                            <p:column headerText="ID">
+                                #{sample.sampleName}
+                            </p:column>
+                            <p:column headerText="Participant">
+                                #{sample.bspDTO.patientId}
+                            </p:column>
+                            <p:column headerText="Collaborator Sample">
+                                #{sample.bspDTO.collaboratorsSampleName}
+                            </p:column>
+                            <p:column headerText="Collaborator Participant ID">
+                                #{sample.bspDTO.collaboratorParticipantId}
+                            </p:column>
+                            <p:column headerText="Material">
+                                #{sample.bspDTO.materialType}
+                            </p:column>
+                            <p:column headerText="Volume">
+                                #{sample.bspDTO.volume}
+                            </p:column>
+                            <p:column headerText="Concentration">
+                                #{sample.bspDTO.concentration}
+                            </p:column>
+                            <p:column headerText="Total">
+                                #{sample.bspDTO.total}
+                            </p:column>
+                            <p:column headerText="Sample Type">
+                                #{sample.bspDTO.sampleType}
+                            </p:column>
+                            <p:column headerText="Primary Disease">
+                                #{sample.bspDTO.primaryDisease}
+                            </p:column>
+                            <p:column headerText="Gender">
+                                #{sample.bspDTO.gender}
+                            </p:column>
+                            <p:column headerText="Stock Type">
+                                #{sample.bspDTO.stockType}
+                            </p:column>
+                            <p:column headerText="Fingerprint Available">
+                                #{sample.bspDTO.hasFingerprint}
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </h:panelGroup>
 
                 <div class="control-group">
                     <div class="controls">

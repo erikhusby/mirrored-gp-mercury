@@ -172,46 +172,44 @@ public class ProductOrder implements Serializable {
             countsValid = true;
         }
 
-        private void outputCounts(StringBuilder sb, Map<String, Integer> counts, String label) {
+        private void outputCounts(List<String> output, Map<String, Integer> counts, String label) {
             for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-                sb.append(MessageFormat.format("{0}: {1} - count: {2}\n", label, entry.getKey(), entry.getValue()));
+                output.add(MessageFormat.format("{0}: {1} - count: {2}", label, entry.getKey(), entry.getValue()));
             }
         }
 
-        public String formatAsText() {
+        public List<String> formatAsText() {
             generateCounts();
 
-            StringBuilder sb = new StringBuilder();
+            List<String> output = new ArrayList<String>();
             if (totalSampleCount == 0) {
-                sb.append("No Samples.");
+                output.add("No Samples.");
             } else {
-                sb.append(MessageFormat.format("Total Samples: {0}", totalSampleCount));
+                output.add(MessageFormat.format("Total Samples: {0}", totalSampleCount));
                 if (uniqueSampleCount != totalSampleCount) {
-                    sb.append(MessageFormat.format(" Unique Samples: {1}, Duplicate Samples: {1}",
-                            uniqueSampleCount, (totalSampleCount - uniqueSampleCount)));
+                    output.add(MessageFormat.format("Unique Samples: {0}", uniqueSampleCount));
+                    output.add(MessageFormat.format("Duplicate Samples: {0}", (totalSampleCount - uniqueSampleCount)));
                 }
-                sb.append("\n");
                 if (bspSampleCount == uniqueSampleCount) {
-                    sb.append("All samples are BSP samples.");
+                    output.add("All samples are BSP samples.");
                 } else if (bspSampleCount != 0) {
-                    sb.append(MessageFormat.format("Of {0} unique samples, {1} are BSP samples and {2} are non-BSP.",
+                    output.add(MessageFormat.format("Of {0} unique samples, {1} are BSP samples and {2} are non-BSP.",
                             uniqueSampleCount, bspSampleCount, uniqueSampleCount - bspSampleCount));
                 } else {
-                    sb.append("None of the samples come from BSP.");
+                    output.add("None of the samples come from BSP.");
                 }
             }
             if (receivedSampleCount != 0) {
-                sb.append(MessageFormat.format("{0} of {1} samples are in RECEIVED state.",
-                        receivedSampleCount, totalSampleCount));
+                output.add(MessageFormat.format("{0} samples are in RECEIVED state.", receivedSampleCount));
             }
-            outputCounts(sb, stockTypeCounts, "Stock type");
-            outputCounts(sb, primaryDiseaseCounts, "Primary disease");
-            outputCounts(sb, genderCounts, "Gender");
+            outputCounts(output, stockTypeCounts, "Stock type");
+            outputCounts(output, primaryDiseaseCounts, "Primary disease");
+            outputCounts(output, genderCounts, "Gender");
             if (hasFPCount != 0) {
-                sb.append(MessageFormat.format("\n{0} samples have fingerprint data.", hasFPCount));
+                output.add(MessageFormat.format("{0} samples have fingerprint data.", hasFPCount));
             }
 
-            return sb.toString();
+            return output;
         }
 
         public void invalidate() {
@@ -624,7 +622,7 @@ public class ProductOrder implements Serializable {
 
         addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
 
-        addPublicComment(getSampleValidationComments());
+        addPublicComment(StringUtils.join(getSampleValidationComments(), "\n"));
     }
 
     /**
@@ -633,7 +631,7 @@ public class ProductOrder implements Serializable {
      *
      * @throws IOException
      */
-    public String getSampleValidationComments() throws IOException {
+    public List<String> getSampleValidationComments() throws IOException {
         counts.generateCounts();
         return counts.formatAsText();
     }

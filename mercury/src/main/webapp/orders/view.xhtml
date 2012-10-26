@@ -100,17 +100,17 @@
 
 
                     <p:panel id="sampleValidation" header="Summary">
-                        <h:outputText value="#{productOrderDetail.productOrder.sampleValidationComments}"/>
+                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}"
+                                    var="comment"
+                                    itemType="none">
+                            #{comment}
+                        </p:dataList>
                     </p:panel>
+
                     <p:dataTable id="sampleData"
                                  value="#{productOrderDetail.productOrder.samples}"
                                  filteredValue="#{productOrderFilterBean.filteredSamples}"
-                                 var="sample"
-                                 paginator="true"
-                                 paginatorAlwaysVisible='false'
-                                 rows="100"
-                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                                 rowsPerPageTemplate="50,100,250,1000">
+                                 var="sample">
                         <f:event type="preRenderComponent" listener="#{productOrderDetail.load}"/>
                         <f:facet name="header">
                             Samples
