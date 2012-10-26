@@ -52,21 +52,6 @@ public class PacbioPlate extends RunCartridge {
     }
 
     @Override
-    public StatusNote getLatestNote() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void logNote(StatusNote statusNote) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Collection<StatusNote> getAllStatusNotes() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public Float getVolume() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }

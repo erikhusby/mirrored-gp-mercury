@@ -149,7 +149,7 @@ public class LabEventTest {
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
                 bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube).invoke();
 
-        ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(mapBarcodeToTube,
+        ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getRackOfTubes(),
                 bettaLimsMessageFactory, labEventFactory, labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
@@ -180,7 +180,6 @@ public class LabEventTest {
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        // todo jmt this now has 6 containers!
         VesselContainer<TwoDBarcodedTube> startingContainer = (VesselContainer<TwoDBarcodedTube>)
                 stringTwoDBarcodedTubeEntry.getValue().getContainers().iterator().next();
         startingContainer.evaluateCriteria(
@@ -226,7 +225,7 @@ public class LabEventTest {
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
                 bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube).invoke();
 
-        ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(mapBarcodeToTube,
+        ShearingEntityBuilder shearingEntityBuilder = new ShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getRackOfTubes(),
                 bettaLimsMessageFactory, labEventFactory, labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
@@ -494,10 +493,6 @@ public class LabEventTest {
             this.mapBarcodeToTube = mapBarcodeToTube;
         }
 
-        public String getRackBarcode() {
-            return rackBarcode;
-        }
-
         public PreFlightEntityBuilder invoke() {
             PreFlightJaxbBuilder preFlightJaxbBuilder = new PreFlightJaxbBuilder(bettaLimsMessageFactory, "",
                     new ArrayList<String>(mapBarcodeToTube.keySet()));
@@ -510,6 +505,7 @@ public class LabEventTest {
                     preFlightJaxbBuilder.getPreflightPicoSetup1(), mapBarcodeToTube, null);
             labEventHandler.processEvent(preflightPicoSetup1Entity);
             // asserts
+            rackOfTubes = (RackOfTubes) preflightPicoSetup1Entity.getSourceLabVessels().iterator().next();
             StaticPlate preflightPicoSetup1Plate = (StaticPlate) preflightPicoSetup1Entity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(preflightPicoSetup1Plate.getSampleInstances().size(),
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
@@ -517,7 +513,7 @@ public class LabEventTest {
             // PreflightPicoSetup 2
             validateWorkflow("PreflightPicoSetup", mapBarcodeToTube.values());
             LabEvent preflightPicoSetup2Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                    preFlightJaxbBuilder.getPreflightPicoSetup2(), mapBarcodeToTube, null);
+                    preFlightJaxbBuilder.getPreflightPicoSetup2(), rackOfTubes, null);
             labEventHandler.processEvent(preflightPicoSetup2Entity);
             // asserts
             StaticPlate preflightPicoSetup2Plate = (StaticPlate) preflightPicoSetup2Entity.getTargetLabVessels().iterator().next();
@@ -527,17 +523,16 @@ public class LabEventTest {
             // PreflightNormalization
             validateWorkflow("PreflightNormalization", mapBarcodeToTube.values());
             LabEvent preflightNormalization = labEventFactory.buildFromBettaLimsRackEventDbFree(
-                    preFlightJaxbBuilder.getPreflightNormalization(), null, mapBarcodeToTube);
+                    preFlightJaxbBuilder.getPreflightNormalization(), rackOfTubes, mapBarcodeToTube);
             labEventHandler.processEvent(preflightNormalization);
             // asserts
-            rackOfTubes = (RackOfTubes) preflightNormalization.getInPlaceLabVessel();
             Assert.assertEquals(rackOfTubes.getSampleInstances().size(),
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
 
             // PreflightPostNormPicoSetup 1
             validateWorkflow("PreflightPostNormPicoSetup", mapBarcodeToTube.values());
             LabEvent preflightPostNormPicoSetup1Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                    preFlightJaxbBuilder.getPreflightPostNormPicoSetup1(), mapBarcodeToTube, null);
+                    preFlightJaxbBuilder.getPreflightPostNormPicoSetup1(), rackOfTubes, null);
             labEventHandler.processEvent(preflightPostNormPicoSetup1Entity);
             // asserts
             StaticPlate preflightPostNormPicoSetup1Plate = (StaticPlate) preflightPostNormPicoSetup1Entity.getTargetLabVessels().iterator().next();
@@ -547,7 +542,7 @@ public class LabEventTest {
             // PreflightPostNormPicoSetup 2
             validateWorkflow("PreflightPostNormPicoSetup", mapBarcodeToTube.values());
             LabEvent preflightPostNormPicoSetup2Entity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                    preFlightJaxbBuilder.getPreflightPostNormPicoSetup2(), mapBarcodeToTube, null);
+                    preFlightJaxbBuilder.getPreflightPostNormPicoSetup2(), rackOfTubes, null);
             labEventHandler.processEvent(preflightPostNormPicoSetup2Entity);
             // asserts
             StaticPlate preflightPostNormPicoSetup2Plate = (StaticPlate) preflightPostNormPicoSetup2Entity.getTargetLabVessels().iterator().next();
@@ -555,6 +550,14 @@ public class LabEventTest {
                     NUM_POSITIONS_IN_RACK, "Wrong number of sample instances");
 
             return this;
+        }
+
+        public String getRackBarcode() {
+            return rackBarcode;
+        }
+
+        public RackOfTubes getRackOfTubes() {
+            return rackOfTubes;
         }
     }
 
@@ -654,6 +657,7 @@ public class LabEventTest {
      */
     public static class ShearingEntityBuilder {
         private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+        private RackOfTubes preflightRack;
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
         private final LabEventFactory labEventFactory;
         private final LabEventHandler labEventHandler;
@@ -663,10 +667,11 @@ public class LabEventTest {
         private String shearCleanPlateBarcode;
         private StaticPlate shearingCleanupPlate;
 
-        public ShearingEntityBuilder(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+        public ShearingEntityBuilder(Map<String, TwoDBarcodedTube> mapBarcodeToTube, RackOfTubes preflightRack,
                 BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
                 LabEventHandler labEventHandler, String rackBarcode) {
             this.mapBarcodeToTube = mapBarcodeToTube;
+            this.preflightRack = preflightRack;
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
             this.labEventFactory = labEventFactory;
             this.labEventHandler = labEventHandler;
@@ -694,7 +699,7 @@ public class LabEventTest {
             // ShearingTransfer
             validateWorkflow("ShearingTransfer", mapBarcodeToTube.values());
             LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                    shearingJaxbBuilder.getShearingTransferEventJaxb(), mapBarcodeToTube, null);
+                    shearingJaxbBuilder.getShearingTransferEventJaxb(), preflightRack, null);
             labEventHandler.processEvent(shearingTransferEventEntity);
             // asserts
             shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();

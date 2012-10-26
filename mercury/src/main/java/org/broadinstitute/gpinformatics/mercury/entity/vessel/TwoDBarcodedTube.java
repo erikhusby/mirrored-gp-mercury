@@ -3,21 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.Failure;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
-import javax.persistence.JoinTable;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 @Entity
 @Audited
@@ -46,16 +39,6 @@ public class TwoDBarcodedTube extends LabVessel {
 
     @Override
     public Collection<LabMetric> getMetrics() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void addFailure(Failure failureMode) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<Failure> getFailures() {
         throw new RuntimeException("I haven't been written yet.");
     }
 
