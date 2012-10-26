@@ -121,7 +121,7 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         for ( Product product : allProducts ) {
             if ((product.getPartNumber().contains(query) || product.getProductName().contains( query) ||
                     product.getProductFamily().getName().toUpperCase().contains( query.toUpperCase() )
-            ) && ( product.isAvailable() || product.getAvailabilityDate().after( new Date() )) ) {
+            ) && ( product.isAvailable() || (product.getAvailabilityDate() != null && product.getAvailabilityDate().after( new Date() )) )) {
                 products.add( product );
             }
         }
