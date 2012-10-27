@@ -2,15 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.AliquotReceiver;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingResponse;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
-import org.broadinstitute.gpinformatics.mercury.entity.project.*;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber;
@@ -52,10 +48,10 @@ public class EndToEndTest  {
         String aliquot1Label = "aliquot1";
         String aliquot2Label = "aliquot2";
 
-        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars", QuotePlatformType.SEQ.getPlatformName());
-        final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
-                null,
-                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+//        PriceItem priceItem = new PriceItem("Specialized Library Construction","1","HS Library","1000","Greenbacks/Dough/Dollars", QuotePlatformType.SEQ.getPlatformName());
+//        final WorkflowDescription workflow = new WorkflowDescription("Hybrid Selection",
+//                null,
+//                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 //        Project project = new BasicProject("Project1",new JiraTicket(new JiraServiceStub(),"TP-0","0"));
 //        BasicProjectPlan plan1 = new BasicProjectPlan(project,"Plan for " + project.getProjectName(),new WorkflowDescription("WGS", null,CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 //        Project project2 = new BasicProject("Project2", new JiraTicket(new JiraServiceStub(),"TP-1","1"));

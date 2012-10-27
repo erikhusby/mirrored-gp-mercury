@@ -32,7 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -140,8 +139,8 @@ public class ExomeExpressEndToEndTest {
 
             // todo when R3_725 comes out, revert to looking this up via the pass
             PriceItem priceItem = new PriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15", "Bananas", "DNA Sequencing");
-            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", priceItem,
-                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+//            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", priceItem,
+//                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 
 //            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass, bspDataFetcher, baitsCache, priceItem);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
@@ -278,20 +277,20 @@ public class ExomeExpressEndToEndTest {
             }
 
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
-                    workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     mapBarcodeToTube);//.invoke();
 
             LabEventTest.ShearingEntityBuilder shearingEntityBuilder = new LabEventTest.ShearingEntityBuilder(
-                    workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
+                    mapBarcodeToTube, preFlightEntityBuilder.getRackOfTubes(), bettaLimsMessageFactory, labEventFactory,
                     labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
             LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LabEventTest.LibraryConstructionEntityBuilder(
-                    workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
                     shearingEntityBuilder.getShearingPlate(), mapBarcodeToTube.size()).invoke();
 
             LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new LabEventTest.HybridSelectionEntityBuilder(
-                    workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
@@ -329,7 +328,7 @@ public class ExomeExpressEndToEndTest {
 //
 //            }
 
-            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(workflowDescription,
+            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
                     bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(), hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes());

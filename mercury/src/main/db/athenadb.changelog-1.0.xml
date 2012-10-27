@@ -373,17 +373,42 @@
     </changeSet>
 
 
-    <changeSet id="GPLIM-139-1" author="mcovarr">
+    <changeSet id="GPLIM-139-1.1.1" author="mcovarr">
         <sql>
             delete from athena.product_price_items where product in (
-                select product_id from athena.product where default_price_item is null
+            select product_id from athena.product where default_price_item is null
             )
         </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-139-1.1.2" author="mcovarr">
         <sql>
             delete from athena.product_add_ons where product in (
-                select product_id from athena.product where default_price_item is null
+            select product_id from athena.product where default_price_item is null
             )
         </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-139-1.1.3" author="mcovarr">
+        <sql>
+            delete from athena.product_add_ons where add_ons in (
+            select product_id from athena.product where default_price_item is null
+            )
+
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-139.1.1.3.1" author="mcovarr">
+        <sql>
+            delete from athena.product_order where product in (
+            select product_id from athena.product where default_price_item is null
+            )
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-139-1.1.4" author="mcovarr">
         <sql>
             delete from athena.product where default_price_item is null
         </sql>
@@ -396,5 +421,32 @@
     <changeSet id="GPLIM-139-3" author="mcovarr">
         <addNotNullConstraint columnName="product_family" tableName="product" schemaName="athena" />
     </changeSet>
+
+    <changeSet id="GPLIM-116" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="product" columnName="pdm_orderable_only" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product">
+            <column name="pdm_orderable_only" type="number(1,0)"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="product"
+                columnName="pdm_orderable_only"
+                defaultNullValue="0" />
+    </changeSet>
+
+    <changeSet id="GPLIM-116_aud" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_aud" columnName="pdm_orderable_only" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_aud">
+            <column name="pdm_orderable_only" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
 
 </databaseChangeLog>

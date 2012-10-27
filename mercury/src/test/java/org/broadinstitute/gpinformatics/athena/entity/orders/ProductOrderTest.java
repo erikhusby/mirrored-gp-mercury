@@ -92,7 +92,7 @@ public class ProductOrderTest {
     public static Product createDummyProduct() {
         return new Product("productName", new ProductFamily("ProductFamily"), "description",
             "partNumber", new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables",
-            true, "workflowName");
+            true, "workflowName", false);
     }
 
     private final List<ProductOrderSample> sixBspSamplesNoDupes =

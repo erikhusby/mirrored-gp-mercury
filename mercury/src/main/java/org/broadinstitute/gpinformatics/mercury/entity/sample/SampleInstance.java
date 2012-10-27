@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 
@@ -110,8 +109,7 @@ public class SampleInstance  {
     public SampleInstance(MercurySample sample,
             GSP_CONTROL_ROLE controlRole,
 //            ProjectPlan projectPlan,
-            MolecularState molecularState,
-            WorkflowDescription workflowDescription) {
+            MolecularState molecularState) {
         this.sample = sample;
         this.controlRole = controlRole;
 //        projectPlans.add(projectPlan);

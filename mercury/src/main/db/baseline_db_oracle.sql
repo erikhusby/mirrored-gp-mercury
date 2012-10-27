@@ -197,9 +197,9 @@
 
     drop table mercury.vessel_transfer_aud cascade constraints;
 
-    drop table mercury.workflow_description cascade constraints;
-
-    drop table mercury.workflow_description_aud cascade constraints;
+--     drop table mercury.workflow_description cascade constraints;
+--
+--     drop table mercury.workflow_description_aud cascade constraints;
 /*
     drop table project_available_quotes cascade constraints;
 
@@ -271,7 +271,7 @@
 
     drop sequence mercury.SEQ_VESSEL_TRANSFER;
 
-    drop sequence mercury.SEQ_WORKFLOW_DESCRIPTION;
+--     drop sequence mercury.SEQ_WORKFLOW_DESCRIPTION;
 
     drop sequence mercury.seq_molecular_index;
 
@@ -1194,21 +1194,21 @@
         primary key (vessel_transfer_id, rev)
     );
 
-    create table mercury.workflow_description (
-        workflow_description_id number(19,0) not null,
-        issue_type number(10,0),
-        workflow_name varchar2(255 char),
-        primary key (workflow_description_id)
-    );
-
-    create table mercury.workflow_description_aud (
-        workflow_description_id number(19,0) not null,
-        rev number(19,0) not null,
-        revtype number(3,0),
-        issue_type number(10,0),
-        workflow_name varchar2(255 char),
-        primary key (workflow_description_id, rev)
-    );
+--     create table mercury.workflow_description (
+--         workflow_description_id number(19,0) not null,
+--         issue_type number(10,0),
+--         workflow_name varchar2(255 char),
+--         primary key (workflow_description_id)
+--     );
+--
+--     create table mercury.workflow_description_aud (
+--         workflow_description_id number(19,0) not null,
+--         rev number(19,0) not null,
+--         revtype number(3,0),
+--         issue_type number(10,0),
+--         workflow_name varchar2(255 char),
+--         primary key (workflow_description_id, rev)
+--     );
 /*
     create table project_available_quotes (
         project number(19,0) not null,
@@ -1964,10 +1964,10 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.workflow_description_aud
-        add constraint FK34339F6D8A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.workflow_description_aud
+--         add constraint FK34339F6D8A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 /*
     alter table project_available_quotes
         add constraint FK2E7B8C136E580798
@@ -2083,8 +2083,13 @@
 
     create sequence mercury.SEQ_VESSEL_TRANSFER start with 1 increment by 50;
 
-    create sequence mercury.SEQ_WORKFLOW_DESCRIPTION start with 1 increment by 50;
+--     create sequence mercury.SEQ_WORKFLOW_DESCRIPTION start with 1 increment by 50;
 
     create sequence mercury.seq_molecular_index start with 1 increment by 50;
 
     create sequence mercury.seq_molecular_indexing_scheme start with 1 increment by 50;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON mercury.rev_info to athena;
+GRANT SELECT on mercury.seq_rev_info to athena;
+
+grant references (rev_info_id) on mercury.rev_info to athena;

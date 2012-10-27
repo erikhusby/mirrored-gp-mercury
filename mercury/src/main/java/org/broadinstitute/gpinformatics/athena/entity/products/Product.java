@@ -67,6 +67,8 @@ public class Product implements Serializable {
 
     private String workflowName;
 
+    private boolean pdmOrderableOnly;
+
     /**
      * JPA package visible no arg constructor
      *
@@ -87,7 +89,8 @@ public class Product implements Serializable {
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
-                   String workflowName) {
+                   String workflowName,
+                   boolean pdmOrderableOnly) {
 
         this.productName = productName;
         this.productFamily = productFamily;
@@ -103,6 +106,7 @@ public class Product implements Serializable {
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
         this.workflowName = workflowName;
+        this.pdmOrderableOnly = pdmOrderableOnly;
     }
 
     public Long getProductId() {
@@ -251,6 +255,13 @@ public class Product implements Serializable {
         return workflowName;
     }
 
+    public boolean isPdmOrderableOnly() {
+        return pdmOrderableOnly;
+    }
+
+    public void setPdmOrderableOnly(boolean pdmOrderableOnly) {
+        this.pdmOrderableOnly = pdmOrderableOnly;
+    }
 
     public boolean isAvailable() {
         Date now = Calendar.getInstance().getTime();

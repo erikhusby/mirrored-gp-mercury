@@ -8,6 +8,6 @@ import org.hibernate.envers.RevisionListener;
 public class EnversRevisionListener implements RevisionListener {
     @Override
     public void newRevision(Object revisionEntity) {
-        // todo jmt set username
+        // todo jmt set username, JNDI to get Credentials?
     }
 }
