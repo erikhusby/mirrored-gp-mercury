@@ -85,12 +85,29 @@ public class ProductOrder implements Serializable {
     @Transient
     private final SampleCounts counts = new SampleCounts();
 
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
+    private Set<ProductOrderAddOn> addOns = new HashSet<ProductOrderAddOn>();
+
     public String getBusinessKey() {
         return jiraTicketKey;
     }
 
     public boolean isInDB() {
         return productOrderId != null;
+    }
+
+    public String getAddOnList() {
+        if (addOns.isEmpty()) {
+            return "no add ons";
+        }
+
+        String[] addOnArray = new String[addOns.size()];
+        int i=0;
+        for (ProductOrderAddOn poAddOn : addOns) {
+            addOnArray[i++] = poAddOn.getAddOn().getProductName();
+        }
+
+        return StringUtils.join(addOnArray, ", ");
     }
 
     /**
@@ -262,6 +279,26 @@ public class ProductOrder implements Serializable {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public List<ProductOrderAddOn> getAddOns() {
+        List<ProductOrderAddOn> addOnList = new ArrayList<ProductOrderAddOn>();
+        if ((addOns != null) && (!addOns.isEmpty())) {
+            addOnList.addAll(addOns);
+        }
+
+        return addOnList;
+    }
+
+    public void setAddOns(List<Product> addOnList) {
+        addOns.clear();
+        for (Product product : addOnList) {
+            addOns.add(new ProductOrderAddOn(product, this));
+        }
+    }
+
+    public void setAddOns(Set<ProductOrderAddOn> addOns) {
+        this.addOns = addOns;
     }
 
     public ResearchProject getResearchProject() {

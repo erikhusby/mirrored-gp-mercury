@@ -49,7 +49,16 @@
 
                     <div class="control-group">
                         <span class="control-label label-form">Product</span>
-                        <span class="controls">#{productOrderDetail.productOrder.title}</span>
+                        <span class="controls">
+                            #{productOrderDetail.productOrder.title}
+                        </span>
+                    </div>
+
+                    <div class="control-group">
+                        <span class="control-label label-form">Add-Ons</span>
+                        <span class="controls" style="width:250px;">
+                            #{productOrderDetail.productOrder.addOnList}
+                        </span>
                     </div>
 
                     <div class="control-group">
@@ -98,7 +107,6 @@
                         </div>
                     </div>
 
-
                     <p:panel id="sampleValidation" header="Summary">
                         <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}"
                                     var="comment"
@@ -106,43 +114,41 @@
                             #{comment}
                         </p:dataList>
                     </p:panel>
-
-                    <p:dataTable id="sampleData"
-                                 value="#{productOrderDetail.productOrder.samples}"
-                                 filteredValue="#{productOrderFilterBean.filteredSamples}"
-                                 var="sample">
+                    <p:dataTable id="sampleData" value="#{productOrderDetail.productOrder.samples}"
+                                 filteredValue="#{productOrderFilterBean.filteredSamples}" var="sample"
+                                 scrollable="true" scrollHeight="260" scrollRows="30">
                         <f:event type="preRenderComponent" listener="#{productOrderDetail.load}"/>
                         <f:facet name="header">
                             Samples
                         </f:facet>
 
-                        <p:column headerText="ID">
+                        <p:column headerText="ID" width="200">
                             <h:outputLink target="BSP_SAMPLE" value="#{bspLink.sampleSearchUrl(sample.sampleName)}" class="external">
                                 <h:outputText value="#{sample.sampleName}" />
                             </h:outputLink>
                         </p:column>
-                        <p:column headerText="Participant ID">
+                        <p:column headerText="Participant ID" width="200">
                             #{sample.bspDTO.patientId}
                         </p:column>
-                        <p:column headerText="Status">
+                        <p:column headerText="Status" width="100">
                             #{sample.billingStatus.displayName}
                         </p:column>
-                        <p:column headerText="Eligible">
+                        <p:column headerText="Eligible" width="100">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Billed">
+                        <p:column headerText="Billed" width="100">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Abandoned">
+                        <p:column headerText="Abandoned" width="70">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Price Item 1">
+                        <p:column headerText="Price Item 1" width="100">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Price Item 2">
+                        <p:column headerText="Price Item 2" width="100">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Comment">
+                        <p:column headerText="Comment" width="245">
                             #{sample.sampleComment}
                         </p:column>
                     </p:dataTable>

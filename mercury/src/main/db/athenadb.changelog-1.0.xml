@@ -372,8 +372,106 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-71-1" author="hrafal">
+        <preConditions>
+            <not>
+                <tableExists tableName="product_order_add_on" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_add_on" schemaName="athena">
+            <column name="product_order_add_on_id" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="add_on" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-2" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_add_on_add_on" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_add_on_product" baseTableSchemaName="athena"
+                                 baseTableName="product_order_add_on" baseColumnNames="add_on"
+                                 referencedTableName="product" referencedColumnNames="product_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-3" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_add_on_order" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_add_on_order" baseTableSchemaName="athena"
+                                 baseTableName="product_order_add_on" baseColumnNames="product_order"
+                                 referencedTableName="product_order" referencedColumnNames="product_order_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-4" author="hrafal">
+        <preConditions>
+            <not>
+                <indexExists indexName="ix_product_order_add_on" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="ix_product_order_add_on" schemaName="athena" tableName="product_order_add_on">
+            <column name="product_order"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-5" author="hrafal">
+        <preConditions>
+            <not>
+                <tableExists tableName="product_order_add_on_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_add_on_aud" schemaName="athena">
+            <column name="product_order_add_on_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="add_on" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-6" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_add_on_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_add_on_aud" baseTableSchemaName="athena"
+                                 baseTableName="product_order_add_on_aud" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-7" author="hrafal">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="SEQ_ORDER_ADD_ON" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_ORDER_ADD_ON" schemaName="athena" startValue="1" incrementBy="50"/>
+    </changeSet>
 
     <changeSet id="GPLIM-139-1.1.1" author="mcovarr">
+.1.1" author="mcovarr">
         <sql>
             delete from athena.product_price_items where product in (
             select product_id from athena.product where default_price_item is null
@@ -421,6 +519,33 @@
     <changeSet id="GPLIM-139-3" author="mcovarr">
         <addNotNullConstraint columnName="product_family" tableName="product" schemaName="athena" />
     </changeSet>
+
+    <changeSet id="GPLIM-116" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="product" columnName="pdm_orderable_only" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product">
+            <column name="pdm_orderable_only" type="number(1,0)"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="product"
+                columnName="pdm_orderable_only"
+                defaultNullValue="0" />
+    </changeSet>
+
+    <changeSet id="GPLIM-116_aud" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_aud" columnName="pdm_orderable_only" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_aud">
+            <column name="pdm_orderable_only" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
 
     <changeSet id="GPLIM-116" author="mcovarr">
         <preConditions>

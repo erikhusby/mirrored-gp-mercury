@@ -149,8 +149,8 @@ public class ResearchProjectForm extends AbstractJsfBean {
             return null;
         }
 
-        addInfoMessage("Research project created.", "Research project \"" + project.getTitle() + "\" has been created.");
-        return "view";
+        addFlashMessage("Research project \"" + project.getTitle() + "\" has been created.");
+        return redirect("view");
     }
 
     private void addCollections(ResearchProject project) {
@@ -182,8 +182,8 @@ public class ResearchProjectForm extends AbstractJsfBean {
             return null;
         }
 
-        addInfoMessage("Research project updated.", "Research project \"" + project.getTitle() + "\" has been updated.");
-        return "view";
+        addFlashMessage("Research project \"" + project.getTitle() + "\" has been updated.");
+        return redirect("view");
     }
 
     public List<Irb> completeIrbs(String query) {

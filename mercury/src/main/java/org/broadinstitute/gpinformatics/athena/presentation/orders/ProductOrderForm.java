@@ -2,11 +2,15 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
@@ -34,10 +38,17 @@ public class ProductOrderForm extends AbstractJsfBean {
     ProductOrderDao productOrderDao;
 
     @Inject
+    ProductDao productDao;
+
+    @Inject
     private QuoteService quoteService;
 
     @Inject
     private FacesContext facesContext;
+
+    private List<String> addOns = new ArrayList<String>();
+
+    private List<String> selectedAddOns = new ArrayList<String>();
 
     /**
      * This is required to get the editIdsCache value in the case where we want to skip the process
@@ -158,6 +169,48 @@ public class ProductOrderForm extends AbstractJsfBean {
         return orderSamples;
     }
 
+    public List<String> getSelectedAddOns() {
+        return selectedAddOns;
+    }
+
+    public void setSelectedAddOns(@Nonnull List<String> selectedAddOns) {
+        this.selectedAddOns = selectedAddOns;
+    }
+
+    public List<String> getAddOns() {
+        return addOns;
+    }
+
+    public void setAddOns(@Nonnull List<String> addOns) {
+        this.addOns = addOns;
+    }
+
+    /**
+     * Set up the add ons when the product selection event happens
+     *
+     * @param productSelectEvent The selection event on the project
+     */
+    public void setupAddOns(SelectEvent productSelectEvent) {
+        addOns.clear();
+        Product product = (Product) productSelectEvent.getObject();
+        setupAddOns(product);
+    }
+
+    /**
+     * Get all the add on products for the specified product
+     *
+     * @param product The product
+     */
+    public void setupAddOns(Product product) {
+        addOns.clear();
+
+        if (product != null) {
+            for (Product productAddOn : product.getAddOns()) {
+                addOns.add(productAddOn.getProductName());
+            }
+        }
+    }
+
     /**
      * Class that contains operations specific to the sample list samplesDialog.
      *
@@ -244,22 +297,37 @@ public class ProductOrderForm extends AbstractJsfBean {
             // 1 => 2
             setEditIdsCache(StringUtils.join(convertOrderSamplesToList(), SEPARATOR + " "));
         }
+
         productOrderDetail.load();
         validateSamples();
+
+        if (productOrderDetail.getProductOrder().getProduct() != null) {
+            setupAddOns(productOrderDetail.getProductOrder().getProduct());
+        }
     }
 
     // FIXME: handle db store errors, JIRA server errors.
     public String save() throws IOException {
         ProductOrder order = productOrderDetail.getProductOrder();
         order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
+        order.setAddOns(getSelectedAddOnProducts());
         // DRAFT orders not yet supported; force state of new PDOs to Submitted.
         order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         String action = order.isInDB() ? "modified" : "created";
         order.submitProductOrder();
         productOrderDao.persist(order);
-        addInfoMessage(MessageFormat.format("Product Order {0}.", action),
-                MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
-                        order.getTitle(), order.getJiraTicketKey(), action));
-        return redirect("list");
+
+        addFlashMessage(
+            MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
+            order.getTitle(), order.getJiraTicketKey(), action));
+        return redirect("view");
+    }
+
+    private List<Product> getSelectedAddOnProducts() {
+        if (getSelectedAddOns().isEmpty()) {
+            return new ArrayList<Product> ();
+        }
+
+        return productDao.findListByList(Product.class, Product_.productName, getSelectedAddOns());
     }
 }

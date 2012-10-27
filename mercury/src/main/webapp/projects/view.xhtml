@@ -170,12 +170,15 @@
                     </f:facet>
 
                     <p:column headerText="Name">
-                        #{order.title}
-                    </p:column>
-                    <p:column headerText="Product ID">
-                        <h:link outcome="/orders/view" value="#{order.jiraTicketKey}">
+                        <h:link outcome="view" value="#{order.title}">
                             <f:param name="productOrder" value="#{order.businessKey}"/>
                         </h:link>
+                    </p:column>
+                    <p:column headerText="Product ID">
+                        <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}"
+                                      class="external" rendered="#{order.hasJiraTicketKey()}" >
+                            <h:outputText value="#{order.jiraTicketKey}" />
+                        </h:outputLink>
                     </p:column>
                     <p:column headerText="Product">
                         #{order.product.productName}

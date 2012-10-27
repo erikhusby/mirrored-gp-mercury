@@ -66,3 +66,20 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 
 .ac-dropdown-text { font-size: small; }
 .ac-dropdown-subtext { font-size: smaller; font-style: italic; }
+
+.form-fieldset {
+    width: 300px;
+    margin-top: 5px;
+}
+
+.form-fieldset legend {
+    display: block;
+    padding: 0;
+    width: 70px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    line-height: 10px;
+    color: #333333;
+    border: 0;
+    border-bottom: 1px solid #e5e5e5;
+}
