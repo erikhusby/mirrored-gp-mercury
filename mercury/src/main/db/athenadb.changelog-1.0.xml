@@ -545,32 +545,4 @@
         </addColumn>
     </changeSet>
 
-
-    <changeSet id="GPLIM-116" author="mcovarr">
-        <preConditions>
-            <not>
-                <columnExists tableName="product" columnName="pdm_orderable_only" schemaName="athena"/>
-            </not>
-        </preConditions>
-        <addColumn tableName="product">
-            <column name="pdm_orderable_only" type="number(1,0)"/>
-        </addColumn>
-        <addNotNullConstraint
-                tableName="product"
-                columnName="pdm_orderable_only"
-                defaultNullValue="0" />
-    </changeSet>
-
-    <changeSet id="GPLIM-116_aud" author="mcovarr">
-        <preConditions>
-            <not>
-                <columnExists tableName="product_aud" columnName="pdm_orderable_only" schemaName="athena"/>
-            </not>
-        </preConditions>
-        <addColumn tableName="product_aud">
-            <column name="pdm_orderable_only" type="number(1,0)"/>
-        </addColumn>
-    </changeSet>
-
-
 </databaseChangeLog>
