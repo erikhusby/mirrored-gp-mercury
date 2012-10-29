@@ -14,6 +14,7 @@
         <ui:define name="metadata">
             <f:metadata>
                 <f:viewParam name="productOrder" value="#{productOrderDetail.productOrder}" converter="#{productOrderConverter}" />
+                <f:viewParam name="researchProject" value="#{productOrderDetail.productOrder.researchProject}" converter="#{researchProjectConverter}" />
             </f:metadata>
         </ui:define>
         <ui:define name="body">
@@ -82,15 +83,6 @@
                                 <h:outputText value="Excel"/>
                                 <p:dataExporter
                                         type="xls"
-                                        pageOnly = "false"
-                                        target="sampleData"
-                                        fileName="#{productOrderDetail.productOrder.title}" />
-                            </p:commandLink>
-                            &nbsp;
-                            <p:commandLink title="Click to download all sample data as a CSV file">
-                                <h:outputText value="CSV"/>
-                                <p:dataExporter
-                                        type="csv"
                                         pageOnly = "false"
                                         target="sampleData"
                                         fileName="#{productOrderDetail.productOrder.title}" />
