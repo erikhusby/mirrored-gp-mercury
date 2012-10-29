@@ -91,8 +91,8 @@ public class ProductDaoTest extends ContainerTest {
 
         public Product createProduct() {
 
-            ProductFamily generalProductsProductFamily =
-                    ProductDaoTest.this.productFamilyDao.find(ProductFamily.ProductFamilyName.GENERAL_PRODUCTS);
+            ProductFamily metagenomicsProductFamily =
+                    ProductDaoTest.this.productFamilyDao.find(ProductFamily.ProductFamilyName.METAGENOMICS);
 
             final int DAYS = 24 * 60 * 60;
 
@@ -121,7 +121,7 @@ public class ProductDaoTest extends ContainerTest {
 
             Product product = new Product(
                     "Test Data",                        // product name
-                    generalProductsProductFamily,       // product family
+                    metagenomicsProductFamily,       // product family
                     "test data ",                       // description
                     "PN-ProductDaoTest",                // part number
                     availableDate,                      // availability date
