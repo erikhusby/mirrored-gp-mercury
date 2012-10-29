@@ -50,6 +50,8 @@ public class ProductOrderSample implements Serializable {
     @ManyToOne
     private ProductOrder productOrder;
 
+    private Integer sample_position;
+
     @Transient
     private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
 
@@ -134,6 +136,13 @@ public class ProductOrderSample implements Serializable {
         }
         this.bspDTO = bspDTO;
         hasBspDTOBeenInitialized = true;
+    }
+
+    public Integer getSample_position() {
+        return sample_position;
+    }
+    public void setSample_position(final Integer sample_position) {
+        this.sample_position = sample_position;
     }
 
     public boolean isInBspFormat() {

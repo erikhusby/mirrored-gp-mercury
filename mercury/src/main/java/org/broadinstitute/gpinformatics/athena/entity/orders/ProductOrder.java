@@ -77,7 +77,7 @@ public class ProductOrder implements Serializable {
     private String jiraTicketKey;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
-    @OrderBy
+    @OrderColumn(name="sample_position")
     private List<ProductOrderSample> samples = Collections.emptyList();
     /** OrderBy defaults to primary key if no column name specified **/
 
