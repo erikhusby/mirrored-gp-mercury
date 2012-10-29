@@ -113,14 +113,9 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void initForm() {
         if (!facesContext.isPostback()) {
-            // Use ID instead of partNumber, which can be non-empty if the user enters one on create!
-//            if ((product.getPartNumber() != null) && !StringUtils.isBlank(product.getPartNumber())) {
             if (product.getProductId() == null) {
-//                priceItems = new ArrayList<PriceItem>();
-//                addOns = new ArrayList<Product>();
+                // No form initialization needed for create
             } else {
-                // Don't load product here... let the converter handle that
-//                product = productDao.findByBusinessKey(product.getPartNumber());
                 if (product.getPriceItems() != null) {
                     priceItems = new ArrayList<PriceItem>();
                     for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
@@ -131,7 +126,10 @@ public class ProductForm extends AbstractJsfBean {
                     defaultPriceItem = entityToDto(product.getDefaultPriceItem());
                 }
                 // TODO: is this needed? or does the actual backing model work for p:autoComplete?
-                addOns.addAll(product.getAddOns());
+                if (product.getAddOns() != null) {
+                    addOns = new ArrayList<Product>();
+                    addOns.addAll(product.getAddOns());
+                }
             }
         }
     }
@@ -176,10 +174,6 @@ public class ProductForm extends AbstractJsfBean {
             addErrorMessage("Date range invalid", errorMessage, errorMessage);
             validationPassed = false;
         }
-        if (priceItems.isEmpty()) {
-            addErrorMessage("priceItem", "Price Items is required.", "Price Items is required.");
-            validationPassed = false;
-        }
         if (getDefaultPriceItem() == null) {
             addErrorMessage("defaultPriceItem", "Default Price Item is required.", "Default Price Item is required.");
             validationPassed = false;
@@ -189,15 +183,10 @@ public class ProductForm extends AbstractJsfBean {
             return null;
         }
 
-//        ProductForm thisEjb = sessionContext.getBusinessObject(ProductForm.class);
         if (product.getProductId() == null ) {
-//            return create();
             return productBoundary.create();
-//            return thisEjb.create();
         } else {
-//            return edit();
             return productBoundary.edit();
-//            return thisEjb.edit();
         }
     }
 
@@ -305,15 +294,13 @@ public class ProductForm extends AbstractJsfBean {
      * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
      */
     private void addAllPriceItemsToProduct() {
+        product.setDefaultPriceItem(findEntity(defaultPriceItem));
+
         product.getPriceItems().clear();
-
-        for (PriceItem priceItem : priceItems) {
-
-            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);
-            product.addPriceItem(entity);
-
-            if (defaultPriceItem.equals(priceItem)) {
-                product.setDefaultPriceItem(entity);
+        if (priceItems != null) {
+            for (PriceItem priceItem : priceItems) {
+                org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);
+                product.addPriceItem(entity);
             }
         }
     }
@@ -492,7 +479,7 @@ public class ProductForm extends AbstractJsfBean {
         }
 */
 
-        return priceListCache.searchPriceItems(getDefaultPriceItems(), query);
+        return priceListCache.searchPriceItems(query);
     }
 
 
@@ -510,6 +497,7 @@ public class ProductForm extends AbstractJsfBean {
                 searchResults.remove(priceItem);
             }
         }
+        searchResults.remove(defaultPriceItem);
 
         return searchResults;
     }

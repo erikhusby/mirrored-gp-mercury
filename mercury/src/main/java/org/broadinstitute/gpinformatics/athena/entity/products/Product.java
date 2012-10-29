@@ -54,9 +54,15 @@ public class Product implements Serializable {
      * Whether this Product should show as a top-level product */
     private boolean topLevelProduct;
 
+    /**
+     * Primary price item for the product. Should NOT also be in the priceItems set.
+     */
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private PriceItem defaultPriceItem;
 
+    /**
+     * OPTIONAL price items for the product. Should NOT include defaultPriceItem.
+     */
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
     private Set<PriceItem> priceItems = new HashSet<PriceItem>();
