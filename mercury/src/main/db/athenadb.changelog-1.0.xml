@@ -643,4 +643,41 @@
         </sql>
     </changeSet>
 
+
+    <changeSet id="GPLIM-172_repoint_and_remove_old" author="mcovarr">
+        <sql>
+            update athena.product set product_family = (
+              select product_family_id from athena.product_family where name = 'RNA')
+            where product_family in (
+              select product_family_id from athena.product_family where name in (
+                'GENERAL_PRODUCTS',
+                'EXOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_ARRAY_ANALYSIS',
+                'RNA_ANALYSIS',
+                'ASSEMBLY_ANALYSIS',
+                'METAGENOMIC_ANALYSIS',
+                'EPIGENOMIC_ANALYSIS',
+                'ILLUMINA_SEQUENCING_ONLY',
+                'ALTERNATIVE_TECHNOLOGIES',
+                'CUSTOM_PRODUCTS_TARGETED_SEQUENCING'
+                )
+            );
+
+            delete from athena.product_family where name in (
+                'GENERAL_PRODUCTS',
+                'EXOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_ARRAY_ANALYSIS',
+                'RNA_ANALYSIS',
+                'ASSEMBLY_ANALYSIS',
+                'METAGENOMIC_ANALYSIS',
+                'EPIGENOMIC_ANALYSIS',
+                'ILLUMINA_SEQUENCING_ONLY',
+                'ALTERNATIVE_TECHNOLOGIES',
+                'CUSTOM_PRODUCTS_TARGETED_SEQUENCING'
+            )
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
