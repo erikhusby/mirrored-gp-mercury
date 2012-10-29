@@ -91,7 +91,7 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
         return newProductOrder;
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=false)
     public void testFindByProductOrder() throws Exception {
         ProductOrder order = createTestProductOrder();
 
