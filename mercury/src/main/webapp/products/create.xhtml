@@ -186,7 +186,7 @@
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{product.productName} - #{product.partNumber}</div>
                                 <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>
-                                <div class="ac-dropdown-subtext">#{product.productFamily}</div>
+                                <div class="ac-dropdown-subtext">#{product.productFamily.displayName}</div>
                                 <div class="ac-dropdown-subtext">#{product.inputRequirements}</div>
                             </p:column>
                         </p:autoComplete>
