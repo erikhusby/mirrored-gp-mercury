@@ -35,6 +35,9 @@ public class ProductForm extends AbstractJsfBean {
     @Inject
     private PriceItemDao priceItemDao;
 
+    @Inject
+    private ProductBoundary productBoundary;
+
     /**
      * Source of quote server sourced price data
      */
@@ -51,12 +54,26 @@ public class ProductForm extends AbstractJsfBean {
     private ProductFormConversationData conversationData;
 
     @Inject
-    private FacesContext facesContext;
+    private transient FacesContext facesContext;
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
     public static final int ONE_HOUR_IN_SECONDS = 3600;
     private Product product;
+
+    /**
+     * JAXB {@link PriceItem} DTOs
+     */
+    private List<PriceItem> priceItems;
+
+    /**
+     * JAXB {@link PriceItem} DTOs, there can be only one default price item but this is a list so the PrimeFaces
+     * {@link org.primefaces.component.autocomplete.AutoComplete} can be styled consistently with all the other
+     * multi-selecting {@link org.primefaces.component.autocomplete.AutoComplete}s in Mercury
+     */
+    private List<PriceItem> defaultPriceItems = new ArrayList<PriceItem>();
+
+    private PriceItem defaultPriceItem;
 
     private List<Product> addOns;
 
@@ -96,11 +113,36 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void initForm() {
         if (!facesContext.isPostback()) {
-            if  ((product.getPartNumber() != null) && !StringUtils.isBlank(product.getPartNumber())) {
-                product = productDao.findByBusinessKey(product.getPartNumber());
-                addOns.addAll( product.getAddOns() );
+            // Use ID instead of partNumber, which can be non-empty if the user enters one on create!
+//            if ((product.getPartNumber() != null) && !StringUtils.isBlank(product.getPartNumber())) {
+            if (product.getProductId() == null) {
+//                priceItems = new ArrayList<PriceItem>();
+//                addOns = new ArrayList<Product>();
+            } else {
+                // Don't load product here... let the converter handle that
+//                product = productDao.findByBusinessKey(product.getPartNumber());
+                if (product.getPriceItems() != null) {
+                    priceItems = new ArrayList<PriceItem>();
+                    for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
+                        priceItems.add(entityToDto(priceItem));
+                    }
+                }
+                if (product.getDefaultPriceItem() != null) {
+                    defaultPriceItem = entityToDto(product.getDefaultPriceItem());
+                }
+                // TODO: is this needed? or does the actual backing model work for p:autoComplete?
+                addOns.addAll(product.getAddOns());
             }
         }
+    }
+
+    /**
+     * maps between entity and JAXB DTOs for price items
+     * @param entity
+     * @return
+     */
+    private PriceItem entityToDto(org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity) {
+        return new PriceItem(entity.getQuoteServerId(), entity.getPlatform(), entity.getCategory(), entity.getName());
     }
 
     /**
@@ -109,7 +151,6 @@ public class ProductForm extends AbstractJsfBean {
     public void initEmptyProduct() {
         product = new Product(null, null, null, null, null, null, null,
                 null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME);
-        addOns = new ArrayList<Product>();
     }
 
     /**
@@ -121,16 +162,51 @@ public class ProductForm extends AbstractJsfBean {
     }
 
 
+//    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public String save() {
+        boolean validationPassed = true;
+
+        if (!isPartNumberUnique()) {
+            String errorMessage = MessageFormat.format("The Product Part-Number ''{0}'' is not unique.", product.getPartNumber());
+            addErrorMessage("partNumber", errorMessage, errorMessage);
+        }
+
         if (! dateRangeOkay()) {
             String errorMessage = "Availability date must precede discontinued date.";
-            addErrorMessage("Date range invalid", errorMessage, errorMessage );
-            return "create";
+            addErrorMessage("Date range invalid", errorMessage, errorMessage);
+            validationPassed = false;
         }
-        if (getProduct().getProductId() == null ) {
-            return create();
+        if (priceItems.isEmpty()) {
+            addErrorMessage("priceItem", "Price Items is required.", "Price Items is required.");
+            validationPassed = false;
+        }
+        if (getDefaultPriceItem() == null) {
+            addErrorMessage("defaultPriceItem", "Default Price Item is required.", "Default Price Item is required.");
+            validationPassed = false;
+        }
+
+        if (!validationPassed) {
+            return null;
+        }
+
+//        ProductForm thisEjb = sessionContext.getBusinessObject(ProductForm.class);
+        if (product.getProductId() == null ) {
+//            return create();
+            return productBoundary.create();
+//            return thisEjb.create();
         } else {
-            return edit();
+//            return edit();
+            return productBoundary.edit();
+//            return thisEjb.edit();
+        }
+    }
+
+    private boolean isPartNumberUnique() {
+        Product existingProduct = productDao.findByPartNumber(product.getPartNumber());
+        if (existingProduct != null && existingProduct.getProductId() != product.getProductId()) {
+            return false;
+        } else {
+            return true;
         }
     }
 
@@ -147,6 +223,7 @@ public class ProductForm extends AbstractJsfBean {
         return true;
     }
 
+//    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public String create() {
         try {
             addAllAddOnsToProduct();
@@ -166,6 +243,7 @@ public class ProductForm extends AbstractJsfBean {
         return redirect("list");
     }
 
+//    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public String edit() {
         try {
             addAllAddOnsToProduct();
@@ -227,13 +305,14 @@ public class ProductForm extends AbstractJsfBean {
      * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
      */
     private void addAllPriceItemsToProduct() {
+        product.getPriceItems().clear();
 
-        for (PriceItem priceItem : conversationData.getPriceItems()) {
+        for (PriceItem priceItem : priceItems) {
 
             org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);
             product.addPriceItem(entity);
 
-            if (conversationData.getDefaultPriceItem().equals(priceItem)) {
+            if (defaultPriceItem.equals(priceItem)) {
                 product.setDefaultPriceItem(entity);
             }
         }
@@ -282,16 +361,16 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public List<PriceItem> getPriceItems() {
-        return conversationData.getPriceItems();
+        return priceItems;
     }
 
     /**
      * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
      * actual setting of {@link PriceItem}s is handled in the ajax event listener only
-     * @param ignored
+     * @param priceItems
      */
-    public void setPriceItems(List<PriceItem> ignored) {
-        // noop
+    public void setPriceItems(List<PriceItem> priceItems) {
+        this.priceItems = priceItems;
     }
 
 
@@ -331,11 +410,12 @@ public class ProductForm extends AbstractJsfBean {
      */
     public void onPriceItemUnselect(UnselectEvent unselectEvent) {
         PriceItem priceItem = (PriceItem) unselectEvent.getObject();
-        conversationData.removePriceItem(priceItem);
+//        priceItems.remove(priceItem);
+        conversationData.getDefaultPriceItems().remove(priceItem);
 
         // nuke out the default price item if it was the same price item we just removed
-        if (conversationData.getDefaultPriceItem() != null && conversationData.getDefaultPriceItem().equals(priceItem)) {
-            conversationData.setDefaultPriceItem(null);
+        if (defaultPriceItem != null && defaultPriceItem.equals(priceItem)) {
+            defaultPriceItem = null;
         }
     }
 
@@ -347,7 +427,8 @@ public class ProductForm extends AbstractJsfBean {
      */
 
     public void onPriceItemSelect(SelectEvent selectEvent) {
-        conversationData.addPriceItem((PriceItem) selectEvent.getObject());
+//        priceItems.add((PriceItem) selectEvent.getObject());
+        getDefaultPriceItems().add((PriceItem) selectEvent.getObject());
     }
 
     /**
@@ -357,7 +438,7 @@ public class ProductForm extends AbstractJsfBean {
      * @param ignored
      */
     public void onDefaultPriceItemUnselect(UnselectEvent ignored) {
-        conversationData.setDefaultPriceItem(null);
+//        defaultPriceItem = null;
     }
 
     /**
@@ -367,12 +448,14 @@ public class ProductForm extends AbstractJsfBean {
      * @param selectEvent
      */
     public void onDefaultPriceItemSelect(SelectEvent selectEvent) {
+/*
         if (conversationData.getDefaultPriceItem() != null) {
             // ignore
         }
         else {
             conversationData.setDefaultPriceItem((PriceItem) selectEvent.getObject());
         }
+*/
     }
 
 
@@ -384,10 +467,10 @@ public class ProductForm extends AbstractJsfBean {
     /**
      * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
      * actual setting of the default {@link PriceItem} is handled in the ajax event listener only
-     * @param ignored
+     * @param defaultPriceItems
      */
-    public void setDefaultPriceItems(List<PriceItem> ignored) {
-        // noop, this is handled in the ajax event listener only!
+    public void setDefaultPriceItems(List<PriceItem> defaultPriceItems) {
+        conversationData.setDefaultPriceItems(defaultPriceItems);
     }
 
 
@@ -402,12 +485,14 @@ public class ProductForm extends AbstractJsfBean {
      */
     public List<PriceItem> searchSelectedPriceItems(String query) {
 
-        if (conversationData.getDefaultPriceItems() != null && conversationData.getDefaultPriceItems().size() > 0) {
+/*
+        if (defaultPriceItems != null && defaultPriceItems.size() > 0) {
             // don't offer anything if there is already a selected default price item
             return new ArrayList<PriceItem>();
         }
+*/
 
-        return priceListCache.searchPriceItems(conversationData.getPriceItems(), query);
+        return priceListCache.searchPriceItems(getDefaultPriceItems(), query);
     }
 
 
@@ -420,13 +505,22 @@ public class ProductForm extends AbstractJsfBean {
     public List<PriceItem> searchPriceItems(String query) {
         List<PriceItem> searchResults = priceListCache.searchPriceItems(query);
         // filter out price items that are already selected
-        for (PriceItem priceItem : getPriceItems()) {
-            searchResults.remove(priceItem);
+        if (priceItems != null) {
+            for (PriceItem priceItem : priceItems) {
+                searchResults.remove(priceItem);
+            }
         }
 
         return searchResults;
     }
 
+    public PriceItem getDefaultPriceItem() {
+        return defaultPriceItem;
+    }
+
+    public void setDefaultPriceItem(PriceItem defaultPriceItem) {
+        this.defaultPriceItem = defaultPriceItem;
+    }
 
     /**
      * Encapsulate logic for coming up with nice {@link PriceItem} labels that fit in the allotted space
