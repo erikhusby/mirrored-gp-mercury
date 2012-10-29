@@ -567,4 +567,80 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-116_pg.remove" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn tableName="product" schemaName="athena" columnName="pdm_orderable_only"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-116_pg.add" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <addColumn tableName="product" schemaName="athena">
+            <column name="pdm_orderable_only" type="boolean"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-116_aud_pg.remove" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn tableName="product_aud" schemaName="athena" columnName="pdm_orderable_only"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-116_aud_pg.add" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <addColumn tableName="product_aud" schemaName="athena">
+            <column name="pdm_orderable_only" type="boolean"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-172_oracle" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="oracle" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'RNA');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'SMALL_DESIGN_VALIDATION_AND_EXTENSION');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'EXOME');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'WHOLE_GENOME');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'DE_NOVO_ASSEMBLY');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'MICROBIAL_AND_VIRAL_ANALYSIS');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'SEQUENCE_ONLY');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'METAGENOMICS');
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-172_pg" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'RNA');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'SMALL_DESIGN_VALIDATION_AND_EXTENSION');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'EXOME');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'WHOLE_GENOME');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'DE_NOVO_ASSEMBLY');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'MICROBIAL_AND_VIRAL_ANALYSIS');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'SEQUENCE_ONLY');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'METAGENOMICS');
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
