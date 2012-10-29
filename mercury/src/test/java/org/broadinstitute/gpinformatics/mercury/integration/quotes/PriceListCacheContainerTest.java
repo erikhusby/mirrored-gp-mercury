@@ -33,7 +33,7 @@ public class PriceListCacheContainerTest extends Arquillian {
 
         Collection<PriceItem> priceItems = priceListCache.getPriceItems();
         Assert.assertNotNull(priceItems);
-        Assert.assertTrue(priceItems.size() > 100);
+        Assert.assertTrue(priceItems.size() > 10);
 
         for (PriceItem priceItem : priceItems) {
             Assert.assertNotNull(priceItem.getPlatformName(), priceItem.toString());

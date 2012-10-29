@@ -157,7 +157,7 @@
                         <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}"
                             completeMethod="#{researchProjectForm.completeIrbs}" var="irb" scrollHeight="250"
                             itemLabel="#{irb.name}: #{irb.irbType.displayName}" itemValue="#{irb}"
-                            converter="#{irbConverter}" multiple="true">
+                            converter="#{irbConverter}" multiple="true" maxlength="250">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{irb.name}: #{irb.irbType.displayName}</div>
                             </p:column>
@@ -173,7 +173,7 @@
                 <div class="control-group">
                     <p:outputLabel for="irbNotes" value="IRB Notes" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50"/>
+                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50" maxlength="250"/>
                         <p:watermark for="irbNotes" value="Enter notes about the above IRBs"/>
                     </div>
                 </div>
