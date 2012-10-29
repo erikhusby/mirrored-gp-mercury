@@ -1,0 +1,111 @@
+#/bin/bash
+#
+# Cron job that runs on the Mercury app server machine as part of Mercury ETL to data warehouse.
+# The script manages moving operational data from files made by Mercury Envers, to the data
+# warehouse input tables, using SqlLoader.
+#
+# Directories
+#
+#   Looks for data files in /seq/lims/datawh/dev/new.
+#   sqlldf will write files to /seq/lims/datawh/dev/log and /seq/lims/datawh/dev/error.
+#   Processed files are moved to /seq/lims/datawh/dev/done.
+#
+# File Sets
+#
+#   Expects to find multiple data files that are interrelated and need to be processed
+#   together by the database merge, though they can all be loaded into the import tables
+#   regardless of order.  Interrelated data files all have the same etl date in their filename.
+#
+#   Filename contains etl date and table name:
+#     <YYYYMMDDHHMMSSFFF>_<table_name>.dat
+#     e.g. 20121025152056211_product_order.dat
+#
+#   There must also be a sqlldr control file for each table name, e.g. product_order.ctl
+#
+# Indicator files
+#
+#   The file named <YYYYMMDDHHMMSSFFF>_is_ready  means the data file set is complete for
+#   the given etl date and processing can start.
+#
+#   A single lock file is used while running to prevent a second cron job from starting
+#   and possibly interfering with the file load.
+#
+
+# use Oracle-full-client
+
+ROOT_DIR=/seq/lims/datawh/dev
+NEW_DIR=${ROOT_DIR}/new
+LOG_DIR=${ROOT_DIR}/log
+ERROR_DIR=${ROOT_DIR}/error
+DONE_DIR=${ROOT_DIR}/done
+CONTROL_DIR=${ROOT_DIR}/control
+LOCKFILE=${NEW_DIR}/.lockfile
+DW_CONNECT=./dw_connect
+
+# Checks for required dirs and files.
+for fsobj in $ROOT_DIR $NEW_DIR $LOG_DIR $ERROR_DIR $DONE_DIR $CONTROL_DIR $DW_CONNECT
+do
+  if [ ! -e $fsobj ]; then
+      echo "Cannot find $fsobj"
+      exit
+  fi
+done
+
+# Creates a lock file, atomically.  Quits if lock file already exists.
+(set -C; : > ${LOCKFILE}) 2> /dev/null
+if [ $? != "0" ]; then
+   echo "Previous ETL job is still running (${LOCKFILE} exists)"
+   exit 1
+fi
+# Removes lockfile when <ctrl>C termination.
+trap 'rm ${LOCKFILE}' EXIT
+
+# Finds the oldest data file set that is ready.
+while [ TRUE ]; do
+
+    TIMESTAMP=`find ${NEW_DIR}/ -name \*_is_ready | sort | head -1 | sed -e 's/_is_ready//' | sed -e 's!.*/!!'`
+
+    if [ -z "${TIMESTAMP}" ]; then
+	echo Done
+	exit 0
+    fi
+    find ${NEW_DIR}/ -maxdepth 1 -name ${TIMESTAMP}\*.dat | while read DAT_FILE
+    do
+	echo Processing ${DAT_FILE}
+
+	TABLE_NAME=`echo ${DAT_FILE} | sed -e "s!.*/${TIMESTAMP}_!!" | sed -e 's/.dat//'`
+
+	CTL_FILE=${CONTROL_DIR}/${TABLE_NAME}.ctl
+	# Checks for a control file.
+	if [ ! -f ${CTL_FILE} ]; then
+	    echo Cannot find ${CTL_FILE}
+	    exit 1
+	fi
+
+	BAD_FILE=${ERROR_DIR}/${TIMESTAMP}_${TABLE_NAME}.bad
+	DSC_FILE=${ERROR_DIR}/${TIMESTAMP}_${TABLE_NAME}.dsc
+	LOG_FILE=${LOG_DIR}/${TIMESTAMP}_${TABLE_NAME}.log
+
+	# Runs sqlldr using extended userid to avoid needing tnsnames.ora
+
+	sqlldr control=${CTL_FILE} log=${LOG_FILE} bad=${BAD_FILE} data=${DAT_FILE} discard=${DSC_FILE} direct=true <<!
+mercurydw/mercurydw_dev@"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=vmgpinform)(PORT= 1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=gpinfdev)))"
+!
+
+	if [ $? != "0" ]; then
+	    echo "sqlldr had errors/warnings.  Check files  ${ERROR_DIR}/${TIMESTAMP}_*"
+	fi
+
+        # Moves the data file to done.
+	mv ${DAT_FILE} ${DONE_DIR}
+    done
+
+    # Invokes load_merge stored procedure and waits for it to finish.
+    sqlplus -L -S "`cat ${DW_CONNECT}`" <<!
+exec merge_import;
+quit;
+!
+
+    mv ${NEW_DIR}/${TIMESTAMP}_is_ready ${DONE_DIR}
+
+done
