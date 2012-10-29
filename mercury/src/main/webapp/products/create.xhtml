@@ -145,34 +145,13 @@
                 </div>
 
                 <div class="control-group">
-                    <p:outputLabel for="priceItem" value="Price Items" styleClass="control-label"/>
+                    <p:outputLabel for="defaultPriceItem" value="Primary Price Item *" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="priceItem" value="#{productForm.priceItems}"
-                                        completeMethod="#{productForm.searchPriceItems}" var="priceItem"
-                                        itemLabel="#{productForm.labelFor(priceItem)}"
-                                        itemValue="#{priceItem}" converter="#{priceItemConverter}" multiple="true"
-                                        forceSelection="true" scrollHeight="250">
-
-                            <p:ajax event="itemUnselect" listener="#{productForm.onPriceItemUnselect}" update="defaultPriceItem"/>
-                            <p:ajax event="itemSelect" listener="#{productForm.onPriceItemSelect}" update="defaultPriceItem"/>
-                            <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name} (#{priceItem.id})</div>
-                            </p:column>
-                        </p:autoComplete>
-                        <p:watermark for="priceItem" value="Type text to search"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <p:outputLabel for="defaultPriceItem" value="Default Price Item" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:autoComplete id="defaultPriceItem" value="#{productForm.defaultPriceItems}"
+                        <p:autoComplete id="defaultPriceItem" value="#{productForm.defaultPriceItem}"
                                         completeMethod="#{productForm.searchSelectedPriceItems}" var="defaultPriceItem"
                                         itemLabel='#{productForm.labelFor(defaultPriceItem)}'
-                                        itemValue="#{defaultPriceItem}" converter="#{priceItemConverter}" multiple="true"
-                                        forceSelection="true">
-                            <p:ajax event="itemUnselect" listener="#{productForm.onDefaultPriceItemUnselect}"/>
-                            <p:ajax event="itemSelect" listener="#{productForm.onDefaultPriceItemSelect}"/>
+                                        itemValue="#{defaultPriceItem}" converter="#{priceItemConverter}"
+                                        forceSelection="true" size="50">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{defaultPriceItem.platformName} | #{defaultPriceItem.categoryName} | #{defaultPriceItem.name} (#{defaultPriceItem.id})</div>
                             </p:column>
@@ -181,6 +160,22 @@
                     </div>
                 </div>
 
+                <div class="control-group">
+                    <p:outputLabel for="priceItem" value="Optional Price Items" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="priceItem" value="#{productForm.priceItems}"
+                                        completeMethod="#{productForm.searchPriceItems}" var="priceItem"
+                                        itemLabel="#{productForm.labelFor(priceItem)}"
+                                        itemValue="#{priceItem}" converter="#{priceItemConverter}" multiple="true"
+                                        scrollHeight="250">
+
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name} (#{priceItem.id})</div>
+                            </p:column>
+                        </p:autoComplete>
+                        <p:watermark for="priceItem" value="Type text to search"/>
+                    </div>
+                </div>
 
                 <div class="control-group">
                     <p:outputLabel for="addOns" value="Add Ons" styleClass="control-label"/>
