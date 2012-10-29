@@ -545,4 +545,26 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-189-1" author="mccrory">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order_sample" columnName="sample_position" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample">
+            <column name="sample_position" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-189-2" author="mccrory">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order_sample_aud" columnName="sample_position" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample_aud">
+            <column name="sample_position" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
