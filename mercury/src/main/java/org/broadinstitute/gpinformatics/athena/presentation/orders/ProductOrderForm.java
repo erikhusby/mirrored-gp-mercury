@@ -314,7 +314,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        order.setAddOns(getSelectedAddOnProducts());
+        order.updateAddOnProducts(getSelectedAddOnProducts());
 
         // DRAFT orders not yet supported; force state of new PDOs to Submitted.
         order.setOrderStatus(ProductOrder.OrderStatus.Submitted);

@@ -290,7 +290,7 @@ public class ProductOrder implements Serializable {
         return addOnList;
     }
 
-    public void setAddOns(List<Product> addOnList) {
+    public void updateAddOnProducts(List<Product> addOnList) {
         addOns.clear();
         for (Product product : addOnList) {
             addOns.add(new ProductOrderAddOn(product, this));

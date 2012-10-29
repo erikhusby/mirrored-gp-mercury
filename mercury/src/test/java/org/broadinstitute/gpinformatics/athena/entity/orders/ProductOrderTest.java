@@ -48,6 +48,7 @@ public class ProductOrderTest {
         sample.addBillableItem(new BillableItem(priceItem, new BigDecimal("1")));
         order.setSamples(Collections.singletonList(sample));
 
+        order.updateAddOnProducts(Collections.singletonList(createDummyProduct()));
         return order;
     }
 
