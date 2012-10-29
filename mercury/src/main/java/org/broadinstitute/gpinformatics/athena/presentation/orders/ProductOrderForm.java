@@ -259,6 +259,7 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         // Validations.
         if (order.getSamples().isEmpty()) {
+            // FIXME: instead of doing this here, it can be done as a validator on the hidden editIDsCache field.
             String message = "You must add at least one sample before placing an order.";
             addErrorMessage(message, message);
             return null;
