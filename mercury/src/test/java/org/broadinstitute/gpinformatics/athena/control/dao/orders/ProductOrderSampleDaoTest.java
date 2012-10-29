@@ -26,7 +26,7 @@ import java.util.UUID;
  * Date: 10/10/12
  * Time: 2:20 PM
  */
-@Test(enabled = true)
+@Test(enabled = false)
 public class ProductOrderSampleDaoTest  extends ContainerTest {
 
     @Inject
