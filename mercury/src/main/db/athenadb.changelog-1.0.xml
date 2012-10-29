@@ -471,7 +471,6 @@
     </changeSet>
 
     <changeSet id="GPLIM-139-1.1.1" author="mcovarr">
-.1.1" author="mcovarr">
         <sql>
             delete from athena.product_price_items where product in (
             select product_id from athena.product where default_price_item is null
