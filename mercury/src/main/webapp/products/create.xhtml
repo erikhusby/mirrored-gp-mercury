@@ -25,11 +25,10 @@
             <h:form id="form" prependId="false" styleClass="form-horizontal">
 
                 <div class="control-group">
-                    <!-- TODO hook up the productFamily, see below -->
                     <p:outputLabel for="productFamily" value="Product Family" styleClass="control-label"/>
                     <div class="controls">
                         <p:selectOneMenu id="productFamily" value="#{productForm.product.productFamily}" converter="#{productFamilyConverter}" required="true">
-                            <f:selectItem itemLabel="Select a ProductFamily" itemValue="" />
+                            <f:selectItem itemLabel="Select a Product Family" itemValue="" />
                             <f:selectItems value="#{productForm.productFamilies}" var="fam" itemLabel="#{fam.displayName}"  itemValue="#{fam}" />
                         </p:selectOneMenu>
                     </div>

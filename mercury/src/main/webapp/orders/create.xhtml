@@ -141,6 +141,20 @@
 
                 <p:blockUI block="sampleDisplay" trigger=":sampleDialogForm:commitSamples"/>
 
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="row-fluid">
+                            <div class="span1">
+                                <p:commandButton value="Place&nbsp;Order" action="#{productOrderForm.save}"
+                                                 ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <h:panelGroup id="sampleDisplay">
                     <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
                     <p:panel header="Summary" toggleable="true" style="margin-bottom: 5px;">
@@ -202,7 +216,7 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Submit" action="#{productOrderForm.save}"
+                                <p:commandButton value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                                  ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">

@@ -305,7 +305,17 @@ public class ProductOrderForm extends AbstractJsfBean {
     public String save() throws IOException {
         ProductOrder order = productOrderDetail.getProductOrder();
         order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
+
+        // Validations.
+        if (order.getSamples().isEmpty()) {
+            // FIXME: instead of doing this here, it can be done as a validator on the hidden editIDsCache field.
+            String message = "You must add at least one sample before placing an order.";
+            addErrorMessage(message, message);
+            return null;
+        }
+
         order.setAddOns(getSelectedAddOnProducts());
+
         // DRAFT orders not yet supported; force state of new PDOs to Submitted.
         order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         String action = order.isInDB() ? "modified" : "created";

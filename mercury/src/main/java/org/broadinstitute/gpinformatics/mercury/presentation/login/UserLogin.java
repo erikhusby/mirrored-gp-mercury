@@ -61,18 +61,19 @@ public class UserLogin extends AbstractJsfBean {
     }
 
     public String authenticateUser() {
-        String targetPage = "/index";
+        String targetPage;
         FacesContext context = FacesContext.getCurrentInstance();
 
         try {
             HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
 
             request.login(username, password);
+            targetPage = checkTargetForRoleRedirect(request);
             BspUser bspUser = bspUserList.getByUsername(username);
             if (bspUser != null) {
                 userBean.setBspUser(bspUser);
             } else {
-                // FIXME: Temporarily map unknown users to the BSP tester user. Will need to handle this in userBean.
+// FIXME: Temporarily map unknown users to the BSP tester user. Will need to handle this in userBean.
                 userBean.setBspUser(bspUserList.getByUsername("tester"));
                 // reuse exception handling below
                 //throw new ServletException("Login error: couldn't find BspUser: " + username);
@@ -80,8 +81,10 @@ public class UserLogin extends AbstractJsfBean {
             addInfoMessage("Welcome back!", "Sign in successful");
 
             String previouslyTargetedPage = (String)request.getSession().getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
-
             if (previouslyTargetedPage != null) {
+                // Check for redirect to PM and PDMs landing page
+                previouslyTargetedPage = checkUrlForRoleRedirect(previouslyTargetedPage, request);
+
                 request.getSession().setAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE, null);
                 try {
                     facesContext.getExternalContext().redirect(previouslyTargetedPage);
@@ -90,12 +93,74 @@ public class UserLogin extends AbstractJsfBean {
                     logger.warn("Could not redirect to: " + previouslyTargetedPage, e);
                 }
             }
+
         } catch (ServletException le) {
             logger.error("ServletException Retrieved: ", le);
             addErrorMessage("The username and password you entered is incorrect.  Please try again.", "Authentication error");
             targetPage = AuthorizationFilter.LOGIN_PAGE;
         }
-
         return redirect(targetPage);
     }
+
+    private String checkUrlForRoleRedirect(String targetPage, final HttpServletRequest request) {
+        final String INDEX = "/index";
+        final String HOME_PAGE = "/Mercury";
+        StringBuilder newUrlBuilder = new StringBuilder(targetPage);
+
+        final boolean hasPMRole = request.isUserInRole( RolePage.PM.getRoleName() );
+        final boolean hasPDMRole = request.isUserInRole( RolePage.PDM.getRoleName());
+
+        if (targetPage.endsWith(HOME_PAGE) || targetPage.endsWith(HOME_PAGE + "/")) {
+            if ( hasPMRole ) {
+                newUrlBuilder.append(RolePage.PM.getLandingPage());
+            }
+            if ( hasPDMRole ) {
+                newUrlBuilder.append(RolePage.PDM.getLandingPage());
+            }
+        } else if ( targetPage.endsWith(INDEX)  || targetPage.endsWith(INDEX + ".xhtml") ) {
+            if ( hasPMRole ) {
+                newUrlBuilder = new StringBuilder(targetPage.replace(INDEX, RolePage.PM.getLandingPage()));
+            }
+            if ( hasPDMRole ) {
+                newUrlBuilder = new StringBuilder(targetPage.replace(INDEX, RolePage.PDM.getLandingPage()));
+            }
+        }
+        return newUrlBuilder.toString();
+    }
+
+    private String checkTargetForRoleRedirect(final HttpServletRequest request) {
+        String newTarget = "/index";
+        final boolean hasPMRole = request.isUserInRole( RolePage.PM.getRoleName() );
+        final boolean hasPDMRole = request.isUserInRole( RolePage.PDM.getRoleName());
+
+        if ( hasPMRole ) {
+            newTarget =   RolePage.PM.getLandingPage();
+        }
+        if ( hasPDMRole ) {
+            newTarget =   RolePage.PDM.getLandingPage();
+        }
+        return newTarget;
+    }
+
+    private enum RolePage {
+        PDM ("/orders/list", "Mercury-ProductManagers"),
+        PM ("/projects/list", "Mercury-ProjectManagers");
+
+        private String landingPage;
+        private String roleName;
+
+        private RolePage(final String landingPage, final String roleName) {
+            this.landingPage = landingPage;
+            this.roleName = roleName;
+        }
+
+        public String getLandingPage() {
+            return landingPage;
+        }
+
+        public String getRoleName() {
+            return roleName;
+        }
+    }
+
 }
