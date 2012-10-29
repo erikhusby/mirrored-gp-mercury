@@ -139,7 +139,7 @@
 
                 <h:inputHidden id="idCache" binding="#{productOrderForm.editIdsCacheBinding}"/>
 
-                <p:blockUI block="sampleDisplay" trigger=":sampleDialogForm:commitSamples"/>
+                <p:blockUI block=":form" trigger=":sampleDialogForm:commitSamples"/>
 
                 <div class="control-group">
                     <div class="controls">
@@ -163,54 +163,54 @@
                             #{comment}
                         </p:dataList>
                     </p:panel>
+
+                    <div class="row-fluid" style="margin-bottom: 5px;">
+                        <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample"
+                                     scrollable="true" scrollHeight="350" scrollRows="30">
+
+                            <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
+                            <p:column headerText="ID" width="120">
+                                #{sample.sampleName}
+                            </p:column>
+                            <p:column headerText="Participant" width="130">
+                                #{sample.bspDTO.patientId}
+                            </p:column>
+                            <p:column headerText="Collaborator&lt;br/&gt;Sample" width="130">
+                                #{sample.bspDTO.collaboratorsSampleName}
+                            </p:column>
+                            <p:column headerText="Collaborator&lt;br/&gt;Participant ID" width="120">
+                                #{sample.bspDTO.collaboratorParticipantId}
+                            </p:column>
+                            <p:column headerText="Material" width="50">
+                                #{sample.bspDTO.materialType}
+                            </p:column>
+                            <p:column headerText="Volume" width="50">
+                                #{sample.bspDTO.volume}
+                            </p:column>
+                            <p:column headerText="Concentration" width="90">
+                                #{sample.bspDTO.concentration}
+                            </p:column>
+                            <p:column headerText="Total" width="50">
+                                #{sample.bspDTO.total}
+                            </p:column>
+                            <p:column headerText="Sample Type" width="75">
+                                #{sample.bspDTO.sampleType}
+                            </p:column>
+                            <p:column headerText="Primary&lt;br/&gt;Disease" width="75">
+                                #{sample.bspDTO.primaryDisease}
+                            </p:column>
+                            <p:column headerText="Gender" width="50">
+                                #{sample.bspDTO.gender}
+                            </p:column>
+                            <p:column headerText="Stock Type" width="75">
+                                #{sample.bspDTO.stockType}
+                            </p:column>
+                            <p:column headerText="Fingerprint&lt;br/&gt;Available" width="100">
+                                #{sample.bspDTO.hasFingerprint}
+                            </p:column>
+                        </p:dataTable>
+                    </div>
                 </h:panelGroup>
-
-                <div class="row-fluid" style="margin-bottom: 5px;">
-                    <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample"
-                                 scrollable="true" scrollHeight="260" scrollRows="30">
-
-                    <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
-                        <p:column headerText="ID" width="120">
-                            #{sample.sampleName}
-                        </p:column>
-                        <p:column headerText="Participant" width="130">
-                            #{sample.bspDTO.patientId}
-                        </p:column>
-                        <p:column headerText="Collaborator&lt;br/&gt;Sample" width="130">
-                            #{sample.bspDTO.collaboratorsSampleName}
-                        </p:column>
-                        <p:column headerText="Collaborator&lt;br/&gt;Participant ID" width="120">
-                            #{sample.bspDTO.collaboratorParticipantId}
-                        </p:column>
-                        <p:column headerText="Material" width="50">
-                            #{sample.bspDTO.materialType}
-                        </p:column>
-                        <p:column headerText="Volume" width="50">
-                            #{sample.bspDTO.volume}
-                        </p:column>
-                        <p:column headerText="Concentration" width="90">
-                            #{sample.bspDTO.concentration}
-                        </p:column>
-                        <p:column headerText="Total" width="50">
-                            #{sample.bspDTO.total}
-                        </p:column>
-                        <p:column headerText="Sample Type" width="75">
-                            #{sample.bspDTO.sampleType}
-                        </p:column>
-                        <p:column headerText="Primary&lt;br/&gt;Disease" width="75">
-                            #{sample.bspDTO.primaryDisease}
-                        </p:column>
-                        <p:column headerText="Gender" width="50">
-                            #{sample.bspDTO.gender}
-                        </p:column>
-                        <p:column headerText="Stock Type" width="75">
-                            #{sample.bspDTO.stockType}
-                        </p:column>
-                        <p:column headerText="Fingerprint&lt;br/&gt;Available" width="100">
-                            #{sample.bspDTO.hasFingerprint}
-                        </p:column>
-                    </p:dataTable>
-                </div>
 
                 <div class="control-group">
                     <div class="controls">
