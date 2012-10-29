@@ -44,12 +44,6 @@ public class UserLogin extends AbstractJsfBean {
     @Inject
     private FacesContext facesContext;
 
-    public static final String PDM_WELCOME_PAGE = "/orders/list";
-    public static final String PM_WELCOME_PAGE = "/projects/list";
-    public static final String INDEX_PAGE = "/index.xhtml";
-    public static final String HOME_PAGE = "/Mercury";
-    public static final String INDEX_REDIRECT = "/index";
-
     public String getUsername() {
         return username;
     }
@@ -89,7 +83,7 @@ public class UserLogin extends AbstractJsfBean {
             String previouslyTargetedPage = (String)request.getSession().getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
             if (previouslyTargetedPage != null) {
                 // Check for redirect to PM and PDMs landing page
-                previouslyTargetedPage = checkTargetForRoleRedirect(previouslyTargetedPage, request);
+                previouslyTargetedPage = checkUrlForRoleRedirect(previouslyTargetedPage, request);
 
                 request.getSession().setAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE, null);
                 try {
@@ -105,45 +99,68 @@ public class UserLogin extends AbstractJsfBean {
             addErrorMessage("The username and password you entered is incorrect.  Please try again.", "Authentication error");
             targetPage = AuthorizationFilter.LOGIN_PAGE;
         }
-
         return redirect(targetPage);
     }
 
-    private String checkTargetForRoleRedirect(String targetPage, final HttpServletRequest request) {
-        StringBuilder newTargetPageBuilder = new StringBuilder(targetPage);
-        final boolean hasPMRole = request.isUserInRole( "Mercury-ProductManagers");
-        final boolean hasPDMRole = request.isUserInRole( "Mercury-ProjectManagers");
+    private String checkUrlForRoleRedirect(String targetPage, final HttpServletRequest request) {
+        final String INDEX = "/index";
+        final String HOME_PAGE = "/Mercury";
+        StringBuilder newUrlBuilder = new StringBuilder(targetPage);
+
+        final boolean hasPMRole = request.isUserInRole( RolePage.PM.getRoleName() );
+        final boolean hasPDMRole = request.isUserInRole( RolePage.PDM.getRoleName());
 
         if (targetPage.endsWith(HOME_PAGE) || targetPage.endsWith(HOME_PAGE + "/")) {
             if ( hasPMRole ) {
-                newTargetPageBuilder.append(PM_WELCOME_PAGE);
+                newUrlBuilder.append(RolePage.PM.getLandingPage());
             }
             if ( hasPDMRole ) {
-                newTargetPageBuilder.append(PDM_WELCOME_PAGE);
+                newUrlBuilder.append(RolePage.PDM.getLandingPage());
             }
-        } else if ( targetPage.endsWith(INDEX_REDIRECT)  || targetPage.endsWith(INDEX_PAGE) ) {
+        } else if ( targetPage.endsWith(INDEX)  || targetPage.endsWith(INDEX + ".xhtml") ) {
             if ( hasPMRole ) {
-                newTargetPageBuilder =   new StringBuilder(targetPage.replace(INDEX_REDIRECT, PM_WELCOME_PAGE));
+                newUrlBuilder = new StringBuilder(targetPage.replace(INDEX, RolePage.PM.getLandingPage()));
             }
             if ( hasPDMRole ) {
-                newTargetPageBuilder =    new StringBuilder(targetPage.replace(INDEX_REDIRECT, PDM_WELCOME_PAGE));
+                newUrlBuilder = new StringBuilder(targetPage.replace(INDEX, RolePage.PDM.getLandingPage()));
             }
         }
-        return newTargetPageBuilder.toString();
+        return newUrlBuilder.toString();
     }
 
     private String checkTargetForRoleRedirect(final HttpServletRequest request) {
-        String indexRedirect = INDEX_REDIRECT;
-        final boolean hasPMRole = request.isUserInRole( "Mercury-ProductManagers");
-        final boolean hasPDMRole = request.isUserInRole( "Mercury-ProjectManagers");
+        String newTarget = "/index";
+        final boolean hasPMRole = request.isUserInRole( RolePage.PM.getRoleName() );
+        final boolean hasPDMRole = request.isUserInRole( RolePage.PDM.getRoleName());
 
         if ( hasPMRole ) {
-            indexRedirect =   PM_WELCOME_PAGE;
+            newTarget =   RolePage.PM.getLandingPage();
         }
         if ( hasPDMRole ) {
-            indexRedirect =   PDM_WELCOME_PAGE;
+            newTarget =   RolePage.PDM.getLandingPage();
         }
-        return indexRedirect;
+        return newTarget;
+    }
+
+    private enum RolePage {
+        PDM ("/orders/list", "Mercury-ProductManagers"),
+        PM ("/projects/list", "Mercury-ProjectManagers");
+
+        private String landingPage;
+        private String roleName;
+
+        private RolePage(final String landingPage, final String roleName) {
+            this.landingPage = landingPage;
+            this.roleName = roleName;
+        }
+
+        public String getLandingPage() {
+            return landingPage;
+        }
+
+        public String getRoleName() {
+            return roleName;
+        }
     }
 
 }
