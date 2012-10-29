@@ -15,7 +15,9 @@
         <ui:define name="metadata">
             <f:metadata>
                 <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
+                <f:viewParam name="product" value="#{productOrderDetail.productOrder.product}" converter="#{productConverter}"/>
             </f:metadata>
+            <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
         </ui:define>
 
         <ui:define name="body">
@@ -91,13 +93,14 @@
                                         required="true"
                                         scrollHeight="250"
                                         size="50">
-                            <p:ajax partialSubmit="true" event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="selectedAddOns"/>
+                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="selectedAddOns"/>
                         </p:autoComplete>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>
 
                         <p:fieldset styleClass="form-fieldset" legend="Add Ons">
-                            <p:selectManyCheckbox id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
+                            <p:selectManyCheckbox
+                                id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
                                 <f:selectItems value="#{productOrderForm.addOns}"/>
                             </p:selectManyCheckbox>
                         </p:fieldset>

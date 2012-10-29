@@ -90,23 +90,8 @@
                             #{comment}
                         </p:dataList>
                     </p:panel>
+
                     <br/>
-
-                    <div class="row-fluid">
-                        <div class="pull-right ui-widget-header" style="padding: 5px;">
-                            <span class="ui-icon ui-icon-folder-open" style="float:left;">&nbsp;</span>
-                            <h:outputText value=" Export all data as: " />
-
-                            <p:commandLink title="Click to download all sample data as a Microsoft Excel file">
-                                <h:outputText value="Excel"/>
-                                <p:dataExporter
-                                        type="xls"
-                                        pageOnly = "false"
-                                        target="sampleData"
-                                        fileName="#{productOrderDetail.productOrder.title}" />
-                            </p:commandLink>
-                        </div>
-                    </div>
 
                     <p:dataTable id="sampleData" value="#{productOrderDetail.productOrder.samples}"
                                  filteredValue="#{productOrderFilterBean.filteredSamples}" var="sample"

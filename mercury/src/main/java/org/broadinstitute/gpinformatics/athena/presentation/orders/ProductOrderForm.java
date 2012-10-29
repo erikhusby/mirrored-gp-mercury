@@ -46,7 +46,8 @@ public class ProductOrderForm extends AbstractJsfBean {
     @Inject
     private FacesContext facesContext;
 
-    private List<String> addOns = new ArrayList<String>();
+    @Inject
+    private ProductOrderConversationData conversationData;
 
     private List<String> selectedAddOns = new ArrayList<String>();
 
@@ -178,11 +179,11 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     public List<String> getAddOns() {
-        return addOns;
+        return conversationData.getAddOnsForProduct();
     }
 
     public void setAddOns(@Nonnull List<String> addOns) {
-        this.addOns = addOns;
+        conversationData.setAddOnsForProduct(addOns);
     }
 
     /**
@@ -191,7 +192,6 @@ public class ProductOrderForm extends AbstractJsfBean {
      * @param productSelectEvent The selection event on the project
      */
     public void setupAddOns(SelectEvent productSelectEvent) {
-        addOns.clear();
         Product product = (Product) productSelectEvent.getObject();
         setupAddOns(product);
     }
@@ -202,11 +202,10 @@ public class ProductOrderForm extends AbstractJsfBean {
      * @param product The product
      */
     public void setupAddOns(Product product) {
-        addOns.clear();
-
+        conversationData.setAddOnsForProduct(new ArrayList<String>());
         if (product != null) {
             for (Product productAddOn : product.getAddOns()) {
-                addOns.add(productAddOn.getProductName());
+                conversationData.getAddOnsForProduct().add(productAddOn.getProductName());
             }
         }
     }
@@ -300,10 +299,6 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         productOrderDetail.load();
         validateSamples();
-
-        if (productOrderDetail.getProductOrder().getProduct() != null) {
-            setupAddOns(productOrderDetail.getProductOrder().getProduct());
-        }
     }
 
     // FIXME: handle db store errors, JIRA server errors.
@@ -329,5 +324,9 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
 
         return productDao.findListByList(Product.class, Product_.productName, getSelectedAddOns());
+    }
+
+    public void initForm() {
+        conversationData.beginConversation(productOrderDetail.getProductOrder());
     }
 }
