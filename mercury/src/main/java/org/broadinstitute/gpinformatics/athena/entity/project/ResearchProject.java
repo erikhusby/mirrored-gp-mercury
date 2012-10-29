@@ -440,14 +440,9 @@ public class ResearchProject {
             }
 
             if (!irbNumbers.isEmpty()) {
-                List<String> irbNums = new ArrayList<String>();
-                for(ResearchProjectIRB irb:irbNumbers ) {
-                    irbNums.add(irb.getIrb());
-                }
-
                 listOfFields.add(
                         new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
-                                        StringUtils.join(irbNums,','), CustomField.SingleFieldType.TEXT ));
+                                        StringUtils.join(getIrbNumbers(), ','), CustomField.SingleFieldType.TEXT ));
             }
 
             listOfFields.add(
