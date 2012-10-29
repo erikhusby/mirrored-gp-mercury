@@ -1,26 +1,19 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
-import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-
 import javax.ejb.Stateful;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.text.MessageFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
 
 /**
+ * This is a hack to retrofit an existing JSF page to begin transactions for some methods. Rather than moving the
+ * method body from the JSF form along with all of its dependencies, this EJB simply establishes the connection and
+ * calls back to the JFS form. It's cheap, but it works for now.
+ *
  * @author breilly
  */
 @Stateful
 @RequestScoped
-public class ProductBoundary extends AbstractJsfBean {
+public class ProductBoundary {
 
     @Inject
     private ProductForm productForm;

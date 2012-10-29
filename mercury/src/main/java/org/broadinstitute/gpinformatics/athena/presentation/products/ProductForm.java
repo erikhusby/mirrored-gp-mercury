@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -22,6 +21,9 @@ import javax.inject.Named;
 import java.text.MessageFormat;
 import java.util.*;
 
+/**
+ * TODO: Update method documentation, especially around price item selection.
+ */
 @Named
 @RequestScoped
 public class ProductForm extends AbstractJsfBean {
@@ -160,7 +162,6 @@ public class ProductForm extends AbstractJsfBean {
     }
 
 
-//    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public String save() {
         boolean validationPassed = true;
 
@@ -212,7 +213,6 @@ public class ProductForm extends AbstractJsfBean {
         return true;
     }
 
-//    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public String create() {
         try {
             addAllAddOnsToProduct();
@@ -232,7 +232,6 @@ public class ProductForm extends AbstractJsfBean {
         return redirect("list");
     }
 
-//    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public String edit() {
         try {
             addAllAddOnsToProduct();
@@ -471,14 +470,6 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public List<PriceItem> searchSelectedPriceItems(String query) {
-
-/*
-        if (defaultPriceItems != null && defaultPriceItems.size() > 0) {
-            // don't offer anything if there is already a selected default price item
-            return new ArrayList<PriceItem>();
-        }
-*/
-
         return priceListCache.searchPriceItems(query);
     }
 
@@ -532,5 +523,4 @@ public class ProductForm extends AbstractJsfBean {
         }
         return priceItem.getName() + " (" + priceItem.getId() + ")";
     }
-
 }
