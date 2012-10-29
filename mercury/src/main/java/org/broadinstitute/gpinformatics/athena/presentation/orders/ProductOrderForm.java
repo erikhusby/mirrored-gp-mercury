@@ -291,11 +291,7 @@ public class ProductOrderForm extends AbstractJsfBean {
         if (facesContext.isPostback()) {
             // Restoring the view, replace entity state with form state.
             // 2 => 1
-
-            // If the edit id cache is null, then this is a post back from a page that is setting up an initial context
-            if (editIdsCacheBinding.getValue() != null) {
-                productOrderDetail.getProductOrder().setSamples(convertTextToOrderSamples(getEditIdsCache()));
-            }
+            productOrderDetail.getProductOrder().setSamples(convertTextToOrderSamples(getEditIdsCache()));
         } else {
             // First time, load from entity state.
             // 1 => 2

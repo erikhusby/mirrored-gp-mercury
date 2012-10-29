@@ -83,6 +83,15 @@
 
                     <p/>
 
+                    <p:panel id="sampleValidation" header="Summary">
+                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}"
+                                    var="comment"
+                                    itemType="none">
+                            #{comment}
+                        </p:dataList>
+                    </p:panel>
+                    <br/>
+
                     <div class="row-fluid">
                         <div class="pull-right ui-widget-header" style="padding: 5px;">
                             <span class="ui-icon ui-icon-folder-open" style="float:left;">&nbsp;</span>
@@ -99,13 +108,6 @@
                         </div>
                     </div>
 
-                    <p:panel id="sampleValidation" header="Summary">
-                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}"
-                                    var="comment"
-                                    itemType="none">
-                            #{comment}
-                        </p:dataList>
-                    </p:panel>
                     <p:dataTable id="sampleData" value="#{productOrderDetail.productOrder.samples}"
                                  filteredValue="#{productOrderFilterBean.filteredSamples}" var="sample"
                                  scrollable="true" scrollHeight="260" scrollRows="30">
