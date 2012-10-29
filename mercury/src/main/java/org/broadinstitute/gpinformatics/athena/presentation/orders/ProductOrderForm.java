@@ -256,6 +256,14 @@ public class ProductOrderForm extends AbstractJsfBean {
     public String save() throws IOException {
         ProductOrder order = productOrderDetail.getProductOrder();
         order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
+
+        // Validations.
+        if (order.getSamples().isEmpty()) {
+            String message = "You must add at least one sample before placing an order.";
+            addErrorMessage(message, message);
+            return null;
+        }
+
         // DRAFT orders not yet supported; force state of new PDOs to Submitted.
         order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         String action = order.isInDB() ? "modified" : "created";
