@@ -100,20 +100,20 @@
                 </div>
 
                 <div class="control-group">
-                    <p:outputLabel for="expectedCycleTimeHours" value="Expected Cycle Time (Hours)" styleClass="control-label"/>
+                    <p:outputLabel for="expectedCycleTimeDays" value="Expected Cycle Time (Days)" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="expectedCycleTimeHours" value="#{productForm.expectedCycleTimeHours}" size="50" required="false"/>
-                        <p:watermark for="expectedCycleTimeHours" value="Enter the expected cycle time in hours"/>
-                        <p:message for="expectedCycleTimeHours"/>
+                        <p:inputText id="expectedCycleTimeDays" value="#{productForm.expectedCycleTimeDays}" size="50" required="false"/>
+                        <p:watermark for="expectedCycleTimeDays" value="Enter the expected cycle time in days"/>
+                        <p:message for="expectedCycleTimeDays"/>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <p:outputLabel for="guaranteedCycleTimeHours" value="Guaranteed Cycle Time (Hours)" styleClass="control-label"/>
+                    <p:outputLabel for="guaranteedCycleTimeDays" value="Guaranteed Cycle Time (Days)" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="guaranteedCycleTimeHours" value="#{productForm.guaranteedCycleTimeHours}" size="50" required="false"/>
-                        <p:watermark for="guaranteedCycleTimeHours" value="Enter the guaranteed cycle time in hours"/>
-                        <p:message for="guaranteedCycleTimeHours"/>
+                        <p:inputText id="guaranteedCycleTimeDays" value="#{productForm.guaranteedCycleTimeDays}" size="50" required="false"/>
+                        <p:watermark for="guaranteedCycleTimeDays" value="Enter the guaranteed cycle time in days"/>
+                        <p:message for="guaranteedCycleTimeDays"/>
                     </div>
                 </div>
 
@@ -149,11 +149,12 @@
                     <div class="controls">
                         <p:autoComplete id="defaultPriceItem" value="#{productForm.defaultPriceItem}"
                                         completeMethod="#{productForm.searchSelectedPriceItems}" var="defaultPriceItem"
-                                        itemLabel='#{productForm.labelFor(defaultPriceItem)}'
+                                        itemLabel='#{productForm.labelFor(defaultPriceItem)}' scrollHeight="250"
                                         itemValue="#{defaultPriceItem}" converter="#{priceItemConverter}"
                                         forceSelection="true" size="50">
                             <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{defaultPriceItem.platformName} | #{defaultPriceItem.categoryName} | #{defaultPriceItem.name} (#{defaultPriceItem.id})</div>
+                                <div class="ac-dropdown-text">#{defaultPriceItem.name} (#{defaultPriceItem.id})</div>
+                                <div class="ac-dropdown-subtext">#{defaultPriceItem.platformName} | #{defaultPriceItem.categoryName}</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="defaultPriceItem" value="Type text to search"/>
@@ -182,11 +183,11 @@
                     <div class="controls">
                         <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}"
                                         var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}"
-                                        converter="#{productConverter}" multiple="true" forceSelection="true" scrollHeight="250">
+                                        converter="#{productConverter}" multiple="true" scrollHeight="250">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{product.productName} - #{product.partNumber}</div>
                                 <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>
-                                <div class="ac-dropdown-subtext">#{product.productFamily}</div>
+                                <div class="ac-dropdown-subtext">#{product.productFamily.displayName}</div>
                                 <div class="ac-dropdown-subtext">#{product.inputRequirements}</div>
                             </p:column>
                         </p:autoComplete>

@@ -60,7 +60,7 @@ public class ProductForm extends AbstractJsfBean {
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
-    public static final int ONE_HOUR_IN_SECONDS = 3600;
+    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
     private Product product;
 
     /**
@@ -255,6 +255,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void addAllAddOnsToProduct() {
         Date now = Calendar.getInstance().getTime();
+        product.getAddOns().clear();
         if ( addOns != null) {
             for ( Product aProductAddOn : addOns ) {
                 if ( aProductAddOn != null ) {
@@ -311,18 +312,18 @@ public class ProductForm extends AbstractJsfBean {
         this.product = product;
     }
 
-    public Integer getExpectedCycleTimeHours() {
-        return convertCycleTimeSecondsToHours (product.getExpectedCycleTimeSeconds()) ;
+    public Integer getExpectedCycleTimeDays() {
+        return convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
-    public void setExpectedCycleTimeHours(final Integer expectedCycleTimeHours) {
-        product.setExpectedCycleTimeSeconds(convertCycleTimeHoursToSeconds(expectedCycleTimeHours));
+    public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
+        product.setExpectedCycleTimeSeconds(convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
 
-    public Integer getGuaranteedCycleTimeHours() {
-        return convertCycleTimeSecondsToHours (product.getGuaranteedCycleTimeSeconds()) ;
+    public Integer getGuaranteedCycleTimeDays() {
+        return convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
-    public void setGuaranteedCycleTimeHours(final Integer guaranteedCycleTimeHours) {
-        product.setGuaranteedCycleTimeSeconds(convertCycleTimeHoursToSeconds(guaranteedCycleTimeHours));
+    public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
+        product.setGuaranteedCycleTimeSeconds(convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
     }
 
 
@@ -361,30 +362,29 @@ public class ProductForm extends AbstractJsfBean {
 
 
     /**
-     * Converts cycle times from hours to seconds.
-     * @param cycleTimeHours
+     * Converts cycle times from days to seconds.
      * @return the number of seconds.
      */
-    public static Integer convertCycleTimeHoursToSeconds(Integer cycleTimeHours) {
+    public static Integer convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
         Integer cycleTimeSeconds = null;
-        if ( cycleTimeHours != null ) {
-            cycleTimeSeconds = ( cycleTimeHours == null ? 0 : cycleTimeHours.intValue() * ONE_HOUR_IN_SECONDS);
+        if ( cycleTimeDays != null ) {
+            cycleTimeSeconds = ( cycleTimeDays == null ? 0 : cycleTimeDays.intValue() * ONE_DAY_IN_SECONDS);
         }
         return cycleTimeSeconds;
     }
 
     /**
-     * Converts cycle times from seconds to hours.
-     * This method rounds down to the nearest hour
+     * Converts cycle times from seconds to days.
+     * This method rounds down to the nearest day
      * @param cycleTimeSeconds
-     * @return the number of hours.
+     * @return the number of days.
      */
-    public static Integer convertCycleTimeSecondsToHours(Integer cycleTimeSeconds) {
-        Integer cycleTimeHours = null;
-        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_HOUR_IN_SECONDS ) {
-            cycleTimeHours =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_HOUR_IN_SECONDS)) / ONE_HOUR_IN_SECONDS;
+    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
+        Integer cycleTimeDays = null;
+        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
+            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
         }
-        return cycleTimeHours;
+        return cycleTimeDays;
     }
 
 
