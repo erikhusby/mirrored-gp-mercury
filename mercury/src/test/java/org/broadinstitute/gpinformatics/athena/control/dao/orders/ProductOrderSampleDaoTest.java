@@ -26,7 +26,7 @@ import java.util.UUID;
  * Date: 10/10/12
  * Time: 2:20 PM
  */
-@Test(enabled = false)
+@Test(enabled = true)
 public class ProductOrderSampleDaoTest  extends ContainerTest {
 
     @Inject
@@ -91,7 +91,7 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
         return newProductOrder;
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=false)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
     public void testFindByProductOrder() throws Exception {
         ProductOrder order = createTestProductOrder();
 

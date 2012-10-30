@@ -273,6 +273,12 @@ public class ProductOrder implements Serializable {
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
+        int samplePos = 0;
+        if ( samples != null) {
+            for ( ProductOrderSample sample :samples ) {
+                sample.setSample_position(samplePos++);
+            }
+        }
     }
 
     public String getTitle() {
@@ -349,6 +355,13 @@ public class ProductOrder implements Serializable {
 
     public void setSamples(List<ProductOrderSample> samples) {
         this.samples = samples;
+        int samplePos = 0;
+        if ( samples != null) {
+            for ( ProductOrderSample sample :samples ) {
+                sample.setSample_position(samplePos);
+                samplePos++;
+            }
+        }
         counts.invalidate();
         sampleBillingSummary = null;
     }
