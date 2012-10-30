@@ -57,6 +57,10 @@ public abstract class LabVessel {
 
     private Date createdOn;
 
+    private Float volume;
+    
+    private Float concentration;
+
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
     private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
@@ -416,15 +420,6 @@ public abstract class LabVessel {
     public abstract Collection<LabEvent> getEvents();
 
     /**
-     * Returns all projects.  Convenience method vs.
-     * iterating over {@link #getSampleInstances()} and
-     * calling {@link org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance#getAllProjectPlans()}
-     * @return
-     */
-//    public abstract Collection<Project> getAllProjects();
-
-
-    /**
      * PM Dashboard will want to show the most recent
      * event performed on this aliquot.  Implementations
      * traipse through lims history to find the most
@@ -464,9 +459,21 @@ public abstract class LabVessel {
         return this.notes;
     }
 
-    public abstract Float getVolume();
+    public Float getVolume() {
+        return volume;
+    }
 
-    public abstract Float getConcentration();
+    public void setVolume(Float volume) {
+        this.volume = volume;
+    }
+
+    public Float getConcentration() {
+        return concentration;
+    }
+
+    public void setConcentration(Float concentration) {
+        this.concentration = concentration;
+    }
 
     public boolean isSampleAuthority() {
         return !mercurySamples.isEmpty();

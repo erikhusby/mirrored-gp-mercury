@@ -62,14 +62,4 @@ public class PlateWell extends LabVessel {
     public Set<SampleInstance> getSampleInstances() {
         return this.plate.getVesselContainer().getSampleInstancesAtPosition(this.vesselPosition);
     }
-
-    @Override
-    public Float getVolume() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Float getConcentration() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
 }

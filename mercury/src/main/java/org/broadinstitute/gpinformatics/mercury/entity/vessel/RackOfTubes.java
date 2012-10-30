@@ -131,16 +131,6 @@ public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<Tw
     }
 
     @Override
-    public Float getVolume() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Float getConcentration() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Set<LabEvent> getTransfersFrom() {
         return this.vesselContainer.getTransfersFrom();
     }
