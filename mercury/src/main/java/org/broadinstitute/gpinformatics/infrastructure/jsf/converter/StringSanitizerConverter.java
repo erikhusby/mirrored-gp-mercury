@@ -6,16 +6,18 @@ import javax.faces.convert.Converter;
 import javax.faces.convert.FacesConverter;
 
 /**
- * JSF converter that trims whitespace from string values.
+ * JSF converter that automatically trims whitespace and converts \r\n to \n for string values. If this behavior is not
+ * desired for a specific component, use the
+ * {@link org.broadinstitute.gpinformatics.infrastructure.jsf.converter.VerbatimConverter}.
  *
  * @author breilly
  */
-@FacesConverter("stringTrimmer")
-public class StringTrimmerConverter implements Converter {
+@FacesConverter(forClass = String.class)
+public class StringSanitizerConverter implements Converter {
 
     @Override
     public Object getAsObject(FacesContext facesContext, UIComponent component, String value) {
-        return value == null ? null : value.trim();
+        return value == null ? null : value.trim().replaceAll("\\r\\n", "\n");
     }
 
     @Override
