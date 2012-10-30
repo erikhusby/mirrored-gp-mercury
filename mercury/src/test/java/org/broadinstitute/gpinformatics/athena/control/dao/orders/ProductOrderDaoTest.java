@@ -101,10 +101,10 @@ public class ProductOrderDaoTest extends ContainerTest {
                 product, foundResearchProject);
         sampleList.add(new ProductOrderSample("MS-1111", newProductOrder));
         sampleList.add(new ProductOrderSample("MS-1112", newProductOrder));
-//        int samplePos = 0;
-//        for ( ProductOrderSample sample :sampleList ) {
-//            sample.setSamplePosition(samplePos++);
-//        }
+        int samplePos = 0;
+        for ( ProductOrderSample sample :sampleList ) {
+            sample.setSamplePosition(samplePos++);
+        }
         newProductOrder.setJiraTicketKey(testProductOrderKey);
         return newProductOrder;
     }
