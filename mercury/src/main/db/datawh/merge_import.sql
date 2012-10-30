@@ -6,12 +6,11 @@
 CREATE OR REPLACE PROCEDURE merge_import
 IS
 
-CURSOR im_po_billing_item_cur IS SELECT * FROM im_po_billable_item WHERE is_delete = 'F';
+CURSOR im_billable_item_cur IS SELECT * FROM im_billable_item WHERE is_delete = 'F';
 CURSOR im_po_cur IS SELECT * FROM im_product_order WHERE is_delete = 'F';
-CURSOR im_po_pos_cur IS SELECT * FROM im_product_order_po_sample WHERE is_delete = 'F';
 CURSOR im_po_sample_cur IS SELECT * FROM im_product_order_sample WHERE is_delete = 'F';
 CURSOR im_po_status_cur IS SELECT * FROM im_product_order_status WHERE is_delete = 'F';
-CURSOR im_pos_billing_status_cur IS SELECT * FROM im_po_sample_billing_status WHERE is_delete = 'F';
+CURSOR im_po_sample_stat_cur IS SELECT * FROM im_product_order_sample_stat WHERE is_delete = 'F';
 CURSOR im_price_item_cur IS SELECT * FROM im_price_item WHERE is_delete = 'F';
 CURSOR im_product_add_on_cur IS SELECT * FROM im_product_add_on WHERE is_delete = 'F';
 CURSOR im_product_cur IS SELECT * FROM im_product WHERE is_delete = 'F';
@@ -20,7 +19,6 @@ CURSOR im_rp_cur IS SELECT * FROM im_research_project WHERE is_delete = 'F';
 CURSOR im_rp_funding_cur IS SELECT * FROM im_research_project_funding WHERE is_delete = 'F';
 CURSOR im_rp_irb_cur IS SELECT * FROM im_research_project_irb WHERE is_delete = 'F';
 CURSOR im_rp_person_cur IS SELECT * FROM im_research_project_person WHERE is_delete = 'F';
-CURSOR im_rp_po_cur IS SELECT * FROM im_research_project_po WHERE is_delete = 'F';
 CURSOR im_rp_status_cur IS SELECT * FROM im_research_project_status WHERE is_delete = 'F';
 
 
@@ -41,35 +39,18 @@ WHERE EXISTS (
   AND t2.is_delete = 'T'
 );
 
-DELETE FROM po_sample_billing_status t1
+DELETE FROM product_order_sample_status t1
 WHERE EXISTS (
-  SELECT 1 FROM im_po_sample_billing_status t2
+  SELECT 1 FROM im_product_order_sample_stat t2
   WHERE t1.product_order_sample_id = t2.product_order_sample_id
   AND t1.status_date = t2.status_date
   AND t2.is_delete = 'T'
 );
 
-DELETE FROM po_billable_item t1
+DELETE FROM billable_item t1
 WHERE EXISTS (
-  SELECT 1 FROM im_po_billable_item t2
-  WHERE t1.product_order_sample_id = t2.product_order_sample_id
-  AND t1.price_item_id = t2.price_item_id
-  AND t2.is_delete = 'T'
-);
-
-DELETE FROM research_project_po t1
-WHERE EXISTS (
-  SELECT 1 FROM im_research_project_po t2
-  WHERE t1.research_project_id = t2.research_project_id
-  AND t1.product_order_id = t2.product_order_id
-  AND t2.is_delete = 'T'
-);
-
-DELETE FROM product_order_po_sample t1
-WHERE EXISTS (
-  SELECT 1 FROM im_product_order_po_sample t2
-  WHERE t1.product_order_id = t2.product_order_id
-  AND t1.product_order_sample_id = t2.product_order_sample_id
+  SELECT 1 FROM im_billable_item t2
+  WHERE t1.billable_item_id = t2.billable_item_id
   AND t2.is_delete = 'T'
 );
 
@@ -101,24 +82,21 @@ WHERE EXISTS (
 DELETE FROM research_project_funding t1
 WHERE EXISTS (
   SELECT 1 FROM im_research_project_funding t2
-  WHERE t1.research_project_id = t2.research_project_id
-  AND t1.research_project_funding_id = t2.research_project_funding_id
+  WHERE t1.research_project_funding_id = t2.research_project_funding_id
   AND t2.is_delete = 'T'
 );
 
 DELETE FROM research_project_cohort t1
 WHERE EXISTS (
   SELECT 1 FROM im_research_project_cohort t2
-  WHERE t1.research_project_id = t2.research_project_id
-  AND t1.research_project_cohort_id = t2.research_project_cohort_id
+  WHERE t1.research_project_cohort_id = t2.research_project_cohort_id
   AND t2.is_delete = 'T'
 );
 
 DELETE FROM research_project_irb t1
 WHERE EXISTS (
   SELECT 1 FROM im_research_project_irb t2
-  WHERE t1.research_project_id = t2.research_project_id
-  AND t1.research_project_irb_id = t2.research_project_irb_id
+  WHERE t1.research_project_irb_id = t2.research_project_irb_id
   AND t2.is_delete = 'T'
 );
 
@@ -249,6 +227,7 @@ END LOOP;
 
 FOR new IN im_po_cur LOOP
   UPDATE product_order SET
+    research_project_id = new.research_project_id,
     product_id = new.product_id,
     status = new.status,
     created_date = new.created_date,
@@ -261,6 +240,7 @@ FOR new IN im_po_cur LOOP
 
   INSERT INTO product_order (
     product_order_id,
+    research_project_id,
     product_id,
     status,
     created_date,
@@ -272,6 +252,7 @@ FOR new IN im_po_cur LOOP
   )
   SELECT
     new.product_order_id,
+    new.research_project_id,
     new.product_id,
     new.status,
     new.created_date,
@@ -413,8 +394,7 @@ END LOOP;
 FOR new IN im_rp_funding_cur LOOP
   UPDATE research_project_funding SET
     etl_date = new.etl_date 
-  WHERE research_project_funding_id = new.research_project_funding_id
-  AND research_project_id = new.research_project_id;
+  WHERE research_project_funding_id = new.research_project_funding_id;
 
   INSERT INTO research_project_funding (
     research_project_id,
@@ -428,7 +408,6 @@ FOR new IN im_rp_funding_cur LOOP
   FROM DUAL WHERE NOT EXISTS (
     SELECT 1 FROM research_project_funding
     WHERE research_project_funding_id = new.research_project_funding_id
-    AND research_project_id = new.research_project_id
   );
 END LOOP;
 
@@ -436,8 +415,7 @@ END LOOP;
 FOR new IN im_rp_cohort_cur LOOP
   UPDATE research_project_cohort SET
     etl_date = new.etl_date 
-  WHERE research_project_id = new.research_project_id
-  AND research_project_cohort_id = new.research_project_cohort_id;
+  WHERE research_project_cohort_id = new.research_project_cohort_id;
 
   INSERT INTO research_project_cohort (
     research_project_id,
@@ -450,43 +428,42 @@ FOR new IN im_rp_cohort_cur LOOP
     new.etl_date 
   FROM DUAL WHERE NOT EXISTS (
     SELECT 1 FROM research_project_cohort
-    WHERE research_project_id = new.research_project_id
-    AND research_project_cohort_id = new.research_project_cohort_id
+    WHERE research_project_cohort_id = new.research_project_cohort_id
   );
 END LOOP;
 
 
 FOR new IN im_rp_irb_cur LOOP
   UPDATE research_project_irb SET
+    research_project_id = new.research_project_id,
     research_project_irb = new.research_project_irb,
     research_project_irb_type = new.research_project_irb_type,
     etl_date = new.etl_date 
-  WHERE research_project_irb_id = new.research_project_irb_id
-  AND research_project_id = new.research_project_id;
+  WHERE research_project_irb_id = new.research_project_irb_id;
 
   INSERT INTO research_project_irb (
-    research_project_id,
     research_project_irb_id,
+    research_project_id,
     research_project_irb,
     research_project_irb_type,
     etl_date 
   )
   SELECT
-    new.research_project_id,
     new.research_project_irb_id,
+    new.research_project_id,
     new.research_project_irb,
     new.research_project_irb_type,
     new.etl_date 
   FROM DUAL WHERE NOT EXISTS (
     SELECT 1 FROM research_project_irb
     WHERE research_project_irb_id = new.research_project_irb_id
-    AND research_project_id = new.research_project_id
   );
 END LOOP;
 
 
 FOR new IN im_po_sample_cur LOOP
   UPDATE product_order_sample SET
+    product_order_id = new.product_order_id,
     sample_name = new.sample_name,
     billing_status = new.billing_status,
     etl_date = new.etl_date 
@@ -494,12 +471,14 @@ FOR new IN im_po_sample_cur LOOP
 
   INSERT INTO product_order_sample (
     product_order_sample_id,
+    product_order_id,
     sample_name,
     billing_status,
     etl_date 
   )
   SELECT
     new.product_order_sample_id,
+    new.product_order_id,
     new.sample_name,
     new.billing_status,
     new.etl_date 
@@ -540,104 +519,61 @@ FOR new IN im_po_status_cur LOOP
 END LOOP;
 
 
-FOR new IN im_pos_billing_status_cur LOOP
-  UPDATE po_sample_billing_status SET
+FOR new IN im_po_sample_stat_cur LOOP
+  UPDATE product_order_sample_status SET
+    product_order_id = new.product_order_id,
     billing_status = new.billing_status,
     etl_date = new.etl_date
   WHERE product_order_sample_id = new.product_order_sample_id
   AND status_date = new.status_date;
 
-  INSERT INTO po_sample_billing_status (
+  INSERT INTO product_order_sample_status (
     product_order_sample_id,
+    product_order_id,
     status_date,
     billing_status,
     etl_date
   )
   SELECT
     new.product_order_sample_id,
+    new.product_order_id,
     new.status_date,
     new.billing_status,
     new.etl_date
   FROM DUAL WHERE NOT EXISTS (
-    SELECT 1 FROM po_sample_billing_status
+    SELECT 1 FROM product_order_sample_status
     WHERE product_order_sample_id = new.product_order_sample_id
     AND status_date = new.status_date
   );
 END LOOP;
 
 
-FOR new IN im_po_billing_item_cur  LOOP
-  UPDATE po_billable_item SET
+FOR new IN im_billable_item_cur  LOOP
+  UPDATE billable_item SET
+    product_order_sample_id = new.product_order_sample_id,
+    price_item_id = new.price_item_id,
     item_count = new.item_count,
     etl_date = new.etl_date
-  WHERE product_order_sample_id = new.product_order_sample_id
-  AND price_item_id = new.price_item_id;
+  WHERE billable_item_id = new.billable_item_id;
 
-  INSERT INTO po_billable_item (
+  INSERT INTO billable_item (
+    billable_item_id,
     product_order_sample_id,
     price_item_id,
     item_count,
     etl_date
   )
   SELECT
+    new.billable_item_id,
     new.product_order_sample_id,
     new.price_item_id,
     new.item_count,
     new.etl_date
   FROM DUAL WHERE NOT EXISTS (
-    SELECT 1 FROM po_billable_item
-    WHERE product_order_sample_id = new.product_order_sample_id
-    AND price_item_id = new.price_item_id
+    SELECT 1 FROM billable_item
+    WHERE billable_item_id = new.billable_item_id
   );
 END LOOP;
-
-
-FOR new IN im_rp_po_cur LOOP
-  UPDATE research_project_po SET
-    etl_date = new.etl_date
-  WHERE research_project_id = new.research_project_id
-  AND product_order_id = new.product_order_id;
-
-  INSERT INTO research_project_po (
-    research_project_id,
-    product_order_id,
-    etl_date
-  )
-  SELECT
-    new.research_project_id,
-    new.product_order_id,
-    new.etl_date
-  FROM DUAL WHERE NOT EXISTS (
-    SELECT 1 FROM research_project_po
-    WHERE research_project_id = new.research_project_id
-    AND product_order_id = new.product_order_id
-  );
-END LOOP;
-
-
-FOR new IN im_po_pos_cur LOOP
-  UPDATE product_order_po_sample SET
-    etl_date = new.etl_date
-  WHERE product_order_id = new.product_order_id
-  AND product_order_sample_id = new.product_order_sample_id;
-
-
-  INSERT INTO product_order_po_sample (
-    product_order_id,
-    product_order_sample_id,
-    etl_date
-  )
-  SELECT
-    new.product_order_id,
-    new.product_order_sample_id,
-    new.etl_date
-  FROM DUAL WHERE NOT EXISTS (
-    SELECT 1 FROM product_order_po_sample
-    WHERE product_order_id = new.product_order_id
-    AND product_order_sample_id = new.product_order_sample_id
-  );
-END LOOP;
-
 
 --COMMIT;
 

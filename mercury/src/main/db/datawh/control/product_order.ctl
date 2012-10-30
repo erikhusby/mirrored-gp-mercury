@@ -4,14 +4,15 @@ REPLACE INTO TABLE im_product_order
 FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"'
 TRAILING NULLCOLS
 (
+ etl_date DATE "YYYYMMDDHH24MISS",
+ is_delete,
  product_order_id,
+ research_project_id,
  product_id,
- status ,
+ status,
  created_date DATE "YYYYMMDDHH24MISS",
  modified_date DATE "YYYYMMDDHH24MISS",
- title ,
- quote_id ,
- jira_ticket_key ,
- etl_date DATE "YYYYMMDDHH24MISS",
- is_delete
+ title,
+ quote_id,
+ jira_ticket_key
 )

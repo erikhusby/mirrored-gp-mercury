@@ -4,9 +4,9 @@ REPLACE INTO TABLE im_product_order_status
 FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"'
 TRAILING NULLCOLS
 (
+ etl_date DATE "YYYYMMDDHH24MISS",
+ is_delete,
  product_order_id,
  status_date DATE "YYYYMMDDHH24MISS",
- status,
- etl_date DATE "YYYYMMDDHH24MISS",
- is_delete
+ status
 )
