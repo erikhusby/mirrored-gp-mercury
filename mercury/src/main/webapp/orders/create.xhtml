@@ -33,18 +33,13 @@
                     <div class="control-group">
                         <div class="controls">
                             <div class="row-fluid">
-                                <div class="span1">
-                                    <p:commandButton id="commitSamples"
-                                                     update=":form:sampleDisplay, :form:idCache"
-                                                     value="OK"
-                                                     onclick="samplesDialog.hide()"
-                                                     actionListener="#{productOrderForm.samplesDialog.commit}"
-                                                     styleClass="btn btn-primary"/>
-                                </div>
-                                <div class="span1">
-                                    <p:commandButton value="Cancel" onclick="samplesDialog.hide()"
-                                                     styleClass="btn"/>
-                                </div>
+                                <p:commandButton id="commitSamples"
+                                                 update=":form:sampleDisplay, :form:idCache"
+                                                 value="OK"
+                                                 onclick="samplesDialog.hide()"
+                                                 actionListener="#{productOrderForm.samplesDialog.commit}"
+                                                 styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Cancel" onclick="samplesDialog.hide()"/>
                             </div>
                         </div>
                     </div>
