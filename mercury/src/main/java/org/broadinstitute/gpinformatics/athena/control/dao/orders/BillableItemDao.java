@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.*;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
@@ -55,6 +57,10 @@ public class BillableItemDao extends GenericDao {
         } catch (NoResultException ignored) {
             return Collections.emptyList();
         }
+    }
+
+    public BillableItem findByBillableItemId(Long billableItemId) {
+        return findSingle(BillableItem.class, BillableItem_.billableItemId, billableItemId);
     }
 
 }

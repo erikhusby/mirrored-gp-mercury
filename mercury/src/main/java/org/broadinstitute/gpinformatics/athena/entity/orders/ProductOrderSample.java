@@ -115,6 +115,10 @@ public class ProductOrderSample implements Serializable {
         return billableItems;
     }
 
+    public Long getProductOrderSampleId() {
+        return productOrderSampleId;
+    }
+
     public void addBillableItem(BillableItem billableItem) {
         billableItems.add(billableItem);
     }
