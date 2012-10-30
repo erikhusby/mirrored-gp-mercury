@@ -467,10 +467,10 @@ public class ResearchProject {
                     ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
                                                           title, synopsis, listOfFields);
 
-            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
-
-            // Only set the JIRA key once everything else has completed successfully
+            // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
             jiraTicketKey = researchProjectResponse.getKey();
+
+            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
     }
 
