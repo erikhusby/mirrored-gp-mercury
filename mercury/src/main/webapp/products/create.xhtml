@@ -149,11 +149,12 @@
                     <div class="controls">
                         <p:autoComplete id="defaultPriceItem" value="#{productForm.defaultPriceItem}"
                                         completeMethod="#{productForm.searchSelectedPriceItems}" var="defaultPriceItem"
-                                        itemLabel='#{productForm.labelFor(defaultPriceItem)}'
+                                        itemLabel='#{productForm.labelFor(defaultPriceItem)}' scrollHeight="250"
                                         itemValue="#{defaultPriceItem}" converter="#{priceItemConverter}"
                                         forceSelection="true" size="50">
                             <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{defaultPriceItem.platformName} | #{defaultPriceItem.categoryName} | #{defaultPriceItem.name} (#{defaultPriceItem.id})</div>
+                                <div class="ac-dropdown-text">#{defaultPriceItem.name} (#{defaultPriceItem.id})</div>
+                                <div class="ac-dropdown-subtext">#{defaultPriceItem.platformName} | #{defaultPriceItem.categoryName}</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="defaultPriceItem" value="Type text to search"/>
@@ -182,7 +183,7 @@
                     <div class="controls">
                         <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}"
                                         var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}"
-                                        converter="#{productConverter}" multiple="true" forceSelection="true" scrollHeight="250">
+                                        converter="#{productConverter}" multiple="true" scrollHeight="250">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{product.productName} - #{product.partNumber}</div>
                                 <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>
