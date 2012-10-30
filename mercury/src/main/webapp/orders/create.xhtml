@@ -88,17 +88,24 @@
                                         required="true"
                                         scrollHeight="250"
                                         size="50">
-                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="selectedAddOns"/>
+                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection"/>
                         </p:autoComplete>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>
 
-                        <p:fieldset styleClass="form-fieldset" legend="Add Ons">
-                            <p:selectManyCheckbox
-                                id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
-                                <f:selectItems value="#{productOrderForm.addOns}"/>
-                            </p:selectManyCheckbox>
-                        </p:fieldset>
+                        <fieldset>
+                            <legend>Add Ons</legend>
+                            <h:panelGroup id="perfbyselection">
+                                <h:outputText styleClass="entry-help" value="#{!productOrderForm.hasProduct ? 'If you select a product, its add ons will show up here' : ''}"/>
+                                <h:outputText styleClass="entry-help"
+                                    value="#{productOrderForm.hasProduct and productOrderForm.addOns.isEmpty() ?
+                                        productOrderForm.noAddOnsString() : ''}"/>
+                                <p:selectManyCheckbox
+                                    id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
+                                    <f:selectItems value="#{productOrderForm.addOns}"/>
+                                </p:selectManyCheckbox>
+                            </h:panelGroup>
+                        </fieldset>
                     </div>
                </div>
 
