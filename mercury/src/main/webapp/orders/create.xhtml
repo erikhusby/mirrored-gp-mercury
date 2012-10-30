@@ -153,8 +153,11 @@
                 <h:panelGroup id="sampleDisplay">
                     <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
                     <p:panel header="Summary" toggleable="true" style="margin-bottom: 5px;">
-                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}"
+                        <p:dataList value="#{productOrderDetail.productOrder.sampleSummaryComments}"
                                     var="comment" itemType="none">
+                            #{comment}
+                        </p:dataList>
+                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}" var="comment" itemType="none">
                             #{comment}
                         </p:dataList>
                     </p:panel>
