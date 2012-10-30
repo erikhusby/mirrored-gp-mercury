@@ -8,25 +8,25 @@
     <!-- changeSet ids include the ticket number, with -n appended to allow multiple changeSets per ticket.
      Keep changeSets small, it's harder to recover from an error in a large changeSet.
       -->
-<!--
-    <changeSet id="GPLIM-55-1" author="thompson">
-        <preConditions>
-            <not>
-                <tableExists tableName="test" schemaName="mercury"/>
-            </not>
-        </preConditions>
-        <comment>Testing Liquibase</comment>
-        <createTable tableName="test" schemaName="mercury">
-            <column name="test_id" type="int">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="name" type="varchar(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="active" type="boolean" defaultValueBoolean="true"/>
-        </createTable>
-    </changeSet>
--->
+    <!--
+        <changeSet id="GPLIM-55-1" author="thompson">
+            <preConditions>
+                <not>
+                    <tableExists tableName="test" schemaName="mercury"/>
+                </not>
+            </preConditions>
+            <comment>Testing Liquibase</comment>
+            <createTable tableName="test" schemaName="mercury">
+                <column name="test_id" type="int">
+                    <constraints primaryKey="true" nullable="false"/>
+                </column>
+                <column name="name" type="varchar(50)">
+                    <constraints nullable="false"/>
+                </column>
+                <column name="active" type="boolean" defaultValueBoolean="true"/>
+            </createTable>
+        </changeSet>
+    -->
 
     <changeSet id="GPLIM-73-1" author="thompson">
         <createTable tableName="lab_vessel_mercury_samples" schemaName="mercury">
@@ -56,61 +56,71 @@
         </createTable>
         <addPrimaryKey tableName="lab_vessel_mercury_samples_aud" schemaName="mercury" columnNames="rev, lab_vessel, mercury_samples"/>
     </changeSet>
-        <changeSet id="GPLIM-73-3" author="thompson">
-            <createTable tableName="mercury_sample" schemaName="mercury">
-                <column name="mercury_sample_id" type="number(19,0)">
-                    <constraints nullable="false"/>
-                </column>
-                <column name="product_order_key" type="varchar(255)">
-                    <constraints nullable="true"/>
-                </column>
-                <column name="sample_key" type="varchar(255)">
-                    <constraints nullable="true"/>
-                </column>
-            </createTable>
-            <addPrimaryKey tableName="mercury_sample" schemaName="mercury" columnNames="mercury_sample_id"/>
-            <createIndex tableName="mercury_sample" indexName="ix_ms_sample_key">
-                <column name="sample_key"/>
-            </createIndex>
-            <createSequence sequenceName="SEQ_MERCURY_SAMPLE" schemaName="mercury" startValue="1" incrementBy="50"/>
-        </changeSet>
-        <changeSet id="GPLIM-73-4" author="thompson">
-            <createTable tableName="mercury_sample_aud" schemaName="mercury">
-                <column name="mercury_sample_id" type="number(19,0)">
-                    <constraints nullable="false"/>
-                </column>
-                <column name="rev" type="number(19,0)">
-                    <constraints nullable="false"/>
-                </column>
-                <column name="revtype" type="number(3,0)">
-                    <constraints nullable="true"/>
-                </column>
-                <column name="product_order_key" type="varchar(255)">
-                    <constraints nullable="true"/>
-                </column>
-                <column name="sample_key" type="varchar(255)">
-                    <constraints nullable="true"/>
-                </column>
-            </createTable>
-            <addPrimaryKey tableName="mercury_sample_aud" schemaName="mercury" columnNames="mercury_sample_id, rev"/>
-        </changeSet>
-        <changeSet id="GPLIM-73-5" author="thompson">
-            <addForeignKeyConstraint baseTableName="lab_vessel_mercury_samples" baseTableSchemaName="mercury"
-                                     baseColumnNames="mercury_samples"
-                                     constraintName="fk_lvms_mercury_sample"
-                                     referencedTableName="mercury_sample" referencedTableSchemaName="mercury"
-                                     referencedColumnNames="mercury_sample_id"/>
-            <addForeignKeyConstraint baseTableName="lab_vessel_mercury_samples" baseTableSchemaName="mercury"
-                                     baseColumnNames="lab_vessel"
-                                     constraintName="fk_lvms_lab_vessel"
-                                     referencedTableName="lab_vessel" referencedTableSchemaName="mercury"
-                                     referencedColumnNames="lab_vessel_id"/>
-            <addForeignKeyConstraint baseTableName="lab_vessel_mercury_samples_aud" baseTableSchemaName="mercury"
-                                     baseColumnNames="rev"
-                                     constraintName="fk_lvmsa_rev_info"
-                                     referencedTableName="rev_info" referencedTableSchemaName="mercury"
-                                     referencedColumnNames="rev_info_id"/>
-        </changeSet>
+    <changeSet id="GPLIM-73-3" author="thompson">
+        <createTable tableName="mercury_sample" schemaName="mercury">
+            <column name="mercury_sample_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order_key" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="sample_key" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="mercury_sample" schemaName="mercury" columnNames="mercury_sample_id"/>
+        <createIndex tableName="mercury_sample" indexName="ix_ms_sample_key">
+            <column name="sample_key"/>
+        </createIndex>
+        <createSequence sequenceName="SEQ_MERCURY_SAMPLE" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-73-4" author="thompson">
+        <createTable tableName="mercury_sample_aud" schemaName="mercury">
+            <column name="mercury_sample_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="product_order_key" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="sample_key" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="mercury_sample_aud" schemaName="mercury" columnNames="mercury_sample_id, rev"/>
+    </changeSet>
+    <changeSet id="GPLIM-73-5" author="thompson">
+        <addForeignKeyConstraint baseTableName="lab_vessel_mercury_samples" baseTableSchemaName="mercury"
+                                 baseColumnNames="mercury_samples"
+                                 constraintName="fk_lvms_mercury_sample"
+                                 referencedTableName="mercury_sample" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="mercury_sample_id"/>
+        <addForeignKeyConstraint baseTableName="lab_vessel_mercury_samples" baseTableSchemaName="mercury"
+                                 baseColumnNames="lab_vessel"
+                                 constraintName="fk_lvms_lab_vessel"
+                                 referencedTableName="lab_vessel" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="lab_vessel_id"/>
+        <addForeignKeyConstraint baseTableName="lab_vessel_mercury_samples_aud" baseTableSchemaName="mercury"
+                                 baseColumnNames="rev"
+                                 constraintName="fk_lvmsa_rev_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
 
+    <changeSet id="GPLIM-73-6" author="thompson">
+        <addColumn tableName="lab_vessel" schemaName="mercury">
+            <column name="volume" type="float"/>
+            <column name="concentration" type="float"/>
+        </addColumn>
+        <addColumn tableName="lab_vessel_aud" schemaName="mercury">
+            <column name="volume" type="float"/>
+            <column name="concentration" type="float"/>
+        </addColumn>
+    </changeSet>
 
 </databaseChangeLog>

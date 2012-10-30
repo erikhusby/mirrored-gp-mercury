@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
@@ -22,6 +23,9 @@ import java.util.*;
 public class BSPUserList {
 
     private static long userIdSeq = 101010101L;
+
+    @Inject
+    private Deployment deployment;
 
     private final List<BspUser> users;
 
@@ -103,28 +107,26 @@ public class BSPUserList {
 
         if (rawUsers == null) {
             rawUsers = new ArrayList<BspUser>();
+        }
+
+        if (deployment != Deployment.PROD) {
             addQADudeUsers(rawUsers);
         }
 
-        if (rawUsers != null) {
-            addQADudeUsers(rawUsers);
-            Collections.sort(rawUsers, new Comparator<BspUser>() {
-                @Override
-                public int compare(BspUser o1, BspUser o2) {
-                    // FIXME: need to figure out what the correct sort criteria are.
-                    CompareToBuilder builder = new CompareToBuilder();
-                    builder.append(o1.getLastName(), o2.getLastName());
-                    builder.append(o1.getFirstName(), o2.getFirstName());
-                    builder.append(o1.getUsername(), o2.getUsername());
-                    builder.append(o1.getEmail(), o2.getEmail());
-                    return builder.build();
-                }
-            });
+        Collections.sort(rawUsers, new Comparator<BspUser>() {
+            @Override
+            public int compare(BspUser o1, BspUser o2) {
+                // FIXME: need to figure out what the correct sort criteria are.
+                CompareToBuilder builder = new CompareToBuilder();
+                builder.append(o1.getLastName(), o2.getLastName());
+                builder.append(o1.getFirstName(), o2.getFirstName());
+                builder.append(o1.getUsername(), o2.getUsername());
+                builder.append(o1.getEmail(), o2.getEmail());
+                return builder.build();
+            }
+        });
 
-            users = ImmutableList.copyOf(rawUsers);
-        } else {
-            users = new ArrayList<BspUser>();
-        }
+        users = ImmutableList.copyOf(rawUsers);
     }
 
     private void addQADudeUsers(List<BspUser> users) {

@@ -33,26 +33,6 @@ public class TwoDBarcodedTube extends LabVessel {
     }
 
     @Override
-    public void addMetric(LabMetric m) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<LabMetric> getMetrics() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode, SampleInstance sampleInstance) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public boolean isAncestor(LabVessel progeny) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Set<LabEvent> getTransfersFrom() {
         Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
         for (VesselContainer<?> vesselContainer : getContainers()) {
@@ -86,27 +66,12 @@ public class TwoDBarcodedTube extends LabVessel {
     }
 
     @Override
-    public boolean isProgeny(LabVessel ancestor) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Collection<LabEvent> getEvents() {
         throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override
     public LabVessel getContainingVessel() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Float getVolume() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Float getConcentration() {
         throw new RuntimeException("I haven't been written yet.");
     }
 }

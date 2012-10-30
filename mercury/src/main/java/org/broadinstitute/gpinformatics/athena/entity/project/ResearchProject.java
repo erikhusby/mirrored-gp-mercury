@@ -246,6 +246,16 @@ public class ResearchProject {
     }
 
     /**
+     * Clears the ID and JIRA ticket key. THIS METHOD MUST ONLY EVER BE CALLED BY
+     * {@link org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectManager#createResearchProject(ResearchProject)}
+     * IN THE CASE WHERE THE JIRA ISSUE HAS BEEN CREATED BUT THERE IS AN ERROR PERSISTING THE RESEARCH PROJECT!
+     */
+    public void rollbackPersist() {
+        this.researchProjectId = null;
+        this.jiraTicketKey = null;
+    }
+
+    /**
      *
      * @return Get the cohortIds. Since the cohort list is defaulted to empty, we know that the cohorts will exist
      */
@@ -457,7 +467,9 @@ public class ResearchProject {
                     ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
                                                           title, synopsis, listOfFields);
 
+            // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
             jiraTicketKey = researchProjectResponse.getKey();
+
             addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
     }

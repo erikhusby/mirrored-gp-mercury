@@ -89,14 +89,4 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
     public Collection<LabEvent> getEvents() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
-
-    @Override
-    public Float getVolume() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public Float getConcentration() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
 }
