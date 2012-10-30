@@ -115,6 +115,29 @@ public class ServiceAccessUtility {
         return foundServiceObject;
     }
 
+    // todo jmt use this in some of the other methods in this class
+    /**
+     * Gets a CDI bean of the given type
+     * @param beanType  class of the bean
+     * @param <T> type of the bean
+     * @return CDI bean
+     */
+    public static <T> T getBean(Class<T> beanType) {
+        try {
+            InitialContext initialContext = new InitialContext();
+            try{
+                BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
+                Bean<?> bean = beanManager.getBeans(beanType).iterator().next();
+                CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
+                return (T) beanManager.getReference(bean, beanType, ctx);
+            } finally {
+                initialContext.close();
+            }
+        } catch (NamingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * createdJiraTicket exposes a method by which a the createJiraTicket method on the Integration layerJira service
      * can be called
