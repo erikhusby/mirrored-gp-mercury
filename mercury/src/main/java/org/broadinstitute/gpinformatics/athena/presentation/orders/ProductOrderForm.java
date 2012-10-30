@@ -71,8 +71,6 @@ public class ProductOrderForm extends AbstractJsfBean {
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
-    private final List<String> sampleValidationMessages = new ArrayList<String>();
-
     public UIInput getEditIdsCacheBinding() {
         return editIdsCacheBinding;
     }
@@ -91,10 +89,6 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     public SamplesDialog getSamplesDialog() {
         return samplesDialog;
-    }
-
-    public List<String> getSampleValidationMessages() {
-        return sampleValidationMessages;
     }
 
     public String getFundsRemaining() {
@@ -263,26 +257,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
     }
 
-    private static void checkCount(int count, String message, List<String> output) {
-        if (count != 0) {
-            output.add(MessageFormat.format(message, count));
-        }
-    }
-
-    /**
-     * Check to see if the samples are valid.
-     * - for all BSP formatted sample IDs, do we have BSP data?
-     * - all BSP samples are RECEIVED
-     * - all BSP samples' stock is ACTIVE
-     */
-    private void validateSamples() {
-        sampleValidationMessages.clear();
-        ProductOrder order = productOrderDetail.getProductOrder();
-        checkCount(order.getMissingBspMetaDataCount(), "Samples Missing BSP Data: {0}", sampleValidationMessages);
-        checkCount(order.getBspSampleCount() - order.getActiveSampleCount(), "Samples Not ACTIVE: {0}", sampleValidationMessages);
-        checkCount(order.getBspSampleCount() - order.getReceivedSampleCount(), "Samples Not RECEIVED: {0}", sampleValidationMessages);
-    }
-
     /**
      * Load local state before rendering the sample table.
      */
@@ -298,7 +272,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
 
         productOrderDetail.load();
-        validateSamples();
     }
 
     // FIXME: handle db store errors, JIRA server errors.
