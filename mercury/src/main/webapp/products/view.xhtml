@@ -57,13 +57,6 @@
                 </div>
             </div>
 
-            <div class="control-group">
-                <label class="control-label">Top Level Product</label>
-                <div class="controls">
-                    <div class="form-value">#{productView.product.topLevelProduct ? "Yes" : "No"}</div>
-                </div>
-            </div>
-
 
             <div class="control-group">
                 <label class="control-label">Availability Date</label>
@@ -101,16 +94,16 @@
             </div>
 
             <div class="control-group">
-                <label class="control-label">Expected Cycle Time (Hours)</label>
+                <label class="control-label">Expected Cycle Time (Days)</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.expectedCycleTimeHours}</div>
+                    <div class="form-value">#{productView.expectedCycleTimeDays}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Guaranteed Cycle Time (Hours)</label>
+                <label class="control-label">Guaranteed Cycle Time (Days)</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.guaranteedCycleTimeHours}</div>
+                    <div class="form-value">#{productView.guaranteedCycleTimeDays}</div>
                 </div>
             </div>
 
@@ -127,6 +120,14 @@
                     <div class="form-value">#{productView.product.minimumOrderSize}</div>
                 </div>
             </div>
+
+            <div class="control-group">
+                <label class="control-label">PDM Orderable Only?</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.pdmOrderableOnly ? "Yes" : "No"}</div>
+                </div>
+            </div>
+
 
             <p:dataTable value="#{productView.addOns}" var="addOn" >
                 <f:facet name="header">

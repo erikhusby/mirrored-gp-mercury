@@ -119,7 +119,10 @@
                 <div class="control-group">
                     <label class="control-label label-form">IRB Not Engaged</label>
                     <div class="controls">
-                        <div class="form-value">#{researchProjectDetail.project.irbNotEngaged}</div>
+
+                        <div class="form-value">
+                            <p:selectBooleanCheckbox id="irbEngaged" value="#{researchProjectDetail.project.irbNotEngaged}" disabled="true"/>
+                        </div>
                     </div>
                 </div>
 
@@ -136,46 +139,30 @@
                         <div class="form-value">#{researchProjectDetail.project.irbNotes}</div>
                     </div>
                 </div>
+            </h:form>
 
-                <br/>
+            <br/>
 
-                <div class="row-fluid">
-                    <div class="pull-right ui-widget-header" style="padding: 5px;">
-                        <span class="ui-icon ui-icon-folder-open" style="float:left;">&nbsp;</span>
-                        <h:outputText value=" Export all data as: " />
+            <h:form>
+                <p:commandButton value="Add Order" action="/orders/create?faces-redirect=true&amp;includeViewParams=true" ajax="false" styleClass="btn"/>
+            </h:form>
 
-                        <p:commandLink title="Click to download all project order data as a Microsoft Excel file">
-                            <h:outputText value="Excel"/>
-                            <p:dataExporter
-                                    type="xls"
-                                    pageOnly = "false"
-                                    target="orderData"
-                                    fileName="#{researchProjectDetail.project.title}" />
-                        </p:commandLink>
-                        &nbsp;
-                        <p:commandLink title="Click to download all project order data as a CSV file">
-                            <h:outputText value="CSV"/>
-                            <p:dataExporter
-                                    type="csv"
-                                    pageOnly = "false"
-                                    target="orderData"
-                                    fileName="#{researchProjectDetail.project.title}" />
-                        </p:commandLink>
-                    </div>
-                </div>
-
+            <h:form>
                 <p:dataTable id="orderData" value="#{researchProjectDetail.project.productOrders}" var="order" filteredValue="#{productOrderBean.filteredProductOrders}">
                     <f:facet name="header">
                         Orders
                     </f:facet>
 
                     <p:column headerText="Name">
-                        #{order.title}
-                    </p:column>
-                    <p:column headerText="Product ID">
-                        <h:link outcome="/orders/view" value="#{order.jiraTicketKey}">
+                        <h:link outcome="view" value="#{order.title}">
                             <f:param name="productOrder" value="#{order.businessKey}"/>
                         </h:link>
+                    </p:column>
+                    <p:column headerText="Product ID">
+                        <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}"
+                                      class="external" rendered="#{order.hasJiraTicketKey()}" >
+                            <h:outputText value="#{order.jiraTicketKey}" />
+                        </h:outputLink>
                     </p:column>
                     <p:column headerText="Product">
                         #{order.product.productName}

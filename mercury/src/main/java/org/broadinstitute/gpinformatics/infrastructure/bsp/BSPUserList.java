@@ -101,6 +101,11 @@ public class BSPUserList {
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
         List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
 
+        if (rawUsers == null) {
+            rawUsers = new ArrayList<BspUser>();
+            addQADudeUsers(rawUsers);
+        }
+
         if (rawUsers != null) {
             addQADudeUsers(rawUsers);
             Collections.sort(rawUsers, new Comparator<BspUser>() {

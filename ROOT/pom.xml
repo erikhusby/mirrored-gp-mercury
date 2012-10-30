@@ -1,0 +1,15 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>ROOT</groupId>
+  <artifactId>ROOT</artifactId>
+  <packaging>war</packaging>
+  <version>1.0</version>
+  <name>ROOT Maven Webapp</name>
+    <description>Simple webapp to be a JBoss ROOT context with a redirect to /Mercury. Requires JBoss AS 7 to have the
+        enable-welcome-root property to be set to false (found in the standalone.xml configuration file.)
+    </description>
+  <build>
+    <finalName>ROOT</finalName>
+  </build>
+</project>

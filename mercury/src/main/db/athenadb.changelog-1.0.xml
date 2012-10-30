@@ -372,6 +372,103 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-71-1" author="hrafal">
+        <preConditions>
+            <not>
+                <tableExists tableName="product_order_add_on" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_add_on" schemaName="athena">
+            <column name="product_order_add_on_id" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="add_on" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-2" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_add_on_add_on" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_add_on_product" baseTableSchemaName="athena"
+                                 baseTableName="product_order_add_on" baseColumnNames="add_on"
+                                 referencedTableName="product" referencedColumnNames="product_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-3" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_add_on_order" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_add_on_order" baseTableSchemaName="athena"
+                                 baseTableName="product_order_add_on" baseColumnNames="product_order"
+                                 referencedTableName="product_order" referencedColumnNames="product_order_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-4" author="hrafal">
+        <preConditions>
+            <not>
+                <indexExists indexName="ix_product_order_add_on" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="ix_product_order_add_on" schemaName="athena" tableName="product_order_add_on">
+            <column name="product_order"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-5" author="hrafal">
+        <preConditions>
+            <not>
+                <tableExists tableName="product_order_add_on_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_add_on_aud" schemaName="athena">
+            <column name="product_order_add_on_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="add_on" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-6" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_add_on_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_add_on_aud" baseTableSchemaName="athena"
+                                 baseTableName="product_order_add_on_aud" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-7" author="hrafal">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="SEQ_ORDER_ADD_ON" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_ORDER_ADD_ON" schemaName="athena" startValue="1" incrementBy="50"/>
+    </changeSet>
 
     <changeSet id="GPLIM-139-1.1.1" author="mcovarr">
         <sql>
@@ -420,6 +517,179 @@
 
     <changeSet id="GPLIM-139-3" author="mcovarr">
         <addNotNullConstraint columnName="product_family" tableName="product" schemaName="athena" />
+    </changeSet>
+
+    <changeSet id="GPLIM-116" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="product" columnName="pdm_orderable_only" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product">
+            <column name="pdm_orderable_only" type="number(1,0)"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="product"
+                columnName="pdm_orderable_only"
+                defaultNullValue="0" />
+    </changeSet>
+
+    <changeSet id="GPLIM-116_aud" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_aud" columnName="pdm_orderable_only" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_aud">
+            <column name="pdm_orderable_only" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-189-1" author="mccrory">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order_sample" columnName="sample_position" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample">
+            <column name="sample_position" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-189-2" author="mccrory">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order_sample_aud" columnName="sample_position" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample_aud">
+            <column name="sample_position" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-116_pg.remove" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn tableName="product" schemaName="athena" columnName="pdm_orderable_only"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-116_pg.add" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <addColumn tableName="product" schemaName="athena">
+            <column name="pdm_orderable_only" type="boolean"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-116_aud_pg.remove" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn tableName="product_aud" schemaName="athena" columnName="pdm_orderable_only"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-116_aud_pg.add" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <addColumn tableName="product_aud" schemaName="athena">
+            <column name="pdm_orderable_only" type="boolean"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-172_oracle" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="oracle" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'RNA');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'SMALL_DESIGN_VALIDATION_AND_EXTENSION');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'EXOME');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'WHOLE_GENOME');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'DE_NOVO_ASSEMBLY');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'MICROBIAL_AND_VIRAL_ANALYSIS');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'SEQUENCE_ONLY');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'METAGENOMICS');
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-172_pg" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'RNA');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'SMALL_DESIGN_VALIDATION_AND_EXTENSION');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'EXOME');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'WHOLE_GENOME');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'DE_NOVO_ASSEMBLY');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'MICROBIAL_AND_VIRAL_ANALYSIS');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'SEQUENCE_ONLY');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'METAGENOMICS');
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-172_repoint_and_remove_old" author="mcovarr">
+        <sql>
+            update athena.product set product_family = (
+              select product_family_id from athena.product_family where name = 'RNA')
+            where product_family in (
+              select product_family_id from athena.product_family where name in (
+                'GENERAL_PRODUCTS',
+                'EXOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_ARRAY_ANALYSIS',
+                'RNA_ANALYSIS',
+                'ASSEMBLY_ANALYSIS',
+                'METAGENOMIC_ANALYSIS',
+                'EPIGENOMIC_ANALYSIS',
+                'ILLUMINA_SEQUENCING_ONLY',
+                'ALTERNATIVE_TECHNOLOGIES',
+                'CUSTOM_PRODUCTS_TARGETED_SEQUENCING'
+                )
+            );
+
+            delete from athena.product_family where name in (
+                'GENERAL_PRODUCTS',
+                'EXOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_ARRAY_ANALYSIS',
+                'RNA_ANALYSIS',
+                'ASSEMBLY_ANALYSIS',
+                'METAGENOMIC_ANALYSIS',
+                'EPIGENOMIC_ANALYSIS',
+                'ILLUMINA_SEQUENCING_ONLY',
+                'ALTERNATIVE_TECHNOLOGIES',
+                'CUSTOM_PRODUCTS_TARGETED_SEQUENCING'
+            )
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-116_pg.add_not_nullable" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <addNotNullConstraint
+                schemaName="athena"
+                tableName="product"
+                columnName="pdm_orderable_only"
+                defaultNullValue="0" />
     </changeSet>
 
 </databaseChangeLog>

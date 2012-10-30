@@ -216,7 +216,7 @@ public class MercuryConfiguration {
 
                     MERCURY_BUILD_INFO += " built on " + new SimpleDateFormat("yyyy/MM/dd hh:mm a").format(date);
                 } else {
-                    throw new RuntimeException("Cannot find version file " + versionFilename);
+                    return "Version unknown.  Are we in a sandbox?";
                 }
             } catch (IOException ioe) {
                 MERCURY_BUILD_INFO = "Unknown build - problematic " + versionFilename;

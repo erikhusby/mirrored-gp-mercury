@@ -2554,7 +2554,7 @@
 
     create sequence mercury.seq_molecular_indexing_scheme start 1 increment 50;
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON mercury.rev_info to athena;
+GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES ON mercury.rev_info to athena;
 GRANT USAGE on mercury.seq_rev_info to athena;
 
 select execute('alter table '||schemaname||'.'||tablename||' owner to '||schemaname||';')
@@ -2563,3 +2563,5 @@ from pg_tables where schemaname in ('athena', 'mercury');
 select execute('alter table '||schms.nspname||'.'||seqs.relname||' owner to '||schms.nspname||';')
 from pg_class as seqs, pg_namespace as schms
 where schms.nspname in ('athena', 'mercury') and seqs.relkind = 'S' and schms.oid = seqs.relnamespace;
+
+grant usage on schema mercury to athena;

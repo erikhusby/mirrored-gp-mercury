@@ -70,10 +70,6 @@
                     <h:outputText value="#{product.productFamily.displayName}" />
                 </p:column>
 
-                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productList.compare}" >
-                    <h:outputText value='#{product.topLevelProduct ? "Yes" : "No"}' />
-                </p:column>
-
                 <p:column headerText="Available?" sortBy="#{product.available}" sortFunction="#{productList.compare}" >
                     <h:outputText value='#{product.available ? "Yes" : "No"}'/>
                 </p:column>

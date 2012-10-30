@@ -26,6 +26,11 @@
     </security-role-mapping>
 
     <security-role-mapping>
+        <role-name>Mercury-ProductManagers</role-name>
+        <group-name>Mercury-ProductManagers</group-name>
+    </security-role-mapping>
+
+    <security-role-mapping>
         <role-name>Mercury-Developers</role-name>
         <group-name>Mercury-Developers</group-name>
     </security-role-mapping>
