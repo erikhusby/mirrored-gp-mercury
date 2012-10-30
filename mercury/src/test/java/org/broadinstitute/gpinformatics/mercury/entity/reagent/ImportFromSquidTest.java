@@ -29,8 +29,7 @@ import java.util.TreeMap;
 /**
  * A Test to import molecular indexes and LCSETs from Squid.  This prepares an empty database to accept messages.  This must
  * be in the same package as MolecularIndexingScheme, because it uses package visible methods on that class.
- * Use the following VM options: -Xmx1G -XX:MaxPermSize=128M.
- * todo jmt also needs org.jboss.remoting-jmx.timeout=600?
+ * Use the following VM options: -Xmx1G -XX:MaxPermSize=128M -Dorg.jboss.remoting-jmx.timeout=1500
  * As of August 2012, the test takes about 20 minutes to run.
  */
 public class ImportFromSquidTest extends ContainerTest {
@@ -241,6 +240,7 @@ public class ImportFromSquidTest extends ContainerTest {
                 tubeBeans = new ArrayList<TubeBean>();
                 labBatch = new LabBatchBean(lcSet, workflowName, tubeBeans);
             }
+            // todo jmt how to create product order, research project?
             tubeBeans.add(new TubeBean(tubeBarcode, sampleBarcode, lcSet));
         }
     }

@@ -90,7 +90,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
             return;
         }
 
-        utx.rollback();
+        utx.commit();
     }
 
     @Test(enabled = true, groups = EXTERNAL_INTEGRATION)

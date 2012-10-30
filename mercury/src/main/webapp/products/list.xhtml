@@ -24,6 +24,10 @@
 
         <h:form id="productList">
 
+            <div class="row">
+                <h:link value="New Product" outcome="create" styleClass="pull-right"/>
+            </div>
+
             <p:dataTable value="#{productList.productsDataModel}"
                          var="product"
                          sortBy="#{product.partNumber}"
