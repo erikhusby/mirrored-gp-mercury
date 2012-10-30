@@ -26,7 +26,7 @@ import java.util.UUID;
  * Date: 10/10/12
  * Time: 2:20 PM
  */
-@Test(enabled = false)
+@Test(enabled = true)
 public class ProductOrderSampleDaoTest  extends ContainerTest {
 
     @Inject
@@ -91,7 +91,7 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
         return newProductOrder;
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=false)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
     public void testFindByProductOrder() throws Exception {
         ProductOrder order = createTestProductOrder();
 
@@ -108,5 +108,9 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
         List<ProductOrderSample> productOrderSamplesFromDb = productOrderSampleDao.findByProductOrder(order);
         Assert.assertNotNull(productOrderSamplesFromDb);
         Assert.assertEquals(productOrderSamplesFromDb.size(), sampleList.size());
+        // check the sample order, should be the same.
+        productOrderSamplesFromDb.get(0).getSampleName().equals("MS-1111");
+        productOrderSamplesFromDb.get(1).getSampleName().equals("MS-2222");
+        productOrderSamplesFromDb.get(2).getSampleName().equals("MS-3333");
     }
 }
