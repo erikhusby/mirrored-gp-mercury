@@ -39,9 +39,12 @@
                 <div class="control-group">
                     <p:outputLabel for="synopsis" value="Synopsis" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="100" maxlength="4000" rows="5" required="true"/>
+                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="100" maxlength="4000" rows="5" required="true" counter="counter" counterTemplate="{0} characters remaining">
+                            <f:validateLength maximum="4000"/>
+                        </p:inputTextarea>
                         <p:watermark for="synopsis" value="Enter scientific background of the research project in this space"/>
                         <p:message for="synopsis"/>
+                        <h:outputText id="counter"/>
                     </div>
                 </div>
 

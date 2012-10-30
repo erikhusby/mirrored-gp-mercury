@@ -49,6 +49,7 @@ public class ResearchProjectManager {
             // Force as much work here as possible to catch conditions where we would want to close the JIRA ticket
             researchProjectDao.flush();
         } catch (RuntimeException e) {
+            project.rollbackPersist();
 
             // TODO: close already-created JIRA ticket
             throw e;
