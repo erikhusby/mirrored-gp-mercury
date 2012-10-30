@@ -16,9 +16,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
 
@@ -65,6 +63,42 @@ public class ProductDaoTest extends ContainerTest {
     }
 
 
+    private Product createProduct() {
+
+        ProductFamily metagenomicsProductFamily =
+                ProductDaoTest.this.productFamilyDao.find(ProductFamily.ProductFamilyName.METAGENOMICS);
+
+
+        final int DAYS = 24 * 60 * 60;
+
+        Product product = new Product(
+                "Test Data",                               // product name
+                metagenomicsProductFamily,                 // product family
+                "test data ",                              // description
+                "PN-ProductDaoTest-" + UUID.randomUUID(),  // part number
+                Calendar.getInstance().getTime(),          // availability date
+                Calendar.getInstance().getTime(),          // discontinued date
+                3 * DAYS,                                  // expected cycle time
+                4 * DAYS,                                  // guaranteed cycle time
+                192,                                       // samples per week
+                96,                                        // min order size
+                "dummy input requirements",                // input requirements
+                "dummy deliverables",                      // deliverables
+                false,                                     // top level product
+                "dummy price item id"                      // quote server price item id
+                ,
+                false);
+
+        List<PriceItem> priceItems = priceItemDao.findAll();
+        Assert.assertNotNull(priceItems);
+        Assert.assertTrue(priceItems.size() > 0);
+        product.setDefaultPriceItem(priceItems.get(0));
+        product.addPriceItem(priceItems.get(0));
+
+        return product;
+    }
+
+
     private class DatesAndAvailability {
 
         private DateSpec availableDateSpec;
@@ -89,12 +123,10 @@ public class ProductDaoTest extends ContainerTest {
         }
 
 
+
         public Product createProduct() {
 
-            ProductFamily metagenomicsProductFamily =
-                    ProductDaoTest.this.productFamilyDao.find(ProductFamily.ProductFamilyName.METAGENOMICS);
-
-            final int DAYS = 24 * 60 * 60;
+            Product product = ProductDaoTest.this.createProduct();
 
             Date availableDate = null;
             Date discontinuedDate = null;
@@ -119,33 +151,13 @@ public class ProductDaoTest extends ContainerTest {
                 discontinuedDate = future.getTime();
             }
 
-            Product product = new Product(
-                    "Test Data",                        // product name
-                    metagenomicsProductFamily,       // product family
-                    "test data ",                       // description
-                    "PN-ProductDaoTest",                // part number
-                    availableDate,                      // availability date
-                    discontinuedDate,                   // discontinued date
-                    3 * DAYS,                           // expected cycle time
-                    4 * DAYS,                           // guaranteed cycle time
-                    192,                                // samples per week
-                    96,                                 // min order size
-                    "dummy input requirements",         // input requirements
-                    "dummy deliverables",               // deliverables
-                    false,                              // top level product
-                    "dummy price item id"               // quote server price item id
-                    ,
-                    false);
-
-            List<PriceItem> priceItems = priceItemDao.findAll();
-            Assert.assertNotNull(priceItems);
-            Assert.assertTrue(priceItems.size() > 0);
-            product.setDefaultPriceItem(priceItems.get(0));
-            product.addPriceItem(priceItems.get(0));
+            product.setAvailabilityDate(availableDate);
+            product.setDiscontinuedDate(discontinuedDate);
 
             return product;
 
         }
+
 
         @Override
         public String toString() {
@@ -180,19 +192,34 @@ public class ProductDaoTest extends ContainerTest {
 
     public void testFindTopLevelProducts() {
 
+        Product topLevelProduct = createProduct();
+        String topLevelPartNumber = topLevelProduct.getPartNumber();
+        topLevelProduct.setTopLevelProduct(true);
+        dao.persist(topLevelProduct);
+
+        Product notTopLevelProduct = createProduct();
+        String notTopLevelPartNumber = notTopLevelProduct.getPartNumber();
+        notTopLevelProduct.setTopLevelProduct(false);
+        dao.persist(notTopLevelProduct);
+        dao.flush();
+
         final List<Product> products = dao.findProducts(ProductDao.TopLevelProductsOnly.YES);
         Assert.assertNotNull(products);
 
-        // make sure exex is in there
+        // make sure our top level is in there and our not top level is not
+        boolean foundTopLevel = false;
+        boolean foundNotTopLevel = false;
         for (Product product : products) {
-            if ("EXOME_EXPRESS-2012.11.01".equals(product.getPartNumber())) {
-                return;
+            if (topLevelPartNumber.equals(product.getPartNumber())) {
+                foundTopLevel = true;
+            }
+            else if (notTopLevelPartNumber.equals(product.getPartNumber())) {
+                foundNotTopLevel = true;
             }
         }
 
-        Assert.fail("Did not find Exome Express top-level product!");
-
-        // needs a negative test for the absence of non top level products
+        Assert.assertTrue(foundTopLevel, "Did not find top level product!");
+        Assert.assertFalse(foundNotTopLevel, "Unexpectedly found not top level product!");
 
     }
 
@@ -228,36 +255,52 @@ public class ProductDaoTest extends ContainerTest {
     }
 
 
-    public void testFindAvailableTopLevelProducts() {
+    public void testFindPDMOnlyProducts() {
 
-        final List<Product> products = dao.findProducts(ProductDao.AvailableProductsOnly.YES, ProductDao.TopLevelProductsOnly.NO);
+        Product pdmOnlyProduct = createProduct();
+        String pdmOnlyPartNumber = pdmOnlyProduct.getPartNumber();
+        pdmOnlyProduct.setPdmOrderableOnly(true);
+        dao.persist(pdmOnlyProduct);
+
+        Product notPDMOnlyProduct = createProduct();
+        String notPDMOnlyPartNumber = notPDMOnlyProduct.getPartNumber();
+        notPDMOnlyProduct.setPdmOrderableOnly(false);
+        dao.persist(notPDMOnlyProduct);
+        dao.flush();
+
+        final List<Product> products = dao.findProducts(ProductDao.IncludePDMOnlyProducts.NO);
         Assert.assertNotNull(products);
 
-        // make sure exex is in there
+        // make sure our top level is in there and our not top level is not
+        boolean foundPDMOnly = false;
+        boolean foundNotPDMOnly = false;
         for (Product product : products) {
-            if ("EXOME_EXPRESS-2012.11.01".equals(product.getPartNumber())) {
-                return;
+            if (pdmOnlyPartNumber.equals(product.getPartNumber())) {
+                foundPDMOnly = true;
+            }
+            else if (notPDMOnlyPartNumber.equals(product.getPartNumber())) {
+                foundNotPDMOnly = true;
             }
         }
 
-        Assert.fail("Did not find Exome Express top-level product!");
-
+        Assert.assertTrue(foundNotPDMOnly, "Did not find expected non-PDM only product!");
+        Assert.assertFalse(foundPDMOnly, "Unexpectedly found PDM only product!");
     }
 
 
 
     public void testFindByPartNumber() {
 
-        final Product product = dao.findByPartNumber("EXOME_EXPRESS-2012.11.01");
-        Assert.assertNotNull(product);
+        Product product = createProduct();
 
-        Assert.assertEquals(product.getPartNumber(), "EXOME_EXPRESS-2012.11.01");
-        Assert.assertTrue(product.isTopLevelProduct());
-        Assert.assertEquals(product.getWorkflowName(), "EXEX-WF-2012.11.01");
+        dao.persist(product);
+        dao.flush();
 
-        // negative test
+        Product foundProduct = dao.findByPartNumber(product.getPartNumber());
+        Assert.assertNotNull(foundProduct, "Product not found!");
+
         Product nonexistentProduct = dao.findByPartNumber("NONEXISTENT PART!!!");
-        Assert.assertNull(nonexistentProduct);
+        Assert.assertNull(nonexistentProduct, "Unexpectedly found product that shouldn't exist!");
 
     }
 }
