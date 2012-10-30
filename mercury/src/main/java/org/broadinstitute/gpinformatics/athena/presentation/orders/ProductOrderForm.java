@@ -178,8 +178,16 @@ public class ProductOrderForm extends AbstractJsfBean {
         this.selectedAddOns = selectedAddOns;
     }
 
+    public boolean getHasProduct() {
+        return conversationData.getProduct() != null;
+    }
+
     public List<String> getAddOns() {
         return conversationData.getAddOnsForProduct();
+    }
+
+    public Product getProduct() {
+        return conversationData.getProduct();
     }
 
     public void setAddOns(@Nonnull List<String> addOns) {
@@ -202,12 +210,11 @@ public class ProductOrderForm extends AbstractJsfBean {
      * @param product The product
      */
     public void setupAddOns(Product product) {
-        conversationData.setAddOnsForProduct(new ArrayList<String>());
-        if (product != null) {
-            for (Product productAddOn : product.getAddOns()) {
-                conversationData.getAddOnsForProduct().add(productAddOn.getProductName());
-            }
-        }
+        conversationData.setProduct(product);
+    }
+
+    public String noAddOnsString() {
+        return "The Product " + getProduct().getProductName() + " has no add ons";
     }
 
     /**
