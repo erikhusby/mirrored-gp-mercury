@@ -680,4 +680,16 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-116_pg.add_not_nullable" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <addNotNullConstraint
+                schemaName="athena"
+                tableName="product"
+                columnName="pdm_orderable_only"
+                defaultNullValue="0" />
+    </changeSet>
+
 </databaseChangeLog>
