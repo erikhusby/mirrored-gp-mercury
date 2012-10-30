@@ -689,7 +689,7 @@
     <changeSet id="GPLIM-189-4" author="mccrory">
         <sql>
             update product_order_sample set sample_position = product_order_sample_id
-            where sample_position = null
+            where sample_position is null
         </sql>
     </changeSet>
 
