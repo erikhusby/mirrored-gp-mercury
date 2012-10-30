@@ -696,11 +696,15 @@
         <addNotNullConstraint columnName="sample_position" tableName="product_order_sample" schemaName="athena" />
     </changeSet>
 
-    <changeSet id="GPLIM-189-4" author="mccrory">
+    <changeSet id="GPLIM-189-3" author="mccrory">
         <sql>
             update product_order_sample set sample_position = product_order_sample_id
             where sample_position is null
         </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-189-4" author="mccrory">
+        <addNotNullConstraint columnName="sample_position" tableName="product_order_sample" schemaName="athena" />
     </changeSet>
 
 </databaseChangeLog>
