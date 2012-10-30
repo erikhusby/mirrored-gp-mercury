@@ -182,7 +182,7 @@
                     <div class="controls">
                         <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}"
                                         var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}"
-                                        converter="#{productConverter}" multiple="true" forceSelection="true" scrollHeight="250">
+                                        converter="#{productConverter}" multiple="true" scrollHeight="250">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{product.productName} - #{product.partNumber}</div>
                                 <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>

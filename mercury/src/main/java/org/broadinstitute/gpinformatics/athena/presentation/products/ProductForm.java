@@ -255,6 +255,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void addAllAddOnsToProduct() {
         Date now = Calendar.getInstance().getTime();
+        product.getAddOns().clear();
         if ( addOns != null) {
             for ( Product aProductAddOn : addOns ) {
                 if ( aProductAddOn != null ) {
