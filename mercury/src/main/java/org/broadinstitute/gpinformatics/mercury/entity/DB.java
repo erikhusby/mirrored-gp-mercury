@@ -1,18 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity;
 
-import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.AuthorizedRole;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.PageAuthorization;
-import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,13 +21,10 @@ public class DB implements Serializable {
     private static final long serialVersionUID = 3344014380008589366L;
 
 //    private final Map<String, Project> projects = new HashMap<String, Project>();
-    private final Map<String, WorkflowDescription> workflowDescriptions = new HashMap<String, WorkflowDescription>();
     private final Map<String, PageAuthorization> pageAuthorizationMap = new HashMap<String, PageAuthorization>();
     private final Map<String, AuthorizedRole> authorizedRoleMap = new HashMap<String, AuthorizedRole>();
 
     public DB() {
-        addWorkflowDescription(new WorkflowDescription("Hybrid Selection", null, null));
-        addWorkflowDescription(new WorkflowDescription("Whole Genome Shotgun", null, null));
         initAuthorizedRoles();
         initPageAuthorizations();
     }
@@ -64,31 +54,6 @@ public class DB implements Serializable {
 //    }
 
     // WorkflowDescription
-
-    public void addWorkflowDescription(WorkflowDescription workflowDescription) {
-        if (workflowDescription.getWorkflowName() == null) {
-            throw new IllegalArgumentException("Non-null constraint violation: WorkflowDescription.workflowName");
-        }
-        if (workflowDescriptions.containsKey(workflowDescription.getWorkflowName())) {
-            throw new IllegalArgumentException("Unique constraint violation: WorkflowDescription.workflowName");
-        }
-        workflowDescriptions.put(workflowDescription.getWorkflowName(), workflowDescription);
-    }
-
-    public List<WorkflowDescription> getAllWorkflowDescriptions() {
-        List<WorkflowDescription> result = new ArrayList<WorkflowDescription>(workflowDescriptions.values());
-        Collections.sort(result, new Comparator<WorkflowDescription>() {
-            @Override
-            public int compare(WorkflowDescription w1, WorkflowDescription w2) {
-                return w1.getWorkflowName().compareTo(w2.getWorkflowName());
-            }
-        });
-        return result;
-    }
-
-    public WorkflowDescription findByWorkflowDescriptionName(String workflowDescriptionName) {
-        return workflowDescriptions.get(workflowDescriptionName);
-    }
 
     public void initPageAuthorizations() {
 /* Leaving here as a code example, but we currently don't want to enforce any page authorizations.

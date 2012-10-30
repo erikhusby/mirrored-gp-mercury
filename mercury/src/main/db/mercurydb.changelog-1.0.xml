@@ -8,25 +8,25 @@
     <!-- changeSet ids include the ticket number, with -n appended to allow multiple changeSets per ticket.
      Keep changeSets small, it's harder to recover from an error in a large changeSet.
       -->
-<!--
-    <changeSet id="GPLIM-55-1" author="thompson">
-        <preConditions>
-            <not>
-                <tableExists tableName="test" schemaName="mercury"/>
-            </not>
-        </preConditions>
-        <comment>Testing Liquibase</comment>
-        <createTable tableName="test" schemaName="mercury">
-            <column name="test_id" type="int">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="name" type="varchar(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="active" type="boolean" defaultValueBoolean="true"/>
-        </createTable>
-    </changeSet>
--->
+    <!--
+        <changeSet id="GPLIM-55-1" author="thompson">
+            <preConditions>
+                <not>
+                    <tableExists tableName="test" schemaName="mercury"/>
+                </not>
+            </preConditions>
+            <comment>Testing Liquibase</comment>
+            <createTable tableName="test" schemaName="mercury">
+                <column name="test_id" type="int">
+                    <constraints primaryKey="true" nullable="false"/>
+                </column>
+                <column name="name" type="varchar(50)">
+                    <constraints nullable="false"/>
+                </column>
+                <column name="active" type="boolean" defaultValueBoolean="true"/>
+            </createTable>
+        </changeSet>
+    -->
 
     <changeSet id="GPLIM-73-1" author="thompson">
         <createTable tableName="lab_vessel_mercury_samples" schemaName="mercury">
@@ -110,6 +110,16 @@
                                  constraintName="fk_lvmsa_rev_info"
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
                                  referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-73-6" author="thompson">
+        <addColumn tableName="lab_vessel" schemaName="mercury">
+            <column name="volume" type="float"/>
+            <column name="concentration" type="float"/>
+        </addColumn>
+        <addColumn tableName="lab_vessel_aud" schemaName="mercury">
+            <column name="volume" type="float"/>
+            <column name="concentration" type="float"/>
+        </addColumn>
     </changeSet>
     <changeSet id="GPLIM-22-1" author="scottmat">
         <createTable tableName="bucket" schemaName="mercury">
@@ -213,5 +223,6 @@
                                  referencedTableName="bucket" referencedTableSchemaName="mercury"
                                  referencedColumnNames="bucket_id"/>
     </changeSet>
+
 
 </databaseChangeLog>

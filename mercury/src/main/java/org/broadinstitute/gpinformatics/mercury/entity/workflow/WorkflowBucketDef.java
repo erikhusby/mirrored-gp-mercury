@@ -1,8 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 /**
  * Where samples are placed for batching, typically the first step in a process
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class WorkflowBucketDef extends WorkflowStepDef {
 
     public enum MaterialType {
@@ -40,7 +44,59 @@ public class WorkflowBucketDef extends WorkflowStepDef {
     // auto-drain rules - time / date based
     private Double autoDrainDays;
 
+    /** For JAXB */
+    WorkflowBucketDef() {
+    }
+
     public WorkflowBucketDef(String name) {
         super(name);
+    }
+
+    public MaterialType getEntryMaterialType() {
+        return entryMaterialType;
+    }
+
+    public void setEntryMaterialType(MaterialType entryMaterialType) {
+        this.entryMaterialType = entryMaterialType;
+    }
+
+    public Double getEntryLowVolume() {
+        return entryLowVolume;
+    }
+
+    public void setEntryLowVolume(Double entryLowVolume) {
+        this.entryLowVolume = entryLowVolume;
+    }
+
+    public Double getEntryHighVolume() {
+        return entryHighVolume;
+    }
+
+    public void setEntryHighVolume(Double entryHighVolume) {
+        this.entryHighVolume = entryHighVolume;
+    }
+
+    public Double getEntryLowConcentration() {
+        return entryLowConcentration;
+    }
+
+    public void setEntryLowConcentration(Double entryLowConcentration) {
+        this.entryLowConcentration = entryLowConcentration;
+    }
+
+    public Double getEntryHighConcentration() {
+        return entryHighConcentration;
+    }
+
+    public void setEntryHighConcentration(Double entryHighConcentration) {
+        this.entryHighConcentration = entryHighConcentration;
+    }
+
+    public Double getAutoDrainDays() {
+        return autoDrainDays;
+    }
+
+    public void setAutoDrainDays(Double autoDrainDays) {
+        this.autoDrainDays = autoDrainDays;
     }
 }

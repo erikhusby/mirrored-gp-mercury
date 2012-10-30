@@ -54,9 +54,17 @@ public class Product implements Serializable {
      * Whether this Product should show as a top-level product */
     private boolean topLevelProduct;
 
+    /**
+     * Primary price item for the product. Should NOT also be in the priceItems set.
+     * TODO: rename this field to something like primaryPriceItem
+     */
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private PriceItem defaultPriceItem;
 
+    /**
+     * OPTIONAL price items for the product. Should NOT include defaultPriceItem.
+     * TODO: rename this field to something like optionalPriceItems
+     */
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
     private Set<PriceItem> priceItems = new HashSet<PriceItem>();
@@ -66,6 +74,8 @@ public class Product implements Serializable {
     private Set<Product> addOns = new HashSet<Product>();
 
     private String workflowName;
+
+    private boolean pdmOrderableOnly;
 
     /**
      * JPA package visible no arg constructor
@@ -87,7 +97,8 @@ public class Product implements Serializable {
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
-                   String workflowName) {
+                   String workflowName,
+                   boolean pdmOrderableOnly) {
 
         this.productName = productName;
         this.productFamily = productFamily;
@@ -103,6 +114,7 @@ public class Product implements Serializable {
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
         this.workflowName = workflowName;
+        this.pdmOrderableOnly = pdmOrderableOnly;
     }
 
     public Long getProductId() {
@@ -251,6 +263,13 @@ public class Product implements Serializable {
         return workflowName;
     }
 
+    public boolean isPdmOrderableOnly() {
+        return pdmOrderableOnly;
+    }
+
+    public void setPdmOrderableOnly(boolean pdmOrderableOnly) {
+        this.pdmOrderableOnly = pdmOrderableOnly;
+    }
 
     public boolean isAvailable() {
         Date now = Calendar.getInstance().getTime();

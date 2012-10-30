@@ -50,6 +50,8 @@ public class ProductOrderSample implements Serializable {
     @ManyToOne
     private ProductOrder productOrder;
 
+    private Integer samplePosition;
+
     @Transient
     private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
 
@@ -99,6 +101,15 @@ public class ProductOrderSample implements Serializable {
         return isInBspFormat() && !hasBspDTOBeenInitialized;
     }
 
+    /**
+     * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
+     */
+    public boolean bspMetaDataMissing() {
+        // Use == here, we want to match the exact object.
+        //noinspection ObjectEquality
+        return isInBspFormat() && hasBspDTOBeenInitialized && bspDTO == BSPSampleDTO.DUMMY;
+    }
+
     public BSPSampleDTO getBspDTO() {
         if (!hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {
@@ -125,6 +136,13 @@ public class ProductOrderSample implements Serializable {
         }
         this.bspDTO = bspDTO;
         hasBspDTOBeenInitialized = true;
+    }
+
+    public Integer getSamplePosition() {
+        return samplePosition;
+    }
+    public void setSamplePosition(final Integer sample_position) {
+        this.samplePosition = sample_position;
     }
 
     public boolean isInBspFormat() {

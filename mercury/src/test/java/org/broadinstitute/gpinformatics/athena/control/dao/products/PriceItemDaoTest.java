@@ -5,20 +5,16 @@ import junit.framework.Assert;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ejb.EJBException;
 import javax.inject.Inject;
-import javax.persistence.NoResultException;
+import javax.transaction.UserTransaction;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Category.EXOME_SEQUENCING_ANALYSIS;
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Name.DNA_EXTRACTION;
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Name.EXOME_EXPRESS;
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Platform.GP;
 
-
-@Test(enabled = false)
+@Test
 public class PriceItemDaoTest extends ContainerTest {
 
     @Inject
@@ -27,38 +23,74 @@ public class PriceItemDaoTest extends ContainerTest {
     @Inject
     private Log log;
 
+    @Inject
+    private UserTransaction utx;
+
+
+    @BeforeMethod
+    public void beforeMethod() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.begin();
+
+        createFixtureData();
+    }
+
+    @AfterMethod
+    public void afterMethod() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.rollback();
+    }
+
+
+    private void createFixtureData() {
+        PriceItem priceItem;
+
+        priceItem = new PriceItem("1234", "Genomics Platform", "Pony Genomics", "Standard Pony");
+        dao.persist(priceItem);
+
+        priceItem = new PriceItem("5678", "Genomics Platform", "Pony Genomics", "Pony Express");
+        dao.persist(priceItem);
+
+        dao.flush();
+    }
+
 
     public void testFindAll() {
 
         final List<PriceItem> priceItems = dao.findAll();
         Assert.assertNotNull(priceItems);
 
+        Assert.assertTrue(priceItems.size() > 1);
+
         for (PriceItem priceItem : priceItems) {
 
             log.warn("Price Item name: " + priceItem.getName());
-            if ( EXOME_EXPRESS.getQuoteServerName().equals(priceItem.getName()) ) {
+            if ( "Pony Express".equals(priceItem.getName()) ) {
                 return;
             }
         }
 
-        Assert.fail("EXEX price item not found!");
+        Assert.fail("Express price item not found!");
 
     }
 
 
     public void testFind() {
 
-        final PriceItem priceItem = dao.find(GP, EXOME_SEQUENCING_ANALYSIS, EXOME_EXPRESS);
+        final PriceItem priceItem = dao.find("Genomics Platform", "Pony Genomics", "Standard Pony");
         Assert.assertNotNull(priceItem);
 
-
-        try {
-            // deliberately mismatching the name to the other parameters
-            dao.find(GP, EXOME_SEQUENCING_ANALYSIS, DNA_EXTRACTION);
-        }
-        catch (EJBException ejbx) {
-            Assert.assertTrue(NoResultException.class.isAssignableFrom(ejbx.getCause().getClass()));
-        }
+        // deliberately mismatching the name
+        PriceItem missingPriceItem = dao.find("Genomics Platform", "Pony Genomics", "Stone Pony");
+        Assert.assertNull(missingPriceItem);
 
     }
 

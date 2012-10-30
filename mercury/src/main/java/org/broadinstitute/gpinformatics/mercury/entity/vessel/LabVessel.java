@@ -1,20 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.Failure;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.SequencingLibraryAnnotation;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowAnnotation;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -61,6 +56,10 @@ public abstract class LabVessel {
     private String label;
 
     private Date createdOn;
+
+    private Float volume;
+    
+    private Float concentration;
 
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
@@ -141,20 +140,6 @@ public abstract class LabVessel {
     }
 
     public Collection<LabMetric> getMetrics() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    /**
-     * A failure of any sort: quant, sequencing,
-     * smells bad, not the right size around the
-     * hips, etc.
-     * @param failureMode
-     */
-    public void addFailure(Failure failureMode) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    public Collection<Failure> getFailures() {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -298,7 +283,7 @@ public abstract class LabVessel {
      * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}, let's
      * remember that fact.  It'll be useful when someone wants
      * to know all the lab work that was done for
-     * a {@link org.broadinstitute.gpinformatics.mercury.entity.sample.StartingSample}.
+     * a StartingSample.
      * @param jiraTicket
      */
     public void addJiraTicket(JiraTicket jiraTicket) {
@@ -361,7 +346,7 @@ public abstract class LabVessel {
 
         if (isSampleAuthority()) {
             for (MercurySample mercurySample : mercurySamples) {
-                sampleInstances.add(new SampleInstance(mercurySample, null, null, null));
+                sampleInstances.add(new SampleInstance(mercurySample, null, null));
             }
         } else {
             for (VesselContainer<?> vesselContainer : this.getContainers()) {
@@ -434,15 +419,6 @@ public abstract class LabVessel {
     public abstract Collection<LabEvent> getEvents();
 
     /**
-     * Returns all projects.  Convenience method vs.
-     * iterating over {@link #getSampleInstances()} and
-     * calling {@link org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance#getAllProjectPlans()}
-     * @return
-     */
-//    public abstract Collection<Project> getAllProjects();
-
-
-    /**
      * PM Dashboard will want to show the most recent
      * event performed on this aliquot.  Implementations
      * traipse through lims history to find the most
@@ -482,20 +458,33 @@ public abstract class LabVessel {
         return this.notes;
     }
 
-    public abstract Float getVolume();
+    public Float getVolume() {
+        return volume;
+    }
 
-    public abstract Float getConcentration();
+    public void setVolume(Float volume) {
+        this.volume = volume;
+    }
+
+    public Float getConcentration() {
+        return concentration;
+    }
+
+    public void setConcentration(Float concentration) {
+        this.concentration = concentration;
+    }
 
     public boolean isSampleAuthority() {
         return !mercurySamples.isEmpty();
     }
 
     /**
-     * In the context of the given {@link WorkflowDescription}, are there any
+     * In the context of the given WorkflowDescription, are there any
      * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
      * @param workflowDescription
      * @return
      */
+/*
     public boolean isSingleSampleLibrary(WorkflowDescription workflowDescription) {
         if (workflowDescription == null) {
             throw new RuntimeException("workflowDescription cannot be null.");
@@ -529,6 +518,7 @@ public abstract class LabVessel {
         }
         return isSingleSample;
     }
+*/
 
     public void addLabBatch(LabBatch labBatch) {
         labBatches.add(labBatch);

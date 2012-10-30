@@ -36,19 +36,28 @@ public class ProductDao extends GenericDao implements Serializable {
         NO
     }
 
+    public enum IncludePDMOnlyProducts {
+        YES,
+        NO
+    }
+
 
     public List<Product> findProducts() {
-        return findProducts(AvailableProductsOnly.NO, TopLevelProductsOnly.NO);
+        return findProducts(AvailableProductsOnly.NO, TopLevelProductsOnly.NO, IncludePDMOnlyProducts.YES);
     }
 
 
     public List<Product> findProducts(AvailableProductsOnly availableProductsOnly) {
-        return findProducts(availableProductsOnly, TopLevelProductsOnly.NO);
+        return findProducts(availableProductsOnly, TopLevelProductsOnly.NO, IncludePDMOnlyProducts.YES);
     }
 
 
     public List<Product> findProducts(TopLevelProductsOnly topLevelProductsOnly) {
-        return findProducts(AvailableProductsOnly.NO, topLevelProductsOnly);
+        return findProducts(AvailableProductsOnly.NO, topLevelProductsOnly, IncludePDMOnlyProducts.YES);
+    }
+
+    public List<Product> findProducts(IncludePDMOnlyProducts includePDMOnlyProducts) {
+        return findProducts(AvailableProductsOnly.NO, TopLevelProductsOnly.NO, includePDMOnlyProducts);
     }
 
     public Product findByBusinessKey(String key) {
@@ -58,14 +67,17 @@ public class ProductDao extends GenericDao implements Serializable {
     /**
      * General purpose product finder method
      *
+     *
      * @param availableProductsOnly
      *
      * @param topLevelProductsOnly
      *
+     * @param includePDMOnlyProducts
      * @return
      */
     public List<Product> findProducts(@NotNull AvailableProductsOnly availableProductsOnly,
-                                      @NotNull TopLevelProductsOnly topLevelProductsOnly) {
+                                      @NotNull TopLevelProductsOnly topLevelProductsOnly,
+                                      @NotNull IncludePDMOnlyProducts includePDMOnlyProducts) {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Product> cq = cb.createQuery(Product.class);
         List<Predicate> predicateList = new ArrayList<Predicate>();
@@ -99,6 +111,10 @@ public class ProductDao extends GenericDao implements Serializable {
 
         if (topLevelProductsOnly == TopLevelProductsOnly.YES) {
             predicateList.add(cb.equal(product.get(Product_.topLevelProduct), true));
+        }
+
+        if (includePDMOnlyProducts == IncludePDMOnlyProducts.NO) {
+            predicateList.add(cb.equal(product.get(Product_.pdmOrderableOnly), false));
         }
 
         Predicate[] predicates = new Predicate[predicateList.size()];

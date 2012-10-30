@@ -8,9 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMessage;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -34,39 +32,9 @@ public class LabEventHandler {
     Event<Billable> billableEvents;
 
     @Inject
-    private LabEventDao labEventDao;
-
-    @Inject
     QuoteService quoteService;
 
     public LabEventHandler() {}
-
-    public HANDLER_RESPONSE handleEvent(LabEventMessage eventMessage) {
-        // 0. write out the message to stable server-side storage,
-        // either relational or otherwise.
-        // 1. check for sources in some way, error out if they aren't there.
-
-        // then on to the good stuff..
-        LabEvent labEvent = createEvent(eventMessage);
-        HANDLER_RESPONSE response = processEvent(labEvent);
-        if (response == HANDLER_RESPONSE.OK) {
-            this.labEventDao.persist(labEvent);
-        }
-        return response;
-    }
-
-    /**
-     * Lots of magic in here.  From the XML/JSON representation
-     * of the event, create a LabEvent.  New up new vessels
-     * or reference existing ones from the database.
-     * 
-     * This is the main automation entry point.  
-     * @param eventMessage
-     * @return
-     */
-    public LabEvent createEvent(LabEventMessage eventMessage) {
-        throw new RuntimeException("Method not yet implemented.");
-    }
 
     public HANDLER_RESPONSE processEvent(LabEvent labEvent) {
         // random thought, which should go onto confluence doc:

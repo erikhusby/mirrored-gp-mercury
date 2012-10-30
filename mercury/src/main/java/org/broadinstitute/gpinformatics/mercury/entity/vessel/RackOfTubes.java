@@ -29,7 +29,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class RackOfTubes extends LabVessel implements SBSSectionable, VesselContainerEmbedder<TwoDBarcodedTube> {
+public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<TwoDBarcodedTube> {
 
     public enum RackType {
         Matrix96("Matrix96", VesselGeometry.G12x8);
@@ -126,38 +126,8 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
     }
 
     @Override
-    public SBSSection getSection() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Set<SampleInstance> getSampleInstances() {
         return this.getVesselContainer().getSampleInstances();
-    }
-
-    @Override
-    public StatusNote getLatestNote() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void logNote(StatusNote statusNote) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<StatusNote> getAllStatusNotes() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Float getVolume() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Float getConcentration() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

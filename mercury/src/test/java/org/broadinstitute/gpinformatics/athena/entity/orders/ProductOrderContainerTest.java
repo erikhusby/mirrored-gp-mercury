@@ -61,6 +61,11 @@ public class ProductOrderContainerTest extends Arquillian {
         Assert.assertTrue(testOrder.getCountsByStockType().containsKey(BSPSampleDTO.ACTIVE_IND));
         Assert.assertEquals(3, testOrder.getCountsByStockType().get(BSPSampleDTO.ACTIVE_IND).intValue());
 
+        //test the sample order should be the same as when created.
+        testOrder.getSamples().get(0).getSampleName().equals("SM-1P3X9");
+        testOrder.getSamples().get(1).getSampleName().equals("SM-1P3WY");
+        testOrder.getSamples().get(2).getSampleName().equals("SM-1P3XN");
+
         //BSP data in BSP QA is different than this.
 //        Assert.assertTrue( testOrder.getPrimaryDiseaseCount().containsKey( BSPSampleSearchServiceStub.SM_12CO4_DISEASE));
 //        Assert.assertEquals( 0 , testOrder.getPrimaryDiseaseCount().get(BSPSampleSearchServiceStub.SM_12CO4_DISEASE).intValue());

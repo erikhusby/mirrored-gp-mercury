@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.test.BeanTester;
+import org.meanbean.test.Configuration;
+import org.meanbean.test.ConfigurationBuilder;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -41,7 +43,13 @@ public class ProductOrderTest {
 
     @Test
     public void test_basic_beaniness() {
-        new BeanTester().testBean ( ProductOrder.class );
+
+        //TODO hmc need to ignore the samples list as meanbean is by default using a list of Strings
+        // to test the samples setter. There may be a api solution for this.
+        BeanTester tester = new BeanTester();
+        Configuration configuration = new ConfigurationBuilder().ignoreProperty("samples").build();
+        tester.testBean(ProductOrder.class, configuration);
+
     }
 
     @Test

@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -22,6 +21,9 @@ import javax.inject.Named;
 import java.text.MessageFormat;
 import java.util.*;
 
+/**
+ * TODO: Update method documentation, especially around price item selection.
+ */
 @Named
 @RequestScoped
 public class ProductForm extends AbstractJsfBean {
@@ -34,6 +36,9 @@ public class ProductForm extends AbstractJsfBean {
 
     @Inject
     private PriceItemDao priceItemDao;
+
+    @Inject
+    private ProductBoundary productBoundary;
 
     /**
      * Source of quote server sourced price data
@@ -55,8 +60,22 @@ public class ProductForm extends AbstractJsfBean {
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
-    public static final int ONE_HOUR_IN_SECONDS = 3600;
+    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
     private Product product;
+
+    /**
+     * JAXB {@link PriceItem} DTOs
+     */
+    private List<PriceItem> priceItems;
+
+    /**
+     * JAXB {@link PriceItem} DTOs, there can be only one default price item but this is a list so the PrimeFaces
+     * {@link org.primefaces.component.autocomplete.AutoComplete} can be styled consistently with all the other
+     * multi-selecting {@link org.primefaces.component.autocomplete.AutoComplete}s in Mercury
+     */
+    private List<PriceItem> defaultPriceItems = new ArrayList<PriceItem>();
+
+    private PriceItem defaultPriceItem;
 
     private List<Product> addOns;
 
@@ -96,11 +115,34 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void initForm() {
         if (!facesContext.isPostback()) {
-            if  ((product.getPartNumber() != null) && !StringUtils.isBlank(product.getPartNumber())) {
-                product = productDao.findByBusinessKey(product.getPartNumber());
-                addOns.addAll( product.getAddOns() );
+            if (product.getProductId() == null) {
+                // No form initialization needed for create
+            } else {
+                if (product.getPriceItems() != null) {
+                    priceItems = new ArrayList<PriceItem>();
+                    for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
+                        priceItems.add(entityToDto(priceItem));
+                    }
+                }
+                if (product.getDefaultPriceItem() != null) {
+                    defaultPriceItem = entityToDto(product.getDefaultPriceItem());
+                }
+                // TODO: is this needed? or does the actual backing model work for p:autoComplete?
+                if (product.getAddOns() != null) {
+                    addOns = new ArrayList<Product>();
+                    addOns.addAll(product.getAddOns());
+                }
             }
         }
+    }
+
+    /**
+     * maps between entity and JAXB DTOs for price items
+     * @param entity
+     * @return
+     */
+    private PriceItem entityToDto(org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity) {
+        return new PriceItem(entity.getQuoteServerId(), entity.getPlatform(), entity.getCategory(), entity.getName());
     }
 
     /**
@@ -108,8 +150,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     public void initEmptyProduct() {
         product = new Product(null, null, null, null, null, null, null,
-                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME);
-        addOns = new ArrayList<Product>();
+                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
     }
 
     /**
@@ -122,15 +163,40 @@ public class ProductForm extends AbstractJsfBean {
 
 
     public String save() {
+        boolean validationPassed = true;
+
+        if (!isPartNumberUnique()) {
+            String errorMessage = MessageFormat.format("The Product Part-Number ''{0}'' is not unique.", product.getPartNumber());
+            addErrorMessage("partNumber", errorMessage, errorMessage);
+        }
+
         if (! dateRangeOkay()) {
             String errorMessage = "Availability date must precede discontinued date.";
-            addErrorMessage("Date range invalid", errorMessage, errorMessage );
-            return "create";
+            addErrorMessage("Date range invalid", errorMessage, errorMessage);
+            validationPassed = false;
         }
-        if (getProduct().getProductId() == null ) {
-            return create();
+        if (getDefaultPriceItem() == null) {
+            addErrorMessage("defaultPriceItem", "Default Price Item is required.", "Default Price Item is required.");
+            validationPassed = false;
+        }
+
+        if (!validationPassed) {
+            return null;
+        }
+
+        if (product.getProductId() == null ) {
+            return productBoundary.create();
         } else {
-            return edit();
+            return productBoundary.edit();
+        }
+    }
+
+    private boolean isPartNumberUnique() {
+        Product existingProduct = productDao.findByPartNumber(product.getPartNumber());
+        if (existingProduct != null && existingProduct.getProductId() != product.getProductId()) {
+            return false;
+        } else {
+            return true;
         }
     }
 
@@ -189,6 +255,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void addAllAddOnsToProduct() {
         Date now = Calendar.getInstance().getTime();
+        product.getAddOns().clear();
         if ( addOns != null) {
             for ( Product aProductAddOn : addOns ) {
                 if ( aProductAddOn != null ) {
@@ -227,14 +294,13 @@ public class ProductForm extends AbstractJsfBean {
      * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
      */
     private void addAllPriceItemsToProduct() {
+        product.setDefaultPriceItem(findEntity(defaultPriceItem));
 
-        for (PriceItem priceItem : conversationData.getPriceItems()) {
-
-            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);
-            product.addPriceItem(entity);
-
-            if (conversationData.getDefaultPriceItem().equals(priceItem)) {
-                product.setDefaultPriceItem(entity);
+        product.getPriceItems().clear();
+        if (priceItems != null) {
+            for (PriceItem priceItem : priceItems) {
+                org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);
+                product.addPriceItem(entity);
             }
         }
     }
@@ -246,18 +312,18 @@ public class ProductForm extends AbstractJsfBean {
         this.product = product;
     }
 
-    public Integer getExpectedCycleTimeHours() {
-        return convertCycleTimeSecondsToHours (product.getExpectedCycleTimeSeconds()) ;
+    public Integer getExpectedCycleTimeDays() {
+        return convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
-    public void setExpectedCycleTimeHours(final Integer expectedCycleTimeHours) {
-        product.setExpectedCycleTimeSeconds(convertCycleTimeHoursToSeconds(expectedCycleTimeHours));
+    public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
+        product.setExpectedCycleTimeSeconds(convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
 
-    public Integer getGuaranteedCycleTimeHours() {
-        return convertCycleTimeSecondsToHours (product.getGuaranteedCycleTimeSeconds()) ;
+    public Integer getGuaranteedCycleTimeDays() {
+        return convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
-    public void setGuaranteedCycleTimeHours(final Integer guaranteedCycleTimeHours) {
-        product.setGuaranteedCycleTimeSeconds(convertCycleTimeHoursToSeconds(guaranteedCycleTimeHours));
+    public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
+        product.setGuaranteedCycleTimeSeconds(convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
     }
 
 
@@ -282,44 +348,43 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public List<PriceItem> getPriceItems() {
-        return conversationData.getPriceItems();
+        return priceItems;
     }
 
     /**
      * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
      * actual setting of {@link PriceItem}s is handled in the ajax event listener only
-     * @param ignored
+     * @param priceItems
      */
-    public void setPriceItems(List<PriceItem> ignored) {
-        // noop
+    public void setPriceItems(List<PriceItem> priceItems) {
+        this.priceItems = priceItems;
     }
 
 
     /**
-     * Converts cycle times from hours to seconds.
-     * @param cycleTimeHours
+     * Converts cycle times from days to seconds.
      * @return the number of seconds.
      */
-    public static Integer convertCycleTimeHoursToSeconds(Integer cycleTimeHours) {
+    public static Integer convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
         Integer cycleTimeSeconds = null;
-        if ( cycleTimeHours != null ) {
-            cycleTimeSeconds = ( cycleTimeHours == null ? 0 : cycleTimeHours.intValue() * ONE_HOUR_IN_SECONDS);
+        if ( cycleTimeDays != null ) {
+            cycleTimeSeconds = ( cycleTimeDays == null ? 0 : cycleTimeDays.intValue() * ONE_DAY_IN_SECONDS);
         }
         return cycleTimeSeconds;
     }
 
     /**
-     * Converts cycle times from seconds to hours.
-     * This method rounds down to the nearest hour
+     * Converts cycle times from seconds to days.
+     * This method rounds down to the nearest day
      * @param cycleTimeSeconds
-     * @return the number of hours.
+     * @return the number of days.
      */
-    public static Integer convertCycleTimeSecondsToHours(Integer cycleTimeSeconds) {
-        Integer cycleTimeHours = null;
-        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_HOUR_IN_SECONDS ) {
-            cycleTimeHours =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_HOUR_IN_SECONDS)) / ONE_HOUR_IN_SECONDS;
+    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
+        Integer cycleTimeDays = null;
+        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
+            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
         }
-        return cycleTimeHours;
+        return cycleTimeDays;
     }
 
 
@@ -331,11 +396,12 @@ public class ProductForm extends AbstractJsfBean {
      */
     public void onPriceItemUnselect(UnselectEvent unselectEvent) {
         PriceItem priceItem = (PriceItem) unselectEvent.getObject();
-        conversationData.removePriceItem(priceItem);
+//        priceItems.remove(priceItem);
+        conversationData.getDefaultPriceItems().remove(priceItem);
 
         // nuke out the default price item if it was the same price item we just removed
-        if (conversationData.getDefaultPriceItem() != null && conversationData.getDefaultPriceItem().equals(priceItem)) {
-            conversationData.setDefaultPriceItem(null);
+        if (defaultPriceItem != null && defaultPriceItem.equals(priceItem)) {
+            defaultPriceItem = null;
         }
     }
 
@@ -347,7 +413,8 @@ public class ProductForm extends AbstractJsfBean {
      */
 
     public void onPriceItemSelect(SelectEvent selectEvent) {
-        conversationData.addPriceItem((PriceItem) selectEvent.getObject());
+//        priceItems.add((PriceItem) selectEvent.getObject());
+        getDefaultPriceItems().add((PriceItem) selectEvent.getObject());
     }
 
     /**
@@ -357,7 +424,7 @@ public class ProductForm extends AbstractJsfBean {
      * @param ignored
      */
     public void onDefaultPriceItemUnselect(UnselectEvent ignored) {
-        conversationData.setDefaultPriceItem(null);
+//        defaultPriceItem = null;
     }
 
     /**
@@ -367,12 +434,14 @@ public class ProductForm extends AbstractJsfBean {
      * @param selectEvent
      */
     public void onDefaultPriceItemSelect(SelectEvent selectEvent) {
+/*
         if (conversationData.getDefaultPriceItem() != null) {
             // ignore
         }
         else {
             conversationData.setDefaultPriceItem((PriceItem) selectEvent.getObject());
         }
+*/
     }
 
 
@@ -384,10 +453,10 @@ public class ProductForm extends AbstractJsfBean {
     /**
      * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
      * actual setting of the default {@link PriceItem} is handled in the ajax event listener only
-     * @param ignored
+     * @param defaultPriceItems
      */
-    public void setDefaultPriceItems(List<PriceItem> ignored) {
-        // noop, this is handled in the ajax event listener only!
+    public void setDefaultPriceItems(List<PriceItem> defaultPriceItems) {
+        conversationData.setDefaultPriceItems(defaultPriceItems);
     }
 
 
@@ -401,13 +470,7 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public List<PriceItem> searchSelectedPriceItems(String query) {
-
-        if (conversationData.getDefaultPriceItems() != null && conversationData.getDefaultPriceItems().size() > 0) {
-            // don't offer anything if there is already a selected default price item
-            return new ArrayList<PriceItem>();
-        }
-
-        return priceListCache.searchPriceItems(conversationData.getPriceItems(), query);
+        return priceListCache.searchPriceItems(query);
     }
 
 
@@ -420,13 +483,23 @@ public class ProductForm extends AbstractJsfBean {
     public List<PriceItem> searchPriceItems(String query) {
         List<PriceItem> searchResults = priceListCache.searchPriceItems(query);
         // filter out price items that are already selected
-        for (PriceItem priceItem : getPriceItems()) {
-            searchResults.remove(priceItem);
+        if (priceItems != null) {
+            for (PriceItem priceItem : priceItems) {
+                searchResults.remove(priceItem);
+            }
         }
+        searchResults.remove(defaultPriceItem);
 
         return searchResults;
     }
 
+    public PriceItem getDefaultPriceItem() {
+        return defaultPriceItem;
+    }
+
+    public void setDefaultPriceItem(PriceItem defaultPriceItem) {
+        this.defaultPriceItem = defaultPriceItem;
+    }
 
     /**
      * Encapsulate logic for coming up with nice {@link PriceItem} labels that fit in the allotted space
@@ -450,5 +523,4 @@ public class ProductForm extends AbstractJsfBean {
         }
         return priceItem.getName() + " (" + priceItem.getId() + ")";
     }
-
 }

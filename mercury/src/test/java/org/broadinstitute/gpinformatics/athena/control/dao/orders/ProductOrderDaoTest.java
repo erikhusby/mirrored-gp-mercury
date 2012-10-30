@@ -28,7 +28,7 @@ import java.util.UUID;
  * Date: 10/9/12
  * Time: 3:47 PM
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION,enabled=true)
 public class ProductOrderDaoTest extends ContainerTest {
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
@@ -101,6 +101,10 @@ public class ProductOrderDaoTest extends ContainerTest {
                 product, foundResearchProject);
         sampleList.add(new ProductOrderSample("MS-1111", newProductOrder));
         sampleList.add(new ProductOrderSample("MS-1112", newProductOrder));
+        int samplePos = 0;
+        for ( ProductOrderSample sample :sampleList ) {
+            sample.setSamplePosition(samplePos++);
+        }
         newProductOrder.setJiraTicketKey(testProductOrderKey);
         return newProductOrder;
     }

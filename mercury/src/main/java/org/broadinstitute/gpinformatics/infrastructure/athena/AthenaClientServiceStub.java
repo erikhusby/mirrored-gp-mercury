@@ -27,6 +27,8 @@ import java.util.Map;
 @Stub
 public class AthenaClientServiceStub implements AthenaClientService {
 
+    private static final Long TEST_CREATOR = 1111L;
+
     @Override
     public ProductOrder retrieveProductOrderDetails ( String poBusinessKey ) {
 
@@ -50,23 +52,25 @@ public class AthenaClientServiceStub implements AthenaClientService {
     public static ProductOrder createDummyProductOrder() {
         PriceItem priceItem = new PriceItem(PriceItem.Platform.GP, PriceItem.Category.EXOME_SEQUENCING_ANALYSIS,
                                     PriceItem.Name.EXOME_EXPRESS, "testQuoteId");
-        Product dummyProduct = AthenaClientServiceStub.createDummyProduct ();
+        Product dummyProduct = createDummyProduct();
         dummyProduct.addPriceItem(priceItem);
-        ProductOrder order = new ProductOrder( 1111L, "title",
-                new ArrayList<ProductOrderSample> (), "quote", dummyProduct,
-                AthenaClientServiceStub.createDummyResearchProject());
+        ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
+                new ArrayList<ProductOrderSample>(), "quote", dummyProduct,
+                createDummyResearchProject());
 
         ProductOrderSample sample = new ProductOrderSample("SM-1234", order);
-        sample.addBillableItem(new BillableItem (priceItem, new BigDecimal ("1")));
-        order.setSamples( Collections.singletonList ( sample ));
+        sample.addBillableItem(new BillableItem(priceItem, new BigDecimal("1")));
+        order.setSamples(Collections.singletonList(sample));
 
+        order.updateAddOnProducts(Collections.singletonList(createDummyProduct()));
         return order;
     }
+
 
     public static Product createDummyProduct() {
         return new Product("productName", new ProductFamily("ProductFamily"), "description",
             "partNumber", new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables",
-            true, "workflowName");
+            true, "workflowName", false);
     }
 
 

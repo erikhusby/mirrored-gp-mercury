@@ -31,19 +31,35 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     /**
      * Known product families, a DAO method might accept one of these to return a persistent or detached instance
      * of one of these ProductFamilies if there was business logic that wanted to call out a specific ProductFamily.
+     *
+     * TODO get rid of this enum
      */
+
     public enum ProductFamilyName {
-        GENERAL_PRODUCTS("General Products"),
-        EXOME_SEQUENCING_ANALYSIS("Exome Sequencing Analysis"),
-        WHOLE_GENOME_SEQUENCING_ANALYSIS("Whole Genome Sequencing Analysis"),
-        WHOLE_GENOME_ARRAY_ANALYSIS("Whole Genome Array Analysis"),
-        RNA_ANALYSIS("RNA Analysis"),
-        ASSEMBLY_ANALYSIS("Assembly Analysis"),
-        METAGENOMIC_ANALYSIS("Metagenomic Analysis"),
-        EPIGENOMIC_ANALYSIS("Epigenomic Analysis"),
-        ILLUMINA_SEQUENCING_ONLY("Illumina Sequencing Only"),
-        ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
-        CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing");
+//        GENERAL_PRODUCTS("General Products"),
+//        EXOME_SEQUENCING_ANALYSIS("Exome Sequencing Analysis"),
+//        WHOLE_GENOME_SEQUENCING_ANALYSIS("Whole Genome Sequencing Analysis"),
+//        WHOLE_GENOME_ARRAY_ANALYSIS("Whole Genome Array Analysis"),
+//        RNA_ANALYSIS("RNA Analysis"),
+//        ASSEMBLY_ANALYSIS("Assembly Analysis"),
+//        METAGENOMIC_ANALYSIS("Metagenomic Analysis"),
+//        EPIGENOMIC_ANALYSIS("Epigenomic Analysis"),
+//        ILLUMINA_SEQUENCING_ONLY("Illumina Sequencing Only"),
+//        ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
+//        CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing"),
+
+        // GPLIM-172 real product families
+        RNA("RNA"),
+        SMALL_DESIGN_VALIDATION_AND_EXTENSION("Small Design, Validation & Extension"),
+        SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE("Sample Initiation, Qualification & Cell Culture"),
+        EXOME("Exome"),
+        WHOLE_GENOME("Whole Genome"),
+        DE_NOVO_ASSEMBLY("de novo Assembly"),
+        MICROBIAL_AND_VIRAL_ANALYSIS("Microbial & Viral Analysis"),
+        SEQUENCE_ONLY("Sequence Only"),
+        METAGENOMICS("Metagenomics");
+
+
 
         private final String displayName;
 
