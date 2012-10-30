@@ -8,8 +8,10 @@ import org.broadinstitute.gpinformatics.infrastructure.DataTableFilteredValuesBe
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
+import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,6 +89,12 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         filteredValuesBean.setFilteredValues(filteredValues);
     }
 
+    private boolean isUserPDM() {
+        HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+        // todo mlc this string constant should be in a centralized place somewhere but I don't know where that is
+        return request.isUserInRole("Mercury-ProductManagers");
+    }
+
     /**
      * Used for auto-complete in the UI, given a search term
      * @param search list of search terms, whitespace separated. If more than one term is present, all terms must
@@ -97,7 +105,21 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         List<Product> list = new ArrayList<Product>();
         String[] searchStrings = search.toLowerCase().split("\\s");
 
-        for (Product product : getProductsDataModel()) {
+        Iterable<Product> possiblyNonPDMFilteredProducts;
+        if (isUserPDM()) {
+            possiblyNonPDMFilteredProducts = getProductsDataModel();
+        }
+        else {
+            List<Product> nonPDMFilteredProducts = new ArrayList<Product>();
+            for (Product product : getProductsDataModel()) {
+                if (! product.isPdmOrderableOnly()) {
+                    nonPDMFilteredProducts.add(product);
+                }
+            }
+            possiblyNonPDMFilteredProducts = nonPDMFilteredProducts;
+        }
+
+        for (Product product : possiblyNonPDMFilteredProducts) {
             String label = product.getProductName().toLowerCase();
             boolean include = true;
             for (String s : searchStrings) {
