@@ -91,7 +91,9 @@ public class AuthorizationFilter implements Filter {
             }
         }
 
-        if (pageUri.equals(LOGIN_PAGE) && request.getRemoteUser() != null) {
+        // FIXME: With this code enabled, the URLs don't get updated in the browser after
+        // the redirect.  Need to debug and then re-enable.  This is bug GPLIM-100.
+        if (false && pageUri.equals(LOGIN_PAGE) && request.getRemoteUser() != null) {
             // Already logged in user is trying to view the login page.  Redirect to the role default page.
             UserLogin.UserRole role = UserLogin.UserRole.fromRequest(request);
             redirectTo(request, servletResponse, role.landingPage + "?faces-redirect=true");
