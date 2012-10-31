@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -20,6 +21,7 @@ import javax.naming.NamingException;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -84,6 +86,21 @@ public class ServiceAccessUtility {
             }
         }).apiCall(BSPUserList.class);
     }
+
+    public static String getCohortsForNames(final List<String> cohortNames) {
+        return (new Caller<String, CohortListBean> () {
+            @Override
+            String call(CohortListBean apiInstance) {
+                String[] cohortIds = new String[cohortNames.size()];
+                for (int i=0; i<cohortNames.size(); i++) {
+                    cohortIds[i] = cohortNames.get(i);
+                }
+
+                return apiInstance.getCohortListString(cohortIds);
+            }
+        }).apiCall(CohortListBean.class);
+    }
+
 
     /**
      * getSampleDtoByNames exposes an integration layer service call to retrieve a BSP Sample DTo based on a collection
