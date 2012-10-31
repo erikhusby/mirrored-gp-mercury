@@ -704,8 +704,8 @@ public class ProductOrder implements Serializable {
                 StringUtils.join(getSampleNames(), ','));
 
         CreateIssueResponse issueResponse = ServiceAccessUtility.createJiraTicket(
-                fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title,
-                comments == null ? "" : comments, listOfFields);
+                fetchJiraProject().getKeyPrefix(), ServiceAccessUtility.getBspUserForId(createdBy).getUsername(),
+                fetchJiraIssueType(), title, comments == null ? "" : comments, listOfFields);
 
         jiraTicketKey = issueResponse.getKey();
         addLink(researchProject.getJiraTicketKey());
