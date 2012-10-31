@@ -111,11 +111,14 @@ public class UserLogin extends AbstractJsfBean {
         final boolean hasPDMRole = request.isUserInRole( RolePage.PDM.getRoleName());
 
         if (targetPage.endsWith(HOME_PAGE) || targetPage.endsWith(HOME_PAGE + "/")) {
+            if ( targetPage.endsWith("/") ) {
+                newUrlBuilder.deleteCharAt( targetPage.lastIndexOf("/") );
+            }
             if ( hasPMRole ) {
-                newUrlBuilder.append(RolePage.PM.getLandingPage());
+                newUrlBuilder.append(RolePage.PM.getLandingPage() + ".xhtml");
             }
             if ( hasPDMRole ) {
-                newUrlBuilder.append(RolePage.PDM.getLandingPage());
+                newUrlBuilder.append(RolePage.PDM.getLandingPage() + ".xhtml" );
             }
         } else if ( targetPage.endsWith(INDEX)  || targetPage.endsWith(INDEX + ".xhtml") ) {
             if ( hasPMRole ) {
