@@ -1,18 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.log4j.Logger;
-import org.apache.poi.ss.formula.functions.T;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.BillableItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.BillableItem;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.project.*;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.hibernate.Session;
 import org.hibernate.envers.*;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 
+import javax.ejb.Schedule;
+import javax.inject.Singleton;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -34,6 +31,8 @@ import java.util.*;
  * User: epolk
  * Date: 10/29/12
  */
+
+@Singleton
 public class ExtractTransform {
     private static String DATAFILE_DIR = "/seq/lims/datawh/dev/new";
     private static String LAST_TIMESTAMP_FILE = "last_etl_timestamp";
@@ -43,28 +42,17 @@ public class ExtractTransform {
     /** Record delimiter expected in sqlLoader file. */
     private final String DELIM = ",";
 
+    /**
+     * Runs one pass of incremental ETL.
+     */
+    @Schedule(hour="*/15")
     private void incrementalETL() {
         final long etlDate = System.currentTimeMillis();
         final String etlDateStr = fullDateFormat.format(new Date(etlDate));
         long lastDate = 0L;
 
-        // Obtains the timestamp of the last ETL run
-        try {
-            File file = new File (DATAFILE_DIR, LAST_TIMESTAMP_FILE);
-            BufferedReader rdr = new BufferedReader(new FileReader(file));
-            String s = rdr.readLine();
-            Long.parseLong(s);
-            rdr.close();
-        } catch (FileNotFoundException e) {
-            logger.error("Missing file: " + LAST_TIMESTAMP_FILE);
-            return;
-        } catch (IOException e) {
-            logger.error("Error processing file " + LAST_TIMESTAMP_FILE, e);
-            return;
-        } catch (NumberFormatException e) {
-            logger.error("Cannot parse mSec timestamp in" + LAST_TIMESTAMP_FILE, e);
-            return;
-        }
+        lastDate = readLastTimestamp();
+
         AuditReader auditReader = AuditReaderFactory.get(new GenericDao().getEntityManager());
         doBillableItem(lastDate, etlDate, etlDateStr, auditReader, "billable_item");
         /*
@@ -82,7 +70,7 @@ public class ExtractTransform {
         doProduct(lastDate, etlDate, etlDateStr, auditReader, "product");
         doProductAddOn(lastDate, etlDate, etlDateStr, auditReader, "product_add_on");
         */
-        writeLastTimestampFile(etlDateStr);
+        writeLastTimestampFile(etlDate);
         writeIsReadyFile(etlDateStr);
     }
 
@@ -192,14 +180,45 @@ public class ExtractTransform {
     }
 
     /**
-     * Writes the file used by this class in the next incremental ETL run, to know when the last run was.
-     * @param etlDateStr date of the etl run to record
+     * Reads the timestamp file from the last incremental ETL run.
+     * @return the msec timestamp
      */
-    private void writeLastTimestampFile(String etlDateStr) {
+    private long readLastTimestamp() {
+        BufferedReader rdr = null;
+        try {
+            File file = new File (DATAFILE_DIR, LAST_TIMESTAMP_FILE);
+            rdr = new BufferedReader(new FileReader(file));
+            String s = rdr.readLine();
+            return Long.parseLong(s);
+        } catch (FileNotFoundException e) {
+            logger.error("Missing file: " + LAST_TIMESTAMP_FILE);
+            return 0L;
+        } catch (IOException e) {
+            logger.error("Error processing file " + LAST_TIMESTAMP_FILE, e);
+            return 0L;
+        } catch (NumberFormatException e) {
+            logger.error("Cannot parse mSec timestamp in" + LAST_TIMESTAMP_FILE, e);
+            return 0L;
+        } finally {
+            try {
+                if (rdr != null) {
+                    rdr.close();
+                }
+            } catch (IOException e) {
+                logger.error("Cannot close file: " + LAST_TIMESTAMP_FILE, e);
+            }
+        }
+    }
+
+    /**
+     * Writes the file used by this class in the next incremental ETL run, to know when the last run was.
+     * @param etlDate mSec date of the etl run to record
+     */
+    private void writeLastTimestampFile(long etlDate) {
         try {
             File file = new File (DATAFILE_DIR, LAST_TIMESTAMP_FILE);
             FileWriter fw = new FileWriter(file);
-            fw.write(etlDateStr);
+            fw.write(String.valueOf(etlDate));
             fw.close();
         } catch (IOException e) {
             logger.error("Error creating file " + LAST_TIMESTAMP_FILE);
