@@ -33,18 +33,13 @@
                     <div class="control-group">
                         <div class="controls">
                             <div class="row-fluid">
-                                <div class="span1">
-                                    <p:commandButton id="commitSamples"
-                                                     update=":form:sampleDisplay, :form:idCache"
-                                                     value="OK"
-                                                     onclick="samplesDialog.hide()"
-                                                     actionListener="#{productOrderForm.samplesDialog.commit}"
-                                                     styleClass="btn btn-primary"/>
-                                </div>
-                                <div class="span1">
-                                    <p:commandButton value="Cancel" onclick="samplesDialog.hide()"
-                                                     styleClass="btn"/>
-                                </div>
+                                <p:commandButton id="commitSamples"
+                                                 update=":form:sampleDisplay, :form:idCache"
+                                                 value="OK"
+                                                 onclick="samplesDialog.hide()"
+                                                 actionListener="#{productOrderForm.samplesDialog.commit}"
+                                                 styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Cancel" onclick="samplesDialog.hide()"/>
                             </div>
                         </div>
                     </div>
@@ -93,19 +88,29 @@
                                         required="true"
                                         scrollHeight="250"
                                         size="50">
-                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="selectedAddOns"/>
+                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection"/>
                         </p:autoComplete>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>
-
-                        <p:fieldset styleClass="form-fieldset" legend="Add Ons">
-                            <p:selectManyCheckbox
-                                id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
-                                <f:selectItems value="#{productOrderForm.addOns}"/>
-                            </p:selectManyCheckbox>
-                        </p:fieldset>
                     </div>
                </div>
+
+
+                <div class="control-group">
+                    <p:outputLabel for="selectedAddOns" value="Add-Ons" styleClass="control-label"/>
+                    <div class="controls">
+                        <h:panelGroup id="perfbyselection">
+                            <h:outputText styleClass="entry-help" value="#{!productOrderForm.hasProduct ? 'If you select a product, its add-ons will show up here' : ''}"/>
+                            <h:outputText styleClass="entry-help"
+                                          value="#{productOrderForm.hasProduct and productOrderForm.addOns.isEmpty() ?
+                            productOrderForm.noAddOnsString() : ''}"/>
+                            <p:selectManyCheckbox
+                                    id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
+                                <f:selectItems value="#{productOrderForm.addOns}"/>
+                            </p:selectManyCheckbox>
+                        </h:panelGroup>
+                    </div>
+                </div>
 
                 <div class="control-group">
                     <p:outputLabel for="quote" value="Quote" styleClass="control-label"/>
@@ -158,8 +163,11 @@
                 <h:panelGroup id="sampleDisplay">
                     <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
                     <p:panel header="Summary" toggleable="true" style="margin-bottom: 5px;">
-                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}"
+                        <p:dataList value="#{productOrderDetail.productOrder.sampleSummaryComments}"
                                     var="comment" itemType="none">
+                            #{comment}
+                        </p:dataList>
+                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}" var="comment" itemType="none">
                             #{comment}
                         </p:dataList>
                     </p:panel>

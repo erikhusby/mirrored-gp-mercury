@@ -158,7 +158,15 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public List<ProductFamily> getProductFamilies() {
-        return  productFamilyDao.findAll();
+        List<ProductFamily> productFamilies = productFamilyDao.findAll();
+        Collections.sort(productFamilies, new Comparator<ProductFamily>() {
+            @Override
+            public int compare(ProductFamily productFamily, ProductFamily productFamily1) {
+                return productFamily.getDisplayName().toLowerCase().compareTo(productFamily1.getDisplayName().toLowerCase());
+            }
+        });
+
+        return productFamilies;
     }
 
 
@@ -213,13 +221,16 @@ public class ProductForm extends AbstractJsfBean {
         return true;
     }
 
+    private String addProductParam() {
+        return "&product=" + product.getBusinessKey();
+    }
+
     public String create() {
         try {
             addAllAddOnsToProduct();
             addAllPriceItemsToProduct();
 
             productDao.persist(product);
-            addInfoMessage("Product created.", "Product " + product.getPartNumber() + " has been created.");
         } catch (Exception e ) {
             logger.error("Exception while persisting Product: " + e);
             String errorMessage = "Exception occurred - " + e.getMessage();
@@ -229,7 +240,9 @@ public class ProductForm extends AbstractJsfBean {
             addErrorMessage("Product not Created.", errorMessage, errorMessage + ": " + e);
             return "create";
         }
-        return redirect("list");
+
+        addFlashMessage("Product \"" + product.getProductName() + "\" has been created.");
+        return redirect("view") + addProductParam();
     }
 
     public String edit() {
@@ -238,7 +251,6 @@ public class ProductForm extends AbstractJsfBean {
             addAllPriceItemsToProduct();
 
             productDao.getEntityManager().merge(getProduct());
-            addInfoMessage("Product detail updated.", "Product " + getProduct().getPartNumber() + " has been updated.");
         } catch (Exception e ) {
             String errorMessage = "Exception occurred - " + e.getMessage();
             if (GenericDao.IsConstraintViolationException(e)) {
@@ -247,7 +259,9 @@ public class ProductForm extends AbstractJsfBean {
             addErrorMessage("Product not updated.", errorMessage, errorMessage + ": " + e);
             return "create";
         }
-        return redirect("list");
+
+        addFlashMessage("Product \"" + product.getProductName() + "\" has been updated.");
+        return redirect("view") + addProductParam();
     }
 
     /**

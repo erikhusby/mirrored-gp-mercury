@@ -19,6 +19,10 @@ public class BspLink {
 
     public String sampleSearchUrl(String sampleId) {
         // skip the SM- part of the name
-        return bspConfig.getUrl(SEARCH_SAMPLE + sampleId.substring(3));
+        if (sampleId.length() > 3) {
+            return bspConfig.getUrl(SEARCH_SAMPLE + sampleId.substring(3));
+        } else {
+            return sampleId;
+        }
     }
 }

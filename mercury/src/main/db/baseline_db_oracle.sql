@@ -51,6 +51,12 @@
 
     drop table athena.research_projectirb_aud cascade constraints;
 
+    drop table if exists athena.product_order_add_on_aud cascade constraints;
+
+    drop table if exists athena.product_order_add_on cascade constraints;
+
+
+
     drop table mercury.jira_ticket cascade constraints;
 
     drop table mercury.jira_ticket_aud cascade constraints;
@@ -200,6 +206,16 @@
 --     drop table mercury.workflow_description cascade constraints;
 --
 --     drop table mercury.workflow_description_aud cascade constraints;
+
+    drop table if exists mercury.lab_vessel_mercury_samples_aud cascade constraints;
+
+    drop table if exists mercury.lab_vessel_mercury_samples cascade constraints;
+
+    drop table if exists mercury.mercury_sample cascade constraints;
+
+    drop table if exists mercury.mercury_sample_aud cascade constraints;
+
+
 /*
     drop table project_available_quotes cascade constraints;
 
@@ -239,6 +255,8 @@
 
     drop sequence athena.seq_rp_irb_index;
 
+    drop sequence athena.seq_order_add_on;
+
     drop sequence mercury.SEQ_LAB_BATCH;
 
     drop sequence mercury.SEQ_LAB_EVENT;
@@ -276,6 +294,9 @@
     drop sequence mercury.seq_molecular_index;
 
     drop sequence mercury.seq_molecular_indexing_scheme;
+
+    drop sequence mercury.seq_mercury_sample;
+
 
     create table athena.billable_item (
         billable_item_id number(19,0) not null,

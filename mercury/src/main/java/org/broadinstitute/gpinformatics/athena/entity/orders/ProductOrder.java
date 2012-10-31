@@ -202,7 +202,7 @@ public class ProductOrder implements Serializable {
             }
         }
 
-        public List<String> formatAsText() {
+        public List<String> sampleSummary() {
             generateCounts();
 
             List<String> output = new ArrayList<String>();
@@ -237,6 +237,29 @@ public class ProductOrder implements Serializable {
                 output.add(MessageFormat.format("{0} samples have fingerprint data.", hasFPCount));
             }
 
+            return output;
+        }
+
+
+        private void checkCount(int count, String message, List<String> output) {
+            if (count != 0) {
+                output.add(MessageFormat.format(message, count));
+            }
+        }
+
+        // TODO: Will need to implement more extensive validations vs specific products; will need to move these
+        // checks elsewhere.
+        /**
+         * Check to see if the samples are valid.
+         * - for all BSP formatted sample IDs, do we have BSP data?
+         * - all BSP samples are RECEIVED
+         * - all BSP samples' stock is ACTIVE
+         */
+        public List<String> sampleValidation() {
+            List<String> output = new ArrayList<String>();
+            checkCount(missingBspMetaDataCount, "Samples Missing BSP Data: {0}", output);
+            checkCount(bspSampleCount - activeSampleCount, "Samples Not ACTIVE: {0}", output);
+            checkCount(bspSampleCount - receivedSampleCount, "Samples Not RECEIVED: {0}", output);
             return output;
         }
 
@@ -648,7 +671,7 @@ public class ProductOrder implements Serializable {
 
     private static void addCustomField(Map<String, CustomFieldDefinition> submissionFields,
                                        List<CustomField> list, RequiredSubmissionFields field, Object value) {
-        list.add(new CustomField(submissionFields.get(field.getFieldName()), value, CustomField.SingleFieldType.TEXT ));
+        list.add(new CustomField(submissionFields.get(field.getFieldName()), value, CustomField.SingleFieldType.TEXT));
     }
 
     /**
@@ -671,13 +694,14 @@ public class ProductOrder implements Serializable {
         addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT_FAMILY,
                 product.getProductFamily() == null ? "" : product.getProductFamily().getName());
 
+        addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT,
+                product.getProductName() == null ? "" : product.getProductName());
+
         if (quoteId != null && !quoteId.isEmpty()) {
             addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.QUOTE_ID, quoteId);
         }
-        if (!isSheetEmpty()) {
-            addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.SAMPLE_IDS,
-                    StringUtils.join(getSampleNames(), ','));
-        }
+        addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.SAMPLE_IDS,
+                StringUtils.join(getSampleNames(), ','));
 
         CreateIssueResponse issueResponse = ServiceAccessUtility.createJiraTicket(
                 fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title,
@@ -688,18 +712,22 @@ public class ProductOrder implements Serializable {
 
         addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
 
+        addPublicComment(StringUtils.join(getSampleSummaryComments(), "\n"));
         addPublicComment(StringUtils.join(getSampleValidationComments(), "\n"));
     }
 
     /**
      * This is a helper method encapsulating the validations run against the samples contained
      * within this product order.  The results of these validation checks are then added to the existing Jira Ticket.
-     *
-     * @throws IOException
      */
-    public List<String> getSampleValidationComments() throws IOException {
+    public List<String> getSampleSummaryComments() {
         counts.generateCounts();
-        return counts.formatAsText();
+        return counts.sampleSummary();
+    }
+
+    public List<String> getSampleValidationComments() {
+        counts.generateCounts();
+        return counts.sampleValidation();
     }
 
     /**
@@ -709,7 +737,9 @@ public class ProductOrder implements Serializable {
      * @throws IOException
      */
     public void addPublicComment(String comment) throws IOException {
-        ServiceAccessUtility.addJiraComment(jiraTicketKey, comment);
+        if (!StringUtils.isBlank(comment)) {
+            ServiceAccessUtility.addJiraComment(jiraTicketKey, comment);
+        }
     }
 
     /**
@@ -807,7 +837,7 @@ public class ProductOrder implements Serializable {
                 }
                 StringBuilder sb = new StringBuilder();
                 for (Map.Entry<BillingStatus, Integer> entry : totals.entrySet()) {
-                    sb.append(entry.getKey().getDisplayName()).append(": ").append(entry.getValue()).append(" ");
+                    sb.append(MessageFormat.format("{0}: {1} ", entry.getKey().getDisplayName(), entry.getValue()));
                 }
                 sampleBillingSummary = sb.toString();
             }
@@ -821,6 +851,7 @@ public class ProductOrder implements Serializable {
      */
     public enum RequiredSubmissionFields {
         PRODUCT_FAMILY("Product Family"),
+        PRODUCT("Product"),
         QUOTE_ID("Quote ID"),
         MERCURY_URL("Mercury URL"),
         SAMPLE_IDS("Sample IDs");

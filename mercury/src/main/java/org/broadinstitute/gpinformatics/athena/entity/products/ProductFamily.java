@@ -48,16 +48,18 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 //        ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
 //        CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing"),
 
-        // GPLIM-172 real product families
-        RNA("RNA"),
-        SMALL_DESIGN_VALIDATION_AND_EXTENSION("Small Design, Validation & Extension"),
-        SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE("Sample Initiation, Qualification & Cell Culture"),
-        EXOME("Exome"),
-        WHOLE_GENOME("Whole Genome"),
+        // GPLIM-172 GPLIM-216 real product families
         DE_NOVO_ASSEMBLY("de novo Assembly"),
+        ALTERNATIVE_LIBRARY_PREP_AND_DEVELOPMENT("Alternate Library Prep & Development"),
+        EPIGENOMICS("Epigenomics"),
+        EXOME("Exome"),
+        METAGENOMICS("Metagenomics"),
         MICROBIAL_AND_VIRAL_ANALYSIS("Microbial & Viral Analysis"),
+        RNA("RNA"),
+        SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE("Sample Initiation, Qualification & Cell Culture"),
         SEQUENCE_ONLY("Sequence Only"),
-        METAGENOMICS("Metagenomics");
+        SMALL_DESIGN_VALIDATION_AND_EXTENSION("Small Design, Validation & Extension"),
+        WHOLE_GENOME("Whole Genome");
 
 
 

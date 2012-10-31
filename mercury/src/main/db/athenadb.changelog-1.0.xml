@@ -49,6 +49,23 @@
                 defaultNullValue="0" />
     </changeSet>
 
+    <!-- Since modify type does not work for changing number to boolean in postgres, just
+         doing a specific drop and add for postgres here -->
+    <changeSet id="GPLIM-65-2b" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn schemaName="athena" tableName="research_project" columnName="irb_not_engaged"/>
+        <addColumn schemaName="athena" tableName="research_project">
+            <column name="irb_not_engaged" type="boolean"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="research_project"
+                columnName="irb_not_engaged"
+                defaultNullValue="false" />
+    </changeSet>
+
     <changeSet id="GPLIM-65-3" author="hrafal">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -68,6 +85,19 @@
         </preConditions>
         <addColumn tableName="research_project_aud">
             <column name="irb_not_engaged" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Since modify type does not work for changing number to boolean in postgres, just
+         doing a specific drop and add for postgres here -->
+    <changeSet id="GPLIM-65-4a" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn schemaName="athena" tableName="research_project_aud" columnName="irb_not_engaged"/>
+        <addColumn schemaName="athena" tableName="research_project_aud">
+            <column name="irb_not_engaged" type="boolean"/>
         </addColumn>
     </changeSet>
 
@@ -702,6 +732,29 @@
 
     <changeSet id="GPLIM-189-6" author="mccrory">
         <addNotNullConstraint columnName="sample_position" tableName="product_order_sample" schemaName="athena" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-216_oracle" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="oracle" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'ALTERNATIVE_LIBRARY_PREP_AND_DEVELOPMENT');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'EPIGENOMICS');
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-216_pg" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'ALTERNATIVE_LIBRARY_PREP_AND_DEVELOPMENT');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'EPIGENOMICS');
+        </sql>
     </changeSet>
 
 </databaseChangeLog>

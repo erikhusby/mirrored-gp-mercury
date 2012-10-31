@@ -49,9 +49,19 @@
                     </div>
 
                     <div class="control-group">
+                        <span class="control-label label-form">Research Project</span>
+                        <span class="controls">
+                        <h:link outcome="/projects/view">
+                            <f:param name="researchProject"  value="#{productOrderDetail.productOrder.researchProject.jiraTicketKey}"/>
+                            #{productOrderDetail.productOrder.researchProject.title}
+                        </h:link>
+                        </span>
+                    </div>
+
+                    <div class="control-group">
                         <span class="control-label label-form">Product</span>
                         <span class="controls">
-                            #{productOrderDetail.productOrder.title}
+                            #{productOrderDetail.productOrder.product.productName}
                         </span>
                     </div>
 
@@ -84,7 +94,7 @@
                     <p/>
 
                     <p:panel id="sampleValidation" header="Summary">
-                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}"
+                        <p:dataList value="#{productOrderDetail.productOrder.sampleSummaryComments}"
                                     var="comment"
                                     itemType="none">
                             #{comment}

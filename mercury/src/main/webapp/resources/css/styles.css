@@ -72,14 +72,30 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
     margin-top: 5px;
 }
 
-.form-fieldset legend {
+fieldset legend {
     display: block;
     padding: 0;
-    width: 70px;
-    margin-bottom: 20px;
+    width: 55px;
+    text-indent: 3px;
+    margin-right: 10px;
+    margin-left: 10px;
     font-size: 12px;
     line-height: 10px;
     color: #333333;
     border: 0;
-    border-bottom: 1px solid #e5e5e5;
+}
+
+fieldset {
+    margin-top: 10px;
+    width: 325px;
+    border: 1px solid #CCC
+}
+
+fieldset .ui-chkbox {
+    margin-left: 5px;
+}
+
+.entry-help {
+    color: #999;
+    margin-left: 10px;
 }
