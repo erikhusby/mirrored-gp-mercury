@@ -757,4 +757,26 @@
         </sql>
     </changeSet>
 
+
+    <changeSet id="GPLIM-227_oracle" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="oracle" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'DATA_ANALYSIS');
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-227_pg" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'DATA_ANALYSIS');
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

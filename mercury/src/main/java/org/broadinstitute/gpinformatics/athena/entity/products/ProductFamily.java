@@ -51,6 +51,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         // GPLIM-172 GPLIM-216 real product families
         DE_NOVO_ASSEMBLY("de novo Assembly"),
         ALTERNATIVE_LIBRARY_PREP_AND_DEVELOPMENT("Alternate Library Prep & Development"),
+        DATA_ANALYSIS("Data Analysis"),
         EPIGENOMICS("Epigenomics"),
         EXOME("Exome"),
         METAGENOMICS("Metagenomics"),
