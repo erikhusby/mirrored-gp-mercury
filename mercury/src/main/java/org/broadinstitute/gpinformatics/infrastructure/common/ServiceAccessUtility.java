@@ -169,30 +169,21 @@ public class ServiceAccessUtility {
      * created ticket
      * @throws IOException
      */
-    public static CreateIssueResponse createJiraTicket (String projectPrefix,
-                                                        CreateIssueRequest.Fields.Issuetype issuetype, String summary,
-                                                        String description, Collection<CustomField> customFields)
-            throws IOException {
+    public static CreateIssueResponse createJiraTicket (
+            final String projectPrefix, final String reporter,
+            final CreateIssueRequest.Fields.Issuetype issuetype, final String summary,
+            final String description, final Collection<CustomField> customFields) throws IOException {
 
-        CreateIssueResponse createdJiraTicket = null;
-
-        try {
-            InitialContext initialContext = new InitialContext();
-            try{
-                BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
-                Bean bean = beanManager.getBeans(JiraService.class).iterator().next();
-                CreationalContext ctx = beanManager.createCreationalContext(bean);
-                JiraService jiraService =
-                        (JiraService) beanManager.getReference(bean, bean.getClass(), ctx);
-                createdJiraTicket = jiraService.createIssue(projectPrefix, issuetype, summary, description, customFields);
-            } finally {
-                initialContext.close();
+        return (new Caller<CreateIssueResponse, JiraService>() {
+            @Override
+            CreateIssueResponse call(JiraService apiInstance) {
+                try {
+                    return apiInstance.createIssue(projectPrefix, reporter, issuetype, summary, description, customFields);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
-        } catch (NamingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return createdJiraTicket;
+        }).apiCall(JiraService.class);
     }
 
     /**

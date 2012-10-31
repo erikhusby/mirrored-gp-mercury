@@ -465,8 +465,10 @@ public class ResearchProject {
                                     "", CustomField.SingleFieldType.TEXT ));
 
             CreateIssueResponse researchProjectResponse =
-                    ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
-                                                          title, synopsis, listOfFields);
+                    ServiceAccessUtility.createJiraTicket(
+                        fetchJiraProject().getKeyPrefix(),
+                        ServiceAccessUtility.getBspUserForId(createdBy).getUsername(),
+                        fetchJiraIssueType(), title, synopsis, listOfFields);
 
             // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
             jiraTicketKey = researchProjectResponse.getKey();
