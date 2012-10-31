@@ -150,13 +150,12 @@ public class UserLogin extends AbstractJsfBean {
         private static final String HOME_PAGE = "/Mercury";
 
         public static UserRole fromRequest(HttpServletRequest request) {
-            return PM;
-//            for (UserRole role : values()) {
-//                if (request.isUserInRole(role.roleName)) {
-//                    return role;
-//                }
-//            }
-//            return OTHER;
+            for (UserRole role : values()) {
+                if (request.isUserInRole(role.roleName)) {
+                    return role;
+                }
+            }
+            return OTHER;
         }
 
         public final String landingPage;
@@ -168,11 +167,18 @@ public class UserLogin extends AbstractJsfBean {
         }
 
         private String checkUrlForRoleRedirect(String targetPage) {
-            if (targetPage.endsWith(HOME_PAGE) || targetPage.endsWith(HOME_PAGE + "/") ||
-                targetPage.endsWith(INDEX) || targetPage.endsWith(INDEX + ".xhtml")) {
-                return landingPage;
+            StringBuilder newUrlBuilder = new StringBuilder(targetPage);
+            if (this != OTHER) {
+                if (targetPage.endsWith(HOME_PAGE) || targetPage.endsWith(HOME_PAGE + "/")) {
+                    if (targetPage.endsWith("/")) {
+                        newUrlBuilder.deleteCharAt(targetPage.lastIndexOf("/"));
+                    }
+                    newUrlBuilder.append(landingPage).append(".xhtml");
+                } else if (targetPage.endsWith(INDEX) || targetPage.endsWith(INDEX + ".xhtml")) {
+                    newUrlBuilder = new StringBuilder(targetPage.replace(INDEX, landingPage));
+                }
             }
-            return targetPage;
+            return newUrlBuilder.toString();
         }
     }
 }
