@@ -154,7 +154,7 @@
                     </f:facet>
 
                     <p:column headerText="Name">
-                        <h:link outcome="view" value="#{order.title}">
+                        <h:link outcome="/orders/view" value="#{order.title}">
                             <f:param name="productOrder" value="#{order.businessKey}"/>
                         </h:link>
                     </p:column>
