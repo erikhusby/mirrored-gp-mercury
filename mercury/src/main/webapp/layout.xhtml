@@ -57,16 +57,18 @@
                             <p:graphicImage url="/images/broad_logo.png" alt="Broad Institute"/>
                             <h:link outcome="/index" style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 1.2em"><p:graphicImage url="/images/mercury_helmet_#{buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</h:link>
                         </div>
-
-                            <h:form styleClass="navbar-form pull-right">
-                                <span id="jiraProblem" class="badge badge-warning" style="cursor: help;" title="Click here to send a bug report or feedback">Feedback?</span>
-                                <sqltg:isLoggedIn>
+                        <h:form styleClass="navbar-form pull-right">
+                            <span id="jiraProblem" class="badge badge-warning" style="cursor: help;" title="Click here to send a bug report or feedback">Feedback?</span>
+                            <sqltg:isLoggedIn>
                                 |
-                                <h:outputText value="#{request.getRemoteUser()}" styleClass="badge"/>
+                                <h:outputText id="userBadge" style="background: green; cursor: help;" value="#{request.getRemoteUser()}" styleClass="badge"/>
+                                <p:overlayPanel for="userBadge">
+                                    <h:outputText value="BSP User - #{userBean}"/>
+                                </p:overlayPanel>
                                 &nbsp;
                                 <p:commandLink action="#{logoutHandler.logout}" value="Sign out" />
-                                </sqltg:isLoggedIn>
-                            </h:form>                        
+                            </sqltg:isLoggedIn>
+                        </h:form>
                     </div>
                 </div>
             </div>

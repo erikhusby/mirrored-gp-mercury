@@ -6,11 +6,6 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -20,15 +15,22 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRes
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
+import org.codehaus.jackson.map.ObjectMapper;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 @Impl
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
-
 
     @Inject
     private JiraConfig jiraConfig;
@@ -36,12 +38,9 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     @Inject
     private Log log;
 
-
     private String baseUrl;
 
-
     public JiraServiceImpl() {}
-
 
     /**
      * Non-CDI constructor
@@ -50,7 +49,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
      */
     public JiraServiceImpl(JiraConfig jiraConfig) {
         this.jiraConfig = jiraConfig;
-        this.log = LogFactory.getLog(JiraServiceImpl.class);
+        log = LogFactory.getLog(JiraServiceImpl.class);
     }
 
     @Override
@@ -63,23 +62,12 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         specifyHttpAuthCredentials(client, jiraConfig);
     }
 
-
-
     private String getBaseUrl() {
-
         if (baseUrl == null) {
-
-            String urlString = "%s/rest/api/2";
-            baseUrl = String.format(urlString, jiraConfig.getUrlBase ( ));
-
+            baseUrl = jiraConfig.getUrlBase() + "/rest/api/2";
         }
-
         return baseUrl;
     }
-
-
-
-
 
     @Override
     public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issueType,
@@ -118,10 +106,11 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         AddCommentRequest addCommentRequest;
         
-        if (visibilityType != null && visibilityValue != null)
+        if (visibilityType != null && visibilityValue != null) {
             addCommentRequest = AddCommentRequest.create(body, visibilityType, visibilityValue);
-        else
+        } else {
             addCommentRequest = AddCommentRequest.create(body);
+        }
 
 
         String urlString = getBaseUrl() + "/issue/" + key + "/comment";
@@ -152,43 +141,28 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         AddIssueLinkRequest linkRequest;
 
-        if(commentBody != null && availabilityType != null && availabilityValue != null) {
+        if (commentBody != null && availabilityType != null && availabilityValue != null) {
             linkRequest = AddIssueLinkRequest.create(type, sourceIssueIn, targetIssueIn,
-                                                     commentBody, availabilityType, availabilityValue);
+                    commentBody, availabilityType, availabilityValue);
         } else {
             linkRequest = AddIssueLinkRequest.create(type, sourceIssueIn, targetIssueIn);
         }
 
         String urlString = getBaseUrl() + "/issueLink";
-        log.debug("addLink Url is " + urlString);
 
         WebResource webResource = getJerseyClient().resource(urlString);
-//        getJerseyClient().resource(urlString).type(MediaType.APPLICATION_JSON_TYPE)
-//                .accept(MediaType.APPLICATION_JSON_TYPE).entity(linkRequest).post();
         post(webResource, linkRequest);
     }
 
-
     @Override
     public void addWatcher(String key, String watcherId) throws IOException{
-        StringBuilder urlString = new StringBuilder(getBaseUrl());
-        urlString.append("/issue/");
-        urlString.append(key);
-        urlString.append("/watchers");
-
-        log.debug("addWatcher Url is " + urlString);
-
-        WebResource webResource = getJerseyClient().resource(urlString.toString());
-
+        WebResource webResource = getJerseyClient().resource(getBaseUrl() + "/issue/" + key + "/watchers");
         post(webResource, watcherId);
-
     }
 
-
-
     @Override
-    public Map<String, CustomFieldDefinition> getRequiredFields(CreateIssueRequest.Fields.Project project,
-                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+    public Map<String, CustomFieldDefinition> getRequiredFields(@Nonnull CreateIssueRequest.Fields.Project project,
+                                                                @Nonnull CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
         if (project == null) {
             throw new NullPointerException("project cannot be null");
         }
@@ -199,68 +173,74 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         String urlString = getBaseUrl() + "/issue/createmeta";
 
         String jsonResponse = getJerseyClient().resource(urlString)
-                .queryParam("projectKeys",project.getKey())
-                .queryParam("issueTypeNames",issueType.getJiraName())
-                .queryParam("expand","projects.issuetypes.fields")
+                .queryParam("projectKeys", project.getKey())
+                .queryParam("issueTypeNames", issueType.getJiraName())
+                .queryParam("expand", "projects.issuetypes.fields")
                 .get(String.class);
 
         return CustomFieldJsonParser.parseRequiredFields(jsonResponse);
     }
 
     @Override
-    public Map<String, CustomFieldDefinition> getCustomFields ( ) throws IOException {
+    public Map<String, CustomFieldDefinition> getCustomFields() throws IOException {
         String urlString = getBaseUrl() + "/field";
 
-        String jsonResponse =
-                getJerseyClient ( ).resource ( urlString ).get ( String.class );
-
+        String jsonResponse = getJerseyClient().resource(urlString).get(String.class);
         return CustomFieldJsonParser.parseCustomFields(jsonResponse);
     }
 
     @Override
     public String createTicketUrl(String jiraTicketName) {
 
-        //Untill such a time as I can remove this method, its delegated to Jira Config
+        // Until such a time as I can remove this method, it's delegated to Jira Config
         return jiraConfig.createTicketUrl(jiraTicketName);
     }
 
     @Override
-    public IssueTransitionResponse findAvailableTransitions ( String jiraIssueKey ) {
+    public IssueTransitionResponse findAvailableTransitions(String jiraIssueKey) {
         String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
 
-
         WebResource webResource =
-                getJerseyClient().resource(urlString)
-                        .queryParam ( "expand", "transitions.fields" );
+                getJerseyClient().resource(urlString).queryParam("expand", "transitions.fields");
 
         return get(webResource, new GenericType<IssueTransitionResponse>(){});
-
     }
 
     @Override
-    public void postNewTransition ( String jiraIssueKey, IssueTransitionRequest jiraIssueTransition ) throws IOException{
-
+    public void postNewTransition(String jiraIssueKey, IssueTransitionRequest jiraIssueTransition) throws IOException {
         String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
-
-        WebResource webResource =
-                getJerseyClient().resource(urlString);
-
+        WebResource webResource = getJerseyClient().resource(urlString);
         post(webResource, jiraIssueTransition);
-
     }
 
     @Override
-    public void postNewTransition ( String jiraIssueKey, String transitionId ) throws IOException{
-
-        IssueTransitionRequest jiraIssueTransition =
-                new IssueTransitionRequest(new Transition(transitionId));
+    public void postNewTransition(String jiraIssueKey, String transitionId) throws IOException {
+        IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(new Transition(transitionId));
 
         String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
-
-        WebResource webResource =
-                getJerseyClient().resource(urlString);
-
+        WebResource webResource = getJerseyClient().resource(urlString);
         post(webResource, jiraIssueTransition);
+    }
 
+    // Validate the current user by using the JIRA user/search API.  We have a match if we get a response back
+    // whose name exactly matches the name we're searching for.  The API excludes inactive users by default.
+    @Override
+    public boolean isUser(String username) {
+        String urlString = getBaseUrl() + "/user/search";
+
+        String jsonResponse = getJerseyClient().resource(urlString).
+                queryParam("username", username).
+                queryParam("maxResults", "1").get(String.class);
+        try {
+            @SuppressWarnings("unchecked")
+            List<Map<String, String>> response = new ObjectMapper().readValue(jsonResponse, List.class);
+            if (!response.isEmpty()) {
+                String foundName = response.get(0).get("name");
+                return foundName.equals(username);
+            }
+            return false;
+        } catch (IOException e) {
+            return false;
+        }
     }
 }
