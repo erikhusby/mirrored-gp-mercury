@@ -12,7 +12,7 @@ CURSOR im_po_sample_cur IS SELECT * FROM im_product_order_sample WHERE is_delete
 CURSOR im_po_status_cur IS SELECT * FROM im_product_order_status WHERE is_delete = 'F';
 CURSOR im_po_sample_stat_cur IS SELECT * FROM im_product_order_sample_stat WHERE is_delete = 'F';
 CURSOR im_price_item_cur IS SELECT * FROM im_price_item WHERE is_delete = 'F';
-CURSOR im_product_add_on_cur IS SELECT * FROM im_product_add_on WHERE is_delete = 'F';
+CURSOR im_po_add_on_cur IS SELECT * FROM im_product_order_add_on WHERE is_delete = 'F';
 CURSOR im_product_cur IS SELECT * FROM im_product WHERE is_delete = 'F';
 CURSOR im_rp_cohort_cur IS SELECT * FROM im_research_project_cohort WHERE is_delete = 'F';
 CURSOR im_rp_cur IS SELECT * FROM im_research_project WHERE is_delete = 'F';
@@ -54,15 +54,14 @@ WHERE EXISTS (
   AND t2.is_delete = 'T'
 );
 
---Level 2 (depends only on level 1 tables)
-
-DELETE FROM product_add_on t1
+DELETE FROM product_order_add_on t1
 WHERE EXISTS (
-  SELECT 1 FROM im_product_add_on t2
-  WHERE t1.product_id = t2.product_id
-  AND t1.add_on_product_id = t2.add_on_product_id
+  SELECT 1 FROM im_product_order_add_on t2
+  WHERE t1.product_order_add_on_id = t2.product_order_add_on_id
   AND t2.is_delete = 'T'
 );
+
+--Level 2 (depends only on level 1 tables)
 
 DELETE FROM research_project_status t1
 WHERE EXISTS (
@@ -267,7 +266,6 @@ FOR new IN im_po_cur LOOP
   );
 END LOOP;
 
-
 FOR new IN im_price_item_cur LOOP
   UPDATE price_item SET
     platform = new.platform,
@@ -305,26 +303,27 @@ FOR new IN im_price_item_cur LOOP
 END LOOP;
 
 
-FOR new IN im_product_add_on_cur  LOOP
-  UPDATE product_add_on SET
+FOR new IN im_po_add_on_cur  LOOP
+  UPDATE product_order_add_on SET
+    product_order_id = new.product_order_id,
+    product_id = new.product_id,
     etl_date = new.etl_date 
-  WHERE product_id = new.product_id
-  AND add_on_product_id = new.add_on_product_id;
+  WHERE product_order_add_on_id = new.product_order_add_on_id;
 
-  INSERT INTO product_add_on (
+  INSERT INTO product_order_add_on (
+    product_order_add_on_id,
+    product_order_id,
     product_id,
-    add_on_product_id,
-    etl_date 
+    etl_date
   )
   SELECT
+    new.product_order_add_on_id,
+    new.product_order_id,
     new.product_id,
-    new.add_on_product_id,
     new.etl_date 
   FROM DUAL WHERE NOT EXISTS (
-    SELECT 1 FROM product_add_on
-    WHERE NOT EXISTS (SELECT 1 FROM product_add_on
-    WHERE product_id = new.product_id
-    AND add_on_product_id = new.add_on_product_id)
+    SELECT 1 FROM product_order_add_on
+    WHERE product_order_add_on_id = new.product_order_add_on_id
   );
 END LOOP;
 
@@ -575,6 +574,6 @@ FOR new IN im_billable_item_cur  LOOP
   );
 END LOOP;
 
---COMMIT;
+COMMIT;
 
 END;

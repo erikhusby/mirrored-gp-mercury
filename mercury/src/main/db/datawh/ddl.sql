@@ -1,5 +1,6 @@
 
 DROP TABLE billable_item;
+DROP TABLE product_order_add_on;
 DROP TABLE product_order_sample_status;
 DROP TABLE product_order_sample;
 DROP TABLE product_order_status;
@@ -11,7 +12,6 @@ DROP TABLE research_project_person;
 DROP TABLE research_project_status;
 DROP TABLE research_project;
 DROP TABLE price_item;
-DROP TABLE product_add_on;
 DROP TABLE product;
 
 
@@ -27,17 +27,6 @@ CREATE TABLE product (
   is_top_level_product CHAR(1) CHECK (is_top_level_product IN ('T','F')),
   workflow_name VARCHAR2(80),
   etl_date DATE NOT NULL
-);
-
-CREATE TABLE product_add_on (
-  product_id NUMERIC(19) NOT NULL,
-  add_on_product_id NUMERIC(19) NOT NULL,
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_product_add_on_product FOREIGN KEY (product_id)
-    REFERENCES product(product_id),
-  CONSTRAINT fk_product_add_on_add_on FOREIGN KEY (add_on_product_id)
-    REFERENCES product(product_id),
-  PRIMARY KEY (product_id, add_on_product_id)
 );
 
 CREATE TABLE price_item (
@@ -167,6 +156,17 @@ CREATE TABLE product_order_sample_status (
   PRIMARY KEY (product_order_sample_id, status_date)
 );
 
+CREATE TABLE product_order_add_on (
+  product_order_add_on_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  product_order_id NUMERIC(19) NOT NULL,
+  product_id NUMERIC(19) NOT NULL,
+  etl_date DATE NOT NULL,
+  CONSTRAINT fk_po_add_on_prodid FOREIGN KEY (product_id)
+    REFERENCES product(product_id),
+  CONSTRAINT fk_po_add_on_poid FOREIGN KEY (product_order_id)
+    REFERENCES product_order(product_order_id)
+);
+
 CREATE TABLE billable_item (
   billable_item_id NUMERIC(19) NOT NULL PRIMARY KEY,
   product_order_sample_id NUMERIC(19) NOT NULL,
@@ -184,6 +184,7 @@ CREATE INDEX billable_item_idx1 ON billable_item (product_order_sample_id, price
 
 -- Import tables
 DROP TABLE im_billable_item;
+DROP TABLE im_product_order_add_on;
 DROP TABLE im_product_order_sample_stat;
 DROP TABLE im_product_order_sample;
 DROP TABLE im_product_order_status;
@@ -195,7 +196,6 @@ DROP TABLE im_research_project_person;
 DROP TABLE im_research_project;
 DROP TABLE im_research_project_status;
 DROP TABLE im_price_item;
-DROP TABLE im_product_add_on;
 DROP TABLE im_product;
 
 
@@ -210,13 +210,6 @@ CREATE TABLE im_product (
   samples_per_week NUMERIC(19),
   is_top_level_product CHAR(1),
   workflow_name VARCHAR2(80),
-  etl_date DATE NOT NULL,
-  is_delete CHAR(1) NOT NULL
-);
-
-CREATE TABLE im_product_add_on (
-  product_id NUMERIC(19) NOT NULL,
-  add_on_product_id NUMERIC(19) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL
 );
@@ -325,6 +318,14 @@ CREATE TABLE im_product_order_sample (
   product_order_id NUMERIC(19),
   sample_name VARCHAR2(80),
   billing_status VARCHAR2(19),
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL
+);
+
+CREATE TABLE im_product_order_add_on (
+  product_order_add_on_id NUMERIC(19) NOT NULL,
+  product_order_id NUMERIC(19),
+  product_id NUMERIC(19),
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL
 );

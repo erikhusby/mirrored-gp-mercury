@@ -23,7 +23,8 @@ import java.util.*;
  * tables that will need to iterate over the relevant range of revisions, typically all changes
  * since the last ETL run, and extract the status and status dates.
  *
- * Transform processing is next.  It maps the entities to DW import table records, writes
+ * Transform processing maps the entities to sqlLoader records.  Record format is defined in
+ * the sqlLoader control file
  * them to a data file that is named with a etl_date.  The same etl_date is used for all DW
  * data processed by this run of ExtractTransform.
  *
