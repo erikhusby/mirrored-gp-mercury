@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary;
 
-import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
@@ -59,7 +58,7 @@ public class StandardPOResolver extends ProductOrderResolver {
     }
 
     @Override
-    public Map<LabVessel, WorkflowStepDef> getStatus(ProductOrderId productOrder, LabVessel root) {
+    public Map<LabVessel, WorkflowStepDef> getStatus( String productOrder, LabVessel root) {
         throw new RuntimeException("not implemented");
     }
 

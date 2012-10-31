@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -124,7 +123,7 @@ public class BucketResource {
 
         try {
             if(null == batchTicket) {
-                bucketBatch.submit();
+                bucketBatch.createJiraTicket ();
             } else {
                 bucketBatch.setJiraTicket(new JiraTicket(batchTicket, batchTicket));
             }

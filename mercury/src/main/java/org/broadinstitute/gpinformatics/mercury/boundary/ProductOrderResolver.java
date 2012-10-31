@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary;
 
-import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This class is the brains the figures out the "why"
@@ -52,11 +50,12 @@ public abstract class ProductOrderResolver {
      * answer.  This seems overly complex at first, but consider something like QTP,
      * where multiple libraries from different {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef}s
      * may come together on a {@link org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaRunChamber}.
+     *
      * @param productOrder
      * @param root
      * @return
      */
-    public abstract Map<LabVessel,WorkflowStepDef> getStatus(ProductOrderId productOrder,
+    public abstract Map<LabVessel,WorkflowStepDef> getStatus( String productOrder,
                                                     LabVessel root);
 
 }

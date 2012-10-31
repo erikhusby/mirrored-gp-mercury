@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
-import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -22,7 +21,7 @@ import java.util.Date;
 /**
  * An entry into a lab {@link Bucket}.  An entry is
  * defined by the {@link LabVessel} that should be worked
- * on and the {@link ProductOrderId product order} for which
+ * on and the {@link String product order} for which
  * the work is related.
  */
 @Entity

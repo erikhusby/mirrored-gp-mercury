@@ -39,130 +39,128 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
+@Table ( schema = "mercury", uniqueConstraints = @UniqueConstraint ( columnNames = { "batchName" } ) )
 public class LabBatch {
 
     @Id
-    @SequenceGenerator(name = "SEQ_LAB_BATCH", schema = "mercury", sequenceName = "SEQ_LAB_BATCH")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_BATCH")
+    @SequenceGenerator ( name = "SEQ_LAB_BATCH", schema = "mercury", sequenceName = "SEQ_LAB_BATCH" )
+    @GeneratedValue ( strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_BATCH" )
     private Long labBatchId;
 
     public static final String LCSET_PROJECT_PREFIX = "LCSET";
 
-    @ManyToMany(cascade = CascadeType.PERSIST)
+    @ManyToMany ( cascade = CascadeType.PERSIST )
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "lb_starting_lab_vessels")
-    private Set<LabVessel> startingLabVessels = new HashSet<LabVessel>();
+    @JoinTable ( schema = "mercury", name = "lb_starting_lab_vessels" )
+    private Set<LabVessel> startingLabVessels = new HashSet<LabVessel> ();
 
     private boolean isActive = true;
 
     private String batchName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne ( fetch = FetchType.LAZY )
     private JiraTicket jiraTicket;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    private ProjectPlan projectPlan;
+    //    @ManyToOne(fetch = FetchType.LAZY)
+    //    private ProjectPlan projectPlan;
 
     // todo jmt get Hibernate to sort this
-    @OneToMany(mappedBy = "labBatch")
-    private Set<GenericLabEvent> labEvents = new LinkedHashSet<GenericLabEvent>();
+    @OneToMany ( mappedBy = "labBatch" )
+    private Set<GenericLabEvent> labEvents = new LinkedHashSet<GenericLabEvent> ();
 
     /**
      * Create a new batch with the given name
      * and set of {@link Starter starting materials}
+     *
      * @param batchName
      * @param starters
      */
-//    public LabBatch(ProjectPlan projectPlan,
-//                    String batchName,
-//                    Set<Starter> starters) {
-//        if (projectPlan == null) {
-//            throw new NullPointerException("ProjectPlan cannot be null.");
-//        }
-//        if (batchName == null) {
-//            throw new NullPointerException("BatchName cannot be null");
-//        }
-//        if (starters == null) {
-//            throw new NullPointerException("starters cannot be null");
-//        }
-//        this.projectPlan = projectPlan;
-//        this.batchName = batchName;
-//        for (Starter starter : starters) {
-//            addStarter(starter);
-//        }
-//    }
-
-    public LabBatch(
-            String batchName,
-            Set<LabVessel> starters) {
-        if (batchName == null) {
-            throw new NullPointerException("BatchName cannot be null");
+    //    public LabBatch(ProjectPlan projectPlan,
+    //                    String batchName,
+    //                    Set<Starter> starters) {
+    //        if (projectPlan == null) {
+    //            throw new NullPointerException("ProjectPlan cannot be null.");
+    //        }
+    //        if (batchName == null) {
+    //            throw new NullPointerException("BatchName cannot be null");
+    //        }
+    //        if (starters == null) {
+    //            throw new NullPointerException("starters cannot be null");
+    //        }
+    //        this.projectPlan = projectPlan;
+    //        this.batchName = batchName;
+    //        for (Starter starter : starters) {
+    //            addStarter(starter);
+    //        }
+    //    }
+    public LabBatch ( String batchName, Set<LabVessel> starters ) {
+        if ( batchName == null ) {
+            throw new NullPointerException ( "BatchName cannot be null" );
         }
-        if (starters == null) {
-            throw new NullPointerException("starters cannot be null");
+        if ( starters == null ) {
+            throw new NullPointerException ( "starters cannot be null" );
         }
         this.batchName = batchName;
-        for (LabVessel starter : starters) {
-            addLabVessel(starter);
+        for ( LabVessel starter : starters ) {
+            addLabVessel ( starter );
         }
     }
 
 
-    protected LabBatch() {
+    protected LabBatch () {
     }
 
-//    public ProjectPlan getProjectPlan() {
-//        // todo could have different project plans per
-//        // starter, make this a map accessible by Starter.
-//        return projectPlan;
-//    }
+    //    public ProjectPlan getProjectPlan() {
+    //        // todo could have different project plans per
+    //        // starter, make this a map accessible by Starter.
+    //        return projectPlan;
+    //    }
 
-    public Set<LabVessel> getStartingLabVessels() {
+    public Set<LabVessel> getStartingLabVessels () {
         return startingLabVessels;
     }
 
-    public void addLabVessel(LabVessel labVessel) {
-        if (labVessel == null) {
-            throw new NullPointerException("vessel cannot be null.");
+    public void addLabVessel ( LabVessel labVessel ) {
+        if ( labVessel == null ) {
+            throw new NullPointerException ( "vessel cannot be null." );
         }
-        startingLabVessels.add(labVessel);
-        labVessel.addLabBatch(this);
+        startingLabVessels.add ( labVessel );
+        labVessel.addLabBatch ( this );
     }
 
-    public boolean getActive() {
+    public boolean getActive () {
         return isActive;
     }
-    
-    public void setActive(boolean isActive) {
+
+    public void setActive ( boolean isActive ) {
         this.isActive = isActive;
     }
-    
-    public String getBatchName() {
+
+    public String getBatchName () {
         return batchName;
     }
 
-    public void setJiraTicket(JiraTicket jiraTicket) {
+    public void setJiraTicket ( JiraTicket jiraTicket ) {
         this.jiraTicket = jiraTicket;
     }
 
-    public JiraTicket getJiraTicket() {
+    public JiraTicket getJiraTicket () {
         return jiraTicket;
     }
 
-//    public void setProjectPlanOverride(LabVessel vessel,ProjectPlan planOverride) {
-//        throw new RuntimeException("I haven't been written yet.");
-//    }
+    //    public void setProjectPlanOverride(LabVessel vessel,ProjectPlan planOverride) {
+    //        throw new RuntimeException("I haven't been written yet.");
+    //    }
 
-//    public ProjectPlan getProjectPlanOverride(LabVessel labVessel) {
-//        throw new RuntimeException("I haven't been written yet.");
-//    }
+    //    public ProjectPlan getProjectPlanOverride(LabVessel labVessel) {
+    //        throw new RuntimeException("I haven't been written yet.");
+    //    }
 
-    public Set<GenericLabEvent> getLabEvents() {
+    public Set<GenericLabEvent> getLabEvents () {
         return labEvents;
     }
 
-    public void setLabEvents(Set<GenericLabEvent> labEvents) {
+    public void setLabEvents ( Set<GenericLabEvent> labEvents ) {
         this.labEvents = labEvents;
     }
 
@@ -170,7 +168,7 @@ public class LabBatch {
     /**
      * Submits the contents of this Lab Batch to Jira to create a new LCSET Ticket
      */
-    public void submit () throws IOException {
+    public void createJiraTicket () throws IOException {
 
 
         Map<String, CustomFieldDefinition> submissionFields = ServiceAccessUtility.getJiraCustomFields ();
@@ -182,9 +180,10 @@ public class LabBatch {
         listOfFields.add ( new CustomField ( submissionFields.get (
                 RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName () ), "", CustomField.SingleFieldType.TEXT ) );
 
-        CreateIssueResponse batchTicket = ServiceAccessUtility.createJiraTicket ( fetchJiraProject ().getKeyPrefix (),
-                                                                                  fetchJiraIssueType (), batchName, "",
-                                                                                  listOfFields );
+        CreateIssueResponse batchTicket =
+                ServiceAccessUtility.createJiraTicket ( fetchJiraProject ().getKeyPrefix (),
+ /* TODO SGM:  Need a better solution.  Map product to issueType*/CreateIssueRequest.Fields.Issuetype.EXOME_EXPRESS,
+                                                        batchName, "", listOfFields );
 
         this.setJiraTicket ( new JiraTicket ( batchTicket.getTicketName (), batchTicket.getTicketName () ) );
         jiraTicket.setLabBatch ( this );
@@ -194,32 +193,35 @@ public class LabBatch {
      * addPublicComment Allows a user to create a jira comment for this product order
      *
      * @param comment comment to set in Jira
+     *
      * @throws IOException
      */
-    public void addPublicComment(String comment) throws IOException {
-        jiraTicket.addComment(comment);
+    public void addPublicComment ( String comment ) throws IOException {
+        jiraTicket.addComment ( comment );
     }
 
     /**
      * addWatcher allows a user to add a user as a watcher of the Jira ticket associated with this product order
      *
      * @param personLoginId Broad User Id
+     *
      * @throws IOException
      */
-    public void addWatcher(String personLoginId) throws IOException {
-        jiraTicket.addWatcher(personLoginId);
+    public void addWatcher ( String personLoginId ) throws IOException {
+        jiraTicket.addWatcher ( personLoginId );
     }
 
     /**
      * addLink allows a user to link this the jira ticket associated with this product order with another Jira Ticket
      *
      * @param targetTicketKey Unique Jira Key of the Jira ticket to which this product order's Jira Ticket will be
-     *                       linked
+     *                        linked
+     *
      * @throws IOException
      */
-    public void addJiraLink (String targetTicketKey) throws IOException {
+    public void addJiraLink ( String targetTicketKey ) throws IOException {
 
-        jiraTicket.addJiraLink(targetTicketKey);
+        jiraTicket.addJiraLink ( targetTicketKey );
     }
 
     /**
@@ -227,11 +229,12 @@ public class LabBatch {
      * makes it easier for a user of this object to interact with Jira for this entity.
      *
      * @return An enum of type
-     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType}
+     *         that
      *         represents the Jira Project for Product Orders
      */
     @Transient
-    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
+    public CreateIssueRequest.Fields.ProjectType fetchJiraProject () {
         return CreateIssueRequest.Fields.ProjectType.LCSET;
     }
 
@@ -240,11 +243,12 @@ public class LabBatch {
      * makes it easier for a user of this object to interact with Jira for this entity.
      *
      * @return An enum of type
-     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype}
+     *         that
      *         represents the Jira Issue Type for Product Orders
      */
     @Transient
-    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
+    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType () {
         return CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL;
     }
 
@@ -252,35 +256,33 @@ public class LabBatch {
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
-     *
      */
     public enum RequiredSubmissionFields {
-        PROTOCOL("Protocol", true ),
+        PROTOCOL ( "Protocol", true ),
 
         //Will not have WR ID info in Mercury.  Set to a Blank string
-        WORK_REQUEST_IDS("Work Request ID(s)", true ),
-        POOLING_STATUS("Pooling Status", true ),
-        PRIORITY("priority",false),
-        DUE_DATE("duedate", false),
+        WORK_REQUEST_IDS ( "Work Request ID(s)", true ),
+        POOLING_STATUS ( "Pooling Status", true ),
+        PRIORITY ( "priority", false ),
+        DUE_DATE ( "duedate", false ),
 
         //User comments at batch creation (Post Dec 1 addition)
-        IMPORTANT("Important", true),
+        IMPORTANT ( "Important", true ),
 
         // ??
-        NUMBER_OF_CONTROLS("Number of Controls", true),
-        NUMBER_OF_SAMPLES("Number of Samples", true),
+        NUMBER_OF_CONTROLS ( "Number of Controls", true ),
+        NUMBER_OF_SAMPLES ( "Number of Samples", true ),
 
-//        DO not set this value.  Leave at it's default (for now)
-        LIBRARY_QC_SEQUENCING_REQUIRED("Library QC Sequencing Required?",true),
+        //        DO not set this value.  Leave at it's default (for now)
+        LIBRARY_QC_SEQUENCING_REQUIRED ( "Library QC Sequencing Required?", true ),
 
         //Radio Button custom field
-        PROGRESS_STATUS("Progress Status",true),
+        PROGRESS_STATUS ( "Progress Status", true ),
 
         //List of Sample names
-        GSSR_IDS("GSSR ID(s)",true),
-        ;
+        GSSR_IDS ( "GSSR ID(s)", true ),;
 
-        private final String fieldName;
+        private final String  fieldName;
         private final boolean customField;
 
         private RequiredSubmissionFields ( String fieldNameIn, boolean customFieldInd ) {
@@ -288,11 +290,10 @@ public class LabBatch {
             customField = customFieldInd;
         }
 
-        public String getFieldName() {
+        public String getFieldName () {
             return fieldName;
         }
     }
-
 
 
 }

@@ -4,6 +4,9 @@ import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.jboss.arquillian.testng.Arquillian;
+import org.meanbean.test.BeanTester;
+import org.meanbean.test.Configuration;
+import org.meanbean.test.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
@@ -14,10 +17,10 @@ import java.util.Date;
  *         Date: 10/26/12
  *         Time: 1:18 PM
  */
+@Test( groups = TestGroups.DATABASE_FREE)
 public class BucketEntryDBFreeTest {
 
 
-    @Test( groups = TestGroups.DATABASE_FREE)
     public void testEntryCreation() {
 
         final String productOrder = "PO-1";
@@ -42,6 +45,13 @@ public class BucketEntryDBFreeTest {
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yy");
 
         Assert.assertEquals ( dateFormatter.format ( new Date () ), dateFormatter.format ( entry.getCreatedDate () ) );
+    }
+
+    public void testBasicBeaniness()  {
+        BeanTester tester = new BeanTester();
+        Configuration configuration = new ConfigurationBuilder ().ignoreProperty("bucketExistence").build();
+
+        tester.testBean(BucketEntry.class, configuration);
     }
 
 }

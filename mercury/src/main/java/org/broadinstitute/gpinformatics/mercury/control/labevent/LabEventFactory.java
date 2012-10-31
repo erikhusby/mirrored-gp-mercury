@@ -826,10 +826,10 @@ public class LabEventFactory {
         return fullEventList;
     }
 
-    public GenericLabEvent createFromBatchItems ( String pdoKey, LabVessel batchItem, Long ambiguator, Person actor,
+    public GenericLabEvent createFromBatchItems ( String pdoKey, LabVessel batchItem, Long disambiguator, Person actor,
                                            LabEventType eventType ) {
         GenericLabEvent bucketMoveEvent = new GenericLabEvent ( eventType, new Date (),
-                                                         LabEvent.UI_EVENT_LOCATION, ambiguator,
+                                                         LabEvent.UI_EVENT_LOCATION, disambiguator,
                                                          actor );
         bucketMoveEvent.setInPlaceLabVessel ( batchItem );
         bucketMoveEvent.setProductOrderId ( pdoKey );
