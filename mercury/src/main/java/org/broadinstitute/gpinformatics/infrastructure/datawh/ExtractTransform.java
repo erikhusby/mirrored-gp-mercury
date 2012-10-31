@@ -45,6 +45,7 @@ public class ExtractTransform {
 
     private void incrementalETL() {
         final long etlDate = System.currentTimeMillis();
+        final String etlDateStr = fullDateFormat.format(new Date(etlDate));
         long lastDate = 0L;
 
         // Obtains the timestamp of the last ETL run
@@ -65,24 +66,87 @@ public class ExtractTransform {
             return;
         }
         AuditReader auditReader = AuditReaderFactory.get(new GenericDao().getEntityManager());
-        doBillableItem(lastDate, etlDate, auditReader, "billable_item");
+        doBillableItem(lastDate, etlDate, etlDateStr, auditReader, "billable_item");
         /*
-        doProductOrderSample(lastDate, etlDate, auditReader, "product_order_sample");
-        doProductOrderSampleStatus(lastDate, etlDate, auditReader, "product_order_sample_status");
-        doProductOrder(lastDate, etlDate, auditReader, "product_order");
-        doProductOrderStatus(lastDate, etlDate, auditReader, "product_order_status");
-        doResearchProjectCohort(lastDate, etlDate, auditReader, "research_project_cohort");
-        doResearchProjectFunding(lastDate, etlDate, auditReader, "research_project_funding");
-        doResearchProjectIRB(lastDate, etlDate, auditReader, "research_project_irb");
-        doProjectPerson(lastDate, etlDate, auditReader, "research_project_person");
-        doResearchProject(lastDate, etlDate, auditReader, "research_project");
-        doResearchProjectStatus(lastDate, etlDate, auditReader, "research_project_status");
-        doPriceItem(lastDate, etlDate, auditReader, "price_item");
-        doProduct(lastDate, etlDate, auditReader, "product");
-        doProductAddOn(lastDate, etlDate, auditReader, "product_add_on");
+        doProductOrderSample(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample");
+        doProductOrderSampleStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample_status");
+        doProductOrder(lastDate, etlDate, etlDateStr, auditReader, "product_order");
+        doProductOrderStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_status");
+        doResearchProjectCohort(lastDate, etlDate, etlDateStr, auditReader, "research_project_cohort");
+        doResearchProjectFunding(lastDate, etlDate, etlDateStr, auditReader, "research_project_funding");
+        doResearchProjectIRB(lastDate, etlDate, etlDateStr, auditReader, "research_project_irb");
+        doProjectPerson(lastDate, etlDate, etlDateStr, auditReader, "research_project_person");
+        doResearchProject(lastDate, etlDate, etlDateStr, auditReader, "research_project");
+        doResearchProjectStatus(lastDate, etlDate, etlDateStr, auditReader, "research_project_status");
+        doPriceItem(lastDate, etlDate, etlDateStr, auditReader, "price_item");
+        doProduct(lastDate, etlDate, etlDateStr, auditReader, "product");
+        doProductAddOn(lastDate, etlDate, etlDateStr, auditReader, "product_add_on");
         */
-        writeLastTimestampFile(etlDate);
-        writeIsReadyFile(etlDate);
+        writeLastTimestampFile(etlDateStr);
+        writeIsReadyFile(etlDateStr);
+    }
+
+    /**
+     * Does extract, transform, and writing sqlLoader file for Mercury entity.
+     * Only the most recent version of a modified entity is recorded.
+     *
+     * @param lastDate beginning of the time interval to look for entity changes.
+     * @param etlDate end of the time interval to look for entity changes.
+     * @param auditReader the Envers audit reader.
+     * @param baseFilename for naming the sqlLoader file.
+     */
+    private void doBillableItem(long lastDate, long etlDate, String etlDateStr, AuditReader auditReader, String baseFilename) {
+        List<Object[]> dataChanges = fetchDataChanges(lastDate, etlDate, auditReader, BillableItem.class);
+        Set<Long> changedEntityIds = new HashSet<Long>();
+        Set<Long> deletedEntityIds = new HashSet<Long>();
+        try {
+            Writer writer = fileWriter(etlDateStr, baseFilename);
+            for (Object[] dataChange : dataChanges) {
+                // Splits the result array.
+                BillableItem entity = (BillableItem)dataChange[0];
+                RevisionType revType = (RevisionType)dataChange[2];
+                Long entityId = entity.getBillableItemId();
+
+                // Writes a DW deletion record if entity was deleted.
+                if (revType.equals(RevisionType.DEL)) {
+                    String record = transform(entity, etlDateStr, true);
+                    writer.write(record);
+                    deletedEntityIds.add(entityId);
+                } else {
+                    // Collects deduplicated entity ids in order to lookup the latest version once.
+                    changedEntityIds.add(entityId);
+                }
+
+            }
+
+            // Makes records for latest version of the changed entity.
+            changedEntityIds.removeAll(deletedEntityIds);
+            for (Long entityId : changedEntityIds) {
+                BillableItem entity = (new BillableItemDao()).findByBillableItemId(entityId);
+                writer.write(transform(entity, etlDateStr, false));
+            }
+        } catch (IOException e) {
+            logger.error("Problem writing " + etlDateStr + "_" + baseFilename);
+        }
+    }
+
+    /**
+     * Transforms Mercury entity to DW record.
+     * @param entity the mercury entity
+     * @param etlDateStr etl run timestamp
+     * @param isDelete indicates the Mercury entity was deleted
+     * @return DW record, a delimited string for sqlLoader
+     */
+    private String transform(BillableItem entity, String etlDateStr, boolean isDelete) {
+        StringBuilder rec = startRecord(etlDateStr, isDelete);
+        rec.append(entity.getBillableItemId());
+        if (!isDelete) {
+            rec.append(DELIM)
+                    .append(entity.getProductOrderSample().getProductOrderSampleId()).append(DELIM)
+                    .append(entity.getPriceItem().getPriceItemId()).append(DELIM)
+                    .append(entity.getCount());
+        }
+        return rec.toString();
     }
 
     /**
@@ -103,86 +167,57 @@ public class ExtractTransform {
         return dataChanges;
     }
 
-    private Writer fileWriter(long etlDate, String baseFilename) throws IOException {
-        File dwFile = new File (DATAFILE_DIR, String.valueOf(etlDate) + "_" + baseFilename + ".dat");
+    /**
+     * Utility method that returns a writer to a new sqlLoader data file named 'etlDateStr'_'baseFilename'.dat
+     * @param etlDateStr etl run time, for filename
+     * @param baseFilename for filename
+     * @return Writer to the new file
+     * @throws IOException
+     */
+    private Writer fileWriter(String etlDateStr, String baseFilename) throws IOException {
+        File dwFile = new File (DATAFILE_DIR, etlDateStr + "_" + baseFilename + ".dat");
         return new BufferedWriter(new FileWriter(dwFile));
     }
 
-    private void doBillableItem(long lastDate, long etlDate, AuditReader auditReader, String baseFilename) {
-        String formattedDate = fullDateFormat.format(new Date(etlDate));
-        List<Object[]> dataChanges = fetchDataChanges(lastDate, etlDate, auditReader, BillableItem.class);
-        Set<Long> changedEntityIds = new HashSet<Long>();
-        Set<Long> deletedEntityIds = new HashSet<Long>();
-        try {
-            Writer writer = fileWriter(etlDate, baseFilename);
-            for (Object[] dataChange : dataChanges) {
-                // Splits the result array.
-                BillableItem entity = (BillableItem)dataChange[0];
-                RevisionType revType = (RevisionType)dataChange[2];
-                Long entityId = entity.getBillableItemId();
-
-                // Writes a DW deletion record if entity was deleted.
-                if (revType.equals(RevisionType.DEL)) {
-                    String record = transform(entity, formattedDate, true);
-                    writer.write(record);
-                    deletedEntityIds.add(entityId);
-                } else {
-                    // Collects deduplicated entity ids in order to lookup the latest version once.
-                    changedEntityIds.add(entityId);
-                }
-
-            }
-
-            // Makes records for latest version of the changed entity.
-            changedEntityIds.removeAll(deletedEntityIds);
-            for (Long entityId : changedEntityIds) {
-                BillableItem entity = (new BillableItemDao()).findByBillableItemId(entityId);
-                writer.write(transform(entity, formattedDate, false));
-            }
-        } catch (IOException e) {
-            logger.error("Problem writing " + etlDate + "_" + baseFilename);
-        }
+    /**
+     * Utility method that returns a new DW record containing the common start fields.
+     * @param etlDateStr first field
+     * @param isDelete second field
+     * @return  StringBuilder that ends with a record delimiter
+     */
+    private StringBuilder startRecord(String etlDateStr, boolean isDelete) {
+        return new StringBuilder()
+                .append(etlDateStr).append(DELIM)
+                .append(isDelete ? "T":"F").append(DELIM);
     }
 
-    /** Creates the DW record with common start fields, ending with trailing delimiter. */
-    private StringBuilder startRecord(String etlDate, boolean isDelete) {
-        return (new StringBuilder()).append(etlDate).append(DELIM).append(isDelete ? "T":"F").append(DELIM);
-    }
-
-    private String transform(BillableItem entity, String etlDate, boolean isDelete) {
-        StringBuilder rec = startRecord(etlDate, isDelete);
-        if (isDelete) {
-            rec.append(entity.getBillableItemId());
-        } else {
-            rec.append(entity.getProductOrderSample().getProductOrderSampleId())
-                    .append(DELIM)
-                    .append(entity.getPriceItem().getPriceItemId())
-                    .append(DELIM)
-                    .append(entity.getCount());
-        }
-        return rec.toString();
-    }
-
-
-    private void writeLastTimestampFile(long etlDate) {
+    /**
+     * Writes the file used by this class in the next incremental ETL run, to know when the last run was.
+     * @param etlDateStr date of the etl run to record
+     */
+    private void writeLastTimestampFile(String etlDateStr) {
         try {
             File file = new File (DATAFILE_DIR, LAST_TIMESTAMP_FILE);
             FileWriter fw = new FileWriter(file);
-            fw.write(String.valueOf(etlDate));
+            fw.write(etlDateStr);
             fw.close();
         } catch (IOException e) {
             logger.error("Error creating file " + LAST_TIMESTAMP_FILE);
         }
     }
 
-    private void writeIsReadyFile(long etlDate) {
+    /**
+     * Writes the file used by cron job to know when this etl run has completed and data file processing can start.
+     * @param etlDateStr used to name the file
+     */
+    private void writeIsReadyFile(String etlDateStr) {
         try {
-            File file = new File (DATAFILE_DIR, String.valueOf(etlDate) + READY_FILE_SUFFIX);
+            File file = new File (DATAFILE_DIR, etlDateStr + READY_FILE_SUFFIX);
             FileWriter fw = new FileWriter(file);
             fw.write("is_ready");
             fw.close();
         } catch (IOException e) {
-            logger.error("Error creating file " + etlDate + READY_FILE_SUFFIX, e);
+            logger.error("Error creating file " + etlDateStr + READY_FILE_SUFFIX, e);
         }
     }
 
