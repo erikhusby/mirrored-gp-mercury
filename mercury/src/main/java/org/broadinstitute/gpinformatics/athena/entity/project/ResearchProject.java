@@ -31,6 +31,7 @@ public class ResearchProject {
 
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
+    public static final String BROADINSTITUTE_ORG = "@broadinstitute.org";
 
     public boolean hasJiraTicketKey() {
         return !StringUtils.isBlank(jiraTicketKey);
@@ -467,7 +468,16 @@ public class ResearchProject {
     }
 
     public void addWatcher(String personLoginId) throws IOException {
-        ServiceAccessUtility.addJiraWatcher(jiraTicketKey, personLoginId);
+        try {
+            ServiceAccessUtility.addJiraWatcher(jiraTicketKey, personLoginId);
+        } catch ( Exception e) {
+            if ( StringUtils.isNotBlank( personLoginId) && personLoginId.contains(BROADINSTITUTE_ORG)) {
+                //Retry by stripping off the email suffix.
+                String shortUsername = personLoginId.replace(BROADINSTITUTE_ORG, "");
+                ServiceAccessUtility.addJiraWatcher(jiraTicketKey, shortUsername);
+            }
+        }
+
     }
 
     public void addLink(String targetIssueKey) throws IOException {
