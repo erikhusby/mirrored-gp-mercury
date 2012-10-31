@@ -834,7 +834,7 @@ public class ProductOrder implements Serializable {
                 }
                 StringBuilder sb = new StringBuilder();
                 for (Map.Entry<BillingStatus, Integer> entry : totals.entrySet()) {
-                    sb.append(entry.getKey().getDisplayName()).append(": ").append(entry.getValue()).append(" ");
+                    sb.append(MessageFormat.format("{0}: {1} ", entry.getKey().getDisplayName(), entry.getValue()));
                 }
                 sampleBillingSummary = sb.toString();
             }

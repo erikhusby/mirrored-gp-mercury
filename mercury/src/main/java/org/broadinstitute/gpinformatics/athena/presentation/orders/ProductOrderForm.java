@@ -208,7 +208,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     public String noAddOnsString() {
-        return "The Product " + getProduct().getProductName() + " has no add ons";
+        return MessageFormat.format("The Product ''{0}'' has no add-ons.", getProduct().getProductName());
     }
 
     /**

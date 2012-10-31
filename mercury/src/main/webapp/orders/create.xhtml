@@ -92,22 +92,25 @@
                         </p:autoComplete>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>
-
-                        <fieldset>
-                            <legend>Add Ons</legend>
-                            <h:panelGroup id="perfbyselection">
-                                <h:outputText styleClass="entry-help" value="#{!productOrderForm.hasProduct ? 'If you select a product, its add ons will show up here' : ''}"/>
-                                <h:outputText styleClass="entry-help"
-                                    value="#{productOrderForm.hasProduct and productOrderForm.addOns.isEmpty() ?
-                                        productOrderForm.noAddOnsString() : ''}"/>
-                                <p:selectManyCheckbox
-                                    id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
-                                    <f:selectItems value="#{productOrderForm.addOns}"/>
-                                </p:selectManyCheckbox>
-                            </h:panelGroup>
-                        </fieldset>
                     </div>
                </div>
+
+
+                <div class="control-group">
+                    <p:outputLabel for="selectedAddOns" value="Add-Ons" styleClass="control-label"/>
+                    <div class="controls">
+                        <h:panelGroup id="perfbyselection">
+                            <h:outputText styleClass="entry-help" value="#{!productOrderForm.hasProduct ? 'If you select a product, its add-ons will show up here' : ''}"/>
+                            <h:outputText styleClass="entry-help"
+                                          value="#{productOrderForm.hasProduct and productOrderForm.addOns.isEmpty() ?
+                            productOrderForm.noAddOnsString() : ''}"/>
+                            <p:selectManyCheckbox
+                                    id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
+                                <f:selectItems value="#{productOrderForm.addOns}"/>
+                            </p:selectManyCheckbox>
+                        </h:panelGroup>
+                    </div>
+                </div>
 
                 <div class="control-group">
                     <p:outputLabel for="quote" value="Quote" styleClass="control-label"/>
