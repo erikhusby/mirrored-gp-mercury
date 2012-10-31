@@ -111,6 +111,7 @@
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
+
     <changeSet id="GPLIM-73-6" author="thompson">
         <addColumn tableName="lab_vessel" schemaName="mercury">
             <column name="volume" type="float"/>
