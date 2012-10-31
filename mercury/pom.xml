@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.5</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -39,7 +39,7 @@
         <connection>scm:git|${git.url}</connection>
         <developerConnection>scm:git|${git.url}</developerConnection>
         <url>${git.browseUrl}</url>
-      <tag>HEAD</tag>
+      <tag>1.5</tag>
   </scm>
 
     <distributionManagement>
