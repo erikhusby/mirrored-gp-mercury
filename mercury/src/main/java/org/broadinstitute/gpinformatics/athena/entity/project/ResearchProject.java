@@ -434,7 +434,7 @@ public class ResearchProject {
                 }
 
                 listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.COHORTS.getFieldName()),
-                                                 StringUtils.join(cohortNames,','), CustomField.SingleFieldType.TEXT ));
+                        ServiceAccessUtility.getCohortsForNames(cohortNames), CustomField.SingleFieldType.TEXT ));
             }
 
             if (!projectFunding.isEmpty()) {
@@ -452,7 +452,7 @@ public class ResearchProject {
             if (!irbNumbers.isEmpty()) {
                 listOfFields.add(
                         new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
-                                        StringUtils.join(getIrbNumbers(), ','), CustomField.SingleFieldType.TEXT ));
+                            StringUtils.join(getIrbNumbers(), ','), CustomField.SingleFieldType.TEXT ));
             }
 
             listOfFields.add(
