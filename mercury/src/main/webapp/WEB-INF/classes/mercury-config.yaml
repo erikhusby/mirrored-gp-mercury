@@ -172,7 +172,7 @@ mercury:
 
     DEV:
 
-      bsp:      DEV
+      bsp:      PROD
       gap:      DEV
       jira:     TEST
       pmbridge: DEV
@@ -184,7 +184,7 @@ mercury:
 
     TEST:
 
-      bsp:      QA
+      bsp:      PROD
       gap:      QA
       jira:     TEST
       pmbridge: DEV
@@ -196,7 +196,7 @@ mercury:
 
     QA:
 
-      bsp:      QA
+      bsp:      PROD
       gap:      QA
       jira:     TEST
       pmbridge: DEV
