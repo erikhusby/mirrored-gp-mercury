@@ -1,0 +1,19 @@
+<subsystem xmlns="urn:jboss:domain:logging:1.0">
+
+   <periodic-rotating-file-handler name="MERCURY" autoflush="true">
+       <formatter>
+           <pattern-formatter pattern="%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n"/>
+       </formatter>
+       <file relative-to="jboss.server.log.dir" path="mercury.log"/>
+       <suffix value=".yyyy-MM-dd"/>
+   </periodic-rotating-file-handler>
+   <logger category="org.broadinstitute">
+       <level name="WARN"/>
+   </logger>
+   <root-logger>
+       <level name="DEBUG"/>
+       <handlers>
+           <handler name="MERCURY"/>
+       </handlers>
+   </root-logger>
+</subsystem>
