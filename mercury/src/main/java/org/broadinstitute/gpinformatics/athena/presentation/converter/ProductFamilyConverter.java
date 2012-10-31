@@ -28,7 +28,6 @@ public class ProductFamilyConverter implements Converter {
 
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object object) {
-        //TODO hmc should not need this extra check but cannot yet figure where the Long object is coming from
         if ((object != null) && (object instanceof ProductFamily)) {
             return ((ProductFamily) object).getName();
         }

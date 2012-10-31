@@ -23,7 +23,7 @@
                              sortOrder="ascending"
                              filteredValue="#{researchProjectBean.filteredResearchProjects}">
 
-                    <p:column headerText="Name" sortBy="#{project.title}">
+                    <p:column headerText="Name" sortBy="#{project.title}" sortingComparator="caseInsensitiveText">
                         <h:link outcome="view" value="#{project.title}">
                             <f:param name="researchProject" value="#{project.businessKey}"/>
                         </h:link>

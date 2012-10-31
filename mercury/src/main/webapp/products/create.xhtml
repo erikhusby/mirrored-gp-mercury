@@ -25,11 +25,10 @@
             <h:form id="form" prependId="false" styleClass="form-horizontal">
 
                 <div class="control-group">
-                    <!-- TODO hook up the productFamily, see below -->
                     <p:outputLabel for="productFamily" value="Product Family" styleClass="control-label"/>
                     <div class="controls">
                         <p:selectOneMenu id="productFamily" value="#{productForm.product.productFamily}" converter="#{productFamilyConverter}" required="true">
-                            <f:selectItem itemLabel="Select a ProductFamily" itemValue="" />
+                            <f:selectItem itemLabel="Select a Product Family" itemValue="" />
                             <f:selectItems value="#{productForm.productFamilies}" var="fam" itemLabel="#{fam.displayName}"  itemValue="#{fam}" />
                         </p:selectOneMenu>
                     </div>
@@ -60,15 +59,6 @@
                         <p:inputText id="partNumber" value="#{productForm.product.partNumber}" size="50" required="true"/>
                         <p:watermark for="partNumber" value="Enter the part number of this product"/>
                         <p:message for="partNumber"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <p:outputLabel for="topLevel" value="Top Level Product" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:watermark for="topLevel" value="Is this a top level product ?"/>
-                        <p:selectBooleanCheckbox id="topLevel" value="#{productForm.product.topLevelProduct}" />
-                        <p:message for="topLevel"/>
                     </div>
                 </div>
 
@@ -110,20 +100,20 @@
                 </div>
 
                 <div class="control-group">
-                    <p:outputLabel for="expectedCycleTimeHours" value="Expected Cycle Time (Hours)" styleClass="control-label"/>
+                    <p:outputLabel for="expectedCycleTimeDays" value="Expected Cycle Time (Days)" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="expectedCycleTimeHours" value="#{productForm.expectedCycleTimeHours}" size="50" required="false"/>
-                        <p:watermark for="expectedCycleTimeHours" value="Enter the expected cycle time in hours"/>
-                        <p:message for="expectedCycleTimeHours"/>
+                        <p:inputText id="expectedCycleTimeDays" value="#{productForm.expectedCycleTimeDays}" size="50" required="false"/>
+                        <p:watermark for="expectedCycleTimeDays" value="Enter the expected cycle time in days"/>
+                        <p:message for="expectedCycleTimeDays"/>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <p:outputLabel for="guaranteedCycleTimeHours" value="Guaranteed Cycle Time (Hours)" styleClass="control-label"/>
+                    <p:outputLabel for="guaranteedCycleTimeDays" value="Guaranteed Cycle Time (Days)" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="guaranteedCycleTimeHours" value="#{productForm.guaranteedCycleTimeHours}" size="50" required="false"/>
-                        <p:watermark for="guaranteedCycleTimeHours" value="Enter the guaranteed cycle time in hours"/>
-                        <p:message for="guaranteedCycleTimeHours"/>
+                        <p:inputText id="guaranteedCycleTimeDays" value="#{productForm.guaranteedCycleTimeDays}" size="50" required="false"/>
+                        <p:watermark for="guaranteedCycleTimeDays" value="Enter the guaranteed cycle time in days"/>
+                        <p:message for="guaranteedCycleTimeDays"/>
                     </div>
                 </div>
 
@@ -146,16 +136,40 @@
                 </div>
 
                 <div class="control-group">
-                    <p:outputLabel for="priceItem" value="Price Items" styleClass="control-label"/>
+                    <p:outputLabel for="pdmOrderableOnly" value="PDM Orderable Only" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:watermark for="pdmOrderableOnly" value="Is this Product orderable only by Product Managers (PDMs) ?"/>
+                        <p:selectBooleanCheckbox id="pdmOrderableOnly" value="#{productForm.product.pdmOrderableOnly}" />
+                        <p:message for="pdmOrderableOnly"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="defaultPriceItem" value="Primary Price Item *" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="defaultPriceItem" value="#{productForm.defaultPriceItem}"
+                                        completeMethod="#{productForm.searchSelectedPriceItems}" var="defaultPriceItem"
+                                        itemLabel='#{productForm.labelFor(defaultPriceItem)}' scrollHeight="250"
+                                        itemValue="#{defaultPriceItem}" converter="#{priceItemConverter}"
+                                        forceSelection="true" size="50">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{defaultPriceItem.name} (#{defaultPriceItem.id})</div>
+                                <div class="ac-dropdown-subtext">#{defaultPriceItem.platformName} | #{defaultPriceItem.categoryName}</div>
+                            </p:column>
+                        </p:autoComplete>
+                        <p:watermark for="defaultPriceItem" value="Type text to search"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="priceItem" value="Optional Price Items" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="priceItem" value="#{productForm.priceItems}"
                                         completeMethod="#{productForm.searchPriceItems}" var="priceItem"
                                         itemLabel="#{productForm.labelFor(priceItem)}"
                                         itemValue="#{priceItem}" converter="#{priceItemConverter}" multiple="true"
-                                        forceSelection="true" scrollHeight="250">
+                                        scrollHeight="250">
 
-                            <p:ajax event="itemUnselect" listener="#{productForm.onPriceItemUnselect}" update="defaultPriceItem"/>
-                            <p:ajax event="itemSelect" listener="#{productForm.onPriceItemSelect}" update="defaultPriceItem"/>
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name} (#{priceItem.id})</div>
                             </p:column>
@@ -165,34 +179,15 @@
                 </div>
 
                 <div class="control-group">
-                    <p:outputLabel for="defaultPriceItem" value="Default Price Item" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:autoComplete id="defaultPriceItem" value="#{productForm.defaultPriceItems}"
-                                        completeMethod="#{productForm.searchSelectedPriceItems}" var="defaultPriceItem"
-                                        itemLabel='#{productForm.labelFor(defaultPriceItem)}'
-                                        itemValue="#{defaultPriceItem}" converter="#{priceItemConverter}" multiple="true"
-                                        forceSelection="true">
-                            <p:ajax event="itemUnselect" listener="#{productForm.onDefaultPriceItemUnselect}"/>
-                            <p:ajax event="itemSelect" listener="#{productForm.onDefaultPriceItemSelect}"/>
-                            <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{defaultPriceItem.platformName} | #{defaultPriceItem.categoryName} | #{defaultPriceItem.name} (#{defaultPriceItem.id})</div>
-                            </p:column>
-                        </p:autoComplete>
-                        <p:watermark for="defaultPriceItem" value="Type text to search"/>
-                    </div>
-                </div>
-
-
-                <div class="control-group">
                     <p:outputLabel for="addOns" value="Add Ons" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}"
                                         var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}"
-                                        converter="#{productConverter}" multiple="true" forceSelection="true" scrollHeight="250">
+                                        converter="#{productConverter}" multiple="true" scrollHeight="250">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{product.productName} - #{product.partNumber}</div>
                                 <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>
-                                <div class="ac-dropdown-subtext">#{product.productFamily}</div>
+                                <div class="ac-dropdown-subtext">#{product.productFamily.displayName}</div>
                                 <div class="ac-dropdown-subtext">#{product.inputRequirements}</div>
                             </p:column>
                         </p:autoComplete>
@@ -209,7 +204,10 @@
                                 <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">
-                                <h:link outcome="list" value="Cancel"/>
+                                <h:link outcome="list" value="Cancel" rendered="#{productForm.product.productId == null}"/>
+                                <h:link outcome="view" value="Cancel" rendered="#{productForm.product.productId != null}">
+                                    <f:param name="product" value="#{productForm.product.businessKey}"/>
+                                </h:link>
                             </div>
                         </div>
                     </div>

@@ -1,4 +1,3 @@
-
 # External system definitions.  These describe the various deployments of external systems with which Mercury might
 # integrate.
 
@@ -45,6 +44,11 @@ gap:
       url:      http://gapqaanalysis.broadinstitute.org:8080
 
 
+    PROD:
+
+      login:    pmbridge
+      password: bspbsp
+      url:      http://gapanalysis.broadinstitute.org:8080
 
 
 jira:
@@ -90,7 +94,12 @@ quote:
       password: Squ1d_us3r
       url:      http://quoteqa:8080
 
-    # also no PROD here
+
+    PROD:
+
+      login:    rnordin@broadinstitute.org
+      password: Squ1d_us3r
+      url:      http://quoteprod:8080
 
 
 
@@ -200,12 +209,10 @@ mercury:
     PROD:
 
       bsp:      PROD
-      gap:      QA
-      # not ready to talk to PROD jira yet, we should see an error if the live service asks to reference this
-      #jira:     PROD
+      gap:      PROD
+      jira:     PROD
       pmbridge: PROD
-      # not ready for PROD quote yet either
-      #quote:    PROD
+      quote:    PROD
       squid:    PROD
       thrift:   PROD
       deckMsgs: PROD

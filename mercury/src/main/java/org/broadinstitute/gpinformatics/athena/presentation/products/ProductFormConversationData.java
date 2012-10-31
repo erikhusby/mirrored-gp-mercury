@@ -34,6 +34,11 @@ public class ProductFormConversationData implements Serializable {
      */
     private List<PriceItem> defaultPriceItems;
 
+    /**
+     * Record of the ID in case it gets lost across AJAX requests so we can always tell whether we're in create or edit
+     * mode.
+     */
+    private Long id;
 
     /**
      * maps between entity and JAXB DTOs for price items
@@ -54,10 +59,12 @@ public class ProductFormConversationData implements Serializable {
         if (conversation.isTransient()) {
             conversation.begin();
             // start every conversation with initialized data!
-            priceItems = new ArrayList<PriceItem>();
+//            priceItems = new ArrayList<PriceItem>();
             defaultPriceItems = new ArrayList<PriceItem>();
 
+/*
             if (product != null) {
+                id = product.getProductId();
                 if (product.getPriceItems() != null) {
                     for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
                         addPriceItem(entityToDto(priceItem));
@@ -67,6 +74,7 @@ public class ProductFormConversationData implements Serializable {
                     defaultPriceItems.add(entityToDto(product.getDefaultPriceItem()));
                 }
             }
+*/
         }
     }
 
@@ -147,5 +155,13 @@ public class ProductFormConversationData implements Serializable {
      */
     public void removePriceItem(PriceItem priceItem) {
         priceItems.remove(priceItem);
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

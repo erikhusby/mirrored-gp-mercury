@@ -73,18 +73,18 @@ public class ProductViewBean {
     }
 
 
-    public Integer getExpectedCycleTimeHours() {
-        return ProductForm.convertCycleTimeSecondsToHours(product.getExpectedCycleTimeSeconds()) ;
+    public Integer getExpectedCycleTimeDays() {
+        return ProductForm.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
-    public void setExpectedCycleTimeHours(final Integer expectedCycleTimeHours) {
-        product.setExpectedCycleTimeSeconds( ProductForm.convertCycleTimeHoursToSeconds(expectedCycleTimeHours) );
+    public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
+        product.setExpectedCycleTimeSeconds( ProductForm.convertCycleTimeDaysToSeconds(expectedCycleTimeDays) );
     }
 
-    public Integer getGuaranteedCycleTimeHours() {
-        return ProductForm.convertCycleTimeSecondsToHours(product.getGuaranteedCycleTimeSeconds()) ;
+    public Integer getGuaranteedCycleTimeDays() {
+        return ProductForm.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
-    public void setGuaranteedCycleTimeHours(final Integer guaranteedCycleTimeHours) {
-        product.setGuaranteedCycleTimeSeconds( ProductForm.convertCycleTimeHoursToSeconds(guaranteedCycleTimeHours) );
+    public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
+        product.setGuaranteedCycleTimeSeconds( ProductForm.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays) );
     }
 
 }

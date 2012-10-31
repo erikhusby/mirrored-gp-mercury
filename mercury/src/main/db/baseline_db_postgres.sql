@@ -510,6 +510,10 @@
 
     drop table if exists athena.research_projectirb_aud cascade;
 
+    drop table if exists athena.product_order_add_on_aud cascade;
+
+    drop table if exists athena.product_order_add_on cascade;
+
     -- databasechangelog% are liquibase tables, liquibase will rebuild these on its first run
 
     drop table if exists mercury.databasechangelog cascade;
@@ -666,6 +670,14 @@
 
     drop table if exists mercury.workflow_description_aud cascade;
 
+    drop table if exists mercury.lab_vessel_mercury_samples_aud cascade;
+
+    drop table if exists mercury.lab_vessel_mercury_samples cascade;
+
+    drop table if exists mercury.mercury_sample cascade;
+
+    drop table if exists mercury.mercury_sample_aud cascade;
+
     drop table if exists project_available_quotes cascade;
 
     drop table if exists project_available_quotes_aud cascade;
@@ -704,6 +716,8 @@
 
     drop sequence athena.seq_rp_irb_index;
 
+    drop sequence athena.seq_order_add_on;
+
     drop sequence mercury.SEQ_LAB_BATCH;
 
     drop sequence mercury.SEQ_LAB_EVENT;
@@ -741,6 +755,8 @@
     drop sequence mercury.seq_molecular_index;
 
     drop sequence mercury.seq_molecular_indexing_scheme;
+
+    drop sequence mercury.seq_mercury_sample;
 
     create table athena.billable_item (
         billable_item_id numeric(19,0) not null,
@@ -1659,21 +1675,21 @@
         primary key (vessel_transfer_id, rev)
     );
 
-    create table mercury.workflow_description (
-        workflow_description_id numeric(19,0) not null,
-        issue_type numeric(10,0),
-        workflow_name varchar(255),
-        primary key (workflow_description_id)
-    );
-
-    create table mercury.workflow_description_aud (
-        workflow_description_id numeric(19,0) not null,
-        rev numeric(19,0) not null,
-        revtype numeric(3,0),
-        issue_type numeric(10,0),
-        workflow_name varchar(255),
-        primary key (workflow_description_id, rev)
-    );
+--     create table mercury.workflow_description (
+--         workflow_description_id numeric(19,0) not null,
+--         issue_type numeric(10,0),
+--         workflow_name varchar(255),
+--         primary key (workflow_description_id)
+--     );
+--
+--     create table mercury.workflow_description_aud (
+--         workflow_description_id numeric(19,0) not null,
+--         rev numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         issue_type numeric(10,0),
+--         workflow_name varchar(255),
+--         primary key (workflow_description_id, rev)
+--     );
 /*
     create table project_available_quotes (
         project numeric(19,0) not null,
@@ -2429,10 +2445,10 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.workflow_description_aud
-        add constraint FK34339F6D8A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.workflow_description_aud
+--         add constraint FK34339F6D8A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 /*
     alter table project_available_quotes
         add constraint FK2E7B8C136E580798
@@ -2548,13 +2564,13 @@
 
     create sequence mercury.SEQ_VESSEL_TRANSFER start 1 increment 50;
 
-    create sequence mercury.SEQ_WORKFLOW_DESCRIPTION start 1 increment 50;
+--     create sequence mercury.SEQ_WORKFLOW_DESCRIPTION start 1 increment 50;
 
     create sequence mercury.seq_molecular_index start 1 increment 50;
 
     create sequence mercury.seq_molecular_indexing_scheme start 1 increment 50;
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON mercury.rev_info to athena;
+GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES ON mercury.rev_info to athena;
 GRANT USAGE on mercury.seq_rev_info to athena;
 
 select execute('alter table '||schemaname||'.'||tablename||' owner to '||schemaname||';')
@@ -2563,3 +2579,5 @@ from pg_tables where schemaname in ('athena', 'mercury');
 select execute('alter table '||schms.nspname||'.'||seqs.relname||' owner to '||schms.nspname||';')
 from pg_class as seqs, pg_namespace as schms
 where schms.nspname in ('athena', 'mercury') and seqs.relkind = 'S' and schms.oid = seqs.relnamespace;
+
+grant usage on schema mercury to athena;

@@ -77,6 +77,7 @@ public class ProductOrder implements Serializable {
     private String jiraTicketKey;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
+    @OrderColumn(name="samplePosition", nullable = false)
     private List<ProductOrderSample> samples = Collections.emptyList();
 
     @Transient
@@ -84,6 +85,9 @@ public class ProductOrder implements Serializable {
 
     @Transient
     private final SampleCounts counts = new SampleCounts();
+
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
+    private Set<ProductOrderAddOn> addOns = new HashSet<ProductOrderAddOn>();
 
     public String getBusinessKey() {
         return jiraTicketKey;
@@ -93,10 +97,24 @@ public class ProductOrder implements Serializable {
         return productOrderId != null;
     }
 
+    public String getAddOnList() {
+        if (addOns.isEmpty()) {
+            return "no add ons";
+        }
+
+        String[] addOnArray = new String[addOns.size()];
+        int i=0;
+        for (ProductOrderAddOn poAddOn : addOns) {
+            addOnArray[i++] = poAddOn.getAddOn().getProductName();
+        }
+
+        return StringUtils.join(addOnArray, ", ");
+    }
+
     /**
      * Class that encapsulates counting samples and storing the results.
      */
-    class SampleCounts implements Serializable {
+    private class SampleCounts implements Serializable {
         private static final long serialVersionUID = -6031146789417566007L;
         private boolean countsValid;
         private int totalSampleCount;
@@ -104,6 +122,7 @@ public class ProductOrder implements Serializable {
         private int receivedSampleCount;
         private int activeSampleCount;
         private int hasFPCount;
+        private int missingBspMetaDataCount;
         private final Map<String, Integer> stockTypeCounts = new HashMap<String, Integer>();
         private final Map<String, Integer> primaryDiseaseCounts = new HashMap<String, Integer>();
         private final Map<String, Integer> genderCounts = new HashMap<String, Integer>();
@@ -133,6 +152,7 @@ public class ProductOrder implements Serializable {
             receivedSampleCount = 0;
             activeSampleCount = 0;
             hasFPCount = 0;
+            missingBspMetaDataCount = 0;
             stockTypeCounts.clear();
             primaryDiseaseCounts.clear();
             genderCounts.clear();
@@ -143,6 +163,10 @@ public class ProductOrder implements Serializable {
                 if (sampleSet.add(sample.getSampleName())) {
                     if (sample.isInBspFormat()) {
                         bspSampleCount++;
+
+                        if (sample.bspMetaDataMissing()) {
+                            missingBspMetaDataCount++;
+                        }
 
                         BSPSampleDTO bspDTO = sample.getBspDTO();
                         if (bspDTO.isSampleReceived()) {
@@ -172,46 +196,71 @@ public class ProductOrder implements Serializable {
             countsValid = true;
         }
 
-        private void outputCounts(StringBuilder sb, Map<String, Integer> counts, String label) {
+        private void outputCounts(List<String> output, Map<String, Integer> counts, String label) {
             for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-                sb.append(MessageFormat.format("{0}: {1} - count: {2}\n", label, entry.getKey(), entry.getValue()));
+                output.add(MessageFormat.format("{0} ''{1}'': {2}", label, entry.getKey(), entry.getValue()));
             }
         }
 
-        public String formatAsText() {
+        public List<String> sampleSummary() {
             generateCounts();
 
-            StringBuilder sb = new StringBuilder();
+            List<String> output = new ArrayList<String>();
             if (totalSampleCount == 0) {
-                sb.append("No Samples.");
+                output.add("No Samples.");
             } else {
-                sb.append(MessageFormat.format("Total Samples: {0}", totalSampleCount));
+                output.add(MessageFormat.format("Total Samples: {0}", totalSampleCount));
                 if (uniqueSampleCount != totalSampleCount) {
-                    sb.append(MessageFormat.format(" Unique Samples: {1}, Duplicate Samples: {1}",
-                            uniqueSampleCount, (totalSampleCount - uniqueSampleCount)));
+                    output.add(MessageFormat.format("Unique Samples: {0}", uniqueSampleCount));
+                    output.add(MessageFormat.format("Duplicate Samples: {0}", (totalSampleCount - uniqueSampleCount)));
                 }
-                sb.append("\n");
                 if (bspSampleCount == uniqueSampleCount) {
-                    sb.append("All samples are BSP samples.");
+                    output.add("All samples are BSP samples.");
                 } else if (bspSampleCount != 0) {
-                    sb.append(MessageFormat.format("Of {0} unique samples, {1} are BSP samples and {2} are non-BSP.",
+                    output.add(MessageFormat.format("Of {0} unique samples, {1} are BSP samples and {2} are non-BSP.",
                             uniqueSampleCount, bspSampleCount, uniqueSampleCount - bspSampleCount));
                 } else {
-                    sb.append("None of the samples come from BSP.");
+                    output.add("None of the samples come from BSP.");
                 }
             }
-            if (receivedSampleCount != 0) {
-                sb.append(MessageFormat.format("{0} of {1} samples are in RECEIVED state.",
-                        receivedSampleCount, totalSampleCount));
+            if (uniqueParticipantCount != 0) {
+                output.add(MessageFormat.format("Unique Participants: {0}", uniqueParticipantCount));
             }
-            outputCounts(sb, stockTypeCounts, "Stock type");
-            outputCounts(sb, primaryDiseaseCounts, "Primary disease");
-            outputCounts(sb, genderCounts, "Gender");
+            if (receivedSampleCount != 0) {
+                output.add(MessageFormat.format("{0} samples are in RECEIVED state.", receivedSampleCount));
+            }
+            outputCounts(output, stockTypeCounts, "Stock Type");
+            outputCounts(output, primaryDiseaseCounts, "Primary Disease");
+            outputCounts(output, genderCounts, "Gender");
+            outputCounts(output, sampleTypeCounts, "Sample Type");
             if (hasFPCount != 0) {
-                sb.append(MessageFormat.format("\n{0} samples have fingerprint data.", hasFPCount));
+                output.add(MessageFormat.format("{0} samples have fingerprint data.", hasFPCount));
             }
 
-            return sb.toString();
+            return output;
+        }
+
+
+        private void checkCount(int count, String message, List<String> output) {
+            if (count != 0) {
+                output.add(MessageFormat.format(message, count));
+            }
+        }
+
+        // TODO: Will need to implement more extensive validations vs specific products; will need to move these
+        // checks elsewhere.
+        /**
+         * Check to see if the samples are valid.
+         * - for all BSP formatted sample IDs, do we have BSP data?
+         * - all BSP samples are RECEIVED
+         * - all BSP samples' stock is ACTIVE
+         */
+        public List<String> sampleValidation() {
+            List<String> output = new ArrayList<String>();
+            checkCount(missingBspMetaDataCount, "Samples Missing BSP Data: {0}", output);
+            checkCount(bspSampleCount - activeSampleCount, "Samples Not ACTIVE: {0}", output);
+            checkCount(bspSampleCount - receivedSampleCount, "Samples Not RECEIVED: {0}", output);
+            return output;
         }
 
         public void invalidate() {
@@ -246,6 +295,12 @@ public class ProductOrder implements Serializable {
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
+        int samplePos = 0;
+        if ( samples != null) {
+            for ( ProductOrderSample sample :samples ) {
+                sample.setSamplePosition(samplePos++);
+            }
+        }
     }
 
     public String getTitle() {
@@ -254,6 +309,26 @@ public class ProductOrder implements Serializable {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public List<ProductOrderAddOn> getAddOns() {
+        List<ProductOrderAddOn> addOnList = new ArrayList<ProductOrderAddOn>();
+        if ((addOns != null) && (!addOns.isEmpty())) {
+            addOnList.addAll(addOns);
+        }
+
+        return addOnList;
+    }
+
+    public void updateAddOnProducts(List<Product> addOnList) {
+        addOns.clear();
+        for (Product product : addOnList) {
+            addOns.add(new ProductOrderAddOn(product, this));
+        }
+    }
+
+    public void setAddOns(Set<ProductOrderAddOn> addOns) {
+        this.addOns = addOns;
     }
 
     public ResearchProject getResearchProject() {
@@ -302,6 +377,13 @@ public class ProductOrder implements Serializable {
 
     public void setSamples(List<ProductOrderSample> samples) {
         this.samples = samples;
+        int samplePos = 0;
+        if ( samples != null) {
+            for ( ProductOrderSample sample :samples ) {
+                sample.setSamplePosition(samplePos);
+                samplePos++;
+            }
+        }
         counts.invalidate();
         sampleBillingSummary = null;
     }
@@ -582,9 +664,14 @@ public class ProductOrder implements Serializable {
         return counts.activeSampleCount;
     }
 
+    public int getMissingBspMetaDataCount() {
+        counts.generateCounts();
+        return counts.missingBspMetaDataCount;
+    }
+
     private static void addCustomField(Map<String, CustomFieldDefinition> submissionFields,
                                        List<CustomField> list, RequiredSubmissionFields field, Object value) {
-        list.add(new CustomField(submissionFields.get(field.getFieldName()), value, CustomField.SingleFieldType.TEXT ));
+        list.add(new CustomField(submissionFields.get(field.getFieldName()), value, CustomField.SingleFieldType.TEXT));
     }
 
     /**
@@ -610,10 +697,8 @@ public class ProductOrder implements Serializable {
         if (quoteId != null && !quoteId.isEmpty()) {
             addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.QUOTE_ID, quoteId);
         }
-        if (!isSheetEmpty()) {
-            addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.SAMPLE_IDS,
-                    StringUtils.join(getSampleNames(), ','));
-        }
+        addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.SAMPLE_IDS,
+                StringUtils.join(getSampleNames(), ','));
 
         CreateIssueResponse issueResponse = ServiceAccessUtility.createJiraTicket(
                 fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title,
@@ -624,18 +709,22 @@ public class ProductOrder implements Serializable {
 
         addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
 
-        addPublicComment(getSampleValidationComments());
+        addPublicComment(StringUtils.join(getSampleSummaryComments(), "\n"));
+        addPublicComment(StringUtils.join(getSampleValidationComments(), "\n"));
     }
 
     /**
      * This is a helper method encapsulating the validations run against the samples contained
      * within this product order.  The results of these validation checks are then added to the existing Jira Ticket.
-     *
-     * @throws IOException
      */
-    public String getSampleValidationComments() throws IOException {
+    public List<String> getSampleSummaryComments() {
         counts.generateCounts();
-        return counts.formatAsText();
+        return counts.sampleSummary();
+    }
+
+    public List<String> getSampleValidationComments() {
+        counts.generateCounts();
+        return counts.sampleValidation();
     }
 
     /**
@@ -645,7 +734,9 @@ public class ProductOrder implements Serializable {
      * @throws IOException
      */
     public void addPublicComment(String comment) throws IOException {
-        ServiceAccessUtility.addJiraComment(jiraTicketKey, comment);
+        if (!StringUtils.isBlank(comment)) {
+            ServiceAccessUtility.addJiraComment(jiraTicketKey, comment);
+        }
     }
 
     /**
@@ -743,7 +834,7 @@ public class ProductOrder implements Serializable {
                 }
                 StringBuilder sb = new StringBuilder();
                 for (Map.Entry<BillingStatus, Integer> entry : totals.entrySet()) {
-                    sb.append(entry.getKey().getDisplayName()).append(": ").append(entry.getValue()).append(" ");
+                    sb.append(MessageFormat.format("{0}: {1} ", entry.getKey().getDisplayName(), entry.getValue()));
                 }
                 sampleBillingSummary = sb.toString();
             }

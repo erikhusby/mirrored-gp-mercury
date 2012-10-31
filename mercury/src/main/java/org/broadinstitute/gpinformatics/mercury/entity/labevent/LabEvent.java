@@ -84,6 +84,7 @@ public abstract class LabEvent {
 
     private String eventLocation;
 
+    // todo jmt this should change to a Long
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private Person eventOperator;
 
@@ -108,12 +109,16 @@ public abstract class LabEvent {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<VesselToSectionTransfer>();
 
+    /** Typically for tube to tube transfers */
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labEvent")
     private Set<VesselToVesselTransfer> vesselToVesselTransfers = new HashSet<VesselToVesselTransfer>();
 
+    /** For plate / tube events, that don't involve a transfer e.g. anonymous reagent addition, loading onto an
+     * instrument, entry into a bucket */
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private LabVessel inPlaceLabVessel;
 
+    // todo jmt delete?
     private String quoteServerBatchId;
 
 //    @ManyToOne(fetch = FetchType.LAZY)

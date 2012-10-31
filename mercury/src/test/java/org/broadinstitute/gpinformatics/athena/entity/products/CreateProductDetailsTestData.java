@@ -51,14 +51,14 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         createProductFamilies();
 
-        ProductFamily exomeSequencingAnalysisProductFamily =
-                findProductFamily(ProductFamily.ProductFamilyName.EXOME_SEQUENCING_ANALYSIS);
+        ProductFamily exomeProductFamily =
+                findProductFamily(ProductFamily.ProductFamilyName.EXOME);
 
-        ProductFamily generalProductsProductFamily =
-                findProductFamily(ProductFamily.ProductFamilyName.GENERAL_PRODUCTS);
+        ProductFamily wholeGenomeProductFamily =
+                findProductFamily(ProductFamily.ProductFamilyName.WHOLE_GENOME);
 
-        ProductFamily illuminaSequencingOnlyProductFamily =
-                findProductFamily(ProductFamily.ProductFamilyName.ILLUMINA_SEQUENCING_ONLY);
+        ProductFamily deNovoAssemblyProductFamily =
+                findProductFamily(ProductFamily.ProductFamilyName.DE_NOVO_ASSEMBLY);
 
         PriceItem labTimePriceItem = new PriceItem(
                 GP,
@@ -83,7 +83,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
                 "Exome Express",                       // product name
 
-                exomeSequencingAnalysisProductFamily,  // product family
+                exomeProductFamily,  // product family
 
                                                        // description
                 "The Exome Express combines the quality and best practices of the Genomics Platform Exome pipeline " +
@@ -122,7 +122,8 @@ public class CreateProductDetailsTestData extends ContainerTest {
                 true,                                  // top level product
 
                 "EXEX-WF-2012.11.01"                   // workflow name
-        );
+                ,
+                false);
 
 
         exex.addPriceItem(labTimePriceItem);
@@ -154,7 +155,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
                 "DNA Extraction",                       // product name
 
-                generalProductsProductFamily,           // product family
+                wholeGenomeProductFamily,           // product family
 
                                                         // description
                 "The Genomics Platform performs high quality DNA extractions from a variety of sample types:  blood " +
@@ -192,8 +193,9 @@ public class CreateProductDetailsTestData extends ContainerTest {
                 true,                                  // top level product
 
                 "DNA_EXTRACT-WF-2012.11.01"            // workflow name
+                ,
 
-        );
+                false);
 
         dnaExtraction.addPriceItem(labTimePriceItem);
         dnaExtraction.addPriceItem(ifxTimePriceItem);
@@ -211,7 +213,7 @@ public class CreateProductDetailsTestData extends ContainerTest {
 
         Product extraCoverage = new Product(
              "Extra HiSeq Coverage",                    // product name
-             illuminaSequencingOnlyProductFamily,       // product family
+             deNovoAssemblyProductFamily,       // product family
              "More seq data",                           // description
              "EXTRA_HISEQ_COVERAGE-2012.11.01",         // part number
              Calendar.getInstance().getTime(),          // availability date
@@ -224,8 +226,9 @@ public class CreateProductDetailsTestData extends ContainerTest {
              "Bigger BAM file",                         // deliverables
              false,                                     // top level product
              "GP-ILLUMINA_SEQUENCING_ONLY-EXTRA_HISEQ_COVERAGE_2012.11.01" // quote server price item id
+                ,
 
-        );
+                false);
 
         extraCoverage.addPriceItem(labTimePriceItem);
         extraCoverage.addPriceItem(ifxTimePriceItem);

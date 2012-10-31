@@ -177,6 +177,9 @@
         <role-name>Mercury-ProjectManagers</role-name>
     </security-role>
     <security-role>
+        <role-name>Mercury-ProductManagers</role-name>
+    </security-role>
+    <security-role>
         <role-name>Mercury-Developers</role-name>
     </security-role>
 

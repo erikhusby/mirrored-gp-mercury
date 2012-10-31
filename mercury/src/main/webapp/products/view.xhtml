@@ -39,7 +39,7 @@
             <div class="control-group">
                 <label class="control-label">Part Number</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.product.partNumber} (<a href="http://link/to/product_sheet/#{productView.product.partNumber}.pdf">Product Sheet PDF</a>)</div>
+                    <div class="form-value">#{productView.product.partNumber} (<a href="Product Descriptions.pdf">Product Descriptions PDF</a>)</div>
                 </div>
             </div>
 
@@ -54,13 +54,6 @@
                 <label class="control-label">Product Family</label>
                 <div class="controls">
                     <div class="form-value">#{productView.product.productFamily.displayName}</div>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label class="control-label">Top Level Product</label>
-                <div class="controls">
-                    <div class="form-value">#{productView.product.topLevelProduct ? "Yes" : "No"}</div>
                 </div>
             </div>
 
@@ -101,16 +94,16 @@
             </div>
 
             <div class="control-group">
-                <label class="control-label">Expected Cycle Time (Hours)</label>
+                <label class="control-label">Expected Cycle Time (Days)</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.expectedCycleTimeHours}</div>
+                    <div class="form-value">#{productView.expectedCycleTimeDays}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Guaranteed Cycle Time (Hours)</label>
+                <label class="control-label">Guaranteed Cycle Time (Days)</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.guaranteedCycleTimeHours}</div>
+                    <div class="form-value">#{productView.guaranteedCycleTimeDays}</div>
                 </div>
             </div>
 
@@ -127,6 +120,21 @@
                     <div class="form-value">#{productView.product.minimumOrderSize}</div>
                 </div>
             </div>
+
+            <div class="control-group">
+                <label class="control-label">Primary Price Item</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.defaultPriceItem.platform}: #{productView.product.defaultPriceItem.category}: #{productView.product.defaultPriceItem.name} (ID #{productView.product.defaultPriceItem.quoteServerId})</div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">PDM Orderable Only?</label>
+                <div class="controls">
+                    <div class="form-value">#{productView.product.pdmOrderableOnly ? "Yes" : "No"}</div>
+                </div>
+            </div>
+
 
             <p:dataTable value="#{productView.addOns}" var="addOn" >
                 <f:facet name="header">
@@ -159,7 +167,7 @@
 
             <p:dataTable value="#{productView.priceItems}" var="priceItem" >
                 <f:facet name="header">
-                    <h:outputText value="Price Items" />
+                    <h:outputText value="Optional Price Items" />
                 </f:facet>
                 <p:column> <!-- sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}"> -->
                     <f:facet name="header">
@@ -184,13 +192,6 @@
                         <h:outputText value="Name"/>
                     </f:facet>
                     <h:outputText value="#{priceItem.name}"/>
-                </p:column>
-                <p:column>
-                    <f:facet name="header">
-                        <h:outputText value="Default?"/>
-                    </f:facet>
-                    <h:outputText
-                            value='#{productView.product.isPriceItemDefault(priceItem) ? "Yes" : "No"}'/>
                 </p:column>
             </p:dataTable>
 

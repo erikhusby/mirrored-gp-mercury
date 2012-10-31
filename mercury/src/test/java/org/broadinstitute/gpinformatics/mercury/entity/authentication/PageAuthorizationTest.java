@@ -19,6 +19,7 @@ public class PageAuthorizationTest {
     final String allRoleName ="All_test";
     final String devRoleName ="Mercury-Developers_test";
     final String pmRoleName ="Mercury-ProjectManagers_test";
+    final String pdmRoleName ="Mercury-ProductManagers_test";
     final String luRoleName ="Mercury-LabUsers_test";
     final String lmRoleName ="Mercury-LabManagers_test";
 
@@ -27,6 +28,7 @@ public class PageAuthorizationTest {
     AuthorizedRole roleAll;
     AuthorizedRole roleDev;
     AuthorizedRole rolePM;
+    AuthorizedRole rolePDM;
     AuthorizedRole roleLabUser;
     AuthorizedRole roleLabManager;
 
@@ -37,6 +39,7 @@ public class PageAuthorizationTest {
         roleAll = new AuthorizedRole(allRoleName);
         roleDev = new AuthorizedRole(devRoleName);
         rolePM = new AuthorizedRole(pmRoleName);
+        rolePDM = new AuthorizedRole(pdmRoleName);
         roleLabUser = new AuthorizedRole(luRoleName);
         roleLabManager = new AuthorizedRole(lmRoleName);
     }

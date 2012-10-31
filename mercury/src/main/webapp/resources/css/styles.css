@@ -41,7 +41,7 @@ label, input, button, select, textarea { font-size: 12px }
 label.ui-state-error, .ui-widget-content label.ui-state-error { background: white; color: #B94A48 }
 
 /* Fix bug with PrimeFaces Bootstrap theme: http://forum.primefaces.org/viewtopic.php?f=9&t=25031 */
-.ui-widget-content input.ui-state-error, .ui-widget-content textarea.ui-state-error { color: black; }
+.ui-widget-content input.ui-state-error, .ui-widget-content textarea.ui-state-error, .ui-widget-content .controls .ui-state-error { color: black; }
 
 .controls .ui-message-error { display: inline-block; }
 
@@ -66,3 +66,36 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 
 .ac-dropdown-text { font-size: small; }
 .ac-dropdown-subtext { font-size: smaller; font-style: italic; }
+
+.form-fieldset {
+    width: 300px;
+    margin-top: 5px;
+}
+
+fieldset legend {
+    display: block;
+    padding: 0;
+    width: 55px;
+    text-indent: 3px;
+    margin-right: 10px;
+    margin-left: 10px;
+    font-size: 12px;
+    line-height: 10px;
+    color: #333333;
+    border: 0;
+}
+
+fieldset {
+    margin-top: 10px;
+    width: 325px;
+    border: 1px solid #CCC
+}
+
+fieldset .ui-chkbox {
+    margin-left: 5px;
+}
+
+.entry-help {
+    color: #999;
+    margin-left: 10px;
+}
