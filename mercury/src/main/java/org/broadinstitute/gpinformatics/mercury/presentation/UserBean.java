@@ -43,6 +43,8 @@ public class UserBean implements Serializable {
 
     private ServerStatus jiraStatus = ServerStatus.notLoggedIn;
 
+    private String jiraUsername;
+
     @Nullable
     public BspUser getBspUser() {
         return bspUser;
@@ -50,6 +52,7 @@ public class UserBean implements Serializable {
 
     public void logout() {
         bspUser = null;
+        jiraUsername = "";
         bspStatus = ServerStatus.notLoggedIn;
         jiraStatus = ServerStatus.notLoggedIn;
     }
@@ -59,7 +62,7 @@ public class UserBean implements Serializable {
     }
 
     public String getBadgeClass() {
-        if (bspUser == null) {
+        if (bspStatus != ServerStatus.loggedIn || jiraStatus != ServerStatus.loggedIn) {
             return "badge-warning";
         }
         return "badge-success";
@@ -73,6 +76,11 @@ public class UserBean implements Serializable {
         this.jiraStatus = jiraStatus;
     }
 
+    public void loginJiraUser(String jiraUsername) {
+        this.jiraUsername = jiraUsername;
+        jiraStatus = ServerStatus.loggedIn;
+    }
+
     private static String formatStatus(ServerStatus status, String serviceName, String host, String username) {
         switch (status) {
         case down:
@@ -80,7 +88,7 @@ public class UserBean implements Serializable {
         case loggedIn:
             return MessageFormat.format("Logged into {0} as ''{1}''", serviceName, username);
         case notLoggedIn:
-            return "Not a BSP User";
+            return MessageFormat.format("Not a {0} User", serviceName);
         }
         // Never reached.
         return null;
@@ -96,7 +104,7 @@ public class UserBean implements Serializable {
     }
 
     public String getJiraStatus() {
-        return formatStatus(jiraStatus, "JIRA", jiraConfig.getHost(), "");
+        return formatStatus(jiraStatus, "JIRA", jiraConfig.getUrlBase(), jiraUsername);
     }
 
     public String getJiraStatusClass() {

@@ -23,7 +23,6 @@ import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.text.MessageFormat;
 
 @Named
 @RequestScoped
@@ -78,36 +77,40 @@ public class UserLogin extends AbstractJsfBean {
     }
 
     private void warnIfBspUserInvalid() {
-        if (userBean.getBspUser() == null) {
-            // The user is not a valid JIRA User.  Warn, but allow login.
+        if (userBean.getBspUser() != null && !bspUserList.isTestUser(userBean.getBspUser())) {
+            userBean.setBspStatus(UserBean.ServerStatus.loggedIn);
+        } else {
             String message;
-            if (bspUserList.getUsers().isEmpty()) {
-                // JIRA Server is unresponsive, can't log in to verify user.
-                message = "Can't connect to JIRA server.";
-                userBean.setBspStatus(UserBean.ServerStatus.down);
-            } else {
-                message = MessageFormat.format("User ''{0}'' is not a valid BSP user, using server '{1}'.", username,
-                        bspConfig.getHost());
+            if (bspUserList.isServerValid()) {
                 userBean.setBspStatus(UserBean.ServerStatus.notLoggedIn);
+            } else {
+                // BSP Server is unresponsive, can't log in to verify user.
+                userBean.setBspStatus(UserBean.ServerStatus.down);
             }
+            message = userBean.getBspStatus();
             logger.error(message);
             addFlashErrorMessage(message, message);
-        } else {
-            userBean.setBspStatus(UserBean.ServerStatus.loggedIn);
         }
     }
 
     private void warnIfJiraUserInvalid() {
-        if (!jiraService.isUser(username)) {
-            // The user is not a valid JIRA User.  Warn, but allow login.
-            // FIXME: compute ServerStatus.down for JIRA.
-            String message = MessageFormat.format("User ''{0}'' is not a valid JIRA user, using server '{1}'.",
-                        username, jiraConfig.getHost());
-            userBean.setBspStatus(UserBean.ServerStatus.notLoggedIn);
+        String message = null;
+        try {
+            if (jiraService.isUser(username)) {
+                userBean.loginJiraUser(username);
+            } else {
+                // The user is not a valid JIRA User.  Warn, but allow login.
+                userBean.setJiraStatus(UserBean.ServerStatus.notLoggedIn);
+                message = userBean.getJiraStatus();
+            }
+        } catch (Exception e) {
+            // This can happen for a few reasons, most common is JIRA server is down/misconfigured
+            userBean.setJiraStatus(UserBean.ServerStatus.down);
+            message = userBean.getJiraStatus();
+        }
+        if (message != null) {
             logger.error(message);
             addFlashErrorMessage(message, message);
-        } else {
-            userBean.setBspStatus(UserBean.ServerStatus.loggedIn);
         }
     }
 
