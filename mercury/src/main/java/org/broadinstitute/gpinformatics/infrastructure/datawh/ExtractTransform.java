@@ -1,13 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.log4j.Logger;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.hibernate.envers.*;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 
 import javax.ejb.Schedule;
+import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -31,12 +30,10 @@ import java.util.concurrent.Semaphore;
  * Date: 10/29/12
  */
 
-@Singleton
+@Stateless
 public class ExtractTransform {
     /** Record delimiter expected in sqlLoader file. */
     public static final String DELIM = ",";
-    /** XXX make directory name configurable */
-    public static final String DATAFILE_DIR = "/seq/lims/datawh/dev/new";
     /** This filename matches what cron job expects. */
     public static final String READY_FILE_SUFFIX = "_is_ready";
     /** This date format matches what cron job expects in filenames. */
@@ -45,58 +42,77 @@ public class ExtractTransform {
     private static final String LAST_TIMESTAMP_FILE = "last_etl_timestamp";
     private static final long MSEC_IN_MINUTE = 60 * 1000;
     private static final Logger logger = Logger.getLogger(ExtractTransform.class);
-    private final Semaphore mutex = new Semaphore(1);
-    private long currentRunStartTime = 0;  // only useful for logging
+    private static final Semaphore mutex = new Semaphore(1);
+    private static long currentRunStartTime = 0;  // only useful for logging
+    /** Directory for sqlLoader data files. */
+    private static String datafileDir = null;
 
     @Inject
     private BillableItemEtl billableItemEtl;
 
+    @Inject
+    private Deployment deployment;
+
+    public static String getDatafileDir() {
+        return datafileDir;
+    }
+
     /**
      * JEE auto-schedules incremental ETL.
      */
-    @Schedule(minute="*/2")
+    @Schedule(hour="*", minute="*", persistent=false)
     private void incrementalEtl() {
-        logger.error("Scheduled run of incremental ETL.");
 
         // If previous run is still busy it is unusual but not an error.  Only one incrementalEtl
         // may run at a time.  Does not queue if busy to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
         if (!mutex.tryAcquire()) {
             logger.info("Previous incremental ETL is still running after "
-                    + ((currentRunStartTime - System.currentTimeMillis())/MSEC_IN_MINUTE) + " minutes.");
+                    + ((System.currentTimeMillis() - currentRunStartTime) / MSEC_IN_MINUTE) + " minutes.");
             return;
         }
+        try {
+            EtlConfig etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
+            datafileDir = etlConfig.getDatawhEtlDirRoot();
 
+            // Bails if target directory is missing.
+            if (datafileDir == null || datafileDir.length() == 0 || !(new File(datafileDir)).exists()) {
+                logger.fatal("ETL data file directory is missing: " + datafileDir);
+                return;
+            }
 
-        // The same etl_date is used for all DW data processed by one ETL run.
-        final long etlDate = System.currentTimeMillis();
-        currentRunStartTime = etlDate;
-        final String etlDateStr = fullDateFormat.format(new Date(etlDate));
-        long lastDate = readLastTimestamp();
-        logger.debug("Doing incremental ETL for interval " + fullDateFormat.format(new Date(lastDate))
-                + " to " + etlDateStr);
-        if (0L == lastDate) {
-            logger.warn("Cannot determine time of last incremental ETL.  Doing a full ETL.");
+            // The same etl_date is used for all DW data processed by one ETL run.
+            final long etlDate = System.currentTimeMillis();
+            currentRunStartTime = etlDate;
+            final String etlDateStr = fullDateFormat.format(new Date(etlDate));
+            long lastDate = readLastTimestamp();
+            logger.debug("Doing incremental ETL for interval " + fullDateFormat.format(new Date(lastDate))
+                    + " to " + etlDateStr);
+            if (0L == lastDate) {
+                logger.warn("Cannot determine time of last incremental ETL.  Doing a full ETL.");
+            }
+
+            billableItemEtl.doEtl(lastDate, etlDate, etlDateStr);
+            /*
+            doProductOrderSample(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample");
+            doProductOrderSampleStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample_status");
+            doProductOrder(lastDate, etlDate, etlDateStr, auditReader, "product_order");
+            doProductOrderStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_status");
+            doResearchProjectCohort(lastDate, etlDate, etlDateStr, auditReader, "research_project_cohort");
+            doResearchProjectFunding(lastDate, etlDate, etlDateStr, auditReader, "research_project_funding");
+            doResearchProjectIRB(lastDate, etlDate, etlDateStr, auditReader, "research_project_irb");
+            doProjectPerson(lastDate, etlDate, etlDateStr, auditReader, "research_project_person");
+            doResearchProject(lastDate, etlDate, etlDateStr, auditReader, "research_project");
+            doResearchProjectStatus(lastDate, etlDate, etlDateStr, auditReader, "research_project_status");
+            doPriceItem(lastDate, etlDate, etlDateStr, auditReader, "price_item");
+            doProduct(lastDate, etlDate, etlDateStr, auditReader, "product");
+            doProductAddOn(lastDate, etlDate, etlDateStr, auditReader, "product_add_on");
+            */
+            writeLastTimestampFile(etlDate);
+            writeIsReadyFile(etlDateStr);
+        } finally {
+            mutex.release();
         }
-
-        billableItemEtl.doEtl(lastDate, etlDate, etlDateStr);
-        /*
-        doProductOrderSample(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample");
-        doProductOrderSampleStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample_status");
-        doProductOrder(lastDate, etlDate, etlDateStr, auditReader, "product_order");
-        doProductOrderStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_status");
-        doResearchProjectCohort(lastDate, etlDate, etlDateStr, auditReader, "research_project_cohort");
-        doResearchProjectFunding(lastDate, etlDate, etlDateStr, auditReader, "research_project_funding");
-        doResearchProjectIRB(lastDate, etlDate, etlDateStr, auditReader, "research_project_irb");
-        doProjectPerson(lastDate, etlDate, etlDateStr, auditReader, "research_project_person");
-        doResearchProject(lastDate, etlDate, etlDateStr, auditReader, "research_project");
-        doResearchProjectStatus(lastDate, etlDate, etlDateStr, auditReader, "research_project_status");
-        doPriceItem(lastDate, etlDate, etlDateStr, auditReader, "price_item");
-        doProduct(lastDate, etlDate, etlDateStr, auditReader, "product");
-        doProductAddOn(lastDate, etlDate, etlDateStr, auditReader, "product_add_on");
-        */
-        writeLastTimestampFile(etlDate);
-        writeIsReadyFile(etlDateStr);
     }
 
     /**
@@ -106,7 +122,7 @@ public class ExtractTransform {
     private long readLastTimestamp() {
         BufferedReader rdr = null;
         try {
-            File file = new File (DATAFILE_DIR, LAST_TIMESTAMP_FILE);
+            File file = new File (datafileDir, LAST_TIMESTAMP_FILE);
             rdr = new BufferedReader(new FileReader(file));
             String s = rdr.readLine();
             return Long.parseLong(s);
@@ -136,7 +152,7 @@ public class ExtractTransform {
      */
     private void writeLastTimestampFile(long etlDate) {
         try {
-            File file = new File (DATAFILE_DIR, LAST_TIMESTAMP_FILE);
+            File file = new File (datafileDir, LAST_TIMESTAMP_FILE);
             FileWriter fw = new FileWriter(file);
             fw.write(String.valueOf(etlDate));
             fw.close();
@@ -151,7 +167,7 @@ public class ExtractTransform {
      */
     private void writeIsReadyFile(String etlDateStr) {
         try {
-            File file = new File (DATAFILE_DIR, etlDateStr + READY_FILE_SUFFIX);
+            File file = new File (datafileDir, etlDateStr + READY_FILE_SUFFIX);
             FileWriter fw = new FileWriter(file);
             fw.write("is_ready");
             fw.close();

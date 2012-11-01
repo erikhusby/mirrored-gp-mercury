@@ -4,7 +4,6 @@ import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 
-import java.io.*;
 import java.util.List;
 
 /**
@@ -38,7 +37,7 @@ public class Util {
      * @return the file name
      */
     static String dataFilename(String etlDateStr, String baseFilename) {
-        return ExtractTransform.DATAFILE_DIR + "/" + etlDateStr + "_" + baseFilename + ".dat";
+        return ExtractTransform.getDatafileDir() + "/" + etlDateStr + "_" + baseFilename + ".dat";
     }
 
     /**

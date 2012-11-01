@@ -217,3 +217,16 @@ mercury:
       thrift:   PROD
       deckMsgs: PROD
 
+datawhEtl:
+
+    DEV:
+
+        datawhEtlDirRoot: /seq/lims/datawh/dev
+
+    QA:
+
+        datawhEtlDirRoot: /seq/lims/datawh/qa
+
+    PROD:
+
+        datawhEtlDirRoot: /seq/lims/datawh/prod
