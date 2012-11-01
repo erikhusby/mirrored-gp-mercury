@@ -35,6 +35,13 @@ public interface JiraService extends Serializable {
      */
     CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException;
 
+    /**
+     * Updates an issue, modifying the custom fields supplied.
+     *
+     * @param key             the key of the JIRA issue to update
+     * @param customFields    the fields to modify
+     */
+    void updateIssue(String key, Collection<CustomField> customFields) throws IOException;
 
     /**
      * Add a publicly visible comment to the specified issue.

@@ -178,6 +178,30 @@ public class ServiceAccessUtility {
         return createdJiraTicket;
     }
 
+    public static void updateJiraTicket(final String key, final Collection<CustomField> customFields) throws IOException {
+//        getJiraService().updateIssue(key, customFields);
+        (new Caller<Void, JiraService>() {
+            @Override
+            Void call(JiraService apiInstance) {
+                try {
+                    apiInstance.updateIssue(key, customFields);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            }
+        }).apiCall(JiraService.class);
+    }
+
+    public static String createTicketUrl(final String key) {
+        return (new Caller<String, JiraService>() {
+            @Override
+            String call(JiraService apiInstance) {
+                return apiInstance.createTicketUrl(key);
+            }
+        }).apiCall(JiraService.class);
+    }
+
     /**
      * getJiraCustomFields exposes a method by which a user can retrieve all custom fields defined within the Jira
      * System.  This is useful when posting a create request or an update request for a jira ticket

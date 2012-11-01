@@ -470,6 +470,12 @@ public class ResearchProject {
             // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
             jiraTicketKey = researchProjectResponse.getKey();
 
+            // Update ticket with link back into Mercury
+            Collection<CustomField> updateFields = new HashSet<CustomField>();
+            updateFields.add(new CustomField(submissionFields.get("Mercury URL"), "http://localhost:8080/Mercury/projects/view.xhtml?researchProject=" + jiraTicketKey, CustomField.SingleFieldType.TEXT));
+//            updateFields.add(new CustomField(submissionFields.get("Mercury URL"), ServiceAccessUtility.createTicketUrl(jiraTicketKey), CustomField.SingleFieldType.TEXT));
+            ServiceAccessUtility.updateJiraTicket(jiraTicketKey, updateFields);
+
             addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
     }

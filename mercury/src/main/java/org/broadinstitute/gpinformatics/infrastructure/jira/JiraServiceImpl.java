@@ -6,6 +6,7 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
@@ -105,6 +106,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         return post(webResource, issueRequest, new GenericType<CreateIssueResponse>() {});
     }
 
+    @Override
+    public void updateIssue(String key, Collection<CustomField> customFields) throws IOException {
+        UpdateIssueRequest request = new UpdateIssueRequest(customFields);
+        String url = getBaseUrl() + "/issue/" + key;
+        WebResource webResource = getJerseyClient().resource(url);
+        put(webResource, request);
+    }
 
     @Override
     public void addComment(String key, String body) throws IOException {

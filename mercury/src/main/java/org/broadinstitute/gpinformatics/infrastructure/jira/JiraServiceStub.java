@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Nex
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -36,6 +35,11 @@ public class JiraServiceStub implements JiraService {
     @Override
     public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException {
         return new CreateIssueResponse("123",projectPrefix + "-123");
+    }
+
+    @Override
+    public void updateIssue(String key, Collection<CustomField> customFields) throws IOException {
+        logger.info("Dummy jira service! Updating " + key);
     }
 
     @Override
