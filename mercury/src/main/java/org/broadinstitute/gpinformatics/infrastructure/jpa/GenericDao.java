@@ -194,13 +194,16 @@ public class GenericDao {
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
             Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values) {
+        List<ENTITY_TYPE> resultList = new ArrayList<ENTITY_TYPE>();
+        if(values.isEmpty()) {
+            return resultList;
+        }
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
 
         // Break the list into chunks of 1000, because of the limit on the number of items in
         // an Oracle IN clause
-        List<ENTITY_TYPE> resultList = new ArrayList<ENTITY_TYPE>();
         for(int i = 0; i < values.size(); i += 1000) {
             criteriaQuery.where(root.get(singularAttribute).in(values.subList(i, Math.min(values.size(), i + 1000))));
             try {
