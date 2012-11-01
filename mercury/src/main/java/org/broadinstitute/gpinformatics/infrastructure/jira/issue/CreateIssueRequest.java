@@ -4,7 +4,6 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.util.Collection;
@@ -26,13 +25,13 @@ public class CreateIssueRequest  {
         public static class Project {
 
             public Project() {
-
             }
 
             public Project(String key) {
                 if (key == null) {
                     throw new RuntimeException("key cannot be null");
                 }
+
                 this.key = key;
             }
 
@@ -47,9 +46,32 @@ public class CreateIssueRequest  {
             }
         }
 
+        public static class Reporter {
+
+            public Reporter() {
+            }
+
+            public Reporter(String name) {
+                if (name == null) {
+                    throw new RuntimeException("name cannot be null");
+                }
+
+                this.name = name;
+            }
+
+            private String name;
+
+            public String getName() {
+                return name;
+            }
+
+            public void setName(String name) {
+                this.name = name;
+            }
+        }
+
         @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
         public enum ProjectType {
-
             LCSET_PROJECT_PREFIX("Illumina Library Construction Tracking", "LCSET"),
             Product_Ordering("Product Ordering", "PDO"),
             Research_Projects("Research Projects", "RP");
@@ -103,6 +125,8 @@ public class CreateIssueRequest  {
 
         private Issuetype issuetype;
 
+        private Reporter reporter;
+
         private final Collection<CustomField> customFields = new HashSet<CustomField>();
 
         public Collection<CustomField> getCustomFields() {
@@ -111,6 +135,10 @@ public class CreateIssueRequest  {
 
         public Project getProject() {
             return project;
+        }
+
+        public Reporter getReporter() {
+            return reporter;
         }
 
         public void setSummary(String summary) {
@@ -137,11 +165,10 @@ public class CreateIssueRequest  {
             this.issuetype = issuetype;
         }
 
-
         public Fields() {
-            this.project = new Project();
+            project = new Project();
+            reporter = new Reporter();
         }
-
     }
 
 
@@ -175,6 +202,7 @@ public class CreateIssueRequest  {
 
 
     public static CreateIssueRequest create(String key,
+                                            String reporter,
                                             Fields.Issuetype issuetype,
                                             String summary,
                                             String description,
@@ -185,6 +213,7 @@ public class CreateIssueRequest  {
         Fields fields = ret.getFields();
 
         fields.getProject().setKey(key);
+        fields.getReporter().setName(reporter);
         fields.setIssuetype(issuetype);
         fields.setSummary(summary);
         fields.setDescription(description);

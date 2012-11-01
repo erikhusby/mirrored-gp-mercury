@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Iss
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 
@@ -33,7 +32,7 @@ public interface JiraService extends Serializable {
      * @return
      * @throws IOException
      */
-    CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException;
+    CreateIssueResponse createIssue(String projectPrefix, String reporter, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException;
 
 
     /**

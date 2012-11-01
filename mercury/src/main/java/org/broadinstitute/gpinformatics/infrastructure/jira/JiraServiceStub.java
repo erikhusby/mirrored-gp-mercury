@@ -15,12 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Nex
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Dummy implementation that writes calls
@@ -34,7 +29,7 @@ public class JiraServiceStub implements JiraService {
     private Log logger = LogFactory.getLog(JiraServiceStub.class);
 
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException {
+    public CreateIssueResponse createIssue(String projectPrefix, String reporter, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException {
         return new CreateIssueResponse("123",projectPrefix + "-123");
     }
 

@@ -694,6 +694,9 @@ public class ProductOrder implements Serializable {
         addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT_FAMILY,
                 product.getProductFamily() == null ? "" : product.getProductFamily().getName());
 
+        addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT,
+                product.getProductName() == null ? "" : product.getProductName());
+
         if (quoteId != null && !quoteId.isEmpty()) {
             addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.QUOTE_ID, quoteId);
         }
@@ -701,8 +704,8 @@ public class ProductOrder implements Serializable {
                 StringUtils.join(getSampleNames(), ','));
 
         CreateIssueResponse issueResponse = ServiceAccessUtility.createJiraTicket(
-                fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title,
-                comments == null ? "" : comments, listOfFields);
+                fetchJiraProject().getKeyPrefix(), ServiceAccessUtility.getBspUserForId(createdBy).getUsername(),
+                fetchJiraIssueType(), title, comments == null ? "" : comments, listOfFields);
 
         jiraTicketKey = issueResponse.getKey();
         addLink(researchProject.getJiraTicketKey());
@@ -848,6 +851,7 @@ public class ProductOrder implements Serializable {
      */
     public enum RequiredSubmissionFields {
         PRODUCT_FAMILY("Product Family"),
+        PRODUCT("Product"),
         QUOTE_ID("Quote ID"),
         MERCURY_URL("Mercury URL"),
         SAMPLE_IDS("Sample IDs");
