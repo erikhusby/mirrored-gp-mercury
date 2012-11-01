@@ -11,6 +11,7 @@ import javax.inject.Singleton;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 /**
  * This is a JEE scheduled bean that does the initial parts of ETL for the data warehouse.
@@ -39,25 +40,36 @@ public class ExtractTransform {
     private static final SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
     /** Record delimiter expected in sqlLoader file. */
     static final String DELIM = ",";
+    Semaphore mutex = new Semaphore(1);
+    /** This non-persistent time is only useful for logging. */
+    private long currentRunStartTime = 0;
 
-    @Inject
-    private ProductOrder dao;
     @Inject
     private BillableItemEtl billableItemEtl;
 
     /**
-     * Runs one pass of incremental ETL.
+     * JEE auto-schedules incremental ETL.
      */
     @Schedule(minute="*/2")
-    private void incrementalETL() {
+    private void incrementalEtl() {
+
+        // If previous run is still busy it is unusual but not an error.  Only one incrementalEtl
+        // may run at a time.  Does not queue if busy to avoid snowball effect if system is
+        // busy for a long time, for whatever reason.
+        if (!mutex.tryAcquire()) {
+            logger.info("Previous incrementalEtl is still running after "
+                    + (currentRunStartTime - System.currentTimeMillis())/(60000L) + " seconds");
+            return;
+        }
+
         // The same etl_date is used for all DW data processed by one ETL run.
         final long etlDate = System.currentTimeMillis();
+        currentRunStartTime = etlDate;
         final String etlDateStr = fullDateFormat.format(new Date(etlDate));
         long lastDate = 0L;
 
         lastDate = readLastTimestamp();
-        AuditReader auditReader = AuditReaderFactory.get(dao.getEntityManager());
-        billableItemEtl.doETL(lastDate, etlDate, etlDateStr, auditReader);
+        billableItemEtl.doEtl(lastDate, etlDate, etlDateStr);
         /*
         doProductOrderSample(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample");
         doProductOrderSampleStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample_status");

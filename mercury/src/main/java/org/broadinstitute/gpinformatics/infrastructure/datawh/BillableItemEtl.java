@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.BillableItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.BillableItem;
 import org.hibernate.envers.AuditReader;
+import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.RevisionType;
 
 import javax.inject.Inject;
@@ -27,9 +28,9 @@ public class BillableItemEtl {
      * @param lastDate     beginning of the time interval to look for entity changes.
      * @param etlDate      end of the time interval to look for entity changes.
      * @param etlDateStr   etlDate formatted as YYYYMMDDHHMMSS
-     * @param auditReader  the Envers audit reader.
      */
-    void doETL(long lastDate, long etlDate, String etlDateStr, AuditReader auditReader) {
+    void doEtl(long lastDate, long etlDate, String etlDateStr) {
+        AuditReader auditReader = AuditReaderFactory.get(dao.getEntityManager());
 
         List<Object[]> dataChanges = Util.fetchDataChanges(lastDate, etlDate, auditReader, BillableItem.class);
 

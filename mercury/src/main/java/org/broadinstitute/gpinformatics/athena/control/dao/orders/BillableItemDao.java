@@ -59,8 +59,4 @@ public class BillableItemDao extends GenericDao {
         }
     }
 
-    public BillableItem findByBillableItemId(Long billableItemId) {
-        return findSingle(BillableItem.class, BillableItem_.billableItemId, billableItemId);
-    }
-
 }
