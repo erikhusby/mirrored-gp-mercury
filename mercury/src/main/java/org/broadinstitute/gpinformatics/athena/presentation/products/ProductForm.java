@@ -242,6 +242,7 @@ public class ProductForm extends AbstractJsfBean {
         }
 
         addFlashMessage("Product \"" + product.getProductName() + "\" has been created.");
+        conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
 
@@ -261,6 +262,7 @@ public class ProductForm extends AbstractJsfBean {
         }
 
         addFlashMessage("Product \"" + product.getProductName() + "\" has been updated.");
+        conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
 
