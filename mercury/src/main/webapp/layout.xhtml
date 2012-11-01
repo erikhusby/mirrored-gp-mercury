@@ -62,14 +62,14 @@
                             <sqltg:isLoggedIn>
                                 |
                                 <h:outputText id="userBadge" style="cursor: help;" value="#{request.remoteUser}" styleClass="badge #{userBean.badgeClass}"/>
-                                <p:tooltip for="userBadge">
+                                <pe:tooltip for="userBadge" atPosition="bottom middle" myPosition="top middle">
                                     <div>
                                         <h:outputText value="#{userBean.bspStatus}" styleClass="#{userBean.bspStatusClass}"/>
                                     </div>
                                     <div>
                                         <h:outputText value="#{userBean.jiraStatus}" styleClass="#{userBean.jiraStatusClass}"/>
                                     </div>
-                                </p:tooltip>
+                                </pe:tooltip>
                                 &nbsp;
                                 <p:commandButton id="logoutButton" action="#{logoutHandler.logout}" value="Sign out"/>
                             </sqltg:isLoggedIn>
