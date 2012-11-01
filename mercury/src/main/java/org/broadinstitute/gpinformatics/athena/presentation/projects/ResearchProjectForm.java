@@ -149,7 +149,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
             return null;
         }
 
-        addFlashMessage("Research project \"" + project.getTitle() + "\" has been created.");
+        addFlashMessage("The Research Project \"" + project.getTitle() + "\" has been created.");
         return redirect("view");
     }
 
@@ -182,7 +182,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
             return null;
         }
 
-        addFlashMessage("Research project \"" + project.getTitle() + "\" has been updated.");
+        addFlashMessage("The Research Project \"" + project.getTitle() + "\" has been updated.");
         return redirect("view");
     }
 

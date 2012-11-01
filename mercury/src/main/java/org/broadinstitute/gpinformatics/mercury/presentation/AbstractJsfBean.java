@@ -17,15 +17,25 @@ public abstract class AbstractJsfBean {
     }
 
     /**
-     * Add a flash message so it can be used after a redirect.
+     * Add a flash message of INFO severity so it can be used after a redirect.
      *
      * @param message the message to add
      */
     public static void addFlashMessage(String message) {
+        addFlashMessage(FacesMessage.SEVERITY_INFO, message, message);
+    }
+
+    /**
+     * Add flash message of any severity level.
+     *
+     * @param severity the severity level for Faces
+     * @param summary the displayed message
+     * @param detail information info about the message
+     */
+    public static void addFlashMessage(FacesMessage.Severity severity, String summary, String detail) {
         Flash flash = FacesContext.getCurrentInstance().getExternalContext().getFlash();
-        flash.setKeepMessages(true);
         flash.setRedirect(true);
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(message));
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(severity, summary, detail));
     }
 
     /**

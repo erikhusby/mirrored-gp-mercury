@@ -78,7 +78,7 @@ public class UserLogin extends AbstractJsfBean {
                 // reuse exception handling below
                 //throw new ServletException("Login error: couldn't find BspUser: " + username);
             }
-            addInfoMessage("Welcome back!", "Sign in successful");
+            addInfoMessage("Welcome to Mercury!", "Sign in successful");
 
             String previouslyTargetedPage = (String)request.getSession().getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
             if (previouslyTargetedPage != null) {
