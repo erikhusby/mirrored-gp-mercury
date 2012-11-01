@@ -33,16 +33,20 @@ import java.util.concurrent.Semaphore;
 
 @Singleton
 public class ExtractTransform {
-    static final String DATAFILE_DIR = "/seq/lims/datawh/dev/new";
-    private static final String LAST_TIMESTAMP_FILE = "last_etl_timestamp";
-    private static final String READY_FILE_SUFFIX = "_is_ready";
-    private static final Logger logger = Logger.getLogger(ExtractTransform.class);
-    private static final SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
     /** Record delimiter expected in sqlLoader file. */
-    static final String DELIM = ",";
-    Semaphore mutex = new Semaphore(1);
-    /** This non-persistent time is only useful for logging. */
-    private long currentRunStartTime = 0;
+    public static final String DELIM = ",";
+    /** XXX make directory name configurable */
+    public static final String DATAFILE_DIR = "/seq/lims/datawh/dev/new";
+    /** This filename matches what cron job expects. */
+    public static final String READY_FILE_SUFFIX = "_is_ready";
+    /** This date format matches what cron job expects in filenames. */
+    public static final SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+
+    private static final String LAST_TIMESTAMP_FILE = "last_etl_timestamp";
+    private static final long MSEC_IN_MINUTE = 60 * 1000;
+    private static final Logger logger = Logger.getLogger(ExtractTransform.class);
+    private final Semaphore mutex = new Semaphore(1);
+    private long currentRunStartTime = 0;  // only useful for logging
 
     @Inject
     private BillableItemEtl billableItemEtl;
@@ -52,23 +56,29 @@ public class ExtractTransform {
      */
     @Schedule(minute="*/2")
     private void incrementalEtl() {
+        logger.error("Scheduled run of incremental ETL.");
 
         // If previous run is still busy it is unusual but not an error.  Only one incrementalEtl
         // may run at a time.  Does not queue if busy to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
         if (!mutex.tryAcquire()) {
-            logger.info("Previous incrementalEtl is still running after "
-                    + (currentRunStartTime - System.currentTimeMillis())/(60000L) + " seconds");
+            logger.info("Previous incremental ETL is still running after "
+                    + ((currentRunStartTime - System.currentTimeMillis())/MSEC_IN_MINUTE) + " minutes.");
             return;
         }
+
 
         // The same etl_date is used for all DW data processed by one ETL run.
         final long etlDate = System.currentTimeMillis();
         currentRunStartTime = etlDate;
         final String etlDateStr = fullDateFormat.format(new Date(etlDate));
-        long lastDate = 0L;
+        long lastDate = readLastTimestamp();
+        logger.debug("Doing incremental ETL for interval " + fullDateFormat.format(new Date(lastDate))
+                + " to " + etlDateStr);
+        if (0L == lastDate) {
+            logger.warn("Cannot determine time of last incremental ETL.  Doing a full ETL.");
+        }
 
-        lastDate = readLastTimestamp();
         billableItemEtl.doEtl(lastDate, etlDate, etlDateStr);
         /*
         doProductOrderSample(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample");

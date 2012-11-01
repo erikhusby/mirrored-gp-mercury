@@ -7,12 +7,14 @@ import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.RevisionType;
 
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Stateless
 public class BillableItemEtl {
     private static final Logger logger = Logger.getLogger(BillableItemEtl.class);
     private static final String BASE_FILENAME = "billable_item";
