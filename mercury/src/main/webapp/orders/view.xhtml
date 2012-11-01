@@ -93,14 +93,19 @@
 
                     <br/>
 
-                    <p:dataTable style="width:1310px;" id="sampleData" value="#{productOrderDetail.productOrder.samples}"
-                                 filteredValue="#{productOrderFilterBean.filteredSamples}" var="sample"
-                                 scrollable="true" scrollHeight="450" scrollWidth="1330">
+                    <p:dataTable style="width:1310px;"
+                                 id="sampleData"
+                                 value="#{productOrderDetail.productOrder.samples}"
+                                 filteredValue="#{productOrderFilterBean.filteredSamples}"
+                                 var="sample"
+                                 scrollable="true"
+                                 scrollHeight="650"
+                                 scrollWidth="1325">
                         <f:event type="preRenderComponent" listener="#{productOrderDetail.load}"/>
                         <f:facet name="header">
                             Samples<br/>
                             <p:dataList value="#{productOrderDetail.productOrder.sampleSummaryComments}"
-                                        var="comment" itemType="none" styleClass="summary-list">
+                                        var="comment" itemType="none" styleClass="fourcolumn summary-list">
                                 #{comment}
                             </p:dataList>
                         </f:facet>
