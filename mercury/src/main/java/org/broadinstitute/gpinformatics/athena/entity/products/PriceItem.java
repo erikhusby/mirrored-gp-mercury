@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
-import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
@@ -23,91 +22,26 @@ import java.io.Serializable;
 })
 public class PriceItem implements Serializable {
 
-
-    /**
-     * GP is the only platform referenced by Athena?
-     */
-    public enum Platform {
-
-        GP("Genomics Platform");
-
-        private final String quoteServerPlatform;
-
-        private Platform(String quoteServerPlatform) {
-            this.quoteServerPlatform = quoteServerPlatform;
-        }
-
-        public String getQuoteServerPlatform() {
-            return quoteServerPlatform;
-        }
-    }
-
-
-    /**
-     * For my dummy test data I am making Category essentially synonymous with {@link ProductFamily}
-     */
-    public enum Category {
-
-        GENERAL_PRODUCTS("General Products"),
-        EXOME_SEQUENCING_ANALYSIS("Exome Sequencing Analysis"),
-        WHOLE_GENOME_SEQUENCING_ANALYSIS("Whole Genome Sequencing Analysis"),
-        WHOLE_GENOME_ARRAY_ANALYSIS("Whole Genome Array Analysis"),
-        RNA_ANALYSIS("RNA Analysis"),
-        ASSEMBLY_ANALYSIS("Assembly Analysis"),
-        METAGENOMIC_ANALYSIS("Metagenomic Analysis"),
-        EPIGENOMIC_ANALYSIS("Epigenomic Analysis"),
-        ILLUMINA_SEQUENCING_ONLY("Illumina Sequencing Only"),
-        ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
-        CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing");
-
-        private final String quoteServerCategory;
-
-
-        Category(String quoteServerCategory) {
-            this.quoteServerCategory = quoteServerCategory;
-        }
-
-
-        public String getQuoteServerCategory() {
-            return quoteServerCategory;
-        }
-    }
-
-
-
-    public enum Name {
-
-        EXOME_EXPRESS("Exome Express"),
-        STANDARD_EXOME_SEQUENCING("Standard Exome Sequencing"),
-        DNA_EXTRACTION("DNA Extraction"),
-        EXTRA_HISEQ_COVERAGE("Extra HiSeq Coverage"),
-        TIME_AND_MATERIALS_LAB("Time and Materials - Laboratory"),
-        TIME_AND_MATERIALS_IFX("Time and Materials - Informatics");
-
-        private final String quoteServerName;
-
-        private Name(String quoteServerName) {
-            this.quoteServerName = quoteServerName;
-        }
-
-        public String getQuoteServerName() {
-            return quoteServerName;
-        }
-    }
-
-
+    public static final String PLATFORM_GENOMICS = "Genomics Platform";
+    public static final String CATEGORY_EXOME_SEQUENCING_ANALYSIS = "Exome Sequencing Analysis";
+    public static final String NAME_EXOME_EXPRESS = "Exome Express";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRICE_ITEM", schema = "athena", sequenceName = "SEQ_PRICE_ITEM")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRICE_ITEM")
     private Long priceItemId;
 
+    @Column(nullable = false)
     private String platform;
 
+    // there are null categories
     private String category;
 
+    @Column(nullable = false)
     private String name;
 
+    // we are currently recording this and it certainly exists on the quote server, but it's possible we might
+    // stop recording it at some point since our having a copy of it doesn't seem all that useful at the moment
     private String quoteServerId;
 
 
@@ -129,33 +63,6 @@ public class PriceItem implements Serializable {
         this.platform = platform;
         this.category = category;
         this.name = name;
-    }
-
-
-    public PriceItem(@NotNull Platform platform, Category category, @NotNull Name name,
-                     @NotNull String quoteServerId) {
-
-        if (platform == null) {
-            throw new NullPointerException("Null platform specified!");
-        }
-
-        if (name == null) {
-            throw new NullPointerException("Null price item name specified!");
-        }
-
-        if (quoteServerId == null) {
-            throw new NullPointerException("Null quote server price item id specified!");
-        }
-
-        // don't currently know how to validate this other than against emptiness...
-        if (StringUtils.isBlank(quoteServerId)) {
-            throw new IllegalArgumentException("Empty quote server price item id specified!");
-        }
-
-        this.platform = platform.getQuoteServerPlatform();
-        this.category = category.getQuoteServerCategory();
-        this.name = name.getQuoteServerName();
-        this.quoteServerId = quoteServerId;
     }
 
 

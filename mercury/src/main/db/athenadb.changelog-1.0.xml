@@ -779,4 +779,14 @@
         </sql>
     </changeSet>
 
+
+    <changeSet id="GPLIM-254-not-null.platform" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="price_item" columnName="platform" />
+    </changeSet>
+
+    <changeSet id="GPLIM-254-not-null.name" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="price_item" columnName="name" />
+    </changeSet>
+
+
 </databaseChangeLog>
