@@ -84,22 +84,30 @@ public class UserLogin extends AbstractJsfBean {
             if (bspUserList.getUsers().isEmpty()) {
                 // JIRA Server is unresponsive, can't log in to verify user.
                 message = "Can't connect to JIRA server.";
+                userBean.setBspStatus(UserBean.ServerStatus.down);
             } else {
                 message = MessageFormat.format("User ''{0}'' is not a valid BSP user, using server '{1}'.", username,
                         bspConfig.getHost());
+                userBean.setBspStatus(UserBean.ServerStatus.notLoggedIn);
             }
             logger.error(message);
             addFlashErrorMessage(message, message);
+        } else {
+            userBean.setBspStatus(UserBean.ServerStatus.loggedIn);
         }
     }
 
     private void warnIfJiraUserInvalid() {
         if (!jiraService.isUser(username)) {
             // The user is not a valid JIRA User.  Warn, but allow login.
+            // FIXME: compute ServerStatus.down for JIRA.
             String message = MessageFormat.format("User ''{0}'' is not a valid JIRA user, using server '{1}'.",
                         username, jiraConfig.getHost());
+            userBean.setBspStatus(UserBean.ServerStatus.notLoggedIn);
             logger.error(message);
             addFlashErrorMessage(message, message);
+        } else {
+            userBean.setBspStatus(UserBean.ServerStatus.loggedIn);
         }
     }
 
@@ -144,7 +152,7 @@ public class UserLogin extends AbstractJsfBean {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
         PDM("/orders/list", PRODUCT_MANAGER_ROLE),
         PM("/projects/list", PROJECT_MANAGER_ROLE),
-        OTHER("", "");
+        OTHER("index", "");
 
         private static final String INDEX = "/index";
         private static final String HOME_PAGE = "/Mercury";
