@@ -28,14 +28,20 @@ public class UserBean implements Serializable {
     JiraConfig jiraConfig;
 
     public enum ServerStatus {
-        down("text-error"),
-        loggedIn("text-success"),
-        notLoggedIn("text-warning");
+        down("text-error", "Cannot connect to {0} Server: ''{1}''"),
+        loggedIn("text-success", "Logged into {0} as ''{2}''"),
+        notLoggedIn("text-warning", "Not a {0} User");
 
         private final String cssClass;
+        private final String format;
 
-        private ServerStatus(String cssClass) {
+        private String formatStatus(String serviceName, String host, String username) {
+            return MessageFormat.format(format, serviceName, host, username);
+        }
+
+        private ServerStatus(String cssClass, String format) {
             this.cssClass = cssClass;
+            this.format = format;
         }
     }
 
@@ -81,22 +87,9 @@ public class UserBean implements Serializable {
         jiraStatus = ServerStatus.loggedIn;
     }
 
-    private static String formatStatus(ServerStatus status, String serviceName, String host, String username) {
-        switch (status) {
-        case down:
-            return MessageFormat.format("Cannot connect to {0} Server: ''{1}''", serviceName, host);
-        case loggedIn:
-            return MessageFormat.format("Logged into {0} as ''{1}''", serviceName, username);
-        case notLoggedIn:
-            return MessageFormat.format("Not a {0} User", serviceName);
-        }
-        // Never reached.
-        return null;
-    }
-
     public String getBspStatus() {
         String username = bspUser == null ? "" : bspUser.getUsername();
-        return formatStatus(bspStatus, "BSP", bspConfig.getHost(), username);
+        return bspStatus.formatStatus("BSP", bspConfig.getHost(), username);
     }
 
     public String getBspStatusClass() {
@@ -104,7 +97,7 @@ public class UserBean implements Serializable {
     }
 
     public String getJiraStatus() {
-        return formatStatus(jiraStatus, "JIRA", jiraConfig.getUrlBase(), jiraUsername);
+        return jiraStatus.formatStatus("JIRA", jiraConfig.getUrlBase(), jiraUsername);
     }
 
     public String getJiraStatusClass() {

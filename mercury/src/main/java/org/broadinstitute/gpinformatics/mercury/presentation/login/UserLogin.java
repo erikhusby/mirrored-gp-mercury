@@ -7,10 +7,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
  */
 
 import org.apache.commons.logging.Log;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -46,19 +43,10 @@ public class UserLogin extends AbstractJsfBean {
     private BSPUserList bspUserList;
 
     @Inject
-    private Deployment deployment;
-
-    @Inject
     private FacesContext facesContext;
 
     @Inject
-    private BSPConfig bspConfig;
-
-    @Inject
     private JiraService jiraService;
-
-    @Inject
-    private JiraConfig jiraConfig;
 
     public String getUsername() {
         return username;
