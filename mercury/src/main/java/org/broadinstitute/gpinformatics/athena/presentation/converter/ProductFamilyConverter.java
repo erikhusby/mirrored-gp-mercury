@@ -17,10 +17,9 @@ public class ProductFamilyConverter implements Converter {
     private ProductFamilyDao productFamilyDao;
 
     @Override
-    public Object getAsObject(FacesContext context, UIComponent component, String value) {
+    public Object getAsObject(FacesContext context, UIComponent component, String productFamilyName) {
         ProductFamily productFamily = null;
-        if (StringUtils.isNotBlank(value)) {
-            ProductFamily.ProductFamilyName productFamilyName = ProductFamily.ProductFamilyName.valueOf(value);
+        if (StringUtils.isNotBlank(productFamilyName)) {
             productFamily = productFamilyDao.find(productFamilyName);
         }
         return productFamily;

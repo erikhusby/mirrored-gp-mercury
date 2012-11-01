@@ -29,7 +29,7 @@
                     <div class="controls">
                         <p:selectOneMenu id="productFamily" value="#{productForm.product.productFamily}" converter="#{productFamilyConverter}" required="true">
                             <f:selectItem itemLabel="Select a Product Family" itemValue="" />
-                            <f:selectItems value="#{productForm.productFamilies}" var="fam" itemLabel="#{fam.displayName}"  itemValue="#{fam}" />
+                            <f:selectItems value="#{productForm.productFamilies}" var="fam" itemLabel="#{fam.name}"  itemValue="#{fam}" />
                         </p:selectOneMenu>
                     </div>
                 </div>
@@ -187,7 +187,7 @@
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{product.productName} - #{product.partNumber}</div>
                                 <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>
-                                <div class="ac-dropdown-subtext">#{product.productFamily.displayName}</div>
+                                <div class="ac-dropdown-subtext">#{product.productFamily.name}</div>
                                 <div class="ac-dropdown-subtext">#{product.inputRequirements}</div>
                             </p:column>
                         </p:autoComplete>

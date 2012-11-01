@@ -28,53 +28,6 @@ import java.io.Serializable;
 @Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
 public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
-    /**
-     * Known product families, a DAO method might accept one of these to return a persistent or detached instance
-     * of one of these ProductFamilies if there was business logic that wanted to call out a specific ProductFamily.
-     *
-     * TODO get rid of this enum
-     */
-
-    public enum ProductFamilyName {
-//        GENERAL_PRODUCTS("General Products"),
-//        EXOME_SEQUENCING_ANALYSIS("Exome Sequencing Analysis"),
-//        WHOLE_GENOME_SEQUENCING_ANALYSIS("Whole Genome Sequencing Analysis"),
-//        WHOLE_GENOME_ARRAY_ANALYSIS("Whole Genome Array Analysis"),
-//        RNA_ANALYSIS("RNA Analysis"),
-//        ASSEMBLY_ANALYSIS("Assembly Analysis"),
-//        METAGENOMIC_ANALYSIS("Metagenomic Analysis"),
-//        EPIGENOMIC_ANALYSIS("Epigenomic Analysis"),
-//        ILLUMINA_SEQUENCING_ONLY("Illumina Sequencing Only"),
-//        ALTERNATIVE_TECHNOLOGIES("Alternative Technologies"),
-//        CUSTOM_PRODUCTS_TARGETED_SEQUENCING("Targeted Sequencing"),
-
-        // GPLIM-172 GPLIM-216 real product families
-        DE_NOVO_ASSEMBLY("de novo Assembly"),
-        ALTERNATIVE_LIBRARY_PREP_AND_DEVELOPMENT("Alternate Library Prep & Development"),
-        DATA_ANALYSIS("Data Analysis"),
-        EPIGENOMICS("Epigenomics"),
-        EXOME("Exome"),
-        METAGENOMICS("Metagenomics"),
-        MICROBIAL_AND_VIRAL_ANALYSIS("Microbial & Viral Analysis"),
-        RNA("RNA"),
-        SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE("Sample Initiation, Qualification & Cell Culture"),
-        SEQUENCE_ONLY("Sequence Only"),
-        SMALL_DESIGN_VALIDATION_AND_EXTENSION("Small Design, Validation & Extension"),
-        WHOLE_GENOME("Whole Genome");
-
-
-
-        private final String displayName;
-
-        ProductFamilyName(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
-
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_FAMILY", schema = "athena", sequenceName = "SEQ_PRODUCT_FAMILY")
@@ -109,11 +62,6 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         return name;
     }
 
-
-    @Transient
-    public String getDisplayName() {
-        return ProductFamilyName.valueOf(getName()).getDisplayName();
-    }
 
     @Override
     public int compareTo(ProductFamily productFamily) {
