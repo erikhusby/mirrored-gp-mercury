@@ -31,7 +31,7 @@ public class BillableItemEtl {
      * @param etlDate      end of the time interval to look for entity changes.
      * @param etlDateStr   etlDate formatted as YYYYMMDDHHMMSS
      */
-    void doEtl(long lastDate, long etlDate, String etlDateStr) {
+    public void doEtl(long lastDate, long etlDate, String etlDateStr) {
         AuditReader auditReader = AuditReaderFactory.get(dao.getEntityManager());
 
         List<Object[]> dataChanges = Util.fetchDataChanges(lastDate, etlDate, auditReader, BillableItem.class);

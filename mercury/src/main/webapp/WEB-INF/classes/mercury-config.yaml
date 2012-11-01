@@ -164,6 +164,21 @@ deckMsgs:
         messageStoreDirRoot: /seq/lims/mercury/prod
 
 
+datawhEtl:
+
+    DEV:
+
+        datawhEtlDirRoot: /seq/lims/datawh/dev
+
+    QA:
+
+        datawhEtlDirRoot: /seq/lims/datawh/qa
+
+    PROD:
+
+        datawhEtlDirRoot: /seq/lims/datawh/prod
+
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 
 
@@ -180,6 +195,7 @@ mercury:
       squid:    DEV
       thrift:   QA
       deckMsgs: DEV
+      datawhEtl: DEV
 
 
     TEST:
@@ -192,7 +208,7 @@ mercury:
       squid:    TEST
       thrift:   TEST
       deckMsgs: DEV
-
+      datawhEtl: DEV
 
     QA:
 
@@ -204,7 +220,7 @@ mercury:
       squid:    QA
       thrift:   QA
       deckMsgs: QA
-
+      datawhEtl: QA
 
     PROD:
 
@@ -216,17 +232,5 @@ mercury:
       squid:    PROD
       thrift:   PROD
       deckMsgs: PROD
+      datawhEtl: PROD
 
-datawhEtl:
-
-    DEV:
-
-        datawhEtlDirRoot: /seq/lims/datawh/dev
-
-    QA:
-
-        datawhEtlDirRoot: /seq/lims/datawh/qa
-
-    PROD:
-
-        datawhEtlDirRoot: /seq/lims/datawh/prod

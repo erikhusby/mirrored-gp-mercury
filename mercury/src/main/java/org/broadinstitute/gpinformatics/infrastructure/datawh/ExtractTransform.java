@@ -46,6 +46,7 @@ public class ExtractTransform {
     private static long currentRunStartTime = 0;  // only useful for logging
     /** Directory for sqlLoader data files. */
     private static String datafileDir = null;
+    private static final String DATAFILE_SUBDIR = "/new";
 
     @Inject
     private BillableItemEtl billableItemEtl;
@@ -73,7 +74,7 @@ public class ExtractTransform {
         }
         try {
             EtlConfig etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
-            datafileDir = etlConfig.getDatawhEtlDirRoot();
+            datafileDir = etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR;
 
             // Bails if target directory is missing.
             if (datafileDir == null || datafileDir.length() == 0 || !(new File(datafileDir)).exists()) {
@@ -110,6 +111,9 @@ public class ExtractTransform {
             */
             writeLastTimestampFile(etlDate);
             writeIsReadyFile(etlDateStr);
+            logger.debug("Incremental ETL finished in "
+                    + Math.ceil((System.currentTimeMillis() - currentRunStartTime) / 1000.) + " seconds.");
+
         } finally {
             mutex.release();
         }
