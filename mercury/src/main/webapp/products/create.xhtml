@@ -201,7 +201,13 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary" rendered="#{productForm.creating}" />
+                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary" rendered="#{ ! productForm.creating}" >
+                                    <!-- GPLIM-208 force the view parameter back in with edit submission so our converter will run
+                                         and set the product into our backing bean.  this parameter seems to get lost after failing
+                                         form validation so we have to fish it out of the request and explicitly re-send it -->
+                                    <f:param name="product" value="#{request.getParameter('product')}" />
+                                </p:commandButton>
                             </div>
                             <div class="span1">
                                 <h:link outcome="list" value="Cancel" rendered="#{productForm.product.productId == null}"/>
