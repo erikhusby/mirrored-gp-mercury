@@ -84,6 +84,7 @@ public class AuthorizationFilter implements Filter {
 
             if (!authorized) {
                 // FIXME: Need to report this error to the user!
+                // It is OK for now since we don't have any per-page authentication in Mercury.
                 String errorMessage = "The user '" + user +  "' doesn't have permission to log in.";
                 logger.warn(errorMessage);
                 redirectTo(request, servletResponse, LOGIN_PAGE);
