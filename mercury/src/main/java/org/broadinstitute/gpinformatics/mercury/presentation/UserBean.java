@@ -2,8 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.presentation;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
@@ -27,6 +30,16 @@ public class UserBean implements Serializable {
     @Inject
     JiraConfig jiraConfig;
 
+    private BSPUserList bspUserList;
+
+    @Inject
+    private JiraService jiraService;
+
+    // FIXME: This is a HACK because we can't inject BSPUserList when running in arquillian.
+    public void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
+    }
+
     public enum ServerStatus {
         down("text-error", "Cannot connect to {0} Server: ''{1}''"),
         loggedIn("text-success", "Logged into {0} as ''{2}''"),
@@ -43,10 +56,13 @@ public class UserBean implements Serializable {
             this.cssClass = cssClass;
             this.format = format;
         }
+
+        public boolean isValid() {
+            return this == loggedIn;
+        }
     }
 
     private ServerStatus bspStatus = ServerStatus.notLoggedIn;
-
     private ServerStatus jiraStatus = ServerStatus.notLoggedIn;
 
     private String jiraUsername;
@@ -63,28 +79,46 @@ public class UserBean implements Serializable {
         jiraStatus = ServerStatus.notLoggedIn;
     }
 
-    public void setBspUser(@Nullable BspUser bspUser) {
-        this.bspUser = bspUser;
-    }
-
-    public String getBadgeClass() {
-        if (bspStatus != ServerStatus.loggedIn || jiraStatus != ServerStatus.loggedIn) {
-            return "badge-warning";
+    private void updateBspStatus() {
+        if (bspUser != null && !bspUserList.isTestUser(bspUser)) {
+            bspStatus = ServerStatus.loggedIn;
+        } else if (bspUserList.isServerValid()) {
+                bspStatus = ServerStatus.notLoggedIn;
+        } else {
+            // BSP Server is unresponsive, can't log in to verify user.
+            bspStatus = ServerStatus.down;
         }
-        return "badge-success";
     }
 
-    public void setBspStatus(ServerStatus bspStatus) {
-        this.bspStatus = bspStatus;
+    private void updateJiraStatus(String username) {
+        try {
+            if (jiraService.isValidUser(username)) {
+                jiraUsername = username;
+                jiraStatus = ServerStatus.loggedIn;
+            } else {
+                // The user is not a valid JIRA User.  Warn, but allow login.
+                jiraStatus = ServerStatus.notLoggedIn;
+            }
+        } catch (Exception e) {
+            // This can happen for a few reasons, most common is JIRA server is down/misconfigured
+            jiraStatus = ServerStatus.down;
+        }
     }
 
-    public void setJiraStatus(ServerStatus jiraStatus) {
-        this.jiraStatus = jiraStatus;
+    public void login(@Nonnull String username) {
+        bspUser = bspUserList.getByUsername(username);
+        updateBspStatus();
+        updateJiraStatus(username);
     }
 
-    public void loginJiraUser(String jiraUsername) {
-        this.jiraUsername = jiraUsername;
-        jiraStatus = ServerStatus.loggedIn;
+    /**
+     * @return CSS class for styling user name 'badge' at top of screen
+     */
+    public String getBadgeClass() {
+        if (isValidBspUser() && isValidJiraUser()) {
+            return "badge-success";
+        }
+        return "badge-warning";
     }
 
     public String getBspStatus() {
@@ -102,5 +136,13 @@ public class UserBean implements Serializable {
 
     public String getJiraStatusClass() {
         return jiraStatus.cssClass;
+    }
+
+    public boolean isValidBspUser() {
+        return bspStatus.isValid();
+    }
+
+    public boolean isValidJiraUser() {
+        return jiraStatus.isValid();
     }
 }

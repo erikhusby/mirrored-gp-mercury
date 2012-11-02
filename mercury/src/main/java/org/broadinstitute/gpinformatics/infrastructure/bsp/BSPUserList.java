@@ -29,7 +29,7 @@ public class BSPUserList {
 
     private final List<BspUser> users;
 
-    private boolean serverValid;
+    private final boolean serverValid;
 
     public boolean isServerValid() {
         return serverValid;

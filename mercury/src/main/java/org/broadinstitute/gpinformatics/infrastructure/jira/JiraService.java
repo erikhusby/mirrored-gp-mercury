@@ -134,7 +134,7 @@ public interface JiraService extends Serializable {
     /**
      * Check and see if the user is an exact match for a JIRA user, and has an active account.
      * @param username the username to look for
-     * @return true if user
+     * @return true if user is valid to use in JIRA API calls.
      */
-    boolean isUser(String username);
+    boolean isValidUser(String username);
 }

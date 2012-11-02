@@ -164,7 +164,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public Map<String, CustomFieldDefinition> getRequiredFields(@Nonnull CreateIssueRequest.Fields.Project project,
                                                                 @Nonnull CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
         if (project == null) {
-            throw new NullPointerException("project cannot be null");
+            throw new NullPointerException("jira project cannot be null");
         }
         if (issueType == null) {
             throw new NullPointerException("issueType cannot be null");
@@ -225,7 +225,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     // Validate the current user by using the JIRA user/search API.  We have a match if we get a response back
     // whose name exactly matches the name we're searching for.  The API excludes inactive users by default.
     @Override
-    public boolean isUser(String username) {
+    public boolean isValidUser(String username) {
         String urlString = getBaseUrl() + "/user/search";
 
         String jsonResponse = getJerseyClient().resource(urlString).
