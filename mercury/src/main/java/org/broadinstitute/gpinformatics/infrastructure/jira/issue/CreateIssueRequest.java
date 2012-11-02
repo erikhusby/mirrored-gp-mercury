@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJ
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -141,6 +142,10 @@ public class CreateIssueRequest  {
             return reporter;
         }
 
+        public void setReporter(@Nullable Reporter reporter) {
+            this.reporter = reporter;
+        }
+
         public void setSummary(String summary) {
             this.summary = summary;
         }
@@ -213,7 +218,13 @@ public class CreateIssueRequest  {
         Fields fields = ret.getFields();
 
         fields.getProject().setKey(key);
-        fields.getReporter().setName(reporter);
+
+        if (reporter != null) {
+            fields.getReporter().setName(reporter);
+        } else {
+            fields.setReporter(null);
+        }
+
         fields.setIssuetype(issuetype);
         fields.setSummary(summary);
         fields.setDescription(description);

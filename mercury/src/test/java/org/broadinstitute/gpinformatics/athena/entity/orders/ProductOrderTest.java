@@ -38,8 +38,11 @@ public class ProductOrderTest {
     }
 
     public static ProductOrder createDummyProductOrder() {
-        PriceItem priceItem = new PriceItem(PriceItem.Platform.GP, PriceItem.Category.EXOME_SEQUENCING_ANALYSIS,
-                                    PriceItem.Name.EXOME_EXPRESS, "testQuoteId");
+        PriceItem priceItem = new PriceItem(
+                PriceItem.PLATFORM_GENOMICS,
+                PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
+                PriceItem.NAME_EXOME_EXPRESS,
+                "testQuoteId");
         Product dummyProduct = createDummyProduct();
         dummyProduct.addPriceItem(priceItem);
         ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
