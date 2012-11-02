@@ -199,7 +199,7 @@ public class ProductForm extends AbstractJsfBean {
             return null;
         }
 
-        addFlashMessage("Product \"" + product.getProductName() + "\" has been created.");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.", "Product");
         conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
@@ -218,7 +218,7 @@ public class ProductForm extends AbstractJsfBean {
             return null;
         }
 
-        addFlashMessage("Product \"" + product.getProductName() + "\" has been updated.");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.", "Product");
         conversationData.endConversation();
         return redirect("view") + addProductParam();
     }

@@ -15,41 +15,6 @@ public abstract class AbstractJsfBean {
     }
 
     /**
-     * Add a flash message of INFO severity so it can be used after a redirect.
-     *
-     * @param message the message to add
-     */
-    public static void addFlashMessage(String message) {
-        addFlashMessage(FacesMessage.SEVERITY_INFO, message, message);
-    }
-
-    /**
-     * Add flash message of any severity level.
-     *
-     * @param severity the severity level for Faces
-     * @param summary the displayed message
-     * @param detail information info about the message
-     */
-    public static void addFlashMessage(FacesMessage.Severity severity, String summary, String detail) {
-        Flash flash = FacesContext.getCurrentInstance().getExternalContext().getFlash();
-        flash.setRedirect(true);
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(severity, summary, detail));
-    }
-
-    /**
-     * Add a flash error message so it can be used after a redirect.
-     *
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
-     */
-    public static void addFlashErrorMessage(String summary, String detail) {
-        Flash flash = FacesContext.getCurrentInstance().getExternalContext().getFlash();
-        flash.setKeepMessages(true);
-        flash.setRedirect(true);
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, summary, detail));
-    }
-
-    /**
      * Adds a global FacesMessage with the INFO severity level and summary and detail messages.
      *
      * @param summary The displayed message on the web page
