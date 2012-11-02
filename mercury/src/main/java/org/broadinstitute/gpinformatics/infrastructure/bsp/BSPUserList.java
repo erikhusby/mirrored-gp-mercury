@@ -10,7 +10,6 @@ import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -21,7 +20,7 @@ import java.util.*;
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
 @Singleton
-public class BSPUserList implements Serializable {
+public class BSPUserList {
 
     private static long userIdSeq = 101010101L;
 
@@ -30,7 +29,7 @@ public class BSPUserList implements Serializable {
 
     private final List<BspUser> users;
 
-    private boolean serverValid;
+    private final boolean serverValid;
 
     public boolean isServerValid() {
         return serverValid;

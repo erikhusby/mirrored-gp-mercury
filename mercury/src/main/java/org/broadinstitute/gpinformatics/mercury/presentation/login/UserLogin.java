@@ -70,6 +70,8 @@ public class UserLogin extends AbstractJsfBean {
             request.login(username, password);
             UserRole role = UserRole.fromRequest(request);
             targetPage = role.landingPage;
+            // HACK needed by Arquillian, see FIXME in UserBean.
+            userBean.setBspUserList(bspUserList);
             userBean.login(username);
 
             if (!userBean.isValidBspUser()) {

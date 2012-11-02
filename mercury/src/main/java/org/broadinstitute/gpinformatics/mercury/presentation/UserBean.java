@@ -30,11 +30,15 @@ public class UserBean implements Serializable {
     @Inject
     JiraConfig jiraConfig;
 
-    @Inject
     private BSPUserList bspUserList;
 
     @Inject
     private JiraService jiraService;
+
+    // FIXME: This is a HACK because we can't inject BSPUserList when running in arquillian.
+    public void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
+    }
 
     public enum ServerStatus {
         down("text-error", "Cannot connect to {0} Server: ''{1}''"),
