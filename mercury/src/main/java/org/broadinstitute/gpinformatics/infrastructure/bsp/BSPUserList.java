@@ -29,6 +29,12 @@ public class BSPUserList {
 
     private final List<BspUser> users;
 
+    private boolean serverValid;
+
+    public boolean isServerValid() {
+        return serverValid;
+    }
+
     /**
      * @return list of bsp users, sorted by lastname, firstname, username, email.
      */
@@ -107,6 +113,9 @@ public class BSPUserList {
 
         if (rawUsers == null) {
             rawUsers = new ArrayList<BspUser>();
+            serverValid = false;
+        } else {
+            serverValid = true;
         }
 
         if (deployment != Deployment.PROD) {
@@ -129,21 +138,30 @@ public class BSPUserList {
         users = ImmutableList.copyOf(rawUsers);
     }
 
-    private void addQADudeUsers(List<BspUser> users) {
-        users.add(makeBspUser("QADudeTest", "QADude", "Test", "qadudetest@broadinstitute.org"));
-        users.add(makeBspUser("QADudePM", "QADude", "PM", "qadudepm@broadinstitute.org"));
-        users.add(makeBspUser("QADudeLU", "QADude", "LU", "qadudelu@broadinstitute.org"));
-        users.add(makeBspUser("QADudeLM", "QADude", "LM", "qadudelm@broadinstitute.org"));
+    public static class QADudeUser extends BspUser {
+        public QADudeUser(String type) {
+            makeBspUser("QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org");
+        }
+
+        // Using synchronized due to use of non-final static member userIdSeq.
+        private synchronized void makeBspUser(String username, String firstName, String lastName, String email) {
+            setUserId(userIdSeq++);
+            setUsername(username);
+            setFirstName(firstName);
+            setLastName(lastName);
+            setEmail(email);
+        }
     }
 
-    private synchronized BspUser makeBspUser(String username, String firstName, String lastName, String email) {
-        BspUser user = new BspUser();
-        user.setUserId(userIdSeq++);
-        user.setUsername(username);
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setEmail(email);
-        return user;
+    private static void addQADudeUsers(List<BspUser> users) {
+        String[] types = {"Test", "PM", "LU", "LM"};
+        for (String type : types) {
+            users.add(new QADudeUser(type));
+        }
+    }
+
+    public boolean isTestUser(BspUser user) {
+        return user instanceof QADudeUser;
     }
 
     public List<SelectItem> getSelectItems(Set<BspUser> users) {

@@ -788,5 +788,118 @@
         <addNotNullConstraint schemaName="athena" tableName="price_item" columnName="name" />
     </changeSet>
 
+    <changeSet id="GPLIM-233-revise-names" author="mcovarr">
+        <sql>
+            update athena.product_family set name = 'de novo Assembly' where name = 'DE_NOVO_ASSEMBLY';
+            update athena.product_family set name = 'Alternate Library Prep &amp; Development' where name = 'ALTERNATIVE_LIBRARY_PREP_AND_DEVELOPMENT';
+            update athena.product_family set name = 'Data Analysis' where name = 'DATA_ANALYSIS';
+            update athena.product_family set name = 'Epigenomics' where name = 'EPIGENOMICS';
+            update athena.product_family set name = 'Exome' where name = 'EXOME';
+            update athena.product_family set name = 'Metagenomics' where name = 'METAGENOMICS';
+            update athena.product_family set name = 'Microbial &amp; Viral Analysis' where name = 'MICROBIAL_AND_VIRAL_ANALYSIS';
+            update athena.product_family set name = 'RNA' where name = 'RNA';
+            update athena.product_family set name = 'Sample Initiation, Qualification &amp; Cell Culture' where name = 'SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE';
+            update athena.product_family set name = 'Sequence Only' where name = 'SEQUENCE_ONLY';
+            update athena.product_family set name = 'Small Design, Validation &amp; Extension' where name = 'SMALL_DESIGN_VALIDATION_AND_EXTENSION';
+            update athena.product_family set name = 'Whole Genome' where name = 'WHOLE_GENOME';
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-185-1" author="mccrory">
+      <sql>
+        update research_project set jira_ticket_key = 'RP-9' where title = 'Lung Adenocarcinoma CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-10' where title = 'Resistance - Kantoff' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-11' where title = 'Germline Cancers (NHGRI)' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-12' where title = 'Resistance NHGRI CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-13' where title = 'Kantoff Resistance' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-14' where title = 'Short Stature' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-15' where title = 'CCLE' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-16' where title = 'GTEx' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-17' where title = 'SIGMA Pediatric' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-18' where title = 'SIGMA Cervical' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-19' where title = 'SIGMA Sarcoma' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-20' where title = 'Kwiatkowski LAM' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-21' where title = '1000 Genomes' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-22' where title = 'TCGA' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-23' where title = 'Lipid Extremes' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-24' where title = 'Germline Cancers (Starr)' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-25' where title = 'Resistance CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-26' where title = 'ESP-GO Exome Chip' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-27' where title = 'Mendelian Consortium' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-28' where title = 'Autism' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-29' where title = 'Large Cell Neuroendocrine Carcinoma THOMAS' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-30' where title = 'Inflammatory Bowel Disease' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-31' where title = 'Kwiatkowski SEGA' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-32' where title = 'ADHD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-33' where title = 'Novartis Resistance' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-34' where title = 'TCGA FFPE' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-35' where title = 'Blood Pressure' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-36' where title = 'Genome Superstruct Project' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-37' where title = 'GWASeq BrCa' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-38' where title = 'Skea' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-39' where title = 'CogDec DLPFC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-40' where title = 'CIP_COLON_EPI' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-41' where title = 'Mouse_Melanoma_MDACC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-42' where title = 'Stroke/MI' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-43' where title = 'Pato African American Trios' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-44' where title = 'SIGMA_T2D' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-45' where title = 'Pato Caucasian Cohort' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-46' where title = 'Anderson Mastocytosis' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-47' where title = 'Kendler Irish Families' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-48' where title = 'Pato GPC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-49' where title = 'Esophageal CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-50' where title = 'Carcinoid' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-51' where title = 'Fanconi Anemia' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-52' where title = 'Medulloblastoma CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-53' where title = 'Neuroblastoma TARGET' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-54' where title = 'Mouse CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-55' where title = 'Anthropometric Extremes' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-56' where title = 'CILIOPATHIES' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-57' where title = 'Rheumatoid Arthritis' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-58' where title = 'BRAIN METS' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-59' where title = 'SIGMA Breast Cancer Deep Dive' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-60' where title = 'Cancer Cell Line Controls' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-61' where title = 'SIGMA Rhabdoid' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-62' where title = 'SIGMA Ewing Sarcoma' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-63' where title = 'SIGMA PPB' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-64' where title = 'SIGMA JMML' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-65' where title = 'SIGMA Osteosarcoma' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-66' where title = 'Meyerson Rhabdomyosarcoma' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-67' where title = 'SIGMA Head and Neck' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-68' where title = 'Sweden SCZ BP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-69' where title = 'Cardiff' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-70' where title = 'ICCBD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-71' where title = 'LOGIC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-72' where title = 'SMRI' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-73' where title = 'Coriell' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-74' where title = 'Taiwanese Trios' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-75' where title = 'Melanoma Immunity' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-76' where title = 'Kwiatkowski Tuberous Sclerosis' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-77' where title = 'McLean' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-78' where title = 'GENEVA' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-79' where title = 'HIV - Host Genetics' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-80' where title = 'SAEC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-81' where title = 'Daly_ATGU' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-82' where title = 'Prostate Cancer CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-83' where title = 'TCGA BLCA' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-84' where title = 'TCGA LUAD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-85' where title = 'TCGA LUSC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-86' where title = 'TCGA THCA' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-87' where title = 'TCGA HNSC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-88' where title = 'TCGA PRAD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-89' where title = 'TCGA STAD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-90' where title = 'TCGA GBM' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-91' where title = 'TCGA LGG' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-92' where title = 'TCGA PAAD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-93' where title = 'TCGA CESC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-94' where title = 'TCGA KIRC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-95' where title = 'Salk Institute Mouse GBM' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-96' where title = 'TCGA SKCM' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-97' where title = 'TCGA VALIDATION' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-98' where title = 'TCGA KIRP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-99' where title = 'Genotyping External' and jira_ticket_key is null;
+      </sql>
+    </changeSet>
 
 </databaseChangeLog>
