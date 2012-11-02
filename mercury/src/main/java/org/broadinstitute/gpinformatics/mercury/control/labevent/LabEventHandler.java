@@ -135,7 +135,7 @@ public class LabEventHandler {
 //            for (LabVessel labVessel : labEvent.getAllLabVessels()) {
 //                if (OrmUtil.proxySafeIsInstance(labVessel, VesselContainerEmbedder.class)) {
 //                    Collection<LabVessel> containedVessels = OrmUtil.proxySafeCast(labVessel, VesselContainerEmbedder.class).
-//                            getVesselContainer().getContainedVessels();
+//                            getContainerRole().getContainedVessels();
 //                    if (containedVessels.isEmpty()) {
 //                        processProjectPlanOverrides(labEvent,labVessel,workflow);
 //                    }

@@ -56,7 +56,7 @@ public class LabEventProjectPlanOverrider {
     }
 
     public void setProjectPlanOverrides(LabEvent labEvent,RackOfTubes rackOfTubes) {
-        Collection<TwoDBarcodedTube> sourceTubes = rackOfTubes.getVesselContainer().getContainedVessels();
+        Collection<TwoDBarcodedTube> sourceTubes = rackOfTubes.getContainerRole().getContainedVessels();
         setProjectPlanOverrides(labEvent,sourceTubes,labBatchDAO.guessActiveBatchesForVessels(sourceTubes));
     }
 

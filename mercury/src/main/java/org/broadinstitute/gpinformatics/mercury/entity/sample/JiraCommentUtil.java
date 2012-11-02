@@ -2,10 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 // todo jmt this should be in control, or deleted
 
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -43,10 +42,11 @@ public class JiraCommentUtil {
         Set<JiraTicket> tickets = new HashSet<JiraTicket>();
         for (LabVessel vessel : vessels) {
             // todo arz talk to jmt about this.  I don't think I'm doing it right.
-            if (OrmUtil.proxySafeIsInstance(vessel, VesselContainerEmbedder.class)) {
-                VesselContainerEmbedder<?> embedder = OrmUtil.proxySafeCast(vessel, VesselContainerEmbedder.class);
-                for (VesselPosition position: embedder.getVesselContainer().getPositions()) {
-                    Collection<LabBatch> batches = embedder.getVesselContainer().getNearestLabBatches(position);
+            VesselContainer vesselContainer = vessel.getContainerRole();
+            if (vesselContainer != null) {
+                for (Object o: vesselContainer.getPositions()) {
+                    VesselPosition position = (VesselPosition) o;
+                    Collection<LabBatch> batches = vesselContainer.getNearestLabBatches(position);
                     if (batches != null) {
                         for (LabBatch batch : batches) {
                             if (batch.getJiraTicket() != null) {

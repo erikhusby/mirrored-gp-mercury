@@ -1,15 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 //import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.util.Collection;
 import java.util.Set;
@@ -55,13 +52,13 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
     }
 
     @Override
-    public VesselContainer<StripTubeWell> getVesselContainer() {
+    public VesselContainer<StripTubeWell> getContainerRole() {
         return vesselContainer;
     }
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        return this.getVesselContainer().getSampleInstances();
+        return this.getContainerRole().getSampleInstances();
     }
 
     @Override

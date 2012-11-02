@@ -111,7 +111,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return this.vesselContainer.getSampleInstances();
     }
 
-    public VesselContainer<PlateWell> getVesselContainer() {
+    public VesselContainer<PlateWell> getContainerRole() {
         return this.vesselContainer;
     }
 

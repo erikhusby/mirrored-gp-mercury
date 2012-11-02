@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -142,8 +141,8 @@ public class LabEventResource {
             type = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class).getRackType().getDisplayName();
         }
         LabVesselBean labVesselBean = new LabVesselBean(labVesselEntity.getLabel(), type);
-        if(OrmUtil.proxySafeIsInstance(labVesselEntity, VesselContainerEmbedder.class)) {
-            VesselContainer vesselContainer = OrmUtil.proxySafeCast(labVesselEntity, VesselContainerEmbedder.class).getVesselContainer();
+        VesselContainer vesselContainer = labVesselEntity.getContainerRole();
+        if(vesselContainer != null) {
             if(OrmUtil.proxySafeIsInstance(labVesselEntity, StaticPlate.class)) {
                 StaticPlate staticPlate = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class);
                 Iterator<String> positionNames = staticPlate.getPlateType().getVesselGeometry().getPositionNames();

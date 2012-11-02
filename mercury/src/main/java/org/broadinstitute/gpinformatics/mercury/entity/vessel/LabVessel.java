@@ -38,7 +38,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * A piece of plastic or glass that holds sample, reagent or other plastic.
  */
 @Entity
 @Audited
@@ -57,6 +57,7 @@ public abstract class LabVessel {
 
     private Date createdOn;
 
+    // todo jmt liquid vs solid?  Not a class level role?  Large tubes can hold both.
     private Float volume;
     
     private Float concentration;
@@ -69,6 +70,7 @@ public abstract class LabVessel {
     @JoinTable(schema = "mercury")
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
+    // todo jmt separate role for reagents?
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
     @JoinTable(schema = "mercury", name = "lv_reagent_contents")
@@ -80,6 +82,7 @@ public abstract class LabVessel {
     @Formula("(select count(*) from lv_reagent_contents where lv_reagent_contents.lab_vessel = lab_vessel_id)")
     private Integer reagentContentsCount = 0;
 
+    // todo jmt separate role for containee
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "mercury")
     private Set<LabVessel> containers = new HashSet<LabVessel>();
@@ -104,6 +107,7 @@ public abstract class LabVessel {
     /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
     private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
 
+    // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
 
@@ -206,7 +210,7 @@ public abstract class LabVessel {
         Set<VesselContainer<?>> vesselContainers = new HashSet<VesselContainer<?>>();
         if(containersCount != null && containersCount > 0) {
             for (LabVessel container : containers) {
-                vesselContainers.add(OrmUtil.proxySafeCast(container, VesselContainerEmbedder.class).getVesselContainer());
+                vesselContainers.add(container.getContainerRole());
             }
         }
 
@@ -580,6 +584,12 @@ public abstract class LabVessel {
     public void addAllSamples(Set<MercurySample> mercurySamples) {
         this.mercurySamples.addAll(mercurySamples);
     }
+
+    /**
+     * This is over ridden by subclasses that implement {@link VesselContainerEmbedder}
+     * @return object representing this vessel's role as a container of other vessels
+     */
+    public VesselContainer getContainerRole() {
+        return null;
+    }
 }
-
-

@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
@@ -60,6 +59,6 @@ public class PlateWell extends LabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        return this.plate.getVesselContainer().getSampleInstancesAtPosition(this.vesselPosition);
+        return this.plate.getContainerRole().getSampleInstancesAtPosition(this.vesselPosition);
     }
 }

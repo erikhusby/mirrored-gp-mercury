@@ -35,8 +35,8 @@ public class LibraryBeanFactory {
         List<LibraryBean> libraries = new ArrayList<LibraryBean>();
         RunCartridge runCartridge = illuminaSequencingRun.getSampleCartridge().iterator().next();
         StripTube stripTube = (StripTube) runCartridge.getTransfersTo().iterator().next().getSourceLabVessels().iterator().next();
-//        Set<SampleInstance> sampleInstances = stripTube.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.TUBE1);
-        Map<MercurySample,Collection<LabVessel>> singleSampleLibrariesForInstance = stripTube.getVesselContainer().getSingleSampleAncestors(VesselPosition.TUBE1);
+//        Set<SampleInstance> sampleInstances = stripTube.getContainerRole().getSampleInstancesAtPosition(VesselPosition.TUBE1);
+        Map<MercurySample,Collection<LabVessel>> singleSampleLibrariesForInstance = stripTube.getContainerRole().getSingleSampleAncestors(VesselPosition.TUBE1);
 
         for (Map.Entry<MercurySample, Collection<LabVessel>> entry : singleSampleLibrariesForInstance.entrySet()) {
             Collection<LabVessel> singleSampleLibraries = entry.getValue();

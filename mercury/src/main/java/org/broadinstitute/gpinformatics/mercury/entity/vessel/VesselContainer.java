@@ -181,8 +181,7 @@ public class VesselContainer<T extends LabVessel> {
 
     /**
      * Traverses transfer history to find the single sample libraries, as defined
-     * by the {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowAnnotation}
-     * for the {@link org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription}
+     * by the WorkflowAnnotation for the WorkflowDescription
      * @param position
      * @return
      */
@@ -368,9 +367,9 @@ public class VesselContainer<T extends LabVessel> {
         if (sampleInstances.isEmpty()) {
             for (LabEvent labEvent : this.embedder.getTransfersTo()) {
                 for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
-                    if(OrmUtil.proxySafeIsInstance(sourceLabVessel, VesselContainerEmbedder.class)) {
-                        sampleInstances.addAll(OrmUtil.proxySafeCast(sourceLabVessel,
-                                VesselContainerEmbedder.class).getVesselContainer().getSampleInstances());
+                    VesselContainer vesselContainer = sourceLabVessel.getContainerRole();
+                    if(vesselContainer != null) {
+                        sampleInstances.addAll(vesselContainer.getSampleInstances());
                         // todo arz fix this, probably by using LabBatch properly
 //                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                     }

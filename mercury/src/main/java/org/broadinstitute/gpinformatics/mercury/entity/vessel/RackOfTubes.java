@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
@@ -31,6 +30,7 @@ import java.util.Set;
 @Table(schema = "mercury")
 public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<TwoDBarcodedTube> {
 
+    // todo jmt create interface implemented by this and PlateType, to get display name and geometry.
     public enum RackType {
         Matrix96("Matrix96", VesselGeometry.G12x8);
 
@@ -38,7 +38,6 @@ public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<Tw
         private final VesselGeometry vesselGeometry;
 
         RackType(String displayName, VesselGeometry vesselGeometry) {
-            //To change body of created methods use File | Settings | File Templates.
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
         }
@@ -127,7 +126,7 @@ public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<Tw
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        return this.getVesselContainer().getSampleInstances();
+        return this.getContainerRole().getSampleInstances();
     }
 
     @Override
@@ -145,7 +144,7 @@ public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<Tw
         return CONTAINER_TYPE.RACK_OF_TUBES;
     }
 
-    public VesselContainer<TwoDBarcodedTube> getVesselContainer() {
+    public VesselContainer<TwoDBarcodedTube> getContainerRole() {
         return this.vesselContainer;
     }
 
