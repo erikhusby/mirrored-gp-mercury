@@ -18,6 +18,7 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -187,9 +188,15 @@ public class ResearchProjectForm extends AbstractJsfBean {
     }
 
     public List<Irb> completeIrbs(String query) {
+        String trimmedQuery = query.trim();
+
+        if (trimmedQuery.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         List<Irb> irbsForQuery = new ArrayList<Irb>();
         for (ResearchProjectIRB.IrbType type : ResearchProjectIRB.IrbType.values()) {
-            irbsForQuery.add(new Irb(query, type));
+            irbsForQuery.add(new Irb(trimmedQuery, type));
         }
 
         return irbsForQuery;
