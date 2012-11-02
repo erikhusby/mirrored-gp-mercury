@@ -19,8 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
@@ -95,9 +93,8 @@ public class LabEventTest {
             if (labEvent != null) {
                 if(hopCount > this.hopCount) {
                     this.hopCount = hopCount;
-                    GenericLabEvent genericLabEvent = OrmUtil.proxySafeCast(labEvent, GenericLabEvent.class);
-                    labEventNames.add(genericLabEvent.getLabEventType().getName() + " into " +
-                            genericLabEvent.getTargetLabVessels().iterator().next().getLabel());
+                    labEventNames.add(labEvent.getLabEventType().getName() + " into " +
+                            labEvent.getTargetLabVessels().iterator().next().getLabel());
                 }
             }
             return TraversalControl.ContinueTraversing;

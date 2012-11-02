@@ -43,7 +43,7 @@ public class LabEventProjectPlanOverrider {
         }
         else if (possibleBatches.size() == 1) {
             LabBatch batch = possibleBatches.iterator().next();
-            batch.getJiraTicket().addComment(labEvent.getEventOperator().getLogin() + "is processing " + labEvent.getEventName().name() + " at " + labEvent.getEventLocation());
+            batch.getJiraTicket().addComment(labEvent.getEventOperator().getLogin() + "is processing " + labEvent.getLabEventType().getName() + " at " + labEvent.getEventLocation());
             for (LabVessel vessel : vessels) {
 //                ProjectPlan projectPlanOverride = batch.getProjectPlanOverride(vessel);
 //                if (projectPlanOverride != null) {

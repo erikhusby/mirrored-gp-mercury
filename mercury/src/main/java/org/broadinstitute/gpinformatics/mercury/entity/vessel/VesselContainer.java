@@ -4,7 +4,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -235,8 +234,7 @@ public class VesselContainer<T extends LabVessel> {
                     for (SampleInstance sampleInstance : sampleInstances) {
                         MolecularState molecularState = sampleInstance.getMolecularState();
                         if(molecularState == null) {
-                            GenericLabEvent genericLabEvent = OrmUtil.proxySafeCast(labEvent, GenericLabEvent.class) ;
-                            LabEventType labEventType = genericLabEvent.getLabEventType();
+                            LabEventType labEventType = labEvent.getLabEventType();
                             molecularState = new MolecularState(labEventType.getNucleicAcidType(), labEventType.getTargetStrand());
                         }
                         sampleInstance.setMolecularState(molecularState);

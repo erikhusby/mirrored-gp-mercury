@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
@@ -44,15 +43,15 @@ public class LabEventResource {
     @Produces({MediaType.APPLICATION_XML})
     public LabEventResponseBean transfersByBatchId(@PathParam("batchId")String batchId) {
         LabBatch labBatch = labBatchDAO.findByName(batchId);
-        List<GenericLabEvent> labEventsByTime = new ArrayList<GenericLabEvent>(labBatch.getLabEvents());
+        List<LabEvent> labEventsByTime = new ArrayList<LabEvent>(labBatch.getLabEvents());
         Collections.sort(labEventsByTime, LabEvent.byEventDate);
         List<LabEventBean> labEventBeans = buildLabEventBeans(labEventsByTime);
         return new LabEventResponseBean(labEventBeans);
     }
 
-    public List<LabEventBean> buildLabEventBeans(List<GenericLabEvent> labEvents) {
+    public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents) {
         List<LabEventBean> labEventBeans = new ArrayList<LabEventBean>();
-        for (GenericLabEvent labEvent : labEvents) {
+        for (LabEvent labEvent : labEvents) {
             LabEventBean labEventBean = new LabEventBean(
                     labEvent.getLabEventType().getName(),
                     labEvent.getEventLocation(),
