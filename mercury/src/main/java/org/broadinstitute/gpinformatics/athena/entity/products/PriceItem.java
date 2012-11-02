@@ -22,6 +22,7 @@ import java.io.Serializable;
 })
 public class PriceItem implements Serializable {
 
+    // constants currently used by real price items in the quote server
     public static final String PLATFORM_GENOMICS = "Genomics Platform";
     public static final String CATEGORY_EXOME_SEQUENCING_ANALYSIS = "Exome Sequencing Analysis";
     public static final String NAME_EXOME_EXPRESS = "Exome Express";
