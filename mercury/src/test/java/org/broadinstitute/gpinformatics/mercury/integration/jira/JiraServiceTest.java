@@ -39,7 +39,7 @@ public class JiraServiceTest {
      * Disabled this because had to change createIssue to pass the Reporter field. We should allow null for jira types
      * that do not expose the reporter, so change the API to do that later.
      */
-    @Test(enabled = false)
+    @Test
     public void testCreation() {
 
         setUp();
@@ -63,7 +63,7 @@ public class JiraServiceTest {
 
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, "hrafal",
+                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, null,
                                         CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                                         "Summary created from Mercury", "Description created from Mercury",
                                         customFieldList);

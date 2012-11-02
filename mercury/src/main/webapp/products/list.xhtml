@@ -66,12 +66,12 @@
                     <h:outputText value="#{product.productName}" />
                 </p:column>
 
-                <p:column sortBy="#{product.productFamily.displayName}" sortFunction="#{productList.compare}">
-                          <!--filterBy="#{product.productFamily.displayName}" filterStyleClass="hide">-->
+                <p:column sortBy="#{product.productFamily.name}" sortFunction="#{productList.compare}">
+                          <!--filterBy="#{product.productFamily.name}" filterStyleClass="hide">-->
                     <f:facet name="header">
                         <h:outputText value="Product Family" />
                     </f:facet>
-                    <h:outputText value="#{product.productFamily.displayName}" />
+                    <h:outputText value="#{product.productFamily.name}" />
                 </p:column>
 
                 <p:column headerText="Available?" sortBy="#{product.available}" sortFunction="#{productList.compare}" >
