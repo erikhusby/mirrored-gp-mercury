@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.cenqua.clover.SamplingPerTestCoverage;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.Failure;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
@@ -277,6 +278,9 @@ public abstract class LabVessel {
      */
     public abstract Set<LabEvent> getTransfersTo();
 
+
+    public abstract VesselGeometry getVesselGeometry();
+
 /*
     public void addNoteToProjects(String message) {
         Collection<Project> ticketsToNotify = new HashSet<Project>();
@@ -332,6 +336,10 @@ public abstract class LabVessel {
         return inPlaceLabEvents;
     }
 
+    public List<LabEvent> getInPlaceEventsList() {
+        return new ArrayList<LabEvent>(getInPlaceEvents());
+    }
+
     public void addInPlaceEvent(LabEvent labEvent) {
         this.inPlaceLabEvents.add(labEvent);
         labEvent.setInPlaceLabVessel(this);
@@ -382,7 +390,7 @@ public abstract class LabVessel {
         return sampleInstances;
     }
 
-    public List<SampleInstance> getSampleInstanceList() {
+    public List<SampleInstance> getSampleInstancesList() {
         return new ArrayList<SampleInstance>(getSampleInstances());
     }
     /**
@@ -552,6 +560,10 @@ public abstract class LabVessel {
         return labBatches;
     }
 
+    public List<LabBatch> getLabBatchesList(){
+        return new ArrayList<LabBatch>(getLabBatches());
+    }
+
     /**
      * Walk the chain of custody back until it can be
      * walked no further.  What you get are the roots
@@ -588,6 +600,14 @@ public abstract class LabVessel {
         // else walk transfers
         throw new RuntimeException("history traversal for empty samples list not implemented");
 
+    }
+
+    public List<MercurySample> getMercurySamplesList(){
+        List<MercurySample> mercurySamplesList = new ArrayList<MercurySample>();
+        if(!mercurySamples.isEmpty()){
+            mercurySamplesList.addAll(getMercurySamples());
+        }
+        return mercurySamplesList;
     }
 
     /**

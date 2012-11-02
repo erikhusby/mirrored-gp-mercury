@@ -94,6 +94,11 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
     }
 
     @Override
+    public VesselGeometry getVesselGeometry() {
+        return getPlateType().getVesselGeometry();
+    }
+
+    @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.STATIC_PLATE;
     }

@@ -4,18 +4,30 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:cc="http://java.sun.com/jsf/composite"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:br="http://sequel.broadinstitute.org/tags" xmlns:ui="http://java.sun.com/jstl/fmt">
 
 <cc:interface>
-    <cc:attribute name="container" required="true"/>
+    <cc:attribute name="barcode" required="true"/>
 </cc:interface>
-<cc:implementation>
-    <h:outputStylesheet library="css" name="container.css" target="head" />
-    <p:dataGrid var="well" columns="#{containerBean.columns}" rows="#{containerBean.container.sampleInstanceList.size()}"
-                value="#{containerBean.container.sampleInstanceList}" styleClass="ui-container">
-        <p:panel>
-            <h:outputText value="#{well.startingSample.sampleKey}" style="font-size: smaller;" />
-        </p:panel>
-    </p:dataGrid>
+<cc:implementation xmlns:b="http://java.sun.com/jsf/composite/sample">
+    <h:outputStylesheet library="css" name="container.css" target="head"/>
+    <h:outputText value="#{containerBean.updateVessel(cc.attrs.barcode)}"/>
+        <p:dataGrid id="containerGrid" var="well" columns="#{containerBean.columns}"
+                    rows="#{containerBean.columns * containerBean.rows}"
+                    value="#{containerBean.geometry}" styleClass="ui-container" emptyMessage="">
+            <p:panel>
+                <h:outputText value="#{containerBean.getRowNumIndex()}"
+                              style="font-size: x-small; font-family: monospace; vertical-align: super"/>
+                <h:outputText value="EMPTY" rendered="#{containerBean.vesselAtPosition() == null}"
+                              style="font-size: smaller;"/>
+                <p:commandLink actionListener="#{sampleBean.sampleName}"
+                               value="#{containerBean.vesselAtPosition().startingSample.sampleKey}"
+                               udpate=":#{cc.clientId}:sampleInfoPanel"/>
+            </p:panel>
+        </p:dataGrid>
+     <p:outputPanel id="sampleInfoPanel" rendered="#{sampleBean.sampleName != null}">
+        <b:sample sampleName="#{sampleBean.sampleName}"/>
+    </p:outputPanel>
 </cc:implementation>
 </html>

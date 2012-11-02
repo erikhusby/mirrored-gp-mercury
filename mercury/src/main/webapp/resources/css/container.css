@@ -1,3 +1,7 @@
 .ui-container td, .ui-container tr{
+    padding: 1;
+}
+
+.ui-container .ui-panel-content, .ui-container .ui-panel {
     padding: 0;
 }

@@ -49,6 +49,11 @@ public class PlateWell extends LabVessel {
     }
 
     @Override
+    public VesselGeometry getVesselGeometry() {
+        return VesselGeometry.WELL;
+    }
+
+    @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.PLATE_WELL;
     }

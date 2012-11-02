@@ -26,27 +26,6 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
     protected StripTube() {
     }
 
-    public enum Positions {
-        ONE("1"),
-        TWO("2"),
-        THREE("3"),
-        FOUR("4"),
-        FIVE("5"),
-        SIX("6"),
-        SEVEN("7"),
-        EIGHT("8");
-
-        private String display;
-
-        Positions(String display) {
-            this.display = display;
-        }
-
-        public String getDisplay() {
-            return this.display;
-        }
-    }
-
     @Embedded
     VesselContainer<StripTubeWell> vesselContainer = new VesselContainer<StripTubeWell>(this);
 
@@ -72,6 +51,11 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
     @Override
     public Set<LabEvent> getTransfersTo() {
         return this.vesselContainer.getTransfersTo();
+    }
+
+    @Override
+    public VesselGeometry getVesselGeometry() {
+        return VesselGeometry.STRIP_TUBE;
     }
 
     @Override

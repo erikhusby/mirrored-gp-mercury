@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -49,6 +50,11 @@ public class IlluminaRunChamber extends RunChamber {
     @Override
     public Set<LabEvent> getTransfersTo() {
         throw new RuntimeException("I haven't been written yet.");
+    }
+
+    @Override
+    public VesselGeometry getVesselGeometry() {
+        return VesselGeometry.WELL;
     }
 
     @Override

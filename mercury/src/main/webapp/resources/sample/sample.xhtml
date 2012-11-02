@@ -3,12 +3,15 @@
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:cc="http://java.sun.com/jsf/composite">
+      xmlns:cc="http://java.sun.com/jsf/composite" xmlns:p="http://primefaces.org/ui">
 
 <cc:interface>
-    <cc:attribute name="sampleInstance" required="true"/>
+    <cc:attribute name="sampleName" required="true"/>
 </cc:interface>
-<cc:implementation xmlns:my="http://java.sun.com/jsf/composite/container/sample">
-    <h:outputText value="#{sampleBean}"/>
+<cc:implementation>
+    <p:panel id="sampleDisplay" header="Sample Information">
+        <h:outputText value="#{sampleBean.setSampleName(cc.attrs.sampleName)}"/>
+        <h:outputText value="#{sampleBean.sampleName}"/>
+    </p:panel>
 </cc:implementation>
 </html>

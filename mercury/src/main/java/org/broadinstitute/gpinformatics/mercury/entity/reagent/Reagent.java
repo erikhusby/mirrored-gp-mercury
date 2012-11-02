@@ -8,6 +8,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.io.Serializable;
 
 /**
  * Some chemistry bits applied to Goop to help
@@ -24,7 +25,7 @@ import javax.persistence.Table;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public abstract class Reagent {
+public abstract class Reagent implements Serializable {
 
     @Id
     @SequenceGenerator(name = "SEQ_REAGENT", schema = "mercury", sequenceName = "SEQ_REAGENT")

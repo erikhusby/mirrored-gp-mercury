@@ -9,87 +9,140 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:b="http://java.sun.com/jsf/composite/container"
-        >
+      xmlns:b="http://java.sun.com/jsf/composite/container">
 <h:body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">
             Barcode Lookup
         </ui:define>
         <ui:define name="body">
-            <h:form>
+            <h:form id="results">
                 <div class="control-group">
                     <div class="controls">
                         <p:inputText id="name" value="#{lookupBean.barcode}" size="50"/>
                         <p:watermark for="name" value="Enter the barcode to search for"/>
-                        <p:commandButton value="Search" action="#{lookupBean.barcodeSearch}" ajax="false"
-                                         styleClass="ui-priority-primary"/>
+                        <p:commandButton value="Search" action="#{lookupBean.barcodeSearch}"
+                                         update=":results:resultsTable,:results:outputContainerPanel" styleClass="ui-priority-primary"/>
                     </div>
                 </div>
-            </h:form>
-            <h:form>
-                <p:dataTable var="searchResult" value="#{lookupBean.foundVessels}" dynamic="true" cache="false">
-                    <f:facet name="header">
-                        Barcode Search Results
-                    </f:facet>
-                    <p:column sortBy="#{searchResult.label}">
+                <div class="container-fluid">
+                    <p:dataTable id="resultsTable" var="searchResult" value="#{lookupBean.foundVessels}" dynamic="true"
+                                 cache="false">
                         <f:facet name="header">
-                            <h:outputText value="Label"/>
+                            Barcode Search Results
                         </f:facet>
-                        <h:outputText value="#{searchResult.label}"/>
-                    </p:column>
-                    <p:column>
-                        <f:facet name="header">
-                            <h:outputText value="Sample Name"/>
-                        </f:facet>
-                        <ui:repeat value="#{searchResult.sampleInstanceList}" var="sampleInstance">
-                            <h:outputText value="#{sampleInstance.startingSample.sampleKey}"/>
-                            <br/>
-                        </ui:repeat>
-                    </p:column>
-                    <p:column>
-                        <f:facet name="header">
-                            <h:outputText value="Index Information"/>
-                        </f:facet>
-                        <ui:repeat value="#{searchResult.sampleInstanceList}" var="sampleInstance">
-                            <h:outputText value="#{lookupBean.indexValueForSample(sampleInstance, searchResult)}"/>
-                            <br/>
-                        </ui:repeat>
-                    </p:column>
-                    <p:column sortBy="#{searchResult.type.name}">
-                        <f:facet name="header">
-                            <h:outputText value="Type"/>
-                        </f:facet>
-                        <h:outputText value="#{searchResult.type.name}"/>
-                    </p:column>
-                    <p:column>
-                        <f:facet name="header">
-                            <h:outputText value="Contained In"/>
-                        </f:facet>
-                        <ui:repeat value="#{searchResult.containerList}" var="container">
-                            <h:commandLink action="#{lookupBean.barcodeSearch(container.embedder.label)}"
-                                           value="#{container.embedder.label}"/>
-                            <h:commandButton value="Show Plate" action="#{containerBean.loadVessel(container.embedder)}"/>
-                            <br/>
-                        </ui:repeat>
-                    </p:column>
-                    <p:column>
-                        <f:facet name="header">
-                            <h:outputText value="Position"/>
-                        </f:facet>
-                        <ui:repeat value="#{searchResult.containerList}" var="container">
-                            <h:outputText value="#{container.getPositionOfVessel(searchResult)}"/>
-                            <br/>
-                        </ui:repeat>
-                    </p:column>
-                    <p:column sortBy="#{searchResult.createdOn}">
-                        <f:facet name="header">
-                            <h:outputText value="Creation Date"/>
-                        </f:facet>
-                        <h:outputText value="#{searchResult.createdOn}"/>
-                    </p:column>
-                </p:dataTable>
-                 <b:container container="#{container.embedder}" />
+                        <p:column sortBy="#{searchResult.label}">
+                            <f:facet name="header">
+                                <h:outputText value="Label"/>
+                            </f:facet>
+                            <h:outputText value="#{searchResult.label}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Sample Name"/>
+                            </f:facet>
+                            <p:panel columns="1" rendered="#{lookupBean.isSingleSampleVessel(searchResult)}">
+                                <ui:repeat value="#{searchResult.sampleInstancesList}" var="sampleInstance">
+                                    <h:outputText value="#{sampleInstance.startingSample.sampleKey}"/>
+                                    <br/>
+                                </ui:repeat>
+                            </p:panel>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Index Information"/>
+                            </f:facet>
+                            <p:panel rendered="#{lookupBean.isSingleSampleVessel(searchResult)}">
+                                <ui:repeat value="#{searchResult.sampleInstancesList}" var="sampleInstance">
+                                    <h:outputText
+                                            value="#{lookupBean.indexValueForSample(sampleInstance, searchResult)}"/>
+                                    <br/>
+                                </ui:repeat>
+                            </p:panel>
+                        </p:column>
+                        <p:column sortBy="#{searchResult.type.name}">
+                            <f:facet name="header">
+                                <h:outputText value="Type"/>
+                            </f:facet>
+                            <h:outputText value="#{searchResult.type.name}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="PDOs"/>
+                            </f:facet>
+                            <p:panel rendered="#{lookupBean.isSingleSampleVessel(searchResult)}" style="margin-top:5px">
+                                <ui:repeat value="#{searchResult.sampleInstancesList}" var="sample">
+                                    <h:outputText value="#{sample.startingSample.productOrderKey}"/>
+                                    <br/>
+                                </ui:repeat>
+                            </p:panel>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Lab Events"/>
+                            </f:facet>
+                            <ui:repeat value="#{searchResult.inPlaceEventsList}" var="event">
+                                <h:outputText value="#{event.eventName}"/>
+                                <br/>
+                            </ui:repeat>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Lab Batches"/>
+                            </f:facet>
+                            <ui:repeat value="#{searchResult.labBatchesList}" var="batch">
+                                <h:outputText value="#{batch.batchName}"/>
+                                <br/>
+                            </ui:repeat>
+                        </p:column>
+                        <!-- <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="QC Metrics"/>
+                            </f:facet>
+                            <ui:repeat value="#{searchResult.metrics}" var="metric">
+                                <h:outputText value="#{metric.name} : #{metric.value} #{metric.units}"/>
+                                <br/>
+                            </ui:repeat>
+                        </p:column>-->
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Contained In"/>
+                            </f:facet>
+                            <p:panel rendered="#{lookupBean.isSingleSampleVessel(searchResult)}">
+                                <ui:repeat value="#{searchResult.containerList}" var="container">
+                                    <p:commandLink action="#{lookupBean.setSelectedBarcode(container.embedder.label)}"
+                                                   value="#{container.embedder.label}"
+                                                   update=":results:outputContainerPanel"/>
+                                    <br/>
+                                </ui:repeat>
+                            </p:panel>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Position"/>
+                            </f:facet>
+                            <p:panel rendered="#{lookupBean.isSingleSampleVessel(searchResult)}">
+                                <ui:repeat value="#{searchResult.containerList}" var="container">
+                                    <h:outputText value="#{container.getPositionOfVessel(searchResult)}"/>
+                                    <br/>
+                                </ui:repeat>
+                            </p:panel>
+                        </p:column>
+                        <p:column sortBy="#{searchResult.createdOn}">
+                            <f:facet name="header">
+                                <h:outputText value="Creation Date"/>
+                            </f:facet>
+                            <h:outputText value="#{searchResult.createdOn}"/>
+                        </p:column>
+                    </p:dataTable>
+                </div>
+                <div class="container-fluid">
+                    <p:outputPanel id="outputContainerPanel">
+                        <p:panel id="platePanel" rendered="#{lookupBean.selectedBarcode != null}">
+                            <b:container barcode="#{lookupBean.selectedBarcode}"/>
+                        </p:panel>
+                    </p:outputPanel>
+                </div>
             </h:form>
         </ui:define>
     </ui:composition>

@@ -171,6 +171,11 @@ public class RackOfTubes extends LabVessel implements SBSSectionable, VesselCont
     }
 
     @Override
+    public VesselGeometry getVesselGeometry() {
+        return getRackType().getVesselGeometry();
+    }
+
+    @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.RACK_OF_TUBES;
     }

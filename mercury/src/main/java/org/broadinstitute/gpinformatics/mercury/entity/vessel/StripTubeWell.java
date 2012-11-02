@@ -36,6 +36,11 @@ public class StripTubeWell extends LabVessel {
     }
 
     @Override
+    public VesselGeometry getVesselGeometry() {
+        return VesselGeometry.STRIP_TUBE_WELL;
+    }
+
+    @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.STRIP_TUBE_WELL;
     }

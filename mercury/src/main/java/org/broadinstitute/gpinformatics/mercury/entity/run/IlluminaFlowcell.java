@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Embedded;
@@ -51,6 +52,11 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     @Override
     public Set<LabEvent> getTransfersTo() {
         return vesselContainer.getTransfersTo();
+    }
+
+    @Override
+    public VesselGeometry getVesselGeometry() {
+        return VesselGeometry.FLOWCELL;
     }
 
     @Override

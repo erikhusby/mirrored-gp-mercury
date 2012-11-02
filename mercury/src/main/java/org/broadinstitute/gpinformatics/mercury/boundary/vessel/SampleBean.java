@@ -1,11 +1,26 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jcarey
- * Date: 10/31/12
- * Time: 3:07 PM
- * To change this template use File | Settings | File Templates.
- */
-public class SampleBean {
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.RequestScoped;
+import javax.faces.bean.ViewScoped;
+import java.io.Serializable;
+
+@ManagedBean
+@RequestScoped
+public class SampleBean implements Serializable {
+    private String sampleName;
+
+    public String getSampleName() {
+        return sampleName;
+    }
+
+    public void setSampleName(String sampleName) {
+        this.sampleName = sampleName;
+    }
+
+    public void loadDetails(String sample){
+        sampleName = sample;
+    }
 }
