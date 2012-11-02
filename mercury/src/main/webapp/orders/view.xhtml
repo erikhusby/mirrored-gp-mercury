@@ -91,32 +91,31 @@
                         <span class="controls">#{productOrderDetail.productOrder.sampleBillingSummary}</span>
                     </div>
 
-                    <p/>
-
-                    <p:panel id="sampleValidation" header="Summary">
-                        <p:dataList value="#{productOrderDetail.productOrder.sampleSummaryComments}"
-                                    var="comment"
-                                    itemType="none">
-                            #{comment}
-                        </p:dataList>
-                    </p:panel>
-
                     <br/>
 
-                    <p:dataTable id="sampleData" value="#{productOrderDetail.productOrder.samples}"
-                                 filteredValue="#{productOrderFilterBean.filteredSamples}" var="sample"
-                                 scrollable="true" scrollHeight="260" scrollRows="30">
+                    <p:dataTable style="width:1310px;"
+                                 id="sampleData"
+                                 value="#{productOrderDetail.productOrder.samples}"
+                                 filteredValue="#{productOrderFilterBean.filteredSamples}"
+                                 var="sample"
+                                 scrollable="true"
+                                 scrollHeight="650"
+                                 scrollWidth="1327">
                         <f:event type="preRenderComponent" listener="#{productOrderDetail.load}"/>
                         <f:facet name="header">
-                            Samples
+                            Samples<br/>
+                            <p:dataList value="#{productOrderDetail.productOrder.sampleSummaryComments}"
+                                        var="comment" itemType="none" styleClass="fourcolumn summary-list">
+                                #{comment}
+                            </p:dataList>
                         </f:facet>
 
-                        <p:column headerText="ID" width="200">
+                        <p:column headerText="ID" width="100">
                             <h:outputLink target="BSP_SAMPLE" value="#{bspLink.sampleSearchUrl(sample.sampleName)}" class="external">
                                 <h:outputText value="#{sample.sampleName}" />
                             </h:outputLink>
                         </p:column>
-                        <p:column headerText="Participant ID" width="200">
+                        <p:column headerText="Participant ID" width="150">
                             #{sample.bspDTO.patientId}
                         </p:column>
                         <p:column headerText="Status" width="100">
@@ -137,7 +136,7 @@
                         <p:column headerText="Price Item 2" width="100">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Comment" width="245">
+                        <p:column headerText="Comment" width="200">
                             #{sample.sampleComment}
                         </p:column>
                     </p:dataTable>
