@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductManager;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -263,7 +264,14 @@ public class ProductForm extends AbstractJsfBean {
     /**
      * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
      */
-    private void addAllPriceItemsToProduct() {
+    private void addAllPriceItemsToProduct() throws ApplicationValidationException {
+
+        if (defaultPriceItem == null) {
+            // ApplicationValidationException is rollback=true, but we're not in a transaction at the time of this
+            // validation, I just wanted to reuse the same exception type since this is an application validation
+            throw new ApplicationValidationException("Default price item must be entered");
+        }
+
         product.setDefaultPriceItem(findEntity(defaultPriceItem));
 
         product.getPriceItems().clear();
