@@ -6,14 +6,13 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Platform.GP;
 
 @Stateful
 @RequestScoped
@@ -32,35 +31,7 @@ public class PriceItemDao extends GenericDao {
      * @return
      */
     public List<PriceItem> findAll() {
-        return findList(PriceItem.class, PriceItem_.platform, GP.getQuoteServerPlatform());
-    }
-
-
-    /**
-     * Find method using strongly typed parameters.
-     *
-     * @param platform
-     * @param category
-     * @param name
-     * @return
-     */
-    public PriceItem find(PriceItem.Platform platform, PriceItem.Category category, PriceItem.Name name) {
-
-        if (platform == null) {
-            throw new NullPointerException("Null platform!");
-        }
-
-        // it's possible category might be null
-
-        if (name == null) {
-            throw new NullPointerException("Null PriceItem name!");
-        }
-
-        return find(
-                platform.getQuoteServerPlatform(),
-                category != null ? category.getQuoteServerCategory() : null,
-                name.getQuoteServerName());
-
+        return findList(PriceItem.class, PriceItem_.platform, PriceItem.PLATFORM_GENOMICS);
     }
 
 
@@ -97,7 +68,11 @@ public class PriceItemDao extends GenericDao {
         Predicate[] predicates = new Predicate[predicateList.size()];
         cq.where(predicateList.toArray(predicates));
 
-        return getEntityManager().createQuery(cq).getSingleResult();
+        try {
+            return getEntityManager().createQuery(cq).getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
 
     }
 }

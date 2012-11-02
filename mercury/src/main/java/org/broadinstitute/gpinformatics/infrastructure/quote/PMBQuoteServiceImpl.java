@@ -6,8 +6,8 @@ import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
@@ -19,7 +19,7 @@ import java.util.Set;
 @Impl
 public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements PMBQuoteService {
 
-    private org.apache.commons.logging.Log logger = LogFactory.getLog(PMBQuoteServiceImpl.class);
+    private Log logger = LogFactory.getLog(PMBQuoteServiceImpl.class);
 
     enum Endpoint {
 
@@ -53,7 +53,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
     public PMBQuoteServiceImpl() {
     }
 
-    public PMBQuoteServiceImpl( QuoteConfig quoteConfig ) {
+    public PMBQuoteServiceImpl(QuoteConfig quoteConfig) {
         this.quoteConfig = quoteConfig;
     }
 
@@ -70,22 +70,16 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-
         return getSingleQuoteById(alphaId, url( Endpoint.SINGLE_QUOTE) );
-
     }
-
 
 
     @Override
-    public Quote getQuoteByNumericId(final String numericId) throws QuoteServerException, QuoteNotFoundException {
-        return this.getSingleQuoteById(numericId, url( Endpoint.SINGLE_NUMERIC_QUOTE ));
+    public Quote getQuoteByNumericId(String numericId) throws QuoteServerException, QuoteNotFoundException {
+        return getSingleQuoteById(numericId, url(Endpoint.SINGLE_NUMERIC_QUOTE));
     }
 
-
-
-    private String url( Endpoint endpoint ) {
-
+    private String url(Endpoint endpoint) {
         return quoteConfig.getUrl() + endpoint.getSuffixUrl();
     }
 
@@ -99,33 +93,24 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
      * @throws QuoteNotFoundException
      * @throws QuoteServerException
      */
-    protected Quote getSingleQuoteById(final String id, String url) throws QuoteNotFoundException, QuoteServerException {
+    protected Quote getSingleQuoteById(String id, String url) throws QuoteNotFoundException, QuoteServerException {
         Quote quote;
-        if(StringUtils.isEmpty(id))
-        {
-           return(null);
+        if (StringUtils.isEmpty(id)) {
+            return (null);
         }
 
         WebResource resource = getJerseyClient().resource(url + id);
 
-        try
-        {
+        try {
             Quotes quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
-            if(quotes.getQuotes() != null && quotes.getQuotes().size()>0)
-            {
+            if (quotes.getQuotes() != null && !quotes.getQuotes().isEmpty()) {
                 quote = quotes.getQuotes().get(0);
+            } else {
+                throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
             }
-            else
-            {
-                throw new QuoteNotFoundException("Could not find quote " + id + " at " + url );
-            }
-        }
-        catch(UniformInterfaceException e)
-        {
-            throw new QuoteNotFoundException("Could not find quote " + id + " at " + url );
-        }
-        catch(ClientHandlerException e)
-        {
+        } catch (UniformInterfaceException e) {
+            throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
+        } catch (ClientHandlerException e) {
             throw new QuoteServerException("Could not communicate with quote server at " + url, e);
         }
         return quote;
@@ -141,23 +126,16 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
      */
     @Override
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
-
         //TODO probably best to Cache this data some how and refresh frequently async on separate thread.
-
         String url = url( Endpoint.ALL_QUOTES );
         WebResource resource = getJerseyClient().resource(url);
 
         Quotes quotes;
-        try
-        {
-           quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
-        }
-        catch(UniformInterfaceException e)
-        {
+        try {
+            quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
+        } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find any quotes at " + url);
-        }
-        catch(ClientHandlerException e)
-        {
+        } catch (ClientHandlerException e) {
             throw new QuoteServerException("Could not communicate with quote server at " + url, e);
         }
 
@@ -166,20 +144,21 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
 
     @Override
     public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException {
-
         Set<Funding> fundingSources = new HashSet<Funding>();
-        for (Quote quote : this.getAllQuotes().getQuotes()) {
+        for (Quote quote : getAllQuotes().getQuotes()) {
             if (quote.getQuoteFunding() != null) {
                 if (quote.getQuoteFunding().getFundingLevel() != null) {
                     if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
-                        final Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
+                        Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
                         // Add it , if it has a type and a number associated with it
-                        if ( (funding.getFundingType() != null) &&
-                            ((funding.getGrantNumber() != null)  || (funding.getPurchaseOrderNumber() != null) ) ) {
+                        if ((funding.getFundingType() != null) &&
+                            ((funding.getGrantNumber() != null) || (funding.getPurchaseOrderNumber() != null))) {
                             fundingSources.add(funding);
                         } else {
-                            String expiredState = ( quote.getExpired() ? "Expired. " : "Non-Expired. ");
-                            logger.info("Ignoring quote  " + quote.getAlphanumericId() + " because it has non-identifiable funding. " + expiredState + " Funds Remaining: " + quote.getQuoteFunding().getFundsRemaining() );
+                            String expiredState = (quote.getExpired() ? "Expired. " : "Non-Expired. ");
+                            logger.info("Ignoring quote  " + quote.getAlphanumericId()
+                                        + " because it has non-identifiable funding. " + expiredState
+                                        + " Funds Remaining: " + quote.getQuoteFunding().getFundsRemaining());
                         }
                     }
                 }
@@ -189,11 +168,11 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
     }
 
     @Override
-    public Set<Quote> getQuotesInFundingSource(final Funding fundingSource) throws QuoteServerException, QuoteNotFoundException {
+    public Set<Quote> getQuotesInFundingSource(Funding fundingSource) throws QuoteServerException, QuoteNotFoundException {
 
         HashSet<Quote> quotesByFundingSource = new HashSet<Quote>();
 
-        for (Quote quote : this.getAllQuotes().getQuotes()) {
+        for (Quote quote : getAllQuotes().getQuotes()) {
             if (quote.getQuoteFunding() != null) {
                 if (quote.getQuoteFunding().getFundingLevel() != null) {
                     if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
@@ -212,39 +191,32 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
 
 
     @Override
-    public PriceList getPlatformPriceItems(final QuotePlatformType quotePlatformType) throws QuoteServerException, QuoteNotFoundException {
+    public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType) throws QuoteServerException, QuoteNotFoundException {
         PriceList platformPrices = new PriceList();
 
         // get all the priceItems and then filter by platform name.
-        PriceList allPrices = this.getAllPriceItems();
-        for ( PriceItem priceItem : allPrices.getPriceList() ) {
-            if (priceItem.getPlatform().equalsIgnoreCase( quotePlatformType.getPlatformName() )) {
+        PriceList allPrices = getAllPriceItems();
+        for ( PriceItem priceItem : allPrices.getPriceItems() ) {
+            if (priceItem.getPlatformName().equalsIgnoreCase( quotePlatformType.getPlatformName() )) {
                 platformPrices.add(priceItem);
             }
         }
         return platformPrices;
     }
 
-
+    @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
 
-        String url = url( Endpoint.ALL_PRICE_ITEMS );
+        String url = url(Endpoint.ALL_PRICE_ITEMS);
         WebResource resource = getJerseyClient().resource(url);
         PriceList prices;
-        try
-        {
+        try {
             prices = resource.accept(MediaType.APPLICATION_XML).get(PriceList.class);
-        }
-        catch(UniformInterfaceException e)
-        {
+        } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find price list at " + url);
-        }
-        catch(ClientHandlerException e)
-        {
+        } catch (ClientHandlerException e) {
             throw new QuoteServerException("Could not communicate with quote server at " + url, e);
         }
         return prices;
     }
-
-
 }

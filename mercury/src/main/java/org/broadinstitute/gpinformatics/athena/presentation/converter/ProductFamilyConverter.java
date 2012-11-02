@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.converter;
 
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 
@@ -16,15 +17,18 @@ public class ProductFamilyConverter implements Converter {
     private ProductFamilyDao productFamilyDao;
 
     @Override
-    public Object getAsObject(FacesContext context, UIComponent component, String value) {
-        ProductFamily.ProductFamilyName productFamilyName = ProductFamily.ProductFamilyName.valueOf(value);
-        return productFamilyDao.find(productFamilyName);
+    public Object getAsObject(FacesContext context, UIComponent component, String productFamilyName) {
+        ProductFamily productFamily = null;
+        if (StringUtils.isNotBlank(productFamilyName)) {
+            productFamily = productFamilyDao.find(productFamilyName);
+        }
+        return productFamily;
     }
 
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object object) {
-        if (object != null) {
-            return ((ProductFamily.ProductFamilyName) object).getDisplayName();
+        if ((object != null) && (object instanceof ProductFamily)) {
+            return ((ProductFamily) object).getName();
         }
         return "";
     }

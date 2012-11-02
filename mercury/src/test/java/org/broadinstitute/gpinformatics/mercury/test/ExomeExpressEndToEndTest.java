@@ -32,7 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -140,8 +139,8 @@ public class ExomeExpressEndToEndTest {
 
             // todo when R3_725 comes out, revert to looking this up via the pass
             PriceItem priceItem = new PriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15", "Bananas", "DNA Sequencing");
-            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", priceItem,
-                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+//            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", priceItem,
+//                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 
 //            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass, bspDataFetcher, baitsCache, priceItem);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
@@ -176,14 +175,17 @@ public class ExomeExpressEndToEndTest {
             Assert.assertEquals(requiredFieldsMap.size(), 9);
 
 
-            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!");
+            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!",
+                                                                       CustomField.SingleFieldType.TEXT );
             // kludge: expect stock samples to have a different field name (like "BSP STOCKS") when this goes live.  until then, we'll call it GSSR.
             final StringBuilder stockSamplesBuilder = new StringBuilder();
             for (LabVessel starter : testLabBatch.getStartingLabVessels()) {
                 stockSamplesBuilder.append(" ").append(starter.getLabel());
             }
-            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString());
-            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world");
+            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString(),
+                                                                        CustomField.SingleFieldType.TEXT );
+            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world",
+                                                                    CustomField.SingleFieldType.TEXT );
 
             final Collection<CustomField> allCustomFields = new HashSet<CustomField>();
             allCustomFields.add(workRequestCustomField);
@@ -192,6 +194,7 @@ public class ExomeExpressEndToEndTest {
 
             for (LabBatch labBatch : labBatches) {
                 CreateIssueResponse createResponse = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
+                        "hrafal",
                         CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
@@ -275,20 +278,20 @@ public class ExomeExpressEndToEndTest {
             }
 
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
-                    workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     mapBarcodeToTube);//.invoke();
 
             LabEventTest.ShearingEntityBuilder shearingEntityBuilder = new LabEventTest.ShearingEntityBuilder(
-                    workflowDescription, mapBarcodeToTube, bettaLimsMessageFactory, labEventFactory,
+                    mapBarcodeToTube, preFlightEntityBuilder.getRackOfTubes(), bettaLimsMessageFactory, labEventFactory,
                     labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
             LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LabEventTest.LibraryConstructionEntityBuilder(
-                    workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
                     shearingEntityBuilder.getShearingPlate(), mapBarcodeToTube.size()).invoke();
 
             LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new LabEventTest.HybridSelectionEntityBuilder(
-                    workflowDescription, bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
@@ -326,7 +329,7 @@ public class ExomeExpressEndToEndTest {
 //
 //            }
 
-            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(workflowDescription,
+            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
                     bettaLimsMessageFactory, labEventFactory, labEventHandler,
                     hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(), hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes());

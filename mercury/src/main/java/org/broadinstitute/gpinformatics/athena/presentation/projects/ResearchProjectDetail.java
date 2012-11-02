@@ -1,16 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
-import javax.faces.context.FacesContext;
-import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -53,7 +49,7 @@ public class ResearchProjectDetail extends AbstractJsfBean {
         return ResearchProject.Status.getNames();
     }
 
-    public String getIrbNumberString() {
+    public String getIrbStrings() {
         return StringUtils.join(project.getIrbNumbers(), ", ");
     }
 }

@@ -82,15 +82,6 @@ public class VesselContainer<T extends LabVessel> {
         return (T) this.mapPositionToVessel.get(position);
     }
 
-//    private static void applyProjectPlanOverrideIfPresent(LabEvent event,
-//            Collection<SampleInstance> sampleInstances) {
-//        if (event.getProjectPlanOverride() != null) {
-//            for (SampleInstance sampleInstance : sampleInstances) {
-//                sampleInstance.resetProjectPlan(event.getProjectPlanOverride());
-//            }
-//        }
-//    }
-
     public Set<LabEvent> getTransfersFrom() {
         Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
@@ -139,19 +130,6 @@ public class VesselContainer<T extends LabVessel> {
                     }
                     labBatchesAtHopCount.get(hopCount).addAll(labBatches);
                 }
-                for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
-//                    for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-//                        for (Starter starter : projectPlan.getStarters()) {
-//                            Collection<LabBatch> labBatchesForStarter = starter.getLabBatches();
-//                            if (!labBatchesForStarter.isEmpty()) {
-//                                if (!labBatchesAtHopCount.containsKey(STARTER_INDEX)) {
-//                                    labBatchesAtHopCount.put(STARTER_INDEX,new HashSet<LabBatch>());
-//                                }
-//                                labBatchesAtHopCount.get(STARTER_INDEX).addAll(labBatchesForStarter);
-//                            }
-//                        }
-//                    }
-                }
             }
             return TraversalControl.ContinueTraversing;
         }
@@ -178,6 +156,7 @@ public class VesselContainer<T extends LabVessel> {
             if (labVessel != null) {
                 for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
                     MercurySample startingSample = sampleInstance.getStartingSample();
+                    // todo jmt fix this
 //                    if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
 //                        if (!singleSampleLibrariesForInstance.containsKey(startingSample)) {
 //                            singleSampleLibrariesForInstance.put(startingSample,new HashSet<LabVessel>());
@@ -282,6 +261,7 @@ public class VesselContainer<T extends LabVessel> {
         return sampleInstanceCriteria.getSampleInstances();
     }
 
+    // todo jmt move this to LabVessel
     public void evaluateCriteria(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
             TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
        T vesselAtPosition = getVesselAtPosition(position);

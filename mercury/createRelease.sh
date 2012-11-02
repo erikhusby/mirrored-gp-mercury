@@ -8,10 +8,10 @@
 if [ -d "release" ] ; then
     rm -rf release
 fi
-mkdir target
+mkdir release
 
-git clone ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git target
-cd target
+git clone ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git release
+cd release
 git checkout QA
 git checkout -b QA_PROD
 cd mercury
@@ -22,11 +22,12 @@ if [ $? -eq 0 ] ; then
     git tag -l
     pushd target/checkout
     git tag -a -m "Current Production" --force PROD HEAD
+    git push origin --tags
     popd
     git checkout master
     git merge QA_PROD -m "REL-000 Update pom.xml with new version"
     git branch -d QA_PROD
-    git push origin :QA_PROD
+    #git push origin :QA_PROD
     git fetch origin +master
     git push origin master
 else

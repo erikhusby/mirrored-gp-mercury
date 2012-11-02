@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 public class ProductOrderSampleContainerTest extends ContainerTest {
 
     public void testOrderSampleConstruction() {
-        ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN");
+        ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN", new ProductOrder());
 
         Assert.assertTrue(testSample.isInBspFormat());
 
@@ -24,7 +24,7 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
             Assert.assertTrue(testSample.getBspDTO().isSampleReceived());
             Assert.assertTrue(testSample.getBspDTO().isActiveStock());
 
-            Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_VOLUME, testSample.getBspDTO().getVolume());
+            Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_VOLUME, String.valueOf(testSample.getBspDTO().getVolume()));
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_ROOT_SAMP, testSample.getBspDTO().getRootSample());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_STOCK_SAMP, testSample.getBspDTO().getStockSample());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_COLL, testSample.getBspDTO().getCollection());
@@ -34,11 +34,10 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_SPECIES, testSample.getBspDTO().getOrganism());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_LSID, testSample.getBspDTO().getSampleLsid());
 
-
-            Assert.assertTrue(testSample.getBspDTO().hasFingerprint());
+            Assert.assertTrue(testSample.getBspDTO().getHasFingerprint());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_COLLAB_PID, testSample.getBspDTO().getCollaboratorParticipantId());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_MAT_TYPE, testSample.getBspDTO().getMaterialType());
-            Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_DNA, testSample.getBspDTO().getTotal());
+            Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_DNA, String.valueOf(testSample.getBspDTO().getTotal()));
             Assert.assertEquals(BSPSampleDTO.NORMAL_IND, testSample.getBspDTO().getSampleType());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_DISEASE, testSample.getBspDTO().getPrimaryDisease());
             Assert.assertEquals(BSPSampleDTO.MALE_IND, testSample.getBspDTO().getGender());

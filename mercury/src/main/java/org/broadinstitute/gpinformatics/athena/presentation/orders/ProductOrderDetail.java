@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
-import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectDetail;
@@ -25,19 +24,8 @@ public class ProductOrderDetail {
     @Inject
     UserBean userBean;
 
-    /** Key used to look up this product order. */
-    private String productOrderKey;
-
     /** The product order we're currently displaying */
     private ProductOrder productOrder;
-
-    public String getProductOrderKey() {
-        return productOrderKey;
-    }
-
-    public void setProductOrderKey(String productOrderKey) {
-        this.productOrderKey = productOrderKey;
-    }
 
     public ProductOrder getProductOrder() {
         if (productOrder == null) {
@@ -50,5 +38,11 @@ public class ProductOrderDetail {
 
     public void setProductOrder(ProductOrder productOrder) {
         this.productOrder = productOrder;
+    }
+
+    public void load() {
+        if (productOrder != null) {
+            productOrder.loadBspData();
+        }
     }
 }

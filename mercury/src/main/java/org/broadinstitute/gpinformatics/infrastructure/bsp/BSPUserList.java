@@ -4,14 +4,13 @@ import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Application wide access to BSP's user list. The list is currently cached once at application startup. In the
@@ -25,7 +24,16 @@ public class BSPUserList {
 
     private static long userIdSeq = 101010101L;
 
+    @Inject
+    private Deployment deployment;
+
     private final List<BspUser> users;
+
+    private final boolean serverValid;
+
+    public boolean isServerValid() {
+        return serverValid;
+    }
 
     /**
      * @return list of bsp users, sorted by lastname, firstname, username, email.
@@ -72,17 +80,30 @@ public class BSPUserList {
      * @return a list of matching users
      */
     public List<BspUser> find(String query) {
-        String lowerQuery = query.toLowerCase();
+        String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<BspUser> results = new ArrayList<BspUser>();
         for (BspUser user : users) {
-            if (user.getFirstName().toLowerCase().contains(lowerQuery) ||
-                user.getLastName().toLowerCase().contains(lowerQuery) ||
-                user.getUsername().contains(lowerQuery) ||
-                    user.getEmail().contains(lowerQuery)) {
+            boolean eachItemMatchesSomething = true;
+            for (String lowerQuery : lowerQueryItems) {
+                // If none of the fields match this item, then all items are not matched
+                if (!anyFieldMatches(lowerQuery, user)) {
+                    eachItemMatchesSomething = false;
+                }
+            }
+
+            if (eachItemMatchesSomething) {
                 results.add(user);
             }
         }
+
         return results;
+    }
+
+    private static boolean anyFieldMatches(String lowerQuery, BspUser user) {
+        return user.getFirstName().toLowerCase().contains(lowerQuery) ||
+            user.getLastName().toLowerCase().contains(lowerQuery) ||
+            user.getUsername().contains(lowerQuery) ||
+                user.getEmail().contains(lowerQuery);
     }
 
     @Inject
@@ -90,41 +111,65 @@ public class BSPUserList {
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
         List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
 
-        if (rawUsers != null) {
-            addQADudeUsers(rawUsers);
-            Collections.sort(rawUsers, new Comparator<BspUser>() {
-                @Override
-                public int compare(BspUser o1, BspUser o2) {
-                    // FIXME: need to figure out what the correct sort criteria are.
-                    CompareToBuilder builder = new CompareToBuilder();
-                    builder.append(o1.getLastName(), o2.getLastName());
-                    builder.append(o1.getFirstName(), o2.getFirstName());
-                    builder.append(o1.getUsername(), o2.getUsername());
-                    builder.append(o1.getEmail(), o2.getEmail());
-                    return builder.build();
-                }
-            });
-
-            users = ImmutableList.copyOf(rawUsers);
+        if (rawUsers == null) {
+            rawUsers = new ArrayList<BspUser>();
+            serverValid = false;
         } else {
-            users = new ArrayList<BspUser>();
+            serverValid = true;
+        }
+
+        if (deployment != Deployment.PROD) {
+            addQADudeUsers(rawUsers);
+        }
+
+        Collections.sort(rawUsers, new Comparator<BspUser>() {
+            @Override
+            public int compare(BspUser o1, BspUser o2) {
+                // FIXME: need to figure out what the correct sort criteria are.
+                CompareToBuilder builder = new CompareToBuilder();
+                builder.append(o1.getLastName(), o2.getLastName());
+                builder.append(o1.getFirstName(), o2.getFirstName());
+                builder.append(o1.getUsername(), o2.getUsername());
+                builder.append(o1.getEmail(), o2.getEmail());
+                return builder.build();
+            }
+        });
+
+        users = ImmutableList.copyOf(rawUsers);
+    }
+
+    public static class QADudeUser extends BspUser {
+        public QADudeUser(String type) {
+            makeBspUser("QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org");
+        }
+
+        // Using synchronized due to use of non-final static member userIdSeq.
+        private synchronized void makeBspUser(String username, String firstName, String lastName, String email) {
+            setUserId(userIdSeq++);
+            setUsername(username);
+            setFirstName(firstName);
+            setLastName(lastName);
+            setEmail(email);
         }
     }
 
-    private void addQADudeUsers(List<BspUser> users) {
-        users.add(makeBspUser("QADudeTest", "QADude", "Test", "qadudetest@broadinstitute.org"));
-        users.add(makeBspUser("QADudePM", "QADude", "PM", "qadudepm@broadinstitute.org"));
-        users.add(makeBspUser("QADudeLU", "QADude", "LU", "qadudelu@broadinstitute.org"));
-        users.add(makeBspUser("QADudeLM", "QADude", "LM", "qadudelm@broadinstitute.org"));
+    private static void addQADudeUsers(List<BspUser> users) {
+        String[] types = {"Test", "PM", "LU", "LM"};
+        for (String type : types) {
+            users.add(new QADudeUser(type));
+        }
     }
 
-    private synchronized BspUser makeBspUser(String username, String firstName, String lastName, String email) {
-        BspUser user = new BspUser();
-        user.setUserId(userIdSeq++);
-        user.setUsername(username);
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setEmail(email);
-        return user;
+    public boolean isTestUser(BspUser user) {
+        return user instanceof QADudeUser;
+    }
+
+    public List<SelectItem> getSelectItems(Set<BspUser> users) {
+        List<SelectItem> items = new ArrayList<SelectItem>();
+        items.add(new SelectItem("", "Any"));
+        for (BspUser user : users) {
+            items.add(new SelectItem(user.getUserId(), user.getFirstName() + " " + user.getLastName()));
+        }
+        return items;
     }
 }

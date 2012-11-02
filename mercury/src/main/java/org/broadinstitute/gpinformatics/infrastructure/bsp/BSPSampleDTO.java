@@ -1,19 +1,19 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import java.io.Serializable;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A simple DTO for fetching commonly used data from BSP.
  */
-public class BSPSampleDTO implements Serializable {
+public class BSPSampleDTO {
 
-    public final static String TUMOR_IND = "Tumor";
-    public final static String NORMAL_IND = "Normal";
+    public static final String TUMOR_IND = "Tumor";
+    public static final String NORMAL_IND = "Normal";
 
-    public final static String FEMALE_IND = "Female";
-    public final static String MALE_IND = "Male";
+    public static final String FEMALE_IND = "Female";
+    public static final String MALE_IND = "Male";
 
-    public final static String ACTIVE_IND = "Active Stock";
+    public static final String ACTIVE_IND = "Active Stock";
 
 
     private final String patientId;
@@ -22,13 +22,15 @@ public class BSPSampleDTO implements Serializable {
 
     private final String rootSample;
 
+    private final String aliquotSample;
+
     private final String collaboratorsSampleName;
 
     private final String collection;
 
-    private final String volume;
+    private final double volume;
 
-    private final String concentration;
+    private final double concentration;
 
     private final String organism;
 
@@ -44,7 +46,7 @@ public class BSPSampleDTO implements Serializable {
 
     private final String materialType;
 
-    private final String total;
+    private final double total;
 
     private final String sampleType;
 
@@ -58,7 +60,6 @@ public class BSPSampleDTO implements Serializable {
 
     private final String containerId;
 
-
     /**
      * Use this when no valid DTO is present, to avoid null checks
      */
@@ -70,70 +71,52 @@ public class BSPSampleDTO implements Serializable {
     // strain?
     // tissueType?
 
+    private static double safeParseDouble(String s) {
+        try {
+            if (!StringUtils.isBlank(s)) {
+                return Double.parseDouble(s);
+            }
+        } catch (Exception e) {
+            // fall through.
+        }
+        return 0;
+    }
+
     public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
                         String patientId, String organism, String collaboratorsSampleName, String collection,
-                        String volume, String concentration, String sampleLsid, String collaboratorParticipantIdIn,
-                        String materialTypeIn, String totalIn, String sampleTypeIn, String primaryDiseaseIn,
-                        String genderIn, String stockTypeIn, String fingerprintIn) {
-
+                        String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
+                        String materialType, String total, String sampleType, String primaryDisease,
+                        String gender, String stockType, String fingerprint) {
         this.containerId = containerId;
         this.stockSample = stockSample;
         this.rootSample = rootSample;
+        this.aliquotSample = aliquotSample;
         this.patientId = patientId;
         this.collaboratorsSampleName = collaboratorsSampleName;
         this.collection = collection;
-        this.volume = volume;
-        this.concentration = concentration;
+
+        this.volume = safeParseDouble(volume);
+        this.concentration = safeParseDouble(concentration);
         this.organism = organism;
         this.sampleLsid = sampleLsid;
-        this.collaboratorParticipantId = collaboratorParticipantIdIn;
-        this.materialType = materialTypeIn;
-        this.total = totalIn;
-        this.sampleType = sampleTypeIn;
-        this.primaryDisease = primaryDiseaseIn;
-        this.gender = genderIn;
-        this.stockType = stockTypeIn;
-        this.fingerprint = fingerprintIn;
-        this.stockAtExport = null;
-        this.positiveControl = false;
-        this.negativeControl = false;
+        this.collaboratorParticipantId = collaboratorParticipantId;
+        this.materialType = materialType;
+        this.total = safeParseDouble(total);
+        this.sampleType = sampleType;
+        this.primaryDisease = primaryDisease;
+        this.gender = gender;
+        this.stockType = stockType;
+        this.fingerprint = fingerprint;
+        stockAtExport = null;
+        positiveControl = false;
+        negativeControl = false;
     }
 
-/*
-    public BSPSampleDTO(String containerId,
-                        String stockSample,
-                        String rootSample,
-                        String aliquotSample,
-                        String patientId,
-                        String organism,
-                        String collaboratorsSampleName,
-                        String collection,
-                        String volume,
-                        String concentration,
-                        String stockAtExport,
-                        Boolean positiveControl,
-                        Boolean negativeControl) {
-        this.stockSample = stockSample;
-        this.rootSample = rootSample;
-        this.patientId = patientId;
-        this.collaboratorsSampleName = collaboratorsSampleName;
-        this.collection = collection;
-        this.volume = volume;
-        this.concentration = concentration;
-        this.organism = organism;
-        this.stockAtExport = stockAtExport;
-        this.positiveControl = positiveControl;
-        this.negativeControl = negativeControl;
-    }
-*/
-
-    public String getVolume() {
-        // todo strongly type, figure out units
+    public double getVolume() {
         return volume;
     }
 
-    public String getConcentration() {
-        // todo strongly type, figure out units
+    public double getConcentration() {
         return concentration;
     }
 
@@ -156,10 +139,7 @@ public class BSPSampleDTO implements Serializable {
     }
 
     /**
-     * Gets the name that the collaborator
-     * gave to this sample.
-     *
-     * @return
+     * @return the name that the collaborator gave to this sample.
      */
     public String getCollaboratorsSampleName() {
         return collaboratorsSampleName;
@@ -182,12 +162,12 @@ public class BSPSampleDTO implements Serializable {
 //        return stockAtExport;
     }
 
-    public Boolean isPositiveControl() {
+    public boolean isPositiveControl() {
         throw new RuntimeException("not implemented yet.");
 //        return positiveControl;
     }
 
-    public Boolean isNegativeControl() {
+    public boolean isNegativeControl() {
         throw new RuntimeException("not implemented yet.");
 
 //        return negativeControl;
@@ -197,11 +177,11 @@ public class BSPSampleDTO implements Serializable {
         return sampleLsid;
     }
 
-    public Boolean getPositiveControl() {
+    public boolean getPositiveControl() {
         throw new RuntimeException("not implemented yet.");
     }
 
-    public Boolean getNegativeControl() {
+    public boolean getNegativeControl() {
         throw new RuntimeException("not implemented yet.");
     }
 
@@ -213,7 +193,7 @@ public class BSPSampleDTO implements Serializable {
         return materialType;
     }
 
-    public String getTotal() {
+    public double getTotal() {
         return total;
     }
 
@@ -242,16 +222,18 @@ public class BSPSampleDTO implements Serializable {
     }
 
     public boolean isSampleReceived() {
-        return ((null != getRootSample()) && (!getRootSample().isEmpty()));
+        return !StringUtils.isBlank(rootSample);
     }
 
     public boolean isActiveStock() {
-        return ((null != getStockType()) &&
-                (getStockType().equals(ACTIVE_IND)));
+        return (stockType != null) && (stockType.equals(ACTIVE_IND));
     }
 
-    public boolean hasFingerprint() {
-        return ((null != getFingerprint()) &&
-                (!getFingerprint().isEmpty()));
+    public boolean getHasFingerprint() {
+        return !StringUtils.isBlank(fingerprint);
+    }
+
+    public String getAliquotSample() {
+        return aliquotSample;
     }
 }

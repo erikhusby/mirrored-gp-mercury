@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -15,49 +17,107 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.persistence.metamodel.SingularAttribute;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Superclass for Data Access Objects.  Managed beans can't be parameterized types, so this DAO can't be typesafe.
+ * Superclass for Data Access Objects. Makes use of a request-scoped extended persistence context. Scoped session beans
+ * can't be parameterized types (JSR-299 3.2), so this DAO can't be type-safe.
+ *
+ * Transaction is SUPPORTS so as to apply to all find methods to let them see any currently active transaction but not
+ * begin, and therefore commit (along with any changes queued up in the persistence context), their own transaction.
  */
 @Stateful
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class GenericDao {
+
     @Inject
     private ThreadEntityManager threadEntityManager;
 
+    // TODO: replace usages of this method with getEntityManager(), then remove this method
     public ThreadEntityManager getThreadEntityManager() {
         return threadEntityManager;
     }
 
+    /**
+     * Flushes changes in the extended persistence context to the database.
+     *
+     * Transaction is MANDATORY because flush does not make sense outside the context of a transaction.
+     */
+    @TransactionAttribute(TransactionAttributeType.MANDATORY)
     public void flush() {
-        this.threadEntityManager.getEntityManager().flush();
+        getEntityManager().flush();
     }
 
+    /**
+     * Clears the extended persistence context causing all managed entities to become detached.
+     *
+     * Transaction is SUPPORTS (default).
+     */
     public void clear() {
-        this.threadEntityManager.getEntityManager().clear();
+        getEntityManager().clear();
     }
 
+    /**
+     * Adds the given object as a managed entity in the extended persistence context.
+     *
+     * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
+     *
+     * @param entity    the entity to persist
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persist(Object entity) {
-        this.threadEntityManager.getEntityManager().persist(entity);
+        getEntityManager().persist(entity);
     }
 
+    /**
+     * Adds the given objects as a managed entities in the extended persistence context.
+     *
+     * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
+     *
+     * @param entities  the entities to persist
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistAll(List<?> entities) {
-        EntityManager entityManager = this.threadEntityManager.getEntityManager();
+        EntityManager entityManager = threadEntityManager.getEntityManager();
         for (Object entity : entities) {
             entityManager.persist(entity);
         }
     }
 
+    /**
+     * Marks the given entity for removal from the underlying data store.
+     *
+     * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
+     *
+     * @param entity    the entity to remove
+     */
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void remove(Object entity) {
         getEntityManager().remove(entity);
     }
 
+    /**
+     * Returns an entity manager for the request-scoped extended persistence context.
+     *
+     * Transaction is SUPPORTS (default).
+     *
+     * @return the persistence context
+     * @see org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager#getEntityManager()
+     */
     public EntityManager getEntityManager() {
         return threadEntityManager.getEntityManager();
     }
 
+    /**
+     * Returns a criteria builder for the request-scoped extended persistence context.
+     *
+     * Transaction is SUPPORTS (default).
+     *
+     * @return the criteria builder
+     */
     protected CriteriaBuilder getCriteriaBuilder() {
         return getEntityManager().getCriteriaBuilder();
     }
@@ -137,15 +197,25 @@ public class GenericDao {
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
             Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values) {
+        List<ENTITY_TYPE> resultList = new ArrayList<ENTITY_TYPE>();
+        if(values.isEmpty()) {
+            return resultList;
+        }
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
-        criteriaQuery.where(root.get(singularAttribute).in(values));
-        try {
-            return getEntityManager().createQuery(criteriaQuery).getResultList();
-        } catch (NoResultException ignored) {
-            return Collections.emptyList();
+
+        // Break the list into chunks of 1000, because of the limit on the number of items in
+        // an Oracle IN clause
+        for(int i = 0; i < values.size(); i += 1000) {
+            criteriaQuery.where(root.get(singularAttribute).in(values.subList(i, Math.min(values.size(), i + 1000))));
+            try {
+                resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());
+            } catch (NoResultException ignored) {
+                return resultList;
+            }
         }
+        return resultList;
     }
 
     /**

@@ -43,7 +43,7 @@ public class ProductOrderDao extends GenericDao {
      * @param researchProject
      * @return
      */
-    public List<ProductOrder> findByResearchProject( ResearchProject researchProject ) {
+    public List<ProductOrder> findByResearchProject(ResearchProject researchProject) {
         return findList(ProductOrder.class, ProductOrder_.researchProject, researchProject);
     }
 
@@ -55,8 +55,6 @@ public class ProductOrderDao extends GenericDao {
      * @return
      */
     public ProductOrder findByResearchProjectAndTitle(@NotNull ResearchProject researchProject, @NotNull String orderTitle) {
-        ProductOrder productOrder = null;
-
         if (researchProject == null) {
             throw new NullPointerException("Null Research Project.");
         }
@@ -106,7 +104,7 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findByCreatedPersonId(@NotNull Long personId) {
         if (personId == null) {
-                    throw new NullPointerException("Null Person Id.");
+            throw new NullPointerException("Null Person Id.");
         }
         return findList(ProductOrder.class, ProductOrder_.createdBy, personId);
     }
@@ -120,7 +118,7 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findByModifiedPersonId(@NotNull Long personId) {
         if (personId == null) {
-                    throw new NullPointerException("Null Person Id.");
+            throw new NullPointerException("Null Person Id.");
         }
         return findList(ProductOrder.class, ProductOrder_.modifiedBy, personId);
     }
@@ -132,10 +130,8 @@ public class ProductOrderDao extends GenericDao {
      */
     public ProductOrder findById(@NotNull Long orderId) {
         if (orderId == null) {
-                    throw new NullPointerException("Null ProductOrder Id.");
+            throw new NullPointerException("Null ProductOrder Id.");
         }
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
     }
-
-
 }

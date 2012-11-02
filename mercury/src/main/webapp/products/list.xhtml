@@ -24,6 +24,10 @@
 
         <h:form id="productList">
 
+            <div class="row">
+                <h:link value="New Product" outcome="create" styleClass="pull-right"/>
+            </div>
+
             <p:dataTable value="#{productList.productsDataModel}"
                          var="product"
                          sortBy="#{product.partNumber}"
@@ -62,16 +66,12 @@
                     <h:outputText value="#{product.productName}" />
                 </p:column>
 
-                <p:column sortBy="#{product.productFamily.displayName}" sortFunction="#{productList.compare}">
-                          <!--filterBy="#{product.productFamily.displayName}" filterStyleClass="hide">-->
+                <p:column sortBy="#{product.productFamily.name}" sortFunction="#{productList.compare}">
+                          <!--filterBy="#{product.productFamily.name}" filterStyleClass="hide">-->
                     <f:facet name="header">
                         <h:outputText value="Product Family" />
                     </f:facet>
-                    <h:outputText value="#{product.productFamily.displayName}" />
-                </p:column>
-
-                <p:column headerText="Top Level?" sortBy="#{product.topLevelProduct}" sortFunction="#{productList.compare}" >
-                    <h:outputText value='#{product.topLevelProduct ? "Yes" : "No"}' />
+                    <h:outputText value="#{product.productFamily.name}" />
                 </p:column>
 
                 <p:column headerText="Available?" sortBy="#{product.available}" sortFunction="#{productList.compare}" >

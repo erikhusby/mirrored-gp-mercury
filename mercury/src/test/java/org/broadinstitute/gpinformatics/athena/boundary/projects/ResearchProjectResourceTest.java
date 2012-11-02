@@ -36,6 +36,9 @@ public class ResearchProjectResourceTest extends ContainerTest {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
+    @Inject
+    private ResearchProjectManager researchProjectManager;
+
     private Long testResearchProjectId;
     private String testTitle;
 
@@ -46,7 +49,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
             testTitle = "MyResearchProject_" + UUID.randomUUID();
             ResearchProject researchProject = createDummyResearchProject(testTitle);
 
-            researchProjectDao.persist(researchProject);
+            researchProjectManager.createResearchProject(researchProject);
 
             testResearchProjectId = researchProject.getResearchProjectId();
         }
@@ -76,7 +79,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         // Only do this if the server is calling this and thus, injection worked
         if (researchProjectResource != null) {
             ResearchProject researchProject = researchProjectResource.findResearchProjectByTitle(testTitle);
-            researchProjectDao.remove(researchProject);
+            researchProjectManager.deleteResearchProject(researchProject);
         }
     }
 

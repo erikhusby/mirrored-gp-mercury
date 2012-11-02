@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.mercury.presentation.login.UserLogin;
 
 import javax.inject.Inject;
 import javax.servlet.*;
@@ -31,12 +32,12 @@ public class AuthorizationFilter implements Filter {
     /**
      * This the default initialization method for this filter.  It grabs the filter config (defined in the
      * web deployment descriptor).
-     * @param filterConfigIn Contains all values defined in the deployment descriptor
+     * @param filterConfig Contains all values defined in the deployment descriptor
      * @throws ServletException
      */
     @Override
-    public void init(FilterConfig filterConfigIn) throws ServletException {
-        this.filterConfig = filterConfigIn;
+    public void init(FilterConfig filterConfig) throws ServletException {
+        this.filterConfig = filterConfig;
     }
 
     /**
@@ -71,27 +72,40 @@ public class AuthorizationFilter implements Filter {
             String user = request.getRemoteUser();
             if (user == null) {
                 logger.debug("User is not authenticated, redirecting to login page");
-                if (!pageUri.equals(LOGIN_PAGE)) {
-                    // FIXME: need to include request.getQueryString() in the saved URL.
-                    servletRequest.setAttribute(TARGET_PAGE_ATTRIBUTE, pageUri);
+                StringBuilder requestedUrl = new StringBuilder(request.getRequestURL());
+                if (request.getQueryString() != null) {
+                    requestedUrl.append("?").append(request.getQueryString());
                 }
-                errorRedirect(servletRequest, servletResponse, LOGIN_PAGE);
+                request.getSession().setAttribute(TARGET_PAGE_ATTRIBUTE, requestedUrl.toString());
+                redirectTo(request, servletResponse, LOGIN_PAGE);
                 return;
             }
             boolean authorized = manager.isUserAuthorized(pageUri, request);
 
             if (!authorized) {
+                // FIXME: Need to report this error to the user!
+                // It is OK for now since we don't have any per-page authentication in Mercury.
                 String errorMessage = "The user '" + user +  "' doesn't have permission to log in.";
                 logger.warn(errorMessage);
-                errorRedirect(servletRequest, servletResponse, LOGIN_PAGE);
+                redirectTo(request, servletResponse, LOGIN_PAGE);
                 return;
             }
         }
+
+        // FIXME: With this code enabled, the URLs don't get updated in the browser after
+        // the redirect.  Need to debug and then re-enable.  This is bug GPLIM-100.
+        if (false && pageUri.equals(LOGIN_PAGE) && request.getRemoteUser() != null) {
+            // Already logged in user is trying to view the login page.  Redirect to the role default page.
+            UserLogin.UserRole role = UserLogin.UserRole.fromRequest(request);
+            redirectTo(request, servletResponse, role.landingPage + "?faces-redirect=true");
+            return;
+        }
+
         filterChain.doFilter(servletRequest, servletResponse);
     }
 
     /**
-     * errorRedirect is a helper method that redirects to a page upon failure in the filter
+     * This is a helper method that redirects to a page instead of chaining to the next in the filter.
      *
      * @param request
      * @param response
@@ -99,7 +113,7 @@ public class AuthorizationFilter implements Filter {
      * @throws IOException
      * @throws ServletException
      */
-    private void errorRedirect(ServletRequest request, ServletResponse response, String errorPage)
+    private void redirectTo(ServletRequest request, ServletResponse response, String errorPage)
             throws IOException, ServletException {
         filterConfig.getServletContext().getRequestDispatcher(errorPage).forward(request, response);
     }

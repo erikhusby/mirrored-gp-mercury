@@ -9,8 +9,6 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Collection;
@@ -24,7 +22,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class StaticPlate extends LabVessel implements SBSSectionable, VesselContainerEmbedder<PlateWell>, Serializable {
+public class StaticPlate extends LabVessel implements VesselContainerEmbedder<PlateWell>, Serializable {
 
     public enum PlateType {
         Eppendorf96("Eppendorf96", VesselGeometry.G12x8),
@@ -114,38 +112,8 @@ public class StaticPlate extends LabVessel implements SBSSectionable, VesselCont
     }
 
     @Override
-    public SBSSection getSection() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Set<SampleInstance> getSampleInstances() {
         return this.vesselContainer.getSampleInstances();
-    }
-
-    @Override
-    public StatusNote getLatestNote() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void logNote(StatusNote statusNote) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<StatusNote> getAllStatusNotes() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Float getVolume() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Float getConcentration() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     public VesselContainer<PlateWell> getVesselContainer() {

@@ -2,11 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -37,6 +35,11 @@ public class JiraServiceTest {
         service = JiraServiceProducer.testInstance();
     }
 
+    /**
+     * Disabled this because had to change createIssue to pass the Reporter field. We should allow null for jira types
+     * that do not expose the reporter, so change the API to do that later.
+     */
+    @Test
     public void testCreation() {
 
         setUp();
@@ -49,8 +52,10 @@ public class JiraServiceTest {
 
             Collection<CustomField> customFieldList = new LinkedList<CustomField>();
 
-            customFieldList.add(new CustomField(requiredFields.get("Protocol"),"test protocol"));
-            customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"),"WR 1 Billion!"));
+            customFieldList.add(new CustomField(requiredFields.get("Protocol"),"test protocol",
+                                                CustomField.SingleFieldType.TEXT ));
+            customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"),"WR 1 Billion!",
+                                                CustomField.SingleFieldType.TEXT ));
 
 
                     //        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
@@ -58,7 +63,7 @@ public class JiraServiceTest {
 
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX,
+                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, null,
                                         CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                                         "Summary created from Mercury", "Description created from Mercury",
                                         customFieldList);
@@ -86,10 +91,10 @@ public class JiraServiceTest {
 
 
             customFieldList.add(new CustomField(requiredFields.get(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()),
-                                                "Test Exome Express"));
+                                                "Test Exome Express", CustomField.SingleFieldType.TEXT ));
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix(),
+                    service.createIssue(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix(), "hrafal",
                                         CreateIssueRequest.Fields.Issuetype.Product_Order,
                                         "Athena Test case:::  Test new Summary Addition",
                                         "Athena Test Case:  Test description setting",customFieldList);

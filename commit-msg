@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# This file should be placed in the .git/hooks directory.
+#
+# Looking for 3 or 4 uppercase, a dash, multiple digits some where in the commit message
+# as evidence of a Jira ID.
+grep "[A-Z]\+-[0-9]\+" "$1"
+if [ $? -eq 1 ] ; then
+    echo >&2 Commit message should have a Jira ID.
+    exit 1
+fi

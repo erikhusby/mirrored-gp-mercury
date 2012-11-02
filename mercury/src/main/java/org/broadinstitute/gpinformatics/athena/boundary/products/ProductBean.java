@@ -4,11 +4,13 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,7 +22,7 @@ import java.util.Set;
  */
 @Named
 @RequestScoped
-public class ProductBean {
+public class ProductBean extends AbstractJsfBean implements Serializable {
 
     @Inject
     private ProductDao productDao;
@@ -52,9 +54,6 @@ public class ProductBean {
         return items;
     }
 
-//    public List<SelectItem> getAllProductFamilies() {
-//        return BoundaryUtils.buildEnumFilterList(ProductFamily.ProductFamilyName.values());
-//    }
 
     public List<ProductFamily> getProductFamilies() {
         return  productFamilyDao.findAll();

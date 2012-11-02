@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -12,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -29,6 +31,11 @@ public class ResearchProject {
 
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
+    public static final String BROADINSTITUTE_ORG = "@broadinstitute.org";
+
+    public boolean hasJiraTicketKey() {
+        return !StringUtils.isBlank(jiraTicketKey);
+    }
 
     public enum Status implements StatusType {
         Open, Archived;
@@ -82,22 +89,22 @@ public class ResearchProject {
 
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ProjectPerson> associatedPeople;
+    private final Set<ProjectPerson> associatedPeople = new HashSet<ProjectPerson>();
 
     // Information about externally managed items
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectCohort> sampleCohorts;
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private final Set<ResearchProjectCohort> sampleCohorts = new HashSet<ResearchProjectCohort>();
 
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectFunding> projectFunding;
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private final Set<ResearchProjectFunding> projectFunding = new HashSet<ResearchProjectFunding>();
 
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectIRB> irbNumbers;
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private final Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
 
     private String irbNotes;
 
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private List<ProductOrder> productOrders;
+    private List<ProductOrder> productOrders = new ArrayList<ProductOrder>();
 
     @Index(name = "ix_rp_jira")
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
@@ -105,9 +112,14 @@ public class ResearchProject {
     @Transient
     private String originalTitle;   // This is used for edit to keep track of changes to the object.
 
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalTitle = title;
+    }
+
     public String getBusinessKey() {
-        // TODO: change to jiraTicketKey once it's populated
-        return title;
+        return jiraTicketKey;
     }
 
     /**
@@ -126,8 +138,6 @@ public class ResearchProject {
      * @param irbNotEngaged Is this project set up for NO IRB?
      */
     public ResearchProject(Long creator, String title, String synopsis, boolean irbNotEngaged) {
-        sampleCohorts = new HashSet<ResearchProjectCohort>();
-        productOrders = new ArrayList<ProductOrder>();
         createdDate = new Date();
         modifiedDate = createdDate;
         irbNotes = "";
@@ -237,6 +247,16 @@ public class ResearchProject {
     }
 
     /**
+     * Clears the ID and JIRA ticket key. THIS METHOD MUST ONLY EVER BE CALLED BY
+     * {@link org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectManager#createResearchProject(ResearchProject)}
+     * IN THE CASE WHERE THE JIRA ISSUE HAS BEEN CREATED BUT THERE IS AN ERROR PERSISTING THE RESEARCH PROJECT!
+     */
+    public void rollbackPersist() {
+        this.researchProjectId = null;
+        this.jiraTicketKey = null;
+    }
+
+    /**
      *
      * @return Get the cohortIds. Since the cohort list is defaulted to empty, we know that the cohorts will exist
      */
@@ -267,7 +287,7 @@ public class ResearchProject {
         if (irbNumbers != null) {
             String[] irbNumberList = new String[irbNumbers.size()];
             for (ResearchProjectIRB irb : irbNumbers) {
-                irbNumberList[i++] = irb.getIrb();
+                irbNumberList[i++] = irb.getIrb() + ": " + irb.getIrbType().getDisplayName();
             }
 
             return irbNumberList;
@@ -277,22 +297,28 @@ public class ResearchProject {
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {
-        if (irbNumbers == null) {
-            irbNumbers = new HashSet<ResearchProjectIRB>();
-        }
-
         irbNumbers.add(irbNumber);
     }
 
-    public void removeIrbNumber(ResearchProjectIRB irbNumber) {
-        irbNumbers.remove(irbNumber);
+    public void clearPeople() {
+        associatedPeople.clear();
     }
 
-    public void addPerson(RoleType role, long personId) {
-        if (associatedPeople == null) {
-            associatedPeople = new HashSet<ProjectPerson>();
+    public void addPeople(RoleType role, List<BspUser> people) {
+        if (people != null) {
+            for (BspUser user : people) {
+                associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
+            }
         }
+    }
 
+    /**
+     * This addPerson should only be used for tests (until we mock up BSP Users better there.
+     *
+     * @param role The role of the person to add
+     * @param personId The user id for the person
+     */
+    public void addPerson(RoleType role, long personId) {
         associatedPeople.add(new ProjectPerson(this, role, personId));
     }
 
@@ -314,56 +340,43 @@ public class ResearchProject {
         return getPeople(RoleType.PM);
     }
 
-    public void updateProjectManagers(Long[] personIds) {
-        updatePeople(RoleType.PM, personIds);
-    }
-
     public Long[] getBroadPIs() {
         return getPeople(RoleType.BROAD_PI);
-    }
-
-    public void updateBroadPIs(Long[] personIds) {
-        updatePeople(RoleType.BROAD_PI, personIds);
     }
 
     public Long[] getScientists() {
         return getPeople(RoleType.SCIENTIST);
     }
 
-    public void updateScientists(Long[] personIds) {
-        updatePeople(RoleType.SCIENTIST, personIds);
-    }
-
     public Long[] getExternalCollaborators() {
         return getPeople ( RoleType.EXTERNAL );
     }
 
-    public void updateExternalCollaborators(Long[] personIds) {
-        updatePeople(RoleType.EXTERNAL, personIds);
+    public void populateFunding(Collection<Funding> fundingSet) {
+        projectFunding.clear();
+        if ((fundingSet != null) && !fundingSet.isEmpty()) {
+            for (Funding funding : fundingSet) {
+                projectFunding.add(new ResearchProjectFunding(this, funding.getFundingTypeAndName()));
+            }
+        }
     }
 
-    public void updatePeople(RoleType role, Long[] personIds) {
-        Set<Long> currentIds = new HashSet<Long>(Arrays.asList(getPeople(role)));
-        Set<Long> newIds = new HashSet<Long>(Arrays.asList(personIds));
-
-        Set<ProjectPerson> peopleToRemove = new HashSet<ProjectPerson>();
-        for (ProjectPerson person : associatedPeople) {
-            if (person.getRole().equals(role)) {
-                if (!newIds.contains(person.getPersonId())) {
-                    peopleToRemove.add(person);
-                }
+    public void populateIrbs(Collection<Irb> irbs) {
+        irbNumbers.clear();
+        if ((irbs != null) && !irbs.isEmpty()) {
+            for (Irb irb : irbs) {
+                irbNumbers.add(new ResearchProjectIRB(this, irb.getIrbType(), irb.getName()));
             }
         }
+    }
 
-        Set<ProjectPerson> peopleToAdd = new HashSet<ProjectPerson>();
-        for (Long personId : personIds) {
-            if (!currentIds.contains(personId)) {
-                peopleToAdd.add(new ProjectPerson(this, role, personId));
+    public void populateCohorts(Collection<Cohort> cohorts) {
+        sampleCohorts.clear();
+        if ((cohorts != null) && !cohorts.isEmpty()) {
+            for (Cohort cohort: cohorts) {
+                sampleCohorts.add(new ResearchProjectCohort(this, cohort.getCohortId()));
             }
         }
-
-        associatedPeople.removeAll(peopleToRemove);
-        associatedPeople.addAll(peopleToAdd);
     }
 
     public String[] getFundingIds() {
@@ -383,10 +396,6 @@ public class ResearchProject {
     }
 
     public void addFunding(ResearchProjectFunding funding) {
-        if (projectFunding == null) {
-            projectFunding = new HashSet<ResearchProjectFunding>();
-        }
-
         projectFunding.add(funding);
     }
 
@@ -424,67 +433,73 @@ public class ResearchProject {
                 for(ResearchProjectCohort cohort:sampleCohorts) {
                     cohortNames.add(cohort.getCohortId());
                 }
+
                 listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.COHORTS.getFieldName()),
-                                                 StringUtils.join(cohortNames,',')));
+                        ServiceAccessUtility.getCohortsForNames(cohortNames), CustomField.SingleFieldType.TEXT ));
             }
-            if(!projectFunding.isEmpty()) {
+
+            if (!projectFunding.isEmpty()) {
                 List<String> fundingSources = new ArrayList<String>();
                 for(ResearchProjectFunding fundingSrc:projectFunding) {
                     fundingSources.add(fundingSrc.getFundingId());
                 }
 
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.FUNDING_SOURCE.getFieldName()),
-                                                 StringUtils.join(fundingSources,',')));
+                listOfFields.add(
+                        new CustomField(submissionFields.get(RequiredSubmissionFields.FUNDING_SOURCE.getFieldName()),
+                                        StringUtils.join(fundingSources,','),
+                                        CustomField.SingleFieldType.TEXT ));
             }
-            if(!irbNumbers.isEmpty()) {
-                List<String> irbNums = new ArrayList<String>();
-                for(ResearchProjectIRB irb:irbNumbers ){
-                    irbNums.add(irb.getIrb());
-                }
-                listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
 
-                                                 StringUtils.join(irbNums,',')));
+            if (!irbNumbers.isEmpty()) {
+                listOfFields.add(
+                        new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
+                            StringUtils.join(getIrbNumbers(), ','), CustomField.SingleFieldType.TEXT ));
             }
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
-                                             irbNotEngaged?"Yes":"No" ));
 
-            /**
-             * TODO To be filled in with the actual URL
-             */
-            listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
-                                             ""));
+            listOfFields.add(
+                    new CustomField (submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
+                                     irbNotEngaged?"Yes":"No" , CustomField.SingleFieldType.RADIO_BUTTON));
+
+            listOfFields.add(
+                    new CustomField(submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                                    "", CustomField.SingleFieldType.TEXT ));
 
             CreateIssueResponse researchProjectResponse =
-                    ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
-                                                          title, synopsis, listOfFields);
+                    ServiceAccessUtility.createJiraTicket(
+                        fetchJiraProject().getKeyPrefix(),
+                        ServiceAccessUtility.getBspUserForId(createdBy).getUsername(),
+                        fetchJiraIssueType(), title, synopsis, listOfFields);
 
+            // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
             jiraTicketKey = researchProjectResponse.getKey();
 
-            /**
-             * todo HMC  need a better test user in test cases or this will always break
-             */
-//            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
+            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
     }
 
     public void addPublicComment(String comment) throws IOException{
-        ServiceAccessUtility.addJiraComment ( jiraTicketKey, comment );
+        ServiceAccessUtility.addJiraComment(jiraTicketKey, comment);
     }
 
     public void addWatcher(String personLoginId) throws IOException {
-        ServiceAccessUtility.addJiraWatcher ( jiraTicketKey, personLoginId );
+        try {
+            ServiceAccessUtility.addJiraWatcher(jiraTicketKey, personLoginId);
+        } catch ( Exception e) {
+            if ( StringUtils.isNotBlank( personLoginId) && personLoginId.contains(BROADINSTITUTE_ORG)) {
+                //Retry by stripping off the email suffix.
+                String shortUsername = personLoginId.replace(BROADINSTITUTE_ORG, "");
+                ServiceAccessUtility.addJiraWatcher(jiraTicketKey, shortUsername);
+            }
+        }
+
     }
 
     public void addLink(String targetIssueKey) throws IOException {
-        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
+        ServiceAccessUtility.addJiraPublicLink(AddIssueLinkRequest.LinkType.Related, jiraTicketKey, targetIssueKey);
     }
 
     public String getOriginalTitle() {
         return originalTitle;
-    }
-
-    public void setOriginalTitle(String originalTitle) {
-        this.originalTitle = originalTitle;
     }
 
     /**
@@ -524,7 +539,7 @@ public class ResearchProject {
         COHORTS("Cohort(s)"),
         FUNDING_SOURCE("Funding Source"),
         IRB_IACUC_NUMBER("IRB/IACUCs"),
-        IRB_ENGAGED("IRB Engaged?"),
+        IRB_ENGAGED("IRB Not Engaged?"),
         MERCURY_URL("Mercury URL");
 
         private String fieldName;

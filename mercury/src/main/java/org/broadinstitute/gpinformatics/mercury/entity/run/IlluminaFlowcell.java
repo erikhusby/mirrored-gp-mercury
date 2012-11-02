@@ -128,29 +128,4 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     public Set<SampleInstance> getSampleInstances() {
         return this.vesselContainer.getSampleInstances();
     }
-
-    @Override
-    public StatusNote getLatestNote() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public void logNote(StatusNote statusNote) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Collection<StatusNote> getAllStatusNotes() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Float getVolume() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Float getConcentration() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
 }

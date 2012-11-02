@@ -5,13 +5,19 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import java.util.List;
 
 /**
  * Queries for the research project.
+ *
+ * Transaction is SUPPORTS so as to apply to all find methods to let them see any currently active transaction but not
+ * begin, and therefore commit (along with any changes queued up in the persistence context), their own transaction.
  */
 @Stateful
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class ResearchProjectDao extends GenericDao {
 
@@ -20,7 +26,7 @@ public class ResearchProjectDao extends GenericDao {
     }
 
     public ResearchProject findByBusinessKey(String key) {
-        return findByTitle(key);
+        return findByJiraTicketKey(key);
     }
 
     public ResearchProject findByTitle(String title) {
