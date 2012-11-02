@@ -27,8 +27,8 @@ public class ProductFamilyDao extends GenericDao {
      * @param productFamilyName
      * @return
      */
-    public ProductFamily find(ProductFamily.ProductFamilyName productFamilyName) {
-        return findSingle(ProductFamily.class, ProductFamily_.name, productFamilyName.name());
+    public ProductFamily find(String productFamilyName) {
+        return findSingle(ProductFamily.class, ProductFamily_.name, productFamilyName);
     }
 
     /**

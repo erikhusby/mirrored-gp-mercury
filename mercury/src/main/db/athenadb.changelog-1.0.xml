@@ -780,6 +780,32 @@
     </changeSet>
 
 
+    <changeSet id="GPLIM-254-not-null.platform" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="price_item" columnName="platform" />
+    </changeSet>
+
+    <changeSet id="GPLIM-254-not-null.name" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="price_item" columnName="name" />
+    </changeSet>
+
+    <changeSet id="GPLIM-233-revise-names" author="mcovarr">
+        <sql>
+            update athena.product_family set name = 'de novo Assembly' where name = 'DE_NOVO_ASSEMBLY';
+            update athena.product_family set name = 'Alternate Library Prep &amp; Development' where name = 'ALTERNATIVE_LIBRARY_PREP_AND_DEVELOPMENT';
+            update athena.product_family set name = 'Data Analysis' where name = 'DATA_ANALYSIS';
+            update athena.product_family set name = 'Epigenomics' where name = 'EPIGENOMICS';
+            update athena.product_family set name = 'Exome' where name = 'EXOME';
+            update athena.product_family set name = 'Metagenomics' where name = 'METAGENOMICS';
+            update athena.product_family set name = 'Microbial &amp; Viral Analysis' where name = 'MICROBIAL_AND_VIRAL_ANALYSIS';
+            update athena.product_family set name = 'RNA' where name = 'RNA';
+            update athena.product_family set name = 'Sample Initiation, Qualification &amp; Cell Culture' where name = 'SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE';
+            update athena.product_family set name = 'Sequence Only' where name = 'SEQUENCE_ONLY';
+            update athena.product_family set name = 'Small Design, Validation &amp; Extension' where name = 'SMALL_DESIGN_VALIDATION_AND_EXTENSION';
+            update athena.product_family set name = 'Whole Genome' where name = 'WHOLE_GENOME';
+        </sql>
+    </changeSet>
+
+
     <changeSet id="GPLIM-185-1" author="mccrory">
       <sql>
         update research_project set jira_ticket_key = 'RP-9' where title = 'Lung Adenocarcinoma CIP' and jira_ticket_key is null;
