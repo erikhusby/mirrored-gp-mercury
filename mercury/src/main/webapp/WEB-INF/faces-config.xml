@@ -10,7 +10,7 @@
     </application>
 
     <lifecycle>
-        <phase-listener>org.broadinstitute.gpinformatics.mercury.presentation.MultiPageMessagesSupport</phase-listener>
+            <phase-listener>org.broadinstitute.gpinformatics.mercury.presentation.MultiPageMessagesSupport</phase-listener>
     </lifecycle>
 
     <factory>
