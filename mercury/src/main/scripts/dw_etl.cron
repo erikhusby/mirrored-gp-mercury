@@ -1,4 +1,6 @@
-#/bin/bash
+source .bashrc
+use Oracle-full-client
+
 #
 # Cron job that runs on the Mercury app server machine as part of Mercury ETL to data warehouse.
 # The script manages moving operational data from files made by Mercury Envers, to the data
@@ -31,8 +33,6 @@
 #   and possibly interfering with the file load.
 #
 
-# use Oracle-full-client
-
 ROOT_DIR=/seq/lims/datawh/dev
 NEW_DIR=${ROOT_DIR}/new
 LOG_DIR=${ROOT_DIR}/log
@@ -40,10 +40,9 @@ ERROR_DIR=${ROOT_DIR}/error
 DONE_DIR=${ROOT_DIR}/done
 CONTROL_DIR=${ROOT_DIR}/control
 LOCKFILE=${NEW_DIR}/.lockfile
-DW_CONNECT=./dw_connect
 
 # Checks for required dirs and files.
-for fsobj in $ROOT_DIR $NEW_DIR $LOG_DIR $ERROR_DIR $DONE_DIR $CONTROL_DIR $DW_CONNECT
+for fsobj in $ROOT_DIR $NEW_DIR $LOG_DIR $ERROR_DIR $DONE_DIR $CONTROL_DIR
 do
   if [ ! -e $fsobj ]; then
       echo "Cannot find $fsobj"
@@ -101,7 +100,7 @@ mercurydw/mercurydw_dev@"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST
     done
 
     # Invokes load_merge stored procedure and waits for it to finish.
-    sqlplus -L -S "`cat ${DW_CONNECT}`" <<!
+    sqlplus -L -S 'mercurydw/mercurydw_dev@"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=vmgpinform)(PORT= 1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SID=gpinfdev)))"' <<!
 exec merge_import;
 quit;
 !

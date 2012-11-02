@@ -675,6 +675,10 @@ public class ProductOrder implements Serializable {
         return counts.missingBspMetaDataCount;
     }
 
+    public Long getProductOrderId() {
+        return productOrderId;
+    }
+
     private static void addCustomField(Map<String, CustomFieldDefinition> submissionFields,
                                        List<CustomField> list, RequiredSubmissionFields field, Object value) {
         list.add(new CustomField(submissionFields.get(field.getFieldName()), value, CustomField.SingleFieldType.TEXT));

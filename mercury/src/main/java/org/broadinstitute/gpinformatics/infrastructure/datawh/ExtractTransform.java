@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.log4j.Logger;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.BillableItemDao;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 
@@ -9,8 +8,7 @@ import javax.ejb.Schedule;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -37,8 +35,6 @@ public class ExtractTransform {
     public static final String DELIM = ",";
     /** This filename matches what cron job expects. */
     public static final String READY_FILE_SUFFIX = "_is_ready";
-    /** This date format matches what cron job expects in filenames. */
-    public static final SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
     private static final String LAST_ETL_FILE = "last_etl_run";
     private static final long MSEC_IN_MINUTE = 60 * 1000;
@@ -53,6 +49,8 @@ public class ExtractTransform {
     private BillableItemEtl billableItemEtl;
     @Inject
     private ProductEtl productEtl;
+    @Inject
+    private ProductOrderEtl productOrderEtl;
 
     @Inject
     private Deployment deployment;
@@ -90,7 +88,7 @@ public class ExtractTransform {
 
             // The same etl_date is used for all DW data processed by one ETL run.
             final Date etlDate = new Date();
-            final String etlDateStr = fullDateFormat.format(etlDate);
+            final String etlDateStr = util.fullDateFormat.format(etlDate);
             currentRunStartTime = etlDate.getTime();
 
             final long lastRev = readLastEtlRun();
@@ -104,12 +102,15 @@ public class ExtractTransform {
                 logger.warn("Cannot determine time of last incremental ETL.  Doing a full ETL.");
             }
 
-            billableItemEtl.doEtl(lastRev, etlRev, etlDateStr);
+            int recordCount = 0;
+            recordCount += billableItemEtl.doEtl(lastRev, etlRev, etlDateStr);
 
             /*
             doProductOrderSample(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample");
             doProductOrderSampleStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample_status");
-            doProductOrder(lastDate, etlDate, etlDateStr, auditReader, "product_order");
+            */
+            recordCount += productOrderEtl.doEtl(lastRev, etlRev, etlDateStr);
+            /*
             doProductOrderStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_status");
             doResearchProjectCohort(lastDate, etlDate, etlDateStr, auditReader, "research_project_cohort");
             doResearchProjectFunding(lastDate, etlDate, etlDateStr, auditReader, "research_project_funding");
@@ -119,13 +120,13 @@ public class ExtractTransform {
             doResearchProjectStatus(lastDate, etlDate, etlDateStr, auditReader, "research_project_status");
             doPriceItem(lastDate, etlDate, etlDateStr, auditReader, "price_item");
             */
-            productEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += productEtl.doEtl(lastRev, etlRev, etlDateStr);
             /*
-            doProductAddOn(lastDate, etlDate, etlDateStr, auditReader, "product_add_on");
+            doProductAddOn(lastDate, etlDate, etlDateStr, auditReader, "product_order_add_on");
             */
             writeLastEtlRun(etlRev);
             writeIsReadyFile(etlDateStr);
-            logger.debug("Incremental ETL finished in "
+            logger.info("Incremental ETL created " + recordCount + " data records in "
                     + Math.ceil((System.currentTimeMillis() - currentRunStartTime) / 1000.) + " seconds.");
 
         } finally {

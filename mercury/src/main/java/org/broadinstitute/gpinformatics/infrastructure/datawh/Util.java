@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.poi.ss.formula.functions.T;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.BillableItemDao;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
@@ -8,10 +9,10 @@ import org.hibernate.envers.query.AuditQuery;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 
 /**
  * Utility methods for data warehouse ETL.
@@ -19,7 +20,10 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 @Stateless
 public class Util {
 
-    // An arbitrary dao just to get the entity manager.
+    /** This date format matches what cron job expects in filenames, and in SqlLoader data files. */
+    public static final SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+
+   // An arbitrary dao just to get the entity manager.
     @Inject
     private BillableItemDao dao;
 
@@ -58,14 +62,6 @@ public class Util {
                 .add(AuditEntity.revisionNumber().gt(lastRev))
                 .add(AuditEntity.revisionNumber().le(etlRev));
 
-/*
-        AuditQuery query = reader.createQuery().forEntitiesAtRevision(entityClass, revisionNumber);
-
-        AuditQuery query = reader.createQuery()
-                .forRevisionsOfEntity(entityClass, false, true)
-                .add(AuditEntity.revisionProperty("revDate").gt(lastDate))
-                .add(AuditEntity.revisionProperty("revDate").le(etlDate));
-*/
         List<Object[]> dataChanges = query.getResultList();
         return dataChanges;
     }
@@ -82,34 +78,78 @@ public class Util {
     }
 
     /**
-     * Returns a new DW record containing the common start fields.
-     * All data file records begin with etlDate and isDelete.
-     *
-     * @param etlDateStr first field
-     * @param isDelete   second field
-     * @return StringBuilder that ends with a record delimiter
-     */
-    public StringBuilder startRecord(String etlDateStr, boolean isDelete) {
-        return new StringBuilder()
-                .append(etlDateStr).append(ExtractTransform.DELIM)
-                .append(isDelete ? "T" : "F").append(ExtractTransform.DELIM);
-    }
-
-    /**
      * Converts fields to a data record.
      * @param etlDateStr date
      * @param isDelete indicates a deleted entity
      * @param fields the fields to be put in the data record
      * @return formatted data record
      */
-    public String makeRecord(String etlDateStr, boolean isDelete, Object... fields) {
+    public static String makeRecord(String etlDateStr, boolean isDelete, Object... fields) {
         StringBuilder rec = new StringBuilder()
-                .append(etlDateStr).append(ExtractTransform.DELIM)
-                .append(isDelete ? "T" : "F").append(ExtractTransform.DELIM);
+                .append(etlDateStr)
+                .append(ExtractTransform.DELIM)
+                .append(isDelete ? "T" : "F");
         for (Object field : fields) {
-            rec.append(field).append(ExtractTransform.DELIM);
+            rec.append(ExtractTransform.DELIM)
+                    .append(field);
         }
         return rec.toString();
     }
+
+    /**
+     * Returns formatted date string, or empty string if date is null.
+     * @param date the date to format
+     */
+    public static String format(Date date) {
+        return (date != null ? fullDateFormat.format(date) : "");
+    }
+
+    /**
+     * Returns T or F string for the boolean.
+     * @param bool to format
+     */
+    public static String format(boolean bool) {
+        return (bool ? "T" : "F");
+    }
+
+    /**
+     * Returns String or empty string if null, and quotes string if DELIM occurs.
+     * @param string to format
+     */
+    public static String format(String string) {
+        if (string == null) {
+            return "";
+        }
+        if (string.contains(ExtractTransform.DELIM)) {
+            // Escapes all embedded " by doubling them, i.e. ""
+            return "\"" + string.replaceAll("\"", "\"\"") + "\"";
+        }
+        return string;
+    }
+
+    /**
+     * Returns String or empty string if null.
+     * @param i to format
+     */
+    public static String format(Integer i) {
+        return (i != null ? i.toString() : "");
+    }
+
+    /**
+     * Returns String or empty string if null.
+     * @param i to format
+     */
+    public static String format(Long i) {
+        return (i != null ? i.toString() : "");
+    }
+
+    /**
+     * Returns String or empty string if null.
+     * @param i to format
+     */
+    public static String format(BigDecimal i) {
+        return (i != null ? i.toString() : "");
+    }
+
 
 }
