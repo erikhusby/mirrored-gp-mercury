@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.log4j.Logger;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.BillableItemDao;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 
@@ -39,7 +40,7 @@ public class ExtractTransform {
     /** This date format matches what cron job expects in filenames. */
     public static final SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
-    private static final String LAST_TIMESTAMP_FILE = "last_etl_timestamp";
+    private static final String LAST_ETL_FILE = "last_etl_run";
     private static final long MSEC_IN_MINUTE = 60 * 1000;
     private static final Logger logger = Logger.getLogger(ExtractTransform.class);
     private static final Semaphore mutex = new Semaphore(1);
@@ -50,9 +51,14 @@ public class ExtractTransform {
 
     @Inject
     private BillableItemEtl billableItemEtl;
+    @Inject
+    private ProductEtl productEtl;
 
     @Inject
     private Deployment deployment;
+
+    @Inject
+    private Util util;
 
     public static String getDatafileDir() {
         return datafileDir;
@@ -83,17 +89,23 @@ public class ExtractTransform {
             }
 
             // The same etl_date is used for all DW data processed by one ETL run.
-            final long etlDate = System.currentTimeMillis();
-            currentRunStartTime = etlDate;
-            final String etlDateStr = fullDateFormat.format(new Date(etlDate));
-            long lastDate = readLastTimestamp();
-            logger.debug("Doing incremental ETL for interval " + fullDateFormat.format(new Date(lastDate))
-                    + " to " + etlDateStr);
-            if (0L == lastDate) {
+            final Date etlDate = new Date();
+            final String etlDateStr = fullDateFormat.format(etlDate);
+            currentRunStartTime = etlDate.getTime();
+
+            final long lastRev = readLastEtlRun();
+            final long etlRev = util.currentRevNumber(etlDate);
+            if (lastRev == etlRev) {
+                logger.info("Incremental ETL found no changes since rev " + lastRev);
+                return;
+            }
+            logger.info("Doing incremental ETL for rev numbers " + lastRev + " to " + etlRev);
+            if (0L == lastRev) {
                 logger.warn("Cannot determine time of last incremental ETL.  Doing a full ETL.");
             }
 
-            billableItemEtl.doEtl(lastDate, etlDate, etlDateStr);
+            billableItemEtl.doEtl(lastRev, etlRev, etlDateStr);
+
             /*
             doProductOrderSample(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample");
             doProductOrderSampleStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample_status");
@@ -106,10 +118,12 @@ public class ExtractTransform {
             doResearchProject(lastDate, etlDate, etlDateStr, auditReader, "research_project");
             doResearchProjectStatus(lastDate, etlDate, etlDateStr, auditReader, "research_project_status");
             doPriceItem(lastDate, etlDate, etlDateStr, auditReader, "price_item");
-            doProduct(lastDate, etlDate, etlDateStr, auditReader, "product");
+            */
+            productEtl.doEtl(lastRev, etlRev, etlDateStr);
+            /*
             doProductAddOn(lastDate, etlDate, etlDateStr, auditReader, "product_add_on");
             */
-            writeLastTimestampFile(etlDate);
+            writeLastEtlRun(etlRev);
             writeIsReadyFile(etlDateStr);
             logger.debug("Incremental ETL finished in "
                     + Math.ceil((System.currentTimeMillis() - currentRunStartTime) / 1000.) + " seconds.");
@@ -120,24 +134,24 @@ public class ExtractTransform {
     }
 
     /**
-     * Reads the timestamp file from the last incremental ETL run.
-     * @return the msec timestamp
+     * Reads the last incremental ETL run file and returns start of this etl interval.
+     * @return the end rev of last incremental ETL
      */
-    private long readLastTimestamp() {
+    private long readLastEtlRun() {
         BufferedReader rdr = null;
         try {
-            File file = new File (datafileDir, LAST_TIMESTAMP_FILE);
+            File file = new File (datafileDir, LAST_ETL_FILE);
             rdr = new BufferedReader(new FileReader(file));
             String s = rdr.readLine();
             return Long.parseLong(s);
         } catch (FileNotFoundException e) {
-            logger.error("Missing file: " + LAST_TIMESTAMP_FILE);
+            logger.error("Missing file: " + LAST_ETL_FILE);
             return 0L;
         } catch (IOException e) {
-            logger.error("Error processing file " + LAST_TIMESTAMP_FILE, e);
+            logger.error("Error processing file " + LAST_ETL_FILE, e);
             return 0L;
         } catch (NumberFormatException e) {
-            logger.error("Cannot parse mSec timestamp in" + LAST_TIMESTAMP_FILE, e);
+            logger.error("Cannot parse " + LAST_ETL_FILE, e);
             return 0L;
         } finally {
             try {
@@ -145,23 +159,23 @@ public class ExtractTransform {
                     rdr.close();
                 }
             } catch (IOException e) {
-                logger.error("Cannot close file: " + LAST_TIMESTAMP_FILE, e);
+                logger.error("Cannot close file: " + LAST_ETL_FILE, e);
             }
         }
     }
 
     /**
-     * Writes the file used by this class in the next incremental ETL run, to know when the last run was.
-     * @param etlDate mSec date of the etl run to record
+     * Writes the file used by this class in the next incremental ETL run, to know where the last run finished.
+     * @param etlRev last rev of the etl run to record
      */
-    private void writeLastTimestampFile(long etlDate) {
+    private void writeLastEtlRun(long etlRev) {
         try {
-            File file = new File (datafileDir, LAST_TIMESTAMP_FILE);
-            FileWriter fw = new FileWriter(file);
-            fw.write(String.valueOf(etlDate));
+            File file = new File (datafileDir, LAST_ETL_FILE);
+            FileWriter fw = new FileWriter(file, false);
+            fw.write(String.valueOf(etlRev));
             fw.close();
         } catch (IOException e) {
-            logger.error("Error creating file " + LAST_TIMESTAMP_FILE);
+            logger.error("Error writing file " + LAST_ETL_FILE);
         }
     }
 
@@ -172,8 +186,8 @@ public class ExtractTransform {
     private void writeIsReadyFile(String etlDateStr) {
         try {
             File file = new File (datafileDir, etlDateStr + READY_FILE_SUFFIX);
-            FileWriter fw = new FileWriter(file);
-            fw.write("is_ready");
+            FileWriter fw = new FileWriter(file, false);
+            fw.write(" ");
             fw.close();
         } catch (IOException e) {
             logger.error("Error creating file " + etlDateStr + READY_FILE_SUFFIX, e);

@@ -1,26 +1,29 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import oracle.sql.DATE;
 import org.apache.log4j.Logger;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.BillableItemDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.BillableItem;
-import org.hibernate.envers.AuditReader;
-import org.hibernate.envers.AuditReaderFactory;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.hibernate.envers.RevisionType;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @Stateless
-public class BillableItemEtl {
-    private static final Logger logger = Logger.getLogger(BillableItemEtl.class);
-    private static final String BASE_FILENAME = "billable_item";
+public class ProductEtl {
+    private static final Logger logger = Logger.getLogger(ProductEtl.class);
+    private static final String BASE_FILENAME = "product";
 
     @Inject
-    BillableItemDao dao;
+    ProductDao dao;
 
     @Inject
     Util util;
@@ -35,7 +38,7 @@ public class BillableItemEtl {
      * @param etlDateStr   etlDate formatted as YYYYMMDDHHMMSS
      */
     public void doEtl(long lastRev, long etlRev, String etlDateStr) {
-        List<Object[]> dataChanges = util.fetchDataChanges(lastRev, etlRev, BillableItem.class);
+        List<Object[]> dataChanges = util.fetchDataChanges(lastRev, etlRev, Product.class);
 
         Set<Long> changedEntityIds = new HashSet<Long>();
         Set<Long> deletedEntityIds = new HashSet<Long>();
@@ -46,16 +49,16 @@ public class BillableItemEtl {
             writer = new BufferedWriter(new FileWriter(filename));
             for (Object[] dataChange : dataChanges) {
                 // Splits the result array.
-                BillableItem entity = (BillableItem) dataChange[0];
+                Product entity = (Product) dataChange[0];
                 RevisionType revType = (RevisionType) dataChange[2];
-                Long entityId = entity.getBillableItemId();
+                Long entityId = entity.getProductId();
 
                 // Writes a DW deletion record if entity was deleted.
                 if (revType.equals(RevisionType.DEL)) {
 
                     String record = util.makeRecord(etlDateStr, true, entityId);
-
                     writer.write(record);
+                    writer.newLine();
 
                     deletedEntityIds.add(entityId);
                 } else {
@@ -68,15 +71,21 @@ public class BillableItemEtl {
             // Makes records for latest version of the changed entity.
             changedEntityIds.removeAll(deletedEntityIds);
             for (Long entityId : changedEntityIds) {
-                BillableItem entity = dao.findById(BillableItem.class, entityId);
+                Product entity = dao.findById(Product.class, entityId);
                 if (entity == null) {
-                    logger.info("Cannot export BillableItem having id " + entityId + " since it no longer exists.");
+                    logger.info("Cannot export product having id " + entityId + " since it no longer exists.");
                 } else {
                     String record =  util.makeRecord(etlDateStr, false,
-                            entity.getBillableItemId(),
-                            entity.getProductOrderSample() == null ? "" : entity.getProductOrderSample().getProductOrderSampleId(),
-                            entity.getPriceItem() == null ? "" : entity.getPriceItem().getPriceItemId(),
-                            entity.getCount());
+                            entity.getProductId(),
+                            entity.getProductName(),
+                            entity.getPartNumber(),
+                            entity.getAvailabilityDate(),
+                            entity.getDiscontinuedDate(),
+                            entity.getExpectedCycleTimeSeconds(),
+                            entity.getGuaranteedCycleTimeSeconds(),
+                            entity.getSamplesPerWeek(),
+                            entity.isTopLevelProduct(),
+                            entity.getWorkflowName());
 
                     writer.write(record);
                     writer.newLine();
