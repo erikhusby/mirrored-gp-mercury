@@ -3,8 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation;
 import javax.annotation.Nullable;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
-import javax.faces.application.FacesMessage;
-import javax.faces.context.FacesContext;
 import javax.faces.context.Flash;
 
 /**
@@ -26,6 +24,19 @@ public abstract class AbstractJsfBean {
         flash.setKeepMessages(true);
         flash.setRedirect(true);
         FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(message));
+    }
+
+    /**
+     * Add a flash error message so it can be used after a redirect.
+     *
+     * @param summary The displayed message on the web page
+     * @param detail The detailed information of the message
+     */
+    public static void addFlashErrorMessage(String summary, String detail) {
+        Flash flash = FacesContext.getCurrentInstance().getExternalContext().getFlash();
+        flash.setKeepMessages(true);
+        flash.setRedirect(true);
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, summary, detail));
     }
 
     /**
