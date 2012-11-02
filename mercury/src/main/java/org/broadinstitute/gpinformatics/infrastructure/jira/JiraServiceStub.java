@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Iss
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.*;
 
@@ -63,9 +64,9 @@ public class JiraServiceStub implements JiraService {
     }
 
     @Override
-    public Map<String, CustomFieldDefinition> getRequiredFields(CreateIssueRequest.Fields.Project project,
-                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
-        final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
+    public Map<String, CustomFieldDefinition> getRequiredFields(@Nonnull CreateIssueRequest.Fields.Project project,
+                                                                @Nonnull CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+        Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
             customFields.put(requiredFieldName,new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,requiredFieldName,true));
         }
@@ -74,7 +75,7 @@ public class JiraServiceStub implements JiraService {
 
     @Override
     public Map<String, CustomFieldDefinition> getCustomFields ( ) throws IOException {
-        final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
+        Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
             customFields.put ( requiredFieldName, new CustomFieldDefinition ( "stub_custom_field_" + requiredFieldName,
                                                                               requiredFieldName, true ) );
@@ -97,17 +98,14 @@ public class JiraServiceStub implements JiraService {
         Transition transition4 = new Transition("7","Start Progress",new NextTransition("", "in Progress","","8"));
         Transition transition5 = new Transition("9","Put On Hold",new NextTransition("", "held","","10"));
 
-
         List<Transition> transitions = new LinkedList<Transition>();
         transitions.add(transition1);
         transitions.add(transition2);
         transitions.add(transition3);
         transitions.add(transition4);
         transitions.add(transition5);
-        IssueTransitionResponse dummyResponse =
-                new IssueTransitionResponse("",transitions);
 
-        return dummyResponse;
+        return new IssueTransitionResponse("", transitions);
     }
 
     @Override
@@ -118,5 +116,11 @@ public class JiraServiceStub implements JiraService {
     @Override
     public void postNewTransition ( String jiraIssueKey, String transitionId ) throws IOException {
 
+    }
+
+    @Override
+    public boolean isUser(String username) {
+        // Pretend all users are valid for test config.
+        return true;
     }
 }

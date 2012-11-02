@@ -13,9 +13,9 @@ public class IrbConverter implements Converter {
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
-        int index = value.lastIndexOf(":");
+        int index = value.trim().lastIndexOf(":");
 
-        if (index < 2) {
+        if (index < 1) {
             return new Irb("undefined", null);
         }
 
