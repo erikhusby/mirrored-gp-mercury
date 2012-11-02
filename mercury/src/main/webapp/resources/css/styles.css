@@ -58,6 +58,7 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 .view-horizontal .control-group { margin-bottom: 20px; *zoom: 1; }
 .view-horizontal .control-label { float: left; width: 160px; text-align: right; }
 .view-horizontal .controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; height: 15px; padding-bottom: 5px; }
+.view-horizontal .tall-controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; padding-bottom: 5px; }
 .view-horizontal .control-group { margin-bottom: 1px; }
 
 .form-readonly .control-group { margin-bottom: 0px; }
