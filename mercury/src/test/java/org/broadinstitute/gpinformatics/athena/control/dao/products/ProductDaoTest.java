@@ -66,7 +66,7 @@ public class ProductDaoTest extends ContainerTest {
     private Product createProduct() {
 
         ProductFamily metagenomicsProductFamily =
-                ProductDaoTest.this.productFamilyDao.find(ProductFamily.ProductFamilyName.METAGENOMICS);
+                ProductDaoTest.this.productFamilyDao.find("Metagenomics");
 
 
         final int DAYS = 24 * 60 * 60;

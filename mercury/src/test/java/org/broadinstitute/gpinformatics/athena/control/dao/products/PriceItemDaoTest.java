@@ -53,10 +53,10 @@ public class PriceItemDaoTest extends ContainerTest {
     private void createFixtureData() {
         PriceItem priceItem;
 
-        priceItem = new PriceItem("1234", "Genomics Platform", "Pony Genomics", "Standard Pony");
+        priceItem = new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony");
         dao.persist(priceItem);
 
-        priceItem = new PriceItem("5678", "Genomics Platform", "Pony Genomics", "Pony Express");
+        priceItem = new PriceItem("5678", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Pony Express");
         dao.persist(priceItem);
 
         dao.flush();
@@ -85,11 +85,11 @@ public class PriceItemDaoTest extends ContainerTest {
 
     public void testFind() {
 
-        final PriceItem priceItem = dao.find("Genomics Platform", "Pony Genomics", "Standard Pony");
+        final PriceItem priceItem = dao.find(PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony");
         Assert.assertNotNull(priceItem);
 
         // deliberately mismatching the name
-        PriceItem missingPriceItem = dao.find("Genomics Platform", "Pony Genomics", "Stone Pony");
+        PriceItem missingPriceItem = dao.find(PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Stone Pony");
         Assert.assertNull(missingPriceItem);
 
     }

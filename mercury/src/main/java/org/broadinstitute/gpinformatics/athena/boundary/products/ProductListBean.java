@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.infrastructure.DataTableFilteredValuesBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.login.UserLogin;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -81,6 +82,7 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
 
 
     public List<Product> getFilteredValues() {
+        //noinspection unchecked
         return filteredValuesBean.getFilteredValues();
     }
 
@@ -89,10 +91,9 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         filteredValuesBean.setFilteredValues(filteredValues);
     }
 
-    private boolean isUserPDM() {
+    private static boolean isUserPDM() {
         HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-        // todo mlc this string constant should be in a centralized place somewhere but I don't know where that is
-        return request.isUserInRole("Mercury-ProductManagers");
+        return request.isUserInRole(UserLogin.PRODUCT_MANAGER_ROLE);
     }
 
     /**
@@ -136,13 +137,14 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         return list;
     }
 
-        // TODO hmc may not be the best way to do this
+    // TODO hmc may not be the best way to do this
     public List<Product> searchProduct(String query) {
         List<Product> allProducts = productDao.findProducts();
         List<Product> products = new ArrayList<Product>();
         for ( Product product : allProducts ) {
-            if ((product.getPartNumber().contains(query) || product.getProductName().contains( query) ||
-                    product.getProductFamily().getName().toUpperCase().contains( query.toUpperCase() )
+            final String queryCapitalized = query.toUpperCase();
+            if ((product.getPartNumber().toUpperCase().contains(queryCapitalized) || product.getProductName().toUpperCase().contains(queryCapitalized) ||
+                    product.getProductFamily().getName().toUpperCase().contains(queryCapitalized)
             ) && ( product.isAvailable() || (product.getAvailabilityDate() != null && product.getAvailabilityDate().after( new Date() )) )) {
                 products.add( product );
             }
