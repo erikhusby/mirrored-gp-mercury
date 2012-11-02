@@ -80,12 +80,8 @@ public class ProductForm extends AbstractJsfBean {
     private List<Product> addOns;
 
 
-    private static class ProductFamilyComparator implements Comparator<ProductFamily> {
-        @Override
-        public int compare(ProductFamily productFamily, ProductFamily productFamily1) {
-            return productFamily.getName().compareToIgnoreCase(productFamily1.getName());
-        }
-    }
+
+
 
     /**
      * Hook for the preRenderView event that initiates the long running conversation and sets up conversation scoped
@@ -167,7 +163,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     public List<ProductFamily> getProductFamilies() {
         List<ProductFamily> productFamilies = productFamilyDao.findAll();
-        Collections.sort(productFamilies, new ProductFamilyComparator());
+        Collections.sort(productFamilies, ProductFamily.PRODUCT_FAMILY_COMPARATOR);
 
         return productFamilies;
     }

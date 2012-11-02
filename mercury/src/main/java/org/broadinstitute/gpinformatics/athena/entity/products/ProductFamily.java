@@ -7,6 +7,7 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Comparator;
 
 
 /**
@@ -35,6 +36,14 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     private Long productFamilyId;
 
     private String name;
+
+
+    public static final Comparator<ProductFamily> PRODUCT_FAMILY_COMPARATOR = new Comparator<ProductFamily>() {
+        @Override
+        public int compare(ProductFamily productFamily, ProductFamily productFamily1) {
+            return productFamily.getName().compareToIgnoreCase(productFamily1.getName());
+        }
+    };
 
 
     /**
