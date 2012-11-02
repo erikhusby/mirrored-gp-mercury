@@ -8,7 +8,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
@@ -45,9 +44,6 @@ public class UserLogin extends AbstractJsfBean {
     @Inject
     private FacesContext facesContext;
 
-    @Inject
-    private JiraService jiraService;
-
     public String getUsername() {
         return username;
     }
@@ -64,44 +60,6 @@ public class UserLogin extends AbstractJsfBean {
         this.password = password;
     }
 
-    private void warnIfBspUserInvalid() {
-        if (userBean.getBspUser() != null && !bspUserList.isTestUser(userBean.getBspUser())) {
-            userBean.setBspStatus(UserBean.ServerStatus.loggedIn);
-        } else {
-            String message;
-            if (bspUserList.isServerValid()) {
-                userBean.setBspStatus(UserBean.ServerStatus.notLoggedIn);
-            } else {
-                // BSP Server is unresponsive, can't log in to verify user.
-                userBean.setBspStatus(UserBean.ServerStatus.down);
-            }
-            message = userBean.getBspStatus();
-            logger.error(message);
-            addFlashErrorMessage(message, message);
-        }
-    }
-
-    private void warnIfJiraUserInvalid() {
-        String message = null;
-        try {
-            if (jiraService.isUser(username)) {
-                userBean.loginJiraUser(username);
-            } else {
-                // The user is not a valid JIRA User.  Warn, but allow login.
-                userBean.setJiraStatus(UserBean.ServerStatus.notLoggedIn);
-                message = userBean.getJiraStatus();
-            }
-        } catch (Exception e) {
-            // This can happen for a few reasons, most common is JIRA server is down/misconfigured
-            userBean.setJiraStatus(UserBean.ServerStatus.down);
-            message = userBean.getJiraStatus();
-        }
-        if (message != null) {
-            logger.error(message);
-            addFlashErrorMessage(message, message);
-        }
-    }
-
     public String authenticateUser() {
         String targetPage;
         FacesContext context = FacesContext.getCurrentInstance();
@@ -112,10 +70,16 @@ public class UserLogin extends AbstractJsfBean {
             request.login(username, password);
             UserRole role = UserRole.fromRequest(request);
             targetPage = role.landingPage;
-            userBean.setBspUser(bspUserList.getByUsername(username));
-            warnIfBspUserInvalid();
-            warnIfJiraUserInvalid();
-            addFlashMessage("Sign in successful. Welcome back!");
+            userBean.login(username);
+
+            if (!userBean.isValidBspUser()) {
+                logger.error(userBean.getBspStatus());
+                addFlashErrorMessage(userBean.getBspStatus(), userBean.getBspStatus());
+            }
+            if (!userBean.isValidJiraUser()) {
+                logger.error(userBean.getJiraStatus());
+                addFlashErrorMessage(userBean.getJiraStatus(), userBean.getJiraStatus());
+            }
 
             String previouslyTargetedPage = (String)request.getSession().getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
             if (previouslyTargetedPage != null) {

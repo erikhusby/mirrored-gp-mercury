@@ -164,7 +164,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public Map<String, CustomFieldDefinition> getRequiredFields(@Nonnull CreateIssueRequest.Fields.Project project,
                                                                 @Nonnull CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
         if (project == null) {
-            throw new NullPointerException("project cannot be null");
+            throw new NullPointerException("jira project cannot be null");
         }
         if (issueType == null) {
             throw new NullPointerException("issueType cannot be null");
