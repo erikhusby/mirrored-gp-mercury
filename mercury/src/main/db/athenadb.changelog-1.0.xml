@@ -479,6 +479,11 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="GPLIM-71-5a" author="hrafal">
+        <dropPrimaryKey schemaName="athena" tableName="product_order_add_on_aud" constraintName="pk_product_order_add_on_aud"/>
+        <addPrimaryKey schemaName="athena" tableName="product_order_add_on_aud" columnNames="rev, add_on, product_order"/>
+    </changeSet>
+
     <changeSet id="GPLIM-71-6" author="hrafal">
         <preConditions>
             <not>
