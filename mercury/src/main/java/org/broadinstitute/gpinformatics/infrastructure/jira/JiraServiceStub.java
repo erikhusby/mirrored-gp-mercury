@@ -119,7 +119,7 @@ public class JiraServiceStub implements JiraService {
     }
 
     @Override
-    public boolean isUser(String username) {
+    public boolean isValidUser(String username) {
         // Pretend all users are valid for test config.
         return true;
     }

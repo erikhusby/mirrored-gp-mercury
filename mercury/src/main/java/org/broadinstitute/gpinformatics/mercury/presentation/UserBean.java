@@ -92,7 +92,7 @@ public class UserBean implements Serializable {
 
     private void updateJiraStatus(String username) {
         try {
-            if (jiraService.isUser(username)) {
+            if (jiraService.isValidUser(username)) {
                 jiraUsername = username;
                 jiraStatus = ServerStatus.loggedIn;
             } else {
