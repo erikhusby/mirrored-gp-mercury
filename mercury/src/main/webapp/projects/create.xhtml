@@ -29,7 +29,9 @@
                     <div class="controls">
                         <p:inputText id="name"
                                      value="#{researchProjectDetail.project.title}" size="50" required="true"
-                                     maxlength="4000"/>
+                                     maxlength="4000">
+                            <f:validateLength maximum="4000"/>
+                        </p:inputText>
                         <p:watermark for="name" value="Enter the name of the research project"/>
                         <p:message for="name"/>
                     </div>
@@ -160,7 +162,7 @@
                         <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}"
                             completeMethod="#{researchProjectForm.completeIrbs}" var="irb" scrollHeight="250"
                             itemLabel="#{irb.name}: #{irb.irbType.displayName}" itemValue="#{irb}"
-                            converter="#{irbConverter}" multiple="true" maxlength="250">
+                            converter="#{irbConverter}" multiple="true" maxlength="#{researchProjectForm.irbMaxLength}">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{irb.name}: #{irb.irbType.displayName}</div>
                             </p:column>
@@ -176,7 +178,9 @@
                 <div class="control-group">
                     <p:outputLabel for="irbNotes" value="IRB Notes" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50" maxlength="250"/>
+                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50" maxlength="250">
+                            <f:validateLength maximum="250"/>
+                        </p:inputText>
                         <p:watermark for="irbNotes" value="Enter notes about the above IRBs"/>
                     </div>
                 </div>
