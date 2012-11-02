@@ -19,7 +19,6 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -123,7 +122,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void initForm() {
         if (!facesContext.isPostback()) {
-            if (product.getProductId() == null) {
+            if (isCreating()) {
                 // No form initialization needed for create
             } else {
                 if (product.getPriceItems() != null) {
