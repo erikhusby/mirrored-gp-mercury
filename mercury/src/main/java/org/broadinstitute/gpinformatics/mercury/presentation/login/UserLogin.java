@@ -75,11 +75,11 @@ public class UserLogin extends AbstractJsfBean {
             userBean.login(username);
 
             if (!userBean.isValidBspUser()) {
-                logger.error(userBean.getBspStatus());
+                logger.error(userBean.getBspStatus() + ": " + username);
                 addFlashErrorMessage(userBean.getBspStatus(), userBean.getBspStatus());
             }
             if (!userBean.isValidJiraUser()) {
-                logger.error(userBean.getJiraStatus());
+                logger.error(userBean.getJiraStatus() + ": " + username);
                 addFlashErrorMessage(userBean.getJiraStatus(), userBean.getJiraStatus());
             }
 
