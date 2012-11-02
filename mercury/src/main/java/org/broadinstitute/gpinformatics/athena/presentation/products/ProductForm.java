@@ -79,6 +79,10 @@ public class ProductForm extends AbstractJsfBean {
 
     private List<Product> addOns;
 
+
+
+
+
     /**
      * Hook for the preRenderView event that initiates the long running conversation and sets up conversation scoped
      * data from the product, also initializes the form as appropriate
@@ -159,12 +163,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     public List<ProductFamily> getProductFamilies() {
         List<ProductFamily> productFamilies = productFamilyDao.findAll();
-        Collections.sort(productFamilies, new Comparator<ProductFamily>() {
-            @Override
-            public int compare(ProductFamily productFamily, ProductFamily productFamily1) {
-                return productFamily.getDisplayName().toLowerCase().compareTo(productFamily1.getDisplayName().toLowerCase());
-            }
-        });
+        Collections.sort(productFamilies, ProductFamily.PRODUCT_FAMILY_COMPARATOR);
 
         return productFamilies;
     }
@@ -198,6 +197,7 @@ public class ProductForm extends AbstractJsfBean {
         }
 
         addFlashMessage("Product \"" + product.getProductName() + "\" has been created.");
+        conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
 
@@ -216,6 +216,7 @@ public class ProductForm extends AbstractJsfBean {
         }
 
         addFlashMessage("Product \"" + product.getProductName() + "\" has been updated.");
+        conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
 
@@ -492,4 +493,6 @@ public class ProductForm extends AbstractJsfBean {
         }
         return priceItem.getName() + " (" + priceItem.getId() + ")";
     }
+
+
 }
