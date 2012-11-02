@@ -13,9 +13,9 @@ public class IrbConverter implements Converter {
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
-        int index = value.lastIndexOf(":");
+        int index = value.trim().lastIndexOf(":");
 
-        if (index < 2) {
+        if (index < 1) {
             return new Irb("undefined", null);
         }
 
@@ -33,11 +33,29 @@ public class IrbConverter implements Converter {
             return null;
         }
 
-        String returnValue = irb.getName();
-        if (irb.getIrbType() != null) {
-            returnValue += " : " + irb.getIrbType().getDisplayName();
+        return getFullIrbString(irb.getName(), irb.getIrbType().getDisplayName());
+    }
+
+    private String getFullIrbString(String irbName, String irbType) {
+        String returnValue = irbName;
+        if (irbType != null) {
+            returnValue += " : " + irbType;
         }
 
         return returnValue;
+    }
+
+    public Irb createIrb(String irbName, ResearchProjectIRB.IrbType type, int irbNameMaxLength) {
+        if (irbNameMaxLength <= type.getDisplayName().length() + 4) {
+            throw new IllegalArgumentException("The max length of IRB does not allow for a name");
+        }
+
+        String returnName = irbName;
+        int lengthOfFullString = getFullIrbString(irbName, type.getDisplayName()).length();
+        if (lengthOfFullString > irbNameMaxLength) {
+            returnName = irbName.substring(0, irbName.length() - (lengthOfFullString - irbNameMaxLength));
+        }
+
+        return new Irb(returnName, type);
     }
 }

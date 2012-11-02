@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueL
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -64,8 +65,8 @@ public interface JiraService extends Serializable {
      * @return A {@link Map} of the custom fields found for the project/issuetype combination.  To make it easy to
      * reference, the field map is indexed by the field name.
      */
-    public Map<String, CustomFieldDefinition> getRequiredFields(CreateIssueRequest.Fields.Project project,
-                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
+    public Map<String, CustomFieldDefinition> getRequiredFields(@Nonnull CreateIssueRequest.Fields.Project project,
+                                                                @Nonnull CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
 
     /**
      * createTicketUrl is a helper class that generates a clickable Url to allow a user to browse the Jira Ticket
@@ -129,4 +130,11 @@ public interface JiraService extends Serializable {
     void postNewTransition( String jiraIssueKey, IssueTransitionRequest jiraIssueTransition ) throws IOException;
 
     void postNewTransition ( String jiraIssueKey, String transitionId ) throws IOException;
+
+    /**
+     * Check and see if the user is an exact match for a JIRA user, and has an active account.
+     * @param username the username to look for
+     * @return true if user is valid to use in JIRA API calls.
+     */
+    boolean isValidUser(String username);
 }
