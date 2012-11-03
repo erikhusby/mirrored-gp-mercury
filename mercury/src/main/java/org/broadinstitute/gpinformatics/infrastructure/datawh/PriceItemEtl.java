@@ -1,30 +1,30 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.util.Date;
 
 @Stateless
-public class ProductEtl  extends GenericEntityEtl {
+public class PriceItemEtl  extends GenericEntityEtl {
     @Inject
-    ProductDao dao;
+    PriceItemDao dao;
 
     @Override
     Class getEntityClass() {
-        return Product.class;
+        return PriceItem.class;
     }
 
     @Override
     String getBaseFilename() {
-        return "product";
+        return "price_item";
     }
 
     @Override
     Long entityId(Object entity) {
-        return ((Product)entity).getProductId();
+        return ((PriceItem)entity).getPriceItemId();
     }
 
     /**
@@ -37,21 +37,20 @@ public class ProductEtl  extends GenericEntityEtl {
      */
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        Product entity = dao.findById(Product.class, entityId);
+        PriceItem entity = dao.findById(PriceItem.class, entityId);
         if (entity == null) {
             return null;
         } else {
             return genericRecord(etlDateStr, false,
-                    entity.getProductId(),
-                    format(entity.getProductName()),
-                    format(entity.getPartNumber()),
-                    format(entity.getAvailabilityDate()),
-                    format(entity.getDiscontinuedDate()),
-                    format(entity.getExpectedCycleTimeSeconds()),
-                    format(entity.getGuaranteedCycleTimeSeconds()),
-                    format(entity.getSamplesPerWeek()),
-                    format(entity.isTopLevelProduct()),
-                    format(entity.getWorkflowName()));
+                    entity.getPriceItemId(),
+                    format(entity.getPriceItemId()),
+                    format(entity.getPlatform()),
+                    format(entity.getCategory()),
+                    format(entity.getName()),
+                    format(entity.getQuoteServerId()),
+                    format(entity.getPrice()),
+                    format(entity.getUnits()));
+
         }
     }
 

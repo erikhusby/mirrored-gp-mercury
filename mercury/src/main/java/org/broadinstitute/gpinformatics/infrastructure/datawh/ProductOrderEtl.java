@@ -1,13 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import oracle.sql.DATE;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import java.util.Date;
 
 @Stateless
 public class ProductOrderEtl extends GenericEntityEtl {
@@ -38,21 +36,34 @@ public class ProductOrderEtl extends GenericEntityEtl {
      * @return delimited SqlLoader record
      */
     @Override
-    String makeRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         ProductOrder entity = dao.findById(ProductOrder.class, entityId);
         if (entity == null) {
             return null;
         } else {
-            return Util.makeRecord(etlDateStr, false,
+            return genericRecord(etlDateStr, false,
                     entity.getProductOrderId(),
-                    Util.format(entity.getResearchProject().getResearchProjectId()),
-                    Util.format(entity.getProduct() != null ? entity.getProduct().getProductId() : null),
-                    Util.format(entity.getOrderStatus().getDisplayName()),
-                    Util.format(entity.getCreatedDate()),
-                    Util.format(entity.getModifiedDate()),
-                    Util.format(entity.getTitle()),
-                    Util.format(entity.getQuoteId()),
-                    Util.format(entity.getJiraTicketKey()));
+                    format(entity.getResearchProject().getResearchProjectId()),
+                    format(entity.getProduct() != null ? entity.getProduct().getProductId() : null),
+                    format(entity.getOrderStatus().getDisplayName()),
+                    format(entity.getCreatedDate()),
+                    format(entity.getModifiedDate()),
+                    format(entity.getTitle()),
+                    format(entity.getQuoteId()),
+                    format(entity.getJiraTicketKey()));
         }
     }
+
+    /** This entity does not make status records. */
+    @Override
+    String entityStatusRecord(String etlDateStr, Date revDate, Object entity) {
+        return null;
+    }
+
+    /** This entity does support add/modify records via primary key. */
+    @Override
+    boolean isEntityEtl() {
+        return true;
+    }
+
 }

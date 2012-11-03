@@ -1,30 +1,30 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.util.Date;
 
 @Stateless
-public class ProductEtl  extends GenericEntityEtl {
+public class ProductOrderSampleEtl extends GenericEntityEtl {
     @Inject
-    ProductDao dao;
+    ProductOrderSampleDao dao;
 
     @Override
     Class getEntityClass() {
-        return Product.class;
+        return ProductOrderSample.class;
     }
 
     @Override
     String getBaseFilename() {
-        return "product";
+        return "product_order_sample";
     }
 
     @Override
     Long entityId(Object entity) {
-        return ((Product)entity).getProductId();
+        return ((ProductOrderSample)entity).getProductOrderSampleId();
     }
 
     /**
@@ -37,21 +37,15 @@ public class ProductEtl  extends GenericEntityEtl {
      */
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        Product entity = dao.findById(Product.class, entityId);
+        ProductOrderSample entity = dao.findById(ProductOrderSample.class, entityId);
         if (entity == null) {
             return null;
         } else {
             return genericRecord(etlDateStr, false,
-                    entity.getProductId(),
-                    format(entity.getProductName()),
-                    format(entity.getPartNumber()),
-                    format(entity.getAvailabilityDate()),
-                    format(entity.getDiscontinuedDate()),
-                    format(entity.getExpectedCycleTimeSeconds()),
-                    format(entity.getGuaranteedCycleTimeSeconds()),
-                    format(entity.getSamplesPerWeek()),
-                    format(entity.isTopLevelProduct()),
-                    format(entity.getWorkflowName()));
+                    entity.getProductOrderSampleId(),
+                    format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
+                    format(entity.getSampleName()),
+                    format(entity.getBillingStatus().getDisplayName()));
         }
     }
 

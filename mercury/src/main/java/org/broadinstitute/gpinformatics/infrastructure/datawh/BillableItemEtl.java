@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.BillableItem;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import java.util.Date;
 
 @Stateless
 public class BillableItemEtl extends GenericEntityEtl {
@@ -35,16 +36,28 @@ public class BillableItemEtl extends GenericEntityEtl {
      * @return delimited SqlLoader record
      */
     @Override
-    String makeRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         BillableItem entity = dao.findById(BillableItem.class, entityId);
         if (entity == null) {
             return null;
         } else {
-            return Util.makeRecord(etlDateStr, false,
+            return genericRecord(etlDateStr, false,
                     entity.getBillableItemId(),
-                    Util.format(entity.getProductOrderSample() == null ? null : entity.getProductOrderSample().getProductOrderSampleId()),
-                    Util.format(entity.getPriceItem() == null ? null : entity.getPriceItem().getPriceItemId()),
-                    Util.format(entity.getCount()));
+                    format(entity.getProductOrderSample() == null ? null : entity.getProductOrderSample().getProductOrderSampleId()),
+                    format(entity.getPriceItem() == null ? null : entity.getPriceItem().getPriceItemId()),
+                    format(entity.getCount()));
         }
+    }
+
+    /** This entity does not make status records. */
+    @Override
+    String entityStatusRecord(String etlDateStr, Date revDate, Object entity) {
+        return null;
+    }
+
+    /** This entity does support add/modify records via primary key. */
+    @Override
+    boolean isEntityEtl() {
+        return true;
     }
 }

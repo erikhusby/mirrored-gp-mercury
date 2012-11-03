@@ -8,21 +8,22 @@ import javax.ejb.Schedule;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.Semaphore;
 
 /**
  * This is a JEE scheduled bean that does the initial parts of ETL for the data warehouse.
  *
- * Extract processing is done first, using Envers AuditReader to get relevant data from the
- * _AUD tables.  These tables contain changes to entities marked with a revision.  For most
- * entities ETL only wants the latest version.  However there are several historical status
- * tables that will need to iterate over the relevant range of revisions, typically all changes
- * since the last ETL run, and extract the status and status dates.
+ * Envers AuditReader is used to get relevant data from the _AUD tables which contain changed
+ * data and a revision number.  For most entities, ETL only wants the latest (current) version,
+ * but for status history, it's necessary to iterate over the relevant range of revisions (all
+ * changes since the last ETL run), and extract the status from the entity and obtain the status
+ * date from the corresponding Envers rev info.
  *
- * Transform processing maps the entities to sqlLoader records.  Record format is defined in
- * the sqlLoader control files in mercury/src/main/db/datawh/control, one for each type of
- * data file created by Java.  There is no link or integrity check between sqlLoader and Java.
+ * Entity data is then converted to sqlLoader records.  Record format is defined in the
+ * sqlLoader control files (located in mercury/src/main/db/datawh/control), one for each type of
+ * data file created by ETL.
  *
  * Created with IntelliJ IDEA.
  * User: epolk
@@ -35,6 +36,9 @@ public class ExtractTransform {
     public static final String DELIM = ",";
     /** This filename matches what cron job expects. */
     public static final String READY_FILE_SUFFIX = "_is_ready";
+    /** This date format matches what cron job expects in filenames, and in SqlLoader data files. */
+    public static final SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+
 
     private static final String LAST_ETL_FILE = "last_etl_run";
     private static final long MSEC_IN_MINUTE = 60 * 1000;
@@ -46,18 +50,41 @@ public class ExtractTransform {
     private static final String DATAFILE_SUBDIR = "/new";
 
     @Inject
+    private Deployment deployment;
+
+    @Inject
+    private AuditReaderEtl auditReaderEtl;
+
+    @Inject
     private BillableItemEtl billableItemEtl;
     @Inject
     private ProductEtl productEtl;
     @Inject
     private ProductOrderEtl productOrderEtl;
-
     @Inject
-    private Deployment deployment;
-
+    private ProductOrderSampleEtl productOrderSampleEtl;
     @Inject
-    private Util util;
+    private ProductOrderSampleStatusEtl productOrderSampleStatusEtl;
+    @Inject
+    private ProductOrderStatusEtl productOrderStatusEtl;
+    @Inject
+    private PriceItemEtl priceItemEtl;
+    @Inject
+    private ResearchProjectEtl researchProjectEtl;
+    @Inject
+    private ResearchProjectStatusEtl researchProjectStatusEtl;
+    @Inject
+    private ProjectPersonEtl projectPersonEtl;
+    @Inject
+    private ResearchProjectIrbEtl researchProjectIrbEtl;
+    @Inject
+    private ResearchProjectFundingEtl researchProjectFundingEtl;
+    @Inject
+    private ResearchProjectCohortEtl researchProjectCohortEtl;
+    @Inject
+    private ProductOrderAddOnEtl productOrderAddOnEtl;
 
+    /** public getter */
     public static String getDatafileDir() {
         return datafileDir;
     }
@@ -88,11 +115,11 @@ public class ExtractTransform {
 
             // The same etl_date is used for all DW data processed by one ETL run.
             final Date etlDate = new Date();
-            final String etlDateStr = util.fullDateFormat.format(etlDate);
+            final String etlDateStr = fullDateFormat.format(etlDate);
             currentRunStartTime = etlDate.getTime();
 
             final long lastRev = readLastEtlRun();
-            final long etlRev = util.currentRevNumber(etlDate);
+            final long etlRev = auditReaderEtl.currentRevNumber(etlDate);
             if (lastRev == etlRev) {
                 logger.info("Incremental ETL found no changes since rev " + lastRev);
                 return;
@@ -103,27 +130,22 @@ public class ExtractTransform {
             }
 
             int recordCount = 0;
-            recordCount += billableItemEtl.doEtl(lastRev, etlRev, etlDateStr);
-
-            /*
-            doProductOrderSample(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample");
-            doProductOrderSampleStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_sample_status");
-            */
-            recordCount += productOrderEtl.doEtl(lastRev, etlRev, etlDateStr);
-            /*
-            doProductOrderStatus(lastDate, etlDate, etlDateStr, auditReader, "product_order_status");
-            doResearchProjectCohort(lastDate, etlDate, etlDateStr, auditReader, "research_project_cohort");
-            doResearchProjectFunding(lastDate, etlDate, etlDateStr, auditReader, "research_project_funding");
-            doResearchProjectIRB(lastDate, etlDate, etlDateStr, auditReader, "research_project_irb");
-            doProjectPerson(lastDate, etlDate, etlDateStr, auditReader, "research_project_person");
-            doResearchProject(lastDate, etlDate, etlDateStr, auditReader, "research_project");
-            doResearchProjectStatus(lastDate, etlDate, etlDateStr, auditReader, "research_project_status");
-            doPriceItem(lastDate, etlDate, etlDateStr, auditReader, "price_item");
-            */
+            // The order of ETL is not significant since import tables have no referential integrity.
             recordCount += productEtl.doEtl(lastRev, etlRev, etlDateStr);
-            /*
-            doProductAddOn(lastDate, etlDate, etlDateStr, auditReader, "product_order_add_on");
-            */
+            recordCount += priceItemEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += researchProjectEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += researchProjectStatusEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += projectPersonEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += researchProjectIrbEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += researchProjectFundingEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += researchProjectCohortEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += billableItemEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += productOrderSampleEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += productOrderSampleStatusEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += productOrderEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += productOrderStatusEtl.doEtl(lastRev, etlRev, etlDateStr);
+            recordCount += productOrderAddOnEtl.doEtl(lastRev, etlRev, etlDateStr);
+
             writeLastEtlRun(etlRev);
             writeIsReadyFile(etlDateStr);
             logger.info("Incremental ETL created " + recordCount + " data records in "

@@ -1,30 +1,31 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.util.Date;
 
 @Stateless
-public class ProductEtl  extends GenericEntityEtl {
+public class ResearchProjectEtl  extends GenericEntityEtl {
     @Inject
-    ProductDao dao;
+    ResearchProjectDao dao;
 
     @Override
     Class getEntityClass() {
-        return Product.class;
+        return ResearchProject.class;
     }
 
     @Override
     String getBaseFilename() {
-        return "product";
+        return "research_project";
     }
 
     @Override
     Long entityId(Object entity) {
-        return ((Product)entity).getProductId();
+        return ((ResearchProject)entity).getResearchProjectId();
     }
 
     /**
@@ -37,21 +38,18 @@ public class ProductEtl  extends GenericEntityEtl {
      */
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        Product entity = dao.findById(Product.class, entityId);
+        ResearchProject entity = dao.findById(ResearchProject.class, entityId);
         if (entity == null) {
             return null;
         } else {
             return genericRecord(etlDateStr, false,
-                    entity.getProductId(),
-                    format(entity.getProductName()),
-                    format(entity.getPartNumber()),
-                    format(entity.getAvailabilityDate()),
-                    format(entity.getDiscontinuedDate()),
-                    format(entity.getExpectedCycleTimeSeconds()),
-                    format(entity.getGuaranteedCycleTimeSeconds()),
-                    format(entity.getSamplesPerWeek()),
-                    format(entity.isTopLevelProduct()),
-                    format(entity.getWorkflowName()));
+                    entity.getResearchProjectId(),
+                    format(entity.getResearchProjectId()),
+                    format(entity.getStatus().getDisplayName()),
+                    format(entity.getCreatedDate()),
+                    format(entity.getTitle()),
+                    format(entity.getIrbNotEngaged()),
+                    format(entity.getJiraTicketKey()));
         }
     }
 
