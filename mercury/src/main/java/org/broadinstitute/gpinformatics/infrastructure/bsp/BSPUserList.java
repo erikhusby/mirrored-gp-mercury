@@ -27,9 +27,9 @@ public class BSPUserList {
     @Inject
     private Deployment deployment;
 
-    private final List<BspUser> users;
+    private List<BspUser> users;
 
-    private final boolean serverValid;
+    private boolean serverValid;
 
     public boolean isServerValid() {
         return serverValid;
@@ -106,10 +106,18 @@ public class BSPUserList {
                 user.getEmail().contains(lowerQuery);
     }
 
+    private BSPManagerFactory bspManagerFactory;
+
     @Inject
     // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
-        List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
+        this.bspManagerFactory = bspManagerFactory;
+
+        refreshUsers();
+    }
+
+    public void refreshUsers() {
+        List<BspUser> rawUsers = this.bspManagerFactory.createUserManager().getUsers();
 
         if (rawUsers == null) {
             rawUsers = new ArrayList<BspUser>();
@@ -135,7 +143,7 @@ public class BSPUserList {
             }
         });
 
-        users = ImmutableList.copyOf(rawUsers);
+        users = Collections.synchronizedList(ImmutableList.copyOf(rawUsers));
     }
 
     public static class QADudeUser extends BspUser {

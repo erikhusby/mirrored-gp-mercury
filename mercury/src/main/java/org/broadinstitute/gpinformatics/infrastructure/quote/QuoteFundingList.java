@@ -4,6 +4,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -28,7 +29,7 @@ public class QuoteFundingList {
     public Set<Funding> getFunding() {
         if (fundingList == null) {
             try {
-                fundingList = quoteService.getAllFundingSources();
+                fundingList = Collections.synchronizedSet(quoteService.getAllFundingSources());
             } catch (Exception ex) {
                 // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
             }
@@ -93,5 +94,10 @@ public class QuoteFundingList {
     private boolean anyFieldMatches(String lowerQuery, Funding funding) {
         return funding.getFundingTypeAndName().toLowerCase().contains(lowerQuery) ||
                funding.getMatchDescription().toLowerCase().contains(lowerQuery);
+    }
+
+    public void refreshFunding() {
+        fundingList = null;
+        getFunding();
     }
 }

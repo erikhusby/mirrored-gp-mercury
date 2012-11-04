@@ -6,6 +6,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -30,7 +31,7 @@ public class BSPCohortList {
     public Set<Cohort> getCohorts() {
         if (cohortList == null) {
             try {
-                cohortList = cohortSearchService.getAllCohorts();
+                cohortList = Collections.synchronizedSet(cohortSearchService.getAllCohorts());
             } catch (Exception ex) {
                 // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
             }
@@ -129,5 +130,10 @@ public class BSPCohortList {
                cohort.getName().toLowerCase().contains(lowerQuery) ||
                cohort.getGroup().toLowerCase().contains(lowerQuery) ||
                cohort.getCategory().toLowerCase().contains(lowerQuery);
+    }
+
+    public void refreshCohorts() {
+        cohortList = null;
+        getCohorts();
     }
 }
