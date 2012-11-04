@@ -1,31 +1,31 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.util.Date;
 
 @Stateless
-public class ProjectPersonEtl  extends GenericEntityEtl {
+public class ResearchProjectCohortEtl  extends GenericEntityEtl {
     @Inject
     ResearchProjectDao dao;
 
     @Override
     Class getEntityClass() {
-        return ProjectPerson.class;
+        return ResearchProjectCohort.class;
     }
 
     @Override
     String getBaseFilename() {
-        return "research_project_person";
+        return "research_project_cohort";
     }
 
     @Override
     Long entityId(Object entity) {
-        return ((ProjectPerson)entity).getProjectPersonId();
+        return ((ResearchProjectCohort)entity).getResearchProjectCohortId();
     }
 
     /**
@@ -38,22 +38,14 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
      */
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        ProjectPerson entity = dao.getEntityManager().find(ProjectPerson.class, entityId);
-        if (entity == null) return null;
-
-        Long personId = entity.getPersonId();
-        if (personId == null) return null;
-
-        Person person = dao.getEntityManager().find(Person.class, personId);
-
-        return genericRecord(etlDateStr, false,
-                entity.getProjectPersonId(),
-                format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),
-                format(entity.getRole() != null ? entity.getRole().toString() : null));
-                format(entity.getPersonId()),
-                format(person.getFirstName()),
-                format(person.getLastName()),
-                format(person.getLogin()));
+        ResearchProjectCohort entity = dao.getEntityManager().find(ResearchProjectCohort.class, entityId);
+        if (entity == null) {
+            return null;
+        } else {
+            return genericRecord(etlDateStr, false,
+                    entity.getResearchProjectCohortId(),
+                    format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null));
+        }
     }
 
     /** This entity does not make status records. */

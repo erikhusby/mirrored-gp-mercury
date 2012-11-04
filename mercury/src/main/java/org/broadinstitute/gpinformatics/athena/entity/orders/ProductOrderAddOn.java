@@ -44,6 +44,14 @@ public class ProductOrderAddOn {
         return addOn;
     }
 
+    public Long getProductOrderAddOnId() {
+        return productOrderAddOnId;
+    }
+
+    public ProductOrder getProductOrder() {
+        return productOrder;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

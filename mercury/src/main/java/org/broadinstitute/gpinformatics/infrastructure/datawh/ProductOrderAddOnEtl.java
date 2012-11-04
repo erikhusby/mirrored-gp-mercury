@@ -1,31 +1,30 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.util.Date;
 
 @Stateless
-public class ResearchProjectEtl  extends GenericEntityEtl {
+public class ProductOrderAddOnEtl extends GenericEntityEtl {
     @Inject
-    ResearchProjectDao dao;
+    ProductOrderDao dao;
 
     @Override
     Class getEntityClass() {
-        return ResearchProject.class;
+        return ProductOrderAddOn.class;
     }
 
     @Override
     String getBaseFilename() {
-        return "research_project";
+        return "product_order_add_on";
     }
 
     @Override
     Long entityId(Object entity) {
-        return ((ResearchProject)entity).getResearchProjectId();
+        return ((ProductOrderAddOn)entity).getProductOrderAddOnId();
     }
 
     /**
@@ -38,18 +37,14 @@ public class ResearchProjectEtl  extends GenericEntityEtl {
      */
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        ResearchProject entity = dao.findById(ResearchProject.class, entityId);
-        if (entity == null) {
+        ProductOrderAddOn entity = dao.findById(ProductOrderAddOn.class, entityId);
+        if (entity == null || entity.getAddOn() == null) {
             return null;
         } else {
             return genericRecord(etlDateStr, false,
-                    entity.getResearchProjectId(),
-                    format(entity.getResearchProjectId()),
-			format(entity.getStatus() != null ? entity.getStatus().getDisplayName() : null),
-                    format(entity.getCreatedDate()),
-                    format(entity.getTitle()),
-                    format(entity.getIrbNotEngaged()),
-                    format(entity.getJiraTicketKey()));
+                    entity.getProductOrderAddOnId(),
+                    format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
+                    format(entity.getAddOn().getProductId()));
         }
     }
 
