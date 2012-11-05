@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.google.common.collect.ImmutableSet;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 
 import javax.inject.Inject;
@@ -18,6 +21,7 @@ import java.util.Set;
 // and does appear to work.  Much to learn about CDI still...
 @Singleton
 public class BSPCohortList {
+    private Log logger = LogFactory.getLog(BSPCohortList.class);
 
     private Set<Cohort> cohortList = null;
 
@@ -29,11 +33,7 @@ public class BSPCohortList {
      */
     public Set<Cohort> getCohorts() {
         if (cohortList == null) {
-            try {
-                cohortList = cohortSearchService.getAllCohorts();
-            } catch (Exception ex) {
-                // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
-            }
+            refreshCohorts();
         }
 
         return cohortList;
@@ -129,5 +129,13 @@ public class BSPCohortList {
                cohort.getName().toLowerCase().contains(lowerQuery) ||
                cohort.getGroup().toLowerCase().contains(lowerQuery) ||
                cohort.getCategory().toLowerCase().contains(lowerQuery);
+    }
+
+    public synchronized void refreshCohorts() {
+        try {
+            cohortList = ImmutableSet.copyOf(cohortSearchService.getAllCohorts());
+        } catch (Exception ex) {
+            logger.debug("Could not refresh the cohort list", ex);
+        }
     }
 }

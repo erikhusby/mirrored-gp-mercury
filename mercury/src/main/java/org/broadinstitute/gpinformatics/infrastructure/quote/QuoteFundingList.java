@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import com.google.common.collect.ImmutableSet;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -16,6 +20,7 @@ import java.util.Set;
 // and does appear to work.  Much to learn about CDI still...
 @Singleton
 public class QuoteFundingList {
+    private Log logger = LogFactory.getLog(QuoteFundingList.class);
 
     private Set<Funding> fundingList;
 
@@ -26,12 +31,9 @@ public class QuoteFundingList {
      * @return list of bsp users, sorted by cohortId.
      */
     public Set<Funding> getFunding() {
+        // any time the funding is null but we are asking for it, try and retrieve it again
         if (fundingList == null) {
-            try {
-                fundingList = quoteService.getAllFundingSources();
-            } catch (Exception ex) {
-                // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
-            }
+            refreshFunding();
         }
 
         return fundingList;
@@ -93,5 +95,13 @@ public class QuoteFundingList {
     private boolean anyFieldMatches(String lowerQuery, Funding funding) {
         return funding.getFundingTypeAndName().toLowerCase().contains(lowerQuery) ||
                funding.getMatchDescription().toLowerCase().contains(lowerQuery);
+    }
+
+    public synchronized void refreshFunding() {
+        try {
+            fundingList = ImmutableSet.copyOf(quoteService.getAllFundingSources());
+        } catch (Exception ex) {
+            logger.debug("Could not refresh the funding list", ex);
+        }
     }
 }
