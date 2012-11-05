@@ -14,7 +14,7 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}">
+                <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}">
                     <f:event type="preValidate" listener="#{productForm.initEmptyProduct}"/>
                 </f:viewParam>
             </f:metadata>

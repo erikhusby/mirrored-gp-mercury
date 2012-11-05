@@ -5,12 +5,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
-import javax.faces.convert.Converter;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 @Named
-public class ProductConverter implements Converter {
+public class ProductConverter extends AbstractConverter {
 
     @Inject
     private ProductDao productDao;
