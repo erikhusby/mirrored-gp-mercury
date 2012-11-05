@@ -136,6 +136,8 @@ WHERE EXISTS (
   AND t2.is_delete = 'T'
 );
 
+COMMIT;
+
 -----------------------------------------------------------------------------------------
 -- Updates rows when they exist in the target table, inserts rows when they do not exist.
 -----------------------------------------------------------------------------------------
@@ -173,6 +175,9 @@ FOR new IN im_rp_cur LOOP
     SELECT 1 FROM research_project
     WHERE research_project_id = new.research_project_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -219,6 +224,9 @@ FOR new IN im_product_cur LOOP
     SELECT 1 FROM product
     WHERE product_id = new.product_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -264,6 +272,9 @@ FOR new IN im_po_cur LOOP
     SELECT 1 FROM product_order
     WHERE product_order_id = new.product_order_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 FOR new IN im_price_item_cur LOOP
@@ -300,6 +311,9 @@ FOR new IN im_price_item_cur LOOP
     SELECT 1 FROM price_item
     WHERE price_item_id = new.price_item_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -325,6 +339,9 @@ FOR new IN im_po_add_on_cur  LOOP
     SELECT 1 FROM product_order_add_on
     WHERE product_order_add_on_id = new.product_order_add_on_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -350,6 +367,9 @@ FOR new IN im_rp_status_cur LOOP
     SELECT 1 FROM research_project_status
     WHERE  research_project_id = new.research_project_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -387,6 +407,9 @@ FOR new IN im_rp_person_cur LOOP
     SELECT 1 FROM research_project_person
     WHERE research_project_person_id = new.research_project_person_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -408,6 +431,9 @@ FOR new IN im_rp_funding_cur LOOP
     SELECT 1 FROM research_project_funding
     WHERE research_project_funding_id = new.research_project_funding_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -429,6 +455,9 @@ FOR new IN im_rp_cohort_cur LOOP
     SELECT 1 FROM research_project_cohort
     WHERE research_project_cohort_id = new.research_project_cohort_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -457,6 +486,9 @@ FOR new IN im_rp_irb_cur LOOP
     SELECT 1 FROM research_project_irb
     WHERE research_project_irb_id = new.research_project_irb_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -485,6 +517,9 @@ FOR new IN im_po_sample_cur LOOP
     SELECT 1 FROM product_order_sample
     WHERE product_order_sample_id = new.product_order_sample_id
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -515,6 +550,9 @@ FOR new IN im_po_status_cur LOOP
     WHERE product_order_id = new.product_order_id
     AND status_date = new.status_date
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -544,6 +582,9 @@ FOR new IN im_po_sample_stat_cur LOOP
     WHERE product_order_sample_id = new.product_order_sample_id
     AND status_date = new.status_date
   );
+
+  COMMIT;
+
 END LOOP;
 
 
@@ -572,8 +613,9 @@ FOR new IN im_billable_item_cur  LOOP
     SELECT 1 FROM billable_item
     WHERE billable_item_id = new.billable_item_id
   );
-END LOOP;
 
-COMMIT;
+  COMMIT;
+
+END LOOP;
 
 END;

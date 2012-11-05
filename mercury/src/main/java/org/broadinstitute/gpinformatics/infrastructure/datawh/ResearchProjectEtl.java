@@ -45,7 +45,6 @@ public class ResearchProjectEtl  extends GenericEntityEtl {
         }
         return genericRecord(etlDateStr, false,
                 entity.getResearchProjectId(),
-                format(entity.getResearchProjectId()),
                 format(entity.getStatus() != null ? entity.getStatus().getDisplayName() : null),
                 format(entity.getCreatedDate()),
                 format(entity.getTitle()),

@@ -83,7 +83,6 @@ abstract public class GenericEntityEtl {
         BufferedWriter writer = null;
 
         try {
-            writer = new BufferedWriter(new FileWriter(filename));
             for (Object[] dataChange : dataChanges) {
                 // Splits the result array.
                 Object entity = dataChange[0];
@@ -99,6 +98,7 @@ abstract public class GenericEntityEtl {
                 if (!isEntityEtl()) {
                     String statusRecord = entityStatusRecord(etlDateStr, revDate, entity);
                     if (statusRecord != null) {
+                        if (writer == null) writer = new BufferedWriter(new FileWriter(filename));
                         writer.write(statusRecord);
                         writer.newLine();
                         recordCount++;
@@ -108,6 +108,7 @@ abstract public class GenericEntityEtl {
                     // in order to lookup the latest version once.
                     if (revType.equals(RevisionType.DEL)) {
                         String record = genericRecord(etlDateStr, true, entityId);
+                        if (writer == null) writer = new BufferedWriter(new FileWriter(filename));
                         writer.write(record);
                         writer.newLine();
                         recordCount++;
@@ -124,6 +125,7 @@ abstract public class GenericEntityEtl {
             for (Long entityId : changedEntityIds) {
                 String record =  entityRecord(etlDateStr, false, entityId);
                 if (record != null) {
+                    if (writer == null) writer = new BufferedWriter(new FileWriter(filename));
                     writer.write(record);
                     writer.newLine();
                     recordCount++;
@@ -139,6 +141,12 @@ abstract public class GenericEntityEtl {
             } catch (IOException e) {
                 logger.error("Problem closing " + etlDateStr + "_" + getBaseFilename());
             }
+        }
+        //XXX delete this!!
+        try {
+            Thread.sleep(30L * 1000L);
+        } catch (InterruptedException e) {
+            //ignore
         }
         return recordCount;
     }

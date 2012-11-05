@@ -4,13 +4,13 @@ import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 
-import javax.ejb.Schedule;
-import javax.ejb.Stateless;
+import javax.ejb.*;
 import javax.inject.Inject;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is a JEE scheduled bean that does the initial parts of ETL for the data warehouse.
@@ -93,14 +93,17 @@ public class ExtractTransform {
      * JEE auto-schedules incremental ETL.
      */
     @Schedule(hour="*", minute="*", persistent=false)
+    //@ActivationConfigProperty(propertyName="transactionTimeout",propertyValue="86400")
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    //@TransactionTimeout(value=24 , unit= TimeUnit.HOURS)
     private void incrementalEtl() {
 
         // If previous run is still busy it is unusual but not an error.  Only one incrementalEtl
-        // may run at a time.  Does not queue if busy to avoid snowball effect if system is
+        // may run at a time.  Does not queue a new job if busy, to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
         if (!mutex.tryAcquire()) {
-            logger.info("Previous incremental ETL is still running after "
-                    + ((System.currentTimeMillis() - currentRunStartTime) / MSEC_IN_MINUTE) + " minutes.");
+            logger.info("Skipping new ETL run since previous run is still busy ("
+                    + (int)Math.ceil((System.currentTimeMillis() - currentRunStartTime) / MSEC_IN_MINUTE) + " minutes).");
             return;
         }
         try {
@@ -146,10 +149,12 @@ public class ExtractTransform {
             recordCount += productOrderStatusEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += productOrderAddOnEtl.doEtl(lastRev, etlRev, etlDateStr);
 
-            writeLastEtlRun(etlRev);
-            writeIsReadyFile(etlDateStr);
-            logger.info("Incremental ETL created " + recordCount + " data records in "
-                    + Math.ceil((System.currentTimeMillis() - currentRunStartTime) / 1000.) + " seconds.");
+            boolean lastEtlFileWritten = writeLastEtlRun(etlRev);
+            if (recordCount > 0 && lastEtlFileWritten) {
+                writeIsReadyFile(etlDateStr);
+                logger.info("Incremental ETL created " + recordCount + " data records in "
+                        + (int)Math.ceil((System.currentTimeMillis() - currentRunStartTime) / 1000.) + " seconds.");
+            }
 
         } finally {
             mutex.release();
@@ -190,15 +195,18 @@ public class ExtractTransform {
     /**
      * Writes the file used by this class in the next incremental ETL run, to know where the last run finished.
      * @param etlRev last rev of the etl run to record
+     * @return true if file was written ok
      */
-    private void writeLastEtlRun(long etlRev) {
+    private boolean writeLastEtlRun(long etlRev) {
         try {
             File file = new File (datafileDir, LAST_ETL_FILE);
             FileWriter fw = new FileWriter(file, false);
             fw.write(String.valueOf(etlRev));
             fw.close();
+            return true;
         } catch (IOException e) {
             logger.error("Error writing file " + LAST_ETL_FILE);
+            return false;
         }
     }
 
