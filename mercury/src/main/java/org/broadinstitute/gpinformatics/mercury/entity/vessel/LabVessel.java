@@ -325,6 +325,14 @@ public abstract class LabVessel {
         return new ArrayList<LabEvent>(getInPlaceEvents());
     }
 
+    public List<LabEvent> getInPlaceEventsSortedByDate() {
+        Map<Date, LabEvent> sortedTreeMap = new TreeMap<Date, LabEvent>();
+        for(LabEvent event : inPlaceLabEvents){
+            sortedTreeMap.put(event.getEventDate(), event);
+        }
+        return new ArrayList<LabEvent>(sortedTreeMap.values());
+    }
+
     public void addInPlaceEvent(LabEvent labEvent) {
         this.inPlaceLabEvents.add(labEvent);
         labEvent.setInPlaceLabVessel(this);
@@ -612,6 +620,16 @@ public abstract class LabVessel {
 
     public void addAllSamples(Set<MercurySample> mercurySamples) {
         this.mercurySamples.addAll(mercurySamples);
+    }
+
+    public LabEvent getLatestEvent() {
+        LabEvent event = null;
+        List<LabEvent> inPlaceEventsSortedByDate = getInPlaceEventsSortedByDate();
+        int size = inPlaceEventsSortedByDate.size();
+        if (size > 0) {
+            event = inPlaceEventsSortedByDate.get(size - 1);
+        }
+        return event;
     }
 }
 

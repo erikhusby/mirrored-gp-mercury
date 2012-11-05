@@ -22,127 +22,139 @@
                         <p:inputText id="name" value="#{lookupBean.barcode}" size="50"/>
                         <p:watermark for="name" value="Enter the barcode to search for"/>
                         <p:commandButton value="Search" action="#{lookupBean.barcodeSearch}"
-                                         update=":results:resultsTable,:results:outputContainerPanel" styleClass="ui-priority-primary"/>
+                                         update=":results:searchResultPanel"
+                                         styleClass="ui-priority-primary"/>
                     </div>
                 </div>
-                <div class="container-fluid">
-                    <p:dataTable id="resultsTable" var="searchResult" value="#{lookupBean.foundVessels}" dynamic="true"
-                                 cache="false">
+                <p:panel id="searchResultPanel">
+                    <p:dataTable id="resultsTable" var="foundVessel"
+                                 value="#{lookupBean.foundVessels}">
+                        <p:ajax event="rowToggle" listener="#{lookupBean.onRowToggle}"/>
                         <f:facet name="header">
                             Barcode Search Results
                         </f:facet>
-                        <p:column sortBy="#{searchResult.label}">
+                        <p:column style="width:4%">
+                            <f:facet name="header">
+                                <h:outputText value="Sample Details"/>
+                            </f:facet>
+                            <p:rowToggler rendered="#{foundVessel.sampleInstancesList.size() > 0}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Sample #"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.sampleInstancesList.size()}"/>
+                        </p:column>
+
+                        <p:column sortBy="#{foundVessel.label}">
                             <f:facet name="header">
                                 <h:outputText value="Label"/>
                             </f:facet>
-                            <h:outputText value="#{searchResult.label}"/>
+                            <h:outputText value="#{foundVessel.label}"/>
                         </p:column>
-                        <p:column>
-                            <f:facet name="header">
-                                <h:outputText value="Sample Name"/>
-                            </f:facet>
-                            <p:panel columns="1" rendered="#{lookupBean.isSingleSampleVessel(searchResult)}">
-                                <ui:repeat value="#{searchResult.sampleInstancesList}" var="sampleInstance">
-                                    <h:outputText value="#{sampleInstance.startingSample.sampleKey}"/>
-                                    <br/>
-                                </ui:repeat>
-                            </p:panel>
-                        </p:column>
-                        <p:column>
-                            <f:facet name="header">
-                                <h:outputText value="Index Information"/>
-                            </f:facet>
-                            <p:panel rendered="#{lookupBean.isSingleSampleVessel(searchResult)}">
-                                <ui:repeat value="#{searchResult.sampleInstancesList}" var="sampleInstance">
-                                    <h:outputText
-                                            value="#{lookupBean.indexValueForSample(sampleInstance, searchResult)}"/>
-                                    <br/>
-                                </ui:repeat>
-                            </p:panel>
-                        </p:column>
-                        <p:column sortBy="#{searchResult.type.name}">
+                        <p:column sortBy="#{foundVessel.type.name}">
                             <f:facet name="header">
                                 <h:outputText value="Type"/>
                             </f:facet>
-                            <h:outputText value="#{searchResult.type.name}"/>
-                        </p:column>
-                        <p:column>
-                            <f:facet name="header">
-                                <h:outputText value="PDOs"/>
-                            </f:facet>
-                            <p:panel rendered="#{lookupBean.isSingleSampleVessel(searchResult)}" style="margin-top:5px">
-                                <ui:repeat value="#{searchResult.sampleInstancesList}" var="sample">
-                                    <h:outputText value="#{sample.startingSample.productOrderKey}"/>
-                                    <br/>
-                                </ui:repeat>
-                            </p:panel>
-                        </p:column>
-                        <p:column>
-                            <f:facet name="header">
-                                <h:outputText value="Lab Events"/>
-                            </f:facet>
-                            <ui:repeat value="#{searchResult.inPlaceEventsList}" var="event">
-                                <h:outputText value="#{event.eventName}"/>
-                                <br/>
-                            </ui:repeat>
+                            <h:outputText value="#{foundVessel.type.name}"/>
                         </p:column>
                         <p:column>
                             <f:facet name="header">
                                 <h:outputText value="Lab Batches"/>
                             </f:facet>
-                            <ui:repeat value="#{searchResult.labBatchesList}" var="batch">
+                            <ui:repeat value="#{foundVessel.labBatchesList}" var="batch">
                                 <h:outputText value="#{batch.batchName}"/>
                                 <br/>
                             </ui:repeat>
                         </p:column>
                         <!-- <p:column>
-                            <f:facet name="header">
-                                <h:outputText value="QC Metrics"/>
-                            </f:facet>
-                            <ui:repeat value="#{searchResult.metrics}" var="metric">
-                                <h:outputText value="#{metric.name} : #{metric.value} #{metric.units}"/>
-                                <br/>
-                            </ui:repeat>
-                        </p:column>-->
+                           <f:facet name="header">
+                               <h:outputText value="QC Metrics"/>
+                           </f:facet>
+                           <ui:repeat value="#{searchResult.metrics}" var="metric">
+                               <h:outputText value="#{metric.name} : #{metric.value} #{metric.units}"/>
+                               <br/>
+                           </ui:repeat>
+                       </p:column> -->
                         <p:column>
                             <f:facet name="header">
-                                <h:outputText value="Contained In"/>
+                                <h:outputText value="Last Event"/>
                             </f:facet>
-                            <p:panel rendered="#{lookupBean.isSingleSampleVessel(searchResult)}">
-                                <ui:repeat value="#{searchResult.containerList}" var="container">
-                                    <p:commandLink action="#{lookupBean.setSelectedBarcode(container.embedder.label)}"
-                                                   value="#{container.embedder.label}"
-                                                   update=":results:outputContainerPanel"/>
-                                    <br/>
-                                </ui:repeat>
-                            </p:panel>
+                            <h:outputText value="#{foundVessel.latestEvent.eventName}"/>
                         </p:column>
                         <p:column>
                             <f:facet name="header">
-                                <h:outputText value="Position"/>
+                                <h:outputText value="Last Event Location"/>
                             </f:facet>
-                            <p:panel rendered="#{lookupBean.isSingleSampleVessel(searchResult)}">
-                                <ui:repeat value="#{searchResult.containerList}" var="container">
-                                    <h:outputText value="#{container.getPositionOfVessel(searchResult)}"/>
-                                    <br/>
-                                </ui:repeat>
-                            </p:panel>
+                            <h:outputText value="#{foundVessel.latestEvent.eventLocation}"/>
                         </p:column>
-                        <p:column sortBy="#{searchResult.createdOn}">
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Last Event User"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.latestEvent.eventOperator.login}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Last Event Date"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.latestEvent.eventDate}"/>
+                        </p:column>
+                        <p:column sortBy="#{foundVessel.createdOn}">
                             <f:facet name="header">
                                 <h:outputText value="Creation Date"/>
                             </f:facet>
-                            <h:outputText value="#{searchResult.createdOn}"/>
+                            <h:outputText value="#{foundVessel.createdOn}"/>
                         </p:column>
+                        <p:rowExpansion>
+                            <p:outputPanel>
+                                <p:dataTable id="sampleResults" value="#{lookupBean.selectedVessel.sampleInstancesList}"
+                                             var="sampleInstance">
+                                    <p:column>
+                                        <f:facet name="header">
+                                            <h:outputText value="Sample Name"/>
+                                        </f:facet>
+                                        <h:outputText value="#{sampleInstance.startingSample.sampleKey}"/>
+                                    </p:column>
+                                    <p:column>
+                                        <f:facet name="header">
+                                            <h:outputText value="PDOs"/>
+                                        </f:facet>
+                                        <h:outputText value="#{sampleInstance.startingSample.productOrderKey}"/>
+                                    </p:column>
+                                    <p:column>
+                                        <f:facet name="header">
+                                            <h:outputText value="Index Information"/>
+                                        </f:facet>
+                                        <h:outputText
+                                                value="#{lookupBean.indexValueForSample(sampleInstance, foundVessel)}"/>
+                                    </p:column>
+                                    <p:column>
+                                        <f:facet name="header">
+                                            <h:outputText value="Contained In"/>
+                                        </f:facet>
+                                        <!-- <p:commandLink action="#{lookupBean.selectedVessel.containingVessel}"
+                                        value="#{foundVessel.label}"
+                                        update=":results:outputContainerPanel"/>-->
+                                        <h:outputText value="NYI"/>
+                                    </p:column>
+                                    <p:column>
+                                        <f:facet name="header">
+                                            <h:outputText value="Position"/>
+                                        </f:facet>
+                                        <!-- <h:outputText value="#{lookupBean.foundVessel.getPositionOfVessel(lookupBean.foundVessel)}"/>-->
+                                        <h:outputText value="NYI"/>
+                                    </p:column>
+                                </p:dataTable>
+                            </p:outputPanel>
+                        </p:rowExpansion>
                     </p:dataTable>
-                </div>
-                <div class="container-fluid">
-                    <p:outputPanel id="outputContainerPanel">
-                        <p:panel id="platePanel" rendered="#{lookupBean.selectedBarcode != null}">
-                            <b:container barcode="#{lookupBean.selectedBarcode}"/>
-                        </p:panel>
-                    </p:outputPanel>
-                </div>
+                </p:panel>
+                <p:outputPanel id="outputContainerPanel">
+                    <p:panel id="platePanel" rendered="#{lookupBean.selectedVessel != null}">
+                        <b:container barcode="#{lookupBean.selectedVessel.label}"/>
+                    </p:panel>
+                </p:outputPanel>
             </h:form>
         </ui:define>
     </ui:composition>
