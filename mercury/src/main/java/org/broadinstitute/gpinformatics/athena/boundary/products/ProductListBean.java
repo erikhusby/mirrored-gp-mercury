@@ -51,7 +51,7 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
             // "lazy" load, except this bean is request scoped so we end up creating a new ProductsDataModel
             // for every request, including column sorts and each character typed into the search filter.
             //
-            // Making a broader scoped cache of Products introduces LIEs on the add-on and price item associations.
+            // Making a broader scoped cache of Products introduces LIEs on the Add-on and price item associations.
             // The ProductDao find method can be modified to left join fetch these associations, but the JPA criteria
             // API has some issues with left join fetching efficiently (it selects every column twice per
             // http://stackoverflow.com/questions/4511368/jpa-2-criteria-fetch-path-navigation).

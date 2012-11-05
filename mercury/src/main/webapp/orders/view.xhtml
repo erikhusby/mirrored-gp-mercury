@@ -38,6 +38,13 @@
 
                 <div class="row-fluid">
                     <div class="control-group">
+                        <span class="control-label label-form">Name</span>
+                        <span class="controls">
+                            #{productOrderDetail.productOrder.title}
+                        </span>
+                    </div>
+
+                    <div class="control-group">
                         <span class="control-label label-form">Order Barcode</span>
                         <span class="controls">
                             <h:outputLink target="JIRA" class="external"
@@ -66,7 +73,7 @@
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label-form">Add-Ons</span>
+                        <span class="control-label label-form">Add-ons</span>
                         <span class="controls" style="width:250px;">
                             #{productOrderDetail.productOrder.addOnList}
                         </span>
@@ -83,7 +90,7 @@
 
                     <div class="control-group">
                         <span class="control-label label-form">Comments</span>
-                        <span class="controls">#{productOrderDetail.productOrder.comments}</span>
+                        <div class="tall-controls">#{productOrderDetail.productOrder.comments}</div>
                     </div>
 
                     <div class="control-group">
