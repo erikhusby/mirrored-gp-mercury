@@ -189,7 +189,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     /**
-     * Set up the add ons when the product selection event happens
+     * Set up the Add-ons when the product selection event happens
      *
      * @param productSelectEvent The selection event on the project
      */
@@ -199,7 +199,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     /**
-     * Get all the add on products for the specified product
+     * Get all the Add-on products for the specified product
      *
      * @param product The product
      */
