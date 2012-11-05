@@ -13,10 +13,7 @@ import java.io.IOException;
  * is authorized to have access to a certain page.  The filter is executed based on the url-pattern filter
  * defined in the web deployment descriptor
  *
- *
  * @author Scott Matthews
- *         Date: 5/2/12
- *         Time: 11:57 AM
  */
 public class AuthorizationFilter implements Filter {
 
@@ -83,12 +80,11 @@ public class AuthorizationFilter implements Filter {
             boolean authorized = manager.isUserAuthorized(pageUri, request);
 
             if (!authorized) {
-                // FIXME: Need to report this error to the user!
-                // It is OK for now since we don't have any per-page authentication in Mercury.
-                String errorMessage = "The user '" + user +  "' doesn't have permission to log in.";
+                String errorMessage = "The user '" + user +  "' doesn't have permission to log in.  ";
                 logger.warn(errorMessage);
-                redirectTo(request, servletResponse, LOGIN_PAGE);
-                return;
+
+                // show general error page, and display our error to the user
+                throw new SecurityException(errorMessage + "Please contact support if you think this is incorrect.");
             }
         }
 
@@ -124,7 +120,6 @@ public class AuthorizationFilter implements Filter {
                path.startsWith("/ArquillianServletRunner") ||
                path.startsWith(LOGIN_PAGE);
     }
-
 
     @Override
     public void destroy() {
