@@ -1,13 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductManager;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -18,7 +18,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.text.MessageFormat;
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -29,16 +29,10 @@ import java.util.*;
 public class ProductForm extends AbstractJsfBean {
 
     @Inject
-    private ProductDao productDao;
-
-    @Inject
     private ProductFamilyDao productFamilyDao;
 
     @Inject
     private PriceItemDao priceItemDao;
-
-    @Inject
-    private ProductBoundary productBoundary;
 
     /**
      * Source of quote server sourced price data
@@ -57,6 +51,14 @@ public class ProductForm extends AbstractJsfBean {
 
     @Inject
     private FacesContext facesContext;
+
+
+    /**
+     * Transaction support for create / update operations
+     */
+    @Inject
+    private ProductManager productManager;
+
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
@@ -78,6 +80,10 @@ public class ProductForm extends AbstractJsfBean {
     private PriceItem defaultPriceItem;
 
     private List<Product> addOns;
+
+
+
+
 
     /**
      * Hook for the preRenderView event that initiates the long running conversation and sets up conversation scoped
@@ -107,7 +113,8 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public boolean isCreating() {
-        return product.getPartNumber() == null;
+        HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+        return request.getParameter("product") == null;
     }
 
     /**
@@ -115,7 +122,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void initForm() {
         if (!facesContext.isPostback()) {
-            if (product.getProductId() == null) {
+            if (isCreating()) {
                 // No form initialization needed for create
             } else {
                 if (product.getPriceItems() != null) {
@@ -159,108 +166,60 @@ public class ProductForm extends AbstractJsfBean {
      */
     public List<ProductFamily> getProductFamilies() {
         List<ProductFamily> productFamilies = productFamilyDao.findAll();
-        Collections.sort(productFamilies, new Comparator<ProductFamily>() {
-            @Override
-            public int compare(ProductFamily productFamily, ProductFamily productFamily1) {
-                return productFamily.getDisplayName().toLowerCase().compareTo(productFamily1.getDisplayName().toLowerCase());
-            }
-        });
+        Collections.sort(productFamilies, ProductFamily.PRODUCT_FAMILY_COMPARATOR);
 
         return productFamilies;
     }
 
 
     public String save() {
-        boolean validationPassed = true;
-
-        if (!isPartNumberUnique()) {
-            String errorMessage = MessageFormat.format("The Product Part-Number ''{0}'' is not unique.", product.getPartNumber());
-            addErrorMessage("partNumber", errorMessage, errorMessage);
+        if (isCreating()) {
+            return create();
         }
-
-        if (! dateRangeOkay()) {
-            String errorMessage = "Availability date must precede discontinued date.";
-            addErrorMessage("Date range invalid", errorMessage, errorMessage);
-            validationPassed = false;
-        }
-        if (getDefaultPriceItem() == null) {
-            addErrorMessage("defaultPriceItem", "Default Price Item is required.", "Default Price Item is required.");
-            validationPassed = false;
-        }
-
-        if (!validationPassed) {
-            return null;
-        }
-
-        if (product.getProductId() == null ) {
-            return productBoundary.create();
-        } else {
-            return productBoundary.edit();
+        else {
+            return edit();
         }
     }
 
-    private boolean isPartNumberUnique() {
-        Product existingProduct = productDao.findByPartNumber(product.getPartNumber());
-        if (existingProduct != null && existingProduct.getProductId() != product.getProductId()) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Sanity check dates
-     * @return
-     */
-    private boolean dateRangeOkay() {
-        if ((product.getAvailabilityDate() != null ) &&
-                (product.getDiscontinuedDate() != null ) &&
-                (product.getAvailabilityDate().after(product.getDiscontinuedDate()))) {
-            return false;
-        }
-        return true;
-    }
 
     private String addProductParam() {
         return "&product=" + product.getBusinessKey();
     }
+
 
     public String create() {
         try {
             addAllAddOnsToProduct();
             addAllPriceItemsToProduct();
 
-            productDao.persist(product);
-        } catch (Exception e ) {
-            logger.error("Exception while persisting Product: " + e);
-            String errorMessage = "Exception occurred - " + e.getMessage();
-            if (GenericDao.IsConstraintViolationException(e)) {
-                errorMessage = MessageFormat.format("The Product Part-Number ''{0}'' is not unique.", product.getPartNumber());
-            }
-            addErrorMessage("Product not Created.", errorMessage, errorMessage + ": " + e);
-            return "create";
+            productManager.create(product);
+        }
+        catch (Exception e ) {
+            addErrorMessage(e.getMessage(), null);
+            return null;
         }
 
-        addFlashMessage("Product \"" + product.getProductName() + "\" has been created.");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.", "Product");
+        conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
+
 
     public String edit() {
         try {
             addAllAddOnsToProduct();
             addAllPriceItemsToProduct();
 
-            productDao.getEntityManager().merge(getProduct());
-        } catch (Exception e ) {
-            String errorMessage = "Exception occurred - " + e.getMessage();
-            if (GenericDao.IsConstraintViolationException(e)) {
-                errorMessage = MessageFormat.format("The Product Part-Number ''{0}'' is not unique.", product.getPartNumber());
-            }
-            addErrorMessage("Product not updated.", errorMessage, errorMessage + ": " + e);
-            return "create";
+            productManager.edit(product);
+
+        }
+        catch (Exception e ) {
+            addErrorMessage(e.getMessage(), null);
+            return null;
         }
 
-        addFlashMessage("Product \"" + product.getProductName() + "\" has been updated.");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.", "Product");
+        conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
 
@@ -274,7 +233,7 @@ public class ProductForm extends AbstractJsfBean {
             for ( Product aProductAddOn : addOns ) {
                 if ( aProductAddOn != null ) {
                     if ( aProductAddOn.isAvailable() || aProductAddOn.getAvailabilityDate().after( now ) ) {
-                        product.addAddOn( aProductAddOn );
+                        product.addAddOn(aProductAddOn);
                     } else {
                         throw new RuntimeException("Product AddOn " + aProductAddOn.getPartNumber() + " is no longer available. Please remove it from the list.");
                     }
@@ -307,7 +266,14 @@ public class ProductForm extends AbstractJsfBean {
     /**
      * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
      */
-    private void addAllPriceItemsToProduct() {
+    private void addAllPriceItemsToProduct() throws ApplicationValidationException {
+
+        if (defaultPriceItem == null) {
+            // ApplicationValidationException is rollback=true, but we're not in a transaction at the time of this
+            // validation, I just wanted to reuse the same exception type since this is an application validation
+            throw new ApplicationValidationException("Default price item must be entered");
+        }
+
         product.setDefaultPriceItem(findEntity(defaultPriceItem));
 
         product.getPriceItems().clear();
@@ -537,4 +503,6 @@ public class ProductForm extends AbstractJsfBean {
         }
         return priceItem.getName() + " (" + priceItem.getId() + ")";
     }
+
+
 }

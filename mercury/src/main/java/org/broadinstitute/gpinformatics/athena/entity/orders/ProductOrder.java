@@ -99,7 +99,7 @@ public class ProductOrder implements Serializable {
 
     public String getAddOnList() {
         if (addOns.isEmpty()) {
-            return "no add ons";
+            return "no Add-ons";
         }
 
         String[] addOnArray = new String[addOns.size()];
@@ -182,11 +182,13 @@ public class ProductOrder implements Serializable {
                         if (StringUtils.isNotBlank(participantId)) {
                             participantSet.add(participantId);
                         }
+
                         incrementCount(primaryDiseaseCounts, bspDTO.getPrimaryDisease());
                         incrementCount(genderCounts, bspDTO.getGender());
                         if (bspDTO.getHasFingerprint()) {
                             hasFPCount++;
                         }
+
                         incrementCount(sampleTypeCounts, bspDTO.getSampleType());
                     }
                 }
@@ -207,39 +209,43 @@ public class ProductOrder implements Serializable {
 
             List<String> output = new ArrayList<String>();
             if (totalSampleCount == 0) {
-                output.add("No Samples.");
+                output.add("Total: None");
             } else {
-                output.add(MessageFormat.format("Total Samples: {0}", totalSampleCount));
+                output.add(MessageFormat.format("Total: {0}", totalSampleCount));
                 if (uniqueSampleCount != totalSampleCount) {
-                    output.add(MessageFormat.format("Unique Samples: {0}", uniqueSampleCount));
-                    output.add(MessageFormat.format("Duplicate Samples: {0}", (totalSampleCount - uniqueSampleCount)));
+                    output.add(MessageFormat.format("Unique: {0}", uniqueSampleCount));
+                    output.add(MessageFormat.format("Duplicate: {0}", (totalSampleCount - uniqueSampleCount)));
                 }
+
                 if (bspSampleCount == uniqueSampleCount) {
-                    output.add("All samples are BSP samples.");
+                    output.add("From BSP: All");
                 } else if (bspSampleCount != 0) {
-                    output.add(MessageFormat.format("Of {0} unique samples, {1} are BSP samples and {2} are non-BSP.",
-                            uniqueSampleCount, bspSampleCount, uniqueSampleCount - bspSampleCount));
+                    output.add(MessageFormat.format("Unique BSP: {0}", bspSampleCount));
+                    output.add(MessageFormat.format("Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount));
                 } else {
-                    output.add("None of the samples come from BSP.");
+                    output.add("From BSP: None");
                 }
             }
+
             if (uniqueParticipantCount != 0) {
                 output.add(MessageFormat.format("Unique Participants: {0}", uniqueParticipantCount));
             }
+
             if (receivedSampleCount != 0) {
-                output.add(MessageFormat.format("{0} samples are in RECEIVED state.", receivedSampleCount));
+                output.add(MessageFormat.format("RECEIVED: {0}", receivedSampleCount));
             }
+
             outputCounts(output, stockTypeCounts, "Stock Type");
-            outputCounts(output, primaryDiseaseCounts, "Primary Disease");
+            outputCounts(output, primaryDiseaseCounts, "Disease");
             outputCounts(output, genderCounts, "Gender");
             outputCounts(output, sampleTypeCounts, "Sample Type");
+
             if (hasFPCount != 0) {
-                output.add(MessageFormat.format("{0} samples have fingerprint data.", hasFPCount));
+                output.add(MessageFormat.format("Fingerprint Data: {0}", hasFPCount));
             }
 
             return output;
         }
-
 
         private void checkCount(int count, String message, List<String> output) {
             if (count != 0) {
@@ -257,9 +263,9 @@ public class ProductOrder implements Serializable {
          */
         public List<String> sampleValidation() {
             List<String> output = new ArrayList<String>();
-            checkCount(missingBspMetaDataCount, "Samples Missing BSP Data: {0}", output);
-            checkCount(bspSampleCount - activeSampleCount, "Samples Not ACTIVE: {0}", output);
-            checkCount(bspSampleCount - receivedSampleCount, "Samples Not RECEIVED: {0}", output);
+            checkCount(missingBspMetaDataCount, "No BSP Data: {0}", output);
+            checkCount(bspSampleCount - activeSampleCount, "Not ACTIVE: {0}", output);
+            checkCount(bspSampleCount - receivedSampleCount, "Not RECEIVED: {0}", output);
             return output;
         }
 
@@ -704,8 +710,8 @@ public class ProductOrder implements Serializable {
                 StringUtils.join(getSampleNames(), ','));
 
         CreateIssueResponse issueResponse = ServiceAccessUtility.createJiraTicket(
-                fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(), title,
-                comments == null ? "" : comments, listOfFields);
+                fetchJiraProject().getKeyPrefix(), ServiceAccessUtility.getBspUserForId(createdBy).getUsername(),
+                fetchJiraIssueType(), title, comments == null ? "" : comments, listOfFields);
 
         jiraTicketKey = issueResponse.getKey();
         addLink(researchProject.getJiraTicketKey());

@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -22,17 +24,30 @@ import java.util.*;
 @Singleton
 public class BSPUserList {
 
+    private Log logger = LogFactory.getLog(BSPUserList.class);
+
     private static long userIdSeq = 101010101L;
 
     @Inject
     private Deployment deployment;
 
-    private final List<BspUser> users;
+    private List<BspUser> users;
+
+    private boolean serverValid;
+
+    public boolean isServerValid() {
+        return serverValid;
+    }
 
     /**
      * @return list of bsp users, sorted by lastname, firstname, username, email.
      */
     public List<BspUser> getUsers() {
+
+        if (users == null) {
+            refreshUsers();
+        }
+
         return users;
     }
 
@@ -100,50 +115,73 @@ public class BSPUserList {
                 user.getEmail().contains(lowerQuery);
     }
 
+    private BSPManagerFactory bspManagerFactory;
+
     @Inject
     // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
-        List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
+        this.bspManagerFactory = bspManagerFactory;
+        refreshUsers();
+    }
 
-        if (rawUsers == null) {
-            rawUsers = new ArrayList<BspUser>();
-        }
+    public synchronized void refreshUsers() {
+        try {
+            List<BspUser> rawUsers = this.bspManagerFactory.createUserManager().getUsers();
 
-        if (deployment != Deployment.PROD) {
-            addQADudeUsers(rawUsers);
-        }
-
-        Collections.sort(rawUsers, new Comparator<BspUser>() {
-            @Override
-            public int compare(BspUser o1, BspUser o2) {
-                // FIXME: need to figure out what the correct sort criteria are.
-                CompareToBuilder builder = new CompareToBuilder();
-                builder.append(o1.getLastName(), o2.getLastName());
-                builder.append(o1.getFirstName(), o2.getFirstName());
-                builder.append(o1.getUsername(), o2.getUsername());
-                builder.append(o1.getEmail(), o2.getEmail());
-                return builder.build();
+            if (rawUsers == null) {
+                rawUsers = new ArrayList<BspUser>();
+                serverValid = false;
+            } else {
+                serverValid = true;
             }
-        });
 
-        users = ImmutableList.copyOf(rawUsers);
+            if (deployment != Deployment.PROD) {
+                addQADudeUsers(rawUsers);
+            }
+
+            Collections.sort(rawUsers, new Comparator<BspUser>() {
+                @Override
+                public int compare(BspUser o1, BspUser o2) {
+                    // FIXME: need to figure out what the correct sort criteria are.
+                    CompareToBuilder builder = new CompareToBuilder();
+                    builder.append(o1.getLastName(), o2.getLastName());
+                    builder.append(o1.getFirstName(), o2.getFirstName());
+                    builder.append(o1.getUsername(), o2.getUsername());
+                    builder.append(o1.getEmail(), o2.getEmail());
+                    return builder.build();
+                }
+            });
+
+            users = ImmutableList.copyOf(rawUsers);
+        } catch (Exception ex) {
+            logger.debug("Could not refresh the user list", ex);
+        }
     }
 
-    private void addQADudeUsers(List<BspUser> users) {
-        users.add(makeBspUser("QADudeTest", "QADude", "Test", "qadudetest@broadinstitute.org"));
-        users.add(makeBspUser("QADudePM", "QADude", "PM", "qadudepm@broadinstitute.org"));
-        users.add(makeBspUser("QADudeLU", "QADude", "LU", "qadudelu@broadinstitute.org"));
-        users.add(makeBspUser("QADudeLM", "QADude", "LM", "qadudelm@broadinstitute.org"));
+    public static class QADudeUser extends BspUser {
+        public QADudeUser(String type) {
+            makeBspUser("QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org");
+        }
+
+        // Using synchronized due to use of non-final static member userIdSeq.
+        private synchronized void makeBspUser(String username, String firstName, String lastName, String email) {
+            setUserId(userIdSeq++);
+            setUsername(username);
+            setFirstName(firstName);
+            setLastName(lastName);
+            setEmail(email);
+        }
     }
 
-    private synchronized BspUser makeBspUser(String username, String firstName, String lastName, String email) {
-        BspUser user = new BspUser();
-        user.setUserId(userIdSeq++);
-        user.setUsername(username);
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setEmail(email);
-        return user;
+    private static void addQADudeUsers(List<BspUser> users) {
+        String[] types = {"Test", "PM", "LU", "LM"};
+        for (String type : types) {
+            users.add(new QADudeUser(type));
+        }
+    }
+
+    public boolean isTestUser(BspUser user) {
+        return user instanceof QADudeUser;
     }
 
     public List<SelectItem> getSelectItems(Set<BspUser> users) {
