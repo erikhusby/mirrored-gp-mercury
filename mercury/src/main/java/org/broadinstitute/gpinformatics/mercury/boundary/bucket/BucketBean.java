@@ -25,17 +25,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BucketResource {
+public class BucketBean {
 
-    private static final Log LOG = LogFactory.getLog (BucketResource.class);
+    private static final Log LOG = LogFactory.getLog (BucketBean.class);
 
     @Inject
     private LabEventFactory labEventFactory;
 
-    public BucketResource () {
+    public BucketBean () {
     }
 
-    public BucketResource(LabEventFactory labEventFactoryIn) {
+    public BucketBean ( LabEventFactory labEventFactoryIn ) {
         this.labEventFactory = labEventFactoryIn;
     }
 

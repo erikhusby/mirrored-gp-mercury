@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -21,8 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -40,7 +38,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
 
     public void test_simple_tube_in_rack_maps_to_pdo() {
 
-        BucketResource bucketResource = new BucketResource(new LabEventFactory());
+        BucketBean bucketResource = new BucketBean (new LabEventFactory());
 
         WorkflowBucketDef bucketDef = new WorkflowBucketDef(BUCKET_REFERENCE_NAME);
 

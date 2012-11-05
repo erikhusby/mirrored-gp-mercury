@@ -26,7 +26,7 @@ import static junit.framework.Assert.assertTrue;
 public class BucketResourceTest extends ContainerTest {
 
     @Inject
-    BucketResource resource;
+    BucketBean resource;
 
     public void testResource () {
         final String bucketCreationName = "Pico Bucket";

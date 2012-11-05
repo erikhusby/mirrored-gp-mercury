@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -36,7 +37,7 @@ public class Bucket {
     @Id
     private Long bucketId;
 
-    @OneToMany (mappedBy = "bucketExistence")
+    @OneToMany (mappedBy = "bucketExistence", cascade = { CascadeType.PERSIST})
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Column ( name = "bucket_definition_name")

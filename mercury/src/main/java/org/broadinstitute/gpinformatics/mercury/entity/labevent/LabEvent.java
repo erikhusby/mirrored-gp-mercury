@@ -371,7 +371,6 @@ todo jmt adder methods
 
     public void setInPlaceLabVessel(LabVessel inPlaceLabVessel) {
         this.inPlaceLabVessel = inPlaceLabVessel;
-        this.inPlaceLabVessel.addInPlaceEvent(this);
     }
 
     /**
