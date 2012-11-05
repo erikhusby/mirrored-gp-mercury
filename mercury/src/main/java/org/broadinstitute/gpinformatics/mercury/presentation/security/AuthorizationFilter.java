@@ -14,14 +14,14 @@ import java.io.IOException;
  * defined in the web deployment descriptor.
  *
  * @author Scott Matthews
- *         Date: 5/2/12
- *         Time: 11:57 AM
  */
 public class AuthorizationFilter implements Filter {
 
     @Inject
     private Log logger;
     private FilterConfig filterConfig;
+
+    @Inject AuthorizationManager manager;
 
     public static final String LOGIN_PAGE = "/security/login.xhtml";
     public static final String TARGET_PAGE_ATTRIBUTE = "targeted_page";
@@ -111,7 +111,6 @@ public class AuthorizationFilter implements Filter {
                path.startsWith("/ArquillianServletRunner") ||
                path.startsWith(LOGIN_PAGE);
     }
-
 
     @Override
     public void destroy() {

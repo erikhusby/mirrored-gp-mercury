@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -24,7 +23,8 @@ import java.util.*;
 @Singleton
 public class BSPUserList {
 
-    private Log logger = LogFactory.getLog(BSPUserList.class);
+    @Inject
+    private Log logger;
 
     private static long userIdSeq = 101010101L;
 
