@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -21,6 +23,8 @@ import java.util.*;
 // and does appear to work.  Much to learn about CDI still...
 @Singleton
 public class BSPUserList {
+
+    private Log logger = LogFactory.getLog(BSPUserList.class);
 
     private static long userIdSeq = 101010101L;
 
@@ -121,33 +125,37 @@ public class BSPUserList {
     }
 
     public synchronized void refreshUsers() {
-        List<BspUser> rawUsers = this.bspManagerFactory.createUserManager().getUsers();
+        try {
+            List<BspUser> rawUsers = this.bspManagerFactory.createUserManager().getUsers();
 
-        if (rawUsers == null) {
-            rawUsers = new ArrayList<BspUser>();
-            serverValid = false;
-        } else {
-            serverValid = true;
-        }
-
-        if (deployment != Deployment.PROD) {
-            addQADudeUsers(rawUsers);
-        }
-
-        Collections.sort(rawUsers, new Comparator<BspUser>() {
-            @Override
-            public int compare(BspUser o1, BspUser o2) {
-                // FIXME: need to figure out what the correct sort criteria are.
-                CompareToBuilder builder = new CompareToBuilder();
-                builder.append(o1.getLastName(), o2.getLastName());
-                builder.append(o1.getFirstName(), o2.getFirstName());
-                builder.append(o1.getUsername(), o2.getUsername());
-                builder.append(o1.getEmail(), o2.getEmail());
-                return builder.build();
+            if (rawUsers == null) {
+                rawUsers = new ArrayList<BspUser>();
+                serverValid = false;
+            } else {
+                serverValid = true;
             }
-        });
 
-        users = ImmutableList.copyOf(rawUsers);
+            if (deployment != Deployment.PROD) {
+                addQADudeUsers(rawUsers);
+            }
+
+            Collections.sort(rawUsers, new Comparator<BspUser>() {
+                @Override
+                public int compare(BspUser o1, BspUser o2) {
+                    // FIXME: need to figure out what the correct sort criteria are.
+                    CompareToBuilder builder = new CompareToBuilder();
+                    builder.append(o1.getLastName(), o2.getLastName());
+                    builder.append(o1.getFirstName(), o2.getFirstName());
+                    builder.append(o1.getUsername(), o2.getUsername());
+                    builder.append(o1.getEmail(), o2.getEmail());
+                    return builder.build();
+                }
+            });
+
+            users = ImmutableList.copyOf(rawUsers);
+        } catch (Exception ex) {
+            logger.debug("Could not refresh the user list", ex);
+        }
     }
 
     public static class QADudeUser extends BspUser {
