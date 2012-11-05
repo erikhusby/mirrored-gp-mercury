@@ -45,11 +45,23 @@ public class IrbConverter implements Converter {
         return returnValue;
     }
 
+    /**
+     * This creates a valid IRB object out of the type.
+     *
+     * @param irbName The name of the irb
+     * @param type The irb type
+     * @param irbNameMaxLength The maximum length name that can be display
+     *
+     * @return The irb object
+     */
     public Irb createIrb(String irbName, ResearchProjectIRB.IrbType type, int irbNameMaxLength) {
+
+        // If the type + the space-colon-space is longer than max length, then we cannot have a unique name.
         if (irbNameMaxLength <= type.getDisplayName().length() + 4) {
-            throw new IllegalArgumentException("The max length of IRB does not allow for a name");
+            throw new IllegalArgumentException("IRB type: " + type.getDisplayName() + " is too long to allow for a name");
         }
 
+        // Strip off any long name to the maximum number of characters
         String returnName = irbName;
         int lengthOfFullString = getFullIrbString(irbName, type.getDisplayName()).length();
         if (lengthOfFullString > irbNameMaxLength) {
