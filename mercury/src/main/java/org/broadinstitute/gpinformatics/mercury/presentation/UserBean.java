@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.mercury.entity.DB;
 
 import javax.annotation.Nullable;
 import javax.enterprise.context.SessionScoped;
@@ -24,19 +25,6 @@ import java.util.EnumSet;
 @Named
 @SessionScoped
 public class UserBean implements Serializable {
-
-    public enum Role {
-        Developer("Mercury-Developers"),
-        PM("Mercury-ProjectManagers"),
-        PDM("Mercury-ProductManagers"),
-        LabUser("Mercury-LabUsers"),
-        LabManager("Mercury-LabManagers");
-
-        public final String name;
-        Role(String name) {
-            this.name = name;
-        }
-    }
 
     @Nullable
     private BspUser bspUser;
@@ -84,9 +72,9 @@ public class UserBean implements Serializable {
 
     private String jiraUsername;
 
-    private final EnumSet<Role> roles = EnumSet.noneOf(Role.class);
+    private final EnumSet<DB.Role> roles = EnumSet.noneOf(DB.Role.class);
 
-    public Collection<Role> getRoles() {
+    public Collection<DB.Role> getRoles() {
         return ImmutableSet.copyOf(roles);
     }
 
@@ -140,7 +128,7 @@ public class UserBean implements Serializable {
         bspUser = bspUserList.getByUsername(username);
         updateBspStatus();
         updateJiraStatus(username);
-        for (Role role : Role.values()) {
+        for (DB.Role role : DB.Role.values()) {
             if (request.isUserInRole(role.name)) {
                 roles.add(role);
             }
@@ -183,7 +171,7 @@ public class UserBean implements Serializable {
     }
 
     public boolean isPDMUser() {
-        return roles.contains(Role.PDM);
+        return roles.contains(DB.Role.PDM);
     }
 
     public String getRolesString() {

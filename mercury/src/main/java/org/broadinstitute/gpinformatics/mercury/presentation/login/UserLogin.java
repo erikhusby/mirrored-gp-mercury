@@ -8,6 +8,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
@@ -103,8 +104,8 @@ public class UserLogin extends AbstractJsfBean {
 
     public enum UserRole {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
-        PDM("/orders/list", UserBean.Role.PDM.name),
-        PM("/projects/list", UserBean.Role.PM.name),
+        PDM("/orders/list", DB.Role.PDM.name),
+        PM("/projects/list", DB.Role.PM.name),
         OTHER("index", "");
 
         private static final String INDEX = "/index";

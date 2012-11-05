@@ -27,6 +27,7 @@ public class AuthorizationFilter implements Filter {
     @Inject AuthorizationManager manager;
 
     public static final String LOGIN_PAGE = "/security/login.xhtml";
+    public static final String HOME_PAGE = "/index";
     public static final String TARGET_PAGE_ATTRIBUTE = "targeted_page";
 
     /**
@@ -85,9 +86,9 @@ public class AuthorizationFilter implements Filter {
             if (!authorized) {
                 // FIXME: Need to report this error to the user!
                 // It is OK for now since we don't have any per-page authentication in Mercury.
-                String errorMessage = "The user '" + user +  "' doesn't have permission to log in.";
+                String errorMessage = "The user '" + user +  "' doesn't have permission to access the page: " + pageUri;
                 logger.warn(errorMessage);
-                redirectTo(request, servletResponse, LOGIN_PAGE);
+                redirectTo(request, servletResponse, HOME_PAGE);
                 return;
             }
         }
