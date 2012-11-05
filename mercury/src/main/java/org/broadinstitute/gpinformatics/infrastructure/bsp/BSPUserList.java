@@ -39,6 +39,11 @@ public class BSPUserList {
      * @return list of bsp users, sorted by lastname, firstname, username, email.
      */
     public List<BspUser> getUsers() {
+
+        if (users == null) {
+            refreshUsers();
+        }
+
         return users;
     }
 
@@ -112,11 +117,10 @@ public class BSPUserList {
     // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
-
         refreshUsers();
     }
 
-    public void refreshUsers() {
+    public synchronized void refreshUsers() {
         List<BspUser> rawUsers = this.bspManagerFactory.createUserManager().getUsers();
 
         if (rawUsers == null) {
@@ -143,7 +147,7 @@ public class BSPUserList {
             }
         });
 
-        users = Collections.synchronizedList(ImmutableList.copyOf(rawUsers));
+        users = ImmutableList.copyOf(rawUsers);
     }
 
     public static class QADudeUser extends BspUser {

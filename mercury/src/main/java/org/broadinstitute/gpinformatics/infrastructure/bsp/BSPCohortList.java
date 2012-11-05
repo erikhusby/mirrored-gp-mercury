@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.google.common.collect.ImmutableSet;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -30,11 +30,7 @@ public class BSPCohortList {
      */
     public Set<Cohort> getCohorts() {
         if (cohortList == null) {
-            try {
-                cohortList = Collections.synchronizedSet(cohortSearchService.getAllCohorts());
-            } catch (Exception ex) {
-                // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
-            }
+            refreshCohorts();
         }
 
         return cohortList;
@@ -132,8 +128,11 @@ public class BSPCohortList {
                cohort.getCategory().toLowerCase().contains(lowerQuery);
     }
 
-    public void refreshCohorts() {
-        cohortList = null;
-        getCohorts();
+    public synchronized void refreshCohorts() {
+        try {
+            cohortList = ImmutableSet.copyOf(cohortSearchService.getAllCohorts());
+        } catch (Exception ex) {
+            // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
+        }
     }
 }

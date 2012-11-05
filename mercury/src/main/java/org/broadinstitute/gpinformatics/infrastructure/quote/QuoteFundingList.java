@@ -1,10 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import com.google.common.collect.ImmutableSet;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -27,12 +28,9 @@ public class QuoteFundingList {
      * @return list of bsp users, sorted by cohortId.
      */
     public Set<Funding> getFunding() {
+        // any time the funding is null but we are asking for it, try and retrieve it again
         if (fundingList == null) {
-            try {
-                fundingList = Collections.synchronizedSet(quoteService.getAllFundingSources());
-            } catch (Exception ex) {
-                // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
-            }
+            refreshFunding();
         }
 
         return fundingList;
@@ -96,8 +94,11 @@ public class QuoteFundingList {
                funding.getMatchDescription().toLowerCase().contains(lowerQuery);
     }
 
-    public void refreshFunding() {
-        fundingList = null;
-        getFunding();
+    public synchronized void refreshFunding() {
+        try {
+            fundingList = ImmutableSet.copyOf(quoteService.getAllFundingSources());
+        } catch (Exception ex) {
+            // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
+        }
     }
 }
