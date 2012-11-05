@@ -28,7 +28,6 @@ public class LogoutHandler extends AbstractJsfBean {
     private UserBean userBean;
 
     public String logout() {
-
         // If logout is successful, the redirect location is irrelevant since our authorization filter
         // will force the user to the login page.
         String result = redirect("/index");
@@ -38,11 +37,11 @@ public class LogoutHandler extends AbstractJsfBean {
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
 
         try {
-            logger.debug("Attempting Logout");
+            logger.debug("Attempting to sign out");
             request.logout();
             userBean.logout();
         } catch (ServletException ex) {
-            logger.error("Logout Failed", ex);
+            logger.error("Sign out failed", ex);
             result = request.getRequestURI();
         }
 

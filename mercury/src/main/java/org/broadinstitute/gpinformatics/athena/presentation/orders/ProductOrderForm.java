@@ -302,9 +302,9 @@ public class ProductOrderForm extends AbstractJsfBean {
         order.submitProductOrder();
         productOrderDao.persist(order);
 
-        addFlashMessage(
+        addInfoMessage(
             MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
-            order.getTitle(), order.getJiraTicketKey(), action));
+            order.getTitle(), order.getJiraTicketKey(), action), "Product order");
         return redirect("view");
     }
 
