@@ -39,14 +39,14 @@ public class ProductOrderSampleEtl extends GenericEntityEtl {
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         ProductOrderSample entity = dao.findById(ProductOrderSample.class, entityId);
         if (entity == null) {
+            logger.info("Cannot export. ProductOrderSample having id " + entityId + " no longer exists.");
             return null;
-        } else {
-            return genericRecord(etlDateStr, false,
-                    entity.getProductOrderSampleId(),
-                    format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
-                    format(entity.getSampleName()),
-                    format(entity.getBillingStatus().getDisplayName()));
         }
+        return genericRecord(etlDateStr, false,
+                entity.getProductOrderSampleId(),
+                format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
+                format(entity.getSampleName()),
+                format(entity.getBillingStatus().getDisplayName()));
     }
 
     /** This entity does not make status records. */

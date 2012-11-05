@@ -45,14 +45,18 @@ public class ProductOrderStatusEtl extends GenericEntityEtl {
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object revObject) {
         ProductOrder entity = (ProductOrder)revObject;
-        if (entity == null || entity.getOrderStatus() == null) {
+        if (entity == null) {
+            logger.info("Cannot export.  Audited ProductOrder object is null.");
             return null;
-        } else {
-            return genericRecord(etlDateStr, false,
-                    entity.getProductOrderId(),
-                    format(revDate),
-                    format(entity.getOrderStatus().getDisplayName()));
+        } else if (entity.getOrderStatus() == null) {
+            logger.info("Cannot export. " + entity.getClass().getSimpleName() + " having id "
+                    + entity.getProductOrderId() + " has null orderStatus.");
+            return null;
         }
+        return genericRecord(etlDateStr, false,
+                entity.getProductOrderId(),
+                format(revDate),
+                format(entity.getOrderStatus().getDisplayName()));
     }
 
     /** This entity etl does not make entity records. */

@@ -39,19 +39,18 @@ public class PriceItemEtl  extends GenericEntityEtl {
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         PriceItem entity = dao.findById(PriceItem.class, entityId);
         if (entity == null) {
+            logger.info("Cannot export. PriceItem having id " + entityId + " no longer exists.");
             return null;
-        } else {
-            return genericRecord(etlDateStr, false,
-                    entity.getPriceItemId(),
-                    format(entity.getPriceItemId()),
-                    format(entity.getPlatform()),
-                    format(entity.getCategory()),
-                    format(entity.getName()),
-                    format(entity.getQuoteServerId()),
-                    format(entity.getPrice()),
-                    format(entity.getUnits()));
-
         }
+        return genericRecord(etlDateStr, false,
+                entity.getPriceItemId(),
+                format(entity.getPriceItemId()),
+                format(entity.getPlatform()),
+                format(entity.getCategory()),
+                format(entity.getName()),
+                format(entity.getQuoteServerId()),
+                format(entity.getPrice()),
+                format(entity.getUnits()));
     }
 
     /** This entity does not make status records. */

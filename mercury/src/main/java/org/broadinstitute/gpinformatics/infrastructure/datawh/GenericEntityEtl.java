@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 abstract public class GenericEntityEtl {
-    private Logger logger = Logger.getLogger(this.getClass());
+    Logger logger = Logger.getLogger(this.getClass());
 
     @Inject
     private AuditReaderEtl auditReaderEtl;
@@ -123,9 +123,7 @@ abstract public class GenericEntityEtl {
             changedEntityIds.removeAll(deletedEntityIds);
             for (Long entityId : changedEntityIds) {
                 String record =  entityRecord(etlDateStr, false, entityId);
-                if (record == null) {
-                    logger.info("Cannot export " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
-                } else {
+                if (record != null) {
                     writer.write(record);
                     writer.newLine();
                     recordCount++;

@@ -168,7 +168,7 @@ public class ExtractTransform {
             String s = rdr.readLine();
             return Long.parseLong(s);
         } catch (FileNotFoundException e) {
-            logger.error("Missing file: " + LAST_ETL_FILE);
+            logger.warn("Missing file: " + LAST_ETL_FILE);
             return 0L;
         } catch (IOException e) {
             logger.error("Error processing file " + LAST_ETL_FILE, e);

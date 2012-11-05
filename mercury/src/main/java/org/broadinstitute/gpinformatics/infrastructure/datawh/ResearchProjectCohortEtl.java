@@ -40,12 +40,12 @@ public class ResearchProjectCohortEtl  extends GenericEntityEtl {
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         ResearchProjectCohort entity = dao.getEntityManager().find(ResearchProjectCohort.class, entityId);
         if (entity == null) {
+            logger.info("Cannot export.  ResearchProjectCohort having id " + entityId + " no longer exists.");
             return null;
-        } else {
-            return genericRecord(etlDateStr, false,
-                    entity.getResearchProjectCohortId(),
-                    format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null));
         }
+        return genericRecord(etlDateStr, false,
+                entity.getResearchProjectCohortId(),
+                format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null));
     }
 
     /** This entity does not make status records. */

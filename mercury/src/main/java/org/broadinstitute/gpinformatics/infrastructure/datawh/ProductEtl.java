@@ -39,20 +39,20 @@ public class ProductEtl  extends GenericEntityEtl {
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         Product entity = dao.findById(Product.class, entityId);
         if (entity == null) {
+            logger.info("Cannot export.  Product having id " + entityId + " no longer exists.");
             return null;
-        } else {
-            return genericRecord(etlDateStr, false,
-                    entity.getProductId(),
-                    format(entity.getProductName()),
-                    format(entity.getPartNumber()),
-                    format(entity.getAvailabilityDate()),
-                    format(entity.getDiscontinuedDate()),
-                    format(entity.getExpectedCycleTimeSeconds()),
-                    format(entity.getGuaranteedCycleTimeSeconds()),
-                    format(entity.getSamplesPerWeek()),
-                    format(entity.isTopLevelProduct()),
-                    format(entity.getWorkflowName()));
         }
+        return genericRecord(etlDateStr, false,
+                entity.getProductId(),
+                format(entity.getProductName()),
+                format(entity.getPartNumber()),
+                format(entity.getAvailabilityDate()),
+                format(entity.getDiscontinuedDate()),
+                format(entity.getExpectedCycleTimeSeconds()),
+                format(entity.getGuaranteedCycleTimeSeconds()),
+                format(entity.getSamplesPerWeek()),
+                format(entity.isTopLevelProduct()),
+                format(entity.getWorkflowName()));
     }
 
     /** This entity does not make status records. */

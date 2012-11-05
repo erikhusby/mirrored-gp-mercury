@@ -38,14 +38,19 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         ProductOrderAddOn entity = dao.findById(ProductOrderAddOn.class, entityId);
-        if (entity == null || entity.getAddOn() == null) {
+        if (entity == null) {
+            logger.info("Cannot export.  ProductOrderAddOn having id " + entityId + " no longer exists.");
             return null;
         } else {
-            return genericRecord(etlDateStr, false,
-                    entity.getProductOrderAddOnId(),
-                    format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
-                    format(entity.getAddOn().getProductId()));
+            if (entity.getAddOn() == null) {
+                logger.info("Cannot export. ProductOrderAddOn having id " + entityId + " has null AddOn.");
+                return null;
+            }
         }
+        return genericRecord(etlDateStr, false,
+                entity.getProductOrderAddOnId(),
+                format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
+                format(entity.getAddOn().getProductId()));
     }
 
     /** This entity does not make status records. */

@@ -39,17 +39,24 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         ProjectPerson entity = dao.getEntityManager().find(ProjectPerson.class, entityId);
-        if (entity == null) return null;
-
+        if (entity == null) {
+            logger.info("Cannot export.  ProjectPerson having id " + entityId + " no longer exists.");
+            return null;
+        }
         Long personId = entity.getPersonId();
-        if (personId == null) return null;
-
-        Person person = dao.getEntityManager().find(Person.class, personId);
+        Person person = null;
+        if (personId != null) {
+            person = dao.getEntityManager().find(Person.class, personId);
+        }
+        if (person == null) {
+            logger.info("Cannot export.  Person having id " + entityId + " no longer exists.");
+            return null;
+        }
 
         return genericRecord(etlDateStr, false,
                 entity.getProjectPersonId(),
                 format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),
-                format(entity.getRole() != null ? entity.getRole().toString() : null));
+                format(entity.getRole() != null ? entity.getRole().toString() : null),
                 format(entity.getPersonId()),
                 format(person.getFirstName()),
                 format(person.getLastName()),

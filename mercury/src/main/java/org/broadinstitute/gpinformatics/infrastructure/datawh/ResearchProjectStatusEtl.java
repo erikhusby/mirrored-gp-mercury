@@ -45,14 +45,18 @@ public class ResearchProjectStatusEtl extends GenericEntityEtl {
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object revObject) {
         ResearchProject entity = (ResearchProject)revObject;
-        if (entity == null || entity.getStatus() == null) {
+        if (entity == null) {
+            logger.info("Cannot export.  Audited ResearchProject object is null.");
             return null;
-        } else {
-            return genericRecord(etlDateStr, false,
-                    entity.getResearchProjectId(),
-                    format(revDate),
-                    format(entity.getStatus().getDisplayName()));
+        } else if (entity.getStatus() == null) {
+            logger.info("Cannot export. " + entity.getClass().getSimpleName() + " having id "
+                    + entity.getResearchProjectId() + " has null status.");
+            return null;
         }
+        return genericRecord(etlDateStr, false,
+                entity.getResearchProjectId(),
+                format(revDate),
+                format(entity.getStatus().getDisplayName()));
     }
 
     /** This entity etl does not make entity records. */

@@ -39,14 +39,14 @@ public class BillableItemEtl extends GenericEntityEtl {
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         BillableItem entity = dao.findById(BillableItem.class, entityId);
         if (entity == null) {
+            logger.info("Cannot export. BillableItem having id " + entityId + " no longer exists.");
             return null;
-        } else {
-            return genericRecord(etlDateStr, false,
-                    entity.getBillableItemId(),
-                    format(entity.getProductOrderSample() == null ? null : entity.getProductOrderSample().getProductOrderSampleId()),
-                    format(entity.getPriceItem() == null ? null : entity.getPriceItem().getPriceItemId()),
-                    format(entity.getCount()));
         }
+        return genericRecord(etlDateStr, false,
+                entity.getBillableItemId(),
+                format(entity.getProductOrderSample() == null ? null : entity.getProductOrderSample().getProductOrderSampleId()),
+                format(entity.getPriceItem() == null ? null : entity.getPriceItem().getPriceItemId()),
+                format(entity.getCount()));
     }
 
     /** This entity does not make status records. */

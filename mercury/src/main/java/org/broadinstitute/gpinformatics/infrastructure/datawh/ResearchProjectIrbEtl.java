@@ -38,15 +38,15 @@ public class ResearchProjectIrbEtl  extends GenericEntityEtl {
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         ResearchProjectIRB entity = dao.getEntityManager().find(ResearchProjectIRB.class, entityId);
-        if (entity == null || entity.getIrbType() == null) {
+        if (entity == null) {
+            logger.info("Cannot export. ResearchProjectIRB having id " + entityId + " no longer exists.");
             return null;
-        } else {
-            return genericRecord(etlDateStr, false,
-                    entity.getResearchProjectIRBId(),
-				 format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null)<
-                    format(entity.getIrb()),
-                    format(entity.getIrbType().getDisplayName()));
         }
+        return genericRecord(etlDateStr, false,
+                entity.getResearchProjectIRBId(),
+                format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),
+                format(entity.getIrb()),
+                format(entity.getIrbType() != null ? entity.getIrbType().getDisplayName() : null));
     }
 
     /** This entity does not make status records. */
