@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.control;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCacheControl;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 
 import javax.ejb.Schedule;
@@ -25,6 +26,9 @@ public class AthenaGlobalCacheControl extends AbstractCacheControl {
     @Inject
     private QuoteFundingList fundingList;
 
+    @Inject
+    private PriceListCache priceListCache;
+
     private static final int MAX_SIZE = 100000;
 
     private int maxCacheSize = MAX_SIZE;
@@ -34,6 +38,7 @@ public class AthenaGlobalCacheControl extends AbstractCacheControl {
     public void invalidateCache() {
         cohortList.refreshCohorts();
         userList.refreshUsers();
+        priceListCache.refreshPriceList();
         fundingList.refreshFunding();
     }
 

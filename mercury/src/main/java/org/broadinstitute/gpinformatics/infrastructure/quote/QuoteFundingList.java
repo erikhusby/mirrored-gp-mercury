@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -20,12 +19,14 @@ import java.util.Set;
 // and does appear to work.  Much to learn about CDI still...
 @Singleton
 public class QuoteFundingList {
-    private Log logger = LogFactory.getLog(QuoteFundingList.class);
 
     private Set<Funding> fundingList;
 
     @Inject
     private PMBQuoteService quoteService;
+
+    @Inject
+    private Log logger;
 
     /**
      * @return list of bsp users, sorted by cohortId.
