@@ -6,13 +6,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.infrastructure.DataTableFilteredValuesBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.login.UserLogin;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
-import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +30,9 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
 
     @Inject
     private ProductDao productDao;
+
+    @Inject
+    private UserBean userBean;
 
     private ProductsDataModel productsDataModel;
 
@@ -91,11 +92,6 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         filteredValuesBean.setFilteredValues(filteredValues);
     }
 
-    private static boolean isUserPDM() {
-        HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-        return request.isUserInRole(UserLogin.PRODUCT_MANAGER_ROLE);
-    }
-
     /**
      * Used for auto-complete in the UI, given a search term
      * @param search list of search terms, whitespace separated. If more than one term is present, all terms must
@@ -107,10 +103,9 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         String[] searchStrings = search.toLowerCase().split("\\s");
 
         Iterable<Product> possiblyNonPDMFilteredProducts;
-        if (isUserPDM()) {
+        if (userBean.isPDMUser()) {
             possiblyNonPDMFilteredProducts = getProductsDataModel();
-        }
-        else {
+        } else {
             List<Product> nonPDMFilteredProducts = new ArrayList<Product>();
             for (Product product : getProductsDataModel()) {
                 if (! product.isPdmOrderableOnly()) {
@@ -141,12 +136,15 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
     public List<Product> searchProduct(String query) {
         List<Product> allProducts = productDao.findProducts();
         List<Product> products = new ArrayList<Product>();
-        for ( Product product : allProducts ) {
-            final String queryCapitalized = query.toUpperCase();
-            if ((product.getPartNumber().toUpperCase().contains(queryCapitalized) || product.getProductName().toUpperCase().contains(queryCapitalized) ||
-                    product.getProductFamily().getName().toUpperCase().contains(queryCapitalized)
-            ) && ( product.isAvailable() || (product.getAvailabilityDate() != null && product.getAvailabilityDate().after( new Date() )) )) {
-                products.add( product );
+        Date today = new Date();
+        for (Product product : allProducts) {
+            String queryCapitalized = query.toUpperCase();
+            if ((product.isAvailable() ||
+                 (product.getAvailabilityDate() != null && product.getAvailabilityDate().after(today))) &&
+                (product.getPartNumber().toUpperCase().contains(queryCapitalized) ||
+                 product.getProductName().toUpperCase().contains(queryCapitalized) ||
+                 product.getProductFamily().getName().toUpperCase().contains(queryCapitalized))) {
+                products.add(product);
             }
         }
         return products;

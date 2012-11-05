@@ -24,10 +24,6 @@ import java.io.IOException;
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
 
-    public static final String PRODUCT_MANAGER_ROLE = "Mercury-ProductManagers";
-
-    public static final String PROJECT_MANAGER_ROLE = "Mercury-ProjectManagers";
-
     private String username;
 
     private String password;
@@ -72,7 +68,7 @@ public class UserLogin extends AbstractJsfBean {
             targetPage = role.landingPage;
             // HACK needed by Arquillian, see FIXME in UserBean.
             userBean.setBspUserList(bspUserList);
-            userBean.login(username);
+            userBean.login(request);
 
             if (!userBean.isValidBspUser()) {
                 logger.error(userBean.getBspStatus() + ": " + username);
@@ -107,8 +103,8 @@ public class UserLogin extends AbstractJsfBean {
 
     public enum UserRole {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
-        PDM("/orders/list", PRODUCT_MANAGER_ROLE),
-        PM("/projects/list", PROJECT_MANAGER_ROLE),
+        PDM("/orders/list", UserBean.Role.PDM.name),
+        PM("/projects/list", UserBean.Role.PM.name),
         OTHER("index", "");
 
         private static final String INDEX = "/index";
