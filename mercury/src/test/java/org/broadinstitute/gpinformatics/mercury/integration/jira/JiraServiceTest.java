@@ -107,7 +107,7 @@ public class JiraServiceTest {
 
         setUp();
         try {
-            service.addWatcher("PDO-1", "squid");
+            service.addWatcher("PDO-8", "squid");
         } catch (IOException iox) {
             Assert.fail(iox.getMessage());
         }
@@ -118,7 +118,7 @@ public class JiraServiceTest {
 
         setUp();
         try {
-            service.addLink(AddIssueLinkRequest.LinkType.Related, "PDO-1", "RP-1");
+            service.addLink(AddIssueLinkRequest.LinkType.Related, "PDO-8", "RP-1");
         } catch (IOException iox) {
             Assert.fail(iox.getMessage());
         }
