@@ -108,9 +108,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     @Override
     public void updateIssue(String key, Collection<CustomField> customFields) throws IOException {
-        UpdateIssueRequest request = new UpdateIssueRequest(customFields);
-        String url = getBaseUrl() + "/issue/" + key;
-        WebResource webResource = getJerseyClient().resource(url);
+        UpdateIssueRequest request = new UpdateIssueRequest(key, customFields);
+        WebResource webResource = getJerseyClient().resource(request.getUrl(getBaseUrl()));
         put(webResource, request);
     }
 

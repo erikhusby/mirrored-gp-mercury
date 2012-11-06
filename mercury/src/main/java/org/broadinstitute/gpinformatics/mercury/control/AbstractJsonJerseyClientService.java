@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
 import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -112,7 +113,11 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
     protected void put(WebResource webResource, Object requestPojo) throws IOException {
         final ByteArrayOutputStream baos = writeValue(requestPojo);
         logger.warn("PUT request: " + baos.toString());
-        setJsonMimeTypes(webResource).put(baos.toString());
+        try {
+            setJsonMimeTypes(webResource).put(baos.toString());
+        } catch (UniformInterfaceException e) {
+            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+        }
     }
 
 
