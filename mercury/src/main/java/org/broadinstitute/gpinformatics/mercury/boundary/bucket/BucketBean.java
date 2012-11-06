@@ -123,7 +123,7 @@ public class BucketBean {
 
         try {
             if(null == batchTicket) {
-                bucketBatch.createJiraTicket ();
+                bucketBatch.createJiraTicket ( actor.getLogin() );
             } else {
                 bucketBatch.setJiraTicket(new JiraTicket(batchTicket, batchTicket));
             }

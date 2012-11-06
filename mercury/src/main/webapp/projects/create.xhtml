@@ -29,7 +29,9 @@
                     <div class="controls">
                         <p:inputText id="name"
                                      value="#{researchProjectDetail.project.title}" size="50" required="true"
-                                     maxlength="4000"/>
+                                     maxlength="4000">
+                            <f:validateLength maximum="4000"/>
+                        </p:inputText>
                         <p:watermark for="name" value="Enter the name of the research project"/>
                         <p:message for="name"/>
                     </div>
@@ -39,9 +41,9 @@
                 <div class="control-group">
                     <p:outputLabel for="synopsis" value="Synopsis" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="100" maxlength="4000" rows="5" required="true" counter="counter" counterTemplate="{0} characters remaining">
+                        <p:editor id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="100" maxlength="4000" rows="5" required="true" counter="counter" counterTemplate="{0} characters remaining">
                             <f:validateLength maximum="4000"/>
-                        </p:inputTextarea>
+                        </p:editor>
                         <p:watermark for="synopsis" value="Enter scientific background of the research project in this space"/>
                         <p:message for="synopsis"/>
                         <h:outputText id="counter"/>
@@ -59,7 +61,7 @@
                             requiredMessage="There must be at least one project manager." scrollHeight="250">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="projectManagers" value="Type name to search"/>
@@ -77,7 +79,7 @@
                             converter="#{bspUserConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="broadPIs" value="Type name to search"/>
@@ -94,7 +96,7 @@
                             converter="#{bspUserConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="scientists" value="Type name to search"/>
@@ -111,7 +113,7 @@
                             converter="#{bspUserConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="externalCollaborators" value="Type name to search"/>
@@ -160,7 +162,7 @@
                         <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}"
                             completeMethod="#{researchProjectForm.completeIrbs}" var="irb" scrollHeight="250"
                             itemLabel="#{irb.name}: #{irb.irbType.displayName}" itemValue="#{irb}"
-                            converter="#{irbConverter}" multiple="true" maxlength="250">
+                            converter="#{irbConverter}" multiple="true" maxlength="#{researchProjectForm.irbMaxLength}">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{irb.name}: #{irb.irbType.displayName}</div>
                             </p:column>
@@ -176,7 +178,9 @@
                 <div class="control-group">
                     <p:outputLabel for="irbNotes" value="IRB Notes" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50" maxlength="250"/>
+                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50" maxlength="250">
+                            <f:validateLength maximum="250"/>
+                        </p:inputText>
                         <p:watermark for="irbNotes" value="Enter notes about the above IRBs"/>
                     </div>
                 </div>

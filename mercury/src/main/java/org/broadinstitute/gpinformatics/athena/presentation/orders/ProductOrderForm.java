@@ -71,8 +71,6 @@ public class ProductOrderForm extends AbstractJsfBean {
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
-    private final List<String> sampleValidationMessages = new ArrayList<String>();
-
     public UIInput getEditIdsCacheBinding() {
         return editIdsCacheBinding;
     }
@@ -91,10 +89,6 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     public SamplesDialog getSamplesDialog() {
         return samplesDialog;
-    }
-
-    public List<String> getSampleValidationMessages() {
-        return sampleValidationMessages;
     }
 
     public String getFundsRemaining() {
@@ -178,8 +172,16 @@ public class ProductOrderForm extends AbstractJsfBean {
         this.selectedAddOns = selectedAddOns;
     }
 
+    public boolean getHasProduct() {
+        return conversationData.getProduct() != null;
+    }
+
     public List<String> getAddOns() {
         return conversationData.getAddOnsForProduct();
+    }
+
+    public Product getProduct() {
+        return conversationData.getProduct();
     }
 
     public void setAddOns(@Nonnull List<String> addOns) {
@@ -187,7 +189,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     /**
-     * Set up the add ons when the product selection event happens
+     * Set up the Add-ons when the product selection event happens
      *
      * @param productSelectEvent The selection event on the project
      */
@@ -197,17 +199,16 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     /**
-     * Get all the add on products for the specified product
+     * Get all the Add-on products for the specified product
      *
      * @param product The product
      */
     public void setupAddOns(Product product) {
-        conversationData.setAddOnsForProduct(new ArrayList<String>());
-        if (product != null) {
-            for (Product productAddOn : product.getAddOns()) {
-                conversationData.getAddOnsForProduct().add(productAddOn.getProductName());
-            }
-        }
+        conversationData.setProduct(product);
+    }
+
+    public String noAddOnsString() {
+        return MessageFormat.format("The Product ''{0}'' has no Add-ons.", getProduct().getProductName());
     }
 
     /**
@@ -263,26 +264,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
     }
 
-    private static void checkCount(int count, String message, List<String> output) {
-        if (count != 0) {
-            output.add(MessageFormat.format(message, count));
-        }
-    }
-
-    /**
-     * Check to see if the samples are valid.
-     * - for all BSP formatted sample IDs, do we have BSP data?
-     * - all BSP samples are RECEIVED
-     * - all BSP samples' stock is ACTIVE
-     */
-    private void validateSamples() {
-        sampleValidationMessages.clear();
-        ProductOrder order = productOrderDetail.getProductOrder();
-        checkCount(order.getMissingBspMetaDataCount(), "Samples Missing BSP Data: {0}", sampleValidationMessages);
-        checkCount(order.getBspSampleCount() - order.getActiveSampleCount(), "Samples Not ACTIVE: {0}", sampleValidationMessages);
-        checkCount(order.getBspSampleCount() - order.getReceivedSampleCount(), "Samples Not RECEIVED: {0}", sampleValidationMessages);
-    }
-
     /**
      * Load local state before rendering the sample table.
      */
@@ -298,7 +279,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
 
         productOrderDetail.load();
-        validateSamples();
     }
 
     // FIXME: handle db store errors, JIRA server errors.
@@ -322,9 +302,9 @@ public class ProductOrderForm extends AbstractJsfBean {
         order.submitProductOrder();
         productOrderDao.persist(order);
 
-        addFlashMessage(
+        addInfoMessage(
             MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
-            order.getTitle(), order.getJiraTicketKey(), action));
+            order.getTitle(), order.getJiraTicketKey(), action), "Product order");
         return redirect("view");
     }
 

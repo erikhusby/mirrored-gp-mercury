@@ -50,8 +50,11 @@ public class AthenaClientServiceStub implements AthenaClientService {
         helper Methods to create test data.  Moved from Test cases to aid stub implementation
      */
     public static ProductOrder createDummyProductOrder() {
-        PriceItem priceItem = new PriceItem(PriceItem.Platform.GP, PriceItem.Category.EXOME_SEQUENCING_ANALYSIS,
-                                    PriceItem.Name.EXOME_EXPRESS, "testQuoteId");
+        PriceItem priceItem = new PriceItem(
+                PriceItem.PLATFORM_GENOMICS,
+                PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
+                PriceItem.NAME_EXOME_EXPRESS,
+                "testQuoteId");
         Product dummyProduct = createDummyProduct();
         dummyProduct.addPriceItem(priceItem);
         ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
@@ -65,7 +68,6 @@ public class AthenaClientServiceStub implements AthenaClientService {
         order.updateAddOnProducts(Collections.singletonList(createDummyProduct()));
         return order;
     }
-
 
     public static Product createDummyProduct() {
         return new Product("productName", new ProductFamily("ProductFamily"), "description",

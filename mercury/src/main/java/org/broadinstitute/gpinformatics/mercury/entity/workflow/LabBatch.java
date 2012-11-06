@@ -167,8 +167,9 @@ public class LabBatch {
 
     /**
      * Submits the contents of this Lab Batch to Jira to create a new LCSET Ticket
+     * @param reporter
      */
-    public void createJiraTicket () throws IOException {
+    public void createJiraTicket ( String reporter ) throws IOException {
 
 
         Map<String, CustomFieldDefinition> submissionFields = ServiceAccessUtility.getJiraCustomFields ();
@@ -181,7 +182,7 @@ public class LabBatch {
                 RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName () ), "", CustomField.SingleFieldType.TEXT ) );
 
         CreateIssueResponse batchTicket =
-                ServiceAccessUtility.createJiraTicket ( fetchJiraProject ().getKeyPrefix (),
+                ServiceAccessUtility.createJiraTicket ( fetchJiraProject ().getKeyPrefix (), reporter,
  /* TODO SGM:  Need a better solution.  Map product to issueType*/CreateIssueRequest.Fields.Issuetype.EXOME_EXPRESS,
                                                         batchName, "", listOfFields );
 
@@ -235,7 +236,7 @@ public class LabBatch {
      */
     @Transient
     public CreateIssueRequest.Fields.ProjectType fetchJiraProject () {
-        return CreateIssueRequest.Fields.ProjectType.LCSET;
+        return CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX;
     }
 
     /**

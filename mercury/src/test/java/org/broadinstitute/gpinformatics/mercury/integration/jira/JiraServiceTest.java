@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -34,6 +35,11 @@ public class JiraServiceTest {
         service = JiraServiceProducer.testInstance();
     }
 
+    /**
+     * Disabled this because had to change createIssue to pass the Reporter field. We should allow null for jira types
+     * that do not expose the reporter, so change the API to do that later.
+     */
+    @Test
     public void testCreation() {
 
         setUp();
@@ -41,7 +47,7 @@ public class JiraServiceTest {
 
             Map<String, CustomFieldDefinition> requiredFields=
                     service.getRequiredFields(new CreateIssueRequest.Fields.Project(
-                            CreateIssueRequest.Fields.ProjectType.LCSET.getKeyPrefix()),
+                            CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
                                               CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
 
             Collection<CustomField> customFieldList = new LinkedList<CustomField>();
@@ -57,7 +63,7 @@ public class JiraServiceTest {
 
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue( CreateIssueRequest.Fields.ProjectType.LCSET.getKeyPrefix(),
+                    service.createIssue(CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix(), null,
                                         CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL,
                                         "Summary created from Mercury", "Description created from Mercury",
                                         customFieldList);
@@ -88,7 +94,7 @@ public class JiraServiceTest {
                                                 "Test Exome Express", CustomField.SingleFieldType.TEXT ));
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix(),
+                    service.createIssue(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix(), "hrafal",
                                         CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER,
                                         "Athena Test case:::  Test new Summary Addition",
                                         "Athena Test Case:  Test description setting",customFieldList);
@@ -159,7 +165,7 @@ public class JiraServiceTest {
         setUp();
         Map<String, CustomFieldDefinition> customFields = null;
         customFields = service.getRequiredFields(new CreateIssueRequest.Fields.Project(
-                CreateIssueRequest.Fields.ProjectType.LCSET.getKeyPrefix()),
+                CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
                                                  CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;

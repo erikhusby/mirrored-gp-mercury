@@ -69,6 +69,7 @@ public class BucketResourceTest extends ContainerTest {
         Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
 
         Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry1, testEntry2, testEntry3 ) );
+        //TODO SGM Flush to test
 
         Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertEquals(1, testEntry1.getLabVessel().getInPlaceEvents().size());

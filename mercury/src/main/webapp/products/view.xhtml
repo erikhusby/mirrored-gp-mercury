@@ -53,7 +53,7 @@
             <div class="control-group">
                 <label class="control-label">Product Family</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.product.productFamily.displayName}</div>
+                    <div class="form-value">#{productView.product.productFamily.name}</div>
                 </div>
             </div>
 
@@ -138,7 +138,7 @@
 
             <p:dataTable value="#{productView.addOns}" var="addOn" >
                 <f:facet name="header">
-                    <h:outputText value="Add Ons" />
+                    <h:outputText value="Add-ons" />
                 </f:facet>
 
                 <p:column>  <!-- sortBy="#{addOn.partNumber}" sortFunction="#{productList.compare}"> -->
@@ -155,11 +155,11 @@
                     </f:facet>
                     <h:outputText value="#{addOn.productName}"/>
                 </p:column>
-                <p:column>  <!-- sortBy="#{addOn.productFamily.displayName}" sortFunction="#{productList.compare}"> -->
+                <p:column>  <!-- sortBy="#{addOn.productFamily.name}" sortFunction="#{productList.compare}"> -->
                     <f:facet name="header">
                         <h:outputText value="Product Family"/>
                     </f:facet>
-                    <h:outputText value="#{addOn.productFamily.displayName}"/>
+                    <h:outputText value="#{addOn.productFamily.name}"/>
                 </p:column>
 
             </p:dataTable>

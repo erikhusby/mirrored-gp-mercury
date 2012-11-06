@@ -79,6 +79,13 @@ public class ProductFormConversationData implements Serializable {
     }
 
 
+    public void endConversation() {
+        if (! conversation.isTransient()) {
+            conversation.end();
+        }
+    }
+
+
     /**
      * Get all the latest PriceItems as visualized on the Create / Edit Product page
      * @return

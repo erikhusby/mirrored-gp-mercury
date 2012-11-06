@@ -29,7 +29,7 @@
                     <div class="controls">
                         <p:selectOneMenu id="productFamily" value="#{productForm.product.productFamily}" converter="#{productFamilyConverter}" required="true">
                             <f:selectItem itemLabel="Select a Product Family" itemValue="" />
-                            <f:selectItems value="#{productForm.productFamilies}" var="fam" itemLabel="#{fam.displayName}"  itemValue="#{fam}" />
+                            <f:selectItems value="#{productForm.productFamilies}" var="fam" itemLabel="#{fam.name}"  itemValue="#{fam}" />
                         </p:selectOneMenu>
                     </div>
                 </div>
@@ -179,7 +179,7 @@
                 </div>
 
                 <div class="control-group">
-                    <p:outputLabel for="addOns" value="Add Ons" styleClass="control-label"/>
+                    <p:outputLabel for="addOns" value="Add-ons" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}"
                                         var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}"
@@ -187,8 +187,7 @@
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{product.productName} - #{product.partNumber}</div>
                                 <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>
-                                <div class="ac-dropdown-subtext">#{product.productFamily.displayName}</div>
-                                <div class="ac-dropdown-subtext">#{product.inputRequirements}</div>
+                                <div class="ac-dropdown-subtext">#{product.productFamily.name}</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="addOns" value="Type text to search"/>
@@ -201,10 +200,22 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary" rendered="#{productForm.creating}" />
+                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary" rendered="#{ ! productForm.creating}" >
+                                    <!-- GPLIM-208 adding this parameter to the command button forces our converter to run
+                                         in preference to taking the local value (the detached Product instance) stored in
+                                         our components.  forcing the converter to run gives us our persistent Product entity.
+
+                                         this parameter value seems to get lost after failing form validation so
+                                         we have to get it out of the request -->
+                                    <f:param name="product" value="#{request.getParameter('product')}" />
+                                </p:commandButton>
                             </div>
                             <div class="span1">
-                                <h:link outcome="list" value="Cancel"/>
+                                <h:link outcome="list" value="Cancel" rendered="#{productForm.product.productId == null}"/>
+                                <h:link outcome="view" value="Cancel" rendered="#{productForm.product.productId != null}">
+                                    <f:param name="product" value="#{productForm.product.businessKey}"/>
+                                </h:link>
                             </div>
                         </div>
                     </div>

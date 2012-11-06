@@ -54,9 +54,6 @@ public class ProductBean extends AbstractJsfBean implements Serializable {
         return items;
     }
 
-//    public List<SelectItem> getAllProductFamilies() {
-//        return BoundaryUtils.buildEnumFilterList(ProductFamily.ProductFamilyName.values());
-//    }
 
     public List<ProductFamily> getProductFamilies() {
         return  productFamilyDao.findAll();
