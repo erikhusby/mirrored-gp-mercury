@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -31,6 +32,9 @@ public class BucketBean {
 
     @Inject
     private LabEventFactory labEventFactory;
+
+    @Inject
+    private BucketEntryDao bucketEntryDao;
 
     public BucketBean () {
     }
@@ -69,7 +73,7 @@ public class BucketBean {
      * {@link org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler handler}
      * can also make this gesture when it processes a message.
      *
-     * @param actor
+     * @param actor   TODO SGM or JMT, replace with User ID string or BSPUserList ID
      * @param bucketEntries
      *
      */
@@ -116,11 +120,6 @@ public class BucketBean {
         eventList.addAll(labEventFactory.buildFromBatchRequestsDBFree ( pdoKeyToVesselMap, actor, bucketBatch ));
 
 
-        for ( BucketEntry currEntry : bucketEntries ) {
-            currEntry.getBucketExistence().removeEntry(currEntry);
-            //TODO SGM call DAO to delete bucket entries
-        }
-
         try {
             if(null == batchTicket) {
                 bucketBatch.createJiraTicket ( actor.getLogin() );
@@ -136,6 +135,12 @@ public class BucketBean {
             LOG.error("Error attempting to create Lab Batch in Jira");
             throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
         }
+
+        for ( BucketEntry currEntry : bucketEntries ) {
+            currEntry.getBucketExistence().removeEntry(currEntry);
+            //TODO SGM call DAO to delete bucket entries
+        }
+
 
     }
 

@@ -12,6 +12,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -43,12 +44,14 @@ public class BucketEntry  {
     private Long bucketEntryId;
 
     @ManyToOne (cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn (name = "lab_vessel_id")
     private LabVessel labVessel;
 
     @Column(name = "po_business_key")
     private String poBusinessKey;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn (name = "bucket_existence_id")
     private Bucket bucketExistence;
 
     /*
@@ -120,6 +123,10 @@ public class BucketEntry  {
 
     public void setProductOrderRanking ( Integer productOrderRanking ) {
         this.productOrderRanking = productOrderRanking;
+    }
+
+    public Long getBucketEntryId () {
+        return bucketEntryId;
     }
 
     @Override

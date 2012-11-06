@@ -6,6 +6,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
+import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -16,6 +20,9 @@ import javax.persistence.criteria.Root;
  *         Date: 10/31/12
  *         Time: 10:58 AM
  */
+@Stateful
+@TransactionAttribute ( TransactionAttributeType.SUPPORTS)
+@RequestScoped
 public class BucketEntryDao extends GenericDao {
 
     public BucketEntry findByVesselAndPO(LabVessel vessel, String productOrder) {

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
@@ -45,6 +46,9 @@ import java.util.logging.Logger;
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
 @BatchSize(size = 50)
 public abstract class LabVessel {
+
+    //todo SGM:  create comparator for sorting Containers THEN Create getter that gets sorted containers
+
 
     private final static Logger logger = Logger.getLogger(LabVessel.class.getName());
 
@@ -97,6 +101,9 @@ public abstract class LabVessel {
     @JoinTable(schema = "mercury")
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
 
+    @OneToMany(mappedBy = "labVessel")
+    private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
+
     @Embedded
     private UserRemarks userRemarks;
 
@@ -114,7 +121,7 @@ public abstract class LabVessel {
     protected LabVessel() {
     }
 
-    private Long getLabVesselId() {
+    public Long getLabVesselId() {
         return labVesselId;
     }
 
@@ -477,6 +484,10 @@ public abstract class LabVessel {
 
     public boolean isSampleAuthority() {
         return !mercurySamples.isEmpty();
+    }
+
+    public Set<BucketEntry> getBucketEntries () {
+        return Collections.unmodifiableSet(bucketEntries);
     }
 
     /**

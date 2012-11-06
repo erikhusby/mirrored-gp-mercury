@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -21,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -33,8 +35,13 @@ import static junit.framework.Assert.*;
 @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
 public class PlasticToProductOrderTest extends ContainerTest {
 
+    @Inject
+    BucketDao bucketDao;
+
+
     private static final String PRODUCT_ORDER_KEY = "PDO-1";
     public static final String BUCKET_REFERENCE_NAME = "Start";
+    private Bucket bucket;
 
     public void test_simple_tube_in_rack_maps_to_pdo() {
 
@@ -43,7 +50,13 @@ public class PlasticToProductOrderTest extends ContainerTest {
         WorkflowBucketDef bucketDef = new WorkflowBucketDef(BUCKET_REFERENCE_NAME);
 
 //        BucketResource bucketResource = new BucketResource( bucketDef );
-        Bucket bucket = new Bucket(bucketDef.getName());
+        bucket = new Bucket (bucketDef.getName());
+        bucketDao.persist(bucket);
+        bucketDao.flush();
+        bucketDao.clear();
+
+        bucket = bucketDao.findByName(BUCKET_REFERENCE_NAME);
+
         BettaLimsMessageFactory messageFactory = new BettaLimsMessageFactory();
         LabEventFactory eventFactory = new LabEventFactory(new PersonDAO());
 
@@ -64,8 +77,8 @@ public class PlasticToProductOrderTest extends ContainerTest {
         LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree ( plateXfer, barcodeToTubeMap,
                                                                                           null );
 
-        BucketEntry bucketEntry = bucketResource.add(tube, PRODUCT_ORDER_KEY, bucket);
-        assertTrue(bucket.contains(bucketEntry));
+        BucketEntry bucketEntry = bucketResource.add(tube, PRODUCT_ORDER_KEY, bucket );
+        assertTrue ( bucket.contains ( bucketEntry ) );
 
         final Map<LabVessel,String> samplePOMapFromAthena = new HashMap<LabVessel, String>();
         samplePOMapFromAthena.put(bucketEntry.getLabVessel(),bucketEntry.getPoBusinessKey ());
@@ -74,7 +87,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
         testEntries.add ( bucketEntry );
         bucketResource.start ( testEntries, new Person ( "hrafal", "Howard", "Rafal" ) );
 
-        Assert.assertFalse (bucketEntry.getLabVessel().getInPlaceEvents().isEmpty());
+        Assert.assertFalse ( bucketEntry.getLabVessel ().getInPlaceEvents ().isEmpty () );
         boolean doesEventHavePDO = false;
         for (LabEvent labEvent : bucketEntry.getLabVessel().getInPlaceEvents ()) {
             if (labEvent.getProductOrderId()!= null) {
@@ -87,7 +100,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
             assertTrue(doesEventHavePDO);
         }
 
-        assertFalse(bucket.contains(bucketEntry));
+        assertFalse( bucket.contains ( bucketEntry ));
         // pull tubes from bucket: this creates a LabEvent for every
         // container pulled from the bucket, and the LabEvent calls out
         // a PDO for each sample

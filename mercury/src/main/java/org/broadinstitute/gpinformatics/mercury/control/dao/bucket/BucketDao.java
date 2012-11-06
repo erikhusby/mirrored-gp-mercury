@@ -5,7 +5,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket_;
 
 import javax.annotation.Nonnull;
+import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.enterprise.context.RequestScoped;
 
+@Stateful
+@TransactionAttribute( TransactionAttributeType.SUPPORTS)
+@RequestScoped
 public class BucketDao extends GenericDao {
 
     /**

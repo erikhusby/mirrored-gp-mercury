@@ -27,7 +27,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table (schema = "mercury", name = "bucket",
-        uniqueConstraints = @UniqueConstraint (columnNames = {"bucket_definition_name"}))
+        uniqueConstraints = @UniqueConstraint (columnNames = {"bucketDefinitionName"}))
 public class Bucket {
 
     // todo wire up to workflow definition
@@ -37,10 +37,10 @@ public class Bucket {
     @Id
     private Long bucketId;
 
-    @OneToMany (mappedBy = "bucketExistence", cascade = { CascadeType.PERSIST})
+    @OneToMany (mappedBy = "bucketExistence", cascade = { CascadeType.PERSIST, CascadeType.REMOVE})
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
-    @Column ( name = "bucket_definition_name")
+    @Column ()
     private String bucketDefinitionName;
 
     protected Bucket () {
@@ -104,4 +104,7 @@ public class Bucket {
         bucketEntries.remove(entryToRemove);
     }
 
+    public Long getBucketId () {
+        return bucketId;
+    }
 }
