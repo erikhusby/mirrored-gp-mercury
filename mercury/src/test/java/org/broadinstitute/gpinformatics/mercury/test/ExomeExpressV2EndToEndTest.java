@@ -21,7 +21,7 @@ public class ExomeExpressV2EndToEndTest {
         // Create Product Order (key lab personnel and PDMs are notified)
         // Define travel group (can be independent of product order)
         // {Create kit and Ship kit}
-        // Upload metadata through BSP portal
+        // - Upload metadata through BSP portal
         // {Receive samples} (There are some hooks into product order so the receipt team can direct samples)
         // 3 stars align notification
         // BSP notifies Mercury of existence of samples in plastic
@@ -32,8 +32,8 @@ public class ExomeExpressV2EndToEndTest {
         // BSP registers batch in Mercury
         // BSP Manual messaging for extractions, various batches
         // Bucket for Shearing
-        // Deck calls web service to verify source barcodes?
-        // Deck calls web service to validate next action against workflow and batch
+        // - Deck calls web service to verify source barcodes?
+        // - Deck calls web service to validate next action against workflow and batch
         // Decks (BSP and Sequencing) send messages to Mercury, first message auto-drains bucket
         // Various messages advance workflow (test JMS vs JAX-RS)
         // Non ExEx messages handled by BettaLIMS
@@ -41,13 +41,13 @@ public class ExomeExpressV2EndToEndTest {
         // Operator views recently handled plasticware
         // Operator visits check point page, chooses re-entry point for rework (type 1)
         // Operator makes note and adds attachment
-        // View batch RAP sheet, add items
-        // View sample RAP sheet, including notes
-        // View Product Order Status (Detail?), including rework and notes
-        // Mark plastic dead
+        // - View batch RAP sheet, add items
+        // - View sample RAP sheet, including notes
+        // - View Product Order Status (Detail?), including rework and notes
+        // - Mark plastic dead
         // Lookup plastic
-        // Search (future)
-        // PdM abandons sample (PMs notified)
+        // - Search (future)
+        // - PdM abandons sample (PMs notified)
         // Add library to queue for sequencing
         // Register library to MiSeq
         // Create pool group
