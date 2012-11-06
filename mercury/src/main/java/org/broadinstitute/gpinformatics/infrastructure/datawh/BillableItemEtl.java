@@ -42,16 +42,17 @@ public class BillableItemEtl extends GenericEntityEtl {
             logger.info("Cannot export. BillableItem having id " + entityId + " no longer exists.");
             return null;
         }
-        return genericRecord(etlDateStr, false,
+        return genericRecord(etlDateStr, isDelete,
                 entity.getBillableItemId(),
                 format(entity.getProductOrderSample() == null ? null : entity.getProductOrderSample().getProductOrderSampleId()),
                 format(entity.getPriceItem() == null ? null : entity.getPriceItem().getPriceItemId()),
-                format(entity.getCount()));
+                format(entity.getCount())
+        );
     }
 
     /** This entity does not make status records. */
     @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity) {
+    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
         return null;
     }
 

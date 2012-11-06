@@ -40,10 +40,11 @@ public class ResearchProjectStatusEtl extends GenericEntityEtl {
      * @param etlDateStr date
      * @param revDate Envers revision date
      * @param revObject the Envers versioned entity
+     * @param isDelete indicates deleted entity
      * @return delimited SqlLoader record, or null if entity does not support status recording
      */
     @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object revObject) {
+    String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete) {
         ResearchProject entity = (ResearchProject)revObject;
         if (entity == null) {
             logger.info("Cannot export.  Audited ResearchProject object is null.");
@@ -53,10 +54,11 @@ public class ResearchProjectStatusEtl extends GenericEntityEtl {
                     + entity.getResearchProjectId() + " has null status.");
             return null;
         }
-        return genericRecord(etlDateStr, false,
+        return genericRecord(etlDateStr, isDelete,
                 entity.getResearchProjectId(),
                 format(revDate),
-                format(entity.getStatus().getDisplayName()));
+                format(entity.getStatus().getDisplayName())
+        );
     }
 
     /** This entity etl does not make entity records. */

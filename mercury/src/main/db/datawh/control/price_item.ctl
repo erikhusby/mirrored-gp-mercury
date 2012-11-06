@@ -4,6 +4,7 @@ REPLACE INTO TABLE im_price_item
 FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"'
 TRAILING NULLCOLS
 (
+ line_number,
  etl_date DATE "YYYYMMDDHH24MISS",
  is_delete,
  price_item_id,

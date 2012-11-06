@@ -43,14 +43,15 @@ public class ResearchProjectCohortEtl  extends GenericEntityEtl {
             logger.info("Cannot export.  ResearchProjectCohort having id " + entityId + " no longer exists.");
             return null;
         }
-        return genericRecord(etlDateStr, false,
+        return genericRecord(etlDateStr, isDelete,
                 entity.getResearchProjectCohortId(),
-                format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null));
+                format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null)
+        );
     }
 
     /** This entity does not make status records. */
     @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity) {
+    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
         return null;
     }
 

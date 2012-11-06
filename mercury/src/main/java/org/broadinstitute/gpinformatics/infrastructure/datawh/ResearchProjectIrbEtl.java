@@ -42,16 +42,17 @@ public class ResearchProjectIrbEtl  extends GenericEntityEtl {
             logger.info("Cannot export. ResearchProjectIRB having id " + entityId + " no longer exists.");
             return null;
         }
-        return genericRecord(etlDateStr, false,
+        return genericRecord(etlDateStr, isDelete,
                 entity.getResearchProjectIRBId(),
                 format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),
                 format(entity.getIrb()),
-                format(entity.getIrbType() != null ? entity.getIrbType().getDisplayName() : null));
+                format(entity.getIrbType() != null ? entity.getIrbType().getDisplayName() : null)
+        );
     }
 
     /** This entity does not make status records. */
     @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity) {
+    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
         return null;
     }
 

@@ -8,7 +8,6 @@ import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -56,9 +55,10 @@ abstract public class GenericEntityEtl {
      * @param etlDateStr date
      * @param revDate Envers revision date
      * @param revObject the Envers versioned entity
+     * @param isDelete indicates deleted entity
      * @return delimited SqlLoader record, or null if entity does not support status recording
      */
-    abstract String entityStatusRecord(String etlDateStr, Date revDate, Object revObject);
+    abstract String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete);
 
     /** Returns true if entity etl record supports entity ETL via primary key.  Status records do not. */
     abstract boolean isEntityEtl();
@@ -74,81 +74,54 @@ abstract public class GenericEntityEtl {
      * @return the number of records created in the data file (deletes and modifies).
      */
     public int doEtl(long lastRev, long etlRev, String etlDateStr) {
-        int recordCount = 0;
+
+        // Retrieves the Envers-formatted list of entity changes in the given revision range.
         List<Object[]> dataChanges = auditReaderEtl.fetchDataChanges(lastRev, etlRev, getEntityClass());
 
         Set<Long> changedEntityIds = new HashSet<Long>();
         Set<Long> deletedEntityIds = new HashSet<Long>();
         String filename = dataFilename(etlDateStr, getBaseFilename());
-        BufferedWriter writer = null;
+        DataFile dataFile = new DataFile(filename);
 
         try {
             for (Object[] dataChange : dataChanges) {
                 // Splits the result array.
                 Object entity = dataChange[0];
-                RevInfo revInfo = (RevInfo)dataChange[1];
+                RevInfo revInfo = (RevInfo) dataChange[1];
                 RevisionType revType = (RevisionType) dataChange[2];
+
                 Long entityId = entityId(entity);
-
-                // For ETL classes that track all status changes, just collects status here
-                // since there is no status audit table nor primary keys.
                 Date revDate = revInfo.getRevDate();
+                boolean isDelete = revType.equals(RevisionType.DEL);
 
-                // Entity ETL will either make status records, or entity records,
+                // Each entity ETL will either make status records, or entity records, not both.
                 if (!isEntityEtl()) {
-                    String statusRecord = entityStatusRecord(etlDateStr, revDate, entity);
-                    if (statusRecord != null) {
-                        if (writer == null) writer = new BufferedWriter(new FileWriter(filename));
-                        writer.write(statusRecord);
-                        writer.newLine();
-                        recordCount++;
-                    }
+                    String statusRecord = entityStatusRecord(etlDateStr, revDate, entity, isDelete);
+                    dataFile.write(statusRecord);
                 } else {
-                    // Writes a DW deletion record if entity was deleted, or collects deduplicated entity ids
-                    // in order to lookup the latest version once.
-                    if (revType.equals(RevisionType.DEL)) {
-                        String record = genericRecord(etlDateStr, true, entityId);
-                        if (writer == null) writer = new BufferedWriter(new FileWriter(filename));
-                        writer.write(record);
-                        writer.newLine();
-                        recordCount++;
-
+                    // Writes a DW deletion record if entity was deleted; if not a delete
+                    // collects deduplicated entity ids to lookup the current entity.
+                    if (isDelete) {
+                        String record = genericRecord(etlDateStr, isDelete, entityId);
+                        dataFile.write(record);
                         deletedEntityIds.add(entityId);
                     } else {
-                        // Entity ids of add/modify changes.
                         changedEntityIds.add(entityId);
                     }
                 }
             }
-            // Writes a record for latest version of each of the changed entity.
+            // Writes a record for latest version of each non-deleted, changed entity.
             changedEntityIds.removeAll(deletedEntityIds);
             for (Long entityId : changedEntityIds) {
-                String record =  entityRecord(etlDateStr, false, entityId);
-                if (record != null) {
-                    if (writer == null) writer = new BufferedWriter(new FileWriter(filename));
-                    writer.write(record);
-                    writer.newLine();
-                    recordCount++;
-                }
+                String record = entityRecord(etlDateStr, false, entityId);
+                dataFile.write(record);
             }
         } catch (IOException e) {
-            logger.error("Problem writing " + etlDateStr + "_" + getBaseFilename());
+            logger.error("Error while writing file " + filename, e);
         } finally {
-            try {
-                if (writer != null) {
-                    writer.close();
-                }
-            } catch (IOException e) {
-                logger.error("Problem closing " + etlDateStr + "_" + getBaseFilename());
-            }
+            dataFile.close();
         }
-        //XXX delete this!!
-        try {
-            Thread.sleep(30L * 1000L);
-        } catch (InterruptedException e) {
-            //ignore
-        }
-        return recordCount;
+        return dataFile.getRecordCount();
     }
 
     /**
@@ -173,7 +146,7 @@ abstract public class GenericEntityEtl {
         StringBuilder rec = new StringBuilder()
                 .append(etlDateStr)
                 .append(ExtractTransform.DELIM)
-                .append(isDelete ? "T" : "F");
+                .append(format(isDelete));
         for (Object field : fields) {
             rec.append(ExtractTransform.DELIM)
                     .append(field);
@@ -198,7 +171,7 @@ abstract public class GenericEntityEtl {
     }
 
     /**
-     * Returns String or empty string if null, and quotes string if DELIM occurs.
+     * Returns String, or empty string if null, and quotes string if DELIM occurs.
      * @param string to format
      */
     public static String format(String string) {
@@ -206,34 +179,54 @@ abstract public class GenericEntityEtl {
             return "";
         }
         if (string.contains(ExtractTransform.DELIM)) {
-            // Escapes all embedded " by doubling them, i.e. ""
+            // Escapes all embedded double quotes by doubling them: " becomes ""
             return "\"" + string.replaceAll("\"", "\"\"") + "\"";
         }
         return string;
     }
 
     /**
-     * Returns String or empty string if null.
-     * @param i to format
+     * Returns String, or empty string if null.
+     * @param num to format
      */
-    public static String format(Integer i) {
-        return (i != null ? i.toString() : "");
+    public static <T extends Number > String format(T num) {
+        return (num != null ? num.toString() : "");
     }
 
-    /**
-     * Returns String or empty string if null.
-     * @param i to format
-     */
-    public static String format(Long i) {
-        return (i != null ? i.toString() : "");
-    }
+    /** Class to wrap/manage writing to the data file. */
+    private class DataFile {
+        private final String filename;
+        private BufferedWriter writer = null;
+        private int lineCount = 0;
 
-    /**
-     * Returns String or empty string if null.
-     * @param i to format
-     */
-    public static String format(BigDecimal i) {
-        return (i != null ? i.toString() : "");
-    }
+        DataFile(String filename) {
+            this.filename = filename;
+        }
 
+        int getRecordCount() {
+            return lineCount;
+        }
+
+        void write(String record) throws IOException {
+            if (record == null) {
+                return;
+            }
+            lineCount++;
+            if (writer == null) {
+                writer = new BufferedWriter(new FileWriter(filename));
+            }
+            writer.write(lineCount + ExtractTransform.DELIM + record);
+            writer.newLine();
+        }
+
+        void close() {
+            try {
+                if (writer != null) {
+                    writer.close();
+                }
+            } catch (IOException e) {
+                logger.error("Problem closing file " + filename);
+            }
+        }
+    }
 }

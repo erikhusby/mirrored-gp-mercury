@@ -42,16 +42,17 @@ public class ProductOrderSampleEtl extends GenericEntityEtl {
             logger.info("Cannot export. ProductOrderSample having id " + entityId + " no longer exists.");
             return null;
         }
-        return genericRecord(etlDateStr, false,
+        return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
                 format(entity.getSampleName()),
-                format(entity.getBillingStatus().getDisplayName()));
+                format(entity.getBillingStatus().getDisplayName())
+        );
     }
 
     /** This entity does not make status records. */
     @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity) {
+    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
         return null;
     }
 

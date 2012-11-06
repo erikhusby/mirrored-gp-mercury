@@ -53,19 +53,20 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
             return null;
         }
 
-        return genericRecord(etlDateStr, false,
+        return genericRecord(etlDateStr, isDelete,
                 entity.getProjectPersonId(),
                 format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),
                 format(entity.getRole() != null ? entity.getRole().toString() : null),
                 format(entity.getPersonId()),
                 format(person.getFirstName()),
                 format(person.getLastName()),
-                format(person.getLogin()));
+                format(person.getLogin())
+        );
     }
 
     /** This entity does not make status records. */
     @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity) {
+    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
         return null;
     }
 

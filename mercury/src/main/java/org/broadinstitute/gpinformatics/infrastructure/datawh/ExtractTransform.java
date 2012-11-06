@@ -4,13 +4,13 @@ import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 
-import javax.ejb.*;
+import javax.ejb.Schedule;
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This is a JEE scheduled bean that does the initial parts of ETL for the data warehouse.
@@ -93,9 +93,7 @@ public class ExtractTransform {
      * JEE auto-schedules incremental ETL.
      */
     @Schedule(hour="*", minute="*", persistent=false)
-    //@ActivationConfigProperty(propertyName="transactionTimeout",propertyValue="86400")
-    @TransactionAttribute(TransactionAttributeType.NEVER)
-    //@TransactionTimeout(value=24 , unit= TimeUnit.HOURS)
+    //@TransactionTimeout(value=10 , unit=TimeUnit.SECONDS)
     private void incrementalEtl() {
 
         // If previous run is still busy it is unusual but not an error.  Only one incrementalEtl

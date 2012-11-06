@@ -4,6 +4,7 @@ REPLACE INTO TABLE im_product
 FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"'
 TRAILING NULLCOLS
 (
+ line_number,
  etl_date DATE "YYYYMMDDHH24MISS",
  is_delete,
  product_id,
@@ -15,5 +16,6 @@ TRAILING NULLCOLS
  guaranteed_cycle_time_sec,
  samples_per_week,
  is_top_level_product,
- workflow_name
+ workflow_name,
+ product_family_name
 )

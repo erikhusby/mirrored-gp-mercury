@@ -40,10 +40,11 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
      * @param etlDateStr date
      * @param revDate Envers revision date
      * @param revObject the Envers versioned entity
+     * @param isDelete indicates deleted entity
      * @return delimited SqlLoader record, or null if entity does not support status recording
      */
     @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object revObject) {
+    String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete) {
         ProductOrderSample entity = (ProductOrderSample)revObject;
         if (entity == null) {
             logger.info("Cannot export. Audited ProductOrderSample object is null.");
@@ -53,11 +54,12 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
                     + entity.getProductOrderSampleId() + " has null billingStatus.");
             return null;
         }
-        return genericRecord(etlDateStr, false,
+        return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
                 format(revDate),
-                format(entity.getBillingStatus().getDisplayName()));
+                format(entity.getBillingStatus().getDisplayName())
+        );
     }
 
     /** This entity etl does not make entity records. */

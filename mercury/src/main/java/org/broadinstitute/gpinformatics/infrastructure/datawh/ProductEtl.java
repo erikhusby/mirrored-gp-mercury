@@ -42,7 +42,7 @@ public class ProductEtl  extends GenericEntityEtl {
             logger.info("Cannot export.  Product having id " + entityId + " no longer exists.");
             return null;
         }
-        return genericRecord(etlDateStr, false,
+        return genericRecord(etlDateStr, isDelete,
                 entity.getProductId(),
                 format(entity.getProductName()),
                 format(entity.getPartNumber()),
@@ -52,12 +52,14 @@ public class ProductEtl  extends GenericEntityEtl {
                 format(entity.getGuaranteedCycleTimeSeconds()),
                 format(entity.getSamplesPerWeek()),
                 format(entity.isTopLevelProduct()),
-                format(entity.getWorkflowName()));
+                format(entity.getWorkflowName()),
+                format(entity.getProductFamily() != null ? entity.getProductFamily().getName() : null)
+        );
     }
 
     /** This entity does not make status records. */
     @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity) {
+    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
         return null;
     }
 

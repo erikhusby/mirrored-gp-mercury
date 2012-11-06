@@ -42,19 +42,20 @@ public class PriceItemEtl  extends GenericEntityEtl {
             logger.info("Cannot export. PriceItem having id " + entityId + " no longer exists.");
             return null;
         }
-        return genericRecord(etlDateStr, false,
+        return genericRecord(etlDateStr, isDelete,
                 entity.getPriceItemId(),
                 format(entity.getPlatform()),
                 format(entity.getCategory()),
                 format(entity.getName()),
                 format(entity.getQuoteServerId()),
                 format(entity.getPrice()),
-                format(entity.getUnits()));
+                format(entity.getUnits())
+        );
     }
 
     /** This entity does not make status records. */
     @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity) {
+    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
         return null;
     }
 

@@ -47,15 +47,16 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
                 return null;
             }
         }
-        return genericRecord(etlDateStr, false,
+        return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderAddOnId(),
                 format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
-                format(entity.getAddOn().getProductId()));
+                format(entity.getAddOn().getProductId())
+        );
     }
 
     /** This entity does not make status records. */
     @Override
-    String entityStatusRecord(String etlDateStr, Date revDate, Object entity) {
+    String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
         return null;
     }
 
