@@ -179,4 +179,29 @@ public class UserBean implements Serializable {
         }
         return "Roles: " + StringUtils.join(roles, ", ");
     }
+
+    public String getDeveloperRole() {
+        return DB.Role.Developer.name;
+    }
+
+    public String getProjectmanagerRole() {
+        return DB.Role.PM.name;
+    }
+
+    public String getProductManagerRole() {
+        return DB.Role.PDM.name;
+    }
+
+    public String getLabUserRole() {
+        return DB.Role.LabUser.name;
+    }
+
+    public String getLabManagerRole() {
+        return DB.Role.LabManager.name;
+    }
+
+    public String getAllRole() {
+        return DB.Role.All.name;
+    }
 }
+

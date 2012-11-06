@@ -25,11 +25,11 @@
 
         <h:form id="productList">
 
-            <security:AuthorizeBlock roles="Mercury-Developers, Mercury-ProductManagers">
+            <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
                 <div class="row">
                     <h:link value="New Product" outcome="create" styleClass="pull-right"/>
                 </div>
-            </security:AuthorizeBlock>
+            </security:authorizeBlock>
 
             <p:dataTable value="#{productList.productsDataModel}"
                          var="product"

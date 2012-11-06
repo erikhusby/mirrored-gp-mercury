@@ -24,17 +24,17 @@
 
             <p:submenu label="Products" icon="ui-icon-tag">
                 <p:menuitem value="List" outcome="/products/list" />
-                <security:AuthorizeBlock roles="Mercury-Developers, Mercury-ProductManagers">
+                <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
                     <p:menuitem value="Create" outcome="/products/create" />
-                </security:AuthorizeBlock>
+                </security:authorizeBlock>
             </p:submenu>
         </p:menubar>
 
-        <security:AuthorizeBlock roles="Sequel-Developers">
+        <security:authorizeBlock roles="#{userBean.developerRole}">
             <p:submenu label="Admin" icon="ui-icon-gear">
                 <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
             </p:submenu>
-        </security:AuthorizeBlock>
+        </security:authorizeBlock>
 
     </h:form>
 

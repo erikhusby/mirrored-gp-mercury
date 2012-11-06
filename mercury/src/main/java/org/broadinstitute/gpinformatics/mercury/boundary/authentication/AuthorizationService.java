@@ -11,6 +11,7 @@ import javax.inject.Inject;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * AuthenticationService is intended to support the front end Authorization process through this service.
@@ -75,7 +76,7 @@ public class AuthorizationService {
     }
 
     /**
-     * isPageProtected uses the authorization registrations to determine whether a page is protected.  if there is no
+     * isPageProtected uses the authorization registrations to determine whether a page is protected.  If there is no
      * current registration for the page, the application does not assume that it needs authentication OR
      * 'authorization.
      *
