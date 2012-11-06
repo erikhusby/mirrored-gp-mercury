@@ -11,7 +11,7 @@ import java.io.IOException;
 /**
  * AuthorizationFilter is a ServletFilter used to assist the Mercury application with validating whether a users
  * is authorized to have access to a certain page.  The filter is executed based on the url-pattern filter
- * defined in the web deployment descriptor
+ * defined in the web deployment descriptor.
  *
  * @author Scott Matthews
  */
@@ -76,15 +76,6 @@ public class AuthorizationFilter implements Filter {
                 request.getSession().setAttribute(TARGET_PAGE_ATTRIBUTE, requestedUrl.toString());
                 redirectTo(request, servletResponse, LOGIN_PAGE);
                 return;
-            }
-            boolean authorized = manager.isUserAuthorized(pageUri, request);
-
-            if (!authorized) {
-                String errorMessage = "The user '" + user +  "' doesn't have permission to log in.  ";
-                logger.warn(errorMessage);
-
-                // show general error page, and display our error to the user
-                throw new SecurityException(errorMessage + "Please contact support if you think this is incorrect.");
             }
         }
 
