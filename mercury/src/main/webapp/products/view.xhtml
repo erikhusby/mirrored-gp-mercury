@@ -124,7 +124,7 @@
             <div class="control-group">
                 <label class="control-label">Primary Price Item</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.product.defaultPriceItem.platform}: #{productView.product.defaultPriceItem.category}: #{productView.product.defaultPriceItem.name} (ID #{productView.product.defaultPriceItem.quoteServerId})</div>
+                    <div class="form-value">#{productView.product.defaultPriceItem.platform}: #{productView.product.defaultPriceItem.category}: #{productView.product.defaultPriceItem.name}</div>
                 </div>
             </div>
 
@@ -164,12 +164,13 @@
 
             </p:dataTable>
 
+            <p/>
 
             <p:dataTable value="#{productView.priceItems}" var="priceItem" >
                 <f:facet name="header">
                     <h:outputText value="Optional Price Items" />
                 </f:facet>
-                <p:column> <!-- sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}"> -->
+                <p:column rendered="false"> <!-- sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}"> -->
                     <f:facet name="header">
                         <h:outputText value="Quote Server ID"/>
                     </f:facet>

@@ -24,7 +24,10 @@ label, input, button, select, textarea { font-size: 12px }
 .ui-widget-content a { color: #0088CC; !important }
 
 /* Make p:autoComplete's input field a little wider to fit longer watermarks. */
-.ui-autocomplete-multiple .ui-autocomplete-input-token input {  width: 160px; }
+.ui-autocomplete-multiple .ui-autocomplete-input-token input {  width: 500px; }
+
+.ui-autocomplete-multiple-container { width: 480px; }
+.ui-autocomplete-multiple-container { overflow: visible }
 
 /* Tighten vertical spacing of Bootstrap horizontal forms. */
 .form-horizontal .control-group { margin-bottom: 12px; }
