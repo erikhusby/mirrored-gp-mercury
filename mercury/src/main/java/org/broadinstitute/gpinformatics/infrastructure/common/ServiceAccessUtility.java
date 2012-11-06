@@ -33,13 +33,10 @@ import java.util.Map;
  *         Time: 12:17 PM
  */
 public class ServiceAccessUtility {
-
     private abstract static class Caller<RESULT_TYPE, API_CLASS> {
-
         abstract RESULT_TYPE call(API_CLASS apiInstance);
 
         public RESULT_TYPE apiCall(Type classType) {
-
             RESULT_TYPE foundServiceObject = null;
 
             try {

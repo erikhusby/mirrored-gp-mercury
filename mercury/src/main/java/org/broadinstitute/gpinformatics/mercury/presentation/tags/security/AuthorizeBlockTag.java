@@ -16,7 +16,6 @@ import java.util.List;
  *         Time: 10:23 AM
  */
 public class AuthorizeBlockTag extends AuthorizationTag {
-
     private final TagAttribute roles;
 
 

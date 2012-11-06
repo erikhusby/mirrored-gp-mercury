@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.logout;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationListener;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -30,7 +31,7 @@ public class LogoutHandler extends AbstractJsfBean {
     public String logout() {
         // If logout is successful, the redirect location is irrelevant since our authorization filter
         // will force the user to the login page.
-        String result = redirect("/index");
+        String result = redirect(AuthorizationListener.HOME_PAGE);
 
         FacesContext context = FacesContext.getCurrentInstance();
 
