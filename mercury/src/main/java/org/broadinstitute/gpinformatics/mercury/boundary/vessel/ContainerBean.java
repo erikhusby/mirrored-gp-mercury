@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -21,10 +22,7 @@ import java.util.Set;
 @RequestScoped
 public class ContainerBean implements Serializable {
     @Inject
-    private RackOfTubesDao rackOfTubesDao;
-
-    @Inject
-    private TwoDBarcodedTubeDAO tubeDao;
+    private LabVesselDao labVesselDao;
 
     private LabVessel vessel;
     private String selectedSample;
@@ -58,7 +56,7 @@ public class ContainerBean implements Serializable {
 
     public void updateVessel(String barcode){
         if(barcode != null && this.vessel == null ){
-            this.vessel = rackOfTubesDao.getByLabel(barcode);
+            this.vessel = labVesselDao.findByIdentifier(barcode);
             this.barcode = barcode;
         }
     }
@@ -102,16 +100,20 @@ public class ContainerBean implements Serializable {
         return index % getColumns();
     }
 
-    public SampleInstance vesselAtPosition(){
+    public SampleInstance sampleAtPosition() {
         SampleInstance instance = null;
-        if(vessel != null && index != -1){
+        if (vessel != null && index != -1) {
             String columnName = vessel.getVesselGeometry().getColumnNames()[getColumnNumFromIndex()];
             String rowName = vessel.getVesselGeometry().getRowNames()[getRowNumFromIndex()];
             VesselPosition position = VesselPosition.getByName(rowName + columnName);
-            LabVessel curVessel = ((RackOfTubes)vessel).getVesselContainer().getVesselAtPosition(position);
-            if(curVessel != null){
-                TwoDBarcodedTube tube = tubeDao.findByBarcode(curVessel.getLabel());
-                Set<SampleInstance> sampleInstances = tube.getSampleInstances();
+            VesselContainer<?> vesselContainer = vessel.getVesselContainer();
+            Set<SampleInstance> sampleInstances;
+            if (vesselContainer != null) {
+                sampleInstances = vesselContainer.getSampleInstancesAtPosition(position);
+            } else {
+                sampleInstances = vessel.getSampleInstances();
+            }
+            if (sampleInstances != null && sampleInstances.size() > 0) {
                 instance = sampleInstances.toArray(new SampleInstance[sampleInstances.size()])[0];
             }
         }

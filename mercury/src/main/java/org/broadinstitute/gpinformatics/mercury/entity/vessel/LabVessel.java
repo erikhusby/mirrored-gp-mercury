@@ -340,6 +340,10 @@ public abstract class LabVessel {
 
     public abstract CONTAINER_TYPE getType();
 
+    public  VesselContainer getVesselContainer(){
+        return null;
+    }
+
     public enum CONTAINER_TYPE {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),

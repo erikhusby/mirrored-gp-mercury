@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:cc="http://java.sun.com/jsf/composite" xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+
+<cc:interface>
+    <cc:attribute name="barcode" required="true"/>
+</cc:interface>
+<cc:implementation>
+    <h:outputText value="#{sampleBean.updateVessel(cc.attrs.barcode)}"/>
+    <p:dataTable id="sampleResults" value="#{sampleBean.vessel.sampleInstancesList}"
+                 var="sampleInstance">
+        <f:facet name="header">
+            Sample Information
+        </f:facet>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Sample Name"/>
+            </f:facet>
+            <h:outputText value="#{sampleInstance.startingSample.sampleKey}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="PDOs"/>
+            </f:facet>
+            <h:outputText value="#{sampleInstance.startingSample.productOrderKey}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Index Information"/>
+            </f:facet>
+            <h:outputText
+                    value="#{lookupBean.indexValueForSample(sampleInstance, sampleBean.vessel)}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Contained In"/>
+            </f:facet>
+            <!-- <p:commandLink action="#{lookupBean.selectedVessel.containingVessel}"
+            value="#{foundVessel.label}"
+            update=":results:outputContainerPanel"/>-->
+            <h:outputText value="NYI"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Position"/>
+            </f:facet>
+            <!-- <h:outputText value="#{lookupBean.foundVessel.getPositionOfVessel(lookupBean.foundVessel)}"/>-->
+            <h:outputText value="NYI"/>
+        </p:column>
+    </p:dataTable>
+</cc:implementation>
+</html>
