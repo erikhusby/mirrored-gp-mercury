@@ -73,11 +73,11 @@ public class UserLogin extends AbstractJsfBean {
 
             if (!userBean.isValidBspUser()) {
                 logger.error(userBean.getBspStatus() + ": " + username);
-                addErrorMessage(userBean.getBspStatus(), userBean.getBspStatus());
+                addErrorMessage(userBean.getBspMessage(), null);
             }
             if (!userBean.isValidJiraUser()) {
                 logger.error(userBean.getJiraStatus() + ": " + username);
-                addErrorMessage(userBean.getJiraStatus(), userBean.getJiraStatus());
+                addErrorMessage(userBean.getJiraMessage(), null);
             }
 
             String previouslyTargetedPage = (String)request.getSession().getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
