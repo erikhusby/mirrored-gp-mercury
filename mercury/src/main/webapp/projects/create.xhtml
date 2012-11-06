@@ -61,7 +61,7 @@
                             requiredMessage="There must be at least one project manager." scrollHeight="250">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="projectManagers" value="Type name to search"/>
@@ -79,7 +79,7 @@
                             converter="#{bspUserConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="broadPIs" value="Type name to search"/>
@@ -96,7 +96,7 @@
                             converter="#{bspUserConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="scientists" value="Type name to search"/>
@@ -113,7 +113,7 @@
                             converter="#{bspUserConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
+                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
                         </p:autoComplete>
                         <p:watermark for="externalCollaborators" value="Type name to search"/>
@@ -133,7 +133,7 @@
                                 <div class="ac-dropdown-subtext">#{funding.matchDescription}:</div>
                             </p:column>
                         </p:autoComplete>
-                        <p:watermark for="fundingSources" value="Type number to search"/>
+                        <p:watermark for="fundingSources" value="Type text to search"/>
                     </div>
                 </div>
 
@@ -151,7 +151,7 @@
                             </p:column>
                         </p:autoComplete>
 
-                        <p:watermark for="sampleCohorts" value="Type number to search"/>
+                        <p:watermark for="sampleCohorts" value="Type text to search"/>
                     </div>
                 </div>
 

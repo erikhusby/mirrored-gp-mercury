@@ -99,7 +99,7 @@ public class ProductOrder implements Serializable {
 
     public String getAddOnList() {
         if (addOns.isEmpty()) {
-            return "no add ons";
+            return "no Add-ons";
         }
 
         String[] addOnArray = new String[addOns.size()];
