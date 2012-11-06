@@ -5,9 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -23,7 +21,6 @@ import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -103,78 +100,9 @@ public class VesselContainer<T extends LabVessel> {
         return transfersTo;
     }
 
-    public interface TransferTraverserCriteria {
-        enum TraversalControl {
-            ContinueTraversing,
-            StopTraversing
-        }
-        TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount);
-    }
-
-    static class NearestLabBatchFinder implements TransferTraverserCriteria {
-
-        // index -1 is for batches for sampleInstance's starter (think BSP stock)
-        private static final int STARTER_INDEX = -1;
-
-        private final Map<Integer,Collection<LabBatch>> labBatchesAtHopCount = new HashMap<Integer, Collection<LabBatch>>();
-
-        @Override
-        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-            if (labVessel != null) {
-                Collection<LabBatch> labBatches = labVessel.getLabBatches();
-
-                if (!labBatches.isEmpty()) {
-                    if (!labBatchesAtHopCount.containsKey(hopCount)) {
-                        labBatchesAtHopCount.put(hopCount,new HashSet<LabBatch>());
-                    }
-                    labBatchesAtHopCount.get(hopCount).addAll(labBatches);
-                }
-            }
-            return TraversalControl.ContinueTraversing;
-        }
-
-        public Collection<LabBatch> getNearestLabBatches() {
-            int nearest = Integer.MAX_VALUE;
-            for (Map.Entry<Integer, Collection<LabBatch>> labBatchesForHopCount : labBatchesAtHopCount.entrySet()) {
-                if (labBatchesForHopCount.getKey() < nearest) {
-                    nearest = labBatchesForHopCount.getKey();
-                }
-            }
-            return labBatchesAtHopCount.get(nearest);
-        }
-    }
-
-    /**
-     * Traverses transfers to find the single sample libraries.
-     */
-    static class SingleSampleLibraryCriteria implements TransferTraverserCriteria {
-        private final Map<MercurySample, Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<MercurySample, Collection<LabVessel>>();
-
-        @Override
-        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-            if (labVessel != null) {
-                for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
-                    MercurySample startingSample = sampleInstance.getStartingSample();
-                    // todo jmt fix this
-//                    if (labVessel.isSingleSampleLibrary(sampleInstance.getSingleProjectPlan().getWorkflowDescription())) {
-//                        if (!singleSampleLibrariesForInstance.containsKey(startingSample)) {
-//                            singleSampleLibrariesForInstance.put(startingSample,new HashSet<LabVessel>());
-//                        }
-//                        singleSampleLibrariesForInstance.get(startingSample).add(labVessel);
-//                    }
-                }
-            }
-            return TraversalControl.ContinueTraversing;
-        }
-
-        public Map<MercurySample,Collection<LabVessel>> getSingleSampleLibraries() {
-            return singleSampleLibrariesForInstance;
-        }
-    }
-
     public Collection<LabBatch> getNearestLabBatches(VesselPosition position) {
-        NearestLabBatchFinder batchCriteria = new NearestLabBatchFinder();
-        evaluateCriteria(position,batchCriteria,TraversalDirection.Ancestors,null,0);
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria = new TransferTraverserCriteria.NearestLabBatchFinder();
+        evaluateCriteria(position,batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors,null,0);
         return batchCriteria.getNearestLabBatches();
     }
 
@@ -185,83 +113,24 @@ public class VesselContainer<T extends LabVessel> {
      * @return
      */
     public Map<MercurySample,Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
-        SingleSampleLibraryCriteria singleSampleLibraryCriteria = new SingleSampleLibraryCriteria();
+        TransferTraverserCriteria.SingleSampleLibraryCriteria singleSampleLibraryCriteria = new TransferTraverserCriteria.SingleSampleLibraryCriteria();
 
-        evaluateCriteria(position, singleSampleLibraryCriteria, TraversalDirection.Ancestors, null, 0);
+        evaluateCriteria(position, singleSampleLibraryCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
         return singleSampleLibraryCriteria.getSingleSampleLibraries();
-    }
-
-    static class SampleInstanceCriteria implements TransferTraverserCriteria {
-
-        /** Sample instances encountered during this traversal */
-        private Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
-        /** Reagents encountered during this traversal */
-        private Set<Reagent> reagents = new LinkedHashSet<Reagent>();
-        /** Ensure that reagents are applied only once */
-        private boolean reagentsApplied = false;
-        /** The first lab event encountered */
-        private LabEvent labEvent;
-
-        @Override
-        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-            // todo jmt this class shouldn't have to worry about plate wells that have no informatics contents
-            if (labVessel != null) {
-                if (labVessel.isSampleAuthority()) {
-                    sampleInstances.addAll(labVessel.getSampleInstances());
-                }
-                if (labVessel.getReagentContentsCount() != null && labVessel.getReagentContentsCount() > 0) {
-                    reagents.addAll(labVessel.getReagentContents());
-                }
-                if (labEvent != null) {
-//                    applyProjectPlanOverrideIfPresent(labEvent, sampleInstances);
-                }
-            }
-            if(labEvent != null && this.labEvent == null) {
-                this.labEvent = labEvent;
-            }
-            return TraversalControl.ContinueTraversing;
-        }
-
-        public Set<SampleInstance> getSampleInstances() {
-            if(!reagentsApplied) {
-                reagentsApplied = true;
-                for (Reagent reagent : reagents) {
-                    for (SampleInstance sampleInstance : sampleInstances) {
-                        sampleInstance.addReagent(reagent);
-                    }
-                }
-                if (labEvent != null) {
-                    for (SampleInstance sampleInstance : sampleInstances) {
-                        MolecularState molecularState = sampleInstance.getMolecularState();
-                        if(molecularState == null) {
-                            LabEventType labEventType = labEvent.getLabEventType();
-                            molecularState = new MolecularState(labEventType.getNucleicAcidType(), labEventType.getTargetStrand());
-                        }
-                        sampleInstance.setMolecularState(molecularState);
-                    }
-                }
-            }
-            return sampleInstances;
-        }
-    }
-
-    public enum TraversalDirection {
-        Ancestors,
-        Descendants
     }
 
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
 
-        SampleInstanceCriteria sampleInstanceCriteria = new SampleInstanceCriteria();
+        TransferTraverserCriteria.SampleInstanceCriteria sampleInstanceCriteria = new TransferTraverserCriteria.SampleInstanceCriteria();
 
-        evaluateCriteria(position, sampleInstanceCriteria, TraversalDirection.Ancestors, null, 0);
+        evaluateCriteria(position, sampleInstanceCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
         return sampleInstanceCriteria.getSampleInstances();
     }
 
     // todo jmt move this to LabVessel
     public void evaluateCriteria(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
-            TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
-       T vesselAtPosition = getVesselAtPosition(position);
+            TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
+        T vesselAtPosition = getVesselAtPosition(position);
         TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVessel(
                 vesselAtPosition, labEvent, hopCount);
         if(vesselAtPosition != null) {
@@ -273,7 +142,7 @@ public class VesselContainer<T extends LabVessel> {
                         if(OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), RackOfTubes.class)) {
                             RackOfTubes otherRackOfTubes = OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), RackOfTubes.class);
                             if(!otherRackOfTubes.getDigest().equals(thisRackOfTubes.getDigest())) {
-                                if(traversalDirection == TraversalDirection.Ancestors) {
+                                if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
                                     vesselContainer.traverseAncestors(vesselContainer.getPositionOfVessel(vesselAtPosition),
                                             transferTraverserCriteria, traversalDirection, hopCount);
                                 } else {
@@ -287,7 +156,7 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
         if (traversalControl == TransferTraverserCriteria.TraversalControl.ContinueTraversing) {
-            if(traversalDirection == TraversalDirection.Ancestors) {
+            if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
                 traverseAncestors(position, transferTraverserCriteria, traversalDirection, hopCount);
             } else {
                 traverseDescendants(position, transferTraverserCriteria, traversalDirection, hopCount);
@@ -296,7 +165,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     private void traverseAncestors(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
-            TraversalDirection traversalDirection, int hopCount) {
+            TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount) {
         for (SectionTransfer sectionTransfer : this.sectionTransfersTo) {
             if (sectionTransfer.getTargetVesselContainer().equals(this)) {
                 VesselContainer sourceVesselContainer = sectionTransfer.getSourceVesselContainer();
@@ -324,7 +193,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     private void traverseDescendants(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
-            TraversalDirection traversalDirection, int hopCount) {
+            TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount) {
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
             if (sectionTransfer.getSourceVesselContainer().equals(this)) {
                 VesselContainer targetVesselContainer = sectionTransfer.getTargetVesselContainer();

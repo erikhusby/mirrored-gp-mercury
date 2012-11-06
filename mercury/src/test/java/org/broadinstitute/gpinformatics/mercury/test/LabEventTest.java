@@ -35,8 +35,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -84,7 +84,7 @@ public class LabEventTest {
     /**
      * Used in test verification, accumulates the events in a chain of transfers
      */
-    public static class ListTransfersFromStart implements VesselContainer.TransferTraverserCriteria {
+    public static class ListTransfersFromStart implements TransferTraverserCriteria {
         private int hopCount = -1;
         private final List<String> labEventNames = new ArrayList<String>();
 
@@ -172,11 +172,8 @@ public class LabEventTest {
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        VesselContainer<TwoDBarcodedTube> startingContainer = (VesselContainer<TwoDBarcodedTube>)
-                stringTwoDBarcodedTubeEntry.getValue().getContainers().iterator().next();
-        startingContainer.evaluateCriteria(
-                startingContainer.getPositionOfVessel(stringTwoDBarcodedTubeEntry.getValue()),
-                transferTraverserCriteria, VesselContainer.TraversalDirection.Descendants, null, 0);
+        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
         Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
 
@@ -283,11 +280,8 @@ public class LabEventTest {
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        VesselContainer<TwoDBarcodedTube> startingContainer = (VesselContainer<TwoDBarcodedTube>)
-                stringTwoDBarcodedTubeEntry.getValue().getContainers().iterator().next();
-        startingContainer.evaluateCriteria(
-                startingContainer.getPositionOfVessel(stringTwoDBarcodedTubeEntry.getValue()),
-                transferTraverserCriteria, VesselContainer.TraversalDirection.Descendants, null, 0);
+        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
         Assert.assertEquals(labEventNames.size(), 12, "Wrong number of transfers");
 

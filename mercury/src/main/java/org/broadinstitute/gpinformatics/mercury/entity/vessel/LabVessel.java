@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -110,6 +110,12 @@ public abstract class LabVessel {
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
+
+    @OneToMany(mappedBy = "sourceVessel")
+    private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<VesselToVesselTransfer>();
+
+    @OneToMany(mappedBy = "targetLabVessel")
+    private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
 
     protected LabVessel(String label) {
         this.label = label;
@@ -354,6 +360,7 @@ public abstract class LabVessel {
                 sampleInstances.add(new SampleInstance(mercurySample, null, null));
             }
         } else {
+            // todo VesselToVesselTransfers and VesselToSectionTransfers too
             for (VesselContainer<?> vesselContainer : this.getContainers()) {
                 sampleInstances.addAll(vesselContainer.getSampleInstancesAtPosition(vesselContainer.getPositionOfVessel(this)));
             }
@@ -591,5 +598,36 @@ public abstract class LabVessel {
      */
     public VesselContainer getContainerRole() {
         return null;
+    }
+
+    public void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
+            TransferTraverserCriteria.TraversalDirection traversalDirection) {
+        evaluateCriteria(transferTraverserCriteria, traversalDirection, null, 0);
+    }
+
+    void evaluateCriteria(/*VesselPosition position, */TransferTraverserCriteria transferTraverserCriteria,
+            TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
+        transferTraverserCriteria.evaluateVessel(this, labEvent, hopCount);
+        if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
+            for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
+                vesselToVesselTransfer.getSourceVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                        vesselToVesselTransfer.getLabEvent(), hopCount + 1);
+            }
+        } else if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
+            for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
+                vesselToVesselTransfer.getTargetLabVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                        vesselToVesselTransfer.getLabEvent(), hopCount + 1);
+            }
+        } else {
+            throw new RuntimeException("Unknown direction " + traversalDirection.name());
+        }
+        for (LabVessel container : containers) {
+            VesselContainer containerRole = container.getContainerRole();
+            // todo jmt rename this to traverse
+            // labVessel.evaluateCriteria
+            //  containerRole.traverse
+            //
+//            containerRole.evaluateCriteria(containerRole.getPositionOfVessel(this), transferTraverserCriteria, traversalDirection, , hopCount);
+        }
     }
 }

@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTr
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -108,7 +109,7 @@ public class LabEventResource {
     }
 
     // todo jmt make this work for sample starters
-    static class StarterCriteria implements VesselContainer.TransferTraverserCriteria {
+    static class StarterCriteria implements TransferTraverserCriteria {
         private LabVessel starter;
 
         @Override
@@ -169,7 +170,7 @@ public class LabEventResource {
             for (LabVesselPositionBean labVesselPositionBean : labVesselBean.getLabVesselPositionBeans()) {
                 StarterCriteria starterCriteria = new StarterCriteria();
                 vesselContainer.evaluateCriteria(VesselPosition.getByName(labVesselPositionBean.getPosition()), starterCriteria,
-                        VesselContainer.TraversalDirection.Ancestors, null, 0);
+                        TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
                 if (starterCriteria.getStarter() != null) {
                     labVesselPositionBean.getLabVesselBean().setStarter(starterCriteria.getStarter().getLabel());
                 }
