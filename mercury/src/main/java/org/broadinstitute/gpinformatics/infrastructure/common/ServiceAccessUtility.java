@@ -33,13 +33,10 @@ import java.util.Map;
  *         Time: 12:17 PM
  */
 public class ServiceAccessUtility {
-
     private abstract static class Caller<RESULT_TYPE, API_CLASS> {
-
         abstract RESULT_TYPE call(API_CLASS apiInstance);
 
         public RESULT_TYPE apiCall(Type classType) {
-
             RESULT_TYPE foundServiceObject = null;
 
             try {
@@ -101,7 +98,6 @@ public class ServiceAccessUtility {
         }).apiCall(CohortListBean.class);
     }
 
-
     /**
      * getSampleDtoByNames exposes an integration layer service call to retrieve a BSP Sample DTo based on a collection
      * of sample names
@@ -110,7 +106,6 @@ public class ServiceAccessUtility {
      * @return a Map of BSP Sample Dtos indexed by the Sample Name associated with the DTO
      */
     public static Map<String, BSPSampleDTO> getSampleDtoByNames ( Collection<String> sampleNames ) {
-
         Map<String, BSPSampleDTO> foundServiceObject = null;
 
         try {
@@ -173,7 +168,6 @@ public class ServiceAccessUtility {
             final String projectPrefix, final String reporter,
             final CreateIssueRequest.Fields.Issuetype issuetype, final String summary,
             final String description, final Collection<CustomField> customFields) throws IOException {
-
         return (new Caller<CreateIssueResponse, JiraService>() {
             @Override
             CreateIssueResponse call(JiraService apiInstance) {
@@ -194,9 +188,7 @@ public class ServiceAccessUtility {
      * field name for easier access
      * @throws IOException
      */
-    public static Map<String, CustomFieldDefinition> getJiraCustomFields ( )
-            throws IOException{
-
+    public static Map<String, CustomFieldDefinition> getJiraCustomFields() throws IOException {
         Map<String, CustomFieldDefinition> customFields = null;
 
         try {
@@ -226,7 +218,7 @@ public class ServiceAccessUtility {
      * @param comment comment to attach to the jira ticket.
      * @throws IOException
      */
-    public static void addJiraComment (String issueKey, String comment) throws IOException{
+    public static void addJiraComment(String issueKey, String comment) throws IOException {
         try {
             InitialContext initialContext = new InitialContext();
             try{
@@ -252,7 +244,7 @@ public class ServiceAccessUtility {
      *                     issueKey
      * @throws IOException
      */
-    public static void addJiraWatcher (String issueKey, String newWatcherId) throws IOException{
+    public static void addJiraWatcher(String issueKey, String newWatcherId) throws IOException {
         try {
             InitialContext initialContext = new InitialContext();
             try{
@@ -278,7 +270,7 @@ public class ServiceAccessUtility {
      * @param targetIssueKey unique key for the Jira Ticket which will act as the target of the link
      * @throws IOException
      */
-    public static void addJiraPublicLink (AddIssueLinkRequest.LinkType linkType,String sourceIssueKey, String targetIssueKey) throws IOException{
+    public static void addJiraPublicLink(AddIssueLinkRequest.LinkType linkType, String sourceIssueKey, String targetIssueKey) throws IOException {
         try {
             InitialContext initialContext = new InitialContext();
             try{
@@ -305,8 +297,7 @@ public class ServiceAccessUtility {
      * @return a response object detailing all currently available workflow transition states.
      * @throws IOException
      */
-    public static IssueTransitionResponse getTransitions(String jiraTicketKey) throws IOException{
-
+    public static IssueTransitionResponse getTransitions(String jiraTicketKey) throws IOException {
         IssueTransitionResponse response = null;
 
         try {
@@ -338,8 +329,6 @@ public class ServiceAccessUtility {
      * @throws IOException
      */
     public static void postTransition(String jiraTicketKey, String transitionId) throws IOException {
-
-
         try {
             InitialContext initialContext = new InitialContext();
             try{
@@ -355,7 +344,5 @@ public class ServiceAccessUtility {
         } catch (NamingException e) {
             throw new RuntimeException(e);
         }
-
     }
-
 }
