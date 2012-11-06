@@ -49,6 +49,23 @@
                 defaultNullValue="0" />
     </changeSet>
 
+    <!-- Since modify type does not work for changing number to boolean in postgres, just
+         doing a specific drop and add for postgres here -->
+    <changeSet id="GPLIM-65-2b" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn schemaName="athena" tableName="research_project" columnName="irb_not_engaged"/>
+        <addColumn schemaName="athena" tableName="research_project">
+            <column name="irb_not_engaged" type="boolean"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="research_project"
+                columnName="irb_not_engaged"
+                defaultNullValue="false" />
+    </changeSet>
+
     <changeSet id="GPLIM-65-3" author="hrafal">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -68,6 +85,19 @@
         </preConditions>
         <addColumn tableName="research_project_aud">
             <column name="irb_not_engaged" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Since modify type does not work for changing number to boolean in postgres, just
+         doing a specific drop and add for postgres here -->
+    <changeSet id="GPLIM-65-4a" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn schemaName="athena" tableName="research_project_aud" columnName="irb_not_engaged"/>
+        <addColumn schemaName="athena" tableName="research_project_aud">
+            <column name="irb_not_engaged" type="boolean"/>
         </addColumn>
     </changeSet>
 
@@ -193,7 +223,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-95-1" author="athomson">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <dbms type="oracle" />
             <runningAs username="ATHENA" />
         </preConditions>
@@ -242,10 +272,6 @@
     </changeSet>
 
     <changeSet id="GPLIM-95-2" author="athomson">
-    <preConditions>
-        <dbms type="oracle" />
-        <runningAs username="ATHENA" />
-    </preConditions>
     <sql>
         Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (249,10943,to_timestamp('2012/07/26','yyyy/mm/dd'),null,null,10943,to_timestamp('2012/07/26','yyyy/mm/dd'),'Lung Adenocarcinoma CIP','Lung Adenocarcinoma CIP',0,'Open');
         Insert into ATHENA.RESEARCH_PROJECT (RESEARCH_PROJECT_ID,CREATED_BY,CREATED_DATE,IRB_NOTES,JIRA_TICKET_KEY,MODIFIED_BY,MODIFIED_DATE,SYNOPSIS,TITLE,IRB_NOT_ENGAGED,STATUS) values (248,11137,to_timestamp('2012/07/24','yyyy/mm/dd'),null,null,11137,to_timestamp('2012/07/24','yyyy/mm/dd'),'Resistance - Kantoff','Resistance - Kantoff',0,'Open');
@@ -348,16 +374,532 @@
     </changeSet>
 
     <changeSet author="athomson" id="GPLIM-95-3">
-        <preConditions>
-            <dbms type="oracle" />
-            <runningAs username="ATHENA" />
-        </preConditions>
         <sql>
             drop sequence athena.seq_research_project_index;
             create sequence athena.seq_research_project_index start with 13000 increment by 50;
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-115-1" author="mccrory">
+        <preConditions>
+            <not>
+                <columnExists tableName="product" columnName="minimum_order_size" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product">
+            <column name="minimum_order_size" type="number(10,0)"/>
+        </addColumn>
+    </changeSet>
 
+    <changeSet id="GPLIM-115-2" author="mccrory">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_aud" columnName="minimum_order_size" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_aud">
+            <column name="minimum_order_size" type="number(10,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-1" author="hrafal">
+        <preConditions>
+            <not>
+                <tableExists tableName="product_order_add_on" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_add_on" schemaName="athena">
+            <column name="product_order_add_on_id" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="add_on" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-2" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_add_on_add_on" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_add_on_product" baseTableSchemaName="athena"
+                                 baseTableName="product_order_add_on" baseColumnNames="add_on"
+                                 referencedTableName="product" referencedColumnNames="product_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-3" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_add_on_order" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_add_on_order" baseTableSchemaName="athena"
+                                 baseTableName="product_order_add_on" baseColumnNames="product_order"
+                                 referencedTableName="product_order" referencedColumnNames="product_order_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-4" author="hrafal">
+        <preConditions>
+            <not>
+                <indexExists indexName="ix_product_order_add_on" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="ix_product_order_add_on" schemaName="athena" tableName="product_order_add_on">
+            <column name="product_order"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-5" author="hrafal">
+        <preConditions>
+            <not>
+                <tableExists tableName="product_order_add_on_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_add_on_aud" schemaName="athena">
+            <column name="product_order_add_on_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="add_on" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-6" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_add_on_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_add_on_aud" baseTableSchemaName="athena"
+                                 baseTableName="product_order_add_on_aud" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-71-7" author="hrafal">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="SEQ_ORDER_ADD_ON" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_ORDER_ADD_ON" schemaName="athena" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-139-1.1.1" author="mcovarr">
+        <sql>
+            delete from athena.product_price_items where product in (
+            select product_id from athena.product where default_price_item is null
+            )
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-139-1.1.2" author="mcovarr">
+        <sql>
+            delete from athena.product_add_ons where product in (
+            select product_id from athena.product where default_price_item is null
+            )
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-139-1.1.3" author="mcovarr">
+        <sql>
+            delete from athena.product_add_ons where add_ons in (
+            select product_id from athena.product where default_price_item is null
+            )
+
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-139.1.1.3.1" author="mcovarr">
+        <sql>
+            delete from athena.product_order where product in (
+            select product_id from athena.product where default_price_item is null
+            )
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-139-1.1.4" author="mcovarr">
+        <sql>
+            delete from athena.product where default_price_item is null
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-139-2" author="mcovarr">
+        <addNotNullConstraint columnName="default_price_item" tableName="product" schemaName="athena" />
+    </changeSet>
+
+    <changeSet id="GPLIM-139-3" author="mcovarr">
+        <addNotNullConstraint columnName="product_family" tableName="product" schemaName="athena" />
+    </changeSet>
+
+    <changeSet id="GPLIM-116" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="product" columnName="pdm_orderable_only" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product">
+            <column name="pdm_orderable_only" type="number(1,0)"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="product"
+                columnName="pdm_orderable_only"
+                defaultNullValue="0" />
+    </changeSet>
+
+    <changeSet id="GPLIM-116_aud" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_aud" columnName="pdm_orderable_only" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_aud">
+            <column name="pdm_orderable_only" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-189-1" author="mccrory">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order_sample" columnName="sample_position" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample">
+            <column name="sample_position" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-189-2" author="mccrory">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order_sample_aud" columnName="sample_position" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample_aud">
+            <column name="sample_position" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-116_pg.remove" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn tableName="product" schemaName="athena" columnName="pdm_orderable_only"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-116_pg.add" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <addColumn tableName="product" schemaName="athena">
+            <column name="pdm_orderable_only" type="boolean"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-116_aud_pg.remove" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn tableName="product_aud" schemaName="athena" columnName="pdm_orderable_only"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-116_aud_pg.add" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <addColumn tableName="product_aud" schemaName="athena">
+            <column name="pdm_orderable_only" type="boolean"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-172_oracle" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="oracle" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'RNA');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'SMALL_DESIGN_VALIDATION_AND_EXTENSION');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'EXOME');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'WHOLE_GENOME');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'DE_NOVO_ASSEMBLY');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'MICROBIAL_AND_VIRAL_ANALYSIS');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'SEQUENCE_ONLY');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'METAGENOMICS');
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-172_pg" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'RNA');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'SMALL_DESIGN_VALIDATION_AND_EXTENSION');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'EXOME');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'WHOLE_GENOME');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'DE_NOVO_ASSEMBLY');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'MICROBIAL_AND_VIRAL_ANALYSIS');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'SEQUENCE_ONLY');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'METAGENOMICS');
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-172_repoint_and_remove_old" author="mcovarr">
+        <sql>
+            update athena.product set product_family = (
+              select product_family_id from athena.product_family where name = 'RNA')
+            where product_family in (
+              select product_family_id from athena.product_family where name in (
+                'GENERAL_PRODUCTS',
+                'EXOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_ARRAY_ANALYSIS',
+                'RNA_ANALYSIS',
+                'ASSEMBLY_ANALYSIS',
+                'METAGENOMIC_ANALYSIS',
+                'EPIGENOMIC_ANALYSIS',
+                'ILLUMINA_SEQUENCING_ONLY',
+                'ALTERNATIVE_TECHNOLOGIES',
+                'CUSTOM_PRODUCTS_TARGETED_SEQUENCING'
+                )
+            );
+
+            delete from athena.product_family where name in (
+                'GENERAL_PRODUCTS',
+                'EXOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_SEQUENCING_ANALYSIS',
+                'WHOLE_GENOME_ARRAY_ANALYSIS',
+                'RNA_ANALYSIS',
+                'ASSEMBLY_ANALYSIS',
+                'METAGENOMIC_ANALYSIS',
+                'EPIGENOMIC_ANALYSIS',
+                'ILLUMINA_SEQUENCING_ONLY',
+                'ALTERNATIVE_TECHNOLOGIES',
+                'CUSTOM_PRODUCTS_TARGETED_SEQUENCING'
+            )
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-116_pg.add_not_nullable" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <addNotNullConstraint
+                schemaName="athena"
+                tableName="product"
+                columnName="pdm_orderable_only"
+                defaultNullValue="0" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-189-5" author="mccrory">
+        <sql>
+            update product_order_sample set sample_position = product_order_sample_id
+            where sample_position is null
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-189-6" author="mccrory">
+        <addNotNullConstraint columnName="sample_position" tableName="product_order_sample" schemaName="athena" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-216_oracle" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="oracle" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'ALTERNATIVE_LIBRARY_PREP_AND_DEVELOPMENT');
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'EPIGENOMICS');
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-216_pg" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'ALTERNATIVE_LIBRARY_PREP_AND_DEVELOPMENT');
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'EPIGENOMICS');
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-227_oracle" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="oracle" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (seq_product_family.nextval, 'DATA_ANALYSIS');
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-227_pg" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <sql>
+            insert into athena.product_family(product_family_id, name) values (nextval('athena.seq_product_family'), 'DATA_ANALYSIS');
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-254-not-null.platform" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="price_item" columnName="platform" />
+    </changeSet>
+
+    <changeSet id="GPLIM-254-not-null.name" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="price_item" columnName="name" />
+    </changeSet>
+
+    <changeSet id="GPLIM-233-revise-names" author="mcovarr">
+        <sql>
+            update athena.product_family set name = 'de novo Assembly' where name = 'DE_NOVO_ASSEMBLY';
+            update athena.product_family set name = 'Alternate Library Prep &amp; Development' where name = 'ALTERNATIVE_LIBRARY_PREP_AND_DEVELOPMENT';
+            update athena.product_family set name = 'Data Analysis' where name = 'DATA_ANALYSIS';
+            update athena.product_family set name = 'Epigenomics' where name = 'EPIGENOMICS';
+            update athena.product_family set name = 'Exome' where name = 'EXOME';
+            update athena.product_family set name = 'Metagenomics' where name = 'METAGENOMICS';
+            update athena.product_family set name = 'Microbial &amp; Viral Analysis' where name = 'MICROBIAL_AND_VIRAL_ANALYSIS';
+            update athena.product_family set name = 'RNA' where name = 'RNA';
+            update athena.product_family set name = 'Sample Initiation, Qualification &amp; Cell Culture' where name = 'SAMPLE_INITIATION_QUALIFICATION_AND_CELL_CULTURE';
+            update athena.product_family set name = 'Sequence Only' where name = 'SEQUENCE_ONLY';
+            update athena.product_family set name = 'Small Design, Validation &amp; Extension' where name = 'SMALL_DESIGN_VALIDATION_AND_EXTENSION';
+            update athena.product_family set name = 'Whole Genome' where name = 'WHOLE_GENOME';
+        </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-185-1" author="mccrory">
+      <sql>
+        update research_project set jira_ticket_key = 'RP-9' where title = 'Lung Adenocarcinoma CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-10' where title = 'Resistance - Kantoff' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-11' where title = 'Germline Cancers (NHGRI)' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-12' where title = 'Resistance NHGRI CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-13' where title = 'Kantoff Resistance' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-14' where title = 'Short Stature' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-15' where title = 'CCLE' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-16' where title = 'GTEx' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-17' where title = 'SIGMA Pediatric' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-18' where title = 'SIGMA Cervical' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-19' where title = 'SIGMA Sarcoma' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-20' where title = 'Kwiatkowski LAM' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-21' where title = '1000 Genomes' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-22' where title = 'TCGA' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-23' where title = 'Lipid Extremes' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-24' where title = 'Germline Cancers (Starr)' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-25' where title = 'Resistance CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-26' where title = 'ESP-GO Exome Chip' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-27' where title = 'Mendelian Consortium' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-28' where title = 'Autism' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-29' where title = 'Large Cell Neuroendocrine Carcinoma THOMAS' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-30' where title = 'Inflammatory Bowel Disease' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-31' where title = 'Kwiatkowski SEGA' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-32' where title = 'ADHD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-33' where title = 'Novartis Resistance' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-34' where title = 'TCGA FFPE' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-35' where title = 'Blood Pressure' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-36' where title = 'Genome Superstruct Project' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-37' where title = 'GWASeq BrCa' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-38' where title = 'Skea' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-39' where title = 'CogDec DLPFC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-40' where title = 'CIP_COLON_EPI' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-41' where title = 'Mouse_Melanoma_MDACC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-42' where title = 'Stroke/MI' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-43' where title = 'Pato African American Trios' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-44' where title = 'SIGMA_T2D' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-45' where title = 'Pato Caucasian Cohort' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-46' where title = 'Anderson Mastocytosis' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-47' where title = 'Kendler Irish Families' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-48' where title = 'Pato GPC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-49' where title = 'Esophageal CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-50' where title = 'Carcinoid' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-51' where title = 'Fanconi Anemia' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-52' where title = 'Medulloblastoma CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-53' where title = 'Neuroblastoma TARGET' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-54' where title = 'Mouse CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-55' where title = 'Anthropometric Extremes' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-56' where title = 'CILIOPATHIES' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-57' where title = 'Rheumatoid Arthritis' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-58' where title = 'BRAIN METS' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-59' where title = 'SIGMA Breast Cancer Deep Dive' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-60' where title = 'Cancer Cell Line Controls' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-61' where title = 'SIGMA Rhabdoid' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-62' where title = 'SIGMA Ewing Sarcoma' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-63' where title = 'SIGMA PPB' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-64' where title = 'SIGMA JMML' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-65' where title = 'SIGMA Osteosarcoma' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-66' where title = 'Meyerson Rhabdomyosarcoma' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-67' where title = 'SIGMA Head and Neck' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-68' where title = 'Sweden SCZ BP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-69' where title = 'Cardiff' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-70' where title = 'ICCBD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-71' where title = 'LOGIC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-72' where title = 'SMRI' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-73' where title = 'Coriell' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-74' where title = 'Taiwanese Trios' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-75' where title = 'Melanoma Immunity' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-76' where title = 'Kwiatkowski Tuberous Sclerosis' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-77' where title = 'McLean' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-78' where title = 'GENEVA' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-79' where title = 'HIV - Host Genetics' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-80' where title = 'SAEC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-81' where title = 'Daly_ATGU' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-82' where title = 'Prostate Cancer CIP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-83' where title = 'TCGA BLCA' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-84' where title = 'TCGA LUAD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-85' where title = 'TCGA LUSC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-86' where title = 'TCGA THCA' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-87' where title = 'TCGA HNSC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-88' where title = 'TCGA PRAD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-89' where title = 'TCGA STAD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-90' where title = 'TCGA GBM' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-91' where title = 'TCGA LGG' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-92' where title = 'TCGA PAAD' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-93' where title = 'TCGA CESC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-94' where title = 'TCGA KIRC' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-95' where title = 'Salk Institute Mouse GBM' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-96' where title = 'TCGA SKCM' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-97' where title = 'TCGA VALIDATION' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-98' where title = 'TCGA KIRP' and jira_ticket_key is null;
+        update research_project set jira_ticket_key = 'RP-99' where title = 'Genotyping External' and jira_ticket_key is null;
+      </sql>
+    </changeSet>
 
 </databaseChangeLog>

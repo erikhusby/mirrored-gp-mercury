@@ -1,25 +1,61 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlID;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 /**
  * A lab process, or team, e.g. QTP
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class WorkflowProcessDef {
 
+    @XmlID
     private String name;
-    /** Process graphs tend to be straight lines, with one or two optional steps (e.g. Normalization is optional in QTP,
-     * because the concentration may be fine as is).  (In Squid workflow, new transitions are often initially optional,
-     * to allow the automation to be rolled out, but this could be addressed in Mercury by versioning.)
-     * Treating steps as lists would simplify visualization and editing. */
-    private List<WorkflowStepDef> workflowStepDefs;
+    private List<WorkflowProcessDefVersion> workflowProcessDefVersions = new ArrayList<WorkflowProcessDefVersion>();
+    private transient List<WorkflowProcessDefVersion> processVersionsDescEffDate;
+
+    /** For JAXB */
+    @SuppressWarnings("UnusedDeclaration")
+    WorkflowProcessDef() {
+    }
 
     public WorkflowProcessDef(String name) {
         this.name = name;
-        this.workflowStepDefs = workflowStepDefs;
     }
 
-    public void addStep(WorkflowStepDef workflowStepDef) {
-        workflowStepDefs.add(workflowStepDef);
+    public String getName() {
+        return name;
+    }
+
+    public void addWorkflowProcessDefVersion(WorkflowProcessDefVersion workflowProcessDefVersion) {
+        this.workflowProcessDefVersions.add(workflowProcessDefVersion);
+    }
+
+    public WorkflowProcessDefVersion getEffectiveVersion() {
+        if (processVersionsDescEffDate == null) {
+            processVersionsDescEffDate = new ArrayList<WorkflowProcessDefVersion>(workflowProcessDefVersions);
+            Collections.sort(processVersionsDescEffDate, new Comparator<WorkflowProcessDefVersion>() {
+                @Override
+                public int compare(WorkflowProcessDefVersion o1, WorkflowProcessDefVersion o2) {
+                    return o2.getEffectiveDate().compareTo(o1.getEffectiveDate());
+                }
+            });
+        }
+        Date now = new Date();
+        WorkflowProcessDefVersion effectiveProcessDef = null;
+        for (WorkflowProcessDefVersion workflowProcessDefVersion : processVersionsDescEffDate) {
+            if(workflowProcessDefVersion.getEffectiveDate().before(now)) {
+                effectiveProcessDef = workflowProcessDefVersion;
+                break;
+            }
+        }
+        assert effectiveProcessDef != null;
+        return effectiveProcessDef;
     }
 }

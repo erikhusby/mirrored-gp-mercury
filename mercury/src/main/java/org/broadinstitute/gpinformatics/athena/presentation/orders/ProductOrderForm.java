@@ -2,11 +2,15 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
@@ -34,10 +38,18 @@ public class ProductOrderForm extends AbstractJsfBean {
     ProductOrderDao productOrderDao;
 
     @Inject
+    ProductDao productDao;
+
+    @Inject
     private QuoteService quoteService;
 
     @Inject
     private FacesContext facesContext;
+
+    @Inject
+    private ProductOrderConversationData conversationData;
+
+    private List<String> selectedAddOns = new ArrayList<String>();
 
     /**
      * This is required to get the editIdsCache value in the case where we want to skip the process
@@ -147,9 +159,56 @@ public class ProductOrderForm extends AbstractJsfBean {
         List<String> sampleIds = convertTextToList(text);
         List<ProductOrderSample> orderSamples = new ArrayList<ProductOrderSample>(sampleIds.size());
         for (String sampleId : sampleIds) {
-            orderSamples.add(new ProductOrderSample(sampleId));
+            orderSamples.add(new ProductOrderSample(sampleId, productOrderDetail.getProductOrder()));
         }
         return orderSamples;
+    }
+
+    public List<String> getSelectedAddOns() {
+        return selectedAddOns;
+    }
+
+    public void setSelectedAddOns(@Nonnull List<String> selectedAddOns) {
+        this.selectedAddOns = selectedAddOns;
+    }
+
+    public boolean getHasProduct() {
+        return conversationData.getProduct() != null;
+    }
+
+    public List<String> getAddOns() {
+        return conversationData.getAddOnsForProduct();
+    }
+
+    public Product getProduct() {
+        return conversationData.getProduct();
+    }
+
+    public void setAddOns(@Nonnull List<String> addOns) {
+        conversationData.setAddOnsForProduct(addOns);
+    }
+
+    /**
+     * Set up the add ons when the product selection event happens
+     *
+     * @param productSelectEvent The selection event on the project
+     */
+    public void setupAddOns(SelectEvent productSelectEvent) {
+        Product product = (Product) productSelectEvent.getObject();
+        setupAddOns(product);
+    }
+
+    /**
+     * Get all the add on products for the specified product
+     *
+     * @param product The product
+     */
+    public void setupAddOns(Product product) {
+        conversationData.setProduct(product);
+    }
+
+    public String noAddOnsString() {
+        return MessageFormat.format("The Product ''{0}'' has no add-ons.", getProduct().getProductName());
     }
 
     /**
@@ -218,19 +277,46 @@ public class ProductOrderForm extends AbstractJsfBean {
             // 1 => 2
             setEditIdsCache(StringUtils.join(convertOrderSamplesToList(), SEPARATOR + " "));
         }
-        productOrderDetail.getProductOrder().loadBspData();
+
+        productOrderDetail.load();
     }
 
-    // FIXME: handle db store errors, JIRA server errors here.
+    // FIXME: handle db store errors, JIRA server errors.
     public String save() throws IOException {
         ProductOrder order = productOrderDetail.getProductOrder();
         order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
+
+        // Validations.
+        if (order.getSamples().isEmpty()) {
+            // FIXME: instead of doing this here, it can be done as a validator on the hidden editIDsCache field.
+            String message = "You must add at least one sample before placing an order.";
+            addErrorMessage(message, message);
+            return null;
+        }
+
+        order.updateAddOnProducts(getSelectedAddOnProducts());
+
+        // DRAFT orders not yet supported; force state of new PDOs to Submitted.
+        order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         String action = order.isInDB() ? "modified" : "created";
-        //order.submitProductOrder();
+        order.submitProductOrder();
         productOrderDao.persist(order);
-        addInfoMessage(MessageFormat.format("Product Order {0}.", action),
-                MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
-                        order.getTitle(), order.getJiraTicketKey(), action));
-        return redirect("list");
+
+        addFlashMessage(
+            MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
+            order.getTitle(), order.getJiraTicketKey(), action));
+        return redirect("view");
+    }
+
+    private List<Product> getSelectedAddOnProducts() {
+        if (getSelectedAddOns().isEmpty()) {
+            return new ArrayList<Product> ();
+        }
+
+        return productDao.findListByList(Product.class, Product_.productName, getSelectedAddOns());
+    }
+
+    public void initForm() {
+        conversationData.beginConversation(productOrderDetail.getProductOrder());
     }
 }

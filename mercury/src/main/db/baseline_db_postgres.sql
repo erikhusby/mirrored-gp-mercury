@@ -452,6 +452,12 @@
     alter table project_project_plans_aud
         drop constraint FK85E13A0F8A39BE24;
 
+    -- databasechangelog% are liquibase tables, liquibase will rebuild these on its first run
+
+    drop table if exists athena.databasechangelog cascade;
+
+    drop table if exists athena.databasechangeloglock cascade;
+
     drop table if exists athena.billable_item cascade;
 
     drop table if exists athena.billable_item_aud cascade;
@@ -503,6 +509,16 @@
     drop table if exists athena.research_projectirb cascade;
 
     drop table if exists athena.research_projectirb_aud cascade;
+
+    drop table if exists athena.product_order_add_on_aud cascade;
+
+    drop table if exists athena.product_order_add_on cascade;
+
+    -- databasechangelog% are liquibase tables, liquibase will rebuild these on its first run
+
+    drop table if exists mercury.databasechangelog cascade;
+
+    drop table if exists mercury.databasechangeloglock cascade;
 
     drop table if exists mercury.jira_ticket cascade;
 
@@ -654,6 +670,14 @@
 
     drop table if exists mercury.workflow_description_aud cascade;
 
+    drop table if exists mercury.lab_vessel_mercury_samples_aud cascade;
+
+    drop table if exists mercury.lab_vessel_mercury_samples cascade;
+
+    drop table if exists mercury.mercury_sample cascade;
+
+    drop table if exists mercury.mercury_sample_aud cascade;
+
     drop table if exists project_available_quotes cascade;
 
     drop table if exists project_available_quotes_aud cascade;
@@ -691,6 +715,8 @@
     drop sequence athena.seq_rp_funding_index;
 
     drop sequence athena.seq_rp_irb_index;
+
+    drop sequence athena.seq_order_add_on;
 
     drop sequence mercury.SEQ_LAB_BATCH;
 
@@ -730,26 +756,28 @@
 
     drop sequence mercury.seq_molecular_indexing_scheme;
 
+    drop sequence mercury.seq_mercury_sample;
+
     create table athena.billable_item (
-        billable_item_id int8 not null,
+        billable_item_id numeric(19,0) not null,
         count numeric(19, 2),
-        price_item int8,
-        product_order_sample int8,
+        price_item numeric(19,0),
+        product_order_sample numeric(19,0),
         primary key (billable_item_id)
     );
 
     create table athena.billable_item_aud (
-        billable_item_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        billable_item_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         count numeric(19, 2),
-        price_item int8,
-        product_order_sample int8,
+        price_item numeric(19,0),
+        product_order_sample numeric(19,0),
         primary key (billable_item_id, rev)
     );
 
     create table athena.price_item (
-        price_item_id int8 not null,
+        price_item_id numeric(19,0) not null,
         category varchar(255),
         name varchar(255),
         platform varchar(255),
@@ -759,9 +787,9 @@
     );
 
     create table athena.price_item_aud (
-        price_item_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        price_item_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         category varchar(255),
         name varchar(255),
         platform varchar(255),
@@ -770,230 +798,230 @@
     );
 
     create table athena.product (
-        product_id int8 not null,
+        product_id numeric(19,0) not null,
         availability_date timestamp,
         deliverables varchar(2000),
         description varchar(2000),
         discontinued_date timestamp,
-        expected_cycle_time_seconds int4,
-        guaranteed_cycle_time_seconds int4,
+        expected_cycle_time_seconds numeric(10,0),
+        guaranteed_cycle_time_seconds numeric(10,0),
         input_requirements varchar(2000),
         part_number varchar(255),
         product_name varchar(255),
-        samples_per_week int4,
+        samples_per_week numeric(10,0),
         top_level_product boolean not null,
         workflow_name varchar(255),
-        default_price_item int8,
-        product_family int8,
+        default_price_item numeric(19,0),
+        product_family numeric(19,0),
         primary key (product_id),
         unique (part_number)
     );
 
     create table athena.product_add_ons (
-        product int8 not null,
-        add_ons int8 not null,
+        product numeric(19,0) not null,
+        add_ons numeric(19,0) not null,
         primary key (product, add_ons)
     );
 
     create table athena.product_add_ons_aud (
-        rev int8 not null,
-        product int8 not null,
-        add_ons int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        product numeric(19,0) not null,
+        add_ons numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, product, add_ons)
     );
 
     create table athena.product_aud (
-        product_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        product_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         availability_date timestamp,
         deliverables varchar(2000),
         description varchar(2000),
         discontinued_date timestamp,
-        expected_cycle_time_seconds int4,
-        guaranteed_cycle_time_seconds int4,
+        expected_cycle_time_seconds numeric(10,0),
+        guaranteed_cycle_time_seconds numeric(10,0),
         input_requirements varchar(2000),
         part_number varchar(255),
         product_name varchar(255),
-        samples_per_week int4,
+        samples_per_week numeric(10,0),
         top_level_product boolean,
         workflow_name varchar(255),
-        default_price_item int8,
-        product_family int8,
+        default_price_item numeric(19,0),
+        product_family numeric(19,0),
         primary key (product_id, rev)
     );
 
     create table athena.product_family (
-        product_family_id int8 not null,
+        product_family_id numeric(19,0) not null,
         name varchar(255),
         primary key (product_family_id),
         unique (name)
     );
 
     create table athena.product_family_aud (
-        product_family_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        product_family_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         name varchar(255),
         primary key (product_family_id, rev)
     );
 
     create table athena.product_order (
-        product_order_id int8 not null,
+        product_order_id numeric(19,0) not null,
         comments varchar(2000),
         jira_ticket_key varchar(255),
-        order_status int4,
+        order_status numeric(10,0),
         quote_id varchar(255),
         title varchar(255) unique,
-        product int8,
-        research_project int8,
+        product numeric(19,0),
+        research_project numeric(19,0),
         primary key (product_order_id)
     );
 
     create table athena.product_order_aud (
-        product_order_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        product_order_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         comments varchar(2000),
         jira_ticket_key varchar(255),
-        order_status int4,
+        order_status numeric(10,0),
         quote_id varchar(255),
         title varchar(255),
-        product int8,
-        research_project int8,
+        product numeric(19,0),
+        research_project numeric(19,0),
         primary key (product_order_id, rev)
     );
 
     create table athena.product_order_sample (
-        product_order_sample_id int8 not null,
-        billing_status int4,
+        product_order_sample_id numeric(19,0) not null,
+        billing_status numeric(10,0),
         sample_comment varchar(255),
         sample_name varchar(255),
-        product_order int8,
+        product_order numeric(19,0),
         primary key (product_order_sample_id)
     );
 
     create table athena.product_order_sample_aud (
-        product_order_sample_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        billing_status int4,
+        product_order_sample_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
+        billing_status numeric(10,0),
         sample_comment varchar(255),
         sample_name varchar(255),
-        product_order int8,
+        product_order numeric(19,0),
         primary key (product_order_sample_id, rev)
     );
 
     create table athena.product_price_items (
-        product int8 not null,
-        price_items int8 not null,
+        product numeric(19,0) not null,
+        price_items numeric(19,0) not null,
         primary key (product, price_items)
     );
 
     create table athena.product_price_items_aud (
-        rev int8 not null,
-        product int8 not null,
-        price_items int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        product numeric(19,0) not null,
+        price_items numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, product, price_items)
     );
 
     create table athena.project_person (
-        project_person_id int8 not null,
-        person_id int8,
-        role int4,
-        research_project int8,
+        project_person_id numeric(19,0) not null,
+        person_id numeric(19,0),
+        role numeric(10,0),
+        research_project numeric(19,0),
         primary key (project_person_id)
     );
 
     create table athena.project_person_aud (
-        project_person_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        person_id int8,
-        role int4,
-        research_project int8,
+        project_person_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
+        person_id numeric(19,0),
+        role numeric(10,0),
+        research_project numeric(19,0),
         primary key (project_person_id, rev)
     );
 
     create table athena.research_project (
-        research_project_id int8 not null,
-        created_by int8,
+        research_project_id numeric(19,0) not null,
+        created_by numeric(19,0),
         created_date timestamp,
         irb_notes varchar(255),
         jira_ticket_key varchar(255),
-        modified_by int8,
+        modified_by numeric(19,0),
         modified_date timestamp,
-        status int4,
+        status numeric(10,0),
         synopsis varchar(255),
         title varchar(255) unique,
         primary key (research_project_id)
     );
 
     create table athena.research_project_aud (
-        research_project_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        created_by int8,
+        research_project_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
+        created_by numeric(19,0),
         created_date timestamp,
         irb_notes varchar(255),
         jira_ticket_key varchar(255),
-        modified_by int8,
+        modified_by numeric(19,0),
         modified_date timestamp,
-        status int4,
+        status numeric(10,0),
         synopsis varchar(255),
         title varchar(255),
         primary key (research_project_id, rev)
     );
 
     create table athena.research_project_cohort (
-        research_project_cohort_id int8 not null,
+        research_project_cohort_id numeric(19,0) not null,
         cohort_id varchar(255),
-        research_project int8,
+        research_project numeric(19,0),
         primary key (research_project_cohort_id)
     );
 
     create table athena.research_project_cohort_aud (
-        research_project_cohort_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        research_project_cohort_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         cohort_id varchar(255),
-        research_project int8,
+        research_project numeric(19,0),
         primary key (research_project_cohort_id, rev)
     );
 
     create table athena.research_project_funding (
-        research_project_funding_id int8 not null,
+        research_project_funding_id numeric(19,0) not null,
         funding_id varchar(255),
-        research_project int8,
+        research_project numeric(19,0),
         primary key (research_project_funding_id)
     );
 
     create table athena.research_project_funding_aud (
-        research_project_funding_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        research_project_funding_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         funding_id varchar(255),
-        research_project int8,
+        research_project numeric(19,0),
         primary key (research_project_funding_id, rev)
     );
 
     create table athena.research_projectirb (
-        research_projectirbid int8 not null,
+        research_projectirbid numeric(19,0) not null,
         irb varchar(255),
-        irb_type int4,
-        research_project int8,
+        irb_type numeric(10,0),
+        research_project numeric(19,0),
         primary key (research_projectirbid)
     );
 
     create table athena.research_projectirb_aud (
-        research_projectirbid int8 not null,
-        rev int8 not null,
-        revtype int2,
+        research_projectirbid numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         irb varchar(255),
-        irb_type int4,
-        research_project int8,
+        irb_type numeric(10,0),
+        research_project numeric(19,0),
         primary key (research_projectirbid, rev)
     );
 
@@ -1001,105 +1029,105 @@
         ticket_id varchar(255) not null,
         browser_url varchar(255),
         ticket_name varchar(255),
-        lab_batch int8,
+        lab_batch numeric(19,0),
         primary key (ticket_id)
     );
 
     create table mercury.jira_ticket_aud (
         ticket_id varchar(255) not null,
-        rev int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         browser_url varchar(255),
         ticket_name varchar(255),
-        lab_batch int8,
+        lab_batch numeric(19,0),
         primary key (ticket_id, rev)
     );
 
     create table mercury.lab_batch (
-        lab_batch_id int8 not null,
+        lab_batch_id numeric(19,0) not null,
         batch_name varchar(255),
         is_active boolean not null,
         jira_ticket varchar(255),
-        project_plan int8,
+--         project_plan numeric(19,0),
         primary key (lab_batch_id),
         unique (batch_name)
     );
 
     create table mercury.lab_batch_aud (
-        lab_batch_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        lab_batch_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         batch_name varchar(255),
         is_active boolean,
         jira_ticket varchar(255),
-        project_plan int8,
+--         project_plan numeric(19,0),
         primary key (lab_batch_id, rev)
     );
 
-    create table mercury.lab_batch_starting_samples (
-        lab_batch int8 not null,
-        starting_samples int8 not null,
-        primary key (lab_batch, starting_samples)
-    );
-
-    create table mercury.lab_batch_starting_samples_aud (
-        rev int8 not null,
-        lab_batch int8 not null,
-        starting_samples int8 not null,
-        revtype int2,
-        primary key (rev, lab_batch, starting_samples)
-    );
+--     create table mercury.lab_batch_starting_samples (
+--         lab_batch numeric(19,0) not null,
+--         starting_samples numeric(19,0) not null,
+--         primary key (lab_batch, starting_samples)
+--     );
+--
+--     create table mercury.lab_batch_starting_samples_aud (
+--         rev numeric(19,0) not null,
+--         lab_batch numeric(19,0) not null,
+--         starting_samples numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         primary key (rev, lab_batch, starting_samples)
+--     );
 
     create table mercury.lab_event (
         dtype varchar(31) not null,
-        lab_event_id int8 not null,
-        disambiguator int8,
+        lab_event_id numeric(19,0) not null,
+        disambiguator numeric(19,0),
         event_date timestamp,
         event_location varchar(255),
         quote_server_batch_id varchar(255),
         lab_event_type varchar(255),
-        event_operator int8,
-        in_place_lab_vessel int8,
-        project_plan_override int8,
-        lab_batch int8,
+        event_operator numeric(19,0),
+        in_place_lab_vessel numeric(19,0),
+--         project_plan_override numeric(19,0),
+        lab_batch numeric(19,0),
         primary key (lab_event_id),
         unique (event_location, event_date, disambiguator)
     );
 
     create table mercury.lab_event_aud (
         dtype varchar(31) not null,
-        lab_event_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        disambiguator int8,
+        lab_event_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
+        disambiguator numeric(19,0),
         event_date timestamp,
         event_location varchar(255),
         quote_server_batch_id varchar(255),
-        event_operator int8,
-        in_place_lab_vessel int8,
-        project_plan_override int8,
+        event_operator numeric(19,0),
+        in_place_lab_vessel numeric(19,0),
+--         project_plan_override numeric(19,0),
         lab_event_type varchar(255),
-        lab_batch int8,
+        lab_batch numeric(19,0),
         primary key (lab_event_id, rev)
     );
 
     create table mercury.lab_event_reagents (
-        lab_event int8 not null,
-        reagents int8 not null,
+        lab_event numeric(19,0) not null,
+        reagents numeric(19,0) not null,
         primary key (lab_event, reagents)
     );
 
     create table mercury.lab_event_reagents_aud (
-        rev int8 not null,
-        lab_event int8 not null,
-        reagents int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        lab_event numeric(19,0) not null,
+        reagents numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, lab_event, reagents)
     );
 
     create table mercury.lab_vessel (
         dtype varchar(31) not null,
-        lab_vessel_id int8 not null,
+        lab_vessel_id numeric(19,0) not null,
         created_on timestamp,
         label varchar(255),
         vessel_position varchar(255),
@@ -1108,32 +1136,32 @@
         flowcell_barcode varchar(255),
         flowcell_type varchar(255),
         plate_type varchar(255),
-        molecular_state int8,
-        project int8,
-        project_authority int8,
-        read_bucket_authority int8,
-        plate int8,
-        aliquot int8,
+--         molecular_state numeric(19,0),
+--         project numeric(19,0),
+--         project_authority numeric(19,0),
+--         read_bucket_authority numeric(19,0),
+        plate numeric(19,0),
+--         aliquot numeric(19,0),
         primary key (lab_vessel_id),
         unique (label)
     );
 
     create table mercury.lab_vessel_aud (
         dtype varchar(31) not null,
-        lab_vessel_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        lab_vessel_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         created_on timestamp,
         label varchar(255),
-        molecular_state int8,
-        project int8,
-        project_authority int8,
-        read_bucket_authority int8,
+--         molecular_state numeric(19,0),
+--         project numeric(19,0),
+--         project_authority numeric(19,0),
+--         read_bucket_authority numeric(19,0),
         digest varchar(255),
         rack_type varchar(255),
-        aliquot int8,
+--         aliquot numeric(19,0),
         vessel_position varchar(255),
-        plate int8,
+        plate numeric(19,0),
         plate_type varchar(255),
         flowcell_barcode varchar(255),
         flowcell_type varchar(255),
@@ -1141,216 +1169,216 @@
     );
 
     create table mercury.lab_vessel_containers (
-        lab_vessel int8 not null,
-        containers int8 not null,
+        lab_vessel numeric(19,0) not null,
+        containers numeric(19,0) not null,
         primary key (lab_vessel, containers)
     );
 
     create table mercury.lab_vessel_containers_aud (
-        rev int8 not null,
-        lab_vessel int8 not null,
-        containers int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        lab_vessel numeric(19,0) not null,
+        containers numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, lab_vessel, containers)
     );
 
     create table mercury.lab_vessel_lab_batches (
-        lab_vessel int8 not null,
-        lab_batches int8 not null,
+        lab_vessel numeric(19,0) not null,
+        lab_batches numeric(19,0) not null,
         primary key (lab_vessel, lab_batches)
     );
 
     create table mercury.lab_vessel_lab_batches_aud (
-        rev int8 not null,
-        lab_vessel int8 not null,
-        lab_batches int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        lab_vessel numeric(19,0) not null,
+        lab_batches numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, lab_vessel, lab_batches)
     );
 
     create table mercury.lab_vessel_notes (
-        lab_vessel int8 not null,
-        notes int8 not null,
+        lab_vessel numeric(19,0) not null,
+        notes numeric(19,0) not null,
         unique (notes)
     );
 
     create table mercury.lab_vessel_notes_aud (
-        rev int8 not null,
-        lab_vessel int8 not null,
-        notes int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        lab_vessel numeric(19,0) not null,
+        notes numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, lab_vessel, notes)
     );
 
     create table mercury.lab_vessel_tickets_created (
-        lab_vessel int8 not null,
+        lab_vessel numeric(19,0) not null,
         tickets_created varchar(255) not null,
         primary key (lab_vessel, tickets_created),
         unique (tickets_created)
     );
 
     create table mercury.lab_vessel_tickets_created_aud (
-        rev int8 not null,
-        lab_vessel int8 not null,
+        rev numeric(19,0) not null,
+        lab_vessel numeric(19,0) not null,
         tickets_created varchar(255) not null,
-        revtype int2,
+        revtype numeric(3,0),
         primary key (rev, lab_vessel, tickets_created)
     );
 
-    create table mercury.lab_work_queue (
-        lab_work_queue_id int8 not null,
-        primary key (lab_work_queue_id)
-    );
-
-    create table mercury.lab_work_queue_aud (
-        lab_work_queue_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        primary key (lab_work_queue_id, rev)
-    );
+--     create table mercury.lab_work_queue (
+--         lab_work_queue_id numeric(19,0) not null,
+--         primary key (lab_work_queue_id)
+--     );
+--
+--     create table mercury.lab_work_queue_aud (
+--         lab_work_queue_id numeric(19,0) not null,
+--         rev numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         primary key (lab_work_queue_id, rev)
+--     );
 
     create table mercury.lb_starting_lab_vessels (
-        lab_batch int8 not null,
-        starting_lab_vessels int8 not null,
+        lab_batch numeric(19,0) not null,
+        starting_lab_vessels numeric(19,0) not null,
         primary key (lab_batch, starting_lab_vessels)
     );
 
     create table mercury.lb_starting_lab_vessels_aud (
-        rev int8 not null,
-        lab_batch int8 not null,
-        starting_lab_vessels int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        lab_batch numeric(19,0) not null,
+        starting_lab_vessels numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, lab_batch, starting_lab_vessels)
     );
 
     create table mercury.lv_map_position_to_vessel (
-        lab_vessel int8 not null,
-        map_position_to_vessel int8 not null,
+        lab_vessel numeric(19,0) not null,
+        map_position_to_vessel numeric(19,0) not null,
         mapkey varchar(255) not null,
         primary key (lab_vessel, mapkey)
     );
 
     create table mercury.lv_map_position_to_vessel_aud (
-        rev int8 not null,
-        lab_vessel int8 not null,
-        map_position_to_vessel int8 not null,
+        rev numeric(19,0) not null,
+        lab_vessel numeric(19,0) not null,
+        map_position_to_vessel numeric(19,0) not null,
         mapkey varchar(255) not null,
-        revtype int2,
+        revtype numeric(3,0),
         primary key (rev, lab_vessel, map_position_to_vessel, mapkey)
     );
 
     create table mercury.lv_reagent_contents (
-        lab_vessel int8 not null,
-        reagent_contents int8 not null,
+        lab_vessel numeric(19,0) not null,
+        reagent_contents numeric(19,0) not null,
         primary key (lab_vessel, reagent_contents)
     );
 
     create table mercury.lv_reagent_contents_aud (
-        rev int8 not null,
-        lab_vessel int8 not null,
-        reagent_contents int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        lab_vessel numeric(19,0) not null,
+        reagent_contents numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, lab_vessel, reagent_contents)
     );
 
-    create table mercury.molecular_envelope (
-        dtype varchar(31) not null,
-        molecular_envelope_id int8 not null,
-        five_prime_seq varchar(255),
-        name varchar(255),
-        three_prime_seq varchar(255),
-        primary key (molecular_envelope_id)
-    );
-
-    create table mercury.molecular_envelope_aud (
-        dtype varchar(31) not null,
-        molecular_envelope_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        five_prime_seq varchar(255),
-        name varchar(255),
-        three_prime_seq varchar(255),
-        primary key (molecular_envelope_id, rev)
-    );
+--     create table mercury.molecular_envelope (
+--         dtype varchar(31) not null,
+--         molecular_envelope_id numeric(19,0) not null,
+--         five_prime_seq varchar(255),
+--         name varchar(255),
+--         three_prime_seq varchar(255),
+--         primary key (molecular_envelope_id)
+--     );
+--
+--     create table mercury.molecular_envelope_aud (
+--         dtype varchar(31) not null,
+--         molecular_envelope_id numeric(19,0) not null,
+--         rev numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         five_prime_seq varchar(255),
+--         name varchar(255),
+--         three_prime_seq varchar(255),
+--         primary key (molecular_envelope_id, rev)
+--     );
 
     create table mercury.molecular_index (
-        molecular_index_id int8 not null,
+        molecular_index_id numeric(19,0) not null,
         sequence varchar(255),
         primary key (molecular_index_id)
     );
 
     create table mercury.molecular_index_aud (
-        molecular_index_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        molecular_index_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         sequence varchar(255),
         primary key (molecular_index_id, rev)
     );
 
     create table mercury.molecular_index_position (
-        scheme_id int8 not null,
-        index_id int8 not null,
+        scheme_id numeric(19,0) not null,
+        index_id numeric(19,0) not null,
         mapkey varchar(255) not null,
         primary key (scheme_id, mapkey)
     );
 
     create table mercury.molecular_index_position_aud (
-        rev int8 not null,
-        scheme_id int8 not null,
-        index_id int8 not null,
+        rev numeric(19,0) not null,
+        scheme_id numeric(19,0) not null,
+        index_id numeric(19,0) not null,
         mapkey varchar(255) not null,
-        revtype int2,
+        revtype numeric(3,0),
         primary key (rev, scheme_id, index_id, mapkey)
     );
 
     create table mercury.molecular_indexing_scheme (
-        molecular_indexing_scheme_id int8 not null,
+        molecular_indexing_scheme_id numeric(19,0) not null,
         name varchar(255),
         primary key (molecular_indexing_scheme_id)
     );
 
     create table mercury.molecular_indexing_scheme_aud (
-        molecular_indexing_scheme_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        molecular_indexing_scheme_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         name varchar(255),
         primary key (molecular_indexing_scheme_id, rev)
     );
 
-    create table mercury.molecular_state (
-        molecular_state_id int8 not null,
-        nucleic_acid_state varchar(255),
-        strand varchar(255),
-        molecular_envelope int8,
-        molecular_state_template int8,
-        primary key (molecular_state_id)
-    );
-
-    create table mercury.molecular_state_aud (
-        molecular_state_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        nucleic_acid_state varchar(255),
-        strand varchar(255),
-        molecular_envelope int8,
-        molecular_state_template int8,
-        primary key (molecular_state_id, rev)
-    );
-
-    create table mercury.molecular_state_template (
-        molecular_state_template_id int8 not null,
-        primary key (molecular_state_template_id)
-    );
-
-    create table mercury.molecular_state_template_aud (
-        molecular_state_template_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        primary key (molecular_state_template_id, rev)
-    );
+--     create table mercury.molecular_state (
+--         molecular_state_id numeric(19,0) not null,
+--         nucleic_acid_state varchar(255),
+--         strand varchar(255),
+--         molecular_envelope numeric(19,0),
+--         molecular_state_template numeric(19,0),
+--         primary key (molecular_state_id)
+--     );
+--
+--     create table mercury.molecular_state_aud (
+--         molecular_state_id numeric(19,0) not null,
+--         rev numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         nucleic_acid_state varchar(255),
+--         strand varchar(255),
+--         molecular_envelope numeric(19,0),
+--         molecular_state_template numeric(19,0),
+--         primary key (molecular_state_id, rev)
+--     );
+--
+--     create table mercury.molecular_state_template (
+--         molecular_state_template_id numeric(19,0) not null,
+--         primary key (molecular_state_template_id)
+--     );
+--
+--     create table mercury.molecular_state_template_aud (
+--         molecular_state_template_id numeric(19,0) not null,
+--         rev numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         primary key (molecular_state_template_id, rev)
+--     );
 
     create table mercury.person (
-        person_id int8 not null,
+        person_id numeric(19,0) not null,
         first_name varchar(255),
         last_name varchar(255),
         username varchar(255),
@@ -1358,121 +1386,121 @@
     );
 
     create table mercury.person_aud (
-        person_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        person_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         first_name varchar(255),
         last_name varchar(255),
         username varchar(255),
         primary key (person_id, rev)
     );
-
+/*
     create table mercury.pp_map_start_smpl_to_aliqt (
-        project_plan int8 not null,
-        map_starting_sample_to_aliquot int8 not null,
-        mapkey int8 not null,
+        project_plan numeric(19,0) not null,
+        map_starting_sample_to_aliquot numeric(19,0) not null,
+        mapkey numeric(19,0) not null,
         primary key (project_plan, mapkey)
     );
 
     create table mercury.pp_map_start_smpl_to_aliqt_aud (
-        rev int8 not null,
-        project_plan int8 not null,
-        map_starting_sample_to_aliquot int8 not null,
-        mapkey int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        project_plan numeric(19,0) not null,
+        map_starting_sample_to_aliquot numeric(19,0) not null,
+        mapkey numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, project_plan, map_starting_sample_to_aliquot, mapkey)
     );
 
     create table mercury.pp_map_start_vssl_to_aliqt (
-        project_plan int8 not null,
-        map_starting_vessel_to_aliquot int8 not null,
-        mapkey int8 not null,
+        project_plan numeric(19,0) not null,
+        map_starting_vessel_to_aliquot numeric(19,0) not null,
+        mapkey numeric(19,0) not null,
         primary key (project_plan, mapkey)
     );
 
     create table mercury.pp_map_start_vssl_to_aliqt_aud (
-        rev int8 not null,
-        project_plan int8 not null,
-        map_starting_vessel_to_aliquot int8 not null,
-        mapkey int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        project_plan numeric(19,0) not null,
+        map_starting_vessel_to_aliquot numeric(19,0) not null,
+        mapkey numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, project_plan, map_starting_vessel_to_aliquot, mapkey)
     );
 
     create table mercury.pp_starting_lab_vessels (
-        project_plan int8 not null,
-        starting_lab_vessels int8 not null,
+        project_plan numeric(19,0) not null,
+        starting_lab_vessels numeric(19,0) not null,
         primary key (project_plan, starting_lab_vessels)
     );
 
     create table mercury.pp_starting_lab_vessels_aud (
-        rev int8 not null,
-        project_plan int8 not null,
-        starting_lab_vessels int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        project_plan numeric(19,0) not null,
+        starting_lab_vessels numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, project_plan, starting_lab_vessels)
     );
 
     create table mercury.pp_starting_samples (
-        project_plan int8 not null,
-        starting_samples int8 not null,
+        project_plan numeric(19,0) not null,
+        starting_samples numeric(19,0) not null,
         primary key (project_plan, starting_samples)
     );
 
     create table mercury.pp_starting_samples_aud (
-        rev int8 not null,
-        project_plan int8 not null,
-        starting_samples int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        project_plan numeric(19,0) not null,
+        starting_samples numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, project_plan, starting_samples)
     );
 
     create table mercury.project (
         dtype varchar(31) not null,
-        project_id int8 not null,
+        project_id numeric(19,0) not null,
         active boolean not null,
         project_name varchar(255),
         jira_ticket varchar(255),
-        platform_owner int8,
+        platform_owner numeric(19,0),
         primary key (project_id)
     );
 
     create table mercury.project_aud (
         dtype varchar(31) not null,
-        project_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        project_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         active boolean,
         project_name varchar(255),
         jira_ticket varchar(255),
-        platform_owner int8,
+        platform_owner numeric(19,0),
         primary key (project_id, rev)
     );
 
     create table mercury.project_plan (
         dtype varchar(31) not null,
-        project_plan_id int8 not null,
+        project_plan_id numeric(19,0) not null,
         notes varchar(255),
         plan_name varchar(255),
-        project int8,
-        workflow_description int8,
+        project numeric(19,0),
+        workflow_description numeric(19,0),
         quote varchar(255),
         primary key (project_plan_id)
     );
 
     create table mercury.project_plan_aud (
         dtype varchar(31) not null,
-        project_plan_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        project int8,
-        workflow_description int8,
+        project_plan_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
+        project numeric(19,0),
+        workflow_description numeric(19,0),
         notes varchar(255),
         plan_name varchar(255),
         quote varchar(255),
         primary key (project_plan_id, rev)
     );
-
+*/
     create table mercury.quote (
         alphanumeric_id varchar(255) not null,
         primary key (alphanumeric_id)
@@ -1480,245 +1508,245 @@
 
     create table mercury.quote_aud (
         alphanumeric_id varchar(255) not null,
-        rev int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (alphanumeric_id, rev)
     );
 
     create table mercury.reagent (
         dtype varchar(31) not null,
-        reagent_id int8 not null,
+        reagent_id numeric(19,0) not null,
         lot varchar(255),
         reagent_name varchar(255),
-        molecular_envelope int8,
-        molecular_indexing_scheme int8,
+--         molecular_envelope numeric(19,0),
+        molecular_indexing_scheme numeric(19,0),
         primary key (reagent_id)
     );
 
     create table mercury.reagent_aud (
         dtype varchar(31) not null,
-        reagent_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        reagent_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         lot varchar(255),
         reagent_name varchar(255),
-        molecular_envelope int8,
-        molecular_indexing_scheme int8,
+--         molecular_envelope numeric(19,0),
+        molecular_indexing_scheme numeric(19,0),
         primary key (reagent_id, rev)
     );
 
     create table mercury.reagent_containers (
-        reagent int8 not null,
-        containers int8 not null,
+        reagent numeric(19,0) not null,
+        containers numeric(19,0) not null,
         primary key (reagent, containers)
     );
 
     create table mercury.reagent_containers_aud (
-        rev int8 not null,
-        reagent int8 not null,
-        containers int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        reagent numeric(19,0) not null,
+        containers numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, reagent, containers)
     );
 
     create table mercury.rev_info (
-        rev_info_id int8 not null,
+        rev_info_id numeric(19,0) not null,
         rev_date timestamp,
         username varchar(255),
         primary key (rev_info_id)
     );
 
     create table mercury.seq_run_run_cartridges (
-        sequencing_run int8 not null,
-        run_cartridges int8 not null,
+        sequencing_run numeric(19,0) not null,
+        run_cartridges numeric(19,0) not null,
         primary key (sequencing_run, run_cartridges),
         unique (run_cartridges)
     );
 
     create table mercury.seq_run_run_cartridges_aud (
-        rev int8 not null,
-        sequencing_run int8 not null,
-        run_cartridges int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        sequencing_run numeric(19,0) not null,
+        run_cartridges numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, sequencing_run, run_cartridges)
     );
 
     create table mercury.sequencing_run (
         dtype varchar(31) not null,
-        sequencing_run_id int8 not null,
+        sequencing_run_id numeric(19,0) not null,
         machine_name varchar(255),
         run_barcode varchar(255),
         run_date timestamp,
         run_name varchar(255),
         test_run boolean,
-        operator int8,
+        operator numeric(19,0),
         primary key (sequencing_run_id)
     );
 
     create table mercury.sequencing_run_aud (
         dtype varchar(31) not null,
-        sequencing_run_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        sequencing_run_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         machine_name varchar(255),
         run_barcode varchar(255),
         run_date timestamp,
         run_name varchar(255),
         test_run boolean,
-        operator int8,
+        operator numeric(19,0),
         primary key (sequencing_run_id, rev)
     );
 
-    create table mercury.starting_sample (
-        dtype varchar(31) not null,
-        sample_id int8 not null,
-        sample_name varchar(255),
-        bsp_sample_authority_twodtube int8,
-        project_plan int8,
-        primary key (sample_id)
-    );
-
-    create table mercury.starting_sample_aud (
-        dtype varchar(31) not null,
-        sample_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        sample_name varchar(255),
-        bsp_sample_authority_twodtube int8,
-        project_plan int8,
-        primary key (sample_id, rev)
-    );
-
-    create table mercury.state_change (
-        state_change_id int8 not null,
-        primary key (state_change_id)
-    );
-
-    create table mercury.state_change_aud (
-        state_change_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        primary key (state_change_id, rev)
-    );
+--     create table mercury.starting_sample (
+--         dtype varchar(31) not null,
+--         sample_id numeric(19,0) not null,
+--         sample_name varchar(255),
+--         bsp_sample_authority_twodtube numeric(19,0),
+--         project_plan numeric(19,0),
+--         primary key (sample_id)
+--     );
+--
+--     create table mercury.starting_sample_aud (
+--         dtype varchar(31) not null,
+--         sample_id numeric(19,0) not null,
+--         rev numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         sample_name varchar(255),
+--         bsp_sample_authority_twodtube numeric(19,0),
+--         project_plan numeric(19,0),
+--         primary key (sample_id, rev)
+--     );
+--
+--     create table mercury.state_change (
+--         state_change_id numeric(19,0) not null,
+--         primary key (state_change_id)
+--     );
+--
+--     create table mercury.state_change_aud (
+--         state_change_id numeric(19,0) not null,
+--         rev numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         primary key (state_change_id, rev)
+--     );
 
     create table mercury.status_note (
-        status_note_id int8 not null,
-        event_name int4,
+        status_note_id numeric(19,0) not null,
+        event_name numeric(10,0),
         note_date timestamp,
         primary key (status_note_id)
     );
 
     create table mercury.status_note_aud (
-        status_note_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        event_name int4,
+        status_note_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
+        event_name numeric(10,0),
         note_date timestamp,
         primary key (status_note_id, rev)
     );
 
     create table mercury.vessel_transfer (
         dtype varchar(31) not null,
-        vessel_transfer_id int8 not null,
+        vessel_transfer_id numeric(19,0) not null,
         source_section varchar(255),
         target_section varchar(255),
         source_position varchar(255),
         target_position varchar(255),
-        lab_event int8,
-        source_vessel int8,
-        target_vessel int8,
-        target_lab_vessel int8,
+        lab_event numeric(19,0),
+        source_vessel numeric(19,0),
+        target_vessel numeric(19,0),
+        target_lab_vessel numeric(19,0),
         primary key (vessel_transfer_id)
     );
 
     create table mercury.vessel_transfer_aud (
         dtype varchar(31) not null,
-        vessel_transfer_id int8 not null,
-        rev int8 not null,
-        revtype int2,
+        vessel_transfer_id numeric(19,0) not null,
+        rev numeric(19,0) not null,
+        revtype numeric(3,0),
         source_position varchar(255),
         target_position varchar(255),
-        lab_event int8,
-        source_vessel int8,
-        target_vessel int8,
+        lab_event numeric(19,0),
+        source_vessel numeric(19,0),
+        target_vessel numeric(19,0),
         target_section varchar(255),
         source_section varchar(255),
-        target_lab_vessel int8,
+        target_lab_vessel numeric(19,0),
         primary key (vessel_transfer_id, rev)
     );
 
-    create table mercury.workflow_description (
-        workflow_description_id int8 not null,
-        issue_type int4,
-        workflow_name varchar(255),
-        primary key (workflow_description_id)
-    );
-
-    create table mercury.workflow_description_aud (
-        workflow_description_id int8 not null,
-        rev int8 not null,
-        revtype int2,
-        issue_type int4,
-        workflow_name varchar(255),
-        primary key (workflow_description_id, rev)
-    );
-
+--     create table mercury.workflow_description (
+--         workflow_description_id numeric(19,0) not null,
+--         issue_type numeric(10,0),
+--         workflow_name varchar(255),
+--         primary key (workflow_description_id)
+--     );
+--
+--     create table mercury.workflow_description_aud (
+--         workflow_description_id numeric(19,0) not null,
+--         rev numeric(19,0) not null,
+--         revtype numeric(3,0),
+--         issue_type numeric(10,0),
+--         workflow_name varchar(255),
+--         primary key (workflow_description_id, rev)
+--     );
+/*
     create table project_available_quotes (
-        project int8 not null,
+        project numeric(19,0) not null,
         available_quotes varchar(255) not null,
         unique (available_quotes)
     );
 
     create table project_available_quotes_aud (
-        rev int8 not null,
-        project int8 not null,
+        rev numeric(19,0) not null,
+        project numeric(19,0) not null,
         available_quotes varchar(255) not null,
-        revtype int2,
+        revtype numeric(3,0),
         primary key (rev, project, available_quotes)
     );
 
     create table project_available_work_qs (
-        project int8 not null,
-        available_work_queues int8 not null,
+        project numeric(19,0) not null,
+        available_work_queues numeric(19,0) not null,
         unique (available_work_queues)
     );
 
     create table project_available_work_qs_aud (
-        rev int8 not null,
-        project int8 not null,
-        available_work_queues int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        project numeric(19,0) not null,
+        available_work_queues numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, project, available_work_queues)
     );
 
     create table project_plan_jira_tickets (
-        project_plan int8 not null,
+        project_plan numeric(19,0) not null,
         jira_tickets varchar(255) not null,
         unique (jira_tickets)
     );
 
     create table project_plan_jira_tickets_aud (
-        rev int8 not null,
-        project_plan int8 not null,
+        rev numeric(19,0) not null,
+        project_plan numeric(19,0) not null,
         jira_tickets varchar(255) not null,
-        revtype int2,
+        revtype numeric(3,0),
         primary key (rev, project_plan, jira_tickets)
     );
 
     create table project_project_plans (
-        project int8 not null,
-        project_plans int8 not null,
+        project numeric(19,0) not null,
+        project_plans numeric(19,0) not null,
         unique (project_plans)
     );
 
     create table project_project_plans_aud (
-        rev int8 not null,
-        project int8 not null,
-        project_plans int8 not null,
-        revtype int2,
+        rev numeric(19,0) not null,
+        project numeric(19,0) not null,
+        project_plans numeric(19,0) not null,
+        revtype numeric(3,0),
         primary key (rev, project, project_plans)
     );
-
+*/
     alter table athena.billable_item
         add constraint FK4A845AB199F23B52
         foreign key (product_order_sample)
@@ -1868,12 +1896,12 @@
         add constraint FKB6E9442E8A39BE24
         foreign key (rev)
         references mercury.rev_info;
-
+/*
     alter table mercury.lab_batch
         add constraint FKD102BE085DAC64D7
         foreign key (project_plan)
         references mercury.project_plan;
-
+*/
     alter table mercury.lab_batch
         add constraint FKD102BE084334B1F1
         foreign key (jira_ticket)
@@ -1884,31 +1912,31 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.lab_batch_starting_samples
-        add constraint FK6D18FC61A1B8F5BF
-        foreign key (lab_batch)
-        references mercury.lab_batch;
-
-    alter table mercury.lab_batch_starting_samples
-        add constraint FK6D18FC61AD133513
-        foreign key (starting_samples)
-        references mercury.starting_sample;
-
-    alter table mercury.lab_batch_starting_samples_aud
-        add constraint FK5BE8DD28A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.lab_batch_starting_samples
+--         add constraint FK6D18FC61A1B8F5BF
+--         foreign key (lab_batch)
+--         references mercury.lab_batch;
+--
+--     alter table mercury.lab_batch_starting_samples
+--         add constraint FK6D18FC61AD133513
+--         foreign key (starting_samples)
+--         references mercury.starting_sample;
+--
+--     alter table mercury.lab_batch_starting_samples_aud
+--         add constraint FK5BE8DD28A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
     alter table mercury.lab_event
         add constraint FKD1365968A1B8F5BF
         foreign key (lab_batch)
         references mercury.lab_batch;
-
+/*
     alter table mercury.lab_event
         add constraint FKD1365968A12D5FAA
         foreign key (project_plan_override)
         references mercury.project_plan;
-
+*/
     alter table mercury.lab_event
         add constraint FKD13659683B570EF2
         foreign key (event_operator)
@@ -1939,36 +1967,36 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.lab_vessel
-        add constraint FK71AE15281149B707
-        foreign key (read_bucket_authority)
-        references mercury.lab_vessel;
-
+--     alter table mercury.lab_vessel
+--         add constraint FK71AE15281149B707
+--         foreign key (read_bucket_authority)
+--         references mercury.lab_vessel;
+/*
     alter table mercury.lab_vessel
         add constraint FK71AE15286E580798
         foreign key (project)
         references mercury.project;
-
-    alter table mercury.lab_vessel
-        add constraint FK71AE152876284BB0
-        foreign key (aliquot)
-        references mercury.starting_sample;
+*/
+--     alter table mercury.lab_vessel
+--         add constraint FK71AE152876284BB0
+--         foreign key (aliquot)
+--         references mercury.starting_sample;
 
     alter table mercury.lab_vessel
         add constraint FK71AE1528A095034B
         foreign key (plate)
         references mercury.lab_vessel;
 
-    alter table mercury.lab_vessel
-        add constraint FK71AE15286DE9BBF6
-        foreign key (molecular_state)
-        references mercury.molecular_state;
-
+--     alter table mercury.lab_vessel
+--         add constraint FK71AE15286DE9BBF6
+--         foreign key (molecular_state)
+--         references mercury.molecular_state;
+/*
     alter table mercury.lab_vessel
         add constraint FK71AE15283BA3A1ED
         foreign key (project_authority)
         references mercury.lab_vessel;
-
+*/
     alter table mercury.lab_vessel_aud
         add constraint FK14FBEB198A39BE24
         foreign key (rev)
@@ -2034,10 +2062,10 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.lab_work_queue_aud
-        add constraint FK815E93C68A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.lab_work_queue_aud
+--         add constraint FK815E93C68A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
     alter table mercury.lb_starting_lab_vessels
         add constraint FKD2D0A1F5A1B8F5BF
@@ -2099,10 +2127,10 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.molecular_envelope_aud
-        add constraint FK6CC133708A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.molecular_envelope_aud
+--         add constraint FK6CC133708A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
     alter table mercury.molecular_index_aud
         add constraint FK1BCC2E748A39BE24
@@ -2129,31 +2157,31 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.molecular_state
-        add constraint FK3453D9C2218B0C4C
-        foreign key (molecular_envelope)
-        references mercury.molecular_envelope;
-
-    alter table mercury.molecular_state
-        add constraint FK3453D9C221C79D25
-        foreign key (molecular_state_template)
-        references mercury.molecular_state_template;
-
-    alter table mercury.molecular_state_aud
-        add constraint FKCF99D2B38A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
-
-    alter table mercury.molecular_state_template_aud
-        add constraint FK1CFFA4C88A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.molecular_state
+--         add constraint FK3453D9C2218B0C4C
+--         foreign key (molecular_envelope)
+--         references mercury.molecular_envelope;
+--
+--     alter table mercury.molecular_state
+--         add constraint FK3453D9C221C79D25
+--         foreign key (molecular_state_template)
+--         references mercury.molecular_state_template;
+--
+--     alter table mercury.molecular_state_aud
+--         add constraint FKCF99D2B38A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
+--
+--     alter table mercury.molecular_state_template_aud
+--         add constraint FK1CFFA4C88A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
     alter table mercury.person_aud
         add constraint FK287892C68A39BE24
         foreign key (rev)
         references mercury.rev_info;
-
+/*
     alter table mercury.pp_map_start_smpl_to_aliqt
         add constraint FK7FAEB807A5892C6C
         foreign key (map_starting_sample_to_aliquot)
@@ -2258,16 +2286,16 @@
         add constraint FK288ACB008A39BE24
         foreign key (rev)
         references mercury.rev_info;
-
+*/
     alter table mercury.quote_aud
         add constraint FKA7A04A6D8A39BE24
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.reagent
-        add constraint FK40671CB2218B0C4C
-        foreign key (molecular_envelope)
-        references mercury.molecular_envelope;
+--     alter table mercury.reagent
+--         add constraint FK40671CB2218B0C4C
+--         foreign key (molecular_envelope)
+--         references mercury.molecular_envelope;
 
     alter table mercury.reagent
         add constraint FK40671CB2AA5A4C9
@@ -2319,25 +2347,25 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.starting_sample
-        add constraint FK18C9CA8979B8E476
-        foreign key (bsp_sample_authority_twodtube)
-        references mercury.lab_vessel;
-
+--     alter table mercury.starting_sample
+--         add constraint FK18C9CA8979B8E476
+--         foreign key (bsp_sample_authority_twodtube)
+--         references mercury.lab_vessel;
+/*
     alter table mercury.starting_sample
         add constraint FK18C9CA895DAC64D7
         foreign key (project_plan)
         references mercury.project_plan;
+*/
+--     alter table mercury.starting_sample_aud
+--         add constraint FKB28C07FA8A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
-    alter table mercury.starting_sample_aud
-        add constraint FKB28C07FA8A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
-
-    alter table mercury.state_change_aud
-        add constraint FK7F42220F8A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
+--     alter table mercury.state_change_aud
+--         add constraint FK7F42220F8A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
 
     alter table mercury.status_note_aud
         add constraint FKBF6042908A39BE24
@@ -2417,11 +2445,11 @@
         foreign key (rev)
         references mercury.rev_info;
 
-    alter table mercury.workflow_description_aud
-        add constraint FK34339F6D8A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
-
+--     alter table mercury.workflow_description_aud
+--         add constraint FK34339F6D8A39BE24
+--         foreign key (rev)
+--         references mercury.rev_info;
+/*
     alter table project_available_quotes
         add constraint FK2E7B8C136E580798
         foreign key (project)
@@ -2481,7 +2509,7 @@
         add constraint FK85E13A0F8A39BE24
         foreign key (rev)
         references mercury.rev_info;
-
+*/
     create sequence athena.SEQ_BILLABLE_ITEM start 1 increment 50;
 
     create sequence athena.SEQ_ORDER_SAMPLE start 1 increment 50;
@@ -2510,37 +2538,46 @@
 
     create sequence mercury.SEQ_LAB_VESSEL start 1 increment 50;
 
-    create sequence mercury.SEQ_LAB_WORK_QUEUE start 1 increment 50;
+--     create sequence mercury.SEQ_LAB_WORK_QUEUE start 1 increment 50;
 
-    create sequence mercury.SEQ_MOLECULAR_ENVELOPE start 1 increment 50;
+--     create sequence mercury.SEQ_MOLECULAR_ENVELOPE start 1 increment 50;
 
-    create sequence mercury.SEQ_MOLECULAR_STATE start 1 increment 50;
+--     create sequence mercury.SEQ_MOLECULAR_STATE start 1 increment 50;
 
-    create sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE start 1 increment 50;
+--     create sequence mercury.SEQ_MOLECULAR_STATE_TEMPLATE start 1 increment 50;
 
     create sequence mercury.SEQ_PERSON start 1 increment 50;
-
+/*
     create sequence mercury.SEQ_PROJECT start 1 increment 50;
 
     create sequence mercury.SEQ_PROJECT_PLAN start 1 increment 50;
-
+*/
     create sequence mercury.SEQ_REAGENT start 1 increment 50;
 
     create sequence mercury.SEQ_REV_INFO start 1 increment 50;
 
     create sequence mercury.SEQ_SEQUENCING_RUN start 1 increment 50;
 
-    create sequence mercury.SEQ_STARTING_SAMPLE start 1 increment 50;
+--     create sequence mercury.SEQ_STARTING_SAMPLE start 1 increment 50;
 
-    create sequence mercury.SEQ_STATE_CHANGE start 1 increment 50;
+--     create sequence mercury.SEQ_STATE_CHANGE start 1 increment 50;
 
     create sequence mercury.SEQ_VESSEL_TRANSFER start 1 increment 50;
 
-    create sequence mercury.SEQ_WORKFLOW_DESCRIPTION start 1 increment 50;
+--     create sequence mercury.SEQ_WORKFLOW_DESCRIPTION start 1 increment 50;
 
     create sequence mercury.seq_molecular_index start 1 increment 50;
 
     create sequence mercury.seq_molecular_indexing_scheme start 1 increment 50;
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON mercury.rev_info to athena;
+GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES ON mercury.rev_info to athena;
 GRANT USAGE on mercury.seq_rev_info to athena;
+
+select execute('alter table '||schemaname||'.'||tablename||' owner to '||schemaname||';')
+from pg_tables where schemaname in ('athena', 'mercury');
+
+select execute('alter table '||schms.nspname||'.'||seqs.relname||' owner to '||schms.nspname||';')
+from pg_class as seqs, pg_namespace as schms
+where schms.nspname in ('athena', 'mercury') and seqs.relkind = 'S' and schms.oid = seqs.relnamespace;
+
+grant usage on schema mercury to athena;

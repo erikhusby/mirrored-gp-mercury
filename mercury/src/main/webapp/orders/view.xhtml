@@ -13,8 +13,8 @@
         <ui:define name="title">View Product Order</ui:define>
         <ui:define name="metadata">
             <f:metadata>
-
-                <f:viewParam name="productOrderKey" value="#{productOrderDetail.productOrder}" converter="#{productOrderConverter}" />
+                <f:viewParam name="productOrder" value="#{productOrderDetail.productOrder}" converter="#{productOrderConverter}" />
+                <f:viewParam name="researchProject" value="#{productOrderDetail.productOrder.researchProject}" converter="#{researchProjectConverter}" />
             </f:metadata>
         </ui:define>
         <ui:define name="body">
@@ -25,12 +25,10 @@
                         <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
                     </p:commandButton>
                     &nbsp;
-                    -->
                     <p:commandButton value="Copy" action="create" ajax="false" styleClass="btn">
                         <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
                     </p:commandButton>
                     &nbsp;
-                    <!--
                     <p:splitButton value="  More Actions  ">
                         <p:menuitem value="Get Quote Template" action="create" icon="ui-icon-folder-open"/>
                         <p:menuitem value="Update Billing" action="create" icon="ui-icon-arrowrefresh-1-e"/>
@@ -42,21 +40,42 @@
                     <div class="control-group">
                         <span class="control-label label-form">Order Barcode</span>
                         <span class="controls">
-                            <h:outputLink target="_new" value="http://prodinfojira.broadinstitute.org/jira/browse/#{productOrderDetail.productOrder.jiraTicketKey}" class="external">
+                            <h:outputLink target="JIRA" class="external"
+                                          rendered="#{productOrderDetail.productOrder.hasJiraTicketKey()}"
+                                          value="#{jiraLink.browseUrl(productOrderDetail.productOrder.jiraTicketKey)}">
                                 <h:outputText value="#{productOrderDetail.productOrder.jiraTicketKey}" />
                             </h:outputLink>
                         </span>
                     </div>
 
                     <div class="control-group">
+                        <span class="control-label label-form">Research Project</span>
+                        <span class="controls">
+                        <h:link outcome="/projects/view">
+                            <f:param name="researchProject"  value="#{productOrderDetail.productOrder.researchProject.jiraTicketKey}"/>
+                            #{productOrderDetail.productOrder.researchProject.title}
+                        </h:link>
+                        </span>
+                    </div>
+
+                    <div class="control-group">
                         <span class="control-label label-form">Product</span>
-                        <span class="controls">#{productOrderDetail.productOrder.title}</span>
+                        <span class="controls">
+                            #{productOrderDetail.productOrder.product.productName}
+                        </span>
+                    </div>
+
+                    <div class="control-group">
+                        <span class="control-label label-form">Add-Ons</span>
+                        <span class="controls" style="width:250px;">
+                            #{productOrderDetail.productOrder.addOnList}
+                        </span>
                     </div>
 
                     <div class="control-group">
                         <span class="control-label label-form">Quote ID</span>
                         <span class="controls">
-                            <h:outputLink target="_new" value="#{QuoteConfig.url(QuoteConfig.SINGLE_NUMERIC_QUOTE)}#{productOrderDetail.productOrder.quoteId}" class="external">
+                            <h:outputLink target="_new" value="#{quoteLink.quoteUrl(productOrderDetail.productOrder.quoteId)}" class="external">
                                 <h:outputText value="#{productOrderDetail.productOrder.quoteId}" />
                             </h:outputLink>
                         </span>
@@ -69,76 +88,55 @@
 
                     <div class="control-group">
                         <span class="control-label label-form">Samples</span>
-                        <span class="controls">#{productOrderDetail.productOrder.sampleSummary}</span>
+                        <span class="controls">#{productOrderDetail.productOrder.sampleBillingSummary}</span>
                     </div>
 
-                    <p/>
+                    <br/>
 
-                    <div class="row-fluid">
-                        <div class="pull-right ui-widget-header" style="padding: 5px;">
-                            <span class="ui-icon ui-icon-folder-open" style="float:left;">&nbsp;</span>
-                            <h:outputText value=" Export all data as: " />
-
-                            <p:commandLink title="Click to download all sample data as a Microsoft Excel file">
-                                <h:outputText value="Excel"/>
-                                <p:dataExporter
-                                        type="xls"
-                                        pageOnly = "false"
-                                        target="sampleData"
-                                        fileName="#{productOrderDetail.productOrder.title}" />
-                            </p:commandLink>
-                            &nbsp;
-                            <p:commandLink title="Click to download all sample data as a CSV file">
-                                <h:outputText value="CSV"/>
-                                <p:dataExporter
-                                        type="csv"
-                                        pageOnly = "false"
-                                        target="sampleData"
-                                        fileName="#{productOrderDetail.productOrder.title}" />
-                            </p:commandLink>
-                        </div>
-                    </div>
-
-                    <p:dataTable id="sampleData"
+                    <p:dataTable style="width:1310px;"
+                                 id="sampleData"
                                  value="#{productOrderDetail.productOrder.samples}"
                                  filteredValue="#{productOrderFilterBean.filteredSamples}"
                                  var="sample"
-                                 paginator="true"
-                                 paginatorAlwaysVisible='false'
-                                 rows="100"
-                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                                 rowsPerPageTemplate="50,100,250,1000">
+                                 scrollable="true"
+                                 scrollHeight="650"
+                                 scrollWidth="1327">
+                        <f:event type="preRenderComponent" listener="#{productOrderDetail.load}"/>
                         <f:facet name="header">
-                            Samples
+                            Samples<br/>
+                            <p:dataList value="#{productOrderDetail.productOrder.sampleSummaryComments}"
+                                        var="comment" itemType="none" styleClass="fourcolumn summary-list">
+                                #{comment}
+                            </p:dataList>
                         </f:facet>
 
-                        <p:column headerText="ID">
-                            <h:outputLink value="http://bsp.broadinstitute.org/BSP/samplesearch/SampleSummary.action?sampleId=#{sample.sampleName}" class="external">
+                        <p:column headerText="ID" width="100">
+                            <h:outputLink target="BSP_SAMPLE" value="#{bspLink.sampleSearchUrl(sample.sampleName)}" class="external">
                                 <h:outputText value="#{sample.sampleName}" />
                             </h:outputLink>
                         </p:column>
-                        <p:column headerText="Participant ID">
+                        <p:column headerText="Participant ID" width="150">
                             #{sample.bspDTO.patientId}
                         </p:column>
-                        <p:column headerText="Status" filterBy="#{sample.billingStatus}" filterOptions="#{productOrderBean.allSampleStatuses}" filterMatchMode="exact">
+                        <p:column headerText="Status" width="100">
                             #{sample.billingStatus.displayName}
                         </p:column>
-                        <p:column headerText="Eligible">
+                        <p:column headerText="Eligible" width="100">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Billed">
+                        <p:column headerText="Billed" width="100">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Abandoned">
+                        <p:column headerText="Abandoned" width="70">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Price Item 1">
+                        <p:column headerText="Price Item 1" width="100">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Price Item 2">
+                        <p:column headerText="Price Item 2" width="100">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Comment">
+                        <p:column headerText="Comment" width="200">
                             #{sample.sampleComment}
                         </p:column>
                     </p:dataTable>

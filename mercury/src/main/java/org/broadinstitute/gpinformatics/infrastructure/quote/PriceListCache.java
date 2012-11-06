@@ -3,8 +3,11 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 
 /**
@@ -16,7 +19,7 @@ import java.util.HashSet;
  */
 @Named
 @ApplicationScoped
-public class PriceListCache {
+public class PriceListCache implements Serializable {
     
     private PriceList priceList;
 
@@ -88,5 +91,60 @@ public class PriceListCache {
     
     public Collection<PriceItem> getGSPPriceItems() {
         return getPriceItemsByPlatform(QuotePlatformType.SEQ);
+    }
+
+
+    public List<PriceItem> searchPriceItems(Collection<PriceItem> priceItems, String query) {
+        List<PriceItem> results = new ArrayList<PriceItem>();
+        String lowerQuery = query.toLowerCase();
+
+        // Currently searching all price items, not filtering by platform or anything else
+        if (priceItems != null) {
+            for (PriceItem priceItem : priceItems) {
+                if (priceItem != null &&
+                        ((priceItem.getPlatformName() != null && priceItem.getPlatformName().toLowerCase().contains(lowerQuery)) ||
+                                (priceItem.getCategoryName() != null && priceItem.getCategoryName().toLowerCase().contains(lowerQuery)) ||
+                                (priceItem.getName() != null && priceItem.getName().toLowerCase().contains(lowerQuery)))) {
+                    results.add(priceItem);
+                }
+            }
+        }
+
+        return results;
+
+    }
+
+
+    public List<PriceItem> searchPriceItems(String query) {
+        return searchPriceItems(getPriceItems(), query);
+    }
+
+
+    /**
+     * The input is search keys concatenated like platform|category|name
+     *
+     * @param concatenatedKey
+     * @return
+     */
+    public PriceItem findByConcatenatedKey(String concatenatedKey) {
+
+        if (concatenatedKey == null) {
+            throw new RuntimeException("Invalid search key: " + concatenatedKey);
+        }
+
+        for (PriceItem priceItem : getPriceItems()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(priceItem.getPlatformName());
+            sb.append('|');
+            sb.append(priceItem.getCategoryName());
+            sb.append('|');
+            sb.append(priceItem.getName());
+
+            if (concatenatedKey.equals(sb.toString())) {
+                return priceItem;
+            }
+        }
+
+        return null;
     }
 }

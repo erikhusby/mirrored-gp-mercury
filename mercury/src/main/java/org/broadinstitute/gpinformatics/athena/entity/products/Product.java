@@ -29,7 +29,7 @@ public class Product implements Serializable {
 
     private String productName;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private ProductFamily productFamily;
 
     @Column(length = 2000)
@@ -42,6 +42,7 @@ public class Product implements Serializable {
     private Integer expectedCycleTimeSeconds;
     private Integer guaranteedCycleTimeSeconds;
     private Integer samplesPerWeek;
+    private Integer minimumOrderSize;
 
     @Column(length = 2000)
     private String inputRequirements;
@@ -53,9 +54,17 @@ public class Product implements Serializable {
      * Whether this Product should show as a top-level product */
     private boolean topLevelProduct;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    /**
+     * Primary price item for the product. Should NOT also be in the priceItems set.
+     * TODO: rename this field to something like primaryPriceItem
+     */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
     private PriceItem defaultPriceItem;
 
+    /**
+     * OPTIONAL price items for the product. Should NOT include defaultPriceItem.
+     * TODO: rename this field to something like optionalPriceItems
+     */
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
     private Set<PriceItem> priceItems = new HashSet<PriceItem>();
@@ -65,6 +74,8 @@ public class Product implements Serializable {
     private Set<Product> addOns = new HashSet<Product>();
 
     private String workflowName;
+
+    private boolean pdmOrderableOnly;
 
     /**
      * JPA package visible no arg constructor
@@ -82,10 +93,12 @@ public class Product implements Serializable {
                    Integer expectedCycleTimeSeconds,
                    Integer guaranteedCycleTimeSeconds,
                    Integer samplesPerWeek,
+                   Integer minimumOrderSize,
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
-                   String workflowName) {
+                   String workflowName,
+                   boolean pdmOrderableOnly) {
 
         this.productName = productName;
         this.productFamily = productFamily;
@@ -96,10 +109,12 @@ public class Product implements Serializable {
         this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
         this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
         this.samplesPerWeek = samplesPerWeek;
+        this.minimumOrderSize = minimumOrderSize;
         this.inputRequirements = inputRequirements;
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
         this.workflowName = workflowName;
+        this.pdmOrderableOnly = pdmOrderableOnly;
     }
 
     public Long getProductId() {
@@ -185,7 +200,6 @@ public class Product implements Serializable {
 
     public void setAvailabilityDate(final Date availabilityDate) {
         this.availabilityDate = availabilityDate;
-        this.availabilityDate = availabilityDate;
     }
 
     public void setDiscontinuedDate(final Date discontinuedDate) {
@@ -202,6 +216,14 @@ public class Product implements Serializable {
 
     public void setSamplesPerWeek(final Integer samplesPerWeek) {
         this.samplesPerWeek = samplesPerWeek;
+    }
+
+    public Integer getMinimumOrderSize() {
+        return minimumOrderSize;
+    }
+
+    public void setMinimumOrderSize(final Integer minimumOrderSize) {
+        this.minimumOrderSize = minimumOrderSize;
     }
 
     public void setInputRequirements(final String inputRequirements) {
@@ -241,6 +263,13 @@ public class Product implements Serializable {
         return workflowName;
     }
 
+    public boolean isPdmOrderableOnly() {
+        return pdmOrderableOnly;
+    }
+
+    public void setPdmOrderableOnly(boolean pdmOrderableOnly) {
+        this.pdmOrderableOnly = pdmOrderableOnly;
+    }
 
     public boolean isAvailable() {
         Date now = Calendar.getInstance().getTime();
@@ -251,13 +280,13 @@ public class Product implements Serializable {
                 (discontinuedDate == null || discontinuedDate.compareTo(now) > 0);
     }
 
-//    public List<RiskContingency> getRiskContingencies() {
-//        return riskContingencies;
-//    }
-//
-//    public void setRiskContingencies(List<RiskContingency> riskContingencies) {
-//        this.riskContingencies = riskContingencies;
-//    }
+    public boolean isAvailableNowOrLater() {
+        Date now = Calendar.getInstance().getTime();
+
+        // need this logic in the dao too
+        // available in the future
+        return availabilityDate != null && (isAvailable() || availabilityDate.compareTo(now) > 0);
+    }
 
     public boolean isPriceItemDefault(PriceItem priceItem) {
         if (defaultPriceItem == priceItem) return true;

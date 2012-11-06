@@ -40,7 +40,7 @@ public class LogoutHandler extends AbstractJsfBean {
         try {
             logger.debug("Attempting Logout");
             request.logout();
-            userBean.setBspUser(null);
+            userBean.logout();
         } catch (ServletException ex) {
             logger.error("Logout Failed", ex);
             result = request.getRequestURI();

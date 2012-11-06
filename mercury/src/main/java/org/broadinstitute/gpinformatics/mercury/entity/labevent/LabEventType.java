@@ -10,6 +10,9 @@ import java.util.Map;
  * Properties common to all events of a particular message type
  */
 public enum LabEventType {
+    PREFLIGHT_CLEANUP ("PreflightCleanup", true, true,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
     PREFLIGHT_PICO_SETUP ("PreflightPicoSetup", true, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
@@ -20,6 +23,9 @@ public enum LabEventType {
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
     SHEARING_TRANSFER("ShearingTransfer", false, true,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    COVARIS_LOADED("CovarisLoaded", false, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
     POST_SHEARING_TRANSFER_CLEANUP("PostShearingTransferCleanup", false, true,
@@ -123,7 +129,13 @@ public enum LabEventType {
     FLOWCELL_TRANSFER ("FlowcellTransfer", true, false,
             Strandedness.SINGLE_STRANDED, NucleicAcid.DNA),
 
+    FLOWCELL_LOADED ("FlowcellLoaded", true, false,
+            Strandedness.SINGLE_STRANDED, NucleicAcid.DNA),
+
     SAGE_LOADING ("SageLoading", true, false,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
+    SAGE_LOADED ("SageLoaded", true, false,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
     SAGE_UNLOADING ("SageUnloading", true, false,

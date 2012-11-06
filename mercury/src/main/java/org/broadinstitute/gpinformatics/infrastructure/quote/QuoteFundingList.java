@@ -17,7 +17,7 @@ import java.util.Set;
 @Singleton
 public class QuoteFundingList {
 
-    private Set<Funding> fundingList = null;
+    private Set<Funding> fundingList;
 
     @Inject
     private PMBQuoteService quoteService;
@@ -71,17 +71,27 @@ public class QuoteFundingList {
      * @return a list of matching users
      */
     public List<Funding> find(String query) {
-        String lowerQuery = query.toLowerCase();
+        String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<Funding> results = new ArrayList<Funding>();
-        if (getFunding() != null) {
-            for (Funding funding : getFunding()) {
-                if (funding.getFundingTypeAndName().toLowerCase().contains(lowerQuery) ||
-                    funding.getMatchDescription().toLowerCase().contains(lowerQuery)) {
-                    results.add(funding);
+        for (Funding funding : getFunding()) {
+            boolean eachItemMatchesSomething = true;
+            for (String lowerQuery : lowerQueryItems) {
+                // If none of the fields match this item, then all items are not matched
+                if (!anyFieldMatches(lowerQuery, funding)) {
+                    eachItemMatchesSomething = false;
                 }
+            }
+
+            if (eachItemMatchesSomething) {
+                results.add(funding);
             }
         }
 
         return results;
+    }
+
+    private boolean anyFieldMatches(String lowerQuery, Funding funding) {
+        return funding.getFundingTypeAndName().toLowerCase().contains(lowerQuery) ||
+               funding.getMatchDescription().toLowerCase().contains(lowerQuery);
     }
 }

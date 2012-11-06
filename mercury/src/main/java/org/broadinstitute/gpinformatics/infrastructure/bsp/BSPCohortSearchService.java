@@ -46,10 +46,6 @@ public class BSPCohortSearchService extends AbstractJerseyClientService {
 
     }
 
-    private String url( Endpoint endpoint ) {
-        return String.format("http://%s:%d/ws/bsp/%s", bspConfig.getHost(), bspConfig.getPort(), endpoint.getSuffixUrl());
-    }
-
     @Override
     protected void customizeConfig(ClientConfig clientConfig) {
         // noop
@@ -73,7 +69,7 @@ public class BSPCohortSearchService extends AbstractJerseyClientService {
 
         List<String[]> ret = new ArrayList<String[]>();
 
-        String urlString = url(Endpoint.SAMPLE_SEARCH);
+        String urlString = bspConfig.getUrl(Endpoint.SAMPLE_SEARCH.getSuffixUrl());
 
         logger.info(String.format("url string is '%s'", urlString));
 
@@ -139,7 +135,8 @@ public class BSPCohortSearchService extends AbstractJerseyClientService {
     private Set<Cohort> runCollectionSearch() {
 
         SortedSet<Cohort> usersCohorts = new TreeSet<Cohort>(Cohort.COHORT_BY_ID);
-        String urlString = url(Endpoint.ALL_COHORTS);
+
+        String urlString = bspConfig.getWSUrl(Endpoint.ALL_COHORTS.getSuffixUrl());
         logger.info(String.format("url string is '%s'", urlString));
         WebResource webResource = getJerseyClient().resource(urlString);
 
@@ -200,7 +197,7 @@ public class BSPCohortSearchService extends AbstractJerseyClientService {
         }
 
         HashSet<Cohort> usersCohorts = new HashSet<Cohort>();
-        String urlString = url(Endpoint.USERS_COHORT)  + bspUsername.trim();
+        String urlString = bspConfig.getWSUrl(Endpoint.USERS_COHORT.getSuffixUrl());
         logger.info(String.format("url string is '%s'", urlString));
         WebResource webResource = getJerseyClient().resource(urlString);
 

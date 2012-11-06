@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -12,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -29,6 +31,11 @@ public class ResearchProject {
 
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
+    public static final String BROADINSTITUTE_ORG = "@broadinstitute.org";
+
+    public boolean hasJiraTicketKey() {
+        return !StringUtils.isBlank(jiraTicketKey);
+    }
 
     public enum Status implements StatusType {
         Open, Archived;
@@ -82,18 +89,17 @@ public class ResearchProject {
 
     // People related to the project
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ProjectPerson> associatedPeople = new HashSet<ProjectPerson>();
+    private final Set<ProjectPerson> associatedPeople = new HashSet<ProjectPerson>();
 
     // Information about externally managed items
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectCohort> sampleCohorts = new HashSet<ResearchProjectCohort>();
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private final Set<ResearchProjectCohort> sampleCohorts = new HashSet<ResearchProjectCohort>();
 
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectFunding> projectFunding = new HashSet<ResearchProjectFunding>();
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private final Set<ResearchProjectFunding> projectFunding = new HashSet<ResearchProjectFunding>();
 
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    private Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
-
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private final Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
 
     private String irbNotes;
 
@@ -241,6 +247,16 @@ public class ResearchProject {
     }
 
     /**
+     * Clears the ID and JIRA ticket key. THIS METHOD MUST ONLY EVER BE CALLED BY
+     * {@link org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectManager#createResearchProject(ResearchProject)}
+     * IN THE CASE WHERE THE JIRA ISSUE HAS BEEN CREATED BUT THERE IS AN ERROR PERSISTING THE RESEARCH PROJECT!
+     */
+    public void rollbackPersist() {
+        this.researchProjectId = null;
+        this.jiraTicketKey = null;
+    }
+
+    /**
      *
      * @return Get the cohortIds. Since the cohort list is defaulted to empty, we know that the cohorts will exist
      */
@@ -271,7 +287,7 @@ public class ResearchProject {
         if (irbNumbers != null) {
             String[] irbNumberList = new String[irbNumbers.size()];
             for (ResearchProjectIRB irb : irbNumbers) {
-                irbNumberList[i++] = irb.getIrb();
+                irbNumberList[i++] = irb.getIrb() + ": " + irb.getIrbType().getDisplayName();
             }
 
             return irbNumberList;
@@ -281,22 +297,28 @@ public class ResearchProject {
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {
-        if (irbNumbers == null) {
-            irbNumbers = new HashSet<ResearchProjectIRB>();
-        }
-
         irbNumbers.add(irbNumber);
     }
 
-    public void removeIrbNumber(ResearchProjectIRB irbNumber) {
-        irbNumbers.remove(irbNumber);
+    public void clearPeople() {
+        associatedPeople.clear();
     }
 
-    public void addPerson(RoleType role, long personId) {
-        if (associatedPeople == null) {
-            associatedPeople = new HashSet<ProjectPerson>();
+    public void addPeople(RoleType role, List<BspUser> people) {
+        if (people != null) {
+            for (BspUser user : people) {
+                associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
+            }
         }
+    }
 
+    /**
+     * This addPerson should only be used for tests (until we mock up BSP Users better there.
+     *
+     * @param role The role of the person to add
+     * @param personId The user id for the person
+     */
+    public void addPerson(RoleType role, long personId) {
         associatedPeople.add(new ProjectPerson(this, role, personId));
     }
 
@@ -318,56 +340,43 @@ public class ResearchProject {
         return getPeople(RoleType.PM);
     }
 
-    public void updateProjectManagers(Long[] personIds) {
-        updatePeople(RoleType.PM, personIds);
-    }
-
     public Long[] getBroadPIs() {
         return getPeople(RoleType.BROAD_PI);
-    }
-
-    public void updateBroadPIs(Long[] personIds) {
-        updatePeople(RoleType.BROAD_PI, personIds);
     }
 
     public Long[] getScientists() {
         return getPeople(RoleType.SCIENTIST);
     }
 
-    public void updateScientists(Long[] personIds) {
-        updatePeople(RoleType.SCIENTIST, personIds);
-    }
-
     public Long[] getExternalCollaborators() {
         return getPeople ( RoleType.EXTERNAL );
     }
 
-    public void updateExternalCollaborators(Long[] personIds) {
-        updatePeople(RoleType.EXTERNAL, personIds);
+    public void populateFunding(Collection<Funding> fundingSet) {
+        projectFunding.clear();
+        if ((fundingSet != null) && !fundingSet.isEmpty()) {
+            for (Funding funding : fundingSet) {
+                projectFunding.add(new ResearchProjectFunding(this, funding.getFundingTypeAndName()));
+            }
+        }
     }
 
-    public void updatePeople(RoleType role, Long[] personIds) {
-        Set<Long> currentIds = new HashSet<Long>(Arrays.asList(getPeople(role)));
-        Set<Long> newIds = new HashSet<Long>(Arrays.asList(personIds));
-
-        Set<ProjectPerson> peopleToRemove = new HashSet<ProjectPerson>();
-        for (ProjectPerson person : associatedPeople) {
-            if (person.getRole() == role) {
-                if (!newIds.contains(person.getPersonId())) {
-                    peopleToRemove.add(person);
-                }
+    public void populateIrbs(Collection<Irb> irbs) {
+        irbNumbers.clear();
+        if ((irbs != null) && !irbs.isEmpty()) {
+            for (Irb irb : irbs) {
+                irbNumbers.add(new ResearchProjectIRB(this, irb.getIrbType(), irb.getName()));
             }
         }
+    }
 
-        Set<ProjectPerson> peopleToAdd = new HashSet<ProjectPerson>();
-        for (Long personId : personIds) {
-            if (!currentIds.contains(personId)) {
-                peopleToAdd.add(new ProjectPerson(this, role, personId));
+    public void populateCohorts(Collection<Cohort> cohorts) {
+        sampleCohorts.clear();
+        if ((cohorts != null) && !cohorts.isEmpty()) {
+            for (Cohort cohort: cohorts) {
+                sampleCohorts.add(new ResearchProjectCohort(this, cohort.getCohortId()));
             }
         }
-
-        associatedPeople.removeAll(peopleToRemove);
-        associatedPeople.addAll(peopleToAdd);
     }
 
     public String[] getFundingIds() {
@@ -426,7 +435,7 @@ public class ResearchProject {
                 }
 
                 listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.COHORTS.getFieldName()),
-                                                 StringUtils.join(cohortNames,','), CustomField.SingleFieldType.TEXT ));
+                        ServiceAccessUtility.getCohortsForNames(cohortNames), CustomField.SingleFieldType.TEXT ));
             }
 
             if (!projectFunding.isEmpty()) {
@@ -442,14 +451,9 @@ public class ResearchProject {
             }
 
             if (!irbNumbers.isEmpty()) {
-                List<String> irbNums = new ArrayList<String>();
-                for(ResearchProjectIRB irb:irbNumbers ) {
-                    irbNums.add(irb.getIrb());
-                }
-
                 listOfFields.add(
                         new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
-                                        StringUtils.join(irbNums,','), CustomField.SingleFieldType.TEXT ));
+                            StringUtils.join(getIrbNumbers(), ','), CustomField.SingleFieldType.TEXT ));
             }
 
             listOfFields.add(
@@ -461,10 +465,14 @@ public class ResearchProject {
                                     "", CustomField.SingleFieldType.TEXT ));
 
             CreateIssueResponse researchProjectResponse =
-                    ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
-                                                          title, synopsis, listOfFields);
+                    ServiceAccessUtility.createJiraTicket(
+                        fetchJiraProject().getKeyPrefix(),
+                        ServiceAccessUtility.getBspUserForId(createdBy).getUsername(),
+                        fetchJiraIssueType(), title, synopsis, listOfFields);
 
+            // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
             jiraTicketKey = researchProjectResponse.getKey();
+
             addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
     }
@@ -474,7 +482,16 @@ public class ResearchProject {
     }
 
     public void addWatcher(String personLoginId) throws IOException {
-        ServiceAccessUtility.addJiraWatcher(jiraTicketKey, personLoginId);
+        try {
+            ServiceAccessUtility.addJiraWatcher(jiraTicketKey, personLoginId);
+        } catch ( Exception e) {
+            if ( StringUtils.isNotBlank( personLoginId) && personLoginId.contains(BROADINSTITUTE_ORG)) {
+                //Retry by stripping off the email suffix.
+                String shortUsername = personLoginId.replace(BROADINSTITUTE_ORG, "");
+                ServiceAccessUtility.addJiraWatcher(jiraTicketKey, shortUsername);
+            }
+        }
+
     }
 
     public void addLink(String targetIssueKey) throws IOException {
@@ -522,7 +539,7 @@ public class ResearchProject {
         COHORTS("Cohort(s)"),
         FUNDING_SOURCE("Funding Source"),
         IRB_IACUC_NUMBER("IRB/IACUCs"),
-        IRB_ENGAGED("IRB Engaged?"),
+        IRB_ENGAGED("IRB Not Engaged?"),
         MERCURY_URL("Mercury URL");
 
         private String fieldName;

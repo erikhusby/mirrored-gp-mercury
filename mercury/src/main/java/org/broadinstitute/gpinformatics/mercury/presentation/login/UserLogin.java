@@ -7,9 +7,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
  */
 
 import org.apache.commons.logging.Log;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
@@ -20,12 +18,16 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
-//@javax.faces.bean.ManagedBean
-//@javax.faces.bean.RequestScoped
 @Named
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
+
+    public static final String PRODUCT_MANAGER_ROLE = "Mercury-ProductManagers";
+
+    public static final String PROJECT_MANAGER_ROLE = "Mercury-ProjectManagers";
+
     private String username;
 
     private String password;
@@ -40,7 +42,7 @@ public class UserLogin extends AbstractJsfBean {
     private BSPUserList bspUserList;
 
     @Inject
-    private Deployment deployment;
+    private FacesContext facesContext;
 
     public String getUsername() {
         return username;
@@ -59,50 +61,89 @@ public class UserLogin extends AbstractJsfBean {
     }
 
     public String authenticateUser() {
-        String targetPage = "/index";
+        String targetPage;
         FacesContext context = FacesContext.getCurrentInstance();
 
         try {
             HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
 
             request.login(username, password);
-            BspUser bspUser = bspUserList.getByUsername(username);
-            if (bspUser != null) {
-                userBean.setBspUser(bspUser);
-            } else {
-                // FIXME: Temporarily map unknown users to the BSP tester user. Will need to handle this in userBean.
-                userBean.setBspUser(bspUserList.getByUsername("tester"));
-                // reuse exception handling below
-                //throw new ServletException("Login error: couldn't find BspUser: " + username);
+            UserRole role = UserRole.fromRequest(request);
+            targetPage = role.landingPage;
+            // HACK needed by Arquillian, see FIXME in UserBean.
+            userBean.setBspUserList(bspUserList);
+            userBean.login(username);
+
+            if (!userBean.isValidBspUser()) {
+                logger.error(userBean.getBspStatus() + ": " + username);
+                addFlashErrorMessage(userBean.getBspStatus(), userBean.getBspStatus());
             }
-            addInfoMessage("Welcome back!", "Sign in successful");
+            if (!userBean.isValidJiraUser()) {
+                logger.error(userBean.getJiraStatus() + ": " + username);
+                addFlashErrorMessage(userBean.getJiraStatus(), userBean.getJiraStatus());
+            }
 
-            String previouslyTargetedPage = (String)request.getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
-
+            String previouslyTargetedPage = (String)request.getSession().getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
             if (previouslyTargetedPage != null) {
-                targetPage = previouslyTargetedPage;
+                // Check for redirect to PM and PDMs landing page.
+                previouslyTargetedPage = role.checkUrlForRoleRedirect(previouslyTargetedPage);
+
+                request.getSession().setAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE, null);
+                try {
+                    facesContext.getExternalContext().redirect(previouslyTargetedPage);
+                    return null;
+                } catch (IOException e) {
+                    logger.warn("Could not redirect to: " + previouslyTargetedPage, e);
+                }
             }
         } catch (ServletException le) {
             logger.error("ServletException Retrieved: ", le);
-            addErrorMessage("The username and password you entered is incorrect.  Please try again.", "Authentication error");
+            addFlashErrorMessage("The username and password you entered is incorrect.  Please try again.",
+                    "Authentication error");
             targetPage = AuthorizationFilter.LOGIN_PAGE;
         }
-
-        return targetPage;
+        return redirect(targetPage);
     }
 
-    public String getDeploymentBadgeStyle() {
-        switch (deployment) {
-            case DEV:
-            case TEST:
-                return "badge badge-success";
-            case QA:
-                return "badge badge-warning";
-            case PROD:
-                return "badge badge-important";
-            default:
-                throw new RuntimeException("Unrecognized deployment: " + deployment);
+    public enum UserRole {
+        // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
+        PDM("/orders/list", PRODUCT_MANAGER_ROLE),
+        PM("/projects/list", PROJECT_MANAGER_ROLE),
+        OTHER("index", "");
+
+        private static final String INDEX = "/index";
+        private static final String HOME_PAGE = "/Mercury";
+
+        public static UserRole fromRequest(HttpServletRequest request) {
+            for (UserRole role : values()) {
+                if (request.isUserInRole(role.roleName)) {
+                    return role;
+                }
+            }
+            return OTHER;
+        }
+
+        public final String landingPage;
+        public final String roleName;
+
+        private UserRole(String landingPage, String roleName) {
+            this.landingPage = landingPage;
+            this.roleName = roleName;
+        }
+
+        private String checkUrlForRoleRedirect(String targetPage) {
+            StringBuilder newUrlBuilder = new StringBuilder(targetPage);
+            if (this != OTHER) {
+                if (targetPage.endsWith(HOME_PAGE) || targetPage.endsWith(HOME_PAGE + "/")) {
+                    if (targetPage.endsWith("/")) {
+                        newUrlBuilder.deleteCharAt(targetPage.lastIndexOf("/"));
+                    }
+                    newUrlBuilder.append(landingPage).append(".xhtml");
+                } else if (targetPage.endsWith(INDEX) || targetPage.endsWith(INDEX + ".xhtml")) {
+                    newUrlBuilder = new StringBuilder(targetPage.replace(INDEX, landingPage));
+                }
+            }
+            return newUrlBuilder.toString();
         }
     }
-
 }

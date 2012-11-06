@@ -31,6 +31,14 @@ public class PriceItem {
 
     public PriceItem() {}
 
+
+    public PriceItem(String quoteServerId, String platformName, String categoryName, String name) {
+        this.id = quoteServerId;
+        this.platformName = platformName;
+        this.categoryName = categoryName;
+        this.name = name;
+    }
+
     /**
      * This constructor is only used by test code.
      *

@@ -14,17 +14,17 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
+                <f:viewParam name="researchProject" value="#{productOrderDetail.productOrder.researchProject}" converter="#{researchProjectConverter}"/>
+                <f:viewParam name="product" value="#{productOrderDetail.productOrder.product}" converter="#{productConverter}"/>
             </f:metadata>
+            <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
         </ui:define>
 
         <ui:define name="body">
             <p:dialog header="Enter Samples" widgetVar="samplesDialog" modal="true" onShow="">
                 <h:form id="sampleDialogForm" prependId="false">
                     <p:inputTextarea id="samplesDialogInput" value="#{productOrderForm.samplesDialog.text}" cols="80"
-                                     rows="20"
-                                     autoResize="false"
-                            >
+                                     rows="20" autoResize="false">
                         <p:ajax update="samplesDialogStatus,samplesDialogInput"
                                 listener="#{productOrderForm.samplesDialog.textChanged}"/>
                     </p:inputTextarea>
@@ -33,16 +33,13 @@
                     <div class="control-group">
                         <div class="controls">
                             <div class="row-fluid">
-                                <div class="span1">
-                                    <p:commandButton id="commitSamples" update=":form:sampleTable, :form:idCache" value="OK"
-                                                     onclick="samplesDialog.hide()"
-                                                     actionListener="#{productOrderForm.samplesDialog.commit}"
-                                                     styleClass="btn btn-primary"/>
-                                </div>
-                                <div class="span1">
-                                    <p:commandButton value="Cancel" onclick="samplesDialog.hide()"
-                                                     styleClass="btn"/>
-                                </div>
+                                <p:commandButton id="commitSamples"
+                                                 update=":form:sampleDisplay, :form:idCache"
+                                                 value="OK"
+                                                 onclick="samplesDialog.hide()"
+                                                 actionListener="#{productOrderForm.samplesDialog.commit}"
+                                                 styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Cancel" onclick="samplesDialog.hide()"/>
                             </div>
                         </div>
                     </div>
@@ -70,6 +67,7 @@
                                         converter="#{researchProjectConverter}"
                                         dropdown="true"
                                         required="true"
+                                        scrollHeight="250"
                                         size="50"/>
                         <p:watermark for="researchProject" value="Type name to search"/>
                         <p:message for="researchProject"/>
@@ -88,9 +86,29 @@
                                         converter="#{productConverter}"
                                         dropdown="true"
                                         required="true"
-                                        size="50"/>
+                                        scrollHeight="250"
+                                        size="50">
+                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection"/>
+                        </p:autoComplete>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>
+                    </div>
+               </div>
+
+
+                <div class="control-group">
+                    <p:outputLabel for="selectedAddOns" value="Add-Ons" styleClass="control-label"/>
+                    <div class="controls">
+                        <h:panelGroup id="perfbyselection">
+                            <h:outputText styleClass="entry-help" value="#{!productOrderForm.hasProduct ? 'If you select a product, its add-ons will show up here' : ''}"/>
+                            <h:outputText styleClass="entry-help"
+                                          value="#{productOrderForm.hasProduct and productOrderForm.addOns.isEmpty() ?
+                            productOrderForm.noAddOnsString() : ''}"/>
+                            <p:selectManyCheckbox
+                                    id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
+                                <f:selectItems value="#{productOrderForm.addOns}"/>
+                            </p:selectManyCheckbox>
+                        </h:panelGroup>
                     </div>
                 </div>
 
@@ -126,34 +144,87 @@
 
                 <h:inputHidden id="idCache" binding="#{productOrderForm.editIdsCacheBinding}"/>
 
-                <p:blockUI block="sampleTable" trigger=":sampleDialogForm:commitSamples"/>
-
-                <div class="row-fluid">
-                    <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample">
-                        <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
-                        <p:column headerText="ID">
-                            #{sample.sampleName}
-                        </p:column>
-
-                        <p:column headerText="Participant">
-                            #{sample.bspDTO.patientId}
-                        </p:column>
-
-                        <p:column headerText="Material">
-                            #{sample.bspDTO.materialType}
-                        </p:column>
-
-                        <p:column headerText="Volume">
-                            #{sample.bspDTO.volume}
-                        </p:column>
-                    </p:dataTable>
-                </div>
+                <p:blockUI block=":form" trigger=":sampleDialogForm:commitSamples"/>
 
                 <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productOrderForm.save}"
+                                <p:commandButton value="Place&nbsp;Order" action="#{productOrderForm.save}"
+                                                 ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h:panelGroup id="sampleDisplay">
+                    <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
+                    <p:panel header="Summary" toggleable="true" style="margin-bottom: 5px;">
+                        <p:dataList value="#{productOrderDetail.productOrder.sampleSummaryComments}"
+                                    var="comment" itemType="none">
+                            #{comment}
+                        </p:dataList>
+                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}" var="comment" itemType="none">
+                            #{comment}
+                        </p:dataList>
+                    </p:panel>
+
+                    <div class="row-fluid" style="margin-bottom: 5px;">
+                        <p:dataTable id="sampleTable" value="#{productOrderDetail.productOrder.samples}" var="sample"
+                                     scrollable="true" scrollHeight="350" scrollRows="30">
+
+                            <f:event type="preRenderComponent" listener="#{productOrderForm.load}"/>
+                            <p:column headerText="ID" width="120">
+                                #{sample.sampleName}
+                            </p:column>
+                            <p:column headerText="Participant" width="130">
+                                #{sample.bspDTO.patientId}
+                            </p:column>
+                            <p:column headerText="Collaborator&lt;br/&gt;Sample" width="130">
+                                #{sample.bspDTO.collaboratorsSampleName}
+                            </p:column>
+                            <p:column headerText="Collaborator&lt;br/&gt;Participant ID" width="120">
+                                #{sample.bspDTO.collaboratorParticipantId}
+                            </p:column>
+                            <p:column headerText="Material" width="50">
+                                #{sample.bspDTO.materialType}
+                            </p:column>
+                            <p:column headerText="Volume" width="50">
+                                #{sample.bspDTO.volume}
+                            </p:column>
+                            <p:column headerText="Concentration" width="90">
+                                #{sample.bspDTO.concentration}
+                            </p:column>
+                            <p:column headerText="Total" width="50">
+                                #{sample.bspDTO.total}
+                            </p:column>
+                            <p:column headerText="Sample Type" width="75">
+                                #{sample.bspDTO.sampleType}
+                            </p:column>
+                            <p:column headerText="Primary&lt;br/&gt;Disease" width="75">
+                                #{sample.bspDTO.primaryDisease}
+                            </p:column>
+                            <p:column headerText="Gender" width="50">
+                                #{sample.bspDTO.gender}
+                            </p:column>
+                            <p:column headerText="Stock Type" width="75">
+                                #{sample.bspDTO.stockType}
+                            </p:column>
+                            <p:column headerText="Fingerprint&lt;br/&gt;Available" width="100">
+                                #{sample.bspDTO.hasFingerprint}
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </h:panelGroup>
+
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="row-fluid">
+                            <div class="span1">
+                                <p:commandButton value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                                  ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">

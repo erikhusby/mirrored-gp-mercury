@@ -39,9 +39,12 @@
                 <div class="control-group">
                     <p:outputLabel for="synopsis" value="Synopsis" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="100" maxlength="4000" rows="5" required="true"/>
+                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="100" maxlength="4000" rows="5" required="true" counter="counter" counterTemplate="{0} characters remaining">
+                            <f:validateLength maximum="4000"/>
+                        </p:inputTextarea>
                         <p:watermark for="synopsis" value="Enter scientific background of the research project in this space"/>
                         <p:message for="synopsis"/>
+                        <h:outputText id="counter"/>
                     </div>
                 </div>
 
@@ -49,7 +52,11 @@
                 <div class="control-group">
                     <p:outputLabel for="projectManagers" value="Project Managers" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true" required="true" requiredMessage="There must be at least one project manager.">
+                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}"
+                            completeMethod="#{userListBean.searchUser}" converter="#{bspUserConverter}"
+                            multiple="true" required="true"
+                            var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}"
+                            requiredMessage="There must be at least one project manager." scrollHeight="250">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
@@ -64,7 +71,10 @@
                 <div class="control-group">
                     <p:outputLabel for="broadPIs" value="Broad PIs" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="broadPIs" value="#{researchProjectForm.broadPIs}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true">
+                        <p:autoComplete id="broadPIs" value="#{researchProjectForm.broadPIs}"
+                            completeMethod="#{userListBean.searchUser}" var="user" scrollHeight="250"
+                            itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}"
+                            converter="#{bspUserConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
@@ -78,7 +88,10 @@
                 <div class="control-group">
                     <p:outputLabel for="scientists" value="Scientists" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true">
+                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}"
+                            completeMethod="#{userListBean.searchUser}" var="user" scrollHeight="250"
+                            itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}"
+                            converter="#{bspUserConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
@@ -92,7 +105,10 @@
                 <div class="control-group">
                     <p:outputLabel for="externalCollaborators" value="External Collaborators" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="externalCollaborators" value="#{researchProjectForm.externalCollaborators}" completeMethod="#{userListBean.searchUser}" var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}" converter="#{bspUserConverter}" multiple="true">
+                        <p:autoComplete id="externalCollaborators" value="#{researchProjectForm.externalCollaborators}"
+                            completeMethod="#{userListBean.searchUser}" var="user" scrollHeight="250"
+                            itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}"
+                            converter="#{bspUserConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username}_ #{user.email}</div>
@@ -106,7 +122,10 @@
                 <div class="control-group">
                     <p:outputLabel for="fundingSources" value="Funding Sources" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="fundingSources" value="#{researchProjectForm.fundingSources}" completeMethod="#{fundingListBean.searchFunding}" var="funding" itemLabel="#{funding.fundingTypeAndName}" itemValue="#{funding}" converter="#{quoteFundingConverter}" multiple="true">
+                        <p:autoComplete id="fundingSources" value="#{researchProjectForm.fundingSources}"
+                            completeMethod="#{fundingListBean.searchFunding}" var="funding" scrollHeight="250"
+                            itemLabel="#{funding.fundingTypeAndName}" itemValue="#{funding}"
+                            converter="#{quoteFundingConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{funding.fundingTypeAndName}</div>
                                 <div class="ac-dropdown-subtext">#{funding.matchDescription}:</div>
@@ -120,12 +139,16 @@
                 <div class="control-group">
                     <p:outputLabel for="sampleCohorts" value="Sample Cohorts" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}" completeMethod="#{cohortListBean.searchActiveCohort}" var="cohort" itemLabel="#{cohort.cohortId}: #{cohort.name}" itemValue="#{cohort}" converter="#{bspCohortConverter}" multiple="true">
+                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}"
+                            completeMethod="#{cohortListBean.searchActiveCohort}" var="cohort" scrollHeight="250"
+                            itemLabel="#{cohort.cohortId}: #{cohort.name}" itemValue="#{cohort}"
+                            converter="#{bspCohortConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{cohort.cohortId}: #{cohort.name}</div>
                                 <div class="ac-dropdown-subtext">#{cohort.group}: #{cohort.category}</div>
                             </p:column>
                         </p:autoComplete>
+
                         <p:watermark for="sampleCohorts" value="Type number to search"/>
                     </div>
                 </div>
@@ -134,9 +157,15 @@
                 <div class="control-group">
                     <p:outputLabel for="irbs" value="IRB/IACUC Numbers" styleClass="control-label"/>
                     <div class="controls">
-                        <!-- TODO: tie into real IRBs? -->
-                        <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}" completeMethod="#{researchProjectForm.completeIrbs}" multiple="true"/>
-                        <p:watermark for="irbs" value="Type number to search"/>
+                        <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}"
+                            completeMethod="#{researchProjectForm.completeIrbs}" var="irb" scrollHeight="250"
+                            itemLabel="#{irb.name}: #{irb.irbType.displayName}" itemValue="#{irb}"
+                            converter="#{irbConverter}" multiple="true" maxlength="250">
+                            <p:column style="width:100%">
+                                <div class="ac-dropdown-text">#{irb.name}: #{irb.irbType.displayName}</div>
+                            </p:column>
+                        </p:autoComplete>
+                        <p:watermark for="irbs" value="Type irb name"/>
                         <p>
                             <p:selectBooleanCheckbox id="irbEngaged" value="#{researchProjectDetail.project.irbNotEngaged}"/> <p:outputLabel for="irbEngaged" value="IRB Not Engaged" style="display: inline-block"/>
                         </p>
@@ -147,7 +176,7 @@
                 <div class="control-group">
                     <p:outputLabel for="irbNotes" value="IRB Notes" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50"/>
+                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50" maxlength="250"/>
                         <p:watermark for="irbNotes" value="Enter notes about the above IRBs"/>
                     </div>
                 </div>
