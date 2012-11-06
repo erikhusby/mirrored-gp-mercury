@@ -73,7 +73,12 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         logger.warn("POST request: " + baos.toString());
 
 
-        T ret = setJsonMimeTypes(webResource).post(responseGenericType, baos.toString());
+        T ret = null;
+        try {
+            ret = setJsonMimeTypes(webResource).post(responseGenericType, baos.toString());
+        } catch (UniformInterfaceException e) {
+            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+        }
 
         logger.debug("POST response: " + ret);
 
@@ -96,7 +101,11 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
 
         logger.warn("POST request: " + baos.toString());
 
-        setJsonMimeTypes(webResource).post(baos.toString());
+        try {
+            setJsonMimeTypes(webResource).post(baos.toString());
+        } catch (UniformInterfaceException e) {
+            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+        }
     }
 
     /**
@@ -131,7 +140,11 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      */
     protected <T> T get(WebResource webResource, GenericType<T> genericType) {
 
-        return setJsonMimeTypes(webResource).get(genericType);
+        try {
+            return setJsonMimeTypes(webResource).get(genericType);
+        } catch (UniformInterfaceException e) {
+            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+        }
     }
 
 }
