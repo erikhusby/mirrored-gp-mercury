@@ -496,13 +496,27 @@ public class ProductForm extends AbstractJsfBean {
         final int MAX_NAME = 45;
 
         if (priceItem.getName().length() > MAX_NAME){
-            return priceItem.getName().substring(0, MAX_NAME) + "... (" + priceItem.getId() + ")";
+            return priceItem.getName().substring(0, MAX_NAME) + "... ";
         }
-        else if (priceItem.getName().length() + priceItem.getPlatformName().length() < MAX_NAME) {
-            return priceItem.getPlatformName() + ": " + priceItem.getName() + " (" + priceItem.getId() + ")";
+        else if (priceItem.getPlatformName().length() + priceItem.getName().length() < MAX_NAME) {
+            return priceItem.getPlatformName() + ": " + priceItem.getName();
         }
-        return priceItem.getName() + " (" + priceItem.getId() + ")";
+        return priceItem.getName();
     }
 
+    public String addOnLabel(Product product) {
 
+        if ((product == null) || (product.getProductName() == null)) {
+            return "";
+        }
+
+        final int MAX_NAME = 45;
+
+        if (product.getProductName().length() > MAX_NAME){
+            return product.getProductName().substring(0, MAX_NAME) + "... ";
+        } else if ( product.getProductName().length() + product.getPartNumber().length() < MAX_NAME ){
+            return product.getProductName() + " : " + product.getPartNumber();
+        }
+        return product.getProductName();
+    }
 }

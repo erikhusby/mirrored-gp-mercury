@@ -1,18 +1,23 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
+import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.mercury.entity.DB;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.util.Collection;
+import java.util.EnumSet;
 
 /**
  * @author breilly
@@ -66,6 +71,12 @@ public class UserBean implements Serializable {
 
     private String jiraUsername;
 
+    private final EnumSet<DB.Role> roles = EnumSet.noneOf(DB.Role.class);
+
+    public Collection<DB.Role> getRoles() {
+        return ImmutableSet.copyOf(roles);
+    }
+
     @Nullable
     public BspUser getBspUser() {
         return bspUser;
@@ -74,6 +85,7 @@ public class UserBean implements Serializable {
     public void logout() {
         bspUser = null;
         jiraUsername = "";
+        roles.clear();
         bspStatus = ServerStatus.notLoggedIn;
         jiraStatus = ServerStatus.notLoggedIn;
     }
@@ -82,7 +94,7 @@ public class UserBean implements Serializable {
         if (bspUser != null && !bspUserList.isTestUser(bspUser)) {
             bspStatus = ServerStatus.loggedIn;
         } else if (bspUserList.isServerValid()) {
-                bspStatus = ServerStatus.notLoggedIn;
+            bspStatus = ServerStatus.notLoggedIn;
         } else {
             // BSP Server is unresponsive, can't log in to verify user.
             bspStatus = ServerStatus.down;
@@ -104,10 +116,22 @@ public class UserBean implements Serializable {
         }
     }
 
-    public void login(@Nonnull String username) {
+    /**
+     * Log in the user and cache user login state.  Application roles, BSP account status and JIRA
+     * account are cached for the duration of the session, so a user must log out and log back in to see
+     * any changes.
+     * @param request the request used for a successful user login
+     */
+    public void login(HttpServletRequest request) {
+        String username = request.getUserPrincipal().getName();
         bspUser = bspUserList.getByUsername(username);
         updateBspStatus();
         updateJiraStatus(username);
+        for (DB.Role role : DB.Role.values()) {
+            if (request.isUserInRole(role.name)) {
+                roles.add(role);
+            }
+        }
     }
 
     /**
@@ -143,5 +167,16 @@ public class UserBean implements Serializable {
 
     public boolean isValidJiraUser() {
         return jiraStatus.isValid();
+    }
+
+    public boolean isPDMUser() {
+        return roles.contains(DB.Role.PDM);
+    }
+
+    public String getRolesString() {
+        if (roles.isEmpty()) {
+            return "No Roles";
+        }
+        return "Roles: " + StringUtils.join(roles, ", ");
     }
 }

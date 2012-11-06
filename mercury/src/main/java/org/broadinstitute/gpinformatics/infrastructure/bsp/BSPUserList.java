@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -24,9 +23,8 @@ import java.util.*;
 @Singleton
 public class BSPUserList {
 
-    private Log logger = LogFactory.getLog(BSPUserList.class);
-
-    private static long userIdSeq = 101010101L;
+    @Inject
+    private Log logger;
 
     @Inject
     private Deployment deployment;
@@ -126,7 +124,7 @@ public class BSPUserList {
 
     public synchronized void refreshUsers() {
         try {
-            List<BspUser> rawUsers = this.bspManagerFactory.createUserManager().getUsers();
+            List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
 
             if (rawUsers == null) {
                 rawUsers = new ArrayList<BspUser>();
@@ -159,13 +157,12 @@ public class BSPUserList {
     }
 
     public static class QADudeUser extends BspUser {
-        public QADudeUser(String type) {
-            makeBspUser("QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org");
+        public QADudeUser(String type, long userId) {
+            setFields(userId, "QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org");
         }
 
-        // Using synchronized due to use of non-final static member userIdSeq.
-        private synchronized void makeBspUser(String username, String firstName, String lastName, String email) {
-            setUserId(userIdSeq++);
+        private void setFields(long userId, String username, String firstName, String lastName, String email) {
+            setUserId(userId);
             setUsername(username);
             setFirstName(firstName);
             setLastName(lastName);
@@ -174,9 +171,12 @@ public class BSPUserList {
     }
 
     private static void addQADudeUsers(List<BspUser> users) {
-        String[] types = {"Test", "PM", "LU", "LM"};
+        // FIXME: should instead generate this dynamically based on current users.properties settings on the server.
+        // Could also create QADude entries on demand during login.
+        String[] types = {"Test", "PM", "PDM", "LU", "LM"};
+        long userIdSeq = 101010101L;
         for (String type : types) {
-            users.add(new QADudeUser(type));
+            users.add(new QADudeUser(type, userIdSeq++));
         }
     }
 

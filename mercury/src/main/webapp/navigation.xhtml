@@ -24,7 +24,9 @@
 
             <p:submenu label="Products" icon="ui-icon-tag">
                 <p:menuitem value="List" outcome="/products/list" />
-                <p:menuitem value="Create" outcome="/products/create" />
+                <security:AuthorizeBlock roles="Mercury-Developers, Mercury-ProductManagers">
+                    <p:menuitem value="Create" outcome="/products/create" />
+                </security:AuthorizeBlock>
             </p:submenu>
         </p:menubar>
 
