@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -16,6 +17,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Map;
@@ -102,6 +104,18 @@ public class JiraServiceTest {
         }
     }
 
+    public void testUpdateTicket() throws IOException {
+        CreateIssueResponse response = service.createIssue(
+                CreateIssueRequest.Fields.ProjectType.Research_Projects.getKeyPrefix(),
+                CreateIssueRequest.Fields.Issuetype.Research_Project,
+                "JiraServiceTest.testUpdateTicket", "Test issue for update", new ArrayList<CustomField>());
+
+        Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
+
+        ArrayList<CustomField> customFields = new ArrayList<CustomField>();
+        customFields.add(new CustomField(allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getFieldName()), "http://www.broadinstitute.org/", CustomField.SingleFieldType.TEXT));
+        service.updateIssue(response.getKey(), customFields);
+    }
 
     public void testAddWatcher() {
 
