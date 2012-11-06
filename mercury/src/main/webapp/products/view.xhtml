@@ -7,7 +7,8 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:sqltg="http://sequel.broadinstitute.org/tags">
 <body>
 
 <h:link outcome="/security/login" value="Athena"/>
@@ -29,11 +30,13 @@
 
         <h:form id="productForm" styleClass="form-horizontal form-readonly" >
 
-            <div class="row-fluid" style="margin-bottom: 30px;">
-                <p:button outcome="create" value="Edit">
-                    <f:param name="product" value="#{productView.product.partNumber}" />
-                </p:button>
-            </div>
+            <sqltg:AuthorizeBlock roles="Mercury-Developers, Mercury-ProductManagers">
+                <div class="row-fluid" style="margin-bottom: 30px;">
+                    <p:button outcome="create" value="Edit">
+                        <f:param name="product" value="#{productView.product.partNumber}" />
+                    </p:button>
+                </div>
+            </sqltg:AuthorizeBlock>
 
 
             <div class="control-group">
@@ -124,7 +127,7 @@
             <div class="control-group">
                 <label class="control-label">Primary Price Item</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.product.defaultPriceItem.platform}: #{productView.product.defaultPriceItem.category}: #{productView.product.defaultPriceItem.name} (ID #{productView.product.defaultPriceItem.quoteServerId})</div>
+                    <div class="form-value">#{productView.product.defaultPriceItem.platform}: #{productView.product.defaultPriceItem.category}: #{productView.product.defaultPriceItem.name}</div>
                 </div>
             </div>
 
@@ -164,12 +167,13 @@
 
             </p:dataTable>
 
+            <p/>
 
             <p:dataTable value="#{productView.priceItems}" var="priceItem" >
                 <f:facet name="header">
                     <h:outputText value="Optional Price Items" />
                 </f:facet>
-                <p:column> <!-- sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}"> -->
+                <p:column rendered="false"> <!-- sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}"> -->
                     <f:facet name="header">
                         <h:outputText value="Quote Server ID"/>
                     </f:facet>
