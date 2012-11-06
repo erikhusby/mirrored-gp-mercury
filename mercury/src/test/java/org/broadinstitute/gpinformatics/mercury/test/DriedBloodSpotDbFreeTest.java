@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -30,9 +29,9 @@ import java.util.Map;
 /**
  * Test messaging for BSP Dried Blood Spot Extraction
  */
-public class DriedBloodSpotTest {
+@Test(groups = TestGroups.DATABASE_FREE)
+public class DriedBloodSpotDbFreeTest {
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testEndToEnd() {
         // import batch and tubes
         LabBatchResource labBatchResource = new LabBatchResource();
@@ -71,10 +70,10 @@ public class DriedBloodSpotTest {
         private PlateTransferEventType dbs2ndPurificationJaxb;
         private PlateEventType dbsElutionBufferJaxb;
         private PlateTransferEventType dbsFinalTransferJaxb;
-        private ArrayList<String> ftaPaperBarcodes;
+        private List<String> ftaPaperBarcodes;
         private String labBatchId;
 
-        public DriedBloodSpotJaxbBuilder(ArrayList<String> ftaPaperBarcodes, String labBatchId) {
+        public DriedBloodSpotJaxbBuilder(List<String> ftaPaperBarcodes, String labBatchId) {
             this.ftaPaperBarcodes = ftaPaperBarcodes;
             this.labBatchId = labBatchId;
         }
