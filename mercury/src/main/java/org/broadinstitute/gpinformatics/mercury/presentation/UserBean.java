@@ -20,7 +20,6 @@ import java.text.MessageFormat;
 @Named
 @SessionScoped
 public class UserBean implements Serializable {
-
     @Nullable
     private BspUser bspUser;
 
