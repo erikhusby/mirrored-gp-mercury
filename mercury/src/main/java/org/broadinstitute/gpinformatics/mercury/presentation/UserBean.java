@@ -26,6 +26,8 @@ import java.util.EnumSet;
 @SessionScoped
 public class UserBean implements Serializable {
 
+    public static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
+
     @Nullable
     private BspUser bspUser;
 
@@ -48,18 +50,33 @@ public class UserBean implements Serializable {
     public enum ServerStatus {
         down("text-error", "Cannot connect to {0} Server: ''{1}''"),
         loggedIn("text-success", "Logged into {0} as ''{2}''"),
-        notLoggedIn("text-warning", "Not a {0} User");
+        notLoggedIn("text-warning", "Not a {0} User",
+                "You do not have an account on the {0} server, which is needed to use this application. "
+                + "Please contact {3} to fix this problem.");
 
+        /** The CSS class used to display the status test. */
         private final String cssClass;
-        private final String format;
+        /** A short message used to show the status of this server in a tooltip. */
+        private final String statusFormat;
+        /** A longer message used to show the status of this server. */
+        private final String messageFormat;
 
         private String formatStatus(String serviceName, String host, String username) {
-            return MessageFormat.format(format, serviceName, host, username);
+            return MessageFormat.format(statusFormat, serviceName, host, username, "");
         }
 
-        private ServerStatus(String cssClass, String format) {
+        private String formatMessage(String serviceName, String host, String username) {
+            return MessageFormat.format(messageFormat, serviceName, host, username, SUPPORT_EMAIL);
+        }
+
+        private ServerStatus(String cssClass, String statusFormat) {
+            this(cssClass, statusFormat, statusFormat);
+        }
+
+        private ServerStatus(String cssClass, String statusFormat, String messageFormat) {
             this.cssClass = cssClass;
-            this.format = format;
+            this.statusFormat = statusFormat;
+            this.messageFormat = messageFormat;
         }
 
         public boolean isValid() {
@@ -150,12 +167,21 @@ public class UserBean implements Serializable {
         return bspStatus.formatStatus("BSP", bspConfig.getHost(), username);
     }
 
+    public String getBspMessage() {
+        String username = bspUser == null ? "" : bspUser.getUsername();
+        return bspStatus.formatMessage("BSP", bspConfig.getHost(), username);
+    }
+
     public String getBspStatusClass() {
         return bspStatus.cssClass;
     }
 
     public String getJiraStatus() {
         return jiraStatus.formatStatus("JIRA", jiraConfig.getUrlBase(), jiraUsername);
+    }
+
+    public String getJiraMessage() {
+        return jiraStatus.formatMessage("JIRA", jiraConfig.getUrlBase(), jiraUsername);
     }
 
     public String getJiraStatusClass() {
