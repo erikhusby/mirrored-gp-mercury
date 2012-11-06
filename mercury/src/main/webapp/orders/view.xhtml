@@ -118,7 +118,7 @@
                         </f:facet>
 
                         <p:column headerText="ID" width="100">
-                            <h:outputLink target="BSP_SAMPLE" value="#{bspLink.sampleSearchUrl(sample.sampleName)}" class="external">
+                            <h:outputLink disabled="#{! bspLink.isInBspFormat(sample.sampleName)}" target="BSP_SAMPLE" value="#{bspLink.sampleSearchUrl(sample.sampleName)}" class="external">
                                 <h:outputText value="#{sample.sampleName}" />
                             </h:outputLink>
                         </p:column>
