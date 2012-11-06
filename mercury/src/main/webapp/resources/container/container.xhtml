@@ -13,19 +13,20 @@
 <cc:implementation>
     <h:outputStylesheet library="css" name="container.css" target="head"/>
     <h:outputText value="#{containerBean.updateVessel(cc.attrs.barcode)}"/>
-        <p:dataGrid id="containerGrid" var="well" columns="#{containerBean.columns}"
-                    rows="#{containerBean.columns * containerBean.rows}"
-                    value="#{containerBean.geometry}" styleClass="ui-container" emptyMessage="">
-            <f:facet name="header">
-                Sample Layout
-            </f:facet>
-            <p:panel>
-                <h:outputText value="#{containerBean.getRowNumIndex()}"
-                              style="font-size: x-small; font-family: monospace; vertical-align: super"/>
-                <h:outputText value="EMPTY" rendered="#{containerBean.sampleAtPosition() == null}"
-                              style="font-size: smaller;"/>
-                <h:outputText value="#{containerBean.sampleAtPosition().startingSample.sampleKey}" style="font-size: smaller;"/>
-            </p:panel>
-        </p:dataGrid>
+    <p:dataGrid id="containerGrid" var="well" columns="#{containerBean.columns}" emptyMessage=""
+                rows="#{containerBean.columns * containerBean.rows}" value="#{containerBean.geometry}"
+                styleClass="ui-container" rendered="#{containerBean.geometry.size() > 1}">
+        <f:facet name="header">
+            Sample Layout
+        </f:facet>
+        <p:panel>
+            <h:outputText value="#{containerBean.getRowNumIndex()} " style="font-size: x-small;
+                              font-family: monospace; vertical-align: super"/>
+            <h:outputText value="EMPTY" rendered="#{containerBean.sampleAtPosition() == null}"
+                          style="font-size: smaller;"/>
+            <h:outputText value="#{containerBean.sampleAtPosition().startingSample.sampleKey}"
+                          style="font-size: smaller;"/>
+        </p:panel>
+    </p:dataGrid>
 </cc:implementation>
 </html>

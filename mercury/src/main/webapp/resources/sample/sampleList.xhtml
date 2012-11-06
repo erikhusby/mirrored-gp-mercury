@@ -3,16 +3,17 @@
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:cc="http://java.sun.com/jsf/composite" xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:cc="http://java.sun.com/jsf/composite"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+        >
 
 <cc:interface>
     <cc:attribute name="barcode" required="true"/>
 </cc:interface>
 <cc:implementation>
     <h:outputText value="#{sampleBean.updateVessel(cc.attrs.barcode)}"/>
-    <p:dataTable id="sampleResults" value="#{sampleBean.vessel.sampleInstancesList}"
-                 var="sampleInstance">
+    <p:dataTable id="sampleResults" value="#{sampleBean.vessel.sampleInstancesList}" var="sampleInstance">
         <f:facet name="header">
             Sample Information
         </f:facet>
@@ -32,8 +33,13 @@
             <f:facet name="header">
                 <h:outputText value="Index Information"/>
             </f:facet>
-            <h:outputText
-                    value="#{lookupBean.indexValueForSample(sampleInstance, sampleBean.vessel)}"/>
+            <h:outputText value="#{sampleBean.indexValueForSample(sampleInstance)}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Reagent Information"/>
+            </f:facet>
+            <h:outputText value="#{sampleBean.reagentInfoForSample(sampleInstance)}"/>
         </p:column>
         <p:column>
             <f:facet name="header">

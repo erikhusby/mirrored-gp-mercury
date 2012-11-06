@@ -1,21 +1,17 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
+package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
-import javax.faces.bean.ViewScoped;
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @ManagedBean
@@ -54,42 +50,43 @@ public class ContainerBean implements Serializable {
         this.vessel = vessel;
     }
 
-    public void updateVessel(String barcode){
-        if(barcode != null && this.vessel == null ){
+    public void updateVessel(String barcode) {
+        if (barcode != null && this.vessel == null) {
             this.vessel = labVesselDao.findByIdentifier(barcode);
             this.barcode = barcode;
         }
     }
 
-    public int getColumns(){
+    public int getColumns() {
         int columns = 1;
-        if(vessel != null){
+        if (vessel != null) {
             columns = vessel.getVesselGeometry().getColumnNames().length;
         }
         return columns;
     }
 
-    public int getRows(){
+    public int getRows() {
         int rows = 1;
-        if(vessel != null){
+        if (vessel != null) {
             rows = vessel.getVesselGeometry().getRowNames().length;
         }
         return rows;
     }
 
-    public void resetIndex(){
-        index = -1;
-    }
     //we need to keep a running count of rows since the datagrid won't do this for us
     //http://code.google.com/p/primefaces/issues/detail?id=4124
-    public String getRowNumIndex(){
+    public String getRowNumIndex() {
         index++;
         int columnNum = getColumnNumFromIndex();
         int rowIndex = getRowNumFromIndex();
         String columnName = vessel.getVesselGeometry().getColumnNames()[columnNum];
         String rowName = vessel.getVesselGeometry().getRowNames()[rowIndex];
         VesselPosition position = VesselPosition.getByName(rowName + columnName);
-        return position.name() + " ";
+        String positionName = " ";
+        if (position != null) {
+            positionName = position.name();
+        }
+        return positionName;
     }
 
     private int getRowNumFromIndex() {
@@ -120,14 +117,10 @@ public class ContainerBean implements Serializable {
         return instance;
     }
 
-    public boolean isTube(){
-        return ((RackOfTubes)vessel).getVesselContainer().getEmbedder().getType().equals(LabVessel.CONTAINER_TYPE.TUBE);
-    }
-
     public List<String> getGeometry() {
-        if(vessel != null && geometry.size() == 0) {
+        if (vessel != null && geometry.size() == 0) {
             int capacity = vessel.getVesselGeometry().getCapacity();
-            for(int i = 0; i < capacity; i++){
+            for (int i = 0; i < capacity; i++) {
                 geometry.add("");
             }
         }

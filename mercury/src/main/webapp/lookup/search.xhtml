@@ -23,13 +23,11 @@
                         <p:inputText id="name" value="#{lookupBean.barcode}" size="50"/>
                         <p:watermark for="name" value="Enter the barcode to search for"/>
                         <p:commandButton value="Search" action="#{lookupBean.barcodeSearch}"
-                                         update=":results:searchResultPanel"
-                                         styleClass="ui-priority-primary"/>
+                                         update=":results:searchResultPanel" styleClass="ui-priority-primary"/>
                     </div>
                 </div>
                 <p:panel id="searchResultPanel">
-                    <p:dataTable id="resultsTable" var="foundVessel"
-                                 value="#{lookupBean.foundVessels}">
+                    <p:dataTable id="resultsTable" var="foundVessel" value="#{lookupBean.foundVessels}">
                         <p:ajax event="rowToggle" listener="#{lookupBean.onRowToggle}"/>
                         <f:facet name="header">
                             Barcode Search Results
@@ -46,7 +44,6 @@
                             </f:facet>
                             <h:outputText value="#{foundVessel.sampleInstancesList.size()}"/>
                         </p:column>
-
                         <p:column sortBy="#{foundVessel.label}">
                             <f:facet name="header">
                                 <h:outputText value="Label"/>
@@ -108,14 +105,14 @@
                             <h:outputText value="#{foundVessel.createdOn}"/>
                         </p:column>
                         <p:rowExpansion>
-                                <p:outputPanel id="outputContainerPanel">
-                                    <p:panel id="platePanel">
-                                        <c:container barcode="#{lookupBean.selectedVessel.label}"/>
-                                    </p:panel>
-                                    <p:panel id="samplePanel">
-                                        <s:sampleList barcode="#{lookupBean.selectedVessel.label}"/>
-                                    </p:panel>
-                                </p:outputPanel>
+                            <p:outputPanel id="outputContainerPanel">
+                                <p:panel id="platePanel">
+                                    <c:container barcode="#{lookupBean.selectedVessel.label}"/>
+                                </p:panel>
+                                <p:panel id="samplePanel">
+                                    <s:sampleList barcode="#{lookupBean.selectedVessel.label}"/>
+                                </p:panel>
+                            </p:outputPanel>
                         </p:rowExpansion>
                     </p:dataTable>
                 </p:panel>
