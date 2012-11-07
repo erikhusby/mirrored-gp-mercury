@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationListener;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -108,8 +109,8 @@ public class UserLogin extends AbstractJsfBean {
         PM("/projects/list", DB.Role.PM.name),
         OTHER("index", "");
 
-        private static final String INDEX = "/index";
-        private static final String HOME_PAGE = "/Mercury";
+        private static final String INDEX = AuthorizationListener.HOME_PAGE;
+        private static final String MERCURY_PAGE = "/Mercury";
 
         public static UserRole fromRequest(HttpServletRequest request) {
             for (UserRole role : values()) {
@@ -131,7 +132,7 @@ public class UserLogin extends AbstractJsfBean {
         private String checkUrlForRoleRedirect(String targetPage) {
             StringBuilder newUrlBuilder = new StringBuilder(targetPage);
             if (this != OTHER) {
-                if (targetPage.endsWith(HOME_PAGE) || targetPage.endsWith(HOME_PAGE + "/")) {
+                if (targetPage.endsWith(MERCURY_PAGE) || targetPage.endsWith(MERCURY_PAGE + "/")) {
                     if (targetPage.endsWith("/")) {
                         newUrlBuilder.deleteCharAt(targetPage.lastIndexOf("/"));
                     }

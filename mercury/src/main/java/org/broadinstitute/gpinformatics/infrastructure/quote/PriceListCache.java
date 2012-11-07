@@ -123,6 +123,11 @@ public class PriceListCache implements Serializable {
         return searchPriceItems(getPriceItems(), query);
     }
 
+
+    public boolean contains(PriceItem priceItem) {
+        return getPriceList().contains(priceItem);
+    }
+
     /**
      * The input is search keys concatenated like platform|category|name
      *

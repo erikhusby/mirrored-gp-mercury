@@ -6,7 +6,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:security="http://mercury.broadinstitute.org/tags"
       xmlns:p="http://primefaces.org/ui">
+
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">Problem</ui:define>
@@ -24,7 +26,7 @@
                         <h3>Sorry!  Mercury seems to have run into a wall!</h3>
                         <p>
                             We're sorry you encountered some problems with our application.  If you would
-                            like to report this issue, please hit the <strong>Feedback?</strong>
+                            like to report this issue, please hit the <strong>Feedback</strong>
                             button on the menubar.
                         </p>
                         <p>
@@ -34,7 +36,15 @@
                             <h:outputText escape="false" value="#{errorBean.message}"/>
                         </p>
 
-                        <h:outputText escape="false" value="#{errorBean.stackTrace}" style="display:none;"/>
+                        <br/><br/><br/>
+
+                        <security:authorizeBlock roles="#{userBean.developerRole}">
+                            <div style="border: 1px dotted #FF0000; border-radius: 10px;-moz-border-radius: 10px; -webkit-border-radius: 10px; padding: 10px;">
+                                <h3>Additional information from the stack trace:</h3>
+                                <p><h:outputText escape="false" value="#{errorBean.stackTrace}" /></p>
+                            </div>
+                        </security:authorizeBlock>
+
 
                     </div>
 
