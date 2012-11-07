@@ -236,7 +236,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
             List<Map<String, String>> response = new ObjectMapper().readValue(jsonResponse, List.class);
             if (!response.isEmpty()) {
                 String foundName = response.get(0).get("name");
-                return foundName.equals(username);
+                // JIRA usernames are not case sensitive.
+                return foundName.equalsIgnoreCase(username);
             }
             return false;
         } catch (IOException e) {
