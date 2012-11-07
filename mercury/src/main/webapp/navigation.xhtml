@@ -7,7 +7,7 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:p="http://primefaces.org/ui"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:sqltg="http://sequel.broadinstitute.org/tags">
+      xmlns:security="http://mercury.broadinstitute.org/tags">
 <body>
 <ui:composition>
     <h:form>
@@ -24,17 +24,19 @@
 
             <p:submenu label="Products" icon="ui-icon-tag">
                 <p:menuitem value="List" outcome="/products/list" />
-                <sqltg:AuthorizeBlock roles="Mercury-Developers, Mercury-ProductManagers">
+                <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
                     <p:menuitem value="Create" outcome="/products/create" />
-                </sqltg:AuthorizeBlock>
+                </security:authorizeBlock>
             </p:submenu>
+
+            <security:authorizeBlock roles="#{userBean.developerRole}">
+                <p:submenu label="Admin" icon="ui-icon-gear">
+                    <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
+                </p:submenu>
+            </security:authorizeBlock>
         </p:menubar>
 
-        <sqltg:AuthorizeBlock roles="Sequel-Developers">
-            <p:submenu label="Admin" icon="ui-icon-gear">
-                <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
-            </p:submenu>
-        </sqltg:AuthorizeBlock>
+
 
     </h:form>
 

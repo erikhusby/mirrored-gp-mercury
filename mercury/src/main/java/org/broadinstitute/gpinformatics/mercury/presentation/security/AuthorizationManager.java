@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthenticationService;
+import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthorizationService;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -8,16 +8,15 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 
 /**
- *
  * AuthorizationManager provides the {@link AuthorizationFilter AuthorizationFilter} with a way to access the
- * {@link AuthenticationService} in order to perform authorization and authentication logic on the pages accessed
+ * {@link AuthorizationService} in order to perform authorization and authentication logic on the pages accessed
  *
  * @author Scott Matthews
  */
 
 @RequestScoped
 public class AuthorizationManager {
-    @Inject private AuthenticationService authSvc;
+    @Inject private AuthorizationService authSvc;
 
     /**
      * isUserAuthorized will determine if the user that us currently logged into the application is authorized to

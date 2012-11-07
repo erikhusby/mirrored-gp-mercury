@@ -33,10 +33,10 @@ public class AuthorizationListener extends AbstractJsfBean implements PhaseListe
         boolean authorized = ServiceAccessUtility.isUserAuthorized(pageUri, request);
 
         if (!authorized) {
-            String errorMessage = "The user '" + request.getRemoteUser() +
-                                  "' doesn't have permission to access the page: " + pageUri;
+            String errorMessage = request.getRemoteUser() + " doesn't have permission to access the page '" + pageUri + "'";
             logger.warn(errorMessage);
-            addErrorMessage("You do not have permission to access the page: " + pageUri, "Page access error");
+
+            addErrorMessage("You do not have permission to access the page '" + pageUri + "'.", "Page access error");
             NavigationHandler nh = context.getApplication().getNavigationHandler();
             nh.handleNavigation(context, null, HOME_PAGE);
         }
