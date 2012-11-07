@@ -28,13 +28,15 @@
                     <p:menuitem value="Create" outcome="/products/create" />
                 </security:authorizeBlock>
             </p:submenu>
+
+            <security:authorizeBlock roles="#{userBean.developerRole}">
+                <p:submenu label="Admin" icon="ui-icon-gear">
+                    <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
+                </p:submenu>
+            </security:authorizeBlock>
         </p:menubar>
 
-        <security:authorizeBlock roles="#{userBean.developerRole}">
-            <p:submenu label="Admin" icon="ui-icon-gear">
-                <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
-            </p:submenu>
-        </security:authorizeBlock>
+
 
     </h:form>
 
