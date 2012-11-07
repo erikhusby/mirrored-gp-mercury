@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -22,14 +23,15 @@ import java.util.*;
 @Singleton
 public class BSPUserList {
 
-    private static long userIdSeq = 101010101L;
+    @Inject
+    private Log logger;
 
     @Inject
     private Deployment deployment;
 
-    private final List<BspUser> users;
+    private List<BspUser> users;
 
-    private final boolean serverValid;
+    private boolean serverValid;
 
     public boolean isServerValid() {
         return serverValid;
@@ -39,6 +41,11 @@ public class BSPUserList {
      * @return list of bsp users, sorted by lastname, firstname, username, email.
      */
     public List<BspUser> getUsers() {
+
+        if (users == null) {
+            refreshUsers();
+        }
+
         return users;
     }
 
@@ -106,46 +113,56 @@ public class BSPUserList {
                 user.getEmail().contains(lowerQuery);
     }
 
+    private BSPManagerFactory bspManagerFactory;
+
     @Inject
     // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
-        List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
+        this.bspManagerFactory = bspManagerFactory;
+        refreshUsers();
+    }
 
-        if (rawUsers == null) {
-            rawUsers = new ArrayList<BspUser>();
-            serverValid = false;
-        } else {
-            serverValid = true;
-        }
+    public synchronized void refreshUsers() {
+        try {
+            List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
 
-        if (deployment != Deployment.PROD) {
-            addQADudeUsers(rawUsers);
-        }
-
-        Collections.sort(rawUsers, new Comparator<BspUser>() {
-            @Override
-            public int compare(BspUser o1, BspUser o2) {
-                // FIXME: need to figure out what the correct sort criteria are.
-                CompareToBuilder builder = new CompareToBuilder();
-                builder.append(o1.getLastName(), o2.getLastName());
-                builder.append(o1.getFirstName(), o2.getFirstName());
-                builder.append(o1.getUsername(), o2.getUsername());
-                builder.append(o1.getEmail(), o2.getEmail());
-                return builder.build();
+            if (rawUsers == null) {
+                rawUsers = new ArrayList<BspUser>();
+                serverValid = false;
+            } else {
+                serverValid = true;
             }
-        });
 
-        users = ImmutableList.copyOf(rawUsers);
+            if (deployment != Deployment.PROD) {
+                addQADudeUsers(rawUsers);
+            }
+
+            Collections.sort(rawUsers, new Comparator<BspUser>() {
+                @Override
+                public int compare(BspUser o1, BspUser o2) {
+                    // FIXME: need to figure out what the correct sort criteria are.
+                    CompareToBuilder builder = new CompareToBuilder();
+                    builder.append(o1.getLastName(), o2.getLastName());
+                    builder.append(o1.getFirstName(), o2.getFirstName());
+                    builder.append(o1.getUsername(), o2.getUsername());
+                    builder.append(o1.getEmail(), o2.getEmail());
+                    return builder.build();
+                }
+            });
+
+            users = ImmutableList.copyOf(rawUsers);
+        } catch (Exception ex) {
+            logger.debug("Could not refresh the user list", ex);
+        }
     }
 
     public static class QADudeUser extends BspUser {
-        public QADudeUser(String type) {
-            makeBspUser("QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org");
+        public QADudeUser(String type, long userId) {
+            setFields(userId, "QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org");
         }
 
-        // Using synchronized due to use of non-final static member userIdSeq.
-        private synchronized void makeBspUser(String username, String firstName, String lastName, String email) {
-            setUserId(userIdSeq++);
+        private void setFields(long userId, String username, String firstName, String lastName, String email) {
+            setUserId(userId);
             setUsername(username);
             setFirstName(firstName);
             setLastName(lastName);
@@ -154,9 +171,12 @@ public class BSPUserList {
     }
 
     private static void addQADudeUsers(List<BspUser> users) {
-        String[] types = {"Test", "PM", "LU", "LM"};
+        // FIXME: should instead generate this dynamically based on current users.properties settings on the server.
+        // Could also create QADude entries on demand during login.
+        String[] types = {"Test", "PM", "PDM", "LU", "LM"};
+        long userIdSeq = 101010101L;
         for (String type : types) {
-            users.add(new QADudeUser(type));
+            users.add(new QADudeUser(type, userIdSeq++));
         }
     }
 

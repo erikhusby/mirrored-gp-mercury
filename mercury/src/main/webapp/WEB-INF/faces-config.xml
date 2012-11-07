@@ -9,6 +9,11 @@
         <message-bundle>org.broadinstitute.gpinformatics.Messages</message-bundle>
     </application>
 
+    <lifecycle>
+        <phase-listener>org.broadinstitute.gpinformatics.mercury.presentation.MultiPageMessagesSupport</phase-listener>
+        <phase-listener>org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationListener</phase-listener>
+    </lifecycle>
+
     <factory>
         <exception-handler-factory>org.primefaces.extensions.component.ajaxerrorhandler.AjaxExceptionHandlerFactory</exception-handler-factory>
     </factory>

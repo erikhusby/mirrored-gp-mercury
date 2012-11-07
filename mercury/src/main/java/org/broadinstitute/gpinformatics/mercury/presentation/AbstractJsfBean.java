@@ -15,31 +15,6 @@ public abstract class AbstractJsfBean {
     }
 
     /**
-     * Add a flash message so it can be used after a redirect.
-     *
-     * @param message the message to add
-     */
-    public static void addFlashMessage(String message) {
-        Flash flash = FacesContext.getCurrentInstance().getExternalContext().getFlash();
-        flash.setKeepMessages(true);
-        flash.setRedirect(true);
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(message));
-    }
-
-    /**
-     * Add a flash error message so it can be used after a redirect.
-     *
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
-     */
-    public static void addFlashErrorMessage(String summary, String detail) {
-        Flash flash = FacesContext.getCurrentInstance().getExternalContext().getFlash();
-        flash.setKeepMessages(true);
-        flash.setRedirect(true);
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, summary, detail));
-    }
-
-    /**
      * Adds a global FacesMessage with the INFO severity level and summary and detail messages.
      *
      * @param summary The displayed message on the web page

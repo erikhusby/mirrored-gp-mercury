@@ -28,6 +28,8 @@ import java.util.List;
 @RequestScoped
 public class ResearchProjectForm extends AbstractJsfBean {
 
+    private static final int IRB_NAME_MAX_LENGTH = 250;
+
     @Inject
     private Log log;
 
@@ -150,7 +152,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
             return null;
         }
 
-        addFlashMessage("Research project \"" + project.getTitle() + "\" has been created.");
+        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been created.", "Research Project");
         return redirect("view");
     }
 
@@ -183,7 +185,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
             return null;
         }
 
-        addFlashMessage("Research project \"" + project.getTitle() + "\" has been updated.");
+        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been updated.", "Research Project");
         return redirect("view");
     }
 
@@ -196,7 +198,8 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
         List<Irb> irbsForQuery = new ArrayList<Irb>();
         for (ResearchProjectIRB.IrbType type : ResearchProjectIRB.IrbType.values()) {
-            irbsForQuery.add(new Irb(trimmedQuery, type));
+            Irb irb = irbConverter.createIrb(trimmedQuery, type, IRB_NAME_MAX_LENGTH);
+            irbsForQuery.add(irb);
         }
 
         return irbsForQuery;
@@ -256,5 +259,9 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
     public void setIrbs(List<Irb> irbs) {
         this.irbs = irbs;
+    }
+
+    public int getIrbMaxLength() {
+        return IRB_NAME_MAX_LENGTH;
     }
 }

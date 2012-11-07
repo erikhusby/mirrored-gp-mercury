@@ -9,24 +9,18 @@ import javax.inject.Inject;
 import java.util.Collection;
 
 /**
- *
  * AuthorizedRoleDao provides boundary objects with a mechanism to access, insert and manipulate {@link AuthorizedRole}s
  * defined within the system
  *
  * @author Scott Matthews
- *         Date: 5/3/12
- *         Time: 2:40 PM
  */
 @Stateful
 @RequestScoped
 public class AuthorizedRoleDao {
-
-
     @Inject
     private DB db;
 
     /**
-     *
      * findRoleByName allows boundary objects to find an existing {@link AuthorizedRole} based on the unique
      * role name
      *
@@ -47,7 +41,6 @@ public class AuthorizedRoleDao {
     }
 
     /**
-     *
      * persist saves a newly defined {@link AuthorizedRole} to the system
      *
      * @param newRoleIn Newly defined {@link AuthorizedRole} to be saved to the system
@@ -57,7 +50,6 @@ public class AuthorizedRoleDao {
     }
 
     /**
-     *
      * removeRole removes a previously defined {@link AuthorizedRole} instance from the system
      *
      * @param defunctRoleIn Previously defined role to be removed from the system.

@@ -2,8 +2,11 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import junit.framework.Assert;
 import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -11,7 +14,9 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
 import java.io.IOException;
+import java.util.Collections;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -25,22 +30,23 @@ public class ProductOrderContainerTest extends Arquillian {
 
     private static final Long TEST_CREATOR = 10950L;
 
+    @Inject
+    private BSPUserList userList;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    public static ProductOrder createSimpleProductOrder() {
+    public ProductOrder createSimpleProductOrder() throws Exception {
         ProductOrder productOrder = new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
-                null,
-                "newQuote",
-                ProductOrderTest.createDummyProduct(),
-                createDummyResearchProject("Test Research Project"));
+            null, "newQuote", ProductOrderTest.createDummyProduct(),
+            createDummyResearchProject(userList, "Test Research Project"));
         productOrder.setSamples(ProductOrderTest.createSampleList("SM-1P3X9,SM-1P3WY,SM-1P3XN", productOrder));
         return productOrder;
     }
 
-    public void testSimpleProductOrder() throws IOException, IllegalStateException{
+    public void testSimpleProductOrder() throws Exception {
 
         ProductOrder testOrder = createSimpleProductOrder();
 
@@ -61,9 +67,9 @@ public class ProductOrderContainerTest extends Arquillian {
         Assert.assertEquals(3, testOrder.getCountsByStockType().get(BSPSampleDTO.ACTIVE_IND).intValue());
 
         //test the sample order should be the same as when created.
-        testOrder.getSamples().get(0).getSampleName().equals("SM-1P3X9");
-        testOrder.getSamples().get(1).getSampleName().equals("SM-1P3WY");
-        testOrder.getSamples().get(2).getSampleName().equals("SM-1P3XN");
+        Assert.assertEquals("SM-1P3X9", testOrder.getSamples().get(0).getSampleName());
+        Assert.assertEquals("SM-1P3WY", testOrder.getSamples().get(1).getSampleName());
+        Assert.assertEquals("SM-1P3XN", testOrder.getSamples().get(2).getSampleName());
 
         //BSP data in BSP QA is different than this.
 //        Assert.assertTrue( testOrder.getPrimaryDiseaseCount().containsKey( BSPSampleSearchServiceStub.SM_12CO4_DISEASE));
@@ -80,17 +86,16 @@ public class ProductOrderContainerTest extends Arquillian {
 //        testOrder.closeProductOrder();
 
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
-
     }
 
-    public void testSimpleNonBspProductOrder() {
+    public void testSimpleNonBspProductOrder() throws Exception {
 
         ProductOrder testOrder =
                 new ProductOrder(TEST_CREATOR, "containerTest Product Order Test2",
                         null,
                         "newQuote",
                         ProductOrderTest.createDummyProduct(),
-                        createDummyResearchProject("Test Research Project"));
+                        createDummyResearchProject(userList, "Test Research Project"));
         testOrder.setSamples(ProductOrderTest.createSampleList("SM_12CO4,SM_1P3WY,SM_1P3XN", testOrder));
 
         Assert.assertEquals(testOrder.getUniqueSampleCount(), 3);
@@ -100,11 +105,14 @@ public class ProductOrderContainerTest extends Arquillian {
         Assert.assertEquals(0, testOrder.getBspSampleCount());
     }
 
-    public static ResearchProject createDummyResearchProject(String researchProjectTitle) {
-        ResearchProject dummyProject = new ResearchProject(1L, researchProjectTitle, "Simple test object for unit tests", true);
+    public static ResearchProject createDummyResearchProject(
+            BSPUserList userList, String researchProjectTitle) throws IOException {
+        ResearchProject dummyProject = new ResearchProject(TEST_CREATOR, researchProjectTitle, "Simple test object for unit tests", true);
 
-        dummyProject.setJiraTicketKey("RP-1");
-
+        // Could inject, but this is static, so just
+        BspUser user = userList.getById(TEST_CREATOR);
+        dummyProject.addPeople(RoleType.PM, Collections.singletonList(user));
+        dummyProject.submit();
         return dummyProject;
     }
 }

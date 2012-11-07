@@ -5,7 +5,7 @@
                 xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facelettaglibrary_2_0.xsd"
                 version="2.0">
 
-    <namespace>http://sequel.broadinstitute.org/tags</namespace>
+    <namespace>http://mercury.broadinstitute.org/tags</namespace>
 
     <tag>
         <tag-name>isLoggedIn</tag-name>
@@ -16,7 +16,7 @@
         <handler-class>org.broadinstitute.gpinformatics.mercury.presentation.tags.security.LoggedOutTag</handler-class>
     </tag>
     <tag>
-        <tag-name>AuthorizeBlock</tag-name>
+        <tag-name>authorizeBlock</tag-name>
         <handler-class>org.broadinstitute.gpinformatics.mercury.presentation.tags.security.AuthorizeBlockTag</handler-class>
         <attribute>
             <description>Comma separated list of groups that this block will allow access.  Using "All" will mean all groups have access</description>

@@ -479,6 +479,11 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="GPLIM-71-5a" author="hrafal">
+        <dropPrimaryKey schemaName="athena" tableName="product_order_add_on_aud" constraintName="pk_product_order_add_on_aud"/>
+        <addPrimaryKey schemaName="athena" tableName="product_order_add_on_aud" columnNames="rev, add_on, product_order"/>
+    </changeSet>
+
     <changeSet id="GPLIM-71-6" author="hrafal">
         <preConditions>
             <not>
@@ -899,6 +904,19 @@
         update research_project set jira_ticket_key = 'RP-97' where title = 'TCGA VALIDATION' and jira_ticket_key is null;
         update research_project set jira_ticket_key = 'RP-98' where title = 'TCGA KIRP' and jira_ticket_key is null;
         update research_project set jira_ticket_key = 'RP-99' where title = 'Genotyping External' and jira_ticket_key is null;
+      </sql>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-229-1" author="mccrory">
+      <sql>
+        update product set samples_per_week = null where samples_per_week = 0;
+      </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-229-2" author="mccrory">
+      <sql>
+        update product set minimum_order_size = null where minimum_order_size = 0;
       </sql>
     </changeSet>
 
