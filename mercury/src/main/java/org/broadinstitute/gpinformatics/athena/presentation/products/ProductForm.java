@@ -15,7 +15,6 @@ import org.primefaces.event.SelectEvent;
 import org.primefaces.event.UnselectEvent;
 
 import javax.enterprise.context.RequestScoped;
-import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -61,14 +60,14 @@ public class ProductForm extends AbstractJsfBean {
     private ProductManager productManager;
 
     /**
-     * Simple flag so we don't issue the same summary warning more than once per request
+     * Flag so we don't issue the same summary warning more than once per request
      */
     private boolean issuedSummaryMessageForPriceItemsNotOnCurrentPriceList;
 
 
-    private static final String SUMMARY_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST =
+    private static final String GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST =
             "One or more price items associated with this product do not appear on the current quote server price list.  " +
-            "These price items have been temporarily removed from the product; hit Save to remove these price items permanently or Cancel to abort.";
+            "These price items have been temporarily removed from this product; hit Save to remove these price items permanently or Cancel to abort.";
 
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
@@ -123,25 +122,20 @@ public class ProductForm extends AbstractJsfBean {
     }
 
 
-    private void issueMessagesForPriceItemNotOnPriceList(String clientId, String detailMessage) {
+    private void issueMessagesForPriceItemNotOnPriceList(String clientId, String clientMessage) {
 
-        // only issue summary warning at most once
+        // issue summary warning at most once
         if (! issuedSummaryMessageForPriceItemsNotOnCurrentPriceList) {
-            FacesMessage facesMessage = new FacesMessage();
-            facesMessage.setSummary(SUMMARY_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST);
-            facesMessage.setSeverity(FacesMessage.SEVERITY_ERROR);
-            facesContext.addMessage(null, facesMessage);
+            // detail message not shown for global messages so set to null
+            addErrorMessage(GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST, null);
             issuedSummaryMessageForPriceItemsNotOnCurrentPriceList = true;
         }
-
-        FacesMessage facesMessage = new FacesMessage();
-        facesMessage.setDetail(detailMessage);
-        facesMessage.setSeverity(FacesMessage.SEVERITY_ERROR);
-        facesContext.addMessage(clientId, facesMessage);
+        // need to keep the summary null for clientMessage or it ends up showing in the global message area
+        addErrorMessage(clientId, null, clientMessage);
     }
 
 
-    private String getDetailMessageForPriceItemNotInPriceList(PriceItem priceItemDto, boolean isPrimary) {
+    private String getClientMessageForPriceItemNotInPriceList(PriceItem priceItemDto, boolean isPrimary) {
         String message = "%s price item '%s: %s: %s' did not appear on the current quote server price list and has temporarily been removed from this product";
         message = String.format(
                 message,
@@ -165,7 +159,7 @@ public class ProductForm extends AbstractJsfBean {
                     PriceItem priceItemDto = entityToDto(product.getDefaultPriceItem());
 
                     if (! priceListCache.contains(priceItemDto)) {
-                        issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getDetailMessageForPriceItemNotInPriceList(priceItemDto, true));
+                        issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, true));
                         defaultPriceItem = null;
                     }
                     else {
@@ -178,7 +172,7 @@ public class ProductForm extends AbstractJsfBean {
 
                         PriceItem priceItemDto = entityToDto(priceItem);
                         if (! priceListCache.contains(priceItemDto)) {
-                            issueMessagesForPriceItemNotOnPriceList("priceItem", getDetailMessageForPriceItemNotInPriceList(priceItemDto, false));
+                            issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
                             defaultPriceItem = null;
                         }
                         else {
