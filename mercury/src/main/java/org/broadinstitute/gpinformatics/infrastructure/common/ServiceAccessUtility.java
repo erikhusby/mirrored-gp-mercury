@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -11,15 +12,18 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueReq
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationManager;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,13 +35,10 @@ import java.util.Map;
  *         Time: 12:17 PM
  */
 public class ServiceAccessUtility {
-
     private abstract static class Caller<RESULT_TYPE, API_CLASS> {
-
         abstract RESULT_TYPE call(API_CLASS apiInstance);
 
         public RESULT_TYPE apiCall(Type classType) {
-
             RESULT_TYPE foundServiceObject = null;
 
             try {
@@ -83,6 +84,29 @@ public class ServiceAccessUtility {
                 return apiInstance.getById(userId);
             }
         }).apiCall(BSPUserList.class);
+    }
+
+    public static String getCohortsForNames(final List<String> cohortNames) {
+        return (new Caller<String, CohortListBean> () {
+            @Override
+            String call(CohortListBean apiInstance) {
+                String[] cohortIds = new String[cohortNames.size()];
+                for (int i=0; i<cohortNames.size(); i++) {
+                    cohortIds[i] = cohortNames.get(i);
+                }
+
+                return apiInstance.getCohortListString(cohortIds);
+            }
+        }).apiCall(CohortListBean.class);
+    }
+
+    public static boolean isUserAuthorized(final String pageUri, final HttpServletRequest request) {
+        return (new Caller<Boolean, AuthorizationManager>() {
+            @Override
+            Boolean call(AuthorizationManager apiInstance) {
+                return apiInstance.isUserAuthorized(pageUri, request);
+            }
+        }).apiCall(AuthorizationManager.class);
     }
 
     /**
@@ -152,30 +176,21 @@ public class ServiceAccessUtility {
      * created ticket
      * @throws IOException
      */
-    public static CreateIssueResponse createJiraTicket (String projectPrefix,
-                                                        CreateIssueRequest.Fields.Issuetype issuetype, String summary,
-                                                        String description, Collection<CustomField> customFields)
-            throws IOException {
+    public static CreateIssueResponse createJiraTicket (
+            final String projectPrefix, final String reporter,
+            final CreateIssueRequest.Fields.Issuetype issuetype, final String summary,
+            final String description, final Collection<CustomField> customFields) throws IOException {
 
-        CreateIssueResponse createdJiraTicket = null;
-
-        try {
-            InitialContext initialContext = new InitialContext();
-            try{
-                BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
-                Bean bean = beanManager.getBeans(JiraService.class).iterator().next();
-                CreationalContext ctx = beanManager.createCreationalContext(bean);
-                JiraService jiraService =
-                        (JiraService) beanManager.getReference(bean, bean.getClass(), ctx);
-                createdJiraTicket = jiraService.createIssue(projectPrefix, issuetype, summary, description, customFields);
-            } finally {
-                initialContext.close();
+        return (new Caller<CreateIssueResponse, JiraService>() {
+            @Override
+            CreateIssueResponse call(JiraService apiInstance) {
+                try {
+                    return apiInstance.createIssue(projectPrefix, reporter, issuetype, summary, description, customFields);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
-        } catch (NamingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return createdJiraTicket;
+        }).apiCall(JiraService.class);
     }
 
     /**

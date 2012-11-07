@@ -14,14 +14,14 @@ import java.util.List;
  */
 public class PageAuthorizationTest {
 
-    final String testPath ="/testPath/";
+    static final String testPath ="/testPath/";
 
-    final String allRoleName ="All_test";
-    final String devRoleName ="Mercury-Developers_test";
-    final String pmRoleName ="Mercury-ProjectManagers_test";
-    final String pdmRoleName ="Mercury-ProductManagers_test";
-    final String luRoleName ="Mercury-LabUsers_test";
-    final String lmRoleName ="Mercury-LabManagers_test";
+    static final String allRoleName ="All_test";
+    static final String devRoleName ="Developers_test";
+    static final String pmRoleName ="ProjectManagers_test";
+    static final String pdmRoleName ="ProductManagers_test";
+    static final String luRoleName ="LabUsers_test";
+    static final String lmRoleName ="LabManagers_test";
 
     PageAuthorization testPage ;
 
@@ -90,5 +90,4 @@ public class PageAuthorizationTest {
 
         Assert.assertEquals(testPage.getRoleList(), testList);
     }
-
 }

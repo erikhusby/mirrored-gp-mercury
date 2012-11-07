@@ -11,46 +11,40 @@ import javax.inject.Inject;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
- *
- * AuthenticationService is intended to support the front end Authentication and Authorization process.  Through
- * this service.
+ * AuthenticationService is intended to support the front end Authorization process through this service.
  *
  * @author Scott Matthews
- *         Date: 5/2/12
- *         Time: 9:44 AM
  */
 @Stateless
-public class AuthenticationService {
+public class AuthorizationService {
+    @Inject
+    private PageAuthorizationDao authorizationDao;
 
-    @Inject private PageAuthorizationDao authorizationDao;
-    @Inject private AuthorizedRoleDao roleDao;
-
+    @Inject
+    private AuthorizedRoleDao roleDao;
 
     /**
-     *
-     * retrieveAuthorizedRoles provides callers with a way to, based on a page access path, access the authorized
+     * The method retrieveAuthorizedRoles provides callers with a way to, based on a page access path, access the authorized
      * roles for that path.  The current implementation is flexible enough to support both directory paths and full
-     * page paths
-     *
+     * page paths.
      *
      * @param pagePath
      * @return
      */
     public Collection<String> retrieveAuthorizedRoles(String pagePath) {
-
         PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
 
         List<String> roleList = new LinkedList<String>();
-        if(null != authorization){
+        if (null != authorization) {
             roleList.addAll(authorization.getRoleList());
         }
         return roleList;
     }
 
     /**
-     *
      * addNewPageAuthorization exposes a method for callers to immediately associate a collection of roles with
      * a new page listing.
      *
@@ -58,13 +52,12 @@ public class AuthenticationService {
      * @param authRoleIn Collection of Roles that are allowed to have access to the resource defined by pagePathIn
      */
     public void addNewPageAuthorization(String pagePathIn, Collection<String> authRoleIn) {
-
-        if(null != authorizationDao.findPageAuthorizationByPage(pagePathIn)) {
-            throw new InformaticsServiceException ("This Page is already registered");
+        if (null != authorizationDao.findPageAuthorizationByPage(pagePathIn)) {
+            throw new InformaticsServiceException("This Page is already registered");
         }
 
         PageAuthorization page = new PageAuthorization(pagePathIn);
-        for(String currRole:authRoleIn) {
+        for (String currRole : authRoleIn) {
             AuthorizedRole role = roleDao.findRoleByName(currRole);
             page.addRoleAccess(role);
         }
@@ -73,19 +66,17 @@ public class AuthenticationService {
     }
 
     public void removePageAuthorization(String pagePathIn) {
-
         PageAuthorization foundPage = authorizationDao.findPageAuthorizationByPage(pagePathIn);
 
-        if ( null == foundPage ) {
-            throw new InformaticsServiceException ("This Page is not currently registered");
+        if (null == foundPage) {
+            throw new InformaticsServiceException("This Page is not currently registered");
         }
 
         authorizationDao.removePageAuthorization(foundPage);
     }
 
     /**
-     *
-     * isPageProtected uses the authorization registrations to determine whether a page is protected.  if there is no
+     * isPageProtected uses the authorization registrations to determine whether a page is protected.  If there is no
      * current registration for the page, the application does not assume that it needs authentication OR
      * 'authorization.
      *
@@ -101,6 +92,7 @@ public class AuthenticationService {
      * getAllAuthorizedPages allows callers to retrieve a list of all presentation resources that are currently
      * registered as protected resources.  If a resource comes up on this list, not only will a user be forced to be
      * logged into the system, they will also have to be in at least one of the roles that is associated with the page
+     *
      * @return Collection of {@link PageAuthorization} entities
      */
     public Collection<PageAuthorization> getAllAuthorizedPages() {
@@ -108,7 +100,6 @@ public class AuthenticationService {
     }
 
     /**
-     *
      * findByPage retrieves the registered authorization entity for a given presentation resource.  A user of this
      * method will gain access to the the defined roles associated with a registered protected resource
      *
@@ -116,25 +107,24 @@ public class AuthenticationService {
      * @return
      */
     public PageAuthorization findByPage(String pagePath) {
-        return authorizationDao.findPageAuthorizationByPage ( pagePath );
+        return authorizationDao.findPageAuthorizationByPage(pagePath);
     }
 
     /**
-     *
      * addRolesToPage will retrieve the requested registered presentation resource and add the given roles to that
      * resources registration.
      *
      * @param pagePath Relative path to the presentation resource to be protected
-     * @param rolesIn Additional Collection of Roles that are allowed to have access to the resource defined by
+     * @param rolesIn  Additional Collection of Roles that are allowed to have access to the resource defined by
      */
     public void addRolesToPage(String pagePath, Collection<String> rolesIn) {
         PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
 
-        if(null == authorization) {
-            throw new InformaticsServiceException ("This Page is not currently registered");
+        if (null == authorization) {
+            throw new InformaticsServiceException("This Page is not currently registered");
         }
 
-        for(String currRole:rolesIn) {
+        for (String currRole : rolesIn) {
             authorization.addRoleAccess(roleDao.findRoleByName(currRole));
         }
     }
@@ -142,18 +132,16 @@ public class AuthenticationService {
     public void removeRolesFromPage(String pagePath, Collection<String> rolesIn) {
         PageAuthorization authorization = authorizationDao.findPageAuthorizationByPage(pagePath);
 
-        if(null == authorization) {
-            throw new InformaticsServiceException ("This Page is not currently registered");
+        if (null == authorization) {
+            throw new InformaticsServiceException("This Page is not currently registered");
         }
 
-        for(String currRole:rolesIn) {
-            authorization.removeRoleAccess ( roleDao.findRoleByName ( currRole ) );
+        for (String currRole : rolesIn) {
+            authorization.removeRoleAccess(roleDao.findRoleByName(currRole));
         }
-
     }
 
     /**
-     *
      * retrieveAllRoles allows a caller to retrieve the list of all roles that are recognized by the system.  The
      * collection returned is not limited to roles that are currently assigned to registered resources, but rather all
      * roles that may be applied to any resource.
@@ -165,7 +153,7 @@ public class AuthenticationService {
 
         List<String> roleStringList = new LinkedList<String>();
 
-        for(AuthorizedRole role:roleList) {
+        for (AuthorizedRole role : roleList) {
             roleStringList.add(role.getRoleName());
         }
 
@@ -177,21 +165,18 @@ public class AuthenticationService {
     }
 
     /**
-     *
      * addNewRole allows a user to defined a new role for the system to recognize.  This action will make it possible
      * for a presentation resource to be able to be registered with the new role.
      *
      * @param roleName Name of a new role for the system to recognize
      */
     public void addNewRole(String roleName) {
-
-        if(null != roleDao.findRoleByName(roleName)) {
-            throw new InformaticsServiceException ("This role is already registered");
+        if (null != roleDao.findRoleByName(roleName)) {
+            throw new InformaticsServiceException("This role is already registered");
         }
 
         AuthorizedRole newRole = new AuthorizedRole(roleName);
         roleDao.persist(newRole);
-
     }
 
     /**

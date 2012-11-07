@@ -11,22 +11,19 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * Comma separated list of groups that this block will allow access.  Using "All" will mean all groups have access.
+ *
  * @author Scott Matthews
- *         Date: 5/2/12
- *         Time: 10:23 AM
  */
 public class AuthorizeBlockTag extends AuthorizationTag {
-
     private final TagAttribute roles;
-
 
     public AuthorizeBlockTag(TagConfig tagConfigIn) {
         super(tagConfigIn);
-        this.roles = this.getRequiredAttribute("roles");
-
+        roles = getRequiredAttribute("roles");
     }
 
-    private List<String> getAttrValues(FaceletContext ctx, TagAttribute attr) {
+    private static List<String> getAttrValues(FaceletContext ctx, TagAttribute attr) {
         List<String> values = new LinkedList<String>();
         String value;
         if (attr.isLiteral()) {
@@ -36,29 +33,27 @@ public class AuthorizeBlockTag extends AuthorizationTag {
             value = (String) expression.getValue(ctx);
         }
 
-        if(null != value) {
+        if (value != null) {
             values.addAll(Arrays.asList(value.split(",")));
         }
         return values;
     }
 
-
     @Override
     protected void alternateOptions() {
-
     }
 
     @Override
     protected boolean isAuthorized(FaceletContext faceletContextIn) {
-
         boolean authorized = false;
 
         FacesContext currContext = FacesContext.getCurrentInstance();
         HttpServletRequest request = (HttpServletRequest)currContext.getExternalContext().getRequest();
 
-
-        for(String currGroup:getAttrValues(faceletContextIn, roles)){
-            if(request.isUserInRole(currGroup) || currGroup.equals("All")){
+        for (String currGroup : getAttrValues(faceletContextIn, roles)) {
+            // trim() required here, in case tag input has spaces between items.
+            currGroup = currGroup.trim();
+            if (request.isUserInRole(currGroup) || currGroup.equals("All")) {
                 authorized = true;
                 break;
             }

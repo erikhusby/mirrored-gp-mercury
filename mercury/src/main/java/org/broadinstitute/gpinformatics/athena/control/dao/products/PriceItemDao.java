@@ -14,8 +14,6 @@ import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.Platform.GP;
-
 @Stateful
 @RequestScoped
 /**
@@ -33,35 +31,7 @@ public class PriceItemDao extends GenericDao {
      * @return
      */
     public List<PriceItem> findAll() {
-        return findList(PriceItem.class, PriceItem_.platform, GP.getQuoteServerPlatform());
-    }
-
-
-    /**
-     * Find method using strongly typed parameters.
-     *
-     * @param platform
-     * @param category
-     * @param name
-     * @return
-     */
-    public PriceItem find(PriceItem.Platform platform, PriceItem.Category category, PriceItem.Name name) {
-
-        if (platform == null) {
-            throw new NullPointerException("Null platform!");
-        }
-
-        // it's possible category might be null
-
-        if (name == null) {
-            throw new NullPointerException("Null PriceItem name!");
-        }
-
-        return find(
-                platform.getQuoteServerPlatform(),
-                category != null ? category.getQuoteServerCategory() : null,
-                name.getQuoteServerName());
-
+        return findList(PriceItem.class, PriceItem_.platform, PriceItem.PLATFORM_GENOMICS);
     }
 
 
@@ -92,7 +62,12 @@ public class PriceItemDao extends GenericDao {
         Root<PriceItem> priceItem = cq.from(PriceItem.class);
 
         predicateList.add(cb.equal(priceItem.get(PriceItem_.platform), platform));
-        predicateList.add(cb.equal(priceItem.get(PriceItem_.category), categoryName));
+        if (categoryName == null) {
+            predicateList.add(cb.isNull(priceItem.get(PriceItem_.category)));
+        }
+        else {
+            predicateList.add(cb.equal(priceItem.get(PriceItem_.category), categoryName));
+        }
         predicateList.add(cb.equal(priceItem.get(PriceItem_.name), priceItemName));
 
         Predicate[] predicates = new Predicate[predicateList.size()];

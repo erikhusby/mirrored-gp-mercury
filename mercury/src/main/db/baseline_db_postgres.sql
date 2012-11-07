@@ -510,6 +510,10 @@
 
     drop table if exists athena.research_projectirb_aud cascade;
 
+    drop table if exists athena.product_order_add_on_aud cascade;
+
+    drop table if exists athena.product_order_add_on cascade;
+
     -- databasechangelog% are liquibase tables, liquibase will rebuild these on its first run
 
     drop table if exists mercury.databasechangelog cascade;
@@ -666,6 +670,14 @@
 
     drop table if exists mercury.workflow_description_aud cascade;
 
+    drop table if exists mercury.lab_vessel_mercury_samples_aud cascade;
+
+    drop table if exists mercury.lab_vessel_mercury_samples cascade;
+
+    drop table if exists mercury.mercury_sample cascade;
+
+    drop table if exists mercury.mercury_sample_aud cascade;
+
     drop table if exists project_available_quotes cascade;
 
     drop table if exists project_available_quotes_aud cascade;
@@ -704,6 +716,8 @@
 
     drop sequence athena.seq_rp_irb_index;
 
+    drop sequence athena.seq_order_add_on;
+
     drop sequence mercury.SEQ_LAB_BATCH;
 
     drop sequence mercury.SEQ_LAB_EVENT;
@@ -741,6 +755,8 @@
     drop sequence mercury.seq_molecular_index;
 
     drop sequence mercury.seq_molecular_indexing_scheme;
+
+    drop sequence mercury.seq_mercury_sample;
 
     create table athena.billable_item (
         billable_item_id numeric(19,0) not null,

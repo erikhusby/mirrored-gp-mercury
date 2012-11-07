@@ -24,7 +24,10 @@ label, input, button, select, textarea { font-size: 12px }
 .ui-widget-content a { color: #0088CC; !important }
 
 /* Make p:autoComplete's input field a little wider to fit longer watermarks. */
-.ui-autocomplete-multiple .ui-autocomplete-input-token input {  width: 160px; }
+.ui-autocomplete-multiple .ui-autocomplete-input-token input {  width: 500px; }
+
+.ui-autocomplete-multiple-container { width: 480px; }
+.ui-autocomplete-multiple-container { overflow: visible }
 
 /* Tighten vertical spacing of Bootstrap horizontal forms. */
 .form-horizontal .control-group { margin-bottom: 12px; }
@@ -55,6 +58,7 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 .view-horizontal .control-group { margin-bottom: 20px; *zoom: 1; }
 .view-horizontal .control-label { float: left; width: 160px; text-align: right; }
 .view-horizontal .controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; height: 15px; padding-bottom: 5px; }
+.view-horizontal .tall-controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; padding-bottom: 5px; }
 .view-horizontal .control-group { margin-bottom: 1px; }
 
 .form-readonly .control-group { margin-bottom: 0px; }
@@ -67,19 +71,16 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 .ac-dropdown-text { font-size: small; }
 .ac-dropdown-subtext { font-size: smaller; font-style: italic; }
 
-.form-fieldset {
-    width: 300px;
-    margin-top: 5px;
-}
+.form-fieldset {width:300px;margin-top:5px}
 
-.form-fieldset legend {
-    display: block;
-    padding: 0;
-    width: 70px;
-    margin-bottom: 20px;
-    font-size: 12px;
-    line-height: 10px;
-    color: #333333;
-    border: 0;
-    border-bottom: 1px solid #e5e5e5;
-}
+fieldset legend {display:block;width:55px;text-indent:3px;margin-right:10px;margin-left:10px;font-size:12px;line-height:10px;color:#333;border:0;padding:0}
+fieldset {margin-top:10px;width:325px;border:1px solid #CCC}
+fieldset .ui-chkbox {margin-left:5px}
+
+.entry-help{color:#999;margin-left:10px}
+
+.summary-list li {font-size:small;font-weight:400}
+.summary-list div {background-color:#f5f5f5;text-align:left;border-style:none}
+
+.threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
+.fourcolumn {-moz-column-count:4;-webkit-column-count:4;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}

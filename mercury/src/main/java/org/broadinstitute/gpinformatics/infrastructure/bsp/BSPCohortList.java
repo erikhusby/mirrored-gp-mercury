@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.google.common.collect.ImmutableSet;
+import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 
 import javax.inject.Inject;
@@ -19,6 +21,9 @@ import java.util.Set;
 @Singleton
 public class BSPCohortList {
 
+    @Inject
+    private Log logger;
+
     private Set<Cohort> cohortList = null;
 
     @Inject
@@ -29,11 +34,7 @@ public class BSPCohortList {
      */
     public Set<Cohort> getCohorts() {
         if (cohortList == null) {
-            try {
-                cohortList = cohortSearchService.getAllCohorts();
-            } catch (Exception ex) {
-                // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
-            }
+            refreshCohorts();
         }
 
         return cohortList;
@@ -129,5 +130,13 @@ public class BSPCohortList {
                cohort.getName().toLowerCase().contains(lowerQuery) ||
                cohort.getGroup().toLowerCase().contains(lowerQuery) ||
                cohort.getCategory().toLowerCase().contains(lowerQuery);
+    }
+
+    public synchronized void refreshCohorts() {
+        try {
+            cohortList = ImmutableSet.copyOf(cohortSearchService.getAllCohorts());
+        } catch (Exception ex) {
+            logger.debug("Could not refresh the cohort list", ex);
+        }
     }
 }

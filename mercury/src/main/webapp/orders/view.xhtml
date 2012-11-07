@@ -38,6 +38,13 @@
 
                 <div class="row-fluid">
                     <div class="control-group">
+                        <span class="control-label label-form">Name</span>
+                        <span class="controls">
+                            #{productOrderDetail.productOrder.title}
+                        </span>
+                    </div>
+
+                    <div class="control-group">
                         <span class="control-label label-form">Order Barcode</span>
                         <span class="controls">
                             <h:outputLink target="JIRA" class="external"
@@ -49,14 +56,24 @@
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label-form">Product</span>
+                        <span class="control-label label-form">Research Project</span>
                         <span class="controls">
-                            #{productOrderDetail.productOrder.title}
+                        <h:link outcome="/projects/view">
+                            <f:param name="researchProject"  value="#{productOrderDetail.productOrder.researchProject.jiraTicketKey}"/>
+                            #{productOrderDetail.productOrder.researchProject.title}
+                        </h:link>
                         </span>
                     </div>
 
                     <div class="control-group">
-                        <span class="control-label label-form">Add-Ons</span>
+                        <span class="control-label label-form">Product</span>
+                        <span class="controls">
+                            #{productOrderDetail.productOrder.product.productName}
+                        </span>
+                    </div>
+
+                    <div class="control-group">
+                        <span class="control-label label-form">Add-ons</span>
                         <span class="controls" style="width:250px;">
                             #{productOrderDetail.productOrder.addOnList}
                         </span>
@@ -73,7 +90,7 @@
 
                     <div class="control-group">
                         <span class="control-label label-form">Comments</span>
-                        <span class="controls">#{productOrderDetail.productOrder.comments}</span>
+                        <div class="tall-controls">#{productOrderDetail.productOrder.comments}</div>
                     </div>
 
                     <div class="control-group">
@@ -81,32 +98,31 @@
                         <span class="controls">#{productOrderDetail.productOrder.sampleBillingSummary}</span>
                     </div>
 
-                    <p/>
-
-                    <p:panel id="sampleValidation" header="Summary">
-                        <p:dataList value="#{productOrderDetail.productOrder.sampleValidationComments}"
-                                    var="comment"
-                                    itemType="none">
-                            #{comment}
-                        </p:dataList>
-                    </p:panel>
-
                     <br/>
 
-                    <p:dataTable id="sampleData" value="#{productOrderDetail.productOrder.samples}"
-                                 filteredValue="#{productOrderFilterBean.filteredSamples}" var="sample"
-                                 scrollable="true" scrollHeight="260" scrollRows="30">
+                    <p:dataTable style="width:1310px;"
+                                 id="sampleData"
+                                 value="#{productOrderDetail.productOrder.samples}"
+                                 filteredValue="#{productOrderFilterBean.filteredSamples}"
+                                 var="sample"
+                                 scrollable="true"
+                                 scrollHeight="650"
+                                 scrollWidth="1327">
                         <f:event type="preRenderComponent" listener="#{productOrderDetail.load}"/>
                         <f:facet name="header">
-                            Samples
+                            Samples<br/>
+                            <p:dataList value="#{productOrderDetail.productOrder.sampleSummaryComments}"
+                                        var="comment" itemType="none" styleClass="fourcolumn summary-list">
+                                #{comment}
+                            </p:dataList>
                         </f:facet>
 
-                        <p:column headerText="ID" width="200">
-                            <h:outputLink target="BSP_SAMPLE" value="#{bspLink.sampleSearchUrl(sample.sampleName)}" class="external">
+                        <p:column headerText="ID" width="100">
+                            <h:outputLink disabled="#{! bspLink.isInBspFormat(sample.sampleName)}" target="BSP_SAMPLE" value="#{bspLink.sampleSearchUrl(sample.sampleName)}" class="external">
                                 <h:outputText value="#{sample.sampleName}" />
                             </h:outputLink>
                         </p:column>
-                        <p:column headerText="Participant ID" width="200">
+                        <p:column headerText="Participant ID" width="150">
                             #{sample.bspDTO.patientId}
                         </p:column>
                         <p:column headerText="Status" width="100">
@@ -127,7 +143,7 @@
                         <p:column headerText="Price Item 2" width="100">
                             &nbsp;
                         </p:column>
-                        <p:column headerText="Comment" width="245">
+                        <p:column headerText="Comment" width="200">
                             #{sample.sampleComment}
                         </p:column>
                     </p:dataTable>

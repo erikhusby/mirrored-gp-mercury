@@ -23,6 +23,10 @@ public class CreateJiraIssueFieldsSerializer extends JsonSerializer<Fields> {
         jsonGenerator.writeObjectField("summary",fields.getSummary());
         jsonGenerator.writeObjectField("description",fields.getDescription());
 
+        if (fields.getReporter() != null) {
+            jsonGenerator.writeObjectField("reporter",fields.getReporter());
+        }
+
         writeCustomFields(fields,jsonGenerator);
 
         jsonGenerator.writeEndObject();

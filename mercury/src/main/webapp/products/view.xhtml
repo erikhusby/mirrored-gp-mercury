@@ -7,7 +7,8 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:security="http://mercury.broadinstitute.org/tags">
 <body>
 
 <h:link outcome="/security/login" value="Athena"/>
@@ -29,107 +30,109 @@
 
         <h:form id="productForm" styleClass="form-horizontal form-readonly" >
 
-            <div class="row-fluid" style="margin-bottom: 30px;">
-                <p:button outcome="create" value="Edit">
-                    <f:param name="product" value="#{productView.product.partNumber}" />
-                </p:button>
-            </div>
+            <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
+                <div class="row-fluid" style="margin-bottom: 30px;">
+                    <p:button outcome="create" value="Edit">
+                        <f:param name="product" value="#{productView.product.partNumber}" />
+                    </p:button>
+                </div>
+            </security:authorizeBlock>
 
 
             <div class="control-group">
-                <label class="control-label">Part Number</label>
+                <label class="control-label label-form">Part Number</label>
                 <div class="controls">
                     <div class="form-value">#{productView.product.partNumber} (<a href="Product Descriptions.pdf">Product Descriptions PDF</a>)</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Name</label>
+                <label class="control-label label-form">Name</label>
                 <div class="controls">
                     <div class="form-value">#{productView.product.productName}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Product Family</label>
+                <label class="control-label label-form">Product Family</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.product.productFamily.displayName}</div>
+                    <div class="form-value">#{productView.product.productFamily.name}</div>
                 </div>
             </div>
 
 
             <div class="control-group">
-                <label class="control-label">Availability Date</label>
+                <label class="control-label label-form">Availability Date</label>
                 <div class="controls">
                     <div class="form-value">#{productView.availabilityDate}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Discontinued Date</label>
+                <label class="control-label label-form">Discontinued Date</label>
                 <div class="controls">
                     <div class="form-value">#{productView.discontinuedDate}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Description</label>
+                <label class="control-label label-form">Description</label>
                 <div class="controls">
                     <div class="form-value">#{productView.product.description}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Deliverables</label>
+                <label class="control-label label-form">Deliverables</label>
                 <div class="controls">
                     <div class="form-value">#{productView.product.deliverables}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Input Requirements</label>
+                <label class="control-label label-form">Input Requirements</label>
                 <div class="controls">
                     <div class="form-value">#{productView.product.inputRequirements}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Expected Cycle Time (Days)</label>
+                <label class="control-label label-form">Expected Cycle Time (Days)</label>
                 <div class="controls">
                     <div class="form-value">#{productView.expectedCycleTimeDays}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Guaranteed Cycle Time (Days)</label>
+                <label class="control-label label-form">Guaranteed Cycle Time (Days)</label>
                 <div class="controls">
                     <div class="form-value">#{productView.guaranteedCycleTimeDays}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Samples Per Week</label>
+                <label class="control-label label-form">Samples Per Week</label>
                 <div class="controls">
                     <div class="form-value">#{productView.product.samplesPerWeek}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Minimum Order Size</label>
+                <label class="control-label label-form">Minimum Order Size</label>
                 <div class="controls">
                     <div class="form-value">#{productView.product.minimumOrderSize}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">Primary Price Item</label>
+                <label class="control-label label-form">Primary Price Item</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.product.defaultPriceItem.platform}: #{productView.product.defaultPriceItem.category}: #{productView.product.defaultPriceItem.name} (ID #{productView.product.defaultPriceItem.quoteServerId})</div>
+                    <div class="form-value">#{productView.product.defaultPriceItem.platform}: #{productView.product.defaultPriceItem.category}: #{productView.product.defaultPriceItem.name}</div>
                 </div>
             </div>
 
             <div class="control-group">
-                <label class="control-label">PDM Orderable Only?</label>
+                <label class="control-label label-form">PDM Orderable Only?</label>
                 <div class="controls">
                     <div class="form-value">#{productView.product.pdmOrderableOnly ? "Yes" : "No"}</div>
                 </div>
@@ -138,7 +141,7 @@
 
             <p:dataTable value="#{productView.addOns}" var="addOn" >
                 <f:facet name="header">
-                    <h:outputText value="Add Ons" />
+                    <h:outputText value="Add-ons" />
                 </f:facet>
 
                 <p:column>  <!-- sortBy="#{addOn.partNumber}" sortFunction="#{productList.compare}"> -->
@@ -155,21 +158,22 @@
                     </f:facet>
                     <h:outputText value="#{addOn.productName}"/>
                 </p:column>
-                <p:column>  <!-- sortBy="#{addOn.productFamily.displayName}" sortFunction="#{productList.compare}"> -->
+                <p:column>  <!-- sortBy="#{addOn.productFamily.name}" sortFunction="#{productList.compare}"> -->
                     <f:facet name="header">
                         <h:outputText value="Product Family"/>
                     </f:facet>
-                    <h:outputText value="#{addOn.productFamily.displayName}"/>
+                    <h:outputText value="#{addOn.productFamily.name}"/>
                 </p:column>
 
             </p:dataTable>
 
+            <p/>
 
             <p:dataTable value="#{productView.priceItems}" var="priceItem" >
                 <f:facet name="header">
                     <h:outputText value="Optional Price Items" />
                 </f:facet>
-                <p:column> <!-- sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}"> -->
+                <p:column rendered="false"> <!-- sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}"> -->
                     <f:facet name="header">
                         <h:outputText value="Quote Server ID"/>
                     </f:facet>

@@ -35,6 +35,11 @@ public class JiraServiceTest {
         service = JiraServiceProducer.testInstance();
     }
 
+    /**
+     * Disabled this because had to change createIssue to pass the Reporter field. We should allow null for jira types
+     * that do not expose the reporter, so change the API to do that later.
+     */
+    @Test
     public void testCreation() {
 
         setUp();
@@ -58,7 +63,7 @@ public class JiraServiceTest {
 
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX,
+                    service.createIssue(JiraTicket.TEST_PROJECT_PREFIX, null,
                                         CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
                                         "Summary created from Mercury", "Description created from Mercury",
                                         customFieldList);
@@ -89,7 +94,7 @@ public class JiraServiceTest {
                                                 "Test Exome Express", CustomField.SingleFieldType.TEXT ));
 
             final CreateIssueResponse createIssueResponse =
-                    service.createIssue(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix(),
+                    service.createIssue(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix(), "hrafal",
                                         CreateIssueRequest.Fields.Issuetype.Product_Order,
                                         "Athena Test case:::  Test new Summary Addition",
                                         "Athena Test Case:  Test description setting",customFieldList);
@@ -107,7 +112,7 @@ public class JiraServiceTest {
 
         setUp();
         try {
-            service.addWatcher("PDO-1", "squid");
+            service.addWatcher("PDO-8", "squid");
         } catch (IOException iox) {
             Assert.fail(iox.getMessage());
         }
@@ -118,7 +123,7 @@ public class JiraServiceTest {
 
         setUp();
         try {
-            service.addLink(AddIssueLinkRequest.LinkType.Related, "PDO-1", "RP-1");
+            service.addLink(AddIssueLinkRequest.LinkType.Related, "PDO-8", "RP-1");
         } catch (IOException iox) {
             Assert.fail(iox.getMessage());
         }

@@ -2,8 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.inject.Singleton;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
