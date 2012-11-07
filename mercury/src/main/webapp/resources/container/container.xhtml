@@ -17,7 +17,7 @@
                 rows="#{containerBean.columns * containerBean.rows}" value="#{containerBean.geometry}"
                 styleClass="ui-container" rendered="#{containerBean.geometry.size() > 1}">
         <f:facet name="header">
-            Sample Layout
+            Sample Layout for #{containerBean.barcode}
         </f:facet>
         <p:panel>
             <h:outputText value="#{containerBean.getRowNumIndex()} " style="font-size: x-small;
