@@ -89,6 +89,7 @@ public class DriedBloodSpotDbFreeTest {
                 ReceptaclePlateTransferEvent samplePunchJaxb = bettaLimsMessageFactory.buildTubeToPlate(
                         "DBSSamplePunch", ftaPaperBarcode, incubationPlateBarcode, "96DeepWell",
                         bettaLimsMessageFactory.buildWellName(paperNum), "FTAPaper");
+                paperNum++;
                 samplePunchJaxb.setBatchId(labBatchId);
                 samplePunchJaxbs.add(samplePunchJaxb);
                 bettaLIMSMessage.getReceptaclePlateTransferEvent().add(samplePunchJaxb);
