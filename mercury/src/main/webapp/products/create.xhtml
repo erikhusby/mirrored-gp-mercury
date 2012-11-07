@@ -151,13 +151,13 @@
                                         completeMethod="#{productForm.searchSelectedPriceItems}" var="defaultPriceItem"
                                         itemLabel='#{productForm.labelFor(defaultPriceItem)}' scrollHeight="250"
                                         itemValue="#{defaultPriceItem}" converter="#{priceItemConverter}"
-                                        forceSelection="true" size="50">
+                                        forceSelection="true" size="60">
                             <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{defaultPriceItem.name} (#{defaultPriceItem.id})</div>
+                                <div class="ac-dropdown-text">#{defaultPriceItem.name}</div>
                                 <div class="ac-dropdown-subtext">#{defaultPriceItem.platformName} | #{defaultPriceItem.categoryName}</div>
                             </p:column>
                         </p:autoComplete>
-                        <p:watermark for="defaultPriceItem" value="Type text to search"/>
+                        <p:watermark for="defaultPriceItem" value="Type text to search "/>
                         <p:message for="defaultPriceItem" />
                     </div>
                 </div>
@@ -172,10 +172,10 @@
                                         scrollHeight="250">
 
                             <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name} (#{priceItem.id})</div>
+                                <div>#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name}</div>
                             </p:column>
                         </p:autoComplete>
-                        <p:watermark for="priceItem" value="Type text to search"/>
+                        <p:watermark for="priceItem" value="Type text to search for Price Items"/>
                         <p:message for="priceItem" />
                     </div>
                 </div>
@@ -184,7 +184,7 @@
                     <p:outputLabel for="addOns" value="Add-ons" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}"
-                                        var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}"
+                                        var="product" itemLabel="#{productForm.addOnLabel(product)}" itemValue="#{product}"
                                         converter="#{productConverter}" multiple="true" scrollHeight="250">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{product.productName} - #{product.partNumber}</div>
@@ -192,7 +192,7 @@
                                 <div class="ac-dropdown-subtext">#{product.productFamily.name}</div>
                             </p:column>
                         </p:autoComplete>
-                        <p:watermark for="addOns" value="Type text to search"/>
+                        <p:watermark for="addOns" value="Type text to search to search for Add-ons"/>
                         <p:message for="addOns"/>
                     </div>
                 </div>
@@ -213,7 +213,7 @@
                                     <f:param name="product" value="#{request.getParameter('product')}" />
                                 </p:commandButton>
                             </div>
-                            <div class="span1">
+                            <div class="offset2">
                                 <h:link outcome="list" value="Cancel" rendered="#{productForm.product.productId == null}"/>
                                 <h:link outcome="view" value="Cancel" rendered="#{productForm.product.productId != null}">
                                     <f:param name="product" value="#{productForm.product.businessKey}"/>

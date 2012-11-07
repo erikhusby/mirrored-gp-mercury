@@ -8,14 +8,12 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
-import javax.ejb.Startup;
 import javax.inject.Inject;
 
 /**
  * Update singleton caches used for athena side of mercury
  */
 @Singleton
-@Startup
 public class AthenaGlobalCacheControl extends AbstractCacheControl {
     @Inject
     private BSPCohortList cohortList;
