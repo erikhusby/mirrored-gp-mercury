@@ -113,8 +113,7 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public boolean isCreating() {
-        HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-        return request.getParameter("product") == null;
+        return product.getProductId() == null;
     }
 
     /**
