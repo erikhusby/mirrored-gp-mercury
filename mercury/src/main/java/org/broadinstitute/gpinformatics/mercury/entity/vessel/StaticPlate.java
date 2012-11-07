@@ -26,6 +26,7 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     public enum PlateType {
         Eppendorf96("Eppendorf96", VesselGeometry.G12x8),
+        Matrix96("Matrix96", VesselGeometry.G12x8),
         CovarisRack("CovarisRack", VesselGeometry.G12x8),
         IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
         SageCassette("SageCassette", VesselGeometry.SAGE_CASSETTE),

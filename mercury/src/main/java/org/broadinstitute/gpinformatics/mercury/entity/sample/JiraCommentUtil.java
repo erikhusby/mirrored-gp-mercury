@@ -59,7 +59,9 @@ public class JiraCommentUtil {
             else {
                 for (LabBatch labBatch : vessel.getLabBatches()) {
                     JiraTicket jiraTicket = labBatch.getJiraTicket();
-                    tickets.add(jiraTicket);
+                    if(jiraTicket != null) {
+                        tickets.add(jiraTicket);
+                    }
                 }
             }
         }
