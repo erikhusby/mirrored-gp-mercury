@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -42,7 +43,10 @@ public class BucketDaoTest extends ContainerTest {
 
         utx.begin();
 
-        testBucket = new Bucket ( EXTRACTION_BUCKET_NAME );
+        WorkflowBucketDef bucketDef = new WorkflowBucketDef(EXTRACTION_BUCKET_NAME);
+
+
+        testBucket = new Bucket ( bucketDef );
 
         bucketDao.persist( testBucket );
         bucketDao.flush();
@@ -93,11 +97,11 @@ public class BucketDaoTest extends ContainerTest {
 
         Assert.assertNotNull(entries.get(0).getLabVessel().getLabVesselId());
 
-        Assert.assertNotNull(entries.get(0).getBucketExistence());
+        Assert.assertNotNull(entries.get ( 0 ).getBucketExistence ());
 
         Assert.assertEquals(retrievedBucket, entries.get(0).getBucketExistence());
 
-        Assert.assertEquals(1,entries.get(0).getLabVessel().getBucketEntries().size());
+        Assert.assertEquals ( 1, entries.get ( 0 ).getLabVessel ().getBucketEntries ().size () );
     }
 
     @Test

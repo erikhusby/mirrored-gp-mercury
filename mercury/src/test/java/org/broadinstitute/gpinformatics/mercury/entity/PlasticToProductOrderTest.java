@@ -2,13 +2,16 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 
 
 import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -38,21 +41,29 @@ public class PlasticToProductOrderTest extends ContainerTest {
     @Inject
     BucketDao bucketDao;
 
+    @Inject
+    BucketEntryDao bucketEntryDao;
+
+    @Inject
+    BucketBean bucketResource;
+
+    @Inject
+    TwoDBarcodedTubeDAO tubeDAO;
 
     private static final String PRODUCT_ORDER_KEY = "PDO-1";
     public static final String BUCKET_REFERENCE_NAME = "Start";
     private Bucket bucket;
+    private String tubeBarcode;
 
     public void test_simple_tube_in_rack_maps_to_pdo() {
 
-        BucketBean bucketResource = new BucketBean (new LabEventFactory());
+//        BucketBean bucketResource = new BucketBean (new LabEventFactory());
 
         WorkflowBucketDef bucketDef = new WorkflowBucketDef(BUCKET_REFERENCE_NAME);
 
-//        BucketResource bucketResource = new BucketResource( bucketDef );
-        bucket = new Bucket (bucketDef.getName());
+        bucket = new Bucket (bucketDef);
         bucketDao.persist(bucket);
-        bucketDao.flush();
+        bucketDao.flush ();
         bucketDao.clear();
 
         bucket = bucketDao.findByName(BUCKET_REFERENCE_NAME);
@@ -64,7 +75,8 @@ public class PlasticToProductOrderTest extends ContainerTest {
         rootSamples.add(new MercurySample(PRODUCT_ORDER_KEY, "TCGA123")); //StubSampleMetadata("TCGA123","Human",null));
         Map<String,TwoDBarcodedTube> barcodeToTubeMap = new HashMap<String, TwoDBarcodedTube>();
         String destinationPlateBarcode = "Plate0000";
-        TwoDBarcodedTube tube = new TwoDBarcodedTube("0000");
+        tubeBarcode = "0000";
+        TwoDBarcodedTube tube = new TwoDBarcodedTube( tubeBarcode );
         tube.addAllSamples(rootSamples);
         barcodeToTubeMap.put(tube.getLabel(),tube);
 
@@ -78,18 +90,40 @@ public class PlasticToProductOrderTest extends ContainerTest {
                                                                                           null );
 
         BucketEntry bucketEntry = bucketResource.add(tube, PRODUCT_ORDER_KEY, bucket );
-        assertTrue ( bucket.contains ( bucketEntry ) );
+        bucketDao.flush();
+        bucketDao.clear();
+
+        bucket = bucketDao.findByName(BUCKET_REFERENCE_NAME);
+
+        LabVessel newTube = tubeDAO.findByBarcode(tubeBarcode);
+
+        BucketEntry reFoundEntry = bucketEntryDao.findByVesselAndPO(newTube, PRODUCT_ORDER_KEY);
+
+
+
+        assertTrue ( bucket.contains ( reFoundEntry ) );
 
         final Map<LabVessel,String> samplePOMapFromAthena = new HashMap<LabVessel, String>();
-        samplePOMapFromAthena.put(bucketEntry.getLabVessel(),bucketEntry.getPoBusinessKey ());
+        samplePOMapFromAthena.put(reFoundEntry.getLabVessel(),reFoundEntry.getPoBusinessKey ());
 
         List<BucketEntry> testEntries = new LinkedList<BucketEntry>();
-        testEntries.add ( bucketEntry );
+        testEntries.add ( reFoundEntry );
         bucketResource.start ( testEntries, new Person ( "hrafal", "Howard", "Rafal" ) );
+        bucketDao.flush();
+        bucketDao.clear();
 
-        Assert.assertFalse ( bucketEntry.getLabVessel ().getInPlaceEvents ().isEmpty () );
+        bucket = bucketDao.findByName(BUCKET_REFERENCE_NAME);
+
+        LabVessel newTube2 = tubeDAO.findByBarcode(tubeBarcode);
+
+        BucketEntry reFoundEntry2 = bucketEntryDao.findByVesselAndPO(newTube2, PRODUCT_ORDER_KEY);
+
+
+
+
+        Assert.assertFalse ( reFoundEntry2.getLabVessel ().getInPlaceEvents ().isEmpty () );
         boolean doesEventHavePDO = false;
-        for (LabEvent labEvent : bucketEntry.getLabVessel().getInPlaceEvents ()) {
+        for (LabEvent labEvent : reFoundEntry2.getLabVessel().getInPlaceEvents ()) {
             if (labEvent.getProductOrderId()!= null) {
                 if (PRODUCT_ORDER_KEY.equals(labEvent.getProductOrderId())) {
                     doesEventHavePDO = true;
@@ -100,7 +134,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
             assertTrue(doesEventHavePDO);
         }
 
-        assertFalse( bucket.contains ( bucketEntry ));
+        assertFalse( bucket.contains ( reFoundEntry2 ));
         // pull tubes from bucket: this creates a LabEvent for every
         // container pulled from the bucket, and the LabEvent calls out
         // a PDO for each sample

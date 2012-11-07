@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -32,7 +33,9 @@ public class BucketResourceTest extends ContainerTest {
         final String bucketCreationName = "Pico Bucket";
         final Person howieTest = new Person ( "hrafal", "Howard", "Rafal" );
 
-        Bucket bucket = new Bucket ( bucketCreationName );
+        WorkflowBucketDef bucketDef = new WorkflowBucketDef(bucketCreationName);
+
+        Bucket bucket = new Bucket ( bucketDef );
 
         final String poBusinessKey1 = "PDO-1";
         final String poBusinessKey2 = "PDO-2";

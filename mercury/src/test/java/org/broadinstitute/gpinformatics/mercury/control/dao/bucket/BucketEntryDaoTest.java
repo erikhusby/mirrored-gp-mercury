@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -52,7 +53,9 @@ public class BucketEntryDaoTest extends ContainerTest {
         utx.begin ();
 
 
-        testBucket = new Bucket ( BucketDaoTest.EXTRACTION_BUCKET_NAME );
+        WorkflowBucketDef bucketDef = new WorkflowBucketDef(BucketDaoTest.EXTRACTION_BUCKET_NAME);
+
+        testBucket = new Bucket ( bucketDef );
 
         bucketDao.persist ( testBucket );
         bucketDao.flush ();
