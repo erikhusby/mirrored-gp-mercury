@@ -76,8 +76,9 @@ public class ProductOrder implements Serializable {
     /** Reference to the Jira Ticket created when the order is submitted */
     private String jiraTicketKey;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
-    @OrderColumn(name="samplePosition", nullable = false)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "PRODUCT_ORDER", nullable = false)
+    @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     private List<ProductOrderSample> samples = Collections.emptyList();
 
     @Transient
@@ -301,12 +302,6 @@ public class ProductOrder implements Serializable {
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
-        int samplePos = 0;
-        if ( samples != null) {
-            for ( ProductOrderSample sample :samples ) {
-                sample.setSamplePosition(samplePos++);
-            }
-        }
     }
 
     public String getTitle() {
@@ -383,13 +378,6 @@ public class ProductOrder implements Serializable {
 
     public void setSamples(List<ProductOrderSample> samples) {
         this.samples = samples;
-        int samplePos = 0;
-        if ( samples != null) {
-            for ( ProductOrderSample sample :samples ) {
-                sample.setSamplePosition(samplePos);
-                samplePos++;
-            }
-        }
         counts.invalidate();
         sampleBillingSummary = null;
     }

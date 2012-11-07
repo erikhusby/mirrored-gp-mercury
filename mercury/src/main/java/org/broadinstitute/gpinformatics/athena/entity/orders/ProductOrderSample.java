@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -46,12 +45,6 @@ public class ProductOrderSample implements Serializable {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrderSample")
     private Set<BillableItem> billableItems = new HashSet<BillableItem>();
 
-    @Index(name = "ix_pos_product_order")
-    @ManyToOne
-    private ProductOrder productOrder;
-
-    private Integer samplePosition;
-
     @Transient
     private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
 
@@ -63,7 +56,6 @@ public class ProductOrderSample implements Serializable {
 
     public ProductOrderSample(@Nonnull String sampleName, @Nonnull ProductOrder productOrder) {
         this.sampleName = sampleName;
-        this.productOrder = productOrder;
     }
 
     /**
@@ -74,7 +66,6 @@ public class ProductOrderSample implements Serializable {
                               @Nonnull BSPSampleDTO bspDTO) {
         this.sampleName = sampleName;
         setBspDTO(bspDTO);
-        this.productOrder = productOrder;
     }
 
     public String getSampleName() {
@@ -138,13 +129,6 @@ public class ProductOrderSample implements Serializable {
         hasBspDTOBeenInitialized = true;
     }
 
-    public Integer getSamplePosition() {
-        return samplePosition;
-    }
-    public void setSamplePosition(final Integer sample_position) {
-        this.samplePosition = sample_position;
-    }
-
     public boolean isInBspFormat() {
         return isInBspFormat(sampleName);
     }
@@ -154,8 +138,7 @@ public class ProductOrderSample implements Serializable {
             throw new NullPointerException("Sample name cannot be null");
         }
 
-        return !StringUtils.isBlank(sampleName)
-                && BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
+        return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
     }
 
     @Override
@@ -170,13 +153,12 @@ public class ProductOrderSample implements Serializable {
         ProductOrderSample that = (ProductOrderSample) o;
         return new EqualsBuilder().append(sampleName, that.sampleName).append(billingStatus, that.billingStatus)
                 .append(sampleComment, that.sampleComment).append(billableItems, that.billableItems)
-                .append(productOrder, that.productOrder).append(bspDTO, that.bspDTO).build();
+                .append(bspDTO, that.bspDTO).build();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(sampleName).append(billingStatus)
-                .append(sampleComment).append(billableItems).append(productOrder)
-                .append(bspDTO).build();
+                .append(sampleComment).append(billableItems).append(bspDTO).build();
     }
 }

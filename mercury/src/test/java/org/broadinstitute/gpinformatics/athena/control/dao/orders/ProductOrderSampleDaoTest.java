@@ -104,13 +104,15 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
         productOrderDao.flush();
         productOrderDao.clear();
 
+        ProductOrder orderFromDb = productOrderDao.findByBusinessKey(testProductOrderKey);
+
         // Try to find the list of samples for a given product Order
-        List<ProductOrderSample> productOrderSamplesFromDb = productOrderSampleDao.findByProductOrder(order);
+        List<ProductOrderSample> productOrderSamplesFromDb = orderFromDb.getSamples();
         Assert.assertNotNull(productOrderSamplesFromDb);
         Assert.assertEquals(productOrderSamplesFromDb.size(), sampleList.size());
         // check the sample order, should be the same.
-        productOrderSamplesFromDb.get(0).getSampleName().equals("MS-1111");
-        productOrderSamplesFromDb.get(1).getSampleName().equals("MS-2222");
-        productOrderSamplesFromDb.get(2).getSampleName().equals("MS-3333");
+        Assert.assertEquals(productOrderSamplesFromDb.get(0).getSampleName(), "MS-1111");
+        Assert.assertEquals(productOrderSamplesFromDb.get(1).getSampleName(), "MS-2222");
+        Assert.assertEquals(productOrderSamplesFromDb.get(2).getSampleName(), "MS-3333");
     }
 }
