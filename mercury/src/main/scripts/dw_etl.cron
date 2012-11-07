@@ -161,10 +161,9 @@ do
     echo ' '
     echo "Running sqlPlus to merge new data"
     (sqlplus -L -S "${USERNAME}/${PASSWORD}@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=${DB_SERVER})(PORT=${DB_PORT})))(CONNECT_DATA=(SERVER=DEDICATED)(SID=${DB_SID})))\"" | grep -v ${TIMESTAMP}) <<!
-set serveroutput on
-set linesize 511
+set pagesize 0 heading off feedback off verify off echo off trimspool on serveroutput on linesize 511
 spool ${NEW_DIR}/${TIMESTAMP}_sqlplus.start;
-select ${TIMESTAMP} from dual;
+select to_char(${TIMESTAMP}) from dual;
 spool off;
 spool ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log;
 exec merge_import;
