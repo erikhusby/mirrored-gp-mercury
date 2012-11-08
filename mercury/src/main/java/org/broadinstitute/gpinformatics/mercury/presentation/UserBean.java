@@ -212,7 +212,7 @@ public class UserBean implements Serializable {
         return DB.Role.Developer.name;
     }
 
-    public String getProjectmanagerRole() {
+    public String getProjectManagerRole() {
         return DB.Role.PM.name;
     }
 
