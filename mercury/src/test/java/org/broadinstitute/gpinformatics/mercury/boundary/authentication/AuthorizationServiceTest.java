@@ -15,12 +15,10 @@ import java.util.List;
 
 /**
  * @author Scott Matthews
- *         Date: 5/7/12
- *         Time: 4:37 PM
  */
 //@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class AuthenticationServiceTest extends ContainerTest {
-    static final String testPath = "/testPath/";
+public class AuthorizationServiceTest extends ContainerTest {
+    final String testPath ="/testPath/";
 
     static final String allRoleName = "All_test";
     static final String devRoleName = "Developers_test";
@@ -37,7 +35,7 @@ public class AuthenticationServiceTest extends ContainerTest {
     AuthorizedRole roleLabManager;
     List<String> predefinedRoleList;
 
-    @Inject AuthenticationService authSvc;
+    @Inject AuthorizationService authSvc;
 
     @BeforeMethod
     public void setUp() throws Exception {

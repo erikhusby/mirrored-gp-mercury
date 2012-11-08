@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.administration;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthenticationService;
+import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthorizationService;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.PageAuthorization;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
@@ -14,14 +14,12 @@ import java.util.List;
 
 /**
  * @author Scott Matthews
- *         Date: 5/3/12
- *         Time: 1:29 PM
  */
 @ManagedBean
 @RequestScoped
 public class PageAdministrationBean extends AbstractJsfBean {
     @Inject
-    private AuthenticationService authSvc;
+    private AuthorizationService authSvc;
     private String pagePath;
     private List<String> newroleAuth = new LinkedList<String>();
 
