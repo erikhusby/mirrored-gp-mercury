@@ -11,12 +11,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * Comma separated list of groups that this block will allow access.  Using "All" will mean all groups have access.
+ *
  * @author Scott Matthews
- *         Date: 5/2/12
- *         Time: 10:23 AM
  */
 public class AuthorizeBlockTag extends AuthorizationTag {
-
     private final TagAttribute roles;
 
     public AuthorizeBlockTag(TagConfig tagConfigIn) {

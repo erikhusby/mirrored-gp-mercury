@@ -7,11 +7,9 @@ import java.io.IOException;
 
 /**
  *
- * AuthenticationTag is the base class for all custom tags that deal specifically with authentication
+ * AuthenticationTag is the base class for all custom tags that deal specifically with authentication.
  *
  * @author Scott Matthews
- *         Date: 5/1/12
- *         Time: 3:03 PM
  */
 public abstract class AuthenticationTag extends SecureTagHandler {
     protected AuthenticationTag(TagConfig tagConfigIn) {
@@ -26,7 +24,7 @@ public abstract class AuthenticationTag extends SecureTagHandler {
     }
 
     /**
-     * implemented by the child classes,checkAuthentication assists in determining if the user should have
+     * Implemented by the child classes,checkAuthentication assists in determining if the user should have
      * access to the resource that this tag surrounds
      * @return
      */

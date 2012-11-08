@@ -51,9 +51,6 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 /* Change error label style to more closely match Bootstrap. */
 label.ui-state-error, .ui-widget-content label.ui-state-error { background: white; color: #B94A48 }
 
-/* Make all navbar buttons smaller, for the Sign Out button. */
-#navbarForm .ui-button-text { padding: 2px 8px }
-
 .pass-section { font-weight: bold; }
 .pass-label { font-style: italic; padding-right: 10px; }
 .pass-data { }
