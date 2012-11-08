@@ -8,6 +8,9 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+/**
+ * JSF converter for Product instances.
+ */
 @Named
 public class ProductConverter extends AbstractConverter {
 
@@ -16,12 +19,12 @@ public class ProductConverter extends AbstractConverter {
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
-        Product product = productDao.findByBusinessKey(value);
-        return product;
+        return productDao.findByBusinessKey(value);
     }
 
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object object) {
+        // check for null because the converter might be passed null during an AJAX request
         if (object != null) {
             return ((Product) object).getBusinessKey();
         }
