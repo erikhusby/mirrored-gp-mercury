@@ -45,13 +45,11 @@ public class ProductOrderTest {
                 "testQuoteId");
         Product dummyProduct = createDummyProduct();
         dummyProduct.addPriceItem(priceItem);
-        ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
-                new ArrayList<ProductOrderSample>(), "quote", dummyProduct,
-                ResearchProjectTest.createDummyResearchProject());
-
-        ProductOrderSample sample = new ProductOrderSample("SM-1234", order);
+        ProductOrderSample sample = new ProductOrderSample("SM-1234");
         sample.addBillableItem(new BillableItem(priceItem, new BigDecimal("1")));
-        order.setSamples(Collections.singletonList(sample));
+        ProductOrder order = new ProductOrder(TEST_CREATOR, "title",
+                Collections.singletonList(sample), "quote", dummyProduct,
+                ResearchProjectTest.createDummyResearchProject());
 
         order.updateAddOnProducts(Collections.singletonList(createDummyProduct()));
         return order;
@@ -108,16 +106,16 @@ public class ProductOrderTest {
     }
 
     private final List<ProductOrderSample> sixBspSamplesNoDupes =
-            createDBFreeSampleList("SM-2ACGC,SM-2ABDD,SM-2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D", productOrder);
+            createDBFreeSampleList("SM-2ACGC","SM-2ABDD","SM-2ACKV","SM-2AB1B","SM-2ACJC","SM-2AD5D");
 
     private final List<ProductOrderSample> fourBspSamplesWithDupes =
-            createDBFreeSampleList("SM-2ACGC,SM-2ABDD,SM-2ACGC,SM-2AB1B,SM-2ACJC,SM-2ACGC", productOrder);
+            createDBFreeSampleList("SM-2ACGC","SM-2ABDD","SM-2ACGC","SM-2AB1B","SM-2ACJC","SM-2ACGC");
 
     private final List<ProductOrderSample> sixMixedSampleProducts =
-            createDBFreeSampleList("SM-2ACGC,SM2ABDD,SM2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D", productOrder);
+            createDBFreeSampleList("SM-2ACGC","SM2ABDD","SM2ACKV","SM-2AB1B","SM-2ACJC","SM-2AD5D");
 
     private final List<ProductOrderSample> nonBspSampleProducts =
-            createDBFreeSampleList("SSM-2ACGC1,SM--2ABDDD,SM-2AB,SM-2AB1B,SM-2ACJCACB,SM-SM-SM", productOrder);
+            createDBFreeSampleList("SSM-2ACGC1","SM--2ABDDD","SM-2AB","SM-2AB1B","SM-2ACJCACB","SM-SM-SM");
 
     @Test
     public void testGetUniqueSampleCount() throws Exception {
@@ -158,26 +156,24 @@ public class ProductOrderTest {
         Assert.assertFalse(productOrder.areAllSampleBSPFormat());
     }
 
-    public static List<ProductOrderSample> createSampleList(String sampleListStr, ProductOrder productOrder) {
-        return createSampleList(sampleListStr, new HashSet<BillableItem>(), productOrder, false);
+    public static List<ProductOrderSample> createSampleList(String... sampleList) {
+        return createSampleList(sampleList, new HashSet<BillableItem>(), false);
     }
 
-    public static List<ProductOrderSample> createDBFreeSampleList(String sampleListStr, ProductOrder productOrder) {
-        return createSampleList(sampleListStr, new HashSet<BillableItem>(), productOrder, true);
+    public static List<ProductOrderSample> createDBFreeSampleList(String... sampleList) {
+        return createSampleList(sampleList, new HashSet<BillableItem>(), true);
     }
 
-    public static List<ProductOrderSample> createSampleList(String sampleListStr,
+    public static List<ProductOrderSample> createSampleList(String[] sampleArray,
                                                             Set<BillableItem> billableItems,
-                                                            ProductOrder productOrder,
                                                             boolean dbFree) {
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
-        String[] sampleArray = sampleListStr.split(",");
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleArray.length);
         for (String sampleName : sampleArray) {
             ProductOrderSample productOrderSample;
             if (dbFree) {
-                productOrderSample = new ProductOrderSample(sampleName, productOrder, BSPSampleDTO.DUMMY);
+                productOrderSample = new ProductOrderSample(sampleName, BSPSampleDTO.DUMMY);
             } else {
-                productOrderSample = new ProductOrderSample(sampleName, productOrder);
+                productOrderSample = new ProductOrderSample(sampleName);
             }
             productOrderSample.setSampleComment("athenaComment");
             for (BillableItem billableItem : billableItems) {

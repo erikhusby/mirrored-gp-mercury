@@ -920,4 +920,42 @@
       </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-293-1" author="pshapiro">
+        <preConditions>
+            <not>
+                <tableExists tableName="product_order_sample_join_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_sample_join_aud" schemaName="athena">
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order_sample_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sample_position" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="product_order_sample_join_aud" columnNames="rev, product_order, product_order_sample_id, sample_position"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-293-2" author="pshapiro">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_sample_join_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_sample_join_aud" baseTableSchemaName="athena"
+                                 baseTableName="product_order_sample_join_aud" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
 </databaseChangeLog>

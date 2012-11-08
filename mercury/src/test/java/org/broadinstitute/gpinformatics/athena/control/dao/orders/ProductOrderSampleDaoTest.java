@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -16,21 +17,11 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- *
- * User: mccrory
- * Date: 10/10/12
- * Time: 2:20 PM
- */
 @Test(enabled = true)
 public class ProductOrderSampleDaoTest  extends ContainerTest {
-
-    @Inject
-    ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
     ProductOrderDao productOrderDao;
@@ -81,12 +72,10 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
         }
 
         // Try to create a Product Order and persist it.
-        List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
         String testProductOrderTitle = ProductOrderDaoTest.TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
-        ProductOrder newProductOrder = new ProductOrder(ProductOrderDaoTest.TEST_CREATOR_ID, testProductOrderTitle, sampleList, "quoteId",
+        ProductOrder newProductOrder = new ProductOrder(ProductOrderDaoTest.TEST_CREATOR_ID, testProductOrderTitle,
+                ProductOrderTest.createSampleList("MS-1111", "MS-1112"), "quoteId",
                 product, foundResearchProject);
-        sampleList.add(new ProductOrderSample("MS-1111", newProductOrder));
-        sampleList.add(new ProductOrderSample("MS-1112", newProductOrder));
         newProductOrder.setJiraTicketKey(testProductOrderKey);
         return newProductOrder;
     }
@@ -95,10 +84,7 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
     public void testFindByProductOrder() throws Exception {
         ProductOrder order = createTestProductOrder();
 
-        List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
-        sampleList.add(new ProductOrderSample("MS-1111", order));
-        sampleList.add(new ProductOrderSample("MS-2222", order));
-        sampleList.add(new ProductOrderSample("MS-3333", order));
+        List<ProductOrderSample> sampleList = ProductOrderTest.createSampleList("MS-1111", "MS-2222", "MS-3333");
         order.setSamples(sampleList);
         productOrderDao.persist(order);
         productOrderDao.flush();

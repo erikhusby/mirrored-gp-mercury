@@ -42,6 +42,11 @@ public class ProductOrderSample implements Serializable {
 
     private String sampleComment;
 
+    @Index(name = "ix_pos_product_order")
+    @ManyToOne
+    @JoinColumn(insertable = false, updatable = false)
+    private ProductOrder productOrder;
+
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrderSample")
     private Set<BillableItem> billableItems = new HashSet<BillableItem>();
 
@@ -51,10 +56,18 @@ public class ProductOrderSample implements Serializable {
     @Transient
     private boolean hasBspDTOBeenInitialized;
 
+    public ProductOrder getProductOrder() {
+        return productOrder;
+    }
+
+    public void setProductOrder(@Nonnull ProductOrder productOrder) {
+        this.productOrder = productOrder;
+    }
+
     ProductOrderSample() {
     }
 
-    public ProductOrderSample(@Nonnull String sampleName, @Nonnull ProductOrder productOrder) {
+    public ProductOrderSample(@Nonnull String sampleName) {
         this.sampleName = sampleName;
     }
 
@@ -62,7 +75,6 @@ public class ProductOrderSample implements Serializable {
      * Used for testing only.
      */
     public ProductOrderSample(@Nonnull String sampleName,
-                              @Nonnull ProductOrder productOrder,
                               @Nonnull BSPSampleDTO bspDTO) {
         this.sampleName = sampleName;
         setBspDTO(bspDTO);
@@ -153,12 +165,13 @@ public class ProductOrderSample implements Serializable {
         ProductOrderSample that = (ProductOrderSample) o;
         return new EqualsBuilder().append(sampleName, that.sampleName).append(billingStatus, that.billingStatus)
                 .append(sampleComment, that.sampleComment).append(billableItems, that.billableItems)
-                .append(bspDTO, that.bspDTO).build();
+                .append(productOrder, that.productOrder).append(bspDTO, that.bspDTO).build();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(sampleName).append(billingStatus)
-                .append(sampleComment).append(billableItems).append(bspDTO).build();
+                .append(sampleComment).append(billableItems).append(productOrder)
+                .append(bspDTO).build();
     }
 }

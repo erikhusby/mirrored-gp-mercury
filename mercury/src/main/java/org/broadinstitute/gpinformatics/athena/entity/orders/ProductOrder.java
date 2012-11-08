@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueReq
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -77,8 +78,9 @@ public class ProductOrder implements Serializable {
     private String jiraTicketKey;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "PRODUCT_ORDER", nullable = false)
+    @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
+    @AuditJoinTable(name = "product_order_sample_join_aud")
     private List<ProductOrderSample> samples = Collections.emptyList();
 
     @Transient
@@ -298,7 +300,7 @@ public class ProductOrder implements Serializable {
         modifiedBy = createdBy;
         modifiedDate = createdDate;
         this.title = title;
-        this.samples = samples;
+        setSamples(samples);
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
@@ -378,6 +380,11 @@ public class ProductOrder implements Serializable {
 
     public void setSamples(List<ProductOrderSample> samples) {
         this.samples = samples;
+        if (samples != null) {
+            for (ProductOrderSample sample : samples) {
+                sample.setProductOrder(this);
+            }
+        }
         counts.invalidate();
         sampleBillingSummary = null;
     }
