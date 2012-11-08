@@ -127,7 +127,7 @@ public class ProductForm extends AbstractJsfBean {
         // issue summary warning at most once
         if (! issuedSummaryMessageForPriceItemsNotOnCurrentPriceList) {
             // detail message not shown for global messages so set to null
-            addErrorMessage(GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST, null);
+            addErrorMessage(GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST);
             issuedSummaryMessageForPriceItemsNotOnCurrentPriceList = true;
         }
         // need to keep the summary null for clientMessage or it ends up showing in the global message area
@@ -242,11 +242,11 @@ public class ProductForm extends AbstractJsfBean {
             productManager.create(product);
         }
         catch (Exception e ) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.", "Product");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.");
         conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
@@ -261,11 +261,11 @@ public class ProductForm extends AbstractJsfBean {
 
         }
         catch (Exception e ) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.", "Product");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.");
         conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
@@ -289,7 +289,6 @@ public class ProductForm extends AbstractJsfBean {
         }
     }
 
-
     /**
      * Utility method to grab a persistent/detached JPA entity corresponding to this JAXB DTO if one exists,
      * otherwise return just a transient JPA entity
@@ -308,7 +307,6 @@ public class ProductForm extends AbstractJsfBean {
 
         return entity;
     }
-
 
     /**
      * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
