@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
@@ -97,24 +97,38 @@ public class ContainerBean implements Serializable {
         return index % getColumns();
     }
 
-    public SampleInstance sampleAtPosition() {
-        SampleInstance instance = null;
+    public List<SampleInstance> samplesAtPosition() {
+        List<SampleInstance> instances = null;
         if (vessel != null && index != -1) {
             String columnName = vessel.getVesselGeometry().getColumnNames()[getColumnNumFromIndex()];
             String rowName = vessel.getVesselGeometry().getRowNames()[getRowNumFromIndex()];
             VesselPosition position = VesselPosition.getByName(rowName + columnName);
-            VesselContainer<?> vesselContainer = vessel.getVesselContainer();
             Set<SampleInstance> sampleInstances;
-            if (vesselContainer != null) {
+            VesselContainer<?> vesselContainer = null;
+            if(OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
+                vesselContainer = ((RackOfTubes)vessel).getVesselContainer();
+            }
+            if(OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
+                vesselContainer = ((StaticPlate)vessel).getVesselContainer();
+            }
+            if(OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
+                vesselContainer = ((StripTube)vessel).getVesselContainer();
+            }
+            if(OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
+                vesselContainer = ((IlluminaFlowcell)vessel).getVesselContainer();
+            }
+            if(vesselContainer != null){
                 sampleInstances = vesselContainer.getSampleInstancesAtPosition(position);
-            } else {
+            }
+            else {
                 sampleInstances = vessel.getSampleInstances();
             }
+
             if (sampleInstances != null && sampleInstances.size() > 0) {
-                instance = sampleInstances.toArray(new SampleInstance[sampleInstances.size()])[0];
+                instances = new ArrayList<SampleInstance>(sampleInstances);
             }
         }
-        return instance;
+        return instances;
     }
 
     public List<String> getGeometry() {

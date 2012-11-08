@@ -9,12 +9,12 @@ import java.util.NoSuchElementException;
 public enum VesselGeometry {
     TUBE(
             "1x1",
-            new String[]{"01"},
-            new String[]{"A"}),
+            new String[]{""},
+            new String[]{""}),
 
     WELL(
             "1x1",
-            new String[]{"01"},
+            new String[]{""},
             new String[]{""}),
 
     G12x8(
@@ -38,19 +38,19 @@ public enum VesselGeometry {
             new String[]{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"}),
 
     STRIP_TUBE(
-            "8x1",
-            new String[]{"1", "2", "3", "4", "5", "6", "7", "8"},
-            new String[]{""}),
+            "1x8",
+            new String[]{""},
+            new String[]{"TUBE1", "TUBE2", "TUBE3", "TUBE4", "TUBE5", "TUBE6", "TUBE7", "TUBE8"}),
 
     STRIP_TUBE_WELL(
             "1x1",
-            new String[]{"1"},
+            new String[]{""},
             new String[]{""}),
 
     FLOWCELL(
-            "1x96",
+            "1x8",
             new String[]{""},
-            new String[]{"1"});
+            new String[]{"LANE1", "LANE2", "LANE3", "LANE4", "LANE5", "LANE6", "LANE7", "LANE8"});
 
     private final String name;
     private final String[] columnNames;

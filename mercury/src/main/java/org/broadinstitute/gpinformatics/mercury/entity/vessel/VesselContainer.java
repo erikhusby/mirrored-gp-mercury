@@ -30,6 +30,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * A vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a flowcell of lanes
@@ -251,6 +253,10 @@ public class VesselContainer<T extends LabVessel> {
     public enum TraversalDirection {
         Ancestors,
         Descendants
+    }
+
+    public List<SampleInstance> getSampleInstancesAtPositionList(VesselPosition position) {
+        return new ArrayList<SampleInstance>(getSampleInstancesAtPosition(position));
     }
 
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {

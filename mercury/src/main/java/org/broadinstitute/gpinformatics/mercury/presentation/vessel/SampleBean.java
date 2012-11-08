@@ -1,17 +1,22 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 @ManagedBean
 @RequestScoped
@@ -21,6 +26,7 @@ public class SampleBean implements Serializable {
 
     private LabVessel vessel;
     private String barcode;
+    private VesselContainer<?> vesselContainer;
 
     public LabVessel getVessel() {
         return vessel;
@@ -38,17 +44,39 @@ public class SampleBean implements Serializable {
         this.barcode = barcode;
     }
 
+    public VesselContainer<?> getVesselContainer() {
+        return vesselContainer;
+    }
+
+    public void setVesselContainer(VesselContainer<?> vesselContainer) {
+        this.vesselContainer = vesselContainer;
+    }
+
     public void updateVessel(String barcode) {
         if (barcode != null && this.vessel == null) {
             this.vessel = labVesselDao.findByIdentifier(barcode);
             this.barcode = barcode;
+            if(OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
+                vesselContainer = ((RackOfTubes)vessel).getVesselContainer();
+            }
+            if(OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
+                vesselContainer = ((StaticPlate)vessel).getVesselContainer();
+            }
+            if(OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
+                vesselContainer = ((StripTube)vessel).getVesselContainer();
+            }
+            if(OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
+                vesselContainer = ((IlluminaFlowcell)vessel).getVesselContainer();
+            }
         }
     }
 
     public String indexValueForSample(SampleInstance sample) {
-        StringBuilder indexInfo = new StringBuilder();
+
+        StringBuilder indexInfo = new StringBuilder("");
+        /*
         for (Reagent reagent : sample.getReagents()) {
-            if (reagent instanceof MolecularIndexReagent) {
+            if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                 MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
                 indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
                 indexInfo.append(" - ");
@@ -59,14 +87,14 @@ public class SampleBean implements Serializable {
                 }
 
             }
-        }
+        } */
         return indexInfo.toString();
     }
 
     public String reagentInfoForSample(SampleInstance sample) {
         StringBuilder reagentInfo = new StringBuilder();
         for (Reagent reagent : sample.getReagents()) {
-            if (!(reagent instanceof MolecularIndexReagent)) {
+            if (!(OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class))) {
                 reagentInfo.append(reagent.getReagentName());
                 reagentInfo.append(" - ");
                 reagentInfo.append(reagent.getLot());
@@ -74,5 +102,17 @@ public class SampleBean implements Serializable {
             }
         }
         return reagentInfo.toString();
+    }
+
+    public List<VesselPosition> getPositionNameList() {
+        List<VesselPosition> positions = null;
+        if(vessel != null){
+            positions = new ArrayList<VesselPosition>();
+            Iterator<String> iterator = vessel.getVesselGeometry().getPositionNames();
+            while(iterator.hasNext()) {
+                positions.add(VesselPosition.getByName(iterator.next()));
+            }
+        }
+        return positions;
     }
 }

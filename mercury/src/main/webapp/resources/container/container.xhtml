@@ -5,7 +5,7 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:cc="http://java.sun.com/jsf/composite"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core" xmlns:ui="http://java.sun.com/jsf/facelets">
 
 <cc:interface>
     <cc:attribute name="barcode" required="true"/>
@@ -21,10 +21,14 @@
         </f:facet>
         <p:panel>
             <h:outputText value="#{containerBean.getRowNumIndex()} " style="font-size: x-small;
-                              font-family: monospace; vertical-align: super"/>
-            <h:outputText value="EMPTY" rendered="#{containerBean.sampleAtPosition() == null}"
-                          style="font-size: smaller;"/>
-            <h:outputText value="#{containerBean.sampleAtPosition().startingSample.sampleKey}"
+                                  font-family: monospace; vertical-align: super"/>
+            <br/>
+            <ui:repeat value="#{containerBean.samplesAtPosition()}" var="sample">
+                <h:outputText value="#{sample.startingSample.sampleKey}"
+                              style="font-size: smaller;"/>
+                <br/>
+            </ui:repeat>
+            <h:outputText value="EMPTY" rendered="#{containerBean.samplesAtPosition() == null}"
                           style="font-size: smaller;"/>
         </p:panel>
     </p:dataGrid>
