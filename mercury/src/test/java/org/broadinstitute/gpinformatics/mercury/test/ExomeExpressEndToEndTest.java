@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -194,7 +194,7 @@ public class ExomeExpressEndToEndTest {
 
             for (LabBatch labBatch : labBatches) {
                 CreateIssueResponse createResponse = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
-                        CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
+                        CreateFields.Issuetype.Whole_Exome_HybSel,
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
                 Assert.assertNotNull(createResponse);

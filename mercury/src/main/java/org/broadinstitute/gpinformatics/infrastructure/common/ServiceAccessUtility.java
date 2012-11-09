@@ -4,10 +4,11 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
@@ -58,6 +59,20 @@ public class ServiceAccessUtility {
 
             return foundServiceObject;
         }
+    }
+
+    /**
+     * Returns the base URL, including context path, of this Mercury deployment.
+     *
+     * @return the base Mercury URL
+     */
+    public static String getMercuryUrl() {
+        return (new Caller<String, MercuryConfig>() {
+            @Override
+            String call(MercuryConfig apiInstance) {
+                return apiInstance.getUrl();
+            }
+        }).apiCall(MercuryConfig.class);
     }
 
     /**
@@ -153,7 +168,7 @@ public class ServiceAccessUtility {
      * @throws IOException
      */
     public static CreateIssueResponse createJiraTicket (String projectPrefix,
-                                                        CreateIssueRequest.Fields.Issuetype issuetype, String summary,
+                                                        CreateFields.Issuetype issuetype, String summary,
                                                         String description, Collection<CustomField> customFields)
             throws IOException {
 

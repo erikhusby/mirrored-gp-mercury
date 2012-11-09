@@ -6,6 +6,7 @@ import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateFields;
 
@@ -18,7 +19,12 @@ public class UpdateJiraIssueUpdateSerializer extends JsonSerializer<UpdateFields
     public void serialize(UpdateFields fields, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
 
         jsonGenerator.writeStartObject();
-        for (CustomField customField : fields.getCustomFields()) {
+        writeCustomFields(fields.getCustomFields(), jsonGenerator);
+        jsonGenerator.writeEndObject();
+    }
+
+    static void writeCustomFields(Collection<CustomField> customFields, JsonGenerator jsonGenerator) throws IOException {
+        for (CustomField customField : customFields) {
             String fieldId = customField.getFieldDefinition().getJiraCustomFieldId();
             if (CustomField.SingleFieldType.RADIO_BUTTON.equals(customField.getFieldType())) {
                 jsonGenerator.writeFieldName(fieldId);
@@ -29,6 +35,5 @@ public class UpdateJiraIssueUpdateSerializer extends JsonSerializer<UpdateFields
                 jsonGenerator.writeObjectField(fieldId, customField.getValue());
             }
         }
-        jsonGenerator.writeEndObject();
     }
 }

@@ -6,7 +6,7 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.*;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
@@ -16,9 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldJsonParser;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
 
@@ -83,7 +80,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
 
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issueType,
+    public CreateIssueResponse createIssue(String projectPrefix, CreateFields.Issuetype issueType,
                                            String summary, String description,
                                            Collection<CustomField> customFields) throws IOException {
 
@@ -194,8 +191,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
 
     @Override
-    public Map<String, CustomFieldDefinition> getRequiredFields(CreateIssueRequest.Fields.Project project,
-                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+    public Map<String, CustomFieldDefinition> getRequiredFields(CreateFields.Project project,
+                                                                CreateFields.Issuetype issueType) throws IOException {
         if (project == null) {
             throw new NullPointerException("project cannot be null");
         }
@@ -238,7 +235,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         WebResource webResource =
                 getJerseyClient().resource(urlString)
-                        .queryParam ( "expand", "transitions.fields" );
+                        .queryParam("expand", "transitions.fields");
 
         return get(webResource, new GenericType<IssueTransitionResponse>(){});
 

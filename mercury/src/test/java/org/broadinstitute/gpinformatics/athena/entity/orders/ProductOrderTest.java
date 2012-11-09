@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectTest;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.Configuration;
@@ -87,9 +87,9 @@ public class ProductOrderTest {
 
         Assert.assertNull(productOrder.getJiraTicketKey());
 
-        Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.Product_Order);
+        Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateFields.Issuetype.Product_Order);
 
-        Assert.assertEquals(productOrder.fetchJiraProject(), CreateIssueRequest.Fields.ProjectType.Product_Ordering);
+        Assert.assertEquals(productOrder.fetchJiraProject(), CreateFields.ProjectType.Product_Ordering);
 
         productOrder.setJiraTicketKey(PDO_JIRA_KEY);
 

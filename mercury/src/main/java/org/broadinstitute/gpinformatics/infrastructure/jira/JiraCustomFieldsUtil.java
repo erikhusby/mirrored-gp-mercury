@@ -2,12 +2,11 @@ package org.broadinstitute.gpinformatics.infrastructure.jira;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,8 +35,8 @@ public class JiraCustomFieldsUtil {
      */
     public static Map<String,CustomFieldDefinition> getRequiredLcSetFieldDefinitions(JiraService jiraService) throws IOException {
         final Map<String, CustomFieldDefinition> allCustomFields =
-                jiraService.getRequiredFields ( new CreateIssueRequest.Fields.Project ( LabBatch.LCSET_PROJECT_PREFIX ),
-                                                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel );
+                jiraService.getRequiredFields ( new CreateFields.Project ( LabBatch.LCSET_PROJECT_PREFIX ),
+                                                CreateFields.Issuetype.Whole_Exome_HybSel );
 
         final Map<String,CustomFieldDefinition> requiredCustomFieldDefinitions = new HashMap<String,CustomFieldDefinition>();
 

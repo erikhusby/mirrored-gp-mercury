@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jira;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Iss
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 
@@ -33,7 +32,7 @@ public interface JiraService extends Serializable {
      * @return
      * @throws IOException
      */
-    CreateIssueResponse createIssue(String projectPrefix, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException;
+    CreateIssueResponse createIssue(String projectPrefix, CreateFields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException;
 
     /**
      * Updates an issue, modifying the custom fields supplied.
@@ -72,8 +71,8 @@ public interface JiraService extends Serializable {
      * @return A {@link Map} of the custom fields found for the project/issuetype combination.  To make it easy to
      * reference, the field map is indexed by the field name.
      */
-    public Map<String, CustomFieldDefinition> getRequiredFields(CreateIssueRequest.Fields.Project project,
-                                                                CreateIssueRequest.Fields.Issuetype issueType) throws IOException;
+    public Map<String, CustomFieldDefinition> getRequiredFields(CreateFields.Project project,
+                                                                CreateFields.Issuetype issueType) throws IOException;
 
     /**
      * createTicketUrl is a helper class that generates a clickable Url to allow a user to browse the Jira Ticket

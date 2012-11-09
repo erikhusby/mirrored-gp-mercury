@@ -15,27 +15,7 @@ import java.util.HashSet;
 @JsonSerialize(using = UpdateJiraIssueUpdateSerializer.class)
 public class UpdateFields {
 
-    private String summary;
-
-    private String description;
-
     private final Collection<CustomField> customFields = new HashSet<CustomField>();
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
     public Collection<CustomField> getCustomFields() {
         return customFields;

@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
@@ -434,7 +434,7 @@ public class ResearchProject {
                 }
 
                 listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.COHORTS.getFieldName()),
-                                                 StringUtils.join(cohortNames,','), CustomField.SingleFieldType.TEXT ));
+                                                 StringUtils.join(cohortNames, ','), CustomField.SingleFieldType.TEXT ));
             }
 
             if (!projectFunding.isEmpty()) {
@@ -472,8 +472,7 @@ public class ResearchProject {
 
             // Update ticket with link back into Mercury
             Collection<CustomField> updateFields = new HashSet<CustomField>();
-            updateFields.add(new CustomField(submissionFields.get("Mercury URL"), "http://localhost:8080/Mercury/projects/view.xhtml?researchProject=" + jiraTicketKey, CustomField.SingleFieldType.TEXT));
-//            updateFields.add(new CustomField(submissionFields.get("Mercury URL"), ServiceAccessUtility.createTicketUrl(jiraTicketKey), CustomField.SingleFieldType.TEXT));
+            updateFields.add(new CustomField(submissionFields.get("Mercury URL"), ServiceAccessUtility.getMercuryUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey, CustomField.SingleFieldType.TEXT));
             ServiceAccessUtility.updateJiraTicket(jiraTicketKey, updateFields);
 
             addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
@@ -501,12 +500,12 @@ public class ResearchProject {
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
-     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType} that
      * represents the Jira Project for Research Projects
      */
     @Transient
-    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
-        return CreateIssueRequest.Fields.ProjectType.Research_Projects;
+    public CreateFields.ProjectType fetchJiraProject() {
+        return CreateFields.ProjectType.Research_Projects;
     }
 
     /**
@@ -515,12 +514,12 @@ public class ResearchProject {
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
-     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.Issuetype} that
      * represents the Jira Issue Type for Research Projects
      */
     @Transient
-    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
-        return CreateIssueRequest.Fields.Issuetype.Research_Project;
+    public CreateFields.Issuetype fetchJiraIssueType() {
+        return CreateFields.Issuetype.Research_Project;
     }
 
     /**
