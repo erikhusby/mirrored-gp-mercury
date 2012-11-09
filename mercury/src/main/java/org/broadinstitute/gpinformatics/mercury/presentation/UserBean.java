@@ -25,7 +25,6 @@ import java.util.EnumSet;
 @Named
 @SessionScoped
 public class UserBean implements Serializable {
-
     public static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
 
     @Nullable
@@ -56,8 +55,10 @@ public class UserBean implements Serializable {
 
         /** The CSS class used to display the status test. */
         private final String cssClass;
+        
         /** A short message used to show the status of this server in a tooltip. */
         private final String statusFormat;
+        
         /** A longer message used to show the status of this server. */
         private final String messageFormat;
 
@@ -200,10 +201,39 @@ public class UserBean implements Serializable {
         return roles.contains(DB.Role.PDM);
     }
 
+    public boolean isDeveloperUser() {
+        return roles.contains(DB.Role.Developer);
+    }
+
     public String getRolesString() {
         if (roles.isEmpty()) {
             return "No Roles";
         }
         return "Roles: " + StringUtils.join(roles, ", ");
     }
+
+    public String getDeveloperRole() {
+        return DB.Role.Developer.name;
+    }
+
+    public String getProjectManagerRole() {
+        return DB.Role.PM.name;
+    }
+
+    public String getProductManagerRole() {
+        return DB.Role.PDM.name;
+    }
+
+    public String getLabUserRole() {
+        return DB.Role.LabUser.name;
+    }
+
+    public String getLabManagerRole() {
+        return DB.Role.LabManager.name;
+    }
+
+    public String getAllRole() {
+        return DB.Role.All.name;
+    }
 }
+

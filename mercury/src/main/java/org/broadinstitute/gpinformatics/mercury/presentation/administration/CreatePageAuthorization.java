@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.administration;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthenticationService;
+import org.broadinstitute.gpinformatics.mercury.boundary.authentication.AuthorizationService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.faces.bean.ManagedBean;
@@ -19,7 +19,7 @@ import java.util.List;
 @ManagedBean
 @RequestScoped
 public class CreatePageAuthorization extends AbstractJsfBean {
-    @Inject private AuthenticationService authSvc;
+    @Inject private AuthorizationService authSvc;
 
     public String pagePath;
     public List<String> assignedRole = new LinkedList<String>();

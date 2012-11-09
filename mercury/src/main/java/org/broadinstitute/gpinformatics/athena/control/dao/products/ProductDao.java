@@ -25,39 +25,39 @@ public class ProductDao extends GenericDao implements Serializable {
     /**
      * Preferring strong types to booleans
      */
-    public enum AvailableProductsOnly {
+    public enum AvailableOnly {
         YES,
         NO
     }
 
 
-    public enum TopLevelProductsOnly {
+    public enum TopLevelOnly {
         YES,
         NO
     }
 
-    public enum IncludePDMOnlyProducts {
+    public enum IncludePDMOnly {
         YES,
         NO
     }
 
 
     public List<Product> findProducts() {
-        return findProducts(AvailableProductsOnly.NO, TopLevelProductsOnly.NO, IncludePDMOnlyProducts.YES);
+        return findProducts(AvailableOnly.NO, TopLevelOnly.NO, IncludePDMOnly.YES);
     }
 
 
-    public List<Product> findProducts(AvailableProductsOnly availableProductsOnly) {
-        return findProducts(availableProductsOnly, TopLevelProductsOnly.NO, IncludePDMOnlyProducts.YES);
+    public List<Product> findProducts(AvailableOnly availableOnly) {
+        return findProducts(availableOnly, TopLevelOnly.NO, IncludePDMOnly.YES);
     }
 
 
-    public List<Product> findProducts(TopLevelProductsOnly topLevelProductsOnly) {
-        return findProducts(AvailableProductsOnly.NO, topLevelProductsOnly, IncludePDMOnlyProducts.YES);
+    public List<Product> findProducts(TopLevelOnly topLevelOnly) {
+        return findProducts(AvailableOnly.NO, topLevelOnly, IncludePDMOnly.YES);
     }
 
-    public List<Product> findProducts(IncludePDMOnlyProducts includePDMOnlyProducts) {
-        return findProducts(AvailableProductsOnly.NO, TopLevelProductsOnly.NO, includePDMOnlyProducts);
+    public List<Product> findProducts(IncludePDMOnly includePDMOnly) {
+        return findProducts(AvailableOnly.NO, TopLevelOnly.NO, includePDMOnly);
     }
 
     public Product findByBusinessKey(String key) {
@@ -68,16 +68,16 @@ public class ProductDao extends GenericDao implements Serializable {
      * General purpose product finder method
      *
      *
-     * @param availableProductsOnly
+     * @param availableOnly
      *
-     * @param topLevelProductsOnly
+     * @param topLevelOnly
      *
-     * @param includePDMOnlyProducts
+     * @param includePDMOnly
      * @return
      */
-    public List<Product> findProducts(@NotNull AvailableProductsOnly availableProductsOnly,
-                                      @NotNull TopLevelProductsOnly topLevelProductsOnly,
-                                      @NotNull IncludePDMOnlyProducts includePDMOnlyProducts) {
+    public List<Product> findProducts(@NotNull AvailableOnly availableOnly,
+                                      @NotNull TopLevelOnly topLevelOnly,
+                                      @NotNull IncludePDMOnly includePDMOnly) {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Product> cq = cb.createQuery(Product.class);
         List<Predicate> predicateList = new ArrayList<Predicate>();
@@ -96,7 +96,7 @@ public class ProductDao extends GenericDao implements Serializable {
 //        product.join(Product_.addOns, JoinType.LEFT);
 //        product.fetch(Product_.addOns, JoinType.LEFT);
 
-        if (availableProductsOnly == AvailableProductsOnly.YES) {
+        if (availableOnly == AvailableOnly.YES) {
             // there is an availability date
             predicateList.add(cb.isNotNull(product.get(Product_.availabilityDate)));
             // and it is in the past
@@ -109,11 +109,11 @@ public class ProductDao extends GenericDao implements Serializable {
             );
         }
 
-        if (topLevelProductsOnly == TopLevelProductsOnly.YES) {
+        if (topLevelOnly == TopLevelOnly.YES) {
             predicateList.add(cb.equal(product.get(Product_.topLevelProduct), true));
         }
 
-        if (includePDMOnlyProducts == IncludePDMOnlyProducts.NO) {
+        if (includePDMOnly == IncludePDMOnly.NO) {
             predicateList.add(cb.equal(product.get(Product_.pdmOrderableOnly), false));
         }
 

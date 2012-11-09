@@ -59,6 +59,16 @@ public class ProductForm extends AbstractJsfBean {
     @Inject
     private ProductManager productManager;
 
+    /**
+     * Flag so we don't issue the same summary warning more than once per request
+     */
+    private boolean issuedSummaryMessageForPriceItemsNotOnCurrentPriceList;
+
+
+    private static final String GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST =
+            "One or more price items associated with this product do not appear on the current quote server price list.  " +
+            "These price items have been temporarily removed from this product; hit Save to remove these price items permanently or Cancel to abort.";
+
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
@@ -66,23 +76,16 @@ public class ProductForm extends AbstractJsfBean {
     private Product product;
 
     /**
-     * JAXB {@link PriceItem} DTOs
+     * These are in their own field since they are JAXB {@link PriceItem} DTOs and not JPA entities
      */
     private List<PriceItem> priceItems;
 
     /**
-     * JAXB {@link PriceItem} DTOs, there can be only one default price item but this is a list so the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete} can be styled consistently with all the other
-     * multi-selecting {@link org.primefaces.component.autocomplete.AutoComplete}s in Mercury
+     * This is in its own field since this is a JAXB {@link PriceItem} DTO and not a JPA entity
      */
-    private List<PriceItem> defaultPriceItems = new ArrayList<PriceItem>();
-
     private PriceItem defaultPriceItem;
 
     private List<Product> addOns;
-
-
-
 
 
     /**
@@ -113,9 +116,35 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public boolean isCreating() {
+        // not using the injected value of FacesContext since that will not be injected on AJAX requests
         HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
         return request.getParameter("product") == null;
     }
+
+
+    private void issueMessagesForPriceItemNotOnPriceList(String clientId, String clientMessage) {
+
+        // issue summary warning at most once
+        if (! issuedSummaryMessageForPriceItemsNotOnCurrentPriceList) {
+            // detail message not shown for global messages so set to null
+            addErrorMessage(GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST);
+            issuedSummaryMessageForPriceItemsNotOnCurrentPriceList = true;
+        }
+        // need to keep the summary null for clientMessage or it ends up showing in the global message area
+        addErrorMessage(clientId, null, clientMessage);
+    }
+
+
+    private String getClientMessageForPriceItemNotInPriceList(PriceItem priceItemDto, boolean isPrimary) {
+        String message = "%s price item '%s: %s: %s' did not appear on the current quote server price list and has temporarily been removed from this product";
+        message = String.format(
+                message,
+                isPrimary ? "Primary" : "Optional",
+                priceItemDto.getPlatformName(), priceItemDto.getCategoryName(), priceItemDto.getName());
+
+        return message;
+    }
+
 
     /**
      * Initialize the form if this is not a postback
@@ -125,15 +154,33 @@ public class ProductForm extends AbstractJsfBean {
             if (isCreating()) {
                 // No form initialization needed for create
             } else {
+
+                if (product.getDefaultPriceItem() != null) {
+                    PriceItem priceItemDto = entityToDto(product.getDefaultPriceItem());
+
+                    if (! priceListCache.contains(priceItemDto)) {
+                        issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, true));
+                        defaultPriceItem = null;
+                    }
+                    else {
+                        defaultPriceItem = entityToDto(product.getDefaultPriceItem());
+                    }
+                }
                 if (product.getPriceItems() != null) {
                     priceItems = new ArrayList<PriceItem>();
                     for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
-                        priceItems.add(entityToDto(priceItem));
+
+                        PriceItem priceItemDto = entityToDto(priceItem);
+                        if (! priceListCache.contains(priceItemDto)) {
+                            issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
+                            defaultPriceItem = null;
+                        }
+                        else {
+                            priceItems.add(priceItemDto);
+                        }
                     }
                 }
-                if (product.getDefaultPriceItem() != null) {
-                    defaultPriceItem = entityToDto(product.getDefaultPriceItem());
-                }
+
                 // TODO: is this needed? or does the actual backing model work for p:autoComplete?
                 if (product.getAddOns() != null) {
                     addOns = new ArrayList<Product>();
@@ -195,11 +242,11 @@ public class ProductForm extends AbstractJsfBean {
             productManager.create(product);
         }
         catch (Exception e ) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.", "Product");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.");
         conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
@@ -214,11 +261,11 @@ public class ProductForm extends AbstractJsfBean {
 
         }
         catch (Exception e ) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.", "Product");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.");
         conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
@@ -242,7 +289,6 @@ public class ProductForm extends AbstractJsfBean {
         }
     }
 
-
     /**
      * Utility method to grab a persistent/detached JPA entity corresponding to this JAXB DTO if one exists,
      * otherwise return just a transient JPA entity
@@ -261,7 +307,6 @@ public class ProductForm extends AbstractJsfBean {
 
         return entity;
     }
-
 
     /**
      * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
