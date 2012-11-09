@@ -9,8 +9,11 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDaoTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -23,9 +26,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -50,21 +56,51 @@ public class PlasticToProductOrderTest extends ContainerTest {
     @Inject
     TwoDBarcodedTubeDAO tubeDAO;
 
+    @Inject
+    RackOfTubesDao rackDAO;
+
+    @Inject
+    StaticPlateDAO plateDAO;
+
+    @Inject
+    private UserTransaction utx;
+
+
+
     private static final String PRODUCT_ORDER_KEY = "PDO-1";
     public static final String BUCKET_REFERENCE_NAME = "Start";
     private Bucket bucket;
     private String tubeBarcode;
+    private WorkflowBucketDef bucketDef;
 
-    public void test_simple_tube_in_rack_maps_to_pdo() {
+    @BeforeMethod ( groups = TestGroups.EXTERNAL_INTEGRATION )
+    public void setUp () throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if ( utx == null ) {
+            return;
+        }
+        utx.begin ();
 
-//        BucketBean bucketResource = new BucketBean (new LabEventFactory());
-
-        WorkflowBucketDef bucketDef = new WorkflowBucketDef(BUCKET_REFERENCE_NAME);
+        bucketDef = new WorkflowBucketDef (BUCKET_REFERENCE_NAME);
 
         bucket = new Bucket (bucketDef);
         bucketDao.persist(bucket);
         bucketDao.flush ();
         bucketDao.clear();
+
+    }
+
+    @AfterMethod ( groups = TestGroups.EXTERNAL_INTEGRATION )
+    public void tearDown () throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if ( utx == null ) {
+            return;
+        }
+
+        utx.rollback ();
+    }
+
+    public void test_simple_tube_in_rack_maps_to_pdo() {
 
         bucket = bucketDao.findByName(BUCKET_REFERENCE_NAME);
 
@@ -89,6 +125,8 @@ public class PlasticToProductOrderTest extends ContainerTest {
         LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree ( plateXfer, barcodeToTubeMap,
                                                                                           null );
 
+        String sourceVesselBarcode = rackToPlateTransfer.getSourceLabVessels().iterator().next().getLabCentricName();
+
         BucketEntry bucketEntry = bucketResource.add(tube, PRODUCT_ORDER_KEY, bucket );
         bucketDao.flush();
         bucketDao.clear();
@@ -109,21 +147,16 @@ public class PlasticToProductOrderTest extends ContainerTest {
         List<BucketEntry> testEntries = new LinkedList<BucketEntry>();
         testEntries.add ( reFoundEntry );
         bucketResource.start ( testEntries, new Person ( "hrafal", "Howard", "Rafal" ) );
-        bucketDao.flush();
-        bucketDao.clear();
+        bucketDao.flush ();
+        bucketDao.clear ();
 
         bucket = bucketDao.findByName(BUCKET_REFERENCE_NAME);
 
         LabVessel newTube2 = tubeDAO.findByBarcode(tubeBarcode);
 
-        BucketEntry reFoundEntry2 = bucketEntryDao.findByVesselAndPO(newTube2, PRODUCT_ORDER_KEY);
-
-
-
-
-        Assert.assertFalse ( reFoundEntry2.getLabVessel ().getInPlaceEvents ().isEmpty () );
+        Assert.assertFalse ( newTube2.getInPlaceEvents ().isEmpty () );
         boolean doesEventHavePDO = false;
-        for (LabEvent labEvent : reFoundEntry2.getLabVessel().getInPlaceEvents ()) {
+        for (LabEvent labEvent : newTube2.getInPlaceEvents ()) {
             if (labEvent.getProductOrderId()!= null) {
                 if (PRODUCT_ORDER_KEY.equals(labEvent.getProductOrderId())) {
                     doesEventHavePDO = true;
@@ -134,7 +167,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
             assertTrue(doesEventHavePDO);
         }
 
-        assertFalse( bucket.contains ( reFoundEntry2 ));
+        assertTrue ( bucket.getBucketEntries ().isEmpty () );
         // pull tubes from bucket: this creates a LabEvent for every
         // container pulled from the bucket, and the LabEvent calls out
         // a PDO for each sample
@@ -153,11 +186,13 @@ public class PlasticToProductOrderTest extends ContainerTest {
         assertEquals(1, rackToPlateTransfer.getTargetLabVessels().size());
         assertEquals(1, rackToPlateTransfer.getSourceLabVessels().size());
 
-        LabVessel targetVessel = rackToPlateTransfer.getTargetLabVessels().iterator().next();
+//        LabVessel targetVessel = rackToPlateTransfer.getTargetLabVessels().iterator().next();
+        LabVessel targetVessel = plateDAO.findByBarcode(destinationPlateBarcode);
         targetVessel.setChainOfCustodyRoots(barcodeToTubeMap.values());
         targetVessel.addAllSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
         // todo I'm setting this on the rack here, but it should just work on the tube
-        LabVessel source = rackToPlateTransfer.getSourceLabVessels().iterator().next();
+//        LabVessel source = rackToPlateTransfer.getSourceLabVessels().iterator().next();
+        LabVessel source = rackDAO.getByLabel(sourceVesselBarcode);
         source.setChainOfCustodyRoots(barcodeToTubeMap.values());
         source.addAllSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -37,7 +38,20 @@ public class BucketEntryDao extends GenericDao {
         } catch (NoResultException ignored) {
             return null;
         }
+    }
 
+    public BucketEntry findByVesselAndBucket(LabVessel vessel, Bucket bucket) {
+        CriteriaBuilder vesselBucketCriteria = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<BucketEntry> query = vesselBucketCriteria.createQuery(BucketEntry.class);
+        Root<BucketEntry> root = query.from(BucketEntry.class);
+        query.where(vesselBucketCriteria.and(vesselBucketCriteria.equal(root.get(BucketEntry_.labVessel),vessel),
+                                             vesselBucketCriteria.equal(root.get(BucketEntry_.bucketExistence),
+                                                                        bucket)));
+        try {
+            return getEntityManager().createQuery(query).getSingleResult();
+        } catch (NoResultException ignored) {
+            return null;
+        }
     }
 
 }

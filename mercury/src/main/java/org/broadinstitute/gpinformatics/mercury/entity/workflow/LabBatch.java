@@ -27,6 +27,8 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -41,6 +43,15 @@ import java.util.Set;
 @Audited
 @Table ( schema = "mercury", uniqueConstraints = @UniqueConstraint ( columnNames = { "batchName" } ) )
 public class LabBatch {
+
+    public static final Comparator<LabBatch> byDate = new Comparator<LabBatch>() {
+        @Override
+        public int compare ( LabBatch bucketEntryPrime, LabBatch bucketEntrySecond ) {
+            return bucketEntryPrime.getCreatedOn().compareTo(bucketEntrySecond.getCreatedOn());
+        }
+    };
+
+
 
     @Id
     @SequenceGenerator ( name = "SEQ_LAB_BATCH", schema = "mercury", sequenceName = "SEQ_LAB_BATCH" )
@@ -58,7 +69,7 @@ public class LabBatch {
 
     private String batchName;
 
-    @ManyToOne ( fetch = FetchType.LAZY )
+    @ManyToOne ( fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private JiraTicket jiraTicket;
 
     //    @ManyToOne(fetch = FetchType.LAZY)
@@ -67,6 +78,8 @@ public class LabBatch {
     // todo jmt get Hibernate to sort this
     @OneToMany ( mappedBy = "labBatch" )
     private Set<GenericLabEvent> labEvents = new LinkedHashSet<GenericLabEvent> ();
+
+    private Date createdOn;
 
     /**
      * Create a new batch with the given name
@@ -104,6 +117,7 @@ public class LabBatch {
         for ( LabVessel starter : starters ) {
             addLabVessel ( starter );
         }
+        createdOn = new Date();
     }
 
 
@@ -163,6 +177,19 @@ public class LabBatch {
     public void setLabEvents ( Set<GenericLabEvent> labEvents ) {
         this.labEvents = labEvents;
     }
+
+    public void addLabEvent (GenericLabEvent labEvent) {
+        this.labEvents.add(labEvent);
+    }
+
+    public void addLabEvents ( Set<GenericLabEvent> labEvents ) {
+        this.labEvents.addAll(labEvents);
+    }
+
+    public Date getCreatedOn () {
+        return createdOn;
+    }
+
 
 
     /**

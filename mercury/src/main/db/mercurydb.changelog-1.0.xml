@@ -133,6 +133,9 @@
         </createTable>
         <addPrimaryKey tableName="bucket" schemaName="mercury" columnNames="bucket_id"/>
         <createSequence sequenceName="SEQ_BUCKET" schemaName="mercury" startValue="1" incrementBy="50"/>
+        <createIndex tableName="bucket" indexName="ix_b_def_name">
+            <column name="bucket_definition_name"/>
+        </createIndex>
     </changeSet>
     <changeSet id="GPLIM-22-2" author="scottmat">
         <createTable tableName="bucket_aud" schemaName="mercury">
@@ -224,6 +227,45 @@
                                  referencedTableName="bucket" referencedTableSchemaName="mercury"
                                  referencedColumnNames="bucket_id"/>
     </changeSet>
+    <changeSet id="GPLIM-273-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lab_event" columnName="product_order_id" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_event">
+            <column name="product_order_id" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-273-2" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lab_event_aud" columnName="product_order_id" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_event_aud">
+            <column name="product_order_id" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-273-3" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lab_batch" columnName="created_on" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_batch">
+            <column name="created_on"  type="oracle.sql.TIMESTAMP" />
+        </addColumn>
 
-
+    </changeSet>
+    <changeSet id="GPLIM-273-4" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="lab_batch_aud" columnName="created_on" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_batch_aud">
+            <column name="created_on"  type="oracle.sql.TIMESTAMP" />
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

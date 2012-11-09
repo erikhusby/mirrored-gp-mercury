@@ -2,12 +2,15 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry_;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
@@ -16,20 +19,21 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
-import javax.ejb.Stateful;
-import javax.enterprise.context.RequestScoped;
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Stateful
-@RequestScoped
+@Stateless
+//@RequestScoped
 public class BucketBean {
 
     private static final Log LOG = LogFactory.getLog (BucketBean.class);
@@ -39,6 +43,9 @@ public class BucketBean {
 
     @Inject
     private BucketEntryDao bucketEntryDao;
+
+    @Inject
+    private AthenaClientService athenaClientService;
 
     public BucketBean () {
     }
@@ -69,6 +76,52 @@ public class BucketBean {
                       bucket.getBucketDefinitionName(), ioe);
         }
         return newEntry;
+    }
+
+    public void start ( Person actor, @Nonnull Collection<LabVessel> vesselsToBatch,
+                        @Nonnull Bucket workingBucket) {
+        start(actor,vesselsToBatch, workingBucket, null);
+    }
+
+    public void start ( Person actor, @Nonnull Collection<LabVessel> vesselsToBatch,
+                        @Nonnull Bucket workingBucket, String batchTicket ) {
+
+        Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry>();
+
+        for (LabVessel workingVessel:vesselsToBatch) {
+            BucketEntry foundEntry = bucketEntryDao.findByVesselAndBucket ( workingVessel, workingBucket );
+            if(null == foundEntry) {
+                throw new InformaticsServiceException("Attempting to pull a vessel from a bucket when it does not exist in that bucket");
+            }
+            bucketEntrySet.add ( foundEntry ) ;
+
+            // TODO SGM add logic when getContainingVessel is implemented
+//            LabVessel container = workingVessel.getContainingVessel();
+        }
+
+        start(bucketEntrySet, actor,batchTicket );
+    }
+
+    public void start ( Person actor, int numberOfBatchSamples, Bucket workingBucket) {
+         start(actor, numberOfBatchSamples, workingBucket, null);
+    }
+
+
+    public void start ( Person actor, int numberOfBatchSamples, Bucket workingBucket, String batchTicket ) {
+
+        Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry>();
+
+        List<BucketEntry> sortedBucketEntries = new LinkedList<BucketEntry>(workingBucket.getBucketEntries());
+
+        Collections.sort (sortedBucketEntries, BucketEntry.byDate);
+
+        Iterator<BucketEntry> bucketEntryIterator = sortedBucketEntries.iterator();
+
+        for(int i=0;i<=numberOfBatchSamples;i++) {
+            bucketEntrySet.add(bucketEntryIterator.next());
+        }
+        start(bucketEntrySet, actor,batchTicket);
+
     }
 
     /**
@@ -107,22 +160,51 @@ public class BucketBean {
         Map<String, List<LabVessel>> pdoKeyToVesselMap = new HashMap<String, List<LabVessel>> ();
         Set<LabVessel> batchVessels = new HashSet<LabVessel> ();
 
+        List<LabBatch> trackBatches = null;
+
+        boolean allHaveBatch = true;
+
         for ( BucketEntry currEntry : bucketEntries ) {
             if ( !pdoKeyToVesselMap.containsKey ( currEntry.getPoBusinessKey () ) ) {
                 pdoKeyToVesselMap.put ( currEntry.getPoBusinessKey (), new LinkedList<LabVessel> () );
             }
             pdoKeyToVesselMap.get ( currEntry.getPoBusinessKey () ).add ( currEntry.getLabVessel () );
             batchVessels.add ( currEntry.getLabVessel () );
+
+            if(!currEntry.getLabVessel().getLabBatches().isEmpty()) {
+
+                trackBatches  = new LinkedList<LabBatch>();
+
+                List<LabBatch> currBatchList = new LinkedList<LabBatch>(currEntry.getLabVessel().getLabBatches());
+
+                Collections.sort(currBatchList, LabBatch.byDate);
+
+                trackBatches.add(currBatchList.get(currBatchList.size()-1));
+            } else {
+                allHaveBatch = false;
+            }
         }
 
-        //TODO SGM Only do the following if this pull is NOT currently a batch
+        /*
+            If the tubes being pulled from the Bucket are all from one LabBatch,  just update that LabBatch and move
+            forward.
 
-        LabBatch bucketBatch = new LabBatch(/*TODO SGM Pull ProductOrder details to get title */" ",
-                                            batchVessels);
+            otherwise (no previous batch, multiple lab batches, existing batch with samples that are not in an
+            existing batch) create a new Lab Batch.
+         */
+        LabBatch bucketBatch = null;
+
+        if( allHaveBatch && trackBatches != null && trackBatches.size()==1) {
+            bucketBatch = trackBatches.get(0);
+        } else {
+            bucketBatch = new LabBatch(/*TODO SGM Pull ProductOrder details to get title */ " ",
+                                       batchVessels);
+        }
 
         Set<GenericLabEvent> eventList = new HashSet<GenericLabEvent>();
         eventList.addAll(labEventFactory.buildFromBatchRequestsDBFree ( pdoKeyToVesselMap, actor, bucketBatch ));
 
+        bucketBatch.addLabEvents(eventList);
 
         try {
             if(null == batchTicket) {
@@ -140,12 +222,17 @@ public class BucketBean {
             throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
         }
 
+        removeEntries ( bucketEntries );
+    }
+
+    private void removeEntries ( Collection<BucketEntry> bucketEntries ) {
         for ( BucketEntry currEntry : bucketEntries ) {
             currEntry.getBucketExistence().removeEntry(currEntry);
-            //TODO SGM call DAO to delete bucket entries
+            bucketEntryDao.remove(currEntry);
+
+            jiraRemovalUpdate ( currEntry, "Extracted for Batch" );
+
         }
-
-
     }
 
     /**
@@ -159,17 +246,23 @@ public class BucketBean {
      * @param reason      textual notes on why the thing is
      *                    being cancelled.
      */
-    public void cancel ( @Nonnull BucketEntry bucketEntry, Person user, String reason ){
+    public void cancel ( @Nonnull BucketEntry bucketEntry, Person user, String reason ) {
 
-        Bucket currentBucket = bucketEntry.getBucketExistence ();
+        List<BucketEntry> singleRemoval = new LinkedList<BucketEntry>();
+        singleRemoval.add(bucketEntry);
 
-        currentBucket.removeEntry ( bucketEntry );
+        removeEntries ( singleRemoval );
 
+        jiraRemovalUpdate ( bucketEntry, reason );
+    }
+
+    private void jiraRemovalUpdate ( BucketEntry bucketEntry, String reason ) {
         try {
 
         ServiceAccessUtility.addJiraComment ( bucketEntry.getPoBusinessKey (), bucketEntry.getPoBusinessKey () + ":" +
                 bucketEntry.getLabVessel ().getLabCentricName () +
-                " Removed from bucket "+ bucketEntry.getBucketExistence().getBucketDefinitionName()+":: " + reason );
+                " Removed from bucket " + bucketEntry.getBucketExistence ()
+                                                     .getBucketDefinitionName () + ":: " + reason );
         } catch (IOException ioe) {
             LOG.error("Error attempting to create jira removal comment for " +
                               bucketEntry.getPoBusinessKey() + " " +

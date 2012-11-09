@@ -127,12 +127,13 @@ public abstract class LabEvent {
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    private BasicProjectPlan projectPlanOverride;
 
+
+
     /**
      * Business Key of a product order to which this event is associated
      */
-    @Transient
-    // transient because ARZ hasn't figured out the tests for this.  work in progress.
     private String productOrderId;
+
 
     public abstract LabEventName getEventName();
 

@@ -979,8 +979,8 @@ public class LabEventFactory {
         //TODO SGM pull event location up and pass it in.  Can be either ui or messaging
         GenericLabEvent bucketMoveEvent = new GenericLabEvent ( eventType, new Date (), LabEvent.UI_EVENT_LOCATION,
                                                                 disambiguator, actor );
-        bucketMoveEvent.setInPlaceLabVessel ( batchItem );
         bucketMoveEvent.setProductOrderId ( pdoKey );
+        batchItem.addInPlaceEvent(bucketMoveEvent);
 
         return bucketMoveEvent;
     }

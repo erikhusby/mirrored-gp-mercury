@@ -94,7 +94,7 @@ public abstract class LabVessel {
     @Formula("(select count(*) from lab_vessel_containers where lab_vessel_containers.lab_vessel = lab_vessel_id)")
     private Integer containersCount = 0;
 
-    @OneToMany(mappedBy = "inPlaceLabVessel")
+    @OneToMany(mappedBy = "inPlaceLabVessel", cascade = CascadeType.PERSIST)
     private Set<LabEvent> inPlaceLabEvents = new HashSet<LabEvent>();
 
     @OneToMany // todo jmt should this have mappedBy?
@@ -115,6 +115,7 @@ public abstract class LabVessel {
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
 
     protected LabVessel(String label) {
+        createdOn = new Date();
         this.label = label;
     }
 
