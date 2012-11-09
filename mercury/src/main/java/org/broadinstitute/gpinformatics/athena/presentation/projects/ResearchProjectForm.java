@@ -20,9 +20,7 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author breilly
@@ -245,74 +243,4 @@ public class ResearchProjectForm extends AbstractJsfBean {
     public void setIrbs(List<Irb> irbs) {
         this.irbs = irbs;
     }
-
-    public void changeUsers(List<BspUser> users, String componentId) {
-        // The users ARE THE ACTUAL MEMBERS THAT ARE THE APPROPRIATE LIST
-        Set<BspUser> uniqueUsers = new HashSet<BspUser>();
-
-        // Since this is called after a single add, at most there is one duplicate
-        BspUser duplicate = null;
-        for (BspUser user : users) {
-            if (uniqueUsers.contains(user)) {
-                duplicate = user;
-            } else {
-                uniqueUsers.add(user);
-            }
-        }
-
-        users.clear();
-        users.addAll(uniqueUsers);
-
-        if (duplicate != null) {
-            String message = String.format("%s was already in the list", duplicate.getFirstName() + " " + duplicate.getLastName());
-            addInfoMessage(componentId, "Duplicate item removed.", message);
-        }
-    }
-
-    public void changeFunding(List<Funding> fundingList, String componentId) {
-        // The users ARE THE ACTUAL MEMBERS THAT ARE THE APPROPRIATE LIST
-        Set<Funding> uniqueFunding = new HashSet<Funding>();
-
-        // Since this is called after a single add, at most there is one duplicate
-        Funding duplicate = null;
-        for (Funding funding : fundingList) {
-            if (uniqueFunding.contains(funding)) {
-                duplicate = funding;
-            } else {
-                uniqueFunding.add(funding);
-            }
-        }
-
-        fundingList.clear();
-        fundingList.addAll(uniqueFunding);
-
-        if (duplicate != null) {
-            String message = String.format("%s was already in the list", duplicate.getFundingTypeAndName());
-            addInfoMessage(componentId, "Duplicate item removed.", message);
-        }
-    }
-
-    public void changeCohorts(List<Cohort> cohorts, String componentId) {
-        // The users ARE THE ACTUAL MEMBERS THAT ARE THE APPROPRIATE LIST
-        Set<Cohort> uniqueCohorts = new HashSet<Cohort>();
-
-        // Since this is called after a single add, at most there is one duplicate
-        Cohort duplicate = null;
-        for (Cohort cohort : cohorts) {
-            if (uniqueCohorts.contains(cohort)) {
-                duplicate = cohort;
-            } else {
-                uniqueCohorts.add(cohort);
-            }
-        }
-
-        cohorts.clear();
-        cohorts.addAll(uniqueCohorts);
-
-        if (duplicate != null) {
-            String message = String.format("%s was already in the list", duplicate.getName());
-            addInfoMessage(componentId, "Duplicate item removed.", message);
-        }
-    }
-
 }

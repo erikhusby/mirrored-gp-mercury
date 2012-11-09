@@ -3,10 +3,11 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 
 import java.util.Comparator;
 
-public class Cohort {
+public class Cohort implements Displayable {
 
     public final String cohortId;
     public final String name;
@@ -62,6 +63,11 @@ public class Cohort {
     }
 
     public static final CohortByIdComparator COHORT_BY_ID = new CohortByIdComparator();
+
+    @Override
+    public String getDisplayName() {
+        return cohortId + ": " + name;
+    }
 
     public static class CohortByIdComparator implements Comparator<Cohort> {
         @Override

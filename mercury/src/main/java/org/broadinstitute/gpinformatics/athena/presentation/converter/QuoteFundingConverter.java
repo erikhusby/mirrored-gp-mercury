@@ -30,6 +30,6 @@ public class QuoteFundingConverter implements Converter {
             return null;
         }
 
-        return funding.getFundingTypeAndName();
+        return funding.getDisplayName();
     }
 }
