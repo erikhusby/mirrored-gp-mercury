@@ -113,7 +113,7 @@ public class LabEventResource {
         private LabVessel starter;
 
         @Override
-        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labVessel != null) {
                 if(labVessel.getTransfersTo().isEmpty()) {
                     for (LabBatch labBatch : labVessel.getLabBatches()) {
@@ -125,6 +125,14 @@ public class LabEventResource {
                 }
             }
             return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
         }
 
         public LabVessel getStarter() {

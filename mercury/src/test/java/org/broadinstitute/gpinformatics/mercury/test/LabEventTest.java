@@ -89,7 +89,7 @@ public class LabEventTest {
         private final List<String> labEventNames = new ArrayList<String>();
 
         @Override
-        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labEvent != null) {
                 if(hopCount > this.hopCount) {
                     this.hopCount = hopCount;
@@ -98,6 +98,14 @@ public class LabEventTest {
                 }
             }
             return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
         }
 
         public List<String> getLabEventNames() {

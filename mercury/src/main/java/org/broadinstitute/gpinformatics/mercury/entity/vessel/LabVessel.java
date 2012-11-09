@@ -607,7 +607,7 @@ public abstract class LabVessel {
 
     void evaluateCriteria(/*VesselPosition position, */TransferTraverserCriteria transferTraverserCriteria,
             TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
-        transferTraverserCriteria.evaluateVessel(this, labEvent, hopCount);
+        transferTraverserCriteria.evaluateVesselPreOrder(this, labEvent, hopCount);
         if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
                 vesselToVesselTransfer.getSourceVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,

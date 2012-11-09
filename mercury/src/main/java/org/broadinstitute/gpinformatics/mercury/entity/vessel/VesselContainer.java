@@ -131,7 +131,7 @@ public class VesselContainer<T extends LabVessel> {
     public void evaluateCriteria(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
             TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
         T vesselAtPosition = getVesselAtPosition(position);
-        TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVessel(
+        TransferTraverserCriteria.TraversalControl traversalControl = transferTraverserCriteria.evaluateVesselPreOrder(
                 vesselAtPosition, labEvent, hopCount);
         if(vesselAtPosition != null) {
             // handle re-arrays of tubes - look in any other racks that the tube has been in
@@ -162,6 +162,7 @@ public class VesselContainer<T extends LabVessel> {
                 traverseDescendants(position, transferTraverserCriteria, traversalDirection, hopCount);
             }
         }
+        transferTraverserCriteria.evaluateVesselPostOrder(vesselAtPosition, labEvent, hopCount);
     }
 
     private void traverseAncestors(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,

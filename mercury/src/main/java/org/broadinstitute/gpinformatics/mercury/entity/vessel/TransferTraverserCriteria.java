@@ -29,7 +29,9 @@ public interface TransferTraverserCriteria {
         Descendants
     }
 
-    TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount);
+    TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount);
+    void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount);
+    void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount);
 
     /**
      * Searches for nearest Lab Batch
@@ -42,7 +44,7 @@ public interface TransferTraverserCriteria {
         private final Map<Integer,Collection<LabBatch>> labBatchesAtHopCount = new HashMap<Integer, Collection<LabBatch>>();
 
         @Override
-        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labVessel != null) {
                 Collection<LabBatch> labBatches = labVessel.getLabBatches();
 
@@ -54,6 +56,14 @@ public interface TransferTraverserCriteria {
                 }
             }
             return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
         }
 
         public Collection<LabBatch> getNearestLabBatches() {
@@ -74,7 +84,7 @@ public interface TransferTraverserCriteria {
         private final Map<MercurySample, Collection<LabVessel>> singleSampleLibrariesForInstance = new HashMap<MercurySample, Collection<LabVessel>>();
 
         @Override
-        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labVessel != null) {
                 for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
                     MercurySample startingSample = sampleInstance.getStartingSample();
@@ -90,6 +100,14 @@ public interface TransferTraverserCriteria {
             return TraversalControl.ContinueTraversing;
         }
 
+        @Override
+        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        }
+
         public Map<MercurySample,Collection<LabVessel>> getSingleSampleLibraries() {
             return singleSampleLibrariesForInstance;
         }
@@ -102,22 +120,38 @@ public interface TransferTraverserCriteria {
 
         /** Sample instances encountered during this traversal */
         private Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
-        /** Reagents encountered during this traversal */
-        private Set<Reagent> reagents = new LinkedHashSet<Reagent>();
+        private Set<SampleInstance> currentSampleInstances = new LinkedHashSet<SampleInstance>();
         /** Ensure that reagents are applied only once */
         private boolean reagentsApplied = false;
         /** The first lab event encountered */
         private LabEvent labEvent;
 
         @Override
-        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             // todo jmt this class shouldn't have to worry about plate wells that have no informatics contents
             if (labVessel != null) {
                 if (labVessel.isSampleAuthority()) {
-                    sampleInstances.addAll(labVessel.getSampleInstances());
+                    currentSampleInstances.clear();
+                    for (MercurySample mercurySample : labVessel.getMercurySamples()) {
+                        currentSampleInstances.add(new SampleInstance(mercurySample, null, null));
+                    }
+                    sampleInstances.addAll(currentSampleInstances);
                 }
                 if (labVessel.getReagentContentsCount() != null && labVessel.getReagentContentsCount() > 0) {
-                    reagents.addAll(labVessel.getReagentContents());
+                    for (Reagent reagent : labVessel.getReagentContents()) {
+                        for (SampleInstance sampleInstance : currentSampleInstances) {
+                            sampleInstance.addReagent(reagent);
+                        }
+                    }
                 }
                 if (labEvent != null) {
 //                    applyProjectPlanOverrideIfPresent(labEvent, sampleInstances);
@@ -126,17 +160,18 @@ public interface TransferTraverserCriteria {
             if(labEvent != null && this.labEvent == null) {
                 this.labEvent = labEvent;
             }
-            return TraversalControl.ContinueTraversing;
         }
 
         public Set<SampleInstance> getSampleInstances() {
             if(!reagentsApplied) {
                 reagentsApplied = true;
+/*
                 for (Reagent reagent : reagents) {
                     for (SampleInstance sampleInstance : sampleInstances) {
                         sampleInstance.addReagent(reagent);
                     }
                 }
+*/
                 if (labEvent != null) {
                     for (SampleInstance sampleInstance : sampleInstances) {
                         MolecularState molecularState = sampleInstance.getMolecularState();
