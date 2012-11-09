@@ -174,13 +174,13 @@ public class Funding {
         }
 
         Funding castOther = (Funding) other;
-        return new EqualsBuilder().append(getCostObject(), castOther.getCostObject())
-                                  .append(getPurchaseOrderNumber(), castOther.getPurchaseOrderNumber())
-                                  .append(getFundingType(), castOther.getFundingType()).isEquals();
+        return new EqualsBuilder().append(costObject, castOther.getCostObject())
+                                  .append(purchaseOrderNumber, castOther.getPurchaseOrderNumber())
+                                  .append(fundingType, castOther.getFundingType()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getCostObject()).append(getPurchaseOrderNumber()).append(getFundingType()).toHashCode();
+        return new HashCodeBuilder().append(costObject).append(purchaseOrderNumber).append(fundingType).toHashCode();
     }
 }

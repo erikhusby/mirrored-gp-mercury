@@ -53,12 +53,12 @@ public class Cohort {
         }
 
         Cohort castOther = (Cohort) other;
-        return new EqualsBuilder().append(getCohortId(), castOther.getCohortId()).isEquals();
+        return new EqualsBuilder().append(cohortId, castOther.getCohortId()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getCohortId()).toHashCode();
+        return new HashCodeBuilder().append(cohortId).toHashCode();
     }
 
     public static final CohortByIdComparator COHORT_BY_ID = new CohortByIdComparator();
