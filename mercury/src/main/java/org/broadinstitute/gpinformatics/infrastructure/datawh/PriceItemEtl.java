@@ -45,7 +45,7 @@ public class PriceItemEtl  extends GenericEntityEtl {
         return genericRecord(etlDateStr, isDelete,
                 entity.getPriceItemId(),
                 format(entity.getPlatform()),
-                format(entity.getCategory()),
+                format(entity.getCategory() != null ? entity.getCategory() : "none"),
                 format(entity.getName()),
                 format(entity.getQuoteServerId()),
                 format(entity.getPrice()),

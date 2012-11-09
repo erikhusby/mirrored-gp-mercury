@@ -65,8 +65,7 @@ abstract public class GenericEntityEtl {
 
     /**
      * Iterates on the modified Mercury entities, converts them to sqlLoader records, and
-     * write them to the data file.
-     * Only the most recent version of a modified entity is recorded.
+     * writes the records to the data file.
      *
      * @param lastRev      beginning of the interval to look for entity changes.
      * @param etlRev       end of the interval to look for entity changes.
@@ -74,54 +73,86 @@ abstract public class GenericEntityEtl {
      * @return the number of records created in the data file (deletes and modifies).
      */
     public int doEtl(long lastRev, long etlRev, String etlDateStr) {
-
         // Retrieves the Envers-formatted list of entity changes in the given revision range.
         List<Object[]> dataChanges = auditReaderEtl.fetchDataChanges(lastRev, etlRev, getEntityClass());
 
-        Set<Long> changedEntityIds = new HashSet<Long>();
-        Set<Long> deletedEntityIds = new HashSet<Long>();
+        // Creates the wrapped Writer to the sqlLoader data file.
         String filename = dataFilename(etlDateStr, getBaseFilename());
         DataFile dataFile = new DataFile(filename);
 
+        // Writes the records.
+        processChanges(dataChanges, dataFile, etlDateStr);
+
+        return dataFile.getRecordCount();
+    }
+
+    /**
+     * Iterates on the modified Mercury entities, converts them to sqlLoader records, and
+     * writes the records to the data file.
+     * This code was broken out for testability.
+     * @param dataChanges
+     * @param dataFile
+     * @param etlDateStr
+     */
+    private void processChanges(List<Object[]> dataChanges, DataFile dataFile, String etlDateStr) {
+        Set<Long> changedEntityIds = new HashSet<Long>();
+        Set<Long> deletedEntityIds = new HashSet<Long>();
+
         try {
             for (Object[] dataChange : dataChanges) {
-                // Splits the result array.
-                Object entity = dataChange[0];
-                RevInfo revInfo = (RevInfo) dataChange[1];
+
+                // Collects the deleted vs added/modified entityIds.
                 RevisionType revType = (RevisionType) dataChange[2];
-
-                Long entityId = entityId(entity);
-                Date revDate = revInfo.getRevDate();
                 boolean isDelete = revType.equals(RevisionType.DEL);
+                Object entity = dataChange[0];
+                Long entityId = entityId(entity);
+                if (isDelete) {
+                    deletedEntityIds.add(entityId);
 
-                // Each entity ETL will either make status records, or entity records, not both.
-                if (!isEntityEtl()) {
-                    String statusRecord = entityStatusRecord(etlDateStr, revDate, entity, isDelete);
-                    dataFile.write(statusRecord);
+                    // Writes the deletion records.  Relies on all sqlLoader control files having entityId before
+                    // any other entity field.  Also for status records to be deletable by the one field.
+                    String record = genericRecord(etlDateStr, isDelete, entityId);
+                    dataFile.write(record);
                 } else {
-                    // Writes a DW deletion record if entity was deleted; if not a delete
-                    // collects deduplicated entity ids to lookup the current entity.
-                    if (isDelete) {
-                        String record = genericRecord(etlDateStr, isDelete, entityId);
-                        dataFile.write(record);
-                        deletedEntityIds.add(entityId);
-                    } else {
-                        changedEntityIds.add(entityId);
+                    changedEntityIds.add(entityId);
+                }
+            }
+
+            // Each entity ETL will either make status records, or entity records, not both.
+            // For entity ETL, only the latest version needs to be recorded regardless of what changed.
+            // For status ETL, iterates again to record every status change along with the change date.
+            if (isEntityEtl()) {
+                changedEntityIds.removeAll(deletedEntityIds);
+
+                for (Long entityId : changedEntityIds) {
+                    String record = entityRecord(etlDateStr, false, entityId);
+                    dataFile.write(record);
+                }
+
+            } else {
+                for (Object[] dataChange : dataChanges) {
+                    RevisionType revType = (RevisionType) dataChange[2];
+                    boolean isDelete = revType.equals(RevisionType.DEL);
+                    if (!isDelete) {
+                        Object entity = dataChange[0];
+                        Long entityId = entityId(entity);
+
+                        // Db trips up on referential integrity of status records if the deleted
+                        // entities are not skipped.
+                        if (!deletedEntityIds.contains(entityId)) {
+                            RevInfo revInfo = (RevInfo) dataChange[1];
+                            Date revDate = revInfo.getRevDate();
+                            String record = entityStatusRecord(etlDateStr, revDate, entity, isDelete);
+                            dataFile.write(record);
+                        }
                     }
                 }
             }
-            // Writes a record for latest version of each non-deleted, changed entity.
-            changedEntityIds.removeAll(deletedEntityIds);
-            for (Long entityId : changedEntityIds) {
-                String record = entityRecord(etlDateStr, false, entityId);
-                dataFile.write(record);
-            }
         } catch (IOException e) {
-            logger.error("Error while writing file " + filename, e);
+            logger.error("Error while writing file " + dataFile.getFilename(), e);
         } finally {
             dataFile.close();
         }
-        return dataFile.getRecordCount();
     }
 
     /**
@@ -205,6 +236,10 @@ abstract public class GenericEntityEtl {
 
         int getRecordCount() {
             return lineCount;
+        }
+
+        String getFilename() {
+            return filename;
         }
 
         void write(String record) throws IOException {

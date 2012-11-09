@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.ejb.Stateless;
@@ -12,6 +14,9 @@ import java.util.Date;
 public class ProjectPersonEtl  extends GenericEntityEtl {
     @Inject
     ResearchProjectDao dao;
+
+    @Inject
+    BSPUserList userList;
 
     @Override
     Class getEntityClass() {
@@ -44,12 +49,12 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
             return null;
         }
         Long personId = entity.getPersonId();
-        Person person = null;
+        BspUser bspUser = null;
         if (personId != null) {
-            person = dao.getEntityManager().find(Person.class, personId);
+            bspUser = userList.getById(personId);
         }
-        if (person == null) {
-            logger.info("Cannot export.  Person having id " + entityId + " no longer exists.");
+        if (bspUser == null) {
+            logger.info("Cannot export.  BspUser having id " + entityId + " no longer exists.");
             return null;
         }
 
@@ -58,9 +63,9 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
                 format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),
                 format(entity.getRole() != null ? entity.getRole().toString() : null),
                 format(entity.getPersonId()),
-                format(person.getFirstName()),
-                format(person.getLastName()),
-                format(person.getLogin())
+                format(bspUser.getFirstName()),
+                format(bspUser.getLastName()),
+                format(bspUser.getUsername())
         );
     }
 

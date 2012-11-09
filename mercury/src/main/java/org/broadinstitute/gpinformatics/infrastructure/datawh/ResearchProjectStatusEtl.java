@@ -49,15 +49,12 @@ public class ResearchProjectStatusEtl extends GenericEntityEtl {
         if (entity == null) {
             logger.info("Cannot export.  Audited ResearchProject object is null.");
             return null;
-        } else if (entity.getStatus() == null) {
-            logger.info("Cannot export. " + entity.getClass().getSimpleName() + " having id "
-                    + entity.getResearchProjectId() + " has null status.");
-            return null;
         }
+
         return genericRecord(etlDateStr, isDelete,
                 entity.getResearchProjectId(),
                 format(revDate),
-                format(entity.getStatus().getDisplayName())
+                format(entity.getStatus() != null ? entity.getStatus().getDisplayName() : "unknown")
         );
     }
 

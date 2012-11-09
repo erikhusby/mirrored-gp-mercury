@@ -49,16 +49,13 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
         if (entity == null) {
             logger.info("Cannot export. Audited ProductOrderSample object is null.");
             return null;
-        } else if (entity.getBillingStatus() == null) {
-            logger.info("Cannot export. " + entity.getClass().getSimpleName() + " having id "
-                    + entity.getProductOrderSampleId() + " has null billingStatus.");
-            return null;
         }
+
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
                 format(revDate),
-                format(entity.getBillingStatus().getDisplayName())
+                format(entity.getBillingStatus() != null ? entity.getBillingStatus().getDisplayName() : "unknown")
         );
     }
 

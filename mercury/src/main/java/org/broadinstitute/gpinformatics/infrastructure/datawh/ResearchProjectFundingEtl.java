@@ -44,7 +44,8 @@ public class ResearchProjectFundingEtl  extends GenericEntityEtl {
         }
         return genericRecord(etlDateStr, isDelete,
                 entity.getResearchProjectFundingId(),
-                format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null)
+                format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),
+                format(entity.getFundingId())
         );
     }
 

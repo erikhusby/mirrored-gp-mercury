@@ -9,8 +9,8 @@ IS
 CURSOR im_billable_item_cur IS SELECT * FROM im_billable_item WHERE is_delete = 'F';
 CURSOR im_po_cur IS SELECT * FROM im_product_order WHERE is_delete = 'F';
 CURSOR im_po_sample_cur IS SELECT * FROM im_product_order_sample WHERE is_delete = 'F';
-CURSOR im_po_status_cur IS SELECT * FROM im_product_order_status WHERE is_delete = 'F' ORDER BY status_date;
-CURSOR im_po_sample_stat_cur IS SELECT * FROM im_product_order_sample_stat WHERE is_delete = 'F' ORDER BY status_date;
+CURSOR im_po_status_cur IS SELECT * FROM im_product_order_status WHERE is_delete = 'F';
+CURSOR im_po_sample_stat_cur IS SELECT * FROM im_product_order_sample_stat WHERE is_delete = 'F';
 CURSOR im_price_item_cur IS SELECT * FROM im_price_item WHERE is_delete = 'F';
 CURSOR im_po_add_on_cur IS SELECT * FROM im_product_order_add_on WHERE is_delete = 'F';
 CURSOR im_product_cur IS SELECT * FROM im_product WHERE is_delete = 'F';
@@ -19,7 +19,7 @@ CURSOR im_rp_cur IS SELECT * FROM im_research_project WHERE is_delete = 'F';
 CURSOR im_rp_funding_cur IS SELECT * FROM im_research_project_funding WHERE is_delete = 'F';
 CURSOR im_rp_irb_cur IS SELECT * FROM im_research_project_irb WHERE is_delete = 'F';
 CURSOR im_rp_person_cur IS SELECT * FROM im_research_project_person WHERE is_delete = 'F';
-CURSOR im_rp_status_cur IS SELECT * FROM im_research_project_status WHERE is_delete = 'F' ORDER BY status_date;
+CURSOR im_rp_status_cur IS SELECT * FROM im_research_project_status WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
 
@@ -32,109 +32,78 @@ BEGIN
 
 --Level 3 (depends on level 2 tables)
 
-DELETE FROM product_order_status t1
-WHERE EXISTS (
-  SELECT 1 FROM im_product_order_status t2
-  WHERE t1.product_order_id = t2.product_order_id
-  AND t1.status_date = t2.status_date
-  AND t2.is_delete = 'T'
+DELETE FROM product_order_status
+WHERE product_order_id IN (
+  SELECT product_order_id FROM im_product_order_status WHERE is_delete = 'T'
 );
 
-DELETE FROM product_order_sample_status t1
-WHERE EXISTS (
-  SELECT 1 FROM im_product_order_sample_stat t2
-  WHERE t1.product_order_sample_id = t2.product_order_sample_id
-  AND t1.status_date = t2.status_date
-  AND t2.is_delete = 'T'
+DELETE FROM product_order_sample_status
+WHERE product_order_sample_id IN (
+  SELECT product_order_sample_id FROM im_product_order_sample_stat WHERE is_delete = 'T'
 );
 
-DELETE FROM billable_item t1
-WHERE EXISTS (
-  SELECT 1 FROM im_billable_item t2
-  WHERE t1.billable_item_id = t2.billable_item_id
-  AND t2.is_delete = 'T'
+DELETE FROM billable_item
+WHERE billable_item_id IN (
+  SELECT billable_item_id FROM im_billable_item WHERE is_delete = 'T'
 );
 
-DELETE FROM product_order_add_on t1
-WHERE EXISTS (
-  SELECT 1 FROM im_product_order_add_on t2
-  WHERE t1.product_order_add_on_id = t2.product_order_add_on_id
-  AND t2.is_delete = 'T'
+DELETE FROM product_order_add_on
+WHERE product_order_add_on_id IN (
+  SELECT product_order_add_on_id FROM im_product_order_add_on WHERE is_delete = 'T'
 );
 
 --Level 2 (depends only on level 1 tables)
 
-DELETE FROM research_project_status t1
-WHERE EXISTS (
-  SELECT 1 FROM im_research_project_status t2
-  WHERE t1.research_project_id = t2.research_project_id
-  AND t1.status_date = t2.status_date
-  AND t2.is_delete = 'T'
+DELETE FROM research_project_status
+WHERE research_project_id IN (
+  SELECT research_project_id FROM im_research_project_status WHERE is_delete = 'T'
 );
  
-DELETE FROM research_project_person t1
-WHERE EXISTS (
-  SELECT 1 FROM im_research_project_person t2
-  WHERE t1.research_project_person_id = t2.research_project_person_id
-  AND is_delete = 'T'
+DELETE FROM research_project_person
+WHERE research_project_person_id IN (
+  SELECT research_project_person_id FROM im_research_project_person WHERE is_delete = 'T'
 );
 
-DELETE FROM research_project_funding t1
-WHERE EXISTS (
-  SELECT 1 FROM im_research_project_funding t2
-  WHERE t1.research_project_funding_id = t2.research_project_funding_id
-  AND t2.is_delete = 'T'
+DELETE FROM research_project_funding
+WHERE research_project_funding_id IN (
+  SELECT research_project_funding_id FROM im_research_project_funding WHERE is_delete = 'T'
 );
 
-DELETE FROM research_project_cohort t1
-WHERE EXISTS (
-  SELECT 1 FROM im_research_project_cohort t2
-  WHERE t1.research_project_cohort_id = t2.research_project_cohort_id
-  AND t2.is_delete = 'T'
+DELETE FROM research_project_cohort
+WHERE research_project_cohort_id IN (
+  SELECT research_project_cohort_id FROM im_research_project_cohort WHERE is_delete = 'T'
 );
 
-DELETE FROM research_project_irb t1
-WHERE EXISTS (
-  SELECT 1 FROM im_research_project_irb t2
-  WHERE t1.research_project_irb_id = t2.research_project_irb_id
-  AND t2.is_delete = 'T'
+DELETE FROM research_project_irb
+WHERE research_project_irb_id IN (
+  SELECT research_project_irb_id FROM im_research_project_irb WHERE is_delete = 'T'
 );
 
-DELETE FROM product_order t1
-WHERE EXISTS (
-  SELECT 1 FROM im_product_order t2
-  WHERE t1.product_order_id = t2.product_order_id
-  AND t2.is_delete = 'T'
+DELETE FROM product_order
+WHERE product_order_id IN (
+  SELECT product_order_id FROM im_product_order WHERE is_delete = 'T'
 );
 
-DELETE FROM product_order_sample t1
-WHERE EXISTS (
-  SELECT 1 FROM im_product_order_sample t2
-  WHERE t1.product_order_sample_id = t2.product_order_sample_id
-  AND t2.is_delete = 'T'
+DELETE FROM product_order_sample
+WHERE product_order_sample_id IN (
+  SELECT product_order_sample_id FROM im_product_order_sample WHERE is_delete = 'T'
 );
 
 -- Level 1 (independent tables)
 
-DELETE FROM research_project t1
-WHERE EXISTS (
-  SELECT 1 FROM im_research_project t2
-  WHERE t1.research_project_id = t2.research_project_id
-  AND t2.is_delete = 'T'
+DELETE FROM research_project
+WHERE research_project_id IN (
+  SELECT research_project_id FROM im_research_project WHERE is_delete = 'T'
 );
 
-DELETE FROM price_item t1
-WHERE EXISTS (
-  SELECT 1 FROM im_price_item t2
-  WHERE t1.price_item_id = t2.price_item_id
-  AND t2.is_delete = 'T'
+DELETE FROM price_item
+WHERE price_item_id IN (
+  SELECT price_item_id FROM im_price_item WHERE is_delete = 'T'
 );
 
-DELETE FROM product t1
-WHERE EXISTS (
-  SELECT 1 FROM im_product t2
-  WHERE t1.product_id = t2.product_id
-  AND t2.is_delete = 'T'
+DELETE FROM product
+WHERE product_id IN (
+  SELECT product_id FROM im_product WHERE is_delete = 'T'
 );
 
 COMMIT;
