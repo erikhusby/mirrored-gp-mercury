@@ -201,6 +201,10 @@ public class UserBean implements Serializable {
         return roles.contains(DB.Role.PDM);
     }
 
+    public boolean isDeveloperUser() {
+        return roles.contains(DB.Role.Developer);
+    }
+
     public String getRolesString() {
         if (roles.isEmpty()) {
             return "No Roles";
