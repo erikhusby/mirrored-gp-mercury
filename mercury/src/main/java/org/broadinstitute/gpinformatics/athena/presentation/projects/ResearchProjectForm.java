@@ -4,7 +4,9 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectManager;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.entity.project.*;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -18,8 +20,9 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author breilly
@@ -27,8 +30,6 @@ import java.util.List;
 @Named
 @RequestScoped
 public class ResearchProjectForm extends AbstractJsfBean {
-
-    private static final int IRB_NAME_MAX_LENGTH = 250;
 
     @Inject
     private Log log;
@@ -189,22 +190,6 @@ public class ResearchProjectForm extends AbstractJsfBean {
         return redirect("view");
     }
 
-    public List<Irb> completeIrbs(String query) {
-        String trimmedQuery = query.trim();
-
-        if (trimmedQuery.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Irb> irbsForQuery = new ArrayList<Irb>();
-        for (ResearchProjectIRB.IrbType type : ResearchProjectIRB.IrbType.values()) {
-            Irb irb = irbConverter.createIrb(trimmedQuery, type, IRB_NAME_MAX_LENGTH);
-            irbsForQuery.add(irb);
-        }
-
-        return irbsForQuery;
-    }
-
     public List<BspUser> getProjectManagers() {
         return projectManagers;
     }
@@ -261,7 +246,73 @@ public class ResearchProjectForm extends AbstractJsfBean {
         this.irbs = irbs;
     }
 
-    public int getIrbMaxLength() {
-        return IRB_NAME_MAX_LENGTH;
+    public void changeUsers(List<BspUser> users, String componentId) {
+        // The users ARE THE ACTUAL MEMBERS THAT ARE THE APPROPRIATE LIST
+        Set<BspUser> uniqueUsers = new HashSet<BspUser>();
+
+        // Since this is called after a single add, at most there is one duplicate
+        BspUser duplicate = null;
+        for (BspUser user : users) {
+            if (uniqueUsers.contains(user)) {
+                duplicate = user;
+            } else {
+                uniqueUsers.add(user);
+            }
+        }
+
+        users.clear();
+        users.addAll(uniqueUsers);
+
+        if (duplicate != null) {
+            String message = String.format("%s was already in the list", duplicate.getFirstName() + " " + duplicate.getLastName());
+            addInfoMessage(componentId, "Duplicate item removed.", message);
+        }
     }
+
+    public void changeFunding(List<Funding> fundingList, String componentId) {
+        // The users ARE THE ACTUAL MEMBERS THAT ARE THE APPROPRIATE LIST
+        Set<Funding> uniqueFunding = new HashSet<Funding>();
+
+        // Since this is called after a single add, at most there is one duplicate
+        Funding duplicate = null;
+        for (Funding funding : fundingList) {
+            if (uniqueFunding.contains(funding)) {
+                duplicate = funding;
+            } else {
+                uniqueFunding.add(funding);
+            }
+        }
+
+        fundingList.clear();
+        fundingList.addAll(uniqueFunding);
+
+        if (duplicate != null) {
+            String message = String.format("%s was already in the list", duplicate.getFundingTypeAndName());
+            addInfoMessage(componentId, "Duplicate item removed.", message);
+        }
+    }
+
+    public void changeCohorts(List<Cohort> cohorts, String componentId) {
+        // The users ARE THE ACTUAL MEMBERS THAT ARE THE APPROPRIATE LIST
+        Set<Cohort> uniqueCohorts = new HashSet<Cohort>();
+
+        // Since this is called after a single add, at most there is one duplicate
+        Cohort duplicate = null;
+        for (Cohort cohort : cohorts) {
+            if (uniqueCohorts.contains(cohort)) {
+                duplicate = cohort;
+            } else {
+                uniqueCohorts.add(cohort);
+            }
+        }
+
+        cohorts.clear();
+        cohorts.addAll(uniqueCohorts);
+
+        if (duplicate != null) {
+            String message = String.format("%s was already in the list", duplicate.getName());
+            addInfoMessage(componentId, "Duplicate item removed.", message);
+        }
+    }
+
 }

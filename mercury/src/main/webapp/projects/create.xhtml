@@ -63,9 +63,10 @@
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
+                            <p:ajax event="itemSelect" listener="#{researchProjectForm.changeUsers(researchProjectForm.projectManagers, 'projectManagers')}" update="projectManagers, pmMessage"/>
                         </p:autoComplete>
                         <p:watermark for="projectManagers" value="Type name to search"/>
-                        <p:message for="projectManagers"/>
+                        <p:message id="pmMessage" for="projectManagers"/>
                     </div>
                 </div>
 
@@ -81,8 +82,10 @@
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
+                            <p:ajax event="itemSelect" listener="#{researchProjectForm.changeUsers(researchProjectForm.broadPIs, 'broadPIs')}" update="broadPIs, piMessage"/>
                         </p:autoComplete>
                         <p:watermark for="broadPIs" value="Type name to search"/>
+                        <p:message id="piMessage" for="broadPIs"/>
                     </div>
                 </div>
 
@@ -98,8 +101,12 @@
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
+                            <p:ajax event="itemSelect"
+                                listener="#{researchProjectForm.changeUsers(researchProjectForm.scientists, 'scientists')}"
+                                update="scientists, scientistMessage"/>
                         </p:autoComplete>
                         <p:watermark for="scientists" value="Type name to search"/>
+                        <p:message id="scientistMessage" for="scientists"/>
                     </div>
                 </div>
 
@@ -115,8 +122,12 @@
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
+                            <p:ajax event="itemSelect"
+                                listener="#{researchProjectForm.changeUsers(researchProjectForm.externalCollaborators, 'externalCollaborators')}"
+                                update="externalCollaborators, externalCollaboratorsMessage"/>
                         </p:autoComplete>
                         <p:watermark for="externalCollaborators" value="Type name to search"/>
+                        <p:message id="externalCollaboratorsMessage" for="externalCollaborators"/>
                     </div>
                 </div>
 
@@ -132,8 +143,12 @@
                                 <div class="ac-dropdown-text">#{funding.fundingTypeAndName}</div>
                                 <div class="ac-dropdown-subtext">#{funding.matchDescription}:</div>
                             </p:column>
+                            <p:ajax event="itemSelect"
+                                listener="#{researchProjectForm.changeFunding(researchProjectForm.fundingSources, 'fundingSources')}"
+                                update="fundingSources, fundingSourcesMessage"/>
                         </p:autoComplete>
                         <p:watermark for="fundingSources" value="Type text to search"/>
+                        <p:message id="fundingSourcesMessage" for="fundingSources"/>
                     </div>
                 </div>
 
@@ -149,9 +164,13 @@
                                 <div class="ac-dropdown-text">#{cohort.cohortId}: #{cohort.name}</div>
                                 <div class="ac-dropdown-subtext">#{cohort.group}: #{cohort.category}</div>
                             </p:column>
-                        </p:autoComplete>
+                            <p:ajax event="itemSelect"
+                                    listener="#{researchProjectForm.changeCohorts(researchProjectForm.sampleCohorts, 'sampleCohorts')}"
+                                    update="sampleCohorts, sampleCohortsMessage"/>
 
+                        </p:autoComplete>
                         <p:watermark for="sampleCohorts" value="Type text to search"/>
+                        <p:message id="sampleCohortsMessage" for="sampleCohorts"/>
                     </div>
                 </div>
 
@@ -160,9 +179,9 @@
                     <p:outputLabel for="irbs" value="IRB/IACUC Numbers" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}"
-                            completeMethod="#{researchProjectForm.completeIrbs}" var="irb" scrollHeight="250"
+                            completeMethod="#{irbConverter.completeIrbs}" var="irb" scrollHeight="250"
                             itemLabel="#{irb.name}: #{irb.irbType.displayName}" itemValue="#{irb}"
-                            converter="#{irbConverter}" multiple="true" maxlength="#{researchProjectForm.irbMaxLength}">
+                            converter="#{irbConverter}" multiple="true" maxlength="#{irbConverter.irbMaxLength}">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{irb.name}: #{irb.irbType.displayName}</div>
                             </p:column>

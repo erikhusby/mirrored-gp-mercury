@@ -127,7 +127,6 @@ public class BSPUserList {
             List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
 
             if (rawUsers == null) {
-                rawUsers = new ArrayList<BspUser>();
                 serverValid = false;
             } else {
                 serverValid = true;
