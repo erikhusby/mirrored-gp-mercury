@@ -63,7 +63,7 @@ public class ProductViewBean extends AbstractJsfBean {
 
     public void onPreRenderView() throws IOException {
         if ( product == null ) {
-            addErrorMessage("No product with this part number exists.", "The product part number does not exist.");
+            addErrorMessage("No product with this part number exists.");
             facesContext.renderResponse();
         }
     }
