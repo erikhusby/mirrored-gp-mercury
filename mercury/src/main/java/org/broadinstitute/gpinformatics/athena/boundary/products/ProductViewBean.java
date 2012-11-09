@@ -6,9 +6,13 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItemComparat
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.athena.presentation.products.ProductForm;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
+import javax.faces.context.FacesContext;
+import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,11 +21,14 @@ import java.util.List;
 
 @Named("productView")
 @RequestScoped
-public class ProductViewBean {
+public class ProductViewBean extends AbstractJsfBean {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
 
     private Product product;
+
+    @Inject
+    private FacesContext facesContext;
 
     public Product getProduct() {
         return product;
@@ -54,6 +61,12 @@ public class ProductViewBean {
         return priceItems;
     }
 
+    public void onPreRenderView() throws IOException {
+        if ( product == null ) {
+            addErrorMessage("No product with this part number exists.", "The product part number does not exist.");
+            facesContext.renderResponse();
+        }
+    }
 
     public String getAvailabilityDate() {
         if (product == null || product.getAvailabilityDate() == null) {

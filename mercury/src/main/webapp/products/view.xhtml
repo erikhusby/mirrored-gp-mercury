@@ -22,13 +22,14 @@
     <ui:define name="metadata">
         <f:metadata>
             <f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}"/>
+            <f:event type="preRenderView" listener="#{productView.onPreRenderView}"/>
         </f:metadata>
     </ui:define>
     <ui:define name="body">
 
 
 
-        <h:form id="productForm" styleClass="form-horizontal form-readonly" >
+        <h:form id="productForm" styleClass="form-horizontal form-readonly" rendered="#{productView.product != null ? true : false }">
 
             <sqltg:AuthorizeBlock roles="Mercury-Developers, Mercury-ProductManagers">
                 <div class="row-fluid" style="margin-bottom: 30px;">
