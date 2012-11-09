@@ -140,10 +140,10 @@ public abstract class AbstractJsfBean {
             }
         }
 
-        objects.clear();
-        objects.addAll(unqiueObjects);
-
         if (duplicate != null) {
+            objects.clear();
+            objects.addAll(unqiueObjects);
+
             String name;
             if (duplicate instanceof BspUser) {
                 // We do not own BSP User, so special case this.
