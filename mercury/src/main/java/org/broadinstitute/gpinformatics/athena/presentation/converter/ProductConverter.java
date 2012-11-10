@@ -15,10 +15,14 @@ public class ProductConverter implements Converter {
     @Inject
     private ProductDao productDao;
 
+    public Product getAsObject(String businessKey) {
+        Product product = productDao.findByBusinessKey(businessKey);
+        return product;
+    }
+
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
-        Product product = productDao.findByBusinessKey(value);
-        return product;
+        return getAsObject(value);
     }
 
     @Override
