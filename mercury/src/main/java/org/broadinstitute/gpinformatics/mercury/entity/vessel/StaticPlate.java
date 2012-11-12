@@ -100,11 +100,6 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public Set<SampleInstance> getSampleInstances() {
-        return this.vesselContainer.getSampleInstances();
-    }
-
     public VesselContainer<PlateWell> getContainerRole() {
         return this.vesselContainer;
     }

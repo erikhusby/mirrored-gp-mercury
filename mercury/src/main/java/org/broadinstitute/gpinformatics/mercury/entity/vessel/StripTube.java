@@ -57,11 +57,6 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
     }
 
     @Override
-    public Set<SampleInstance> getSampleInstances() {
-        return this.getContainerRole().getSampleInstances();
-    }
-
-    @Override
     public Set<LabEvent> getTransfersFrom() {
         return vesselContainer.getTransfersFrom();
     }

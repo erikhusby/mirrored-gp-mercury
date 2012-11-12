@@ -120,11 +120,6 @@ public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<Tw
     }
 
     @Override
-    public Set<SampleInstance> getSampleInstances() {
-        return this.getContainerRole().getSampleInstances();
-    }
-
-    @Override
     public Set<LabEvent> getTransfersFrom() {
         return this.vesselContainer.getTransfersFrom();
     }

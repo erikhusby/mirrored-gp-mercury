@@ -118,8 +118,4 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         return this.flowcellBarcode;
     }
 
-    @Override
-    public Set<SampleInstance> getSampleInstances() {
-        return this.vesselContainer.getSampleInstances();
-    }
 }

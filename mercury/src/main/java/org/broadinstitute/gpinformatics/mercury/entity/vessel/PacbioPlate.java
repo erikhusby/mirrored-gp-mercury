@@ -36,11 +36,6 @@ public class PacbioPlate extends RunCartridge {
     }
 
     @Override
-    public Set<SampleInstance> getSampleInstances() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public Collection<LabEvent> getEvents() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }

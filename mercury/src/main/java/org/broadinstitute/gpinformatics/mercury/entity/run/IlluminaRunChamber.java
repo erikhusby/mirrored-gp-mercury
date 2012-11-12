@@ -61,11 +61,6 @@ public class IlluminaRunChamber extends RunChamber {
     }
 
 
-    @Override
-    public Set<SampleInstance> getSampleInstances() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
     /**
      * Web service call over to zamboni/picard
      * @return

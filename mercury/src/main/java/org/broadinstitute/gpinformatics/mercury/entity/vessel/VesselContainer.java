@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -20,10 +18,12 @@ import javax.persistence.MapKeyColumn;
 import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,7 +33,7 @@ import java.util.Set;
 @Embeddable
 public class VesselContainer<T extends LabVessel> {
 
-    private static final Log LOG = LogFactory.getLog(VesselContainer.class);
+//    private static final Log LOG = LogFactory.getLog(VesselContainer.class);
 
     /* rack holds tubes, tubes have barcodes and can be removed.
     * plate holds wells, wells can't be removed.
@@ -75,6 +75,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public T getVesselAtPosition(VesselPosition position) {
+        //noinspection unchecked
         return (T) this.mapPositionToVessel.get(position);
     }
 
@@ -120,11 +121,30 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
+        LabVessel.TraversalResults traversalResults = traverseAncestors(position);
+        return traversalResults.getSampleInstances();
+    }
 
-        TransferTraverserCriteria.SampleInstanceCriteria sampleInstanceCriteria = new TransferTraverserCriteria.SampleInstanceCriteria();
+    LabVessel.TraversalResults traverseAncestors(VesselPosition position) {
+        LabVessel.TraversalResults traversalResults = new LabVessel.TraversalResults();
+        T vesselAtPosition = getVesselAtPosition(position);
 
-        evaluateCriteria(position, sampleInstanceCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
-        return sampleInstanceCriteria.getSampleInstances();
+        if(vesselAtPosition == null) {
+            List<LabVessel.VesselEvent> ancestors = getAncestors(position);
+            for (LabVessel.VesselEvent ancestor : ancestors) {
+                LabVessel labVessel = ancestor.getLabVessel();
+                // todo jmt put this logic in VesselEvent?
+                if (labVessel == null) {
+                    traversalResults.add(ancestor.getVesselContainer().traverseAncestors(ancestor.getPosition()));
+                } else {
+                    traversalResults.add(labVessel.traverseAncestors());
+                }
+            }
+        } else {
+            traversalResults.add(vesselAtPosition.traverseAncestors());
+        }
+        traversalResults.completeLevel();
+        return traversalResults;
     }
 
     // todo jmt move this to LabVessel
@@ -237,6 +257,7 @@ public class VesselContainer<T extends LabVessel> {
                 for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
                     VesselContainer vesselContainer = sourceLabVessel.getContainerRole();
                     if(vesselContainer != null) {
+                        //noinspection unchecked
                         sampleInstances.addAll(vesselContainer.getSampleInstances());
                         // todo arz fix this, probably by using LabBatch properly
 //                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
@@ -257,6 +278,7 @@ public class VesselContainer<T extends LabVessel> {
      */
     @Transient
     public Collection<T> getContainedVessels() {
+        //noinspection unchecked
         return (Collection<T>) this.mapPositionToVessel.values();
     }
 
@@ -271,6 +293,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public Map<VesselPosition, T> getMapPositionToVessel() {
+        //noinspection unchecked
         return (Map<VesselPosition, T>) mapPositionToVessel;
     }
 
@@ -299,4 +322,34 @@ public class VesselContainer<T extends LabVessel> {
         return cherryPickTransfersTo;
     }
 
+    public List<LabVessel.VesselEvent> getAncestors(VesselPosition position) {
+        List<LabVessel.VesselEvent> vesselEvents = new ArrayList<LabVessel.VesselEvent>();
+        for (SectionTransfer sectionTransfer : sectionTransfersTo) {
+            // todo jmt replace indexOf with map lookup
+            int targetWellIndex = sectionTransfer.getTargetSection().getWells().indexOf(position);
+            if(targetWellIndex < 0) {
+                // the position parameter isn't in the section, so skip the transfer
+                continue;
+            }
+            VesselPosition sourcePosition = sectionTransfer.getSourceSection().getWells().get(targetWellIndex);
+            VesselContainer sourceVesselContainer = sectionTransfer.getSourceVesselContainer();
+            vesselEvents.add(new LabVessel.VesselEvent(sourceVesselContainer.getVesselAtPosition(sourcePosition),
+                    sourceVesselContainer, sourcePosition, sectionTransfer.getLabEvent()));
+        }
+        for (CherryPickTransfer cherryPickTransfer : cherryPickTransfersTo) {
+            // todo jmt optimize this
+            if(cherryPickTransfer.getTargetPosition() == position && cherryPickTransfer.getTargetVesselContainer().equals(this)) {
+                VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
+                VesselContainer<?> sourceVesselContainer = cherryPickTransfer.getSourceVesselContainer();
+                vesselEvents.add(new LabVessel.VesselEvent(sourceVesselContainer.getVesselAtPosition(sourcePosition),
+                        sourceVesselContainer, sourcePosition, cherryPickTransfer.getLabEvent()));
+            }
+
+        }
+        return vesselEvents;
+    }
+
+    public List<LabVessel.VesselEvent> getAncestors(LabVessel containee) {
+        return getAncestors(getPositionOfVessel(containee));
+    }
 }

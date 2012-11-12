@@ -881,11 +881,9 @@ public class LabEventTest {
             labEventHandler.processEvent(indexedAdapterLigationEntity);
             // asserts
             Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-//            PlateWell plateWellA1PostIndex = shearingCleanupPlate.getContainerRole().getVesselAtPosition("A01");
-//            Assert.assertEquals(plateWellA1PostIndex.getAppliedReagents().iterator().next(), index301, "Wrong reagent");
             SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
             MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) sampleInstance.getReagents().iterator().next();
-            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Fenok", "Wrong index");
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-M", "Wrong index");
 
             // AdapterLigationCleanup
             validateWorkflow("AdapterLigationCleanup", shearingCleanupPlate);
@@ -931,7 +929,7 @@ public class LabEventTest {
     public static class BuildIndexPlate {
         private final String indexPlateBarcode;
         private StaticPlate indexPlate;
-        private MolecularIndexReagent index301;
+//        private MolecularIndexReagent index301;
 
         public BuildIndexPlate(String indexPlateBarcode) {
             this.indexPlateBarcode = indexPlateBarcode;
@@ -942,18 +940,27 @@ public class LabEventTest {
         }
 
         public BuildIndexPlate invoke() {
+            char[] bases = {'A', 'C', 'T', 'G'};
+
             indexPlate = new StaticPlate(indexPlateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
-            PlateWell plateWellA01 = new PlateWell(indexPlate, VesselPosition.A01);
-            index301 = new MolecularIndexReagent(new MolecularIndexingScheme(
-                    new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
-                        put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex("ATCGATCG"));}}));
-            plateWellA01.addReagent(index301);
-            indexPlate.getContainerRole().addContainedVessel(plateWellA01, VesselPosition.A01);
-            PlateWell plateWellA02 = new PlateWell(indexPlate, VesselPosition.A02);
-            plateWellA02.addReagent(new MolecularIndexReagent(new MolecularIndexingScheme(
-                    new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
-                        put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex("TCGATCGA"));}})));
-            indexPlate.getContainerRole().addContainedVessel(plateWellA02, VesselPosition.A02);
+            for (VesselPosition vesselPosition : SBSSection.ALL96.getWells()) {
+                PlateWell plateWell = new PlateWell(indexPlate, vesselPosition);
+                StringBuilder stringBuilder = new StringBuilder();
+
+                // Build a deterministic sequence from the vesselPosition, by indexing into the bases array
+                int base4Ordinal = Integer.parseInt(Integer.toString(vesselPosition.ordinal() + 1, 4), 4);
+                while(base4Ordinal > 0) {
+                    stringBuilder.append(bases[base4Ordinal % 4]);
+                    base4Ordinal = base4Ordinal / 4;
+                }
+
+                final String sequence = stringBuilder.toString();
+                MolecularIndexReagent molecularIndexReagent = new MolecularIndexReagent(new MolecularIndexingScheme(
+                        new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
+                            put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex(sequence));}}));
+                plateWell.addReagent(molecularIndexReagent);
+                indexPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+            }
             return this;
         }
     }
@@ -1626,8 +1633,10 @@ public class LabEventTest {
             labEventHandler.processEvent(flowcellTransferEntity);
             //asserts
             illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE1).size(),
-                    normCatchRack.getSampleInstances().size(), "Wrong number of samples in flowcell lane");
+            Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE1);
+            Assert.assertEquals(lane1SampleInstances.size(), normCatchRack.getSampleInstances().size(),
+                    "Wrong number of samples in flowcell lane");
+            Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1, "Wrong number of reagents");
         }
 
         public RackOfTubes getDenatureRack() {
