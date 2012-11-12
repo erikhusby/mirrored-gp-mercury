@@ -8,10 +8,7 @@ import javax.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 abstract public class GenericEntityEtl {
     Logger logger = Logger.getLogger(this.getClass());
@@ -97,30 +94,41 @@ abstract public class GenericEntityEtl {
     private void processChanges(List<Object[]> dataChanges, DataFile dataFile, String etlDateStr) {
         Set<Long> changedEntityIds = new HashSet<Long>();
         Set<Long> deletedEntityIds = new HashSet<Long>();
+        List<Object> statusEntities = new ArrayList<Object>();
+        List<Date> statusDates = new ArrayList<Date>();
 
         try {
-            for (Object[] dataChange : dataChanges) {
 
-                // Collects the deleted vs added/modified entityIds.
+            for (Object[] dataChange : dataChanges) {
                 RevisionType revType = (RevisionType) dataChange[2];
                 boolean isDelete = revType.equals(RevisionType.DEL);
                 Object entity = dataChange[0];
                 Long entityId = entityId(entity);
                 if (isDelete) {
+                    // Makes a set of ids of deleted entities
                     deletedEntityIds.add(entityId);
 
-                    // Writes the deletion records.  Relies on all sqlLoader control files having entityId before
-                    // any other entity field.  Also for status records to be deletable by the one field.
+                    // Writes the deletion records.  Currently all entities are unique on the entityId field.
+                    // For status record Etl, all status for the entity will be deleted.
                     String record = genericRecord(etlDateStr, isDelete, entityId);
                     dataFile.write(record);
                 } else {
+                    // Makes a set of ids of added/modified entities
                     changedEntityIds.add(entityId);
+
+                    // List of status change entities and dates
+                    if (!isEntityEtl()) {
+                        RevInfo revInfo = (RevInfo) dataChange[1];
+                        statusDates.add(revInfo.getRevDate());
+                        statusEntities.add(entity);
+                    }
                 }
             }
 
-            // Each entity ETL will either make status records, or entity records, not both.
-            // For entity ETL, only the latest version needs to be recorded regardless of what changed.
-            // For status ETL, iterates again to record every status change along with the change date.
+
+            // Each entityEtl class will either make status records, or entity records, not both.
+            // For entity records, only the latest version needs to be recorded regardless of what changed.
+            // For status records, iterates on the statusEntities to record every status change.
             if (isEntityEtl()) {
                 changedEntityIds.removeAll(deletedEntityIds);
 
@@ -130,21 +138,15 @@ abstract public class GenericEntityEtl {
                 }
 
             } else {
-                for (Object[] dataChange : dataChanges) {
-                    RevisionType revType = (RevisionType) dataChange[2];
-                    boolean isDelete = revType.equals(RevisionType.DEL);
-                    if (!isDelete) {
-                        Object entity = dataChange[0];
-                        Long entityId = entityId(entity);
+                Iterator<Date> statusDateIter = statusDates.iterator();
+                for (Object entity : statusEntities) {
+                    Long entityId = entityId(entity);
 
-                        // Db trips up on referential integrity of status records if the deleted
-                        // entities are not skipped.
-                        if (!deletedEntityIds.contains(entityId)) {
-                            RevInfo revInfo = (RevInfo) dataChange[1];
-                            Date revDate = revInfo.getRevDate();
-                            String record = entityStatusRecord(etlDateStr, revDate, entity, isDelete);
-                            dataFile.write(record);
-                        }
+                    // Db trips up on referential integrity if deleted entity statuses are not skipped.
+                    if (!deletedEntityIds.contains(entityId)) {
+                        Date revDate = statusDateIter.next();
+                        String record = entityStatusRecord(etlDateStr, revDate, entity, false);
+                        dataFile.write(record);
                     }
                 }
             }

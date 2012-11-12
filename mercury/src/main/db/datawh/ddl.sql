@@ -249,7 +249,7 @@ CREATE TABLE im_research_project_status (
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
   research_project_id NUMERIC(19) NOT NULL,
-  status_date DATE NOT NULL,
+  status_date DATE,
   status VARCHAR2(19)
 );
 

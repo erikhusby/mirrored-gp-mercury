@@ -416,17 +416,20 @@ END LOOP;
 FOR new IN im_rp_funding_cur LOOP
   BEGIN
     UPDATE research_project_funding SET
+      funding_id = new.funding_id,
       etl_date = new.etl_date 
     WHERE research_project_funding_id = new.research_project_funding_id;
 
     INSERT INTO research_project_funding (
       research_project_id,
       research_project_funding_id,
+      funding_id,
       etl_date 
     )
     SELECT
       new.research_project_id,
       new.research_project_funding_id,
+      new.funding_id,
       new.etl_date 
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM research_project_funding

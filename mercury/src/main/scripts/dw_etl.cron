@@ -178,6 +178,9 @@ quit;
 
     if [ -s ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log ]; then
 	echo "There were data problems while merging new data.  See ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log"
+    else
+        # removes the zero-length file
+        rm ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log
     fi
     mv ${NEW_DIR}/${TIMESTAMP}_is_ready ${DONE_DIR}
 

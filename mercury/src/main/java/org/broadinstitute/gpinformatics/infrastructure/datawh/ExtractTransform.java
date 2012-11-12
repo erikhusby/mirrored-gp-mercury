@@ -92,8 +92,7 @@ public class ExtractTransform {
     /**
      * JEE auto-schedules incremental ETL.
      */
-    @Schedule(hour="*", minute="*", persistent=false)
-    //@TransactionTimeout(value=24, unit=TimeUnit.HOURS)
+    @Schedule(hour="*", minute="*/15", persistent=false)
     private void incrementalEtl() {
 
         // If previous run is still busy it is unusual but not an error.  Only one incrementalEtl

@@ -50,12 +50,16 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
             logger.info("Cannot export. Audited ProductOrderSample object is null.");
             return null;
         }
+        // Skips entity changes that don't affect status (i.e. status will be null in the Envers entity).
+        if (entity.getBillingStatus() == null) {
+            return null;
+        }
 
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
                 format(revDate),
-                format(entity.getBillingStatus() != null ? entity.getBillingStatus().getDisplayName() : "unknown")
+                format(entity.getBillingStatus().getDisplayName())
         );
     }
 

@@ -8,5 +8,6 @@ TRAILING NULLCOLS
  etl_date DATE "YYYYMMDDHH24MISS",
  is_delete,
  research_project_funding_id,
- research_project_id
+ research_project_id,
+ funding_id
 )
