@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -77,11 +76,6 @@ public class IlluminaRunChamber extends RunChamber {
         throw new RuntimeException("Method not yet implemented.");
     }
 
-    @Override
-    public LabVessel getContainingVessel() {
-        return this.flowcell;
-    }
-
 
     /**
      * Web service call to zamboni/picard
@@ -107,8 +101,8 @@ public class IlluminaRunChamber extends RunChamber {
      * @return
      */
     @Override
-    public Collection<Reagent> getReagentContents() {
-        final Collection<Reagent> sequencerReagents = new HashSet<Reagent>();
+    public Set<Reagent> getReagentContents() {
+        final Set<Reagent> sequencerReagents = new HashSet<Reagent>();
         for (LabEvent event: getEvents()) {
             sequencerReagents.addAll(event.getReagents());
         }

@@ -78,11 +78,6 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
 
     // todo jmt remove these empty methods
     @Override
-    public LabVessel getContainingVessel() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
     public Collection<LabEvent> getEvents() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }

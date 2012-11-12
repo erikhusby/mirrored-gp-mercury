@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -38,11 +37,6 @@ public class PacbioPlate extends RunCartridge {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public LabVessel getContainingVessel() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 

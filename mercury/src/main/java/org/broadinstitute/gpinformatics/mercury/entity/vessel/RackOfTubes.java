@@ -115,11 +115,6 @@ public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<Tw
     }
 
     @Override
-    public LabVessel getContainingVessel() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public Collection<LabEvent> getEvents() {
         throw new RuntimeException("I haven't been written yet.");
     }

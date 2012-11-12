@@ -4,7 +4,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -70,8 +69,4 @@ public class TwoDBarcodedTube extends LabVessel {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    @Override
-    public LabVessel getContainingVessel() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
 }

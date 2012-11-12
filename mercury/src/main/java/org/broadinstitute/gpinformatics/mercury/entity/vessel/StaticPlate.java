@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
@@ -94,11 +93,6 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.STATIC_PLATE;
-    }
-
-    @Override
-    public LabVessel getContainingVessel() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     @Override

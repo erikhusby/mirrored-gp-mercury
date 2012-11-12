@@ -33,11 +33,6 @@ public class PlateWell extends LabVessel {
     }
 
     @Override
-    public LabVessel getContainingVessel() {
-        return this.plate;
-    }
-
-    @Override
     public Set<LabEvent> getTransfersFrom() {
         throw new RuntimeException("I haven't been written yet.");
     }
@@ -55,10 +50,5 @@ public class PlateWell extends LabVessel {
     @Override
     public Collection<LabEvent> getEvents() {
         throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Set<SampleInstance> getSampleInstances() {
-        return this.plate.getContainerRole().getSampleInstancesAtPosition(this.vesselPosition);
     }
 }

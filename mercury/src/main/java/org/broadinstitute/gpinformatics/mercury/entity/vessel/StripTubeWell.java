@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
@@ -42,11 +41,6 @@ public class StripTubeWell extends LabVessel {
 
     @Override
     public Set<SampleInstance> getSampleInstances() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public LabVessel getContainingVessel() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
