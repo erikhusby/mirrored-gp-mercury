@@ -2,11 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
-
-import java.util.Collection;
-import java.util.HashSet;
 
 /**
  * We use a custom serializer here because custom fields are not
@@ -68,7 +64,7 @@ public class CreateFields extends UpdateFields {
 
 
     @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
-    public enum Issuetype  {
+    public enum IssueType {
 
         Whole_Exome_HybSel("Whole Exome (HybSel)"),
         Product_Order("Product Order"),
@@ -76,7 +72,7 @@ public class CreateFields extends UpdateFields {
 
         private final String jiraName;
 
-        private Issuetype(String jiraName) {
+        private IssueType(String jiraName) {
             this.jiraName = jiraName;
         }
 
@@ -96,7 +92,7 @@ public class CreateFields extends UpdateFields {
 
     private String description;
 
-    private Issuetype issuetype;
+    private IssueType issueType;
 
     public Project getProject() {
         return project;
@@ -118,12 +114,12 @@ public class CreateFields extends UpdateFields {
         this.description = description;
     }
 
-    public Issuetype getIssuetype() {
-        return issuetype;
+    public IssueType getIssueType() {
+        return issueType;
     }
 
-    public void setIssuetype(Issuetype issuetype) {
-        this.issuetype = issuetype;
+    public void setIssueType(IssueType issueType) {
+        this.issueType = issueType;
     }
 
     public CreateFields() {

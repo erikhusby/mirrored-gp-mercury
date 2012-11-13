@@ -19,7 +19,7 @@ public class CreateJiraIssueFieldsSerializer extends JsonSerializer<CreateFields
     public void serialize(CreateFields fields, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         jsonGenerator.writeStartObject();
         jsonGenerator.writeObjectField("project", fields.getProject());
-        jsonGenerator.writeObjectField("issuetype", fields.getIssuetype());
+        jsonGenerator.writeObjectField("issuetype", fields.getIssueType());
         jsonGenerator.writeObjectField("summary", fields.getSummary());
         jsonGenerator.writeObjectField("description", fields.getDescription());
 

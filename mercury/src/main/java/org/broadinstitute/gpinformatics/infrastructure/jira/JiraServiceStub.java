@@ -33,7 +33,7 @@ public class JiraServiceStub implements JiraService {
     private Log logger = LogFactory.getLog(JiraServiceStub.class);
 
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, CreateFields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException {
+    public CreateIssueResponse createIssue(String projectPrefix, CreateFields.IssueType issueType, String summary, String description, Collection<CustomField> customFields) throws IOException {
         return new CreateIssueResponse("123",projectPrefix + "-123");
     }
 
@@ -73,7 +73,7 @@ public class JiraServiceStub implements JiraService {
 
     @Override
     public Map<String, CustomFieldDefinition> getRequiredFields(CreateFields.Project project,
-                                                                CreateFields.Issuetype issueType) throws IOException {
+                                                                CreateFields.IssueType issueType) throws IOException {
         final Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
             customFields.put(requiredFieldName,new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,requiredFieldName,true));

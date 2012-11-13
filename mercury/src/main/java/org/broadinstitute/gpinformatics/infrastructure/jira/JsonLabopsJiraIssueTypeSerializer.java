@@ -20,13 +20,13 @@ import java.io.IOException;
  * Note this class does not perform deserialization, nor is there currently a need for that.
  *
  */
-public class JsonLabopsJiraIssueTypeSerializer extends JsonSerializer<CreateFields.Issuetype> {
+public class JsonLabopsJiraIssueTypeSerializer extends JsonSerializer<CreateFields.IssueType> {
 
     @Override
     /**
      * Replace all underscores in the value with a blank
      */
-    public void serialize(CreateFields.Issuetype issueType, JsonGenerator jgen, SerializerProvider provider) throws IOException {
+    public void serialize(CreateFields.IssueType issueType, JsonGenerator jgen, SerializerProvider provider) throws IOException {
         jgen.writeStartObject();
         jgen.writeFieldName("name");
         jgen.writeString(issueType.getJiraName());

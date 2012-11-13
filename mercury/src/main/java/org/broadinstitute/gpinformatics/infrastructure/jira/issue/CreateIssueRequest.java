@@ -36,7 +36,7 @@ public class CreateIssueRequest  {
 
 
     public static CreateIssueRequest create(String key,
-                                            CreateFields.Issuetype issuetype,
+                                            CreateFields.IssueType issueType,
                                             String summary,
                                             String description,
                                             Collection<CustomField> customFields) {
@@ -46,7 +46,7 @@ public class CreateIssueRequest  {
         CreateFields fields = ret.getFields();
 
         fields.getProject().setKey(key);
-        fields.setIssuetype(issuetype);
+        fields.setIssueType(issueType);
         fields.setSummary(summary);
         fields.setDescription(description);
 

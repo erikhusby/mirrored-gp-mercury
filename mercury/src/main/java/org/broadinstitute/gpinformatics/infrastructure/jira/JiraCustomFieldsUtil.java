@@ -36,7 +36,7 @@ public class JiraCustomFieldsUtil {
     public static Map<String,CustomFieldDefinition> getRequiredLcSetFieldDefinitions(JiraService jiraService) throws IOException {
         final Map<String, CustomFieldDefinition> allCustomFields =
                 jiraService.getRequiredFields ( new CreateFields.Project ( LabBatch.LCSET_PROJECT_PREFIX ),
-                                                CreateFields.Issuetype.Whole_Exome_HybSel );
+                                                CreateFields.IssueType.Whole_Exome_HybSel );
 
         final Map<String,CustomFieldDefinition> requiredCustomFieldDefinitions = new HashMap<String,CustomFieldDefinition>();
 

@@ -42,7 +42,7 @@ public class JiraServiceTest {
             Map<String, CustomFieldDefinition> requiredFields=
                     service.getRequiredFields(new CreateFields.Project(
                             CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
-                                              CreateFields.Issuetype.Whole_Exome_HybSel);
+                                              CreateFields.IssueType.Whole_Exome_HybSel);
 
             Collection<CustomField> customFieldList = new LinkedList<CustomField>();
 
@@ -58,7 +58,7 @@ public class JiraServiceTest {
 
             final CreateIssueResponse createIssueResponse =
                     service.createIssue(JiraTicket.TEST_PROJECT_PREFIX,
-                                        CreateFields.Issuetype.Whole_Exome_HybSel,
+                                        CreateFields.IssueType.Whole_Exome_HybSel,
                                         "Summary created from Mercury", "Description created from Mercury",
                                         customFieldList);
 
@@ -79,7 +79,7 @@ public class JiraServiceTest {
         try {
             Map<String, CustomFieldDefinition> requiredFields =
                 service.getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.Product_Ordering.getKeyPrefix()),
-                                                              CreateFields.Issuetype.Product_Order);
+                                                              CreateFields.IssueType.Product_Order);
 
             Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()));
 
@@ -89,7 +89,7 @@ public class JiraServiceTest {
 
             final CreateIssueResponse createIssueResponse =
                     service.createIssue(CreateFields.ProjectType.Product_Ordering.getKeyPrefix(),
-                                        CreateFields.Issuetype.Product_Order,
+                                        CreateFields.IssueType.Product_Order,
                                         "Athena Test case:::  Test new Summary Addition",
                                         "Athena Test Case:  Test description setting",customFieldList);
             final String pdoJiraKey = createIssueResponse.getTicketName();
@@ -104,7 +104,7 @@ public class JiraServiceTest {
     public void testUpdateTicket() throws IOException {
         CreateIssueResponse response = service.createIssue(
                 CreateFields.ProjectType.Research_Projects.getKeyPrefix(),
-                CreateFields.Issuetype.Research_Project,
+                CreateFields.IssueType.Research_Project,
                 "JiraServiceTest.testUpdateTicket", "Test issue for update", new ArrayList<CustomField>());
 
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
@@ -173,7 +173,7 @@ public class JiraServiceTest {
         Map<String, CustomFieldDefinition> customFields = null;
         customFields = service.getRequiredFields(new CreateFields.Project(
                 CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
-                                                 CreateFields.Issuetype.Whole_Exome_HybSel);
+                                                 CreateFields.IssueType.Whole_Exome_HybSel);
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;
         for (CustomFieldDefinition customField : customFields.values()) {

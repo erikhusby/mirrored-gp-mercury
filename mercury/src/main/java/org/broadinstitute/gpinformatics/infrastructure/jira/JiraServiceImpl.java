@@ -80,7 +80,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
 
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, CreateFields.Issuetype issueType,
+    public CreateIssueResponse createIssue(String projectPrefix, CreateFields.IssueType issueType,
                                            String summary, String description,
                                            Collection<CustomField> customFields) throws IOException {
 
@@ -192,7 +192,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     @Override
     public Map<String, CustomFieldDefinition> getRequiredFields(CreateFields.Project project,
-                                                                CreateFields.Issuetype issueType) throws IOException {
+                                                                CreateFields.IssueType issueType) throws IOException {
         if (project == null) {
             throw new NullPointerException("project cannot be null");
         }

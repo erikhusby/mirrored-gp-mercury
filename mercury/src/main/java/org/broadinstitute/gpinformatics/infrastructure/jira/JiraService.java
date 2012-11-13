@@ -25,14 +25,14 @@ public interface JiraService extends Serializable {
      *
      *
      * @param projectPrefix
-     * @param issuetype
+     * @param issueType
      * @param summary
      * @param description
      * @param customFields
      * @return
      * @throws IOException
      */
-    CreateIssueResponse createIssue(String projectPrefix, CreateFields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException;
+    CreateIssueResponse createIssue(String projectPrefix, CreateFields.IssueType issueType, String summary, String description, Collection<CustomField> customFields) throws IOException;
 
     /**
      * Updates an issue, modifying the custom fields supplied.
@@ -72,7 +72,7 @@ public interface JiraService extends Serializable {
      * reference, the field map is indexed by the field name.
      */
     public Map<String, CustomFieldDefinition> getRequiredFields(CreateFields.Project project,
-                                                                CreateFields.Issuetype issueType) throws IOException;
+                                                                CreateFields.IssueType issueType) throws IOException;
 
     /**
      * createTicketUrl is a helper class that generates a clickable Url to allow a user to browse the Jira Ticket

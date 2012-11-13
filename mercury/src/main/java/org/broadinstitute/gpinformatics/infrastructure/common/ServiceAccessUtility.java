@@ -159,7 +159,7 @@ public class ServiceAccessUtility {
      *
      * @param projectPrefix String representing the Jira Project a ticket is to be created.  This is the prefix of all
      *                      tickets created in this project
-     * @param issuetype the Issue Type of the Project the user wishes to create
+     * @param issueType the Issue Type of the Project the user wishes to create
      * @param summary a Brief summary that will go along with the created Issue
      * @param description a Brief description of what the new issue will represent
      * @param customFields a Collection of additional custom fields to be set during the Issue Creation Process
@@ -168,7 +168,7 @@ public class ServiceAccessUtility {
      * @throws IOException
      */
     public static CreateIssueResponse createJiraTicket (String projectPrefix,
-                                                        CreateFields.Issuetype issuetype, String summary,
+                                                        CreateFields.IssueType issueType, String summary,
                                                         String description, Collection<CustomField> customFields)
             throws IOException {
 
@@ -182,7 +182,7 @@ public class ServiceAccessUtility {
                 CreationalContext ctx = beanManager.createCreationalContext(bean);
                 JiraService jiraService =
                         (JiraService) beanManager.getReference(bean, bean.getClass(), ctx);
-                createdJiraTicket = jiraService.createIssue(projectPrefix, issuetype, summary, description, customFields);
+                createdJiraTicket = jiraService.createIssue(projectPrefix, issueType, summary, description, customFields);
             } finally {
                 initialContext.close();
             }

@@ -518,12 +518,12 @@ public class ResearchProject {
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
-     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.Issuetype} that
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType} that
      * represents the Jira Issue Type for Research Projects
      */
     @Transient
-    public CreateFields.Issuetype fetchJiraIssueType() {
-        return CreateFields.Issuetype.Research_Project;
+    public CreateFields.IssueType fetchJiraIssueType() {
+        return CreateFields.IssueType.Research_Project;
     }
 
     /**

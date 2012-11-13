@@ -61,7 +61,7 @@ public class ResearchProjectTest {
 
         Assert.assertNull(researchProject.getJiraTicketKey());
 
-        Assert.assertEquals(researchProject.fetchJiraIssueType(), CreateFields.Issuetype.Research_Project);
+        Assert.assertEquals(researchProject.fetchJiraIssueType(), CreateFields.IssueType.Research_Project);
 
         Assert.assertEquals(researchProject.fetchJiraProject(), CreateFields.ProjectType.Research_Projects);
 

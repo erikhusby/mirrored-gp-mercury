@@ -87,7 +87,7 @@ public class ProductOrderTest {
 
         Assert.assertNull(productOrder.getJiraTicketKey());
 
-        Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateFields.Issuetype.Product_Order);
+        Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateFields.IssueType.Product_Order);
 
         Assert.assertEquals(productOrder.fetchJiraProject(), CreateFields.ProjectType.Product_Ordering);
 
