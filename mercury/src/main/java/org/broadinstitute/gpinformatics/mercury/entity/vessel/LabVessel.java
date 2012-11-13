@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
@@ -46,6 +47,9 @@ import java.util.logging.Logger;
 @BatchSize(size = 50)
 public abstract class LabVessel {
 
+    //todo SGM:  create comparator for sorting Containers THEN Create getter that gets sorted containers
+
+
     private final static Logger logger = Logger.getLogger(LabVessel.class.getName());
 
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", schema = "mercury",  sequenceName = "SEQ_LAB_VESSEL")
@@ -90,12 +94,15 @@ public abstract class LabVessel {
     @Formula("(select count(*) from lab_vessel_containers where lab_vessel_containers.lab_vessel = lab_vessel_id)")
     private Integer containersCount = 0;
 
-    @OneToMany(mappedBy = "inPlaceLabVessel")
+    @OneToMany(mappedBy = "inPlaceLabVessel", cascade = CascadeType.PERSIST)
     private Set<LabEvent> inPlaceLabEvents = new HashSet<LabEvent>();
 
     @OneToMany // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
+
+    @OneToMany(mappedBy = "labVessel")
+    private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Embedded
     private UserRemarks userRemarks;
@@ -108,13 +115,14 @@ public abstract class LabVessel {
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
 
     protected LabVessel(String label) {
+        createdOn = new Date();
         this.label = label;
     }
 
     protected LabVessel() {
     }
 
-    private Long getLabVesselId() {
+    public Long getLabVesselId() {
         return labVesselId;
     }
 
@@ -479,6 +487,10 @@ public abstract class LabVessel {
         return !mercurySamples.isEmpty();
     }
 
+    public Set<BucketEntry> getBucketEntries () {
+        return Collections.unmodifiableSet(bucketEntries);
+    }
+
     /**
      * In the context of the given WorkflowDescription, are there any
      * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
@@ -579,6 +591,26 @@ public abstract class LabVessel {
 
     public void addAllSamples(Set<MercurySample> mercurySamples) {
         this.mercurySamples.addAll(mercurySamples);
+    }
+
+    @Override
+    public boolean equals ( Object o ) {
+        if ( this == o )
+            return true;
+        if ( !( o instanceof LabVessel ) )
+            return false;
+
+        LabVessel labVessel = ( LabVessel ) o;
+
+        if ( label != null ? !label.equals ( labVessel.label ) : labVessel.label != null )
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode () {
+        return label != null ? label.hashCode () : 0;
     }
 }
 

@@ -195,12 +195,12 @@ public class ExomeExpressEndToEndTest {
             for (LabBatch labBatch : labBatches) {
                 CreateIssueResponse createResponse = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
                         "hrafal",
-                        CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
+                        CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL,
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
                 Assert.assertNotNull(createResponse);
                 Assert.assertNotNull(createResponse.getTicketName());
-                jiraTicket = new JiraTicket(jiraService, createResponse.getTicketName(), createResponse.getId());
+                jiraTicket = new JiraTicket( createResponse.getTicketName(), createResponse.getId());
                 labBatch.setJiraTicket(jiraTicket);
                 //labBatch.get
             }

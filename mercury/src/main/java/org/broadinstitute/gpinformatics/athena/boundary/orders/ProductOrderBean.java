@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.BillingStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 
+import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
@@ -88,4 +89,16 @@ public class ProductOrderBean {
 
         return bspUserList.getSelectItems(owners);
     }
+
+    /**
+     * Simple finder to search for product order by key.  Allows Infrastructure level components the ability to use this
+     * functionality
+     * @param productOrderKey business key of the desired product order.
+     * @return if found, and instance of the desired product order.  Otherwise null
+     */
+    public ProductOrder getProductOrderByKey( @Nonnull String productOrderKey) {
+        return productOrderDao.findByBusinessKey(productOrderKey);
+    }
+
+
 }

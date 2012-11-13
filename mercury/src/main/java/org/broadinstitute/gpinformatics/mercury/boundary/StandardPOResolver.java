@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary;
 
-import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
@@ -14,15 +13,15 @@ import java.util.*;
 public class StandardPOResolver extends ProductOrderResolver {
 
     @Override
-    public Map<LabVessel, ProductOrderId> findProductOrders(LabVessel labVessel) {
-        final Map<LabVessel,ProductOrderId> vesselToPOMap = new HashMap<LabVessel, ProductOrderId>();
+    public Map<LabVessel, String> findProductOrders ( LabVessel labVessel ) {
+        final Map<LabVessel,String> vesselToPOMap = new HashMap<LabVessel, String>();
         final Collection<? extends LabVessel> allRoots = labVessel.getChainOfCustodyRoots();
         final Set<LabVesselPOHopCount> vesselPOHopCounts = new HashSet<LabVesselPOHopCount>();
 
         // todo also iterate through non-transfer events
         // todo make this actually walk all the way to root
         for (LabEvent labEvent : labVessel.getTransfersTo()) {
-            final ProductOrderId productOrderForEvent = labEvent.getProductOrderId();
+            final String productOrderForEvent = labEvent.getProductOrderId();
             if (productOrderForEvent != null) {
                 // todo test scenarios for rack of tubes to plate
                 for (LabVessel sourceVessel : labEvent.getSourceLabVessels()) {
@@ -36,7 +35,7 @@ public class StandardPOResolver extends ProductOrderResolver {
         // event that declares the PO/vessel relationship
         for (LabVessel incomingRoot : allRoots) {
             int minDistance = Integer.MAX_VALUE;
-            ProductOrderId productOrderId = null;
+            String productOrderId = null;
             for (LabVesselPOHopCount vesselPOHopCount : vesselPOHopCounts) {
                 for (LabVessel rootVessel : vesselPOHopCount.getVessel().getChainOfCustodyRoots()) {
                     if (incomingRoot.equals(rootVessel)) {
@@ -59,7 +58,7 @@ public class StandardPOResolver extends ProductOrderResolver {
     }
 
     @Override
-    public Map<LabVessel, WorkflowStepDef> getStatus(ProductOrderId productOrder, LabVessel root) {
+    public Map<LabVessel, WorkflowStepDef> getStatus( String productOrder, LabVessel root) {
         throw new RuntimeException("not implemented");
     }
 
@@ -67,11 +66,11 @@ public class StandardPOResolver extends ProductOrderResolver {
 
         private LabVessel vessel;
 
-        private ProductOrderId po;
+        private String po;
 
         private int hopCount;
 
-        public LabVesselPOHopCount(LabVessel vessel,ProductOrderId productOrderId,int hopCount) {
+        public LabVesselPOHopCount(LabVessel vessel, String productOrderId,int hopCount) {
             this.vessel = vessel;
             this.po = productOrderId;
             this.hopCount = hopCount;
@@ -86,7 +85,7 @@ public class StandardPOResolver extends ProductOrderResolver {
         }
 
 
-        private ProductOrderId getProductOrderId() {
+        private String getProductOrderId () {
             return po;
         }
 

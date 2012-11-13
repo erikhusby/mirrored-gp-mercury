@@ -35,6 +35,8 @@ public class ProductDaoTest extends ContainerTest {
 
     @Inject
     private UserTransaction utx;
+    private PriceItem priceItem1;
+    private PriceItem priceItem2;
 
 
     public enum DateSpec {
@@ -177,6 +179,16 @@ public class ProductDaoTest extends ContainerTest {
         }
 
         utx.begin();
+
+        priceItem1 = new PriceItem ("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony");
+        priceItem2 = new PriceItem ("5678", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Pony Express");
+
+        dao.persist( priceItem1 );
+        dao.persist ( priceItem2 );
+
+        dao.flush();
+        dao.clear();
+
     }
 
     @AfterMethod
