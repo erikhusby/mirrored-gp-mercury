@@ -62,14 +62,12 @@ public class Cohort implements Displayable {
         return new HashCodeBuilder().append(getCohortId()).toHashCode();
     }
 
-    public static final CohortByIdComparator COHORT_BY_ID = new CohortByIdComparator();
-
     @Override
     public String getDisplayName() {
         return cohortId + ": " + name;
     }
 
-    public static class CohortByIdComparator implements Comparator<Cohort> {
+    public static final Comparator<Cohort> COHORT_BY_ID = new Comparator<Cohort> () {
         @Override
         public int compare(Cohort cohort, Cohort cohort1) {
             Integer nullCohort = nullCompare(cohort, cohort1);
@@ -94,5 +92,5 @@ public class Cohort implements Displayable {
 
             return null;
         }
-    }
+    };
 }
