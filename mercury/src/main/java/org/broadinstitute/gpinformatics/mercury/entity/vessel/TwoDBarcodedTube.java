@@ -36,9 +36,4 @@ public class TwoDBarcodedTube extends LabVessel {
         return CONTAINER_TYPE.TUBE;
     }
 
-    @Override
-    public Collection<LabEvent> getEvents() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
 }

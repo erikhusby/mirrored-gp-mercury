@@ -45,12 +45,6 @@ public class IlluminaRunChamber extends RunChamber {
         return CONTAINER_TYPE.ILLUMINA_RUN_CHAMBER;
     }
 
-    @Override
-    public Collection<LabEvent> getEvents() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-
     /**
      * Web service call over to zamboni/picard
      * @return

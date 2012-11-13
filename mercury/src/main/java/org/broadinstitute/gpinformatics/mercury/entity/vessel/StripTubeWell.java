@@ -29,8 +29,4 @@ public class StripTubeWell extends LabVessel {
         return CONTAINER_TYPE.STRIP_TUBE_WELL;
     }
 
-    @Override
-    public Collection<LabEvent> getEvents() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
 }

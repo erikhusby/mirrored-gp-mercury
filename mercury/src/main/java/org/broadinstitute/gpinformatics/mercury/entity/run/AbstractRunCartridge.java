@@ -14,9 +14,4 @@ public abstract class AbstractRunCartridge extends RunCartridge {
     protected AbstractRunCartridge() {
     }
 
-    @Override
-    public Collection<LabEvent> getEvents() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
 }

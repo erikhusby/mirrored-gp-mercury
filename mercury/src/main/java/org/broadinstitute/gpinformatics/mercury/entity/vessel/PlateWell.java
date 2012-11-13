@@ -37,8 +37,4 @@ public class PlateWell extends LabVessel {
         return CONTAINER_TYPE.PLATE_WELL;
     }
 
-    @Override
-    public Collection<LabEvent> getEvents() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
 }

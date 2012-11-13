@@ -545,11 +545,16 @@ public abstract class LabVessel {
 
     /**
      * Get all events that have happened directly to
-     * this vessel.  Really, really fast.  Like
-     * right now.
-     * @return
+     * this vessel.
+     * @return in place events, transfers from, transfers to
      */
-    public abstract Collection<LabEvent> getEvents();
+    public Set<LabEvent> getEvents() {
+        Set<LabEvent> events = new HashSet<LabEvent>();
+        events.addAll(getInPlaceEvents());
+        events.addAll(getTransfersFrom());
+        events.addAll(getTransfersTo());
+        return events;
+    }
 
     /**
      * PM Dashboard will want to show the most recent

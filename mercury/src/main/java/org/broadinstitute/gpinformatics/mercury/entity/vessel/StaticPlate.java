@@ -85,11 +85,6 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return CONTAINER_TYPE.STATIC_PLATE;
     }
 
-    @Override
-    public Collection<LabEvent> getEvents() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
     public VesselContainer<PlateWell> getContainerRole() {
         return this.vesselContainer;
     }
