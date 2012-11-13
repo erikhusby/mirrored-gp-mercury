@@ -203,7 +203,7 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(notTopLevelProduct);
         dao.flush();
 
-        final List<Product> products = dao.findProducts(ProductDao.TopLevelProductsOnly.YES);
+        final List<Product> products = dao.findProducts(ProductDao.TopLevelOnly.YES);
         Assert.assertNotNull(products);
 
         // make sure our top level is in there and our not top level is not
@@ -236,7 +236,7 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(product);
         dao.flush();
 
-        List<Product> products = dao.findProducts(ProductDao.AvailableProductsOnly.YES);
+        List<Product> products = dao.findProducts(ProductDao.AvailableOnly.YES);
         // filter out non test data
         CollectionUtils.filter(products, new Predicate<Product>() {
             @Override
@@ -268,7 +268,7 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(notPDMOnlyProduct);
         dao.flush();
 
-        final List<Product> products = dao.findProducts(ProductDao.IncludePDMOnlyProducts.NO);
+        final List<Product> products = dao.findProducts(ProductDao.IncludePDMOnly.NO);
         Assert.assertNotNull(products);
 
         // make sure our top level is in there and our not top level is not

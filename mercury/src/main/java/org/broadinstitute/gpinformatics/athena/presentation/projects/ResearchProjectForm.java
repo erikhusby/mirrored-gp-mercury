@@ -147,11 +147,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
         try {
             researchProjectManager.createResearchProject(project);
         } catch (Exception e) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been created.", "Research Project");
+        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been created.");
         return redirect("view");
     }
 
@@ -180,11 +180,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
         try {
             researchProjectManager.updateResearchProject(project);
         } catch (Exception e) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been updated.", "Research Project");
+        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been updated.");
         return redirect("view");
     }
 
