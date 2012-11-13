@@ -14,6 +14,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.NonUniqueResultException;
 import javax.transaction.UserTransaction;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -101,6 +102,56 @@ public class BucketEntryDaoTest extends ContainerTest {
         Assert.assertEquals ( dateFormatter.format ( new Date () ), dateFormatter.format (
                 retrievedEntry.getCreatedDate () ) );
 
+
+        Bucket findBucket = bucketDao.findByName ( BucketDaoTest.EXTRACTION_BUCKET_NAME );
+
+        BucketEntry retrievedEntry2 = bucketEntryDao.findByVesselAndBucket(foundVessel, findBucket);
+
+        Assert.assertNotNull ( retrievedEntry2 );
+        Assert.assertNotNull ( retrievedEntry2.getBucketExistence () );
+        Assert.assertNotNull ( retrievedEntry2.getCreatedDate () );
+
+        Assert.assertEquals ( dateFormatter.format ( new Date () ), dateFormatter.format (
+                retrievedEntry2.getCreatedDate () ) );
+    }
+
+    @Test
+    public void testFindDuplicate () {
+
+        Bucket testBucket = bucketDao.findByName ( BucketDaoTest.EXTRACTION_BUCKET_NAME );
+
+        TwoDBarcodedTube vesselToDupe = tubeDAO.findByBarcode ( twoDBarcodeKey );
+        BucketEntry testEntry = new BucketEntry ( vesselToDupe, testPoBusinessKey+"dupe",
+                                                  testBucket );
+
+        bucketEntryDao.persist ( testEntry );
+        bucketEntryDao.flush ();
+        bucketEntryDao.clear ();
+
+        TwoDBarcodedTube foundVessel = tubeDAO.findByBarcode ( twoDBarcodeKey );
+
+        Assert.assertNotNull ( foundVessel );
+
+        BucketEntry retrievedEntry = bucketEntryDao.findByVesselAndPO ( foundVessel, testPoBusinessKey );
+
+        Assert.assertNotNull ( retrievedEntry );
+        Assert.assertNotNull ( retrievedEntry.getBucketExistence () );
+        Assert.assertNotNull ( retrievedEntry.getCreatedDate () );
+
+        SimpleDateFormat dateFormatter = new SimpleDateFormat ( "dd/MM/yy" );
+
+        Assert.assertEquals ( dateFormatter.format ( new Date () ), dateFormatter.format (
+                retrievedEntry.getCreatedDate () ) );
+
+
+        Bucket findBucket = bucketDao.findByName ( BucketDaoTest.EXTRACTION_BUCKET_NAME );
+
+        try {
+            BucketEntry retrievedEntry2 = bucketEntryDao.findByVesselAndBucket(foundVessel, findBucket);
+            Assert.fail("Duplicate Exception Expected");
+        } catch (Exception dupeExp) {
+
+        }
     }
 
     @Test

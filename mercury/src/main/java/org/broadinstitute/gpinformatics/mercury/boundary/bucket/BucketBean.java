@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
@@ -43,9 +42,6 @@ public class BucketBean {
 
     @Inject
     private BucketEntryDao bucketEntryDao;
-
-    @Inject
-    private AthenaClientService athenaClientService;
 
     public BucketBean () {
     }
