@@ -38,26 +38,26 @@ public class ServiceAccessUtility {
         abstract RESULT_TYPE call(API_CLASS apiInstance);
 
         public RESULT_TYPE apiCall(Type classType) {
+            API_CLASS apiInstance = ServiceAccessUtility.lookupBean(classType);
+            return call(apiInstance);
+        }
+    }
 
-            RESULT_TYPE foundServiceObject = null;
-
+    public static <T> T lookupBean(Type classType) {
+        try {
+            InitialContext initialContext = new InitialContext();
             try {
-                InitialContext initialContext = new InitialContext();
-                try {
-                    BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
-                    Bean<?> bean = beanManager.getBeans(classType).iterator().next();
-                    CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
-                    @SuppressWarnings("unchecked")
-                    API_CLASS apiInstance = (API_CLASS) beanManager.getReference(bean, bean.getClass(), ctx);
-                    foundServiceObject = call(apiInstance);
-                } finally {
-                    initialContext.close();
-                }
-            } catch (NamingException e) {
-                throw new RuntimeException(e);
+                BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
+                Bean<?> bean = beanManager.getBeans(classType).iterator().next();
+                CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
+                @SuppressWarnings("unchecked")
+                T service = (T) beanManager.getReference(bean, bean.getClass(), ctx);
+                return service;
+            } finally {
+                initialContext.close();
             }
-
-            return foundServiceObject;
+        } catch (NamingException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -191,30 +191,6 @@ public class ServiceAccessUtility {
         }
 
         return createdJiraTicket;
-    }
-
-    public static void updateJiraTicket(final String key, final Collection<CustomField> customFields) throws IOException {
-//        getJiraService().updateIssue(key, customFields);
-        (new Caller<Void, JiraService>() {
-            @Override
-            Void call(JiraService apiInstance) {
-                try {
-                    apiInstance.updateIssue(key, customFields);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                return null;
-            }
-        }).apiCall(JiraService.class);
-    }
-
-    public static String createTicketUrl(final String key) {
-        return (new Caller<String, JiraService>() {
-            @Override
-            String call(JiraService apiInstance) {
-                return apiInstance.createTicketUrl(key);
-            }
-        }).apiCall(JiraService.class);
     }
 
     /**

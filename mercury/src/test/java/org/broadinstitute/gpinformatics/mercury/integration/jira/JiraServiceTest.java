@@ -17,10 +17,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -112,9 +109,10 @@ public class JiraServiceTest {
 
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
 
-        ArrayList<CustomField> customFields = new ArrayList<CustomField>();
-        customFields.add(new CustomField(allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getFieldName()), "http://www.broadinstitute.org/", CustomField.SingleFieldType.TEXT));
-        service.updateIssue(response.getKey(), customFields);
+        CustomField mercuryUrlField = new CustomField(
+                allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                "http://www.broadinstitute.org/", CustomField.SingleFieldType.TEXT);
+        service.updateIssue(response.getKey(), Collections.singletonList(mercuryUrlField));
     }
 
     public void testAddWatcher() {

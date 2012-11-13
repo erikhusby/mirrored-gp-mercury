@@ -126,9 +126,7 @@ public class CreateFields extends UpdateFields {
         this.issuetype = issuetype;
     }
 
-
     public CreateFields() {
         this.project = new Project();
     }
-
 }

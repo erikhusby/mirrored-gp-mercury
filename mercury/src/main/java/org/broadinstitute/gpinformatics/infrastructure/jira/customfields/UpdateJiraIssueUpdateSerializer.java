@@ -26,7 +26,7 @@ public class UpdateJiraIssueUpdateSerializer extends JsonSerializer<UpdateFields
     static void writeCustomFields(Collection<CustomField> customFields, JsonGenerator jsonGenerator) throws IOException {
         for (CustomField customField : customFields) {
             String fieldId = customField.getFieldDefinition().getJiraCustomFieldId();
-            if (CustomField.SingleFieldType.RADIO_BUTTON.equals(customField.getFieldType())) {
+            if (CustomField.SingleFieldType.RADIO_BUTTON == customField.getFieldType()) {
                 jsonGenerator.writeFieldName(fieldId);
                 jsonGenerator.writeStartObject();
                 jsonGenerator.writeObjectField("value", customField.getValue());

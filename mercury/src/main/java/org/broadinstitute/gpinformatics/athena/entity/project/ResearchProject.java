@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -421,8 +422,9 @@ public class ResearchProject {
     public void submit() throws IOException {
 
         if (jiraTicketKey == null) {
-            Map<String, CustomFieldDefinition> submissionFields =
-                    ServiceAccessUtility.getJiraCustomFields ( );
+            JiraService jiraService = ServiceAccessUtility.lookupBean(JiraService.class);
+
+            Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
             List<CustomField> listOfFields = new ArrayList<CustomField>();
 
@@ -464,16 +466,18 @@ public class ResearchProject {
                                     "", CustomField.SingleFieldType.TEXT ));
 
             CreateIssueResponse researchProjectResponse =
-                    ServiceAccessUtility.createJiraTicket(fetchJiraProject().getKeyPrefix(),fetchJiraIssueType(),
-                                                          title, synopsis, listOfFields);
+                    jiraService.createIssue(fetchJiraProject().getKeyPrefix(), fetchJiraIssueType(),
+                            title, synopsis, listOfFields);
 
             // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
             jiraTicketKey = researchProjectResponse.getKey();
 
             // Update ticket with link back into Mercury
-            Collection<CustomField> updateFields = new HashSet<CustomField>();
-            updateFields.add(new CustomField(submissionFields.get("Mercury URL"), ServiceAccessUtility.getMercuryUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey, CustomField.SingleFieldType.TEXT));
-            ServiceAccessUtility.updateJiraTicket(jiraTicketKey, updateFields);
+            CustomField mercuryUrlField = new CustomField(
+                    submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                    ServiceAccessUtility.getMercuryUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey,
+                    CustomField.SingleFieldType.TEXT);
+            jiraService.updateIssue(jiraTicketKey, Collections.singleton(mercuryUrlField));
 
             addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }

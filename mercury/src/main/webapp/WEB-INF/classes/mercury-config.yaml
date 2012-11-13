@@ -7,7 +7,7 @@ app:
       url:      http://localhost:8080/Mercury/
 
     TEST:
-      url:      http://seq01:8080/Mercury/
+      url:      http://seq01.broadinstitute.org:8080/Mercury/
 
     QA:
       url:      http://pmbridgedev.broadinstitute.org:8081/Mercury/
