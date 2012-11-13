@@ -48,7 +48,7 @@ public class QuoteFundingList {
     public Funding getById(String fundingTypeAndName) {
         if (getFunding() != null) {
             for (Funding funding : getFunding()) {
-                if (funding.getFundingTypeAndName().equals(fundingTypeAndName)) {
+                if (funding.getDisplayName().equals(fundingTypeAndName)) {
                     return funding;
                 }
             }
@@ -94,7 +94,7 @@ public class QuoteFundingList {
     }
 
     private boolean anyFieldMatches(String lowerQuery, Funding funding) {
-        return funding.getFundingTypeAndName().toLowerCase().contains(lowerQuery) ||
+        return funding.getDisplayName().toLowerCase().contains(lowerQuery) ||
                funding.getMatchDescription().toLowerCase().contains(lowerQuery);
     }
 
