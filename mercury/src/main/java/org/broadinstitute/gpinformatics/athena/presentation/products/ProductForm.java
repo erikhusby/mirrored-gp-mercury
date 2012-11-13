@@ -11,14 +11,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-import org.primefaces.event.SelectEvent;
-import org.primefaces.event.UnselectEvent;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -411,78 +408,6 @@ public class ProductForm extends AbstractJsfBean {
             cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
         }
         return cycleTimeDays;
-    }
-
-
-    /**
-     * AJAX unselection (removal) handler for {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param unselectEvent
-     */
-    public void onPriceItemUnselect(UnselectEvent unselectEvent) {
-        PriceItem priceItem = (PriceItem) unselectEvent.getObject();
-//        priceItems.remove(priceItem);
-        conversationData.getDefaultPriceItems().remove(priceItem);
-
-        // nuke out the default price item if it was the same price item we just removed
-        if (defaultPriceItem != null && defaultPriceItem.equals(priceItem)) {
-            defaultPriceItem = null;
-        }
-    }
-
-    /**
-     * AJAX selection (addition) handler for default {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param selectEvent
-     */
-
-    public void onPriceItemSelect(SelectEvent selectEvent) {
-//        priceItems.add((PriceItem) selectEvent.getObject());
-        getDefaultPriceItems().add((PriceItem) selectEvent.getObject());
-    }
-
-    /**
-     * AJAX unselection (removal) handler for default {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param ignored
-     */
-    public void onDefaultPriceItemUnselect(UnselectEvent ignored) {
-//        defaultPriceItem = null;
-    }
-
-    /**
-     * AJAX selection (addition) handler for {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param selectEvent
-     */
-    public void onDefaultPriceItemSelect(SelectEvent selectEvent) {
-/*
-        if (conversationData.getDefaultPriceItem() != null) {
-            // ignore
-        }
-        else {
-            conversationData.setDefaultPriceItem((PriceItem) selectEvent.getObject());
-        }
-*/
-    }
-
-
-    public List<PriceItem> getDefaultPriceItems() {
-        return conversationData.getDefaultPriceItems();
-    }
-
-
-    /**
-     * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
-     * actual setting of the default {@link PriceItem} is handled in the ajax event listener only
-     * @param defaultPriceItems
-     */
-    public void setDefaultPriceItems(List<PriceItem> defaultPriceItems) {
-        conversationData.setDefaultPriceItems(defaultPriceItems);
     }
 
 
