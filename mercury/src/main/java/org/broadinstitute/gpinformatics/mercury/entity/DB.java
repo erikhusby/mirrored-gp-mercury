@@ -14,13 +14,22 @@ import java.util.Map;
 @ApplicationScoped
 public class DB implements Serializable {
 
-    private static final String DEVELOPER_ROLE = "Mercury-Developers";
-    private static final String PROJECT_MANAGER_ROLE = "Mercury-ProjectManagers";
-    private static final String LAB_USER_ROLE = "Mercury-LabUsers";
-    private static final String LAB_MANAGER_ROLE = "Mercury-LabManagers";
+    public enum Role {
+        Developer("Mercury-Developers"),
+        PM("Mercury-ProjectManagers"),
+        PDM("Mercury-ProductManagers"),
+        LabUser("Mercury-LabUsers"),
+        LabManager("Mercury-LabManagers"),
+        All("All");
+
+        public final String name;
+        Role(String name) {
+            this.name = name;
+        }
+    }
+
     private static final long serialVersionUID = 3344014380008589366L;
 
-//    private final Map<String, Project> projects = new HashMap<String, Project>();
     private final Map<String, PageAuthorization> pageAuthorizationMap = new HashMap<String, PageAuthorization>();
     private final Map<String, AuthorizedRole> authorizedRoleMap = new HashMap<String, AuthorizedRole>();
 
@@ -29,56 +38,19 @@ public class DB implements Serializable {
         initPageAuthorizations();
     }
 
-    // Project
-
-//    public void addProject(Project project) {
-//        if (StringUtils.isBlank(project.getProjectName())) {
-//            throw new IllegalArgumentException("Non-null constraint violation: Project.projectName");
-//        }
-//        if (projects.containsKey(project.getProjectName())) {
-//            throw new IllegalArgumentException("Unique constraint violation: Project.projectName");
-//        }
-//        projects.put(project.getProjectName(), project);
-//    }
-
-//    public Collection<Project> getAllProjects() {
-//        return Collections.unmodifiableCollection(projects.values());
-//    }
-//
-//    public Project findByProjectName(String projectName) {
-//        return projects.get(projectName);
-//    }
-//
-//    public void removeProject(String projectName) {
-//        projects.remove(projectName);
-//    }
-
-    // WorkflowDescription
-
     public void initPageAuthorizations() {
-/* Leaving here as a code example, but we currently don't want to enforce any page authorizations.
-        PageAuthorization page = new PageAuthorization("/projects/");
+        PageAuthorization page = new PageAuthorization("/products/create.xhtml");
 
-        page.addRoleAccess(authorizedRoleMap.get(DEVELOPER_ROLE));
-        page.addRoleAccess(authorizedRoleMap.get(PROJECT_MANAGER_ROLE));
+        page.addRoleAccess(authorizedRoleMap.get(Role.Developer.name));
+        page.addRoleAccess(authorizedRoleMap.get(Role.PDM.name));
         addPageAuthorization(page);
-*/
     }
 
     private void initAuthorizedRoles() {
-        AuthorizedRole roleAll = new AuthorizedRole("All");
-        addAuthorizedRole(roleAll);
-        AuthorizedRole roleDev = new AuthorizedRole(DEVELOPER_ROLE);
-        addAuthorizedRole(roleDev);
-        AuthorizedRole rolePM = new AuthorizedRole(PROJECT_MANAGER_ROLE);
-        addAuthorizedRole(rolePM);
-        AuthorizedRole roleLabUser = new AuthorizedRole(LAB_USER_ROLE);
-        addAuthorizedRole(roleLabUser);
-        AuthorizedRole roleLabManager = new AuthorizedRole(LAB_MANAGER_ROLE);
-        addAuthorizedRole(roleLabManager);
-
+        for (Role role : Role.values()) {
+            addAuthorizedRole(new AuthorizedRole(role.name));
+        }
     }
-
 
     public void addAuthorizedRole(AuthorizedRole roleIn) {
         authorizedRoleMap.put(roleIn.getRoleName(), roleIn);

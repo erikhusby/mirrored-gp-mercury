@@ -62,7 +62,12 @@ public class PriceItemDao extends GenericDao {
         Root<PriceItem> priceItem = cq.from(PriceItem.class);
 
         predicateList.add(cb.equal(priceItem.get(PriceItem_.platform), platform));
-        predicateList.add(cb.equal(priceItem.get(PriceItem_.category), categoryName));
+        if (categoryName == null) {
+            predicateList.add(cb.isNull(priceItem.get(PriceItem_.category)));
+        }
+        else {
+            predicateList.add(cb.equal(priceItem.get(PriceItem_.category), categoryName));
+        }
         predicateList.add(cb.equal(priceItem.get(PriceItem_.name), priceItemName));
 
         Predicate[] predicates = new Predicate[predicateList.size()];

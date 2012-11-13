@@ -35,79 +35,8 @@
         <url-pattern>*.xhtml</url-pattern>
     </servlet-mapping>
 
-    <!-- BEGIN for GlassFish -->
-<!--
-    &lt;!&ndash; JAX-WS &ndash;&gt;
-
-    <listener>
-        <listener-class>
-            com.sun.xml.ws.transport.http.servlet.WSServletContextListener
-        </listener-class>
-    </listener>
-
-    <servlet>
-        <description>JAX-WS endpoint</description>
-        <display-name>The JAX-WS servlet</display-name>
-        <servlet-name>jaxws</servlet-name>
-        <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>jaxws</servlet-name>
-        <url-pattern>/PASS</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>jaxws</servlet-name>
-        <url-pattern>/SampleKit</url-pattern>
-    </servlet-mapping>
-
-    &lt;!&ndash; JAX-RS &ndash;&gt;
-
-    <listener>
-        <listener-class>org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap</listener-class>
-    </listener>
-
-    <servlet>
-        <display-name>rest</display-name>
-        <servlet-name>rest</servlet-name>
-        <servlet-class>org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher</servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>rest</servlet-name>
-        <url-pattern>/rest/*</url-pattern>
-    </servlet-mapping>
-    <context-param>
-        <param-name>resteasy.servlet.mapping.prefix</param-name>
-        <param-value>/rest</param-value>
-    </context-param>
--->
-    <!-- END for GlassFish -->
 
     <!-- BEGIN for JBoss AS 7 -->
-
-    <!-- JAX-WS -->
-
-<!--
-    <servlet>
-        <servlet-name>PASSService</servlet-name>
-        <servlet-class>org.broadinstitute.gpinformatics.mercury.boundary.pass.PassServiceImpl</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>PASSService</servlet-name>
-        <url-pattern>/PASS</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>SampleKitService</servlet-name>
-        <servlet-class>org.broadinstitute.gpinformatics.mercury.boundary.samplekit.SampleKitSOAPServiceImpl</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>SampleKitService</servlet-name>
-        <url-pattern>/SampleKit</url-pattern>
-    </servlet-mapping>
--->
 
     <!-- JAX-RS -->
 
@@ -127,6 +56,7 @@
         <!-- we don't scan for test performance reasons.  use resteasy.resources explicitly instead. -->
         <param-value>false</param-value>
     </context-param>
+
     <context-param>
         <param-name>resteasy.resources</param-name>
         <!-- comma separated list of jax-rs resource classes -->
@@ -137,7 +67,7 @@
             org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource
+            org.broadinstitute.gpinformatics.athena.boundary.util.PingResource
         </param-value>
     </context-param>
     <context-param>
@@ -163,25 +93,6 @@
         <auth-constraint>
         </auth-constraint>
     </security-constraint>
-
-    <security-role>
-        <role-name>Mercury-Admins</role-name>
-    </security-role>
-    <security-role>
-        <role-name>Mercury-LabUsers</role-name>
-    </security-role>
-    <security-role>
-        <role-name>Mercury-LabManagers</role-name>
-    </security-role>
-    <security-role>
-        <role-name>Mercury-ProjectManagers</role-name>
-    </security-role>
-    <security-role>
-        <role-name>Mercury-ProductManagers</role-name>
-    </security-role>
-    <security-role>
-        <role-name>Mercury-Developers</role-name>
-    </security-role>
 
     <welcome-file-list>
         <welcome-file>/index.xhtml</welcome-file>

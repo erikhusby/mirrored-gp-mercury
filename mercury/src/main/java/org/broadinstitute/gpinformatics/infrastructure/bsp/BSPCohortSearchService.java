@@ -11,8 +11,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
-import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
@@ -190,7 +190,7 @@ public class BSPCohortSearchService extends AbstractJerseyClientService {
         return usersCohorts;
     }
 
-    private Set<Cohort> runCollectionSearch(@NotNull String bspUsername) {
+    private Set<Cohort> runCollectionSearch(@Nonnull String bspUsername) {
 
         if (StringUtils.isBlank(bspUsername))  {
             throw new IllegalArgumentException( "Cannot lookup cohorts for user without a valid username." );
@@ -267,7 +267,7 @@ public class BSPCohortSearchService extends AbstractJerseyClientService {
      * Group Name
      * Archived
      */
-    public Set<Cohort> getCohortsByUser(@NotNull String bspUser) {
+    public Set<Cohort> getCohortsByUser(@Nonnull String bspUser) {
         if (StringUtils.isBlank(bspUser)) {
             throw new IllegalArgumentException("Bsp Username is not valid. Canot retrieve list of cohorts from BSP.");
         }

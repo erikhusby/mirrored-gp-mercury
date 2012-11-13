@@ -15,43 +15,39 @@ public abstract class AbstractJsfBean {
     }
 
     /**
-     * Adds a global FacesMessage with the INFO severity level and summary and detail messages.
+     * Adds a global FacesMessage with the INFO severity level and summary message.
      *
      * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
      */
-    protected void addInfoMessage(String summary, String detail) {
-        addMessage(null, FacesMessage.SEVERITY_INFO, summary, detail);
+    protected void addInfoMessage(String summary) {
+        addMessage(null, FacesMessage.SEVERITY_INFO, summary, summary);
     }
 
     /**
-     * Adds a global FacesMessage with the WARN severity level and summary and detail messages.
+     * Adds a global FacesMessage with the WARN severity level and summary message.
      *
      * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
      */
-    protected void addWarnMessage(String summary, String detail) {
-        addMessage(null, FacesMessage.SEVERITY_WARN, summary, detail);
+    protected void addWarnMessage(String summary) {
+        addMessage(null, FacesMessage.SEVERITY_WARN, summary, summary);
     }
 
     /**
-     * Adds a global FacesMessage with the ERROR severity level and summary and detail messages.
+     * Adds a global FacesMessage with the ERROR severity level and summary message.
      *
      * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
      */
-    protected void addErrorMessage(String summary, String detail) {
-        addMessage(null, FacesMessage.SEVERITY_ERROR, summary, detail);
+    protected void addErrorMessage(String summary) {
+        addMessage(null, FacesMessage.SEVERITY_ERROR, summary, summary);
     }
 
     /**
-     * Adds a global FacesMessage with the FATAL severity level and summary and detail messages.
+     * Adds a global FacesMessage with the FATAL severity level and summary message.
      *
      * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
      */
-    protected void addFatalMessage(String summary, String detail) {
-        addMessage(null, FacesMessage.SEVERITY_FATAL, summary, detail);
+    protected void addFatalMessage(String summary) {
+        addMessage(null, FacesMessage.SEVERITY_FATAL, summary, summary);
     }
 
     /**

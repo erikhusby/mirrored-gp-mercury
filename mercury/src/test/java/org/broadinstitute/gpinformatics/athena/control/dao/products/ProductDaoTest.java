@@ -35,6 +35,8 @@ public class ProductDaoTest extends ContainerTest {
 
     @Inject
     private UserTransaction utx;
+    private PriceItem priceItem1;
+    private PriceItem priceItem2;
 
 
     public enum DateSpec {
@@ -177,6 +179,16 @@ public class ProductDaoTest extends ContainerTest {
         }
 
         utx.begin();
+
+        priceItem1 = new PriceItem ("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony");
+        priceItem2 = new PriceItem ("5678", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Pony Express");
+
+        dao.persist( priceItem1 );
+        dao.persist ( priceItem2 );
+
+        dao.flush();
+        dao.clear();
+
     }
 
     @AfterMethod
@@ -203,7 +215,7 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(notTopLevelProduct);
         dao.flush();
 
-        final List<Product> products = dao.findProducts(ProductDao.TopLevelProductsOnly.YES);
+        final List<Product> products = dao.findProducts(ProductDao.TopLevelOnly.YES);
         Assert.assertNotNull(products);
 
         // make sure our top level is in there and our not top level is not
@@ -236,7 +248,7 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(product);
         dao.flush();
 
-        List<Product> products = dao.findProducts(ProductDao.AvailableProductsOnly.YES);
+        List<Product> products = dao.findProducts(ProductDao.AvailableOnly.YES);
         // filter out non test data
         CollectionUtils.filter(products, new Predicate<Product>() {
             @Override
@@ -268,7 +280,7 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(notPDMOnlyProduct);
         dao.flush();
 
-        final List<Product> products = dao.findProducts(ProductDao.IncludePDMOnlyProducts.NO);
+        final List<Product> products = dao.findProducts(ProductDao.IncludePDMOnly.NO);
         Assert.assertNotNull(products);
 
         // make sure our top level is in there and our not top level is not

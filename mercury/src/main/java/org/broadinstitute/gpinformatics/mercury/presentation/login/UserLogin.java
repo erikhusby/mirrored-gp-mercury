@@ -8,9 +8,11 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationListener;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -23,10 +25,6 @@ import java.io.IOException;
 @Named
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
-
-    public static final String PRODUCT_MANAGER_ROLE = "Mercury-ProductManagers";
-
-    public static final String PROJECT_MANAGER_ROLE = "Mercury-ProjectManagers";
 
     private String username;
 
@@ -72,15 +70,15 @@ public class UserLogin extends AbstractJsfBean {
             targetPage = role.landingPage;
             // HACK needed by Arquillian, see FIXME in UserBean.
             userBean.setBspUserList(bspUserList);
-            userBean.login(username);
+            userBean.login(request);
 
             if (!userBean.isValidBspUser()) {
                 logger.error(userBean.getBspStatus() + ": " + username);
-                addErrorMessage(userBean.getBspStatus(), userBean.getBspStatus());
+                addErrorMessage(userBean.getBspMessage());
             }
             if (!userBean.isValidJiraUser()) {
                 logger.error(userBean.getJiraStatus() + ": " + username);
-                addErrorMessage(userBean.getJiraStatus(), userBean.getJiraStatus());
+                addErrorMessage(userBean.getJiraMessage());
             }
 
             String previouslyTargetedPage = (String)request.getSession().getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
@@ -98,8 +96,7 @@ public class UserLogin extends AbstractJsfBean {
             }
         } catch (ServletException le) {
             logger.error("ServletException Retrieved: ", le);
-            addErrorMessage("The username and password you entered is incorrect.  Please try again.",
-                    "Authentication error");
+            addErrorMessage("The username and password you entered is incorrect.  Please try again.");
             targetPage = AuthorizationFilter.LOGIN_PAGE;
         }
         return redirect(targetPage);
@@ -107,12 +104,12 @@ public class UserLogin extends AbstractJsfBean {
 
     public enum UserRole {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
-        PDM("/orders/list", PRODUCT_MANAGER_ROLE),
-        PM("/projects/list", PROJECT_MANAGER_ROLE),
+        PDM("/orders/list", DB.Role.PDM.name),
+        PM("/projects/list", DB.Role.PM.name),
         OTHER("index", "");
 
-        private static final String INDEX = "/index";
-        private static final String HOME_PAGE = "/Mercury";
+        private static final String INDEX = AuthorizationListener.HOME_PAGE;
+        private static final String MERCURY_PAGE = "/Mercury";
 
         public static UserRole fromRequest(HttpServletRequest request) {
             for (UserRole role : values()) {
@@ -134,7 +131,7 @@ public class UserLogin extends AbstractJsfBean {
         private String checkUrlForRoleRedirect(String targetPage) {
             StringBuilder newUrlBuilder = new StringBuilder(targetPage);
             if (this != OTHER) {
-                if (targetPage.endsWith(HOME_PAGE) || targetPage.endsWith(HOME_PAGE + "/")) {
+                if (targetPage.endsWith(MERCURY_PAGE) || targetPage.endsWith(MERCURY_PAGE + "/")) {
                     if (targetPage.endsWith("/")) {
                         newUrlBuilder.deleteCharAt(targetPage.lastIndexOf("/"));
                     }

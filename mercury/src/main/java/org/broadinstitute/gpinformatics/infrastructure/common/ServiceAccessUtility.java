@@ -12,12 +12,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueReq
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationManager;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -33,13 +35,10 @@ import java.util.Map;
  *         Time: 12:17 PM
  */
 public class ServiceAccessUtility {
-
     private abstract static class Caller<RESULT_TYPE, API_CLASS> {
-
         abstract RESULT_TYPE call(API_CLASS apiInstance);
 
         public RESULT_TYPE apiCall(Type classType) {
-
             RESULT_TYPE foundServiceObject = null;
 
             try {
@@ -101,6 +100,14 @@ public class ServiceAccessUtility {
         }).apiCall(CohortListBean.class);
     }
 
+    public static boolean isUserAuthorized(final String pageUri, final HttpServletRequest request) {
+        return (new Caller<Boolean, AuthorizationManager>() {
+            @Override
+            Boolean call(AuthorizationManager apiInstance) {
+                return apiInstance.isUserAuthorized(pageUri, request);
+            }
+        }).apiCall(AuthorizationManager.class);
+    }
 
     /**
      * getSampleDtoByNames exposes an integration layer service call to retrieve a BSP Sample DTo based on a collection

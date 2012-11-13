@@ -7,7 +7,8 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:security="http://mercury.broadinstitute.org/tags">
 
 <h:head>
     <title>Athena Product List</title>
@@ -24,9 +25,11 @@
 
         <h:form id="productList">
 
-            <div class="row">
-                <h:link value="New Product" outcome="create" styleClass="pull-right"/>
-            </div>
+            <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
+                <div class="row">
+                    <h:link value="New Product" outcome="create" styleClass="pull-right"/>
+                </div>
+            </security:authorizeBlock>
 
             <p:dataTable value="#{productList.productsDataModel}"
                          var="product"

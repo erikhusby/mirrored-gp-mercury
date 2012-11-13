@@ -1,18 +1,17 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.infrastructure.DataTableFilteredValuesBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.login.UserLogin;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
-import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +32,9 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
     @Inject
     private ProductDao productDao;
 
+    @Inject
+    private UserBean userBean;
+
     private ProductsDataModel productsDataModel;
 
     /**
@@ -42,7 +44,6 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
     public void onPreRenderView() {
         filteredValuesBean.beginConversation();
     }
-
 
     public ProductsDataModel getProductsDataModel() {
 
@@ -63,37 +64,20 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         return productsDataModel;
     }
 
-
     /**
      * Generic comparison method for column sorts.  Assumes passed in parameters implement {@link Comparable}
      */
     public int compare(Object o1, Object o2) {
-        if (o1 == o2)
-            return 0;
-
-        if (o1 == null)
-            return -1;
-
-        if (o2 == null)
-            return 1;
-
-        return ((Comparable) o1).compareTo(o2);
+        return new CompareToBuilder().append(o1, o2).toComparison();
     }
 
-
+    @SuppressWarnings("unchecked")
     public List<Product> getFilteredValues() {
-        //noinspection unchecked
         return filteredValuesBean.getFilteredValues();
     }
 
-
     public void setFilteredValues(List<Product> filteredValues) {
         filteredValuesBean.setFilteredValues(filteredValues);
-    }
-
-    private static boolean isUserPDM() {
-        HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-        return request.isUserInRole(UserLogin.PRODUCT_MANAGER_ROLE);
     }
 
     /**
@@ -106,21 +90,12 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         List<Product> list = new ArrayList<Product>();
         String[] searchStrings = search.toLowerCase().split("\\s");
 
-        Iterable<Product> possiblyNonPDMFilteredProducts;
-        if (isUserPDM()) {
-            possiblyNonPDMFilteredProducts = getProductsDataModel();
-        }
-        else {
-            List<Product> nonPDMFilteredProducts = new ArrayList<Product>();
-            for (Product product : getProductsDataModel()) {
-                if (! product.isPdmOrderableOnly()) {
-                    nonPDMFilteredProducts.add(product);
-                }
-            }
-            possiblyNonPDMFilteredProducts = nonPDMFilteredProducts;
-        }
+        boolean showPDMProducts = userBean.isPDMUser() || userBean.isDeveloperUser();
+        List<Product> products = productDao.findProducts(
+                showPDMProducts ? ProductDao.IncludePDMOnly.YES : ProductDao.IncludePDMOnly.NO);
+        Collections.sort(products, new ProductComparator());
 
-        for (Product product : possiblyNonPDMFilteredProducts) {
+        for (Product product : products) {
             String label = product.getProductName().toLowerCase();
             boolean include = true;
             for (String s : searchStrings) {
@@ -141,12 +116,15 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
     public List<Product> searchProduct(String query) {
         List<Product> allProducts = productDao.findProducts();
         List<Product> products = new ArrayList<Product>();
-        for ( Product product : allProducts ) {
-            final String queryCapitalized = query.toUpperCase();
-            if ((product.getPartNumber().toUpperCase().contains(queryCapitalized) || product.getProductName().toUpperCase().contains(queryCapitalized) ||
-                    product.getProductFamily().getName().toUpperCase().contains(queryCapitalized)
-            ) && ( product.isAvailable() || (product.getAvailabilityDate() != null && product.getAvailabilityDate().after( new Date() )) )) {
-                products.add( product );
+        Date today = new Date();
+        for (Product product : allProducts) {
+            String queryCapitalized = query.toUpperCase();
+            if ((product.isAvailable() ||
+                 (product.getAvailabilityDate() != null && product.getAvailabilityDate().after(today))) &&
+                (product.getPartNumber().toUpperCase().contains(queryCapitalized) ||
+                 product.getProductName().toUpperCase().contains(queryCapitalized) ||
+                 product.getProductFamily().getName().toUpperCase().contains(queryCapitalized))) {
+                products.add(product);
             }
         }
         return products;

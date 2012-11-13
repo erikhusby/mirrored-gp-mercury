@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.logout;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationListener;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -12,15 +13,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
 /**
+ * This class handles removing the user's web application authentication.
+ *
  * @author Scott Matthews
- *         Date: 4/23/12
- *         Time: 11:47 AM
  */
-
 @Named
 @RequestScoped
 public class LogoutHandler extends AbstractJsfBean {
-
     @Inject
     private Log logger;
 
@@ -30,7 +29,7 @@ public class LogoutHandler extends AbstractJsfBean {
     public String logout() {
         // If logout is successful, the redirect location is irrelevant since our authorization filter
         // will force the user to the login page.
-        String result = redirect("/index");
+        String result = redirect(AuthorizationListener.HOME_PAGE);
 
         FacesContext context = FacesContext.getCurrentInstance();
 
