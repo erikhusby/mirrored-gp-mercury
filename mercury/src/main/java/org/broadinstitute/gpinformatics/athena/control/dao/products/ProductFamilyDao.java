@@ -4,9 +4,9 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 
@@ -36,7 +36,7 @@ public class ProductFamilyDao extends GenericDao {
      * @param productFamilyId
      * @return
      */
-    public ProductFamily find(@NotNull Long productFamilyId) {
+    public ProductFamily find(@Nonnull Long productFamilyId) {
         return findSingle(ProductFamily.class, ProductFamily_.productFamilyId, productFamilyId);
     }
 
