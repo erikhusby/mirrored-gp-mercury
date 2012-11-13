@@ -126,19 +126,19 @@ public abstract class AbstractJsfBean {
     public <T> void updateForDuplicates(List<T> objects, String componentId) {
 
         // The users ARE THE ACTUAL MEMBERS that back the autocomplete lists
-        Set<T> unqiueObjects = new HashSet<T>();
+        Set<T> uniqueObjects = new HashSet<T>();
 
         // Since this is called after a single add, at most there is one duplicate
         T duplicate = null;
         for (T object : objects) {
-            if (!unqiueObjects.add(object)) {
+            if (!uniqueObjects.add(object)) {
                 duplicate = object;
             }
         }
 
         if (duplicate != null) {
             objects.clear();
-            objects.addAll(unqiueObjects);
+            objects.addAll(uniqueObjects);
 
             String name;
             if (duplicate instanceof BspUser) {

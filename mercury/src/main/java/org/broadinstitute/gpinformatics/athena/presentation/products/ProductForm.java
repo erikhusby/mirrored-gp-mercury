@@ -93,6 +93,9 @@ public class ProductForm extends AbstractJsfBean {
     private List<Product> addOns;
 
 
+
+
+
     /**
      * Hook for the preRenderView event that initiates the long running conversation and sets up conversation scoped
      * data from the product, also initializes the form as appropriate
@@ -121,9 +124,7 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public boolean isCreating() {
-        // not using the injected value of FacesContext since that will not be injected on AJAX requests
-        HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-        return request.getParameter("product") == null;
+        return product.getProductId() == null;
     }
 
 
