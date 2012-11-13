@@ -3,11 +3,14 @@ package org.broadinstitute.gpinformatics.athena.control.dao.products;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -75,9 +78,9 @@ public class ProductDao extends GenericDao implements Serializable {
      * @param includePDMOnly
      * @return
      */
-    public List<Product> findProducts(@NotNull AvailableOnly availableOnly,
-                                      @NotNull TopLevelOnly topLevelOnly,
-                                      @NotNull IncludePDMOnly includePDMOnly) {
+    public List<Product> findProducts(@Nonnull AvailableOnly availableOnly,
+                                      @Nonnull TopLevelOnly topLevelOnly,
+                                      @Nonnull IncludePDMOnly includePDMOnly) {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Product> cq = cb.createQuery(Product.class);
         List<Predicate> predicateList = new ArrayList<Predicate>();
