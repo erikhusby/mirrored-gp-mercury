@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -15,7 +16,7 @@ import javax.persistence.*;
 @Table(name = "RESEARCH_PROJECTIRB", schema = "athena")
 public class ResearchProjectIRB {
 
-    public enum IrbType {
+    public enum IrbType implements Displayable {
         PARTNERS("IRB from Partners"),
         FARBER("IRB from Dana Farber"),
         MIT("IRB from MIT COUHES"),

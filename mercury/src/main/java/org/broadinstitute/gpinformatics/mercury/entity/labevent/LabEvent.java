@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
-import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -63,8 +62,12 @@ import java.util.Set;
     // deltas in an aggregation in zamboni
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}))
+@Table(schema = "mercury",
+       uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}),
+       name = "lab_event")
 public abstract class LabEvent {
+
+    public static final String UI_EVENT_LOCATION = "User Interface";
 
     public static final Comparator<GenericLabEvent> byEventDate = new Comparator<GenericLabEvent>() {
         @Override
@@ -124,9 +127,13 @@ public abstract class LabEvent {
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    private BasicProjectPlan projectPlanOverride;
 
-    @Transient
-    // transient because ARZ hasn't figured out the tests for this.  work in progress.
-    private ProductOrderId productOrder;
+
+
+    /**
+     * Business Key of a product order to which this event is associated
+     */
+    private String productOrderId;
+
 
     public abstract LabEventName getEventName();
 
@@ -393,11 +400,11 @@ todo jmt adder methods
      * Most events will return null.
      * @return
      */
-    public ProductOrderId getProductOrderId() {
-        return productOrder;
+    public String getProductOrderId () {
+        return productOrderId;
     }
 
-    public void setProductOrderId(ProductOrderId productOrder) {
-        this.productOrder = productOrder;
+    public void setProductOrderId( String productOrder) {
+        this.productOrderId = productOrder;
     }
 }

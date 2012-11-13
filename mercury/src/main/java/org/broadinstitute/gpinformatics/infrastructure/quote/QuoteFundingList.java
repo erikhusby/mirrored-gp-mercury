@@ -48,7 +48,7 @@ public class QuoteFundingList {
     public Funding getById(String fundingTypeAndName) {
         if (getFunding() != null) {
             for (Funding funding : getFunding()) {
-                if (funding.getFundingTypeAndName().equals(fundingTypeAndName)) {
+                if (funding.getDisplayName().equals(fundingTypeAndName)) {
                     return funding;
                 }
             }
@@ -94,13 +94,20 @@ public class QuoteFundingList {
     }
 
     private boolean anyFieldMatches(String lowerQuery, Funding funding) {
-        return funding.getFundingTypeAndName().toLowerCase().contains(lowerQuery) ||
+        return funding.getDisplayName().toLowerCase().contains(lowerQuery) ||
                funding.getMatchDescription().toLowerCase().contains(lowerQuery);
     }
 
     public synchronized void refreshFunding() {
         try {
-            fundingList = ImmutableSet.copyOf(quoteService.getAllFundingSources());
+            Set<Funding> rawFunding = quoteService.getAllFundingSources();
+
+            // if fails, use previous cache entry (even if it's null)
+            if (rawFunding == null) {
+                return;
+            }
+
+            fundingList = ImmutableSet.copyOf(rawFunding);
         } catch (Exception ex) {
             logger.debug("Could not refresh the funding list", ex);
         }

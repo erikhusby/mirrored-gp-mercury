@@ -61,7 +61,14 @@ public class PriceListCache implements Serializable {
 
     public synchronized void refreshPriceList() {
         try {
-            priceList = quoteService.getAllPriceItems();
+            PriceList rawPriceList = quoteService.getAllPriceItems();
+
+            // if fails, use previous cache entry (even if it's null)
+            if (rawPriceList == null) {
+                return;
+            }
+
+            priceList = rawPriceList;
         } catch (Exception ex) {
             logger.debug("Could not refresh the price item list", ex);
         }
