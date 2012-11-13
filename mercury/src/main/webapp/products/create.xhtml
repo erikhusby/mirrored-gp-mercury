@@ -147,17 +147,18 @@
                 <div class="control-group">
                     <p:outputLabel for="defaultPriceItem" value="Primary Price Item *" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="defaultPriceItem" value="#{productForm.defaultPriceItem}"
-                                        completeMethod="#{productForm.searchSelectedPriceItems}" var="defaultPriceItem"
+                        <p:autoComplete id="defaultPriceItem" value="#{productForm.defaultPriceItems}"
+                                        completeMethod="#{productForm.searchForDefaultPriceItem}" var="defaultPriceItem"
                                         itemLabel='#{productForm.labelFor(defaultPriceItem)}' scrollHeight="250"
                                         itemValue="#{defaultPriceItem}" converter="#{priceItemConverter}"
-                                        forceSelection="true" size="60">
+                                       multiple="true" size="60">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{defaultPriceItem.name}</div>
                                 <div class="ac-dropdown-subtext">#{defaultPriceItem.platformName} | #{defaultPriceItem.categoryName}</div>
                             </p:column>
+                            <p:ajax event="itemSelect" listener="#{productForm.onDefaultPriceItemSelect}" />
+                            <p:ajax event="itemUnselect" listener="#{productForm.onDefaultPriceItemUnselect}" />
                         </p:autoComplete>
-                        <p:watermark for="defaultPriceItem" value="Type text to search "/>
                         <p:message for="defaultPriceItem" />
                     </div>
                 </div>
@@ -166,7 +167,7 @@
                     <p:outputLabel for="priceItem" value="Optional Price Items" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="priceItem" value="#{productForm.priceItems}"
-                                        completeMethod="#{productForm.searchPriceItems}" var="priceItem"
+                                        completeMethod="#{productForm.searchForOptionalPriceItems}" var="priceItem"
                                         itemLabel="#{productForm.labelFor(priceItem)}"
                                         itemValue="#{priceItem}" converter="#{priceItemConverter}" multiple="true"
                                         scrollHeight="250">
@@ -174,6 +175,8 @@
                             <p:column style="width:100%">
                                 <div>#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name}</div>
                             </p:column>
+                            <p:ajax event="itemSelect" listener="#{productForm.onOptionalPriceItemSelect}" />
+                            <p:ajax event="itemUnselect" listener="#{productForm.onOptionalPriceItemUnselect}" />
                         </p:autoComplete>
                         <p:watermark for="priceItem" value="Type text to search for Price Items"/>
                         <p:message for="priceItem" />

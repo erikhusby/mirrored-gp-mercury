@@ -356,7 +356,7 @@ public class ResearchProject {
         projectFunding.clear();
         if ((fundingSet != null) && !fundingSet.isEmpty()) {
             for (Funding funding : fundingSet) {
-                projectFunding.add(new ResearchProjectFunding(this, funding.getFundingTypeAndName()));
+                projectFunding.add(new ResearchProjectFunding(this, funding.getDisplayName()));
             }
         }
     }
