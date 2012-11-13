@@ -1,13 +1,15 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
-import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -18,7 +20,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.util.Collection;
 import java.util.Comparator;
@@ -56,7 +57,7 @@ import java.util.Set;
  * (think: Bravo protocol file) as well as the workflow.
  *
  * LabEvents can be re-used in different workflows, with
- * different expected ranges, and project manaagers might
+ * different expected ranges, and project managers might
  * want to override these ranges.
  */
 // todo rename to "Event"--everything is an event, including
@@ -66,7 +67,7 @@ import java.util.Set;
 @Table(schema = "mercury",
        uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}),
        name = "lab_event")
-public abstract class LabEvent {
+public class LabEvent {
 
     public static final String UI_EVENT_LOCATION = "User Interface";
 

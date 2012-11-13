@@ -873,18 +873,18 @@ public class LabEventFactory {
      *
      * @return A collection of the created events for the submitted lab vessels
      */
-    public Collection<GenericLabEvent> buildFromBatchRequestsDBFree ( Map<String, List<LabVessel>> pdoToVessels,
+    public Collection<LabEvent> buildFromBatchRequestsDBFree ( Map<String, List<LabVessel>> pdoToVessels,
                                                                       Person actor, LabBatch batchIn ) {
 
         long workCounter = 0L;
 
-        List<GenericLabEvent> fullEventList = new LinkedList<GenericLabEvent> ();
+        List<LabEvent> fullEventList = new LinkedList<LabEvent> ();
 
         for ( Map.Entry<String, List<LabVessel>> mapEntry : pdoToVessels.entrySet () ) {
-            List<GenericLabEvent> events = new LinkedList<GenericLabEvent> ();
+            List<LabEvent> events = new LinkedList<LabEvent> ();
             for ( LabVessel currVessel : mapEntry.getValue () ) {
                 //TODO SGM  pull event type up and pass in.  Can be entry or exit.
-                GenericLabEvent currEvent = createFromBatchItems ( mapEntry.getKey (), currVessel, workCounter++, actor,
+                LabEvent currEvent = createFromBatchItems ( mapEntry.getKey (), currVessel, workCounter++, actor,
                                                                    LabEventType.BUCKET_EXIT );
                 currEvent.setLabBatch ( batchIn );
                 events.add ( currEvent );
@@ -911,11 +911,11 @@ public class LabEventFactory {
      * @param eventType
      * @return
      */
-    public GenericLabEvent createFromBatchItems ( String pdoKey, LabVessel batchItem, Long disambiguator, Person actor,
+    public LabEvent createFromBatchItems ( String pdoKey, LabVessel batchItem, Long disambiguator, Person actor,
                                                   LabEventType eventType ) {
 
         //TODO SGM pull event location up and pass it in.  Can be either ui or messaging
-        GenericLabEvent bucketMoveEvent = new GenericLabEvent ( eventType, new Date (), LabEvent.UI_EVENT_LOCATION,
+        LabEvent bucketMoveEvent = new LabEvent ( eventType, new Date (), LabEvent.UI_EVENT_LOCATION,
                                                                 disambiguator, actor );
         bucketMoveEvent.setProductOrderId ( pdoKey );
         batchItem.addInPlaceEvent(bucketMoveEvent);

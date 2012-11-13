@@ -177,11 +177,11 @@ public class LabBatch {
         this.labEvents = labEvents;
     }
 
-    public void addLabEvent (GenericLabEvent labEvent) {
+    public void addLabEvent (LabEvent labEvent) {
         this.labEvents.add(labEvent);
     }
 
-    public void addLabEvents ( Set<GenericLabEvent> labEvents ) {
+    public void addLabEvents ( Set<LabEvent> labEvents ) {
         this.labEvents.addAll(labEvents);
     }
 

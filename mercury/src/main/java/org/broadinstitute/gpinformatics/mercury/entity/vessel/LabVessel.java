@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
