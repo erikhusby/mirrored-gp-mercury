@@ -2,8 +2,8 @@ package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -29,7 +29,7 @@ public class ResearchProjectResource {
     }
 
     @GET
-    @Path("{researchProjectTitle}")
+    @Path("{researchProjectId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public ResearchProject findResearchProjectById(@PathParam("researchProjectId") String researchProjectId) {
         return findRPById(researchProjectId);
@@ -42,7 +42,7 @@ public class ResearchProjectResource {
      *
      * @return null if not found, otherwise the matching research project
      */
-    private ResearchProject findRPByTitle(@NotNull String researchProjectTitle) {
+    private ResearchProject findRPByTitle(@Nonnull String researchProjectTitle) {
         // Try to find research project by number
         return researchProjectDao.findByTitle(researchProjectTitle);
     }
@@ -54,7 +54,7 @@ public class ResearchProjectResource {
      *
      * @return null if not found, otherwise the matching research project
      */
-    private ResearchProject findRPById(@NotNull String jiraTicketKey) {
+    private ResearchProject findRPById(@Nonnull String jiraTicketKey) {
         return researchProjectDao.findByJiraTicketKey(jiraTicketKey);
     }
 
