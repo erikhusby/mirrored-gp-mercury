@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -61,7 +60,7 @@ public class SamplesPicoEndToEndTest {
 
         // event web service, by batch
         LabEventResource labEventResource = new LabEventResource();
-        List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<GenericLabEvent>(labBatch.getLabEvents()));
+        List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<LabEvent>(labBatch.getLabEvents()));
         Assert.assertEquals("Wrong number of messages", 10, labEventBeans.size());
         LabEventBean standardsTransferEvent = labEventBeans.get(labEventBeans.size() - 1);
         LabVesselBean microfluorPlate = standardsTransferEvent.getTargets().iterator().next();

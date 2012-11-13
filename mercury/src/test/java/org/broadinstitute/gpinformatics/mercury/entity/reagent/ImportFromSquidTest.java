@@ -152,7 +152,7 @@ public class ImportFromSquidTest extends ContainerTest {
             }
             plateWell.addReagent(new MolecularIndexReagent(molecularIndexingScheme));
 
-            staticPlate.getVesselContainer().addContainedVessel(plateWell, vesselPosition);
+            staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
         }
         staticPlateDAO.persistAll(plates);
         staticPlateDAO.clear();

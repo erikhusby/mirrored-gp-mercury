@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -69,9 +70,9 @@ public abstract class LabEvent {
 
     public static final String UI_EVENT_LOCATION = "User Interface";
 
-    public static final Comparator<GenericLabEvent> byEventDate = new Comparator<GenericLabEvent>() {
+    public static final Comparator<LabEvent> byEventDate = new Comparator<LabEvent>() {
         @Override
-        public int compare(GenericLabEvent o1, GenericLabEvent o2) {
+        public int compare(LabEvent o1, LabEvent o2) {
             int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
             if (dateComparison == 0) {
                 return o1.getDisambiguator().compareTo(o2.getDisambiguator());
@@ -127,79 +128,29 @@ public abstract class LabEvent {
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    private BasicProjectPlan projectPlanOverride;
 
-
-
     /**
      * Business Key of a product order to which this event is associated
      */
     private String productOrderId;
 
 
-    public abstract LabEventName getEventName();
+    @Enumerated(EnumType.STRING)
+    private LabEventType labEventType;
 
-    /**
-     * This is the change to sample state that this
-     * operation accomplishes.
-     *
-     * A lab event could be someone scanning
-     * a rack of tubes and saying "I hereby
-     * bless thee as having this arrangement
-     * of molecular indexes."  In this example,
-     * there's no transfer for us to track,
-     * and we don't bother to ask for the details
-     * of how we managed to get the
-     * indexes applied.  But we would configure
-     * the magical "apply molecular indexes"
-     * event type in the database such that
-     * any applcation of the event would
-     * have this effect.
-     *
-     * For example:
-     * adding molecular indexes
-     * changing volume
-     * changing concentration
-     * changing from RNA to DNA
-     * changing target sample size by fragmentation
-     * @return
-     * @throws InvalidMolecularStateException when this LabEvent is being
-     * applied in such a way that the molecular state change it causes is not
-     * what is expected.
-     */
-    public abstract void applyMolecularStateChanges() throws InvalidMolecularStateException;
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    private LabBatch labBatch;
 
-    /**
-     * Are the sources in the expected molecular state?
-     *
-     * In the messaging world, we are told of events
-     * after they happen.  So refusing to persist
-     * an event is unacceptable, although we might
-     * want to log/alert when this exception is thrown.
-     *
-     * On the other hand, if we want to up-front validation
-     * prior to events, we can leave it to the client
-     * to respond to this exception without getting
-     * our transactions confused.
-     *
-     * @throws InvalidMolecularStateException
-     */
-    public abstract void validateSourceMolecularState() throws InvalidMolecularStateException;
+    /** For JPA */
+    LabEvent() {
+    }
 
-    /**
-     * Are the targets in the expected molecular state?
-     *
-     * In the messaging world, we are told of events
-     * after they happen.  So refusing to persist
-     * an event is unacceptable, although we might
-     * want to log/alert when this exception is thrown.
-     *
-     * On the other hand, if we want to up-front validation
-     * prior to events, we can leave it to the client
-     * to respond to this exception without getting
-     * our transactions confused.
-     *
-     * @throws InvalidMolecularStateException
-     */
-    public abstract void validateTargetMolecularState() throws InvalidMolecularStateException;
+    public LabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Long disambiguator, Person operator) {
+        this.labEventType = labEventType;
+        this.setEventDate(eventDate);
+        this.setEventLocation(eventLocation);
+        this.setDisambiguator(disambiguator);
+        this.setEventOperator(operator);
+    }
 
     public Set<LabVessel> getTargetLabVessels() {
         Set<LabVessel> targetLabVessels = new HashSet<LabVessel>();
@@ -243,10 +194,6 @@ public abstract class LabEvent {
     }
 
     public void addReagent(Reagent reagent) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    public Collection<LabVessel> getTargetsForSource(LabVessel sourceVessl) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -324,7 +271,7 @@ public abstract class LabEvent {
 //    }
 
     /**
-     * See {@link #setProjectPlanOverride(org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan)}.
+     * See setProjectPlanOverride(org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan).
      * @return
      */
 //    public BasicProjectPlan getProjectPlanOverride() {
@@ -407,4 +354,208 @@ todo jmt adder methods
     public void setProductOrderId( String productOrder) {
         this.productOrderId = productOrder;
     }
+
+    public LabEventType getLabEventType() {
+        return this.labEventType;
+    }
+
+    public void setLabBatch(LabBatch labBatch) {
+        this.labBatch = labBatch;
+    }
+
+    public LabBatch getLabBatch() {
+        return labBatch;
+    }
+
+    /**
+     * Are the sources in the expected molecular state?
+     *
+     * In the messaging world, we are told of events
+     * after they happen.  So refusing to persist
+     * an event is unacceptable, although we might
+     * want to log/alert when this exception is thrown.
+     *
+     * On the other hand, if we want to up-front validation
+     * prior to events, we can leave it to the client
+     * to respond to this exception without getting
+     * our transactions confused.
+     *
+     * Probably we'll want generic source/target
+     * molecular state checks done up at the
+     * abstract superclass level and then let
+     * subclasses override them?
+     *
+     * @throws InvalidMolecularStateException
+     */
+    public void validateSourceMolecularState() throws InvalidMolecularStateException {
+        if (getSourceLabVessels().isEmpty() && !this.labEventType.isExpectedEmptySources()) {
+            throw new InvalidMolecularStateException("No sources.");
+        }
+/*
+        for (LabVessel source: getSourceLabVessels()) { // todo jmt remove
+            if (!this.labEventType.isExpectedEmptySources()) {
+                if (source.getSampleInstances().isEmpty()) {
+                    throw new InvalidMolecularStateException("Source " + source.getLabCentricName() + " is empty");
+                }
+            }
+        }
+*/
+    }
+
+    /**
+     * Are the targets in the expected molecular state?
+     *
+     * In the messaging world, we are told of events
+     * after they happen.  So refusing to persist
+     * an event is unacceptable, although we might
+     * want to log/alert when this exception is thrown.
+     *
+     * On the other hand, if we want to up-front validation
+     * prior to events, we can leave it to the client
+     * to respond to this exception without getting
+     * our transactions confused.
+     *
+     * @throws InvalidMolecularStateException
+     *
+     * Probably we'll want generic source/target
+     * molecular state checks done up at the
+     * abstract superclass level and then let
+     * subclasses override them?
+     * @throws InvalidMolecularStateException
+     */
+    public void validateTargetMolecularState() throws InvalidMolecularStateException {
+        if (getTargetLabVessels().isEmpty() && getInPlaceLabVessel() == null) {
+            throw new InvalidMolecularStateException("No destinations!");
+        }
+/*
+        for (LabVessel target: getTargetLabVessels()) {
+            if (!this.labEventType.isExpectedEmptyTargets()) {
+                if (target.getSampleInstances().isEmpty()) {
+                    throw new InvalidMolecularStateException("Target " + target.getLabCentricName() + " is empty");
+                }
+            }
+        }
+*/
+    }
+
+    /**
+     * This is the change to sample state that this
+     * operation accomplishes.
+     *
+     * A lab event could be someone scanning
+     * a rack of tubes and saying "I hereby
+     * bless thee as having this arrangement
+     * of molecular indexes."  In this example,
+     * there's no transfer for us to track,
+     * and we don't bother to ask for the details
+     * of how we managed to get the
+     * indexes applied.  But we would configure
+     * the magical "apply molecular indexes"
+     * event type in the database such that
+     * any applcation of the event would
+     * have this effect.
+     *
+     * For example:
+     * adding molecular indexes
+     * changing volume
+     * changing concentration
+     * changing from RNA to DNA
+     * changing target sample size by fragmentation
+     * @return
+     * @throws InvalidMolecularStateException when this LabEvent is being
+     * applied in such a way that the molecular state change it causes is not
+     * what is expected.
+     *
+     * After writing this method, I know think we only need
+     * a single {@link LabEvent} class to handle most Logic for properly handling
+     * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState} changes can be written
+     * once.  The need to customize behavior of
+     * {@link #validateSourceMolecularState()}, {@link #validateTargetMolecularState()},
+     * and {@link #applyMolecularStateChanges()}  is
+     * pretty unlikely.
+     * @throws InvalidMolecularStateException
+     */
+    public void applyMolecularStateChanges() throws InvalidMolecularStateException {
+        // apply reagents in message
+/*
+        for (LabVessel target: getTargetLabVessels()) {
+            for (LabVessel source: getSourcesForTarget(target)) {
+                // apply all goop from all sources
+                for (SampleSheet sampleSheet : source.getSampleSheets()) {
+                    target.addSampleSheet(sampleSheet);
+                }
+            }
+            // after the target goop is transferred,
+            // apply the reagent
+            for (Reagent reagent : getReagents()) {
+                target.applyReagent(reagent);
+            }
+        }
+*/
+
+        /**
+         * Here is why we probably only need a single {@link #applyMolecularStateChanges()}
+         * method.
+         */
+/*
+        for (LabVessel target: getTargetLabVessels()) {
+            // todo jmt restore this
+            // check the molecular state per target.
+            Set<MolecularStateTemplate> molecularStateTemplatesInTarget = new HashSet<MolecularStateTemplate>();
+            for (SampleInstance sampleInstance : target.getSampleInstances()) {
+                molecularStateTemplatesInTarget.add(sampleInstance.getMolecularState().getMolecularStateTemplate());
+            }
+            // allowing for jumbled {@link MolecularState} is probably
+            // one of those things we'd override per {@link LabEvent}
+            // subclass.  In the worst case, an implementation of
+            // {@link LabEvent} might have to dip into {@link Project}
+            // data to make some sort of special case
+            if (molecularStateTemplatesInTarget.size() > 1) {
+                StringBuilder errorMessage = new StringBuilder("Molecular state will not be uniform as a result of this operation.  " + target.getLabCentricName() + " has " + molecularStateTemplatesInTarget.size() + " different molecular states:\n");
+                for (MolecularStateTemplate stateTemplate : molecularStateTemplatesInTarget) {
+                    errorMessage.append(stateTemplate.toText());
+                }
+                // todo post this error message back to PM jira
+                throw new InvalidMolecularStateException(errorMessage.toString());
+            }
+            // if no molecular envelope change, set backlink
+
+            // create pool, or set backlink
+            // how to determine that it's a pooling operation? destination section has samples (is not empty), source section has samples
+
+            // set molecular state from map (or set backlink?)
+
+            // setting backlinks must be section based, unless the section is ALL* (without flips)
+        }
+*/
+
+        for (SectionTransfer sectionTransfer : getSectionTransfers()) {
+            sectionTransfer.applyTransfer();
+        }
+    }
+
+    /**
+     * Are we going to change the molecular
+     * state?
+     *
+     * Perhaps this should be up at {@link LabEvent}
+     *
+     * Events that denature or that transform from
+     * RNA into DNA also change molecular state.  So perhaps
+     * these
+     * @return
+     */
+/*
+    @Transient
+    private boolean isMolecularStateBeingChanged() {
+        boolean hasMolStateChange = false;
+        for (Reagent reagent: getReagents()) {
+            if (reagent.getMolecularEnvelopeDelta() != null) {
+                hasMolStateChange = true;
+            }
+        }
+        return hasMolStateChange;
+    }
+*/
+
 }
