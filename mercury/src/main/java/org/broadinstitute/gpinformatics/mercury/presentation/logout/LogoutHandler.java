@@ -13,15 +13,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
 /**
+ * This class handles removing the user's web application authentication.
+ *
  * @author Scott Matthews
- *         Date: 4/23/12
- *         Time: 11:47 AM
  */
-
 @Named
 @RequestScoped
 public class LogoutHandler extends AbstractJsfBean {
-
     @Inject
     private Log logger;
 

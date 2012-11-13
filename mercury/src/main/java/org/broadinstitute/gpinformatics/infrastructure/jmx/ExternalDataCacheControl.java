@@ -1,8 +1,7 @@
-package org.broadinstitute.gpinformatics.athena.control;
+package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCacheControl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 
@@ -14,7 +13,7 @@ import javax.inject.Inject;
  * Update singleton caches used for athena side of mercury
  */
 @Singleton
-public class AthenaGlobalCacheControl extends AbstractCacheControl {
+public class ExternalDataCacheControl extends AbstractCacheControl {
     @Inject
     private BSPCohortList cohortList;
 

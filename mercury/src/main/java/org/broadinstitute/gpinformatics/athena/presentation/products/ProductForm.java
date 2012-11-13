@@ -81,9 +81,14 @@ public class ProductForm extends AbstractJsfBean {
     private List<PriceItem> priceItems;
 
     /**
-     * This is in its own field since this is a JAXB {@link PriceItem} DTO and not a JPA entity
+     * Even though the
+     * underlying {@link Product} has a single-valued default price item, this is a collection so we can use
+     * the multi-select {@link org.primefaces.component.autocomplete.AutoComplete} that's used everywhere else in
+     * the application.  PriceItem is in its own field and not referenced through the Product model since this is
+     * a JAXB {@link PriceItem} DTO and not a JPA entity,
      */
-    private PriceItem defaultPriceItem;
+    private List<PriceItem> defaultPriceItems;
+
 
     private List<Product> addOns;
 
@@ -127,7 +132,7 @@ public class ProductForm extends AbstractJsfBean {
         // issue summary warning at most once
         if (! issuedSummaryMessageForPriceItemsNotOnCurrentPriceList) {
             // detail message not shown for global messages so set to null
-            addErrorMessage(GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST, null);
+            addErrorMessage(GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST);
             issuedSummaryMessageForPriceItemsNotOnCurrentPriceList = true;
         }
         // need to keep the summary null for clientMessage or it ends up showing in the global message area
@@ -158,12 +163,13 @@ public class ProductForm extends AbstractJsfBean {
                 if (product.getDefaultPriceItem() != null) {
                     PriceItem priceItemDto = entityToDto(product.getDefaultPriceItem());
 
+                    // Warn if default price item is unrecognized and null it out
                     if (! priceListCache.contains(priceItemDto)) {
                         issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, true));
-                        defaultPriceItem = null;
+                        defaultPriceItems = null;
                     }
                     else {
-                        defaultPriceItem = entityToDto(product.getDefaultPriceItem());
+                        defaultPriceItems = Collections.singletonList(entityToDto(product.getDefaultPriceItem()));
                     }
                 }
                 if (product.getPriceItems() != null) {
@@ -171,9 +177,9 @@ public class ProductForm extends AbstractJsfBean {
                     for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
 
                         PriceItem priceItemDto = entityToDto(priceItem);
+                        // Warn if this optional price item is unrecognized and null it out
                         if (! priceListCache.contains(priceItemDto)) {
                             issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
-                            defaultPriceItem = null;
                         }
                         else {
                             priceItems.add(priceItemDto);
@@ -242,11 +248,11 @@ public class ProductForm extends AbstractJsfBean {
             productManager.create(product);
         }
         catch (Exception e ) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.", "Product");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.");
         conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
@@ -261,11 +267,11 @@ public class ProductForm extends AbstractJsfBean {
 
         }
         catch (Exception e ) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.", "Product");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.");
         conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
@@ -289,7 +295,6 @@ public class ProductForm extends AbstractJsfBean {
         }
     }
 
-
     /**
      * Utility method to grab a persistent/detached JPA entity corresponding to this JAXB DTO if one exists,
      * otherwise return just a transient JPA entity
@@ -309,19 +314,18 @@ public class ProductForm extends AbstractJsfBean {
         return entity;
     }
 
-
     /**
      * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
      */
     private void addAllPriceItemsToProduct() throws ApplicationValidationException {
 
-        if (defaultPriceItem == null) {
+        if (defaultPriceItems == null || defaultPriceItems.size() == 0) {
             // ApplicationValidationException is rollback=true, but we're not in a transaction at the time of this
-            // validation, I just wanted to reuse the same exception type since this is an application validation
+            // validation, we're just reusing the same exception type
             throw new ApplicationValidationException("Default price item must be entered");
         }
 
-        product.setDefaultPriceItem(findEntity(defaultPriceItem));
+        product.setDefaultPriceItem(findEntity(defaultPriceItems.get(0)));
 
         product.getPriceItems().clear();
         if (priceItems != null) {
@@ -416,88 +420,19 @@ public class ProductForm extends AbstractJsfBean {
 
 
     /**
-     * AJAX unselection (removal) handler for {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
      *
-     * @param unselectEvent
-     */
-    public void onPriceItemUnselect(UnselectEvent unselectEvent) {
-        PriceItem priceItem = (PriceItem) unselectEvent.getObject();
-//        priceItems.remove(priceItem);
-        conversationData.getDefaultPriceItems().remove(priceItem);
-
-        // nuke out the default price item if it was the same price item we just removed
-        if (defaultPriceItem != null && defaultPriceItem.equals(priceItem)) {
-            defaultPriceItem = null;
-        }
-    }
-
-    /**
-     * AJAX selection (addition) handler for default {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param selectEvent
-     */
-
-    public void onPriceItemSelect(SelectEvent selectEvent) {
-//        priceItems.add((PriceItem) selectEvent.getObject());
-        getDefaultPriceItems().add((PriceItem) selectEvent.getObject());
-    }
-
-    /**
-     * AJAX unselection (removal) handler for default {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param ignored
-     */
-    public void onDefaultPriceItemUnselect(UnselectEvent ignored) {
-//        defaultPriceItem = null;
-    }
-
-    /**
-     * AJAX selection (addition) handler for {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param selectEvent
-     */
-    public void onDefaultPriceItemSelect(SelectEvent selectEvent) {
-/*
-        if (conversationData.getDefaultPriceItem() != null) {
-            // ignore
-        }
-        else {
-            conversationData.setDefaultPriceItem((PriceItem) selectEvent.getObject());
-        }
-*/
-    }
-
-
-    public List<PriceItem> getDefaultPriceItems() {
-        return conversationData.getDefaultPriceItems();
-    }
-
-
-    /**
-     * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
-     * actual setting of the default {@link PriceItem} is handled in the ajax event listener only
-     * @param defaultPriceItems
-     */
-    public void setDefaultPriceItems(List<PriceItem> defaultPriceItems) {
-        conversationData.setDefaultPriceItems(defaultPriceItems);
-    }
-
-
-    /**
-     *
-     * Used for {@link org.primefaces.component.autocomplete.AutoComplete}ing the default price item, restrict search
-     * to only the currently selected {@link PriceItem}s.  If there is already a default price item, no results will
-     * be returned to prevent an additional default price item from being set
+     * Used for {@link org.primefaces.component.autocomplete.AutoComplete}ing the default price item,
+     * excludes already selected price items and returns no results if a default price item is already set
      *
      * @param query
      * @return
      */
-    public List<PriceItem> searchSelectedPriceItems(String query) {
-        return priceListCache.searchPriceItems(query);
+    public List<PriceItem> searchForDefaultPriceItem(String query) {
+        if (conversationData.getSelectedDefaultPriceItem() == null) {
+            // if there's no currently selected price item, search is the same as for optional price items
+            return searchForOptionalPriceItems(query);
+        }
+        return null;
     }
 
 
@@ -507,25 +442,66 @@ public class ProductForm extends AbstractJsfBean {
      * @param query
      * @return
      */
-    public List<PriceItem> searchPriceItems(String query) {
+    public List<PriceItem> searchForOptionalPriceItems(String query) {
         List<PriceItem> searchResults = priceListCache.searchPriceItems(query);
         // filter out price items that are already selected
-        if (priceItems != null) {
-            for (PriceItem priceItem : priceItems) {
-                searchResults.remove(priceItem);
-            }
+
+        for (PriceItem priceItem : conversationData.getAllSelectedPriceItems()) {
+            searchResults.remove(priceItem);
         }
-        searchResults.remove(defaultPriceItem);
 
         return searchResults;
     }
 
-    public PriceItem getDefaultPriceItem() {
-        return defaultPriceItem;
+
+    /**
+     * AJAX listener method for selection of optional price item
+     * @param selectEvent
+     */
+    public void onOptionalPriceItemSelect(SelectEvent selectEvent) {
+        conversationData.addSelectedOptionalPriceItem((PriceItem) selectEvent.getObject());
     }
 
-    public void setDefaultPriceItem(PriceItem defaultPriceItem) {
-        this.defaultPriceItem = defaultPriceItem;
+
+    /**
+     * AJAX listener method for unselection of optional price item
+     * @param unselectEvent
+     */
+    public void onOptionalPriceItemUnselect(UnselectEvent unselectEvent) {
+        conversationData.removeSelectedOptionalPriceItem((PriceItem) unselectEvent.getObject());
+    }
+
+
+    /**
+     * AJAX listener method for selection of default price item
+     * @param selectEvent
+     */
+    public void onDefaultPriceItemSelect(SelectEvent selectEvent) {
+        conversationData.setSelectedDefaultPriceItem((PriceItem) selectEvent.getObject());
+    }
+
+    /**
+     * AJAX listener method for unselection of default price item
+     * @param ignored
+     */
+    public void onDefaultPriceItemUnselect(UnselectEvent ignored) {
+        conversationData.setSelectedDefaultPriceItem(null);
+    }
+
+    /**
+     * Property access for default price items "list"
+     * @return
+     */
+    public List<PriceItem> getDefaultPriceItems() {
+        return defaultPriceItems;
+    }
+
+    /**
+     * Setter for default price items "list"
+     * @param defaultPriceItems
+     */
+    public void setDefaultPriceItems(List<PriceItem> defaultPriceItems) {
+        this.defaultPriceItems = defaultPriceItems;
     }
 
     /**
@@ -566,4 +542,5 @@ public class ProductForm extends AbstractJsfBean {
         }
         return product.getProductName();
     }
+
 }

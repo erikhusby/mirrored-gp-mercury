@@ -12,8 +12,8 @@ import java.util.List;
 
 
 /**
- * Storing {@link PriceItem} data in a conversation to enable crosstalk between "all priceitems" and "default priceitem"
- * components.
+ * Storing {@link PriceItem} data in a conversation to record the selected priceitems across AJAX requests in the
+ * {@link Product} create / edit page.
  *
  */
 @ConversationScoped
@@ -23,22 +23,17 @@ public class ProductFormConversationData implements Serializable {
     private Conversation conversation;
 
     /**
-     * JAXB {@link PriceItem} DTOs
-     */
-    private List<PriceItem> priceItems;
-
-    /**
      * JAXB {@link PriceItem} DTOs, there can be only one default price item but this is a list so the PrimeFaces
      * {@link org.primefaces.component.autocomplete.AutoComplete} can be styled consistently with all the other
-     * multi-selecting {@link org.primefaces.component.autocomplete.AutoComplete}s in Mercury
+     * multi-selecting {@link org.primefaces.component.autocomplete.AutoComplete}s in Mercury.  Selection and
+     * unselection managed by the AJAX listeners in {@link ProductForm}
      */
-    private List<PriceItem> defaultPriceItems;
+    private List<PriceItem> selectedDefaultPriceItems;
 
     /**
-     * Record of the ID in case it gets lost across AJAX requests so we can always tell whether we're in create or edit
-     * mode.
+     * Currently selected optional price items as noted by the AJAX select / unselect listeners in {@link ProductForm}.
      */
-    private Long id;
+    private List<PriceItem> selectedOptionalPriceItems;
 
     /**
      * maps between entity and JAXB DTOs for price items
@@ -49,7 +44,6 @@ public class ProductFormConversationData implements Serializable {
         return new PriceItem(entity.getQuoteServerId(), entity.getPlatform(), entity.getCategory(), entity.getName());
     }
 
-
     /**
      * Method that initiates the long-running conversation.  Price items are pulled from the {@link Product} parameter.
      *
@@ -58,23 +52,20 @@ public class ProductFormConversationData implements Serializable {
     public void beginConversation(Product product) {
         if (conversation.isTransient()) {
             conversation.begin();
-            // start every conversation with initialized data!
-//            priceItems = new ArrayList<PriceItem>();
-            defaultPriceItems = new ArrayList<PriceItem>();
 
-/*
+            selectedDefaultPriceItems = new ArrayList<PriceItem>();
+            selectedOptionalPriceItems = new ArrayList<PriceItem>();
+
             if (product != null) {
-                id = product.getProductId();
                 if (product.getPriceItems() != null) {
                     for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
-                        addPriceItem(entityToDto(priceItem));
+                        addSelectedOptionalPriceItem(entityToDto(priceItem));
                     }
                 }
                 if (product.getDefaultPriceItem() != null) {
-                    defaultPriceItems.add(entityToDto(product.getDefaultPriceItem()));
+                    setSelectedDefaultPriceItem(entityToDto(product.getDefaultPriceItem()));
                 }
             }
-*/
         }
     }
 
@@ -87,88 +78,49 @@ public class ProductFormConversationData implements Serializable {
 
 
     /**
-     * Get all the latest PriceItems as visualized on the Create / Edit Product page
-     * @return
-     */
-    public List<PriceItem> getPriceItems() {
-        return priceItems;
-    }
-
-    /**
-     * Setter for UI price items
-     * @param priceItems
-     */
-    public void setPriceItems(List<PriceItem> priceItems) {
-        this.priceItems = priceItems;
-    }
-
-    /**
-     * List version of default price items getter, as used by the actual {@link org.primefaces.component.autocomplete.AutoComplete}
-     * component in the create.xhtml
-     * @return
-     */
-    public List<PriceItem> getDefaultPriceItems() {
-        return defaultPriceItems;
-    }
-
-    /**
-     * List version of default price items setter, as used by the actual {@link org.primefaces.component.autocomplete.AutoComplete}
-     * component in the create.xhtml
-     * @return
-     */
-
-    public void setDefaultPriceItems(List<PriceItem> defaultPriceItems) {
-        this.defaultPriceItems = defaultPriceItems;
-    }
-
-    /**
      * Convenience setter to box the price item into its list
      * @param priceItem
      */
-    public void setDefaultPriceItem(PriceItem priceItem) {
-        if (defaultPriceItems == null) {
-            defaultPriceItems = new ArrayList<PriceItem>();
+    public void setSelectedDefaultPriceItem(PriceItem priceItem) {
+        if (selectedDefaultPriceItems == null) {
+            selectedDefaultPriceItems = new ArrayList<PriceItem>();
         }
 
-        defaultPriceItems.clear();
+        selectedDefaultPriceItems.clear();
 
         if (priceItem != null) {
-            defaultPriceItems.add(priceItem);
+            selectedDefaultPriceItems.add(priceItem);
         }
     }
 
     /**
      * Convenience getter to "unbox" the default price item from its list
      */
-    public PriceItem getDefaultPriceItem() {
-        if (defaultPriceItems == null || defaultPriceItems.size() == 0) {
+    public PriceItem getSelectedDefaultPriceItem() {
+        if (selectedDefaultPriceItems == null || selectedDefaultPriceItems.size() == 0) {
             return null;
         }
 
-        return defaultPriceItems.get(0);
+        return selectedDefaultPriceItems.get(0);
     }
 
-    /**
-     * Convenience methods to add to the list of current price items
-     * @param priceItem
-     */
-    public void addPriceItem(PriceItem priceItem) {
-        priceItems.add(priceItem);
+
+    public void addSelectedOptionalPriceItem(PriceItem priceItem) {
+        selectedOptionalPriceItems.add(priceItem);
     }
 
-    /**
-     * Convenience methods to remove from the list of current price items
-     * @param priceItem
-     */
-    public void removePriceItem(PriceItem priceItem) {
-        priceItems.remove(priceItem);
+
+    public void removeSelectedOptionalPriceItem(PriceItem priceItem) {
+        selectedOptionalPriceItems.remove(priceItem);
     }
 
-    public Long getId() {
-        return id;
+
+    public List<PriceItem> getAllSelectedPriceItems() {
+        List<PriceItem> allSelectedPriceItems = new ArrayList<PriceItem>();
+        allSelectedPriceItems.addAll(selectedDefaultPriceItems);
+        allSelectedPriceItems.addAll(selectedOptionalPriceItems);
+        return allSelectedPriceItems;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+
 }

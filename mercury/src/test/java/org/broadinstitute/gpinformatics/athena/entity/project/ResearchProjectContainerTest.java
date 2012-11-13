@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import junit.framework.Assert;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -30,7 +30,7 @@ public class ResearchProjectContainerTest extends Arquillian {
 
     public void testJiraSubmission() throws IOException {
 
-        ResearchProject dummy = ResearchProjectTest.createDummyResearchProject();
+        ResearchProject dummy = AthenaClientServiceStub.createDummyResearchProject ();
 
         dummy.submit();
 

@@ -49,7 +49,7 @@ public class ImportFromSquidTest extends ContainerTest {
     /**
      * Import index schemes from Squid.
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testImportIndexingSchemes() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     mis.NAME, " +
