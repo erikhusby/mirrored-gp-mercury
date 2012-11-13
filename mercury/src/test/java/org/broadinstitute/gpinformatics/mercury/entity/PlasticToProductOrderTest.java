@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDaoTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
@@ -61,6 +62,9 @@ public class PlasticToProductOrderTest extends ContainerTest {
 
     @Inject
     StaticPlateDAO plateDAO;
+
+    @Inject
+    LabEventDao labEventDao;
 
     @Inject
     private UserTransaction utx;
@@ -125,38 +129,20 @@ public class PlasticToProductOrderTest extends ContainerTest {
         LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree ( plateXfer, barcodeToTubeMap,
                                                                                           null );
 
-        String sourceVesselBarcode = rackToPlateTransfer.getSourceLabVessels().iterator().next().getLabCentricName();
-
         BucketEntry bucketEntry = bucketResource.add(tube, PRODUCT_ORDER_KEY, bucket );
-        bucketDao.flush();
-        bucketDao.clear();
 
-        bucket = bucketDao.findByName(BUCKET_REFERENCE_NAME);
-
-        LabVessel newTube = tubeDAO.findByBarcode(tubeBarcode);
-
-        BucketEntry reFoundEntry = bucketEntryDao.findByVesselAndPO(newTube, PRODUCT_ORDER_KEY);
-
-
-
-        assertTrue ( bucket.contains ( reFoundEntry ) );
+        assertTrue ( bucket.contains ( bucketEntry ) );
 
         final Map<LabVessel,String> samplePOMapFromAthena = new HashMap<LabVessel, String>();
-        samplePOMapFromAthena.put(reFoundEntry.getLabVessel(),reFoundEntry.getPoBusinessKey ());
+        samplePOMapFromAthena.put(bucketEntry.getLabVessel(),bucketEntry.getPoBusinessKey ());
 
         List<BucketEntry> testEntries = new LinkedList<BucketEntry>();
-        testEntries.add ( reFoundEntry );
+        testEntries.add ( bucketEntry);
         bucketResource.start ( testEntries, new Person ( "hrafal", "Howard", "Rafal" ) );
-        bucketDao.flush ();
-        bucketDao.clear ();
 
-        bucket = bucketDao.findByName(BUCKET_REFERENCE_NAME);
-
-        LabVessel newTube2 = tubeDAO.findByBarcode(tubeBarcode);
-
-        Assert.assertFalse ( newTube2.getInPlaceEvents ().isEmpty () );
+        Assert.assertFalse ( tube.getInPlaceEvents ().isEmpty () );
         boolean doesEventHavePDO = false;
-        for (LabEvent labEvent : newTube2.getInPlaceEvents ()) {
+        for (LabEvent labEvent : tube.getInPlaceEvents ()) {
             if (labEvent.getProductOrderId()!= null) {
                 if (PRODUCT_ORDER_KEY.equals(labEvent.getProductOrderId())) {
                     doesEventHavePDO = true;
@@ -186,15 +172,16 @@ public class PlasticToProductOrderTest extends ContainerTest {
         assertEquals(1, rackToPlateTransfer.getTargetLabVessels().size());
         assertEquals(1, rackToPlateTransfer.getSourceLabVessels().size());
 
-//        LabVessel targetVessel = rackToPlateTransfer.getTargetLabVessels().iterator().next();
-        LabVessel targetVessel = plateDAO.findByBarcode(destinationPlateBarcode);
+        LabVessel targetVessel = rackToPlateTransfer.getTargetLabVessels().iterator().next();
+
         targetVessel.setChainOfCustodyRoots(barcodeToTubeMap.values());
         targetVessel.addAllSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
         // todo I'm setting this on the rack here, but it should just work on the tube
-//        LabVessel source = rackToPlateTransfer.getSourceLabVessels().iterator().next();
-        LabVessel source = rackDAO.getByLabel(sourceVesselBarcode);
+        LabVessel source = rackToPlateTransfer.getSourceLabVessels().iterator().next();
+
         source.setChainOfCustodyRoots(barcodeToTubeMap.values());
         source.addAllSamples(rootSamples); // in reality we wouldn't set the samples list; it would be derived from a history walk
+
 
         Map<LabVessel,String> vesselPOMap = poResolver.findProductOrders(targetVessel);
 
