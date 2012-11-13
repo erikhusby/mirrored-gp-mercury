@@ -24,7 +24,7 @@ import static junit.framework.Assert.assertTrue;
  *         Time: 2:10 PM
  */
 @Test ( groups = TestGroups.EXTERNAL_INTEGRATION )
-public class BucketResourceTest extends ContainerTest {
+public class BucketBeanTest extends ContainerTest {
 
     @Inject
     BucketBean resource;
