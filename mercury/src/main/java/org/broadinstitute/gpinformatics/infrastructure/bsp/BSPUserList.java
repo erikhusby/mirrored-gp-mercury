@@ -125,11 +125,17 @@ public class BSPUserList {
     public synchronized void refreshUsers() {
         try {
             List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
+            serverValid = rawUsers != null;
 
-            if (rawUsers == null) {
-                serverValid = false;
-            } else {
-                serverValid = true;
+            if (!serverValid) {
+                // BSP is down
+                if (users != null) {
+                    // I have the old set of users, which will include QADude, if needed, so just return.
+                    return;
+                } else {
+                    // set raw users empty so that we can add qa dude and copy just that
+                    rawUsers = new ArrayList<BspUser>();
+                }
             }
 
             if (deployment != Deployment.PROD) {

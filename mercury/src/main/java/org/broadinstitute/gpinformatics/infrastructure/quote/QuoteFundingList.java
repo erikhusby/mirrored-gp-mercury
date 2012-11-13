@@ -100,7 +100,14 @@ public class QuoteFundingList {
 
     public synchronized void refreshFunding() {
         try {
-            fundingList = ImmutableSet.copyOf(quoteService.getAllFundingSources());
+            Set<Funding> rawFunding = quoteService.getAllFundingSources();
+
+            // if fails, use previous cache entry (even if it's null)
+            if (rawFunding == null) {
+                return;
+            }
+
+            fundingList = ImmutableSet.copyOf(rawFunding);
         } catch (Exception ex) {
             logger.debug("Could not refresh the funding list", ex);
         }

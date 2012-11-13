@@ -134,7 +134,14 @@ public class BSPCohortList {
 
     public synchronized void refreshCohorts() {
         try {
-            cohortList = ImmutableSet.copyOf(cohortSearchService.getAllCohorts());
+            Set<Cohort> rawCohorts = cohortSearchService.getAllCohorts();
+
+            // if fails, use previous cache entry (even if it's null)
+            if (rawCohorts == null) {
+                return;
+            }
+
+            cohortList = ImmutableSet.copyOf(rawCohorts);
         } catch (Exception ex) {
             logger.debug("Could not refresh the cohort list", ex);
         }
