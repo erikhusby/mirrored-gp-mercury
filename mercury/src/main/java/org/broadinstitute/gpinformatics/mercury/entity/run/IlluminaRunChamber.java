@@ -41,16 +41,6 @@ public class IlluminaRunChamber extends RunChamber {
     }
 
     @Override
-    public Set<LabEvent> getTransfersFrom() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Set<LabEvent> getTransfersTo() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.ILLUMINA_RUN_CHAMBER;
     }

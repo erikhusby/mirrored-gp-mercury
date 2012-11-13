@@ -57,16 +57,6 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
     }
 
     @Override
-    public Set<LabEvent> getTransfersFrom() {
-        return vesselContainer.getTransfersFrom();
-    }
-
-    @Override
-    public Set<LabEvent> getTransfersTo() {
-        return this.vesselContainer.getTransfersTo();
-    }
-
-    @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.STRIP_TUBE;
     }

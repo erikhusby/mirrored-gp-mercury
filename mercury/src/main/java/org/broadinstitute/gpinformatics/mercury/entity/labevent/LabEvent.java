@@ -198,10 +198,6 @@ public class LabEvent {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public Collection<LabVessel> getTargetsForSource(LabVessel sourceVessl) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
     /**
      * Returns all the lab vessels involved in this
      * operation, regardless of source/destination.

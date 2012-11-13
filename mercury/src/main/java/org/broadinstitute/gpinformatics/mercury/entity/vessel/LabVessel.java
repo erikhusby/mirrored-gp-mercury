@@ -40,6 +40,9 @@ import java.util.logging.Logger;
 
 /**
  * A piece of plastic or glass that holds sample, reagent or other plastic.
+ * In-place lab events can apply to any LabVessel, whereas SectionTransfers and CherryPickTransfers apply to
+ * LabVessels with a VesselContainer role (racks and plates), and VesselToVessel and VesselToSection transfers
+ * apply to containees (tubes and wells).
  */
 @Entity
 @Audited
@@ -125,14 +128,6 @@ public abstract class LabVessel {
     protected LabVessel() {
     }
 
-    private Long getLabVesselId() {
-        return labVesselId;
-    }
-
-    private void setLabVesselId(Long labVesselId) {
-        this.labVesselId = labVesselId;
-    }
-
     /**
      * Well A01, Lane 3, Region 6 all might
      * be considered a labeled sub-section
@@ -162,7 +157,7 @@ public abstract class LabVessel {
      * Special subclass for DNAReagent to deal with
      * indexes and adaptors?  Or give Reagent a way
      * to express how it modifies the molecular envelope?
-     * @return
+     * @return reagents
      */
     public Set<Reagent> getReagentContents() {
         if(getReagentContentsCount() != null && getReagentContentsCount() > 0) {
@@ -200,14 +195,6 @@ public abstract class LabVessel {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public boolean isProgeny(LabVessel ancestor) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    public boolean isAncestor(LabVessel progeny) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
     public void addToContainer(VesselContainer vesselContainer) {
         this.containers.add(vesselContainer.getEmbedder());
         if(this.containersCount == null) {
@@ -227,11 +214,7 @@ public abstract class LabVessel {
         return Collections.unmodifiableSet(vesselContainers);
     }
 
-    public Integer getContainersCount() {
-        return containersCount;
-    }
-
-    // todo notion of a "sample group", not a cohorot,
+    // todo notion of a "sample group", not a cohort,
     // but rather an ID for the pool of samples within
     // a container.  useful for finding "related"
     // libraries, related by the group of samples
@@ -249,7 +232,6 @@ public abstract class LabVessel {
      */
     @Transient
     public String getLabCentricName() {
-        // todo jmt what should this do?
         String vesselContentName;
 
         try {
@@ -265,16 +247,38 @@ public abstract class LabVessel {
     }
 
     /**
-     * This needs to be really, really fast.
-     * @return
+     * Get LabEvents that are transfers from this vessel
+     * @return transfers
      */
-    public abstract Set<LabEvent> getTransfersFrom();
+    public Set<LabEvent> getTransfersFrom(){
+        if (getContainerRole() == null) {
+            Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
+            for (VesselContainer<?> vesselContainer : getContainers()) {
+                transfersFrom.addAll(vesselContainer.getTransfersFrom());
+            }
+            return transfersFrom;
+        } else {
+            return getContainerRole().getTransfersFrom();
+        }
+        // todo jmt vessel to vessel transfers
+    }
 
     /**
-     * This needs to be really, really fast.
-     * @return
+     * Get LabEvents that are transfers to this vessel
+     * @return transfers
      */
-    public abstract Set<LabEvent> getTransfersTo();
+    public Set<LabEvent> getTransfersTo(){
+        if (getContainerRole() == null) {
+            Set<LabEvent> transfersTo = new HashSet<LabEvent>();
+            for (VesselContainer<?> vesselContainer : getContainers()) {
+                transfersTo.addAll(vesselContainer.getTransfersTo());
+            }
+            return transfersTo;
+        } else {
+            return getContainerRole().getTransfersTo();
+        }
+        // todo jmt vessel to vessel transfers
+    }
 
 /*
     public void addNoteToProjects(String message) {
@@ -470,7 +474,7 @@ public abstract class LabVessel {
     }
 
     /**
-     * Get the immediate ancestor vessels to this vessel
+     * Get the immediate ancestor vessels to this vessel, in the transfer graph
      * @return ancestors and events
      */
     private List<VesselEvent> getAncestors() {
@@ -480,6 +484,21 @@ public abstract class LabVessel {
         }
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getAncestors(this));
+        }
+        return vesselEvents;
+    }
+
+    /**
+     * Get the immediate descendant vessels to this vessel, in the transfer graph
+     * @return descendant and events
+     */
+    private List<VesselEvent> getDescendants() {
+        List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
+            vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetLabVessel(), null, null, vesselToVesselTransfer.getLabEvent()));
+        }
+        for (LabVessel container : containers) {
+            vesselEvents.addAll(container.getContainerRole().getDescendants(this));
         }
         return vesselEvents;
     }
@@ -518,7 +537,7 @@ public abstract class LabVessel {
         NEAREST_DESCENDANT,
         /**
          * Find the metric on the nearest
-         * vessell, irrespective of
+         * vessel, irrespective of
          * ancestor or descendant.
          */
         NEAREST
@@ -526,7 +545,7 @@ public abstract class LabVessel {
 
     /**
      * Get all events that have happened directly to
-     * this vesell.  Really, really fast.  Like
+     * this vessel.  Really, really fast.  Like
      * right now.
      * @return
      */
@@ -707,16 +726,22 @@ public abstract class LabVessel {
         evaluateCriteria(transferTraverserCriteria, traversalDirection, null, 0);
     }
 
-    void evaluateCriteria(/*VesselPosition position, */TransferTraverserCriteria transferTraverserCriteria,
+    void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
             TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
         transferTraverserCriteria.evaluateVesselPreOrder(this, labEvent, hopCount);
-        // todo jmt use getAncestors and getDescendants
         if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
-            for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
-                vesselToVesselTransfer.getSourceVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,
-                        vesselToVesselTransfer.getLabEvent(), hopCount + 1);
+            for (VesselEvent vesselEvent : getAncestors()) {
+                LabVessel labVessel = vesselEvent.getLabVessel();
+                if(labVessel == null) {
+                    vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getVesselContainer().getPositionOfVessel(this),
+                            transferTraverserCriteria, traversalDirection, null, hopCount);
+                } else {
+                    labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                            vesselEvent.getLabEvent(), hopCount + 1);
+                }
             }
         } else if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
+            getDescendants();
             for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
                 vesselToVesselTransfer.getTargetLabVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,
                         vesselToVesselTransfer.getLabEvent(), hopCount + 1);
@@ -728,5 +753,6 @@ public abstract class LabVessel {
             VesselContainer containerRole = container.getContainerRole();
             containerRole.evaluateCriteria(containerRole.getPositionOfVessel(this), transferTraverserCriteria, traversalDirection, null, hopCount);
         }
+        transferTraverserCriteria.evaluateVesselPostOrder(this, labEvent, hopCount);
     }
 }
