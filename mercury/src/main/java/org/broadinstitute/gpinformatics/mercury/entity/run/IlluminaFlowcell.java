@@ -44,22 +44,12 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     @Override
-    public Set<LabEvent> getTransfersFrom() {
-        return vesselContainer.getTransfersFrom();
-    }
-
-    @Override
-    public Set<LabEvent> getTransfersTo() {
-        return vesselContainer.getTransfersTo();
-    }
-
-    @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.FLOWCELL;
     }
 
     @Override
-    public VesselContainer<RunChamber> getVesselContainer() {
+    public VesselContainer<RunChamber> getContainerRole() {
         return this.vesselContainer;
     }
 
@@ -118,8 +108,4 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         return this.flowcellBarcode;
     }
 
-    @Override
-    public Set<SampleInstance> getSampleInstances() {
-        return this.vesselContainer.getSampleInstances();
-    }
 }

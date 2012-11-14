@@ -56,7 +56,7 @@ public class VesselToSectionTransfer extends VesselTransfer {
     }
 
     public VesselContainer<?> getTargetVesselContainer() {
-        return OrmUtil.proxySafeCast(targetVessel, VesselContainerEmbedder.class).getVesselContainer();
+        return targetVessel.getContainerRole();
     }
 
     public LabEvent getLabEvent() {

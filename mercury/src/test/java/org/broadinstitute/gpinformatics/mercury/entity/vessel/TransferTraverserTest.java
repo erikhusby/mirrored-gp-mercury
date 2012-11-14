@@ -57,11 +57,8 @@ public class TransferTraverserTest extends ContainerTest{
 //        else {
 //            labVessel = OrmUtil.proxySafeCast(starter,LabVessel.class);
 //        }
-        VesselContainer<?> vesselContainer = labVessel.getContainers().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
-        vesselContainer.evaluateCriteria(vesselContainer.getPositionOfVessel(labVessel),
-                transferTraverserCriteria, VesselContainer.TraversalDirection.Descendants,
-                null, 0);
+        labVessel.evaluateCriteria(transferTraverserCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         System.out.println(jiraTicket.getTicketName() + ": " + transferTraverserCriteria.getLabEventNames());
     }
 }

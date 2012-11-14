@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +22,7 @@ import java.util.Map;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(name = "uk_mi_sequence", columnNames = {"sequence"}))
 public class MolecularIndex implements Serializable {
     public static final long serialVersionUID = 2011122101l;
 

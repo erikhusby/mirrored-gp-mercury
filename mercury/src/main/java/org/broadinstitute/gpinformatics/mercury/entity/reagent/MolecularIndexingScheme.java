@@ -27,7 +27,7 @@ import java.util.TreeMap;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(name = "uk_mis_name", columnNames = {"name"}))
 @NamedNativeQueries({
         @NamedNativeQuery(
                 name="MolecularIndexingScheme.findSingleIndexScheme",

@@ -22,6 +22,7 @@ public class VesselToVesselTransfer extends VesselTransfer{
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
 
+    // todo jmt should be targetVessel
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel targetLabVessel;
 

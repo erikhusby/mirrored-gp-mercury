@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
@@ -76,15 +76,14 @@ public class LabBatch {
     //    private ProjectPlan projectPlan;
 
     // todo jmt get Hibernate to sort this
-    @OneToMany ( mappedBy = "labBatch" )
-    private Set<GenericLabEvent> labEvents = new LinkedHashSet<GenericLabEvent> ();
+    @OneToMany(mappedBy = "labBatch")
+    private Set<LabEvent> labEvents = new LinkedHashSet<LabEvent>();
 
     private Date createdOn;
 
     /**
      * Create a new batch with the given name
-     * and set of {@link Starter starting materials}
-     *
+     * and set of @link Starter starting materials
      * @param batchName
      * @param starters
      */
@@ -170,19 +169,19 @@ public class LabBatch {
     //        throw new RuntimeException("I haven't been written yet.");
     //    }
 
-    public Set<GenericLabEvent> getLabEvents () {
+    public Set<LabEvent> getLabEvents() {
         return labEvents;
     }
 
-    public void setLabEvents ( Set<GenericLabEvent> labEvents ) {
+    public void setLabEvents(Set<LabEvent> labEvents) {
         this.labEvents = labEvents;
     }
 
-    public void addLabEvent (GenericLabEvent labEvent) {
+    public void addLabEvent (LabEvent labEvent) {
         this.labEvents.add(labEvent);
     }
 
-    public void addLabEvents ( Set<GenericLabEvent> labEvents ) {
+    public void addLabEvents ( Set<LabEvent> labEvents ) {
         this.labEvents.addAll(labEvents);
     }
 
