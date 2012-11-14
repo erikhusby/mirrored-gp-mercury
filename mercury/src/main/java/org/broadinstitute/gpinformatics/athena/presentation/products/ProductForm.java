@@ -39,11 +39,6 @@ public class ProductForm extends AbstractJsfBean {
     @Inject
     private Log logger;
 
-    /**
-     * Holder of long-running conversation state needed for price items
-     */
-    @Inject
-    private ProductFormConversationData conversationData;
 
     @Inject
     private FacesContext facesContext;
@@ -84,15 +79,11 @@ public class ProductForm extends AbstractJsfBean {
     private List<Product> addOns;
 
 
-
-
-
     /**
      * Hook for the preRenderView event that initiates the long running conversation and sets up conversation scoped
      * data from the product, also initializes the form as appropriate
      */
     public void onPreRenderView() {
-        conversationData.beginConversation(product);
         initForm();
     }
 
@@ -115,7 +106,7 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public boolean isCreating() {
-        return product.getProductId() == null;
+        return product == null || product.getProductId() == null;
     }
 
 
@@ -244,7 +235,6 @@ public class ProductForm extends AbstractJsfBean {
         }
 
         addInfoMessage("Product \"" + product.getProductName() + "\" has been created.");
-        conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
 
@@ -263,7 +253,6 @@ public class ProductForm extends AbstractJsfBean {
         }
 
         addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.");
-        conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
 
@@ -364,11 +353,6 @@ public class ProductForm extends AbstractJsfBean {
     }
 
 
-    /**
-     * Pull {@link PriceItem} data from conversation scoped {@link ProductFormConversationData}
-     *
-     * @return
-     */
     public List<PriceItem> getPriceItems() {
         return priceItems;
     }
