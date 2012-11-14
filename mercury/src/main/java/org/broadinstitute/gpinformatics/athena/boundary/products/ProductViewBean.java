@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItemComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
-import org.broadinstitute.gpinformatics.athena.presentation.converter.ProductConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.products.ProductForm;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
@@ -61,21 +61,34 @@ public class ProductViewBean extends AbstractJsfBean {
     private FacesContext facesContext;
 
     @Inject
-    private ProductConverter productConverter;
+    private ProductDao productDao;
+
+
+    private String getCachedBusinessKey() {
+        if (vsBusinessKeyCache != null) {
+            return (String) vsBusinessKeyCache.getValue();
+        }
+        return null;
+    }
+
+    public void setCachedBusinessKey(String key) {
+        vsBusinessKeyCache.setValue(key);
+    }
 
 
     public Product getProduct() {
 
         // if the model is not set but we have the business key in our cache binding, run the converter
         // to generate the model.  we expect to be in this case for every ajax request on this page.
-        if (product == null && vsBusinessKeyCache != null && vsBusinessKeyCache.getValue() != null) {
-            product = productConverter.getAsObject((String) vsBusinessKeyCache.getValue());
-        }
-        // if we have the model but have not yet set the business key into our cache binding, set the key
+        //
+        // else if we have the model but have not yet set the business key into our cache binding, set the key
         // into the cache binding.  we expect to be in this case on the initial page render when the f:param
         // has run the productConverter to set the model into this backing bean
-        else if (vsBusinessKeyCache != null && vsBusinessKeyCache.getValue() == null && product != null) {
-            vsBusinessKeyCache.setValue(product.getBusinessKey());
+        if (product == null && getCachedBusinessKey() != null) {
+            product = productDao.findByPartNumber(getCachedBusinessKey());
+        }
+        else if (product != null && getCachedBusinessKey() == null) {
+            setCachedBusinessKey(product.getBusinessKey());
         }
 
         return product;
@@ -88,8 +101,7 @@ public class ProductViewBean extends AbstractJsfBean {
     public List<Product> getAddOns() {
 
         if (getProduct() != null && addOns == null) {
-            addOns = new ArrayList<Product>();
-            addOns.addAll(getProduct().getAddOns());
+            addOns = new ArrayList<Product>(getProduct().getAddOns());
             // TODO make ProductComparator a static field on Product
             Collections.sort(addOns, new ProductComparator());
         }
@@ -99,8 +111,7 @@ public class ProductViewBean extends AbstractJsfBean {
 
     public List<PriceItem> getPriceItems() {
         if (getProduct() != null && priceItems == null) {
-            priceItems = new ArrayList<PriceItem>();
-            priceItems.addAll(getProduct().getPriceItems());
+            priceItems = new ArrayList<PriceItem>(getProduct().getPriceItems());
             // TODO make PriceItemComparator a static field on PriceItem
             Collections.sort(priceItems, new PriceItemComparator());
         }

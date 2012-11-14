@@ -148,7 +148,7 @@
                     <h:outputText value="Add-ons" />
                 </f:facet>
 
-                <p:column sortBy="#{addOn.partNumber}" sortFunction="#{productList.compare}">
+                <p:column sortBy="#{addOn.partNumber}">
                     <f:facet name="header">
                         <h:outputText value="Part Number"/>
                     </f:facet>
@@ -156,13 +156,13 @@
                         <f:param name="product" value="#{addOn.businessKey}"/>
                     </h:link>
                 </p:column>
-                <p:column sortBy="#{addOn.productName}" sortFunction="#{productList.compare}">
+                <p:column sortBy="#{addOn.productName}">
                     <f:facet name="header">
                         <h:outputText value="Name"/>
                     </f:facet>
                     <h:outputText value="#{addOn.productName}"/>
                 </p:column>
-                <p:column sortBy="#{addOn.productFamily.name}" sortFunction="#{productList.compare}">
+                <p:column sortBy="#{addOn.productFamily.name}">
                     <f:facet name="header">
                         <h:outputText value="Product Family"/>
                     </f:facet>
@@ -177,19 +177,19 @@
                 <f:facet name="header">
                     <h:outputText value="Optional Price Items" />
                 </f:facet>
-                <p:column sortBy="#{priceItem.platform}" sortFunction="#{productList.compare}">
+                <p:column sortBy="#{priceItem.platform}">
                     <f:facet name="header">
                         <h:outputText value="Platform"/>
                     </f:facet>
                     <h:outputText value="#{priceItem.platform}"/>
                 </p:column>
-                <p:column sortBy="#{priceItem.category}" sortFunction="#{productList.compare}">
+                <p:column sortBy="#{priceItem.category}">
                     <f:facet name="header">
                         <h:outputText value="Category"/>
                     </f:facet>
                     <h:outputText value="#{priceItem.category}"/>
                 </p:column>
-                <p:column sortBy="#{priceItem.name}" sortFunction="#{productList.compare}">
+                <p:column sortBy="#{priceItem.name}">
                     <f:facet name="header">
                         <h:outputText value="Name"/>
                     </f:facet>
