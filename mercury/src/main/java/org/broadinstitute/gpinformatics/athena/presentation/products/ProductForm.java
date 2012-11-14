@@ -208,12 +208,22 @@ public class ProductForm extends AbstractJsfBean {
 
 
     public String save() {
-        if (isCreating()) {
-            return create();
+        // need to calculate 'creating' here, doing it after writing out the entity is too late (we always get 'updating')
+        boolean creating = isCreating();
+
+        try {
+            addAllAddOnsToProduct();
+            addAllPriceItemsToProduct();
+
+            productManager.save(product);
         }
-        else {
-            return edit();
+        catch (Exception e ) {
+            addErrorMessage(e.getMessage());
+            return null;
         }
+
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been " + (creating ? "created." : "updated."));
+        return redirect("view") + addProductParam();
     }
 
 
@@ -221,40 +231,6 @@ public class ProductForm extends AbstractJsfBean {
         return "&product=" + product.getBusinessKey();
     }
 
-
-    public String create() {
-        try {
-            addAllAddOnsToProduct();
-            addAllPriceItemsToProduct();
-
-            productManager.create(product);
-        }
-        catch (Exception e ) {
-            addErrorMessage(e.getMessage());
-            return null;
-        }
-
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.");
-        return redirect("view") + addProductParam();
-    }
-
-
-    public String edit() {
-        try {
-            addAllAddOnsToProduct();
-            addAllPriceItemsToProduct();
-
-            productManager.edit(product);
-
-        }
-        catch (Exception e ) {
-            addErrorMessage(e.getMessage());
-            return null;
-        }
-
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.");
-        return redirect("view") + addProductParam();
-    }
 
     /**
      * Entify all the addons from our JAXB DTOs and add them to the {@link Product} before persisting
