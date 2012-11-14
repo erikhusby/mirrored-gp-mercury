@@ -49,7 +49,7 @@ public class ImportFromSquidTest extends ContainerTest {
     /**
      * Import index schemes from Squid.
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testImportIndexingSchemes() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     mis.NAME, " +
@@ -152,7 +152,7 @@ public class ImportFromSquidTest extends ContainerTest {
             }
             plateWell.addReagent(new MolecularIndexReagent(molecularIndexingScheme));
 
-            staticPlate.getVesselContainer().addContainedVessel(plateWell, vesselPosition);
+            staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
         }
         staticPlateDAO.persistAll(plates);
         staticPlateDAO.clear();

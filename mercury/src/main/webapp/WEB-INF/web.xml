@@ -10,6 +10,13 @@
         <param-value>Development</param-value>
     </context-param>
 
+<!--
+    <context-param>
+        <param-name>javax.faces.STATE_SAVING_METHOD</param-name>
+        <param-value>client</param-value>
+    </context-param>
+-->
+
     <context-param>
         <param-name>javax.faces.FACELETS_SKIP_COMMENTS</param-name>
         <param-value>true</param-value>
@@ -56,7 +63,6 @@
         <!-- we don't scan for test performance reasons.  use resteasy.resources explicitly instead. -->
         <param-value>false</param-value>
     </context-param>
-
     <context-param>
         <param-name>resteasy.resources</param-name>
         <!-- comma separated list of jax-rs resource classes -->
@@ -67,6 +73,7 @@
             org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource,
             org.broadinstitute.gpinformatics.athena.boundary.util.PingResource
         </param-value>
     </context-param>

@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -42,29 +41,8 @@ public class IlluminaRunChamber extends RunChamber {
     }
 
     @Override
-    public Set<LabEvent> getTransfersFrom() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Set<LabEvent> getTransfersTo() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.ILLUMINA_RUN_CHAMBER;
-    }
-
-    @Override
-    public Collection<LabEvent> getEvents() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-
-    @Override
-    public Set<SampleInstance> getSampleInstances() {
-        throw new RuntimeException("I haven't been written yet.");
     }
 
     /**
@@ -75,11 +53,6 @@ public class IlluminaRunChamber extends RunChamber {
     public Iterable<OutputDataLocation> getDataDirectories() {
         //return ZamboniWebService.getDataDirectories(...);
         throw new RuntimeException("Method not yet implemented.");
-    }
-
-    @Override
-    public LabVessel getContainingVessel() {
-        return this.flowcell;
     }
 
 
@@ -107,8 +80,8 @@ public class IlluminaRunChamber extends RunChamber {
      * @return
      */
     @Override
-    public Collection<Reagent> getReagentContents() {
-        final Collection<Reagent> sequencerReagents = new HashSet<Reagent>();
+    public Set<Reagent> getReagentContents() {
+        final Set<Reagent> sequencerReagents = new HashSet<Reagent>();
         for (LabEvent event: getEvents()) {
             sequencerReagents.addAll(event.getReagents());
         }

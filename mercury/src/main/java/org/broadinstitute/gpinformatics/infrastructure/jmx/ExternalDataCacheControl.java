@@ -1,42 +1,46 @@
 package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
-
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
-import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Update singleton caches used for athena side of mercury
+ * Registry of scheduled items for the application.  To use this class, subclass AbstractCache
+ * and override refreshCache().
  */
 @Singleton
 public class ExternalDataCacheControl extends AbstractCacheControl {
-    @Inject
-    private BSPCohortList cohortList;
 
-    @Inject
-    private BSPUserList userList;
-
-    @Inject
-    private QuoteFundingList fundingList;
-
-    @Inject
-    private PriceListCache priceListCache;
+    private final List<AbstractCache> caches = new ArrayList<AbstractCache>();
 
     private static final int MAX_SIZE = 100000;
 
     private int maxCacheSize = MAX_SIZE;
 
     @Override
-    @Schedule(minute = "*/20", hour = "*")
+    @Schedule(minute = "*/5", hour = "*")
     public void invalidateCache() {
-        cohortList.refreshCohorts();
-        userList.refreshUsers();
-        priceListCache.refreshPriceList();
-        fundingList.refreshFunding();
+        for (AbstractCache cache : caches) {
+            cache.refreshCache();
+        }
+    }
+
+    /**
+     * Add a cache to the list of caches to refresh.
+     * @param cache the cache to add
+     */
+    public void registerCache(AbstractCache cache) {
+        caches.add(cache);
+    }
+
+    /**
+     * Remove a cache from the list of caches to refresh.
+     * @param cache the cache to remove
+     * @return true if the cache was removed
+     */
+    public boolean unRegisterCache(AbstractCache cache) {
+        return caches.remove(cache);
     }
 
     @Override

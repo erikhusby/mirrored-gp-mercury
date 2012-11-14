@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -18,7 +19,7 @@ import java.util.Set;
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
 @Singleton
-public class QuoteFundingList {
+public class QuoteFundingList extends AbstractCache {
 
     private Set<Funding> fundingList;
 
@@ -34,7 +35,7 @@ public class QuoteFundingList {
     public Set<Funding> getFunding() {
         // any time the funding is null but we are asking for it, try and retrieve it again
         if (fundingList == null) {
-            refreshFunding();
+            refreshCache();
         }
 
         return fundingList;
@@ -93,12 +94,12 @@ public class QuoteFundingList {
         return results;
     }
 
-    private boolean anyFieldMatches(String lowerQuery, Funding funding) {
+    private static boolean anyFieldMatches(String lowerQuery, Funding funding) {
         return funding.getDisplayName().toLowerCase().contains(lowerQuery) ||
                funding.getMatchDescription().toLowerCase().contains(lowerQuery);
     }
 
-    public synchronized void refreshFunding() {
+    public synchronized void refreshCache() {
         try {
             Set<Funding> rawFunding = quoteService.getAllFundingSources();
 

@@ -95,7 +95,7 @@ public class BucketDaoTest extends ContainerTest {
         List<BucketEntry> entries =  new LinkedList<BucketEntry>(retrievedBucket.getBucketEntries());
         Collections.sort(entries, BucketEntry.byDate);
 
-        Assert.assertNotNull(entries.get(0).getLabVessel().getLabVesselId());
+//        Assert.assertNotNull(entries.get(0).getLabVessel().getLabVesselId());
 
         Assert.assertNotNull(entries.get ( 0 ).getBucketExistence ());
 
