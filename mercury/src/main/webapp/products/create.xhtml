@@ -14,7 +14,7 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}">
+                <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}">
                     <f:event type="preValidate" listener="#{productForm.initEmptyProduct}"/>
                 </f:viewParam>
             </f:metadata>
@@ -202,20 +202,11 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary" rendered="#{productForm.creating}" />
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary" rendered="#{ ! productForm.creating}" >
-                                    <!-- GPLIM-208 adding this parameter to the command button forces our converter to run
-                                         in preference to taking the local value (the detached Product instance) stored in
-                                         our components.  forcing the converter to run gives us our persistent Product entity.
-
-                                         this parameter value seems to get lost after failing form validation so
-                                         we have to get it out of the request -->
-                                    <f:param name="product" value="#{request.getParameter('product')}" />
-                                </p:commandButton>
+                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="offset2">
-                                <h:link outcome="list" value="Cancel" rendered="#{productForm.product.productId == null}"/>
-                                <h:link outcome="view" value="Cancel" rendered="#{productForm.product.productId != null}">
+                                <h:link outcome="list" value="Cancel" rendered="#{productForm.creating}"/>
+                                <h:link outcome="view" value="Cancel" rendered="#{!productForm.creating}">
                                     <f:param name="product" value="#{productForm.product.businessKey}"/>
                                 </h:link>
                             </div>

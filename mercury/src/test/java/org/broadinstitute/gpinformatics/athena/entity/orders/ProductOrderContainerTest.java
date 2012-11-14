@@ -5,6 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -39,9 +40,9 @@ public class ProductOrderContainerTest extends Arquillian {
     }
 
     public ProductOrder createSimpleProductOrder() throws Exception {
-        return new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
+        ProductOrder productOrder = new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
                 ProductOrderTest.createSampleList("SM-1P3X9","SM-1P3WY","SM-1P3XN"),
-                "newQuote", ProductOrderTest.createDummyProduct(),
+                "newQuote", AthenaClientServiceStub.createDummyProduct(),
             createDummyResearchProject(userList, "Test Research Project"));
     }
 
@@ -93,7 +94,7 @@ public class ProductOrderContainerTest extends Arquillian {
                 new ProductOrder(TEST_CREATOR, "containerTest Product Order Test2",
                         ProductOrderTest.createSampleList("SM_12CO4","SM_1P3WY","SM_1P3XN"),
                         "newQuote",
-                        ProductOrderTest.createDummyProduct(),
+                        AthenaClientServiceStub.createDummyProduct(),
                         createDummyResearchProject(userList, "Test Research Project"));
 
         Assert.assertEquals(testOrder.getUniqueSampleCount(), 3);

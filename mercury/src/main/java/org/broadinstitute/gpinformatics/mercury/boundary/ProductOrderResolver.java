@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary;
 
-import org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This class is the brains the figures out the "why"
@@ -34,10 +32,11 @@ public abstract class ProductOrderResolver {
      * The keys of the map are the {@link LabVessel root lab vessels}.  Some clients
      * may need to know the mapping between a root sample and its product orders, while
      * others might only flatten the list of {@link org.broadinstitute.gpinformatics.mercury.entity.ProductOrderId product orders}.
+     *
      * @param labVessel
      * @return
      */
-    public abstract Map<LabVessel,ProductOrderId> findProductOrders(LabVessel labVessel);
+    public abstract Map<LabVessel, String> findProductOrders ( LabVessel labVessel );
 
     /**
      * What's the {@link WorkflowStepDef} for the given  {@link LabVessel}
@@ -51,11 +50,12 @@ public abstract class ProductOrderResolver {
      * answer.  This seems overly complex at first, but consider something like QTP,
      * where multiple libraries from different {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef}s
      * may come together on a {@link org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaRunChamber}.
+     *
      * @param productOrder
      * @param root
      * @return
      */
-    public abstract Map<LabVessel,WorkflowStepDef> getStatus(ProductOrderId productOrder,
+    public abstract Map<LabVessel,WorkflowStepDef> getStatus( String productOrder,
                                                     LabVessel root);
 
 }

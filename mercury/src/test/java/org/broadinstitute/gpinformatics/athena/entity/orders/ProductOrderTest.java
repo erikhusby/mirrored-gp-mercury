@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectTest;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -15,7 +16,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -27,32 +27,14 @@ import java.util.*;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderTest {
 
-    private static final Long TEST_CREATOR = 10L;
+    private static final Long TEST_CREATOR = 1111L;
 
     private static final String PDO_JIRA_KEY = "PDO-1";
     private ProductOrder productOrder;
 
     @BeforeMethod
     public void setUp() throws Exception {
-        productOrder = createDummyProductOrder();
-    }
-
-    public static ProductOrder createDummyProductOrder() {
-        PriceItem priceItem = new PriceItem(
-                PriceItem.PLATFORM_GENOMICS,
-                PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
-                PriceItem.NAME_EXOME_EXPRESS,
-                "testQuoteId");
-        Product dummyProduct = createDummyProduct();
-        dummyProduct.addPriceItem(priceItem);
-        ProductOrderSample sample = new ProductOrderSample("SM-1234");
-        sample.addBillableItem(new BillableItem(priceItem, new BigDecimal("1")));
-        ProductOrder order = new ProductOrder(TEST_CREATOR, "title",
-                Collections.singletonList(sample), "quote", dummyProduct,
-                ResearchProjectTest.createDummyResearchProject());
-
-        order.updateAddOnProducts(Collections.singletonList(createDummyProduct()));
-        return order;
+        productOrder = AthenaClientServiceStub.createDummyProductOrder ();
     }
 
     @AfterMethod
@@ -88,7 +70,7 @@ public class ProductOrderTest {
 
         Assert.assertNull(productOrder.getJiraTicketKey());
 
-        Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.Product_Order);
+        Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER);
 
         Assert.assertEquals(productOrder.fetchJiraProject(), CreateIssueRequest.Fields.ProjectType.Product_Ordering);
 
@@ -97,12 +79,6 @@ public class ProductOrderTest {
         Assert.assertNotNull(productOrder.getJiraTicketKey());
 
         Assert.assertEquals(productOrder.getJiraTicketKey(), PDO_JIRA_KEY);
-    }
-
-    public static Product createDummyProduct() {
-        return new Product("productName", new ProductFamily("ProductFamily"), "description",
-            "partNumber", new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables",
-            true, "workflowName", false);
     }
 
     private final List<ProductOrderSample> sixBspSamplesNoDupes =
@@ -129,16 +105,16 @@ public class ProductOrderTest {
     @Test
     public void testGetTotalSampleCount() throws Exception {
         productOrder = new ProductOrder(TEST_CREATOR, "title", sixBspSamplesNoDupes, "quote", null, null);
-        Assert.assertEquals(productOrder.getTotalSampleCount(), 6);
+        Assert.assertEquals(productOrder.getTotalSampleCount (), 6);
 
         productOrder = new ProductOrder(TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
-        Assert.assertEquals(productOrder.getTotalSampleCount(), 6);
+        Assert.assertEquals(productOrder.getTotalSampleCount (), 6);
     }
 
     @Test
     public void testGetDuplicateCount() throws Exception {
         productOrder = new ProductOrder(TEST_CREATOR, "title", fourBspSamplesWithDupes, "quote", null, null);
-        Assert.assertEquals(productOrder.getDuplicateCount(), 2);
+        Assert.assertEquals(productOrder.getDuplicateCount (), 2);
     }
 
     @Test
@@ -153,7 +129,7 @@ public class ProductOrderTest {
         Assert.assertFalse(productOrder.areAllSampleBSPFormat());
 
         productOrder = new ProductOrder(TEST_CREATOR, "title", sixMixedSampleProducts, "quote", null, null);
-        Assert.assertFalse(productOrder.areAllSampleBSPFormat());
+        Assert.assertFalse ( productOrder.areAllSampleBSPFormat () );
     }
 
     public static List<ProductOrderSample> createSampleList(String... sampleList) {

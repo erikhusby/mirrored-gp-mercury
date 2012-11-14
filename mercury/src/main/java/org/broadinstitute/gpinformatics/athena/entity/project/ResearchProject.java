@@ -301,7 +301,7 @@ public class ResearchProject {
     }
 
     public void clearPeople() {
-        associatedPeople.clear();
+        associatedPeople.clear ();
     }
 
     public void addPeople(RoleType role, List<BspUser> people) {
@@ -356,7 +356,7 @@ public class ResearchProject {
         projectFunding.clear();
         if ((fundingSet != null) && !fundingSet.isEmpty()) {
             for (Funding funding : fundingSet) {
-                projectFunding.add(new ResearchProjectFunding(this, funding.getFundingTypeAndName()));
+                projectFunding.add(new ResearchProjectFunding(this, funding.getDisplayName()));
             }
         }
     }
@@ -526,7 +526,7 @@ public class ResearchProject {
      */
     @Transient
     public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
-        return CreateIssueRequest.Fields.Issuetype.Research_Project;
+        return CreateIssueRequest.Fields.Issuetype.RESEARCH_PROJECT;
     }
 
     /**

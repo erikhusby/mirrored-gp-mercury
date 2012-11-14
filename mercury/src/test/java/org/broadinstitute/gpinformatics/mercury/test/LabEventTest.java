@@ -19,8 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
@@ -37,8 +35,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -86,21 +84,28 @@ public class LabEventTest {
     /**
      * Used in test verification, accumulates the events in a chain of transfers
      */
-    public static class ListTransfersFromStart implements VesselContainer.TransferTraverserCriteria {
+    public static class ListTransfersFromStart implements TransferTraverserCriteria {
         private int hopCount = -1;
         private final List<String> labEventNames = new ArrayList<String>();
 
         @Override
-        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labEvent != null) {
                 if(hopCount > this.hopCount) {
                     this.hopCount = hopCount;
-                    GenericLabEvent genericLabEvent = OrmUtil.proxySafeCast(labEvent, GenericLabEvent.class);
-                    labEventNames.add(genericLabEvent.getLabEventType().getName() + " into " +
-                            genericLabEvent.getTargetLabVessels().iterator().next().getLabel());
+                    labEventNames.add(labEvent.getLabEventType().getName() + " into " +
+                            labEvent.getTargetLabVessels().iterator().next().getLabel());
                 }
             }
             return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
         }
 
         public List<String> getLabEventNames() {
@@ -175,11 +180,8 @@ public class LabEventTest {
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        VesselContainer<TwoDBarcodedTube> startingContainer = (VesselContainer<TwoDBarcodedTube>)
-                stringTwoDBarcodedTubeEntry.getValue().getContainers().iterator().next();
-        startingContainer.evaluateCriteria(
-                startingContainer.getPositionOfVessel(stringTwoDBarcodedTubeEntry.getValue()),
-                transferTraverserCriteria, VesselContainer.TraversalDirection.Descendants, null, 0);
+        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
         Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
 
@@ -271,7 +273,7 @@ public class LabEventTest {
         RackOfTubes sageUnloadRackRearrayed = new RackOfTubes("sageUnloadRearray", RackOfTubes.RackType.Matrix96);
         List<TwoDBarcodedTube> sageUnloadTubes = new ArrayList<TwoDBarcodedTube>(mapBarcodeToSageUnloadTubes.values());
         for(int i = 0; i < NUM_POSITIONS_IN_RACK; i++) {
-            sageUnloadRackRearrayed.getVesselContainer().addContainedVessel(sageUnloadTubes.get(i),
+            sageUnloadRackRearrayed.getContainerRole().addContainedVessel(sageUnloadTubes.get(i),
                     VesselPosition.getByName(bettaLimsMessageFactory.buildWellName(i + 1)));
         }
         sageUnloadRackRearrayed.makeDigest();
@@ -286,11 +288,8 @@ public class LabEventTest {
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        VesselContainer<TwoDBarcodedTube> startingContainer = (VesselContainer<TwoDBarcodedTube>)
-                stringTwoDBarcodedTubeEntry.getValue().getContainers().iterator().next();
-        startingContainer.evaluateCriteria(
-                startingContainer.getPositionOfVessel(stringTwoDBarcodedTubeEntry.getValue()),
-                transferTraverserCriteria, VesselContainer.TraversalDirection.Descendants, null, 0);
+        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
         Assert.assertEquals(labEventNames.size(), 12, "Wrong number of transfers");
 
@@ -713,7 +712,7 @@ public class LabEventTest {
             shearingCleanupPlate = (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(shearingCleanupPlate.getSampleInstances().size(),
                     mapBarcodeToTube.size(), "Wrong number of sample instances");
-            Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
+            Set<SampleInstance> sampleInstancesInWell = shearingCleanupPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
             Assert.assertEquals(sampleInstancesInWell.iterator().next().getStartingSample().getSampleKey(),
                     mapBarcodeToTube.values().iterator().next().getSampleInstances().iterator().next().getStartingSample().getSampleKey(), "Wrong sample");
@@ -881,12 +880,10 @@ public class LabEventTest {
                     libraryConstructionJaxbBuilder.getIndexedAdapterLigationJaxb(), indexPlate, shearingCleanupPlate);
             labEventHandler.processEvent(indexedAdapterLigationEntity);
             // asserts
-            Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
-//            PlateWell plateWellA1PostIndex = shearingCleanupPlate.getVesselContainer().getVesselAtPosition("A01");
-//            Assert.assertEquals(plateWellA1PostIndex.getAppliedReagents().iterator().next(), index301, "Wrong reagent");
+            Set<SampleInstance> postIndexingSampleInstances = shearingCleanupPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
             SampleInstance sampleInstance = postIndexingSampleInstances.iterator().next();
             MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) sampleInstance.getReagents().iterator().next();
-            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-Fenok", "Wrong index");
+            Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P7-M", "Wrong index");
 
             // AdapterLigationCleanup
             validateWorkflow("AdapterLigationCleanup", shearingCleanupPlate);
@@ -918,7 +915,7 @@ public class LabEventTest {
             pondRegRack = (RackOfTubes) pondRegistrationEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(pondRegRack.getSampleInstances().size(),
                     shearingPlate.getSampleInstances().size(), "Wrong number of sample instances");
-            Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
+            Set<SampleInstance> sampleInstancesInPondRegWell = pondRegRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInPondRegWell.size(), 1, "Wrong number of sample instances in position");
             Assert.assertEquals(sampleInstancesInPondRegWell.iterator().next().getStartingSample().getSampleKey(),
                     shearingPlate.getSampleInstances().iterator().next().getStartingSample().getSampleKey(), "Wrong sample");
@@ -932,7 +929,7 @@ public class LabEventTest {
     public static class BuildIndexPlate {
         private final String indexPlateBarcode;
         private StaticPlate indexPlate;
-        private MolecularIndexReagent index301;
+//        private MolecularIndexReagent index301;
 
         public BuildIndexPlate(String indexPlateBarcode) {
             this.indexPlateBarcode = indexPlateBarcode;
@@ -943,18 +940,27 @@ public class LabEventTest {
         }
 
         public BuildIndexPlate invoke() {
+            char[] bases = {'A', 'C', 'T', 'G'};
+
             indexPlate = new StaticPlate(indexPlateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
-            PlateWell plateWellA01 = new PlateWell(indexPlate, VesselPosition.A01);
-            index301 = new MolecularIndexReagent(new MolecularIndexingScheme(
-                    new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
-                        put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex("ATCGATCG"));}}));
-            plateWellA01.addReagent(index301);
-            indexPlate.getVesselContainer().addContainedVessel(plateWellA01, VesselPosition.A01);
-            PlateWell plateWellA02 = new PlateWell(indexPlate, VesselPosition.A02);
-            plateWellA02.addReagent(new MolecularIndexReagent(new MolecularIndexingScheme(
-                    new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
-                        put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex("TCGATCGA"));}})));
-            indexPlate.getVesselContainer().addContainedVessel(plateWellA02, VesselPosition.A02);
+            for (VesselPosition vesselPosition : SBSSection.ALL96.getWells()) {
+                PlateWell plateWell = new PlateWell(indexPlate, vesselPosition);
+                StringBuilder stringBuilder = new StringBuilder();
+
+                // Build a deterministic sequence from the vesselPosition, by indexing into the bases array
+                int base4Ordinal = Integer.parseInt(Integer.toString(vesselPosition.ordinal() + 1, 4), 4);
+                while(base4Ordinal > 0) {
+                    stringBuilder.append(bases[base4Ordinal % 4]);
+                    base4Ordinal = base4Ordinal / 4;
+                }
+
+                final String sequence = stringBuilder.toString();
+                MolecularIndexReagent molecularIndexReagent = new MolecularIndexReagent(new MolecularIndexingScheme(
+                        new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
+                            put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex(sequence));}}));
+                plateWell.addReagent(molecularIndexReagent);
+                indexPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
+            }
             return this;
         }
     }
@@ -1169,7 +1175,7 @@ public class LabEventTest {
             validateWorkflow("PreSelectionPool", pondRegRack); //todo jmt should be mapBarcodeToPondRegTube.values());
             Map<String, TwoDBarcodedTube> mapBarcodeToPreSelPoolTube = new HashMap<String, TwoDBarcodedTube>();
             Map<String, TwoDBarcodedTube> mapBarcodeToPondTube = new HashMap<String, TwoDBarcodedTube>();
-            for (TwoDBarcodedTube twoDBarcodedTube : pondRegRack.getVesselContainer().getContainedVessels()) {
+            for (TwoDBarcodedTube twoDBarcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
                 mapBarcodeToPondTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
             }
             Map<String, TwoDBarcodedTube> mapBarcodeToPreSelSource1Tube = new HashMap<String, TwoDBarcodedTube>();
@@ -1197,7 +1203,7 @@ public class LabEventTest {
                     Assert.fail("Duplicate sample " + preSelPoolSampleInstance.getStartingSample().getSampleKey());
                 }
             }
-            Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
+            Set<SampleInstance> sampleInstancesInPreSelPoolWell = preSelPoolRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(sampleInstancesInPreSelPoolWell.size(), 2, "Wrong number of sample instances in position");
 
             // Hybridization
@@ -1558,7 +1564,7 @@ public class LabEventTest {
 
         public void invoke() {
             QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, "", normCatchBarcodes, normCatchRackBarcode).invoke();
-            PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getCherryPickJaxb();
+            PlateCherryPickEvent cherryPickJaxb = qtpJaxbBuilder.getPoolingTransferJaxb();
             final String poolRackBarcode = qtpJaxbBuilder.getPoolRackBarcode();
             PlateCherryPickEvent denatureJaxb = qtpJaxbBuilder.getDenatureJaxb();
             final String denatureRackBarcode = qtpJaxbBuilder.getDenatureRackBarcode();
@@ -1581,7 +1587,7 @@ public class LabEventTest {
             labEventHandler.processEvent(poolingEntity);
             // asserts
             final RackOfTubes poolingRack = (RackOfTubes) poolingEntity.getTargetLabVessels().iterator().next();
-            Set<SampleInstance> pooledSampleInstances = poolingRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
+            Set<SampleInstance> pooledSampleInstances = poolingRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(pooledSampleInstances.size(), normCatchRack.getSampleInstances().size(), "Wrong number of pooled samples");
 
             // DenatureTransfer
@@ -1599,7 +1605,7 @@ public class LabEventTest {
             labEventHandler.processEvent(denatureEntity);
             // asserts
             denatureRack = (RackOfTubes) denatureEntity.getTargetLabVessels().iterator().next();
-            Set<SampleInstance> denaturedSampleInstances = denatureRack.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.A01);
+            Set<SampleInstance> denaturedSampleInstances = denatureRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(denaturedSampleInstances.size(), normCatchRack.getSampleInstances().size(), "Wrong number of denatured samples");
 
             // StripTubeBTransfer
@@ -1618,7 +1624,7 @@ public class LabEventTest {
             labEventHandler.processEvent(stripTubeTransferEntity);
             // asserts
             StripTube stripTube = (StripTube) stripTubeTransferEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(stripTube.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.TUBE1).size(),
+            Assert.assertEquals(stripTube.getContainerRole().getSampleInstancesAtPosition(VesselPosition.TUBE1).size(),
                     normCatchRack.getSampleInstances().size(), "Wrong number of samples in strip tube well");
 
             // FlowcellTransfer
@@ -1627,8 +1633,10 @@ public class LabEventTest {
             labEventHandler.processEvent(flowcellTransferEntity);
             //asserts
             illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(illuminaFlowcell.getVesselContainer().getSampleInstancesAtPosition(VesselPosition.LANE1).size(),
-                    normCatchRack.getSampleInstances().size(), "Wrong number of samples in flowcell lane");
+            Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE1);
+            Assert.assertEquals(lane1SampleInstances.size(), normCatchRack.getSampleInstances().size(),
+                    "Wrong number of samples in flowcell lane");
+            Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1, "Wrong number of reagents");
         }
 
         public RackOfTubes getDenatureRack() {
@@ -1650,7 +1658,8 @@ public class LabEventTest {
         private final String normCatchRackBarcode;
 
         private String poolRackBarcode;
-        private PlateCherryPickEvent cherryPickJaxb;
+        private String poolTubeBarcode;
+        private PlateCherryPickEvent poolingTransferJaxb;
         private String denatureRackBarcode;
         private PlateCherryPickEvent denatureJaxb;
         private String stripTubeHolderBarcode;
@@ -1671,8 +1680,12 @@ public class LabEventTest {
             return poolRackBarcode;
         }
 
-        public PlateCherryPickEvent getCherryPickJaxb() {
-            return cherryPickJaxb;
+        public String getPoolTubeBarcode() {
+            return poolTubeBarcode;
+        }
+
+        public PlateCherryPickEvent getPoolingTransferJaxb() {
+            return poolingTransferJaxb;
         }
 
         public String getDenatureRackBarcode() {
@@ -1704,6 +1717,7 @@ public class LabEventTest {
         }
 
         public QtpJaxbBuilder invoke() {
+            // PoolingTransfer
             poolRackBarcode = "PoolRack" + testPrefix;
             List<BettaLimsMessageFactory.CherryPick> poolingCherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
             List<String> poolTubeBarcodes = new ArrayList<String>();
@@ -1712,14 +1726,16 @@ public class LabEventTest {
                         bettaLimsMessageFactory.buildWellName(rackPosition), poolRackBarcode, "A01"));
                 poolTubeBarcodes.add("Pool" + testPrefix + rackPosition);
             }
-            cherryPickJaxb = bettaLimsMessageFactory.buildCherryPick("PoolingTransfer",
+            poolTubeBarcode = "Pool" + testPrefix + "1";
+            poolingTransferJaxb = bettaLimsMessageFactory.buildCherryPick("PoolingTransfer",
                     Arrays.asList(normCatchRackBarcode), Arrays.asList(normCatchBarcodes), poolRackBarcode, poolTubeBarcodes,
                     poolingCherryPicks);
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-            bettaLIMSMessage.getPlateCherryPickEvent().add(cherryPickJaxb);
+            bettaLIMSMessage.getPlateCherryPickEvent().add(poolingTransferJaxb);
             messageList.add(bettaLIMSMessage);
             bettaLimsMessageFactory.advanceTime();
 
+            // DenatureTransfer
             denatureRackBarcode = "DenatureRack" + testPrefix;
             List<BettaLimsMessageFactory.CherryPick> denatureCherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
             List<String> denatureTubeBarcodes = new ArrayList<String>();
@@ -1734,6 +1750,7 @@ public class LabEventTest {
             messageList.add(bettaLIMSMessage1);
             bettaLimsMessageFactory.advanceTime();
 
+            // StripTubeBTransfer
             stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
             List<BettaLimsMessageFactory.CherryPick> stripTubeCherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
             for(int rackPosition = 0; rackPosition < 8; rackPosition++) {
@@ -1750,6 +1767,7 @@ public class LabEventTest {
             messageList.add(bettaLIMSMessage2);
             bettaLimsMessageFactory.advanceTime();
 
+            // FlowcellTransfer
             flowcellBarcode = "Flowcell" + testPrefix;
             flowcellTransferJaxb = bettaLimsMessageFactory.buildStripTubeToFlowcell("FlowcellTransfer",
                     stripTubeBarcode, flowcellBarcode);
