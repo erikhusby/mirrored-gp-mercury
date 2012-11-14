@@ -40,10 +40,10 @@ public class ProductOrderContainerTest extends Arquillian {
     }
 
     public ProductOrder createSimpleProductOrder() throws Exception {
-        ProductOrder productOrder = new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
-                ProductOrderTest.createSampleList("SM-1P3X9","SM-1P3WY","SM-1P3XN"),
+        return new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
+                ProductOrderTest.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
                 "newQuote", AthenaClientServiceStub.createDummyProduct(),
-            createDummyResearchProject(userList, "Test Research Project"));
+                createDummyResearchProject(userList, "Test Research Project"));
     }
 
     public void testSimpleProductOrder() throws Exception {
@@ -92,7 +92,7 @@ public class ProductOrderContainerTest extends Arquillian {
 
         ProductOrder testOrder =
                 new ProductOrder(TEST_CREATOR, "containerTest Product Order Test2",
-                        ProductOrderTest.createSampleList("SM_12CO4","SM_1P3WY","SM_1P3XN"),
+                        ProductOrderTest.createSampleList("SM_12CO4", "SM_1P3WY", "SM_1P3XN"),
                         "newQuote",
                         AthenaClientServiceStub.createDummyProduct(),
                         createDummyResearchProject(userList, "Test Research Project"));
