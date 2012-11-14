@@ -23,7 +23,7 @@ public class GenotypingServiceExternalTest extends ContainerTest {
     private GenotypingService genotypingService;
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testLookupTechnologyProductById() throws Exception {
 
         // <product name="Omni1M"/>
