@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
@@ -7,6 +8,7 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Comparator;
 
 
 /**
@@ -20,7 +22,7 @@ import java.io.Serializable;
         uniqueConstraints = {
         @UniqueConstraint(columnNames = {"platform", "category", "name"})
 })
-public class PriceItem implements Serializable {
+public class PriceItem implements Serializable, Comparable<PriceItem> {
 
     // constants currently used by real price items in the quote server
     public static final String PLATFORM_GENOMICS = "Genomics Platform";
@@ -52,6 +54,18 @@ public class PriceItem implements Serializable {
 
     @Transient
     private String units;
+
+    private static final Comparator<PriceItem> PRICE_ITEM_COMPARATOR = new Comparator<PriceItem>() {
+        @Override
+        public int compare(PriceItem priceItem, PriceItem priceItem1) {
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(priceItem.getPlatform(), priceItem1.getPlatform());
+            builder.append(priceItem.getCategory(), priceItem1.getCategory());
+            builder.append(priceItem.getName(), priceItem1.getName());
+
+            return builder.build();
+        }
+    };
 
 
     /**
@@ -112,6 +126,11 @@ public class PriceItem implements Serializable {
 
     public String getQuoteServerId() {
         return quoteServerId;
+    }
+
+    @Override
+    public int compareTo(PriceItem that) {
+        return PRICE_ITEM_COMPARATOR.compare(this, that);
     }
 
     @Override

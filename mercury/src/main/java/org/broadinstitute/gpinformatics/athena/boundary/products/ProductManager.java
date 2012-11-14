@@ -50,27 +50,22 @@ public class ProductManager {
     }
 
 
-
-    public void create(Product product) throws ApplicationValidationException {
+    public void save(Product product) throws ApplicationValidationException {
 
         validateUniquePartNumber(product);
         validateDateRangeOkay(product);
 
-        try {
-            productDao.persist(product);
-            productDao.flush();
+        // if we are doing a create we will need to persist and flush, otherwise just falling off the end of this
+        // @Stateful method will commit our transaction
+        if (product.getProductId() == null) {
+            try {
+                productDao.persist(product);
+                productDao.flush();
+            }
+            catch (RuntimeException e) {
+                throw new ApplicationValidationException("Error creating Product", e);
+            }
         }
-        catch (RuntimeException e) {
-            throw new ApplicationValidationException("Error creating Product", e);
-        }
-
     }
-
-
-    public void edit(Product product) throws ApplicationValidationException {
-        validateUniquePartNumber(product);
-        validateDateRangeOkay(product);
-    }
-
 
 }
