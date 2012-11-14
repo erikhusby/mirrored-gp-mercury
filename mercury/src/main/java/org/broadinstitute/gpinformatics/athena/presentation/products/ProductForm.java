@@ -211,7 +211,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     public List<ProductFamily> getProductFamilies() {
         List<ProductFamily> productFamilies = productFamilyDao.findAll();
-        Collections.sort(productFamilies, ProductFamily.PRODUCT_FAMILY_COMPARATOR);
+        Collections.sort(productFamilies);
 
         return productFamilies;
     }
