@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
@@ -34,21 +33,6 @@ public class PlateWell extends LabVessel {
     }
 
     @Override
-    public LabVessel getContainingVessel() {
-        return this.plate;
-    }
-
-    @Override
-    public Set<LabEvent> getTransfersFrom() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Set<LabEvent> getTransfersTo() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
     public VesselGeometry getVesselGeometry() {
         return VesselGeometry.WELL;
     }
@@ -58,13 +42,4 @@ public class PlateWell extends LabVessel {
         return CONTAINER_TYPE.PLATE_WELL;
     }
 
-    @Override
-    public Collection<LabEvent> getEvents() {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    @Override
-    public Set<SampleInstance> getSampleInstances() {
-        return this.plate.getVesselContainer().getSampleInstancesAtPosition(this.vesselPosition);
-    }
 }

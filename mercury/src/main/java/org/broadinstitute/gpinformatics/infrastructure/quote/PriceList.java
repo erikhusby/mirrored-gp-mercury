@@ -23,4 +23,9 @@ public class PriceList {
         }
         priceItems.add(priceItem);
     }
+
+
+    public boolean contains(PriceItem priceItem) {
+        return priceItems.contains(priceItem);
+    }
 }

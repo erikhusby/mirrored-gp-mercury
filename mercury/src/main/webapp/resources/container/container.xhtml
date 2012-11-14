@@ -5,7 +5,9 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:cc="http://java.sun.com/jsf/composite"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core" xmlns:ui="http://java.sun.com/jsf/facelets">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+        >
 
 <cc:interface>
     <cc:attribute name="barcode" required="true"/>
@@ -23,12 +25,12 @@
             <h:outputText value="#{containerBean.getRowNumIndex()} " style="font-size: x-small;
                                   font-family: monospace; vertical-align: super"/>
             <br/>
-            <ui:repeat value="#{containerBean.samplesAtPosition()}" var="sample">
-                <h:outputText value="#{sample.startingSample.sampleKey}"
-                              style="font-size: smaller;"/>
-                <br/>
+            <ui:repeat value="#{containerBean.samplesAtPosition()}" var="sample" varStatus="status">
+                <h:outputText value="#{sample.startingSample.sampleKey}&lt;br/&gt;" escape="false"
+                              style="font-size: smaller;" rendered="#{status.index lt 3}"/>
             </ui:repeat>
-            <h:outputText value="EMPTY" rendered="#{containerBean.samplesAtPosition() == null}"
+            <h:outputText value="..." rendered="#{containerBean.samplesAtPosition().size() gt 3}"/>
+            <h:outputText value="EMPTY" rendered="#{containerBean.samplesAtPosition().size() == 0}"
                           style="font-size: smaller;"/>
         </p:panel>
     </p:dataGrid>

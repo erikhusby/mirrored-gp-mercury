@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.google.common.collect.ImmutableSet;
+import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -17,9 +20,12 @@ import java.util.Set;
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
 @Singleton
-public class BSPCohortList {
+public class BSPCohortList extends AbstractCache {
 
-    private Set<Cohort> cohortList = null;
+    @Inject
+    private Log logger;
+
+    private Set<Cohort> cohortList;
 
     @Inject
     private BSPCohortSearchService cohortSearchService;
@@ -29,11 +35,7 @@ public class BSPCohortList {
      */
     public Set<Cohort> getCohorts() {
         if (cohortList == null) {
-            try {
-                cohortList = cohortSearchService.getAllCohorts();
-            } catch (Exception ex) {
-                // If there are any problems with BSP, just leave the cohort list null for later when BSP does exist
-            }
+            refreshCache();
         }
 
         return cohortList;
@@ -91,18 +93,15 @@ public class BSPCohortList {
         return results;
     }
 
-    private void addCohortIfMatches(String[] lowerQueryItems, List<Cohort> results, Cohort cohort) {
-        boolean eachItemMatchesSomething = true;
+    private static void addCohortIfMatches(String[] lowerQueryItems, List<Cohort> results, Cohort cohort) {
         for (String lowerQuery : lowerQueryItems) {
             // If none of the fields match this item, then all items are not matched
             if (!anyFieldMatches(lowerQuery, cohort)) {
-                eachItemMatchesSomething = false;
+                return;
             }
         }
 
-        if (eachItemMatchesSomething) {
-            results.add(cohort);
-        }
+        results.add(cohort);
     }
 
     /**
@@ -124,10 +123,26 @@ public class BSPCohortList {
         return results;
     }
 
-    private boolean anyFieldMatches(String lowerQuery, Cohort cohort) {
+    private static boolean anyFieldMatches(String lowerQuery, Cohort cohort) {
         return cohort.getCohortId().toLowerCase().contains(lowerQuery) ||
                cohort.getName().toLowerCase().contains(lowerQuery) ||
                cohort.getGroup().toLowerCase().contains(lowerQuery) ||
                cohort.getCategory().toLowerCase().contains(lowerQuery);
+    }
+
+    @Override
+    public synchronized void refreshCache() {
+        try {
+            Set<Cohort> rawCohorts = cohortSearchService.getAllCohorts();
+
+            // if fails, use previous cache entry (even if it's null)
+            if (rawCohorts == null) {
+                return;
+            }
+
+            cohortList = ImmutableSet.copyOf(rawCohorts);
+        } catch (Exception ex) {
+            logger.debug("Could not refresh the cohort list", ex);
+        }
     }
 }

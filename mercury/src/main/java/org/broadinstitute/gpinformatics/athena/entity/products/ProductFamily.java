@@ -41,7 +41,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     public static final Comparator<ProductFamily> PRODUCT_FAMILY_COMPARATOR = new Comparator<ProductFamily>() {
         @Override
         public int compare(ProductFamily productFamily, ProductFamily productFamily1) {
-            return productFamily.getName().compareToIgnoreCase(productFamily1.getName());
+            return productFamily.getName().compareTo(productFamily1.getName());
         }
     };
 
@@ -73,8 +73,8 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
 
     @Override
-    public int compareTo(ProductFamily productFamily) {
-        return getName().compareTo(productFamily.getName());
+    public int compareTo(ProductFamily other) {
+        return PRODUCT_FAMILY_COMPARATOR.compare(this, other);
     }
 
     @Override

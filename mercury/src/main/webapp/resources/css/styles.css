@@ -24,7 +24,9 @@ label, input, button, select, textarea { font-size: 12px }
 .ui-widget-content a { color: #0088CC; !important }
 
 /* Make p:autoComplete's input field a little wider to fit longer watermarks. */
-.ui-autocomplete-multiple .ui-autocomplete-input-token input {  width: 160px; }
+.ui-autocomplete-multiple .ui-autocomplete-input-token input {  width: 500px; }
+
+.ui-autocomplete-multiple-container { width: 480px; overflow: visible }
 
 /* Tighten vertical spacing of Bootstrap horizontal forms. */
 .form-horizontal .control-group { margin-bottom: 12px; }
@@ -32,24 +34,13 @@ label, input, button, select, textarea { font-size: 12px }
 /* Right-justify p:dataTable content. E.g.: <h:outputText value="..." styleClass="dataTable-align-right"/> */
 .ui-datatable-data td .align-right { float: right; }
 
-/* Fix bug with PrimeFaces Bootstrap theme: http://forum.primefaces.org/viewtopic.php?f=9&t=25031 */
-.ui-widget-content input.ui-state-error, .ui-widget-content textarea.ui-state-error { color: black; }
-
-.controls .ui-message-error { display: inline-block; }
-
 /* Change error label style to more closely match Bootstrap. */
 label.ui-state-error, .ui-widget-content label.ui-state-error { background: white; color: #B94A48 }
 
 /* Fix bug with PrimeFaces Bootstrap theme: http://forum.primefaces.org/viewtopic.php?f=9&t=25031 */
 .ui-widget-content input.ui-state-error, .ui-widget-content textarea.ui-state-error, .ui-widget-content .controls .ui-state-error { color: black; }
 
-.controls .ui-message-error { display: inline-block; }
-
-/* Change error label style to more closely match Bootstrap. */
-label.ui-state-error, .ui-widget-content label.ui-state-error { background: white; color: #B94A48 }
-
-/* Make all navbar buttons smaller, for the Sign Out button. */
-#navbarForm .ui-button-text { padding: 2px 8px }
+.controls .ui-message-error, .controls .ui-message-info { display: inline-block; }
 
 .pass-section { font-weight: bold; }
 .pass-label { font-style: italic; padding-right: 10px; }
@@ -58,6 +49,7 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 .view-horizontal .control-group { margin-bottom: 20px; *zoom: 1; }
 .view-horizontal .control-label { float: left; width: 160px; text-align: right; }
 .view-horizontal .controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; height: 15px; padding-bottom: 5px; }
+.view-horizontal .tall-controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; padding-bottom: 5px; }
 .view-horizontal .control-group { margin-bottom: 1px; }
 
 .form-readonly .control-group { margin-bottom: 0px; }
@@ -78,7 +70,7 @@ fieldset .ui-chkbox {margin-left:5px}
 
 .entry-help{color:#999;margin-left:10px}
 
-.summary-list li {font-size:small;font-weight:400}
+.summary-list li {font-size:smaller;font-weight:400}
 .summary-list div {background-color:#f5f5f5;text-align:left;border-style:none}
 
 .threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}

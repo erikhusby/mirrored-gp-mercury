@@ -14,7 +14,7 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}">
+                <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}">
                     <f:event type="preValidate" listener="#{productForm.initEmptyProduct}"/>
                 </f:viewParam>
             </f:metadata>
@@ -151,13 +151,14 @@
                                         completeMethod="#{productForm.searchSelectedPriceItems}" var="defaultPriceItem"
                                         itemLabel='#{productForm.labelFor(defaultPriceItem)}' scrollHeight="250"
                                         itemValue="#{defaultPriceItem}" converter="#{priceItemConverter}"
-                                        forceSelection="true" size="50">
+                                        forceSelection="true" size="60">
                             <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{defaultPriceItem.name} (#{defaultPriceItem.id})</div>
+                                <div class="ac-dropdown-text">#{defaultPriceItem.name}</div>
                                 <div class="ac-dropdown-subtext">#{defaultPriceItem.platformName} | #{defaultPriceItem.categoryName}</div>
                             </p:column>
                         </p:autoComplete>
-                        <p:watermark for="defaultPriceItem" value="Type text to search"/>
+                        <p:watermark for="defaultPriceItem" value="Type text to search "/>
+                        <p:message for="defaultPriceItem" />
                     </div>
                 </div>
 
@@ -171,18 +172,19 @@
                                         scrollHeight="250">
 
                             <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name} (#{priceItem.id})</div>
+                                <div>#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name}</div>
                             </p:column>
                         </p:autoComplete>
-                        <p:watermark for="priceItem" value="Type text to search"/>
+                        <p:watermark for="priceItem" value="Type text to search for Price Items"/>
+                        <p:message for="priceItem" />
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <p:outputLabel for="addOns" value="Add Ons" styleClass="control-label"/>
+                    <p:outputLabel for="addOns" value="Add-ons" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}"
-                                        var="product" itemLabel="#{product.productName} #{product.partNumber}" itemValue="#{product}"
+                                        var="product" itemLabel="#{productForm.addOnLabel(product)}" itemValue="#{product}"
                                         converter="#{productConverter}" multiple="true" scrollHeight="250">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{product.productName} - #{product.partNumber}</div>
@@ -190,7 +192,7 @@
                                 <div class="ac-dropdown-subtext">#{product.productFamily.name}</div>
                             </p:column>
                         </p:autoComplete>
-                        <p:watermark for="addOns" value="Type text to search"/>
+                        <p:watermark for="addOns" value="Type text to search to search for Add-ons"/>
                         <p:message for="addOns"/>
                     </div>
                 </div>
@@ -200,20 +202,11 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary" rendered="#{productForm.creating}" />
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary" rendered="#{ ! productForm.creating}" >
-                                    <!-- GPLIM-208 adding this parameter to the command button forces our converter to run
-                                         in preference to taking the local value (the detached Product instance) stored in
-                                         our components.  forcing the converter to run gives us our persistent Product entity.
-
-                                         this parameter value seems to get lost after failing form validation so
-                                         we have to get it out of the request -->
-                                    <f:param name="product" value="#{request.getParameter('product')}" />
-                                </p:commandButton>
+                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
-                            <div class="span1">
-                                <h:link outcome="list" value="Cancel" rendered="#{productForm.product.productId == null}"/>
-                                <h:link outcome="view" value="Cancel" rendered="#{productForm.product.productId != null}">
+                            <div class="offset2">
+                                <h:link outcome="list" value="Cancel" rendered="#{productForm.creating}"/>
+                                <h:link outcome="view" value="Cancel" rendered="#{!productForm.creating}">
                                     <f:param name="product" value="#{productForm.product.businessKey}"/>
                                 </h:link>
                             </div>

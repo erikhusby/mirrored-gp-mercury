@@ -99,7 +99,7 @@ public class ProductOrder implements Serializable {
 
     public String getAddOnList() {
         if (addOns.isEmpty()) {
-            return "no add ons";
+            return "no Add-ons";
         }
 
         String[] addOnArray = new String[addOns.size()];
@@ -827,7 +827,7 @@ public class ProductOrder implements Serializable {
      */
     @Transient
     public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
-        return CreateIssueRequest.Fields.Issuetype.Product_Order;
+        return CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER;
     }
 
     public String getSampleBillingSummary() {

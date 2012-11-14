@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
-import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.Serializable;
 
@@ -59,7 +59,7 @@ public class PriceItem implements Serializable {
      */
     PriceItem() {}
 
-    public PriceItem(@NotNull String quoteServerId, @NotNull String platform, String category, @NotNull String name) {
+    public PriceItem(@Nonnull String quoteServerId, @Nonnull String platform, String category, @Nonnull String name) {
         this.quoteServerId = quoteServerId;
         this.platform = platform;
         this.category = category;

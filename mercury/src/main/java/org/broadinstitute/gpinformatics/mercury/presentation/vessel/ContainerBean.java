@@ -98,37 +98,33 @@ public class ContainerBean implements Serializable {
     }
 
     public List<SampleInstance> samplesAtPosition() {
-        List<SampleInstance> instances = null;
+        List<SampleInstance> sampleInstances = null;
         if (vessel != null && index != -1) {
             String columnName = vessel.getVesselGeometry().getColumnNames()[getColumnNumFromIndex()];
             String rowName = vessel.getVesselGeometry().getRowNames()[getRowNumFromIndex()];
             VesselPosition position = VesselPosition.getByName(rowName + columnName);
-            Set<SampleInstance> sampleInstances;
             VesselContainer<?> vesselContainer = null;
             if(OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
-                vesselContainer = ((RackOfTubes)vessel).getVesselContainer();
+                vesselContainer = ((RackOfTubes)vessel).getContainerRole();
             }
             if(OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
-                vesselContainer = ((StaticPlate)vessel).getVesselContainer();
+                vesselContainer = ((StaticPlate)vessel).getContainerRole();
             }
             if(OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
-                vesselContainer = ((StripTube)vessel).getVesselContainer();
+                vesselContainer = ((StripTube)vessel).getContainerRole();
             }
             if(OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
-                vesselContainer = ((IlluminaFlowcell)vessel).getVesselContainer();
+                vesselContainer = ((IlluminaFlowcell)vessel).getContainerRole();
             }
             if(vesselContainer != null){
-                sampleInstances = vesselContainer.getSampleInstancesAtPosition(position);
+                sampleInstances = vesselContainer.getSampleInstancesAtPositionList(position);
             }
             else {
-                sampleInstances = vessel.getSampleInstances();
+                sampleInstances = vessel.getSampleInstancesList();
             }
 
-            if (sampleInstances != null && sampleInstances.size() > 0) {
-                instances = new ArrayList<SampleInstance>(sampleInstances);
-            }
         }
-        return instances;
+        return sampleInstances;
     }
 
     public List<String> getGeometry() {

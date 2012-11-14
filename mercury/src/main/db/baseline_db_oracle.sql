@@ -215,6 +215,14 @@
 
     drop table if exists mercury.mercury_sample_aud cascade constraints;
 
+    drop table if exists mercury.bucket_entry cascade;
+
+    drop table if exists mercury.bucket_entry_aud cascade;
+
+    drop table if exists mercury.bucket cascade;
+
+    drop table if exists mercury.bucket_aud cascade;
+
 
 /*
     drop table project_available_quotes cascade constraints;
@@ -296,6 +304,10 @@
     drop sequence mercury.seq_molecular_indexing_scheme;
 
     drop sequence mercury.seq_mercury_sample;
+
+    drop sequence mercury.seq_bucket;
+
+    drop sequence mercury.seq_bucket_entry;
 
 
     create table athena.billable_item (

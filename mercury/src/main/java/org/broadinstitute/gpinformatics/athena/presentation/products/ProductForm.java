@@ -11,14 +11,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-import org.primefaces.event.SelectEvent;
-import org.primefaces.event.UnselectEvent;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -59,6 +56,16 @@ public class ProductForm extends AbstractJsfBean {
     @Inject
     private ProductManager productManager;
 
+    /**
+     * Flag so we don't issue the same summary warning more than once per request
+     */
+    private boolean issuedSummaryMessageForPriceItemsNotOnCurrentPriceList;
+
+
+    private static final String GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST =
+            "One or more price items associated with this product do not appear on the current quote server price list.  " +
+            "These price items have been temporarily removed from this product; hit Save to remove these price items permanently or Cancel to abort.";
+
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
@@ -66,17 +73,13 @@ public class ProductForm extends AbstractJsfBean {
     private Product product;
 
     /**
-     * JAXB {@link PriceItem} DTOs
+     * These are in their own field since they are JAXB {@link PriceItem} DTOs and not JPA entities
      */
     private List<PriceItem> priceItems;
 
     /**
-     * JAXB {@link PriceItem} DTOs, there can be only one default price item but this is a list so the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete} can be styled consistently with all the other
-     * multi-selecting {@link org.primefaces.component.autocomplete.AutoComplete}s in Mercury
+     * This is in its own field since this is a JAXB {@link PriceItem} DTO and not a JPA entity
      */
-    private List<PriceItem> defaultPriceItems = new ArrayList<PriceItem>();
-
     private PriceItem defaultPriceItem;
 
     private List<Product> addOns;
@@ -113,9 +116,33 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public boolean isCreating() {
-        HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-        return request.getParameter("product") == null;
+        return product.getProductId() == null;
     }
+
+
+    private void issueMessagesForPriceItemNotOnPriceList(String clientId, String clientMessage) {
+
+        // issue summary warning at most once
+        if (! issuedSummaryMessageForPriceItemsNotOnCurrentPriceList) {
+            // detail message not shown for global messages so set to null
+            addErrorMessage(GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST);
+            issuedSummaryMessageForPriceItemsNotOnCurrentPriceList = true;
+        }
+        // need to keep the summary null for clientMessage or it ends up showing in the global message area
+        addErrorMessage(clientId, null, clientMessage);
+    }
+
+
+    private String getClientMessageForPriceItemNotInPriceList(PriceItem priceItemDto, boolean isPrimary) {
+        String message = "%s price item '%s: %s: %s' did not appear on the current quote server price list and has temporarily been removed from this product";
+        message = String.format(
+                message,
+                isPrimary ? "Primary" : "Optional",
+                priceItemDto.getPlatformName(), priceItemDto.getCategoryName(), priceItemDto.getName());
+
+        return message;
+    }
+
 
     /**
      * Initialize the form if this is not a postback
@@ -125,15 +152,33 @@ public class ProductForm extends AbstractJsfBean {
             if (isCreating()) {
                 // No form initialization needed for create
             } else {
+
+                if (product.getDefaultPriceItem() != null) {
+                    PriceItem priceItemDto = entityToDto(product.getDefaultPriceItem());
+
+                    if (! priceListCache.contains(priceItemDto)) {
+                        issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, true));
+                        defaultPriceItem = null;
+                    }
+                    else {
+                        defaultPriceItem = entityToDto(product.getDefaultPriceItem());
+                    }
+                }
                 if (product.getPriceItems() != null) {
                     priceItems = new ArrayList<PriceItem>();
                     for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
-                        priceItems.add(entityToDto(priceItem));
+
+                        PriceItem priceItemDto = entityToDto(priceItem);
+                        if (! priceListCache.contains(priceItemDto)) {
+                            issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
+                            defaultPriceItem = null;
+                        }
+                        else {
+                            priceItems.add(priceItemDto);
+                        }
                     }
                 }
-                if (product.getDefaultPriceItem() != null) {
-                    defaultPriceItem = entityToDto(product.getDefaultPriceItem());
-                }
+
                 // TODO: is this needed? or does the actual backing model work for p:autoComplete?
                 if (product.getAddOns() != null) {
                     addOns = new ArrayList<Product>();
@@ -166,7 +211,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     public List<ProductFamily> getProductFamilies() {
         List<ProductFamily> productFamilies = productFamilyDao.findAll();
-        Collections.sort(productFamilies, ProductFamily.PRODUCT_FAMILY_COMPARATOR);
+        Collections.sort(productFamilies);
 
         return productFamilies;
     }
@@ -195,11 +240,11 @@ public class ProductForm extends AbstractJsfBean {
             productManager.create(product);
         }
         catch (Exception e ) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.", "Product");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.");
         conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
@@ -214,11 +259,11 @@ public class ProductForm extends AbstractJsfBean {
 
         }
         catch (Exception e ) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.", "Product");
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.");
         conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
@@ -242,7 +287,6 @@ public class ProductForm extends AbstractJsfBean {
         }
     }
 
-
     /**
      * Utility method to grab a persistent/detached JPA entity corresponding to this JAXB DTO if one exists,
      * otherwise return just a transient JPA entity
@@ -261,7 +305,6 @@ public class ProductForm extends AbstractJsfBean {
 
         return entity;
     }
-
 
     /**
      * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
@@ -369,78 +412,6 @@ public class ProductForm extends AbstractJsfBean {
 
 
     /**
-     * AJAX unselection (removal) handler for {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param unselectEvent
-     */
-    public void onPriceItemUnselect(UnselectEvent unselectEvent) {
-        PriceItem priceItem = (PriceItem) unselectEvent.getObject();
-//        priceItems.remove(priceItem);
-        conversationData.getDefaultPriceItems().remove(priceItem);
-
-        // nuke out the default price item if it was the same price item we just removed
-        if (defaultPriceItem != null && defaultPriceItem.equals(priceItem)) {
-            defaultPriceItem = null;
-        }
-    }
-
-    /**
-     * AJAX selection (addition) handler for default {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param selectEvent
-     */
-
-    public void onPriceItemSelect(SelectEvent selectEvent) {
-//        priceItems.add((PriceItem) selectEvent.getObject());
-        getDefaultPriceItems().add((PriceItem) selectEvent.getObject());
-    }
-
-    /**
-     * AJAX unselection (removal) handler for default {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param ignored
-     */
-    public void onDefaultPriceItemUnselect(UnselectEvent ignored) {
-//        defaultPriceItem = null;
-    }
-
-    /**
-     * AJAX selection (addition) handler for {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param selectEvent
-     */
-    public void onDefaultPriceItemSelect(SelectEvent selectEvent) {
-/*
-        if (conversationData.getDefaultPriceItem() != null) {
-            // ignore
-        }
-        else {
-            conversationData.setDefaultPriceItem((PriceItem) selectEvent.getObject());
-        }
-*/
-    }
-
-
-    public List<PriceItem> getDefaultPriceItems() {
-        return conversationData.getDefaultPriceItems();
-    }
-
-
-    /**
-     * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
-     * actual setting of the default {@link PriceItem} is handled in the ajax event listener only
-     * @param defaultPriceItems
-     */
-    public void setDefaultPriceItems(List<PriceItem> defaultPriceItems) {
-        conversationData.setDefaultPriceItems(defaultPriceItems);
-    }
-
-
-    /**
      *
      * Used for {@link org.primefaces.component.autocomplete.AutoComplete}ing the default price item, restrict search
      * to only the currently selected {@link PriceItem}s.  If there is already a default price item, no results will
@@ -496,13 +467,27 @@ public class ProductForm extends AbstractJsfBean {
         final int MAX_NAME = 45;
 
         if (priceItem.getName().length() > MAX_NAME){
-            return priceItem.getName().substring(0, MAX_NAME) + "... (" + priceItem.getId() + ")";
+            return priceItem.getName().substring(0, MAX_NAME) + "... ";
         }
-        else if (priceItem.getName().length() + priceItem.getPlatformName().length() < MAX_NAME) {
-            return priceItem.getPlatformName() + ": " + priceItem.getName() + " (" + priceItem.getId() + ")";
+        else if (priceItem.getPlatformName().length() + priceItem.getName().length() < MAX_NAME) {
+            return priceItem.getPlatformName() + ": " + priceItem.getName();
         }
-        return priceItem.getName() + " (" + priceItem.getId() + ")";
+        return priceItem.getName();
     }
 
+    public String addOnLabel(Product product) {
 
+        if ((product == null) || (product.getProductName() == null)) {
+            return "";
+        }
+
+        final int MAX_NAME = 45;
+
+        if (product.getProductName().length() > MAX_NAME){
+            return product.getProductName().substring(0, MAX_NAME) + "... ";
+        } else if ( product.getProductName().length() + product.getPartNumber().length() < MAX_NAME ){
+            return product.getProductName() + " : " + product.getPartNumber();
+        }
+        return product.getProductName();
+    }
 }

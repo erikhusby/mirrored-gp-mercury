@@ -8,8 +8,6 @@ import javax.faces.view.facelets.TagConfig;
  *         Time: 3:23 PM
  */
 public class LoggedOutTag extends LoggedInTag {
-
-
     public LoggedOutTag(TagConfig tagConfigIn) {
         super(tagConfigIn);
     }

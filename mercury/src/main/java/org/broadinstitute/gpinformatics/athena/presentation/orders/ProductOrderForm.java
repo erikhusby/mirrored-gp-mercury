@@ -189,7 +189,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     /**
-     * Set up the add ons when the product selection event happens
+     * Set up the Add-ons when the product selection event happens
      *
      * @param productSelectEvent The selection event on the project
      */
@@ -199,7 +199,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     /**
-     * Get all the add on products for the specified product
+     * Get all the Add-on products for the specified product
      *
      * @param product The product
      */
@@ -208,7 +208,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     public String noAddOnsString() {
-        return MessageFormat.format("The Product ''{0}'' has no add-ons.", getProduct().getProductName());
+        return MessageFormat.format("The Product ''{0}'' has no Add-ons.", getProduct().getProductName());
     }
 
     /**
@@ -290,7 +290,7 @@ public class ProductOrderForm extends AbstractJsfBean {
         if (order.getSamples().isEmpty()) {
             // FIXME: instead of doing this here, it can be done as a validator on the hidden editIDsCache field.
             String message = "You must add at least one sample before placing an order.";
-            addErrorMessage(message, message);
+            addErrorMessage(message);
             return null;
         }
 
@@ -304,7 +304,7 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         addInfoMessage(
             MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
-            order.getTitle(), order.getJiraTicketKey(), action), "Product order");
+            order.getTitle(), order.getJiraTicketKey(), action));
         return redirect("view");
     }
 

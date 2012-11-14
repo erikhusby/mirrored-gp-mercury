@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -19,64 +22,75 @@ import java.util.List;
  */
 @Named
 @ApplicationScoped
-public class PriceListCache implements Serializable {
+public class PriceListCache extends AbstractCache implements Serializable {
     
     private PriceList priceList;
 
     @Inject
     private PMBQuoteService quoteService;
 
+    @Inject
+    private Log logger;
+
     public PriceListCache() {}
 
     /**
      * Not sure we really need this constructor any more except there are tests using it
      *
-     * @param priceList
+     * @param priceList The price list to hold in the cache
      */
     public PriceListCache(PriceList priceList) {
         if (priceList == null) {
              throw new NullPointerException("priceList cannot be null."); 
         }
+
         this.priceList = priceList;
     }
-
 
     /**
      * Pull down and cache the full list of prices from the quote server
      *
-     * @return
+     * @return The full price list
      */
     public PriceList getPriceList() {
-        try {
-            if (priceList == null) {
-                priceList = quoteService.getAllPriceItems();
-            }
-            return priceList;
+        if (priceList == null) {
+            refreshCache();
         }
-        catch (QuoteServerException e) {
-            throw new RuntimeException(e);
-        }
-        catch (QuoteNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+
+        return priceList;
     }
 
+    @Override
+    public synchronized void refreshCache() {
+        try {
+            PriceList rawPriceList = quoteService.getAllPriceItems();
+
+            // if fails, use previous cache entry (even if it's null)
+            if (rawPriceList == null) {
+                return;
+            }
+
+            priceList = rawPriceList;
+        } catch (Exception ex) {
+            logger.debug("Could not refresh the price item list", ex);
+        }
+    }
 
     /**
      * Drill into the {@link PriceList} to save a level of EL'ing
      *
-     * @return
+     * @return the price items
      */
     public Collection<PriceItem> getPriceItems() {
         return getPriceList().getPriceItems();
     }
 
-
     /**
      * Filter {@link PriceItem}s by known platforms
      *
-     * @param quotePlatformType
-     * @return
+     * @param quotePlatformType The type of platform for the quote server
+     *
+     * @return The matching price items
      */
     public Collection<PriceItem> getPriceItemsByPlatform(QuotePlatformType quotePlatformType) {
         Collection<PriceItem> priceItems = new HashSet<PriceItem>();
@@ -114,17 +128,21 @@ public class PriceListCache implements Serializable {
 
     }
 
-
     public List<PriceItem> searchPriceItems(String query) {
         return searchPriceItems(getPriceItems(), query);
     }
 
 
+    public boolean contains(PriceItem priceItem) {
+        return getPriceList().contains(priceItem);
+    }
+
     /**
      * The input is search keys concatenated like platform|category|name
      *
-     * @param concatenatedKey
-     * @return
+     * @param concatenatedKey The three part key
+     *
+     * @return The matching price item
      */
     public PriceItem findByConcatenatedKey(String concatenatedKey) {
 
@@ -133,14 +151,10 @@ public class PriceListCache implements Serializable {
         }
 
         for (PriceItem priceItem : getPriceItems()) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(priceItem.getPlatformName());
-            sb.append('|');
-            sb.append(priceItem.getCategoryName());
-            sb.append('|');
-            sb.append(priceItem.getName());
+            String currentKey =
+                priceItem.getPlatformName() + '|' + priceItem.getCategoryName() + '|' + priceItem.getName();
 
-            if (concatenatedKey.equals(sb.toString())) {
+            if (concatenatedKey.equals(currentKey)) {
                 return priceItem;
             }
         }

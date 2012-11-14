@@ -7,12 +7,11 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
+ * Tag support for the application of security rules.
+ *
  * @author Scott Matthews
- *         Date: 5/2/12
- *         Time: 10:16 AM
  */
-public abstract class AuthorizationTag extends SecureTagHandler{
-
+public abstract class AuthorizationTag extends SecureTagHandler {
     private Collection<String> groups;
 
     protected AuthorizationTag(TagConfig tagConfigIn) {
@@ -21,15 +20,14 @@ public abstract class AuthorizationTag extends SecureTagHandler{
 
     @Override
     public void apply(FaceletContext faceletContextIn, UIComponent uiComponentIn) throws IOException {
-        if(isAuthorized(faceletContextIn)) {
+        if (isAuthorized(faceletContextIn)) {
             this.nextHandler.apply(faceletContextIn, uiComponentIn);
-        }
-        else {
+        } else {
             alternateOptions();
         }
     }
 
-    protected abstract void alternateOptions() ;
-    protected abstract boolean isAuthorized(FaceletContext faceletContextIn);
+    protected abstract void alternateOptions();
 
+    protected abstract boolean isAuthorized(FaceletContext faceletContextIn);
 }

@@ -17,7 +17,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:sqltg="http://sequel.broadinstitute.org/tags"
+      xmlns:security="http://mercury.broadinstitute.org/tags"
       xmlns:pe="http://primefaces.org/ui/extensions">
 
 <!--
@@ -59,7 +59,7 @@
                         </div>
                         <h:form id="navbarForm" styleClass="navbar-form pull-right">
                             <span id="jiraProblem" class="badge" style="cursor: pointer;" title="Click here to send a bug report or feedback">Feedback</span>
-                            <sqltg:isLoggedIn>
+                            <security:isLoggedIn>
                                 |
                                 <h:outputText id="userBadge" style="cursor: help;" value="#{request.remoteUser}" styleClass="badge #{userBean.badgeClass}"/>
                                 <pe:tooltip for="userBadge" atPosition="bottom middle" myPosition="top middle">
@@ -69,10 +69,13 @@
                                     <div>
                                         <h:outputText value="#{userBean.jiraStatus}" styleClass="#{userBean.jiraStatusClass}"/>
                                     </div>
+                                    <div>
+                                        <h:outputText value="#{userBean.rolesString}"/>
+                                    </div>
                                 </pe:tooltip>
                                 &nbsp;
-                                <p:commandButton action="#{logoutHandler.logout}" value="Sign out"/>
-                            </sqltg:isLoggedIn>
+                                <p:commandButton action="#{logoutHandler.logout}" value="Sign out" styleClass="btn btn-mini"/>
+                            </security:isLoggedIn>
                         </h:form>
                     </div>
                 </div>

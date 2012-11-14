@@ -56,25 +56,23 @@ public class SampleBean implements Serializable {
         if (barcode != null && this.vessel == null) {
             this.vessel = labVesselDao.findByIdentifier(barcode);
             this.barcode = barcode;
-            if(OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
-                vesselContainer = ((RackOfTubes)vessel).getVesselContainer();
+            if (OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
+                vesselContainer = ((RackOfTubes) vessel).getContainerRole();
             }
-            if(OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
-                vesselContainer = ((StaticPlate)vessel).getVesselContainer();
+            if (OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
+                vesselContainer = ((StaticPlate) vessel).getContainerRole();
             }
-            if(OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
-                vesselContainer = ((StripTube)vessel).getVesselContainer();
+            if (OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
+                vesselContainer = ((StripTube) vessel).getContainerRole();
             }
-            if(OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
-                vesselContainer = ((IlluminaFlowcell)vessel).getVesselContainer();
+            if (OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
+                vesselContainer = ((IlluminaFlowcell) vessel).getContainerRole();
             }
         }
     }
 
     public String indexValueForSample(SampleInstance sample) {
-
         StringBuilder indexInfo = new StringBuilder("");
-        /*
         for (Reagent reagent : sample.getReagents()) {
             if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                 MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
@@ -87,7 +85,7 @@ public class SampleBean implements Serializable {
                 }
 
             }
-        } */
+        }
         return indexInfo.toString();
     }
 
@@ -106,10 +104,10 @@ public class SampleBean implements Serializable {
 
     public List<VesselPosition> getPositionNameList() {
         List<VesselPosition> positions = null;
-        if(vessel != null){
+        if (vessel != null) {
             positions = new ArrayList<VesselPosition>();
             Iterator<String> iterator = vessel.getVesselGeometry().getPositionNames();
-            while(iterator.hasNext()) {
+            while (iterator.hasNext()) {
                 positions.add(VesselPosition.getByName(iterator.next()));
             }
         }

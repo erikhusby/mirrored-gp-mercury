@@ -7,9 +7,14 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 import javax.inject.Named;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Named
 public class IrbConverter implements Converter {
+
+    private static final int IRB_NAME_MAX_LENGTH = 250;
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
@@ -45,11 +50,43 @@ public class IrbConverter implements Converter {
         return returnValue;
     }
 
-    public Irb createIrb(String irbName, ResearchProjectIRB.IrbType type, int irbNameMaxLength) {
-        if (irbNameMaxLength <= type.getDisplayName().length() + 4) {
-            throw new IllegalArgumentException("The max length of IRB does not allow for a name");
+    public List<Irb> completeIrbs(String query) {
+        String trimmedQuery = query.trim();
+
+        if (trimmedQuery.isEmpty()) {
+            return Collections.emptyList();
         }
 
+        List<Irb> irbsForQuery = new ArrayList<Irb>();
+        for (ResearchProjectIRB.IrbType type : ResearchProjectIRB.IrbType.values()) {
+            Irb irb = createIrb(trimmedQuery, type, IRB_NAME_MAX_LENGTH);
+            irbsForQuery.add(irb);
+        }
+
+        return irbsForQuery;
+    }
+
+    public int getIrbMaxLength() {
+        return IRB_NAME_MAX_LENGTH;
+    }
+
+    /**
+     * This creates a valid IRB object out of the type.
+     *
+     * @param irbName The name of the irb
+     * @param type The irb type
+     * @param irbNameMaxLength The maximum length name that can be display
+     *
+     * @return The irb object
+     */
+    public Irb createIrb(String irbName, ResearchProjectIRB.IrbType type, int irbNameMaxLength) {
+
+        // If the type + the space-colon-space is longer than max length, then we cannot have a unique name.
+        if (type.getDisplayName().length() + 4 > irbNameMaxLength) {
+            throw new IllegalArgumentException("IRB type: " + type.getDisplayName() + " is too long to allow for a name");
+        }
+
+        // Strip off any long name to the maximum number of characters
         String returnName = irbName;
         int lengthOfFullString = getFullIrbString(irbName, type.getDisplayName()).length();
         if (lengthOfFullString > irbNameMaxLength) {

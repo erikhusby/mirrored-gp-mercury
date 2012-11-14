@@ -7,7 +7,8 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:security="http://mercury.broadinstitute.org/tags">
 
 <h:head>
     <title>Athena Product List</title>
@@ -15,66 +16,61 @@
 
 <h:body>
 <ui:composition template="/layout.xhtml">
-    <ui:define name="metadata">
-        <f:event type="preRenderView" listener="#{productList.onPreRenderView}" />
-    </ui:define>
 
     <ui:define name="title">Products</ui:define>
     <ui:define name="body">
 
         <h:form id="productList">
 
-            <div class="row">
-                <h:link value="New Product" outcome="create" styleClass="pull-right"/>
-            </div>
+            <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
+                <div class="row">
+                    <h:link value="New Product" outcome="create" styleClass="pull-right"/>
+                </div>
+            </security:authorizeBlock>
 
-            <p:dataTable value="#{productList.productsDataModel}"
+            <p:dataTable value="#{productList.products}"
                          var="product"
                          sortBy="#{product.partNumber}"
                          sortOrder="ascending"
                          id="dataTable"
                          widgetVar="dataTable"
-                         filteredValue="#{productList.filteredValues}"
                          emptyMessage="No products found containing search text">
 
-                <!-- even with ajax selection gone the global filter still lags by one event... -->
+                <f:facet name="header">
+                    <p:outputPanel styleClass="pull-right">
+                        <h:outputText value=" Search "/>
+                        <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
+                    </p:outputPanel>
+                </f:facet>
 
-                <!--<f:facet name="header">-->
-                    <!--<p:outputPanel styleClass="pull-right">-->
-                        <!--<h:outputText value=" Search "/>-->
-                        <!--<p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>-->
-                    <!--</p:outputPanel>-->
-                <!--</f:facet>-->
-
-                <p:column sortBy="#{product.partNumber}" sortFunction="#{productList.compare}">
-                          <!--filterBy="#{product.partNumber}" filterStyleClass="hide">-->
+                <p:column sortBy="#{product.partNumber}"
+                          filterBy="#{product.partNumber}" filterStyleClass="hide">
                     <f:facet name="header">
                         <h:outputText value="Part Number" />
                     </f:facet>
 
-                    <!--<h:outputText value="#{product.partNumber}" />-->
                     <h:link outcome="view" value="#{product.partNumber}">
                         <f:param name="product" value="#{product.businessKey}"/>
                     </h:link>
                 </p:column>
 
-                <p:column sortBy="#{product.productName}" sortFunction="#{productList.compare}">
-                          <!--filterBy="#{product.productName}" filterStyleClass="hide">-->
+                <p:column sortBy="#{product.productName}"
+                          filterBy="#{product.productName}" filterStyleClass="hide">
                     <f:facet name="header">
                         <h:outputText value="Name" />
                     </f:facet>
                     <h:outputText value="#{product.productName}" />
                 </p:column>
 
-                <p:column sortBy="#{product.productFamily.name}" sortFunction="#{productList.compare}">
-                          <!--filterBy="#{product.productFamily.name}" filterStyleClass="hide">-->
+                <p:column sortBy="#{product.productFamily.name}"
+                          filterBy="#{product.productFamily.name}" filterStyleClass="hide">
                     <f:facet name="header">
                         <h:outputText value="Product Family" />
                     </f:facet>
                     <h:outputText value="#{product.productFamily.name}" />
                 </p:column>
 
-                <p:column headerText="Available?" sortBy="#{product.available}" sortFunction="#{productList.compare}" >
+                <p:column headerText="Available?" sortBy="#{product.available}">
                     <h:outputText value='#{product.available ? "Yes" : "No"}'/>
                 </p:column>
 
