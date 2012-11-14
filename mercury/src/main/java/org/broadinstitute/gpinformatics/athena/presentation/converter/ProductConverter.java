@@ -5,28 +5,26 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
-import javax.faces.convert.Converter;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+/**
+ * JSF converter for Product instances.
+ */
 @Named
-public class ProductConverter implements Converter {
+public class ProductConverter extends AbstractConverter {
 
     @Inject
     private ProductDao productDao;
 
-    public Product getAsObject(String businessKey) {
-        Product product = productDao.findByBusinessKey(businessKey);
-        return product;
-    }
-
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
-        return getAsObject(value);
+        return productDao.findByBusinessKey(value);
     }
 
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object object) {
+        // check for null because the converter might be passed null during an AJAX request
         if (object != null) {
             return ((Product) object).getBusinessKey();
         }

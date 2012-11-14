@@ -5,6 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -40,7 +41,7 @@ public class ProductOrderContainerTest extends Arquillian {
 
     public ProductOrder createSimpleProductOrder() throws Exception {
         ProductOrder productOrder = new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
-            null, "newQuote", ProductOrderTest.createDummyProduct(),
+            null, "newQuote", AthenaClientServiceStub.createDummyProduct(),
             createDummyResearchProject(userList, "Test Research Project"));
         productOrder.setSamples(ProductOrderTest.createSampleList("SM-1P3X9,SM-1P3WY,SM-1P3XN", productOrder));
         return productOrder;
@@ -94,7 +95,7 @@ public class ProductOrderContainerTest extends Arquillian {
                 new ProductOrder(TEST_CREATOR, "containerTest Product Order Test2",
                         null,
                         "newQuote",
-                        ProductOrderTest.createDummyProduct(),
+                        AthenaClientServiceStub.createDummyProduct(),
                         createDummyResearchProject(userList, "Test Research Project"));
         testOrder.setSamples(ProductOrderTest.createSampleList("SM_12CO4,SM_1P3WY,SM_1P3XN", testOrder));
 

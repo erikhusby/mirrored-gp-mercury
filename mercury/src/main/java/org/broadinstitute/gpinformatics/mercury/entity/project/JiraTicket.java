@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.project;
 
 
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
@@ -19,8 +21,6 @@ import java.io.IOException;
 @Table(schema = "mercury")
 public class JiraTicket {
 
-    public static final String TEST_PROJECT_PREFIX = "LCSET";
-
     private String ticketName;
 
     @Id
@@ -32,9 +32,6 @@ public class JiraTicket {
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private LabBatch labBatch;
 
-    @Transient // todo arz make real hibernate relationship
-    private JiraService jiraService;
-
     /*
     SGM -- Doesn't make sense to store the URL.  Can be derived on the front end using the Jira config
      */
@@ -42,22 +39,16 @@ public class JiraTicket {
 
     public JiraTicket() {}
     
-    public JiraTicket(JiraService jiraService,
-                      String ticketName,
-                      String ticketId) {
+    public JiraTicket ( String ticketName, String ticketId ) {
         if (ticketName == null) {
             throw new NullPointerException("ticketName cannot be null.");
         }
         if (ticketId == null) {
             throw new NullPointerException("ticketId cannot be null.");
         }
-        if (jiraService == null) {
-             throw new NullPointerException("service cannot be null.");
-        }
         this.ticketName = ticketName;
         this.ticketId = ticketId;
-        this.jiraService = jiraService;
-        this.browserUrl = jiraService.createTicketUrl(ticketName);
+        this.browserUrl = ServiceAccessUtility.getTicketUrl ( ticketName );
     }
 
     /**
@@ -82,17 +73,36 @@ public class JiraTicket {
      * @param text
      */
     public void addComment(String text) {
-        // todo jmt remove null check after initializing service for entities
-        if (jiraService != null) {
-            try {
-                jiraService.addComment(ticketName,text);
-            }
-            catch(IOException  e) {
-                throw new RuntimeException("Could not log message '" + text + "' to jira ticket " + ticketName + ".  Is the jira server okay?",e);
-            }
+        try {
+            ServiceAccessUtility.addJiraComment(ticketName,text);
+        }
+        catch(IOException  e) {
+            throw new RuntimeException("Could not log message '" + text + "' to jira ticket " + ticketName + ".  Is the jira server okay?",e);
         }
     }
 
+    /**
+     * addWatcher allows a user to add a user as a watcher of the Jira ticket associated with this product order
+     *
+     * @param personLoginId Broad User Id
+     * @throws IOException
+     */
+    public void addWatcher(String personLoginId) throws IOException {
+        ServiceAccessUtility.addJiraWatcher(ticketName, personLoginId);
+    }
+
+    /**
+     * addLink allows a user to link this the jira ticket associated with this product order with another Jira Ticket
+     *
+     * @param targetTicketKey Unique Jira Key of the Jira ticket to which this product order's Jira Ticket will be
+     *                       linked
+     * @throws IOException
+     */
+    public void addJiraLink (String targetTicketKey) throws IOException {
+
+        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related ,ticketName,
+                                                targetTicketKey);
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -9,13 +9,15 @@ public class CustomField {
     private final SingleFieldType fieldType;
 
 
-    public CustomField ( CustomFieldDefinition fieldDefinition, Object value, SingleFieldType fieldType ) {
+    public CustomField(CustomFieldDefinition fieldDefinition, Object value, SingleFieldType fieldType) {
         if (fieldDefinition == null) {
             throw new NullPointerException("fieldDefinition cannot be null");
         }
+
         if (value == null) {
             throw new NullPointerException("value cannot be null");
         }
+
         this.definition = fieldDefinition;
         this.value = value;
         this.fieldType = fieldType;
@@ -36,7 +38,7 @@ public class CustomField {
     public enum SingleFieldType {
         TEXT,
         RADIO_BUTTON,
-        SINGLE_SELECT;
+        SINGLE_SELECT
     }
 
 }

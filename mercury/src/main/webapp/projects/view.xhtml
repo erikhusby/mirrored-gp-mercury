@@ -158,7 +158,7 @@
                             <f:param name="productOrder" value="#{order.businessKey}"/>
                         </h:link>
                     </p:column>
-                    <p:column headerText="Product ID">
+                    <p:column headerText="Order ID">
                         <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}"
                                       class="external" rendered="#{order.hasJiraTicketKey()}" >
                             <h:outputText value="#{order.jiraTicketKey}" />

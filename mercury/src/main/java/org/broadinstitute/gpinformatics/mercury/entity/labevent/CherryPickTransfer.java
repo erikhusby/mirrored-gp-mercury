@@ -56,7 +56,7 @@ public class CherryPickTransfer extends VesselTransfer {
     }
 
     public VesselContainer<?> getSourceVesselContainer() {
-        return OrmUtil.proxySafeCast(sourceVessel, VesselContainerEmbedder.class).getVesselContainer();
+        return sourceVessel.getContainerRole();
     }
 
     public VesselPosition getSourcePosition() {
@@ -64,7 +64,7 @@ public class CherryPickTransfer extends VesselTransfer {
     }
 
     public VesselContainer<?> getTargetVesselContainer() {
-        return OrmUtil.proxySafeCast(targetVessel, VesselContainerEmbedder.class).getVesselContainer();
+        return targetVessel.getContainerRole();
     }
 
     public VesselPosition getTargetPosition() {

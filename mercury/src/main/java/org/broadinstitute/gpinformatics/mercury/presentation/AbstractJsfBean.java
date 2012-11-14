@@ -1,9 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+
 import javax.annotation.Nullable;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
-import javax.faces.context.Flash;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Class to define some common useful functions to remove boiler plate code for JSF functionality.  This class is
@@ -107,5 +112,48 @@ public abstract class AbstractJsfBean {
      */
     protected void addFatalMessage(String clientId, String summary, String detail) {
         addMessage(clientId, FacesMessage.SEVERITY_FATAL, summary, detail);
+    }
+
+    /**
+     * This is a service for autocomplete removal of duplicates. It assumes that there will only be one
+     * duplicate because it is what was just selected. If we had what was just selected, we could just look
+     * for two of those and remove one.
+     *
+     * @param objects The list of items in the autocomplete
+     * @param componentId The id of the component
+     * @param <T> The correct object
+     */
+    public <T> void updateForDuplicates(List<T> objects, String componentId) {
+
+        // The users ARE THE ACTUAL MEMBERS that back the autocomplete lists
+        Set<T> uniqueObjects = new HashSet<T>();
+
+        // Since this is called after a single add, at most there is one duplicate
+        T duplicate = null;
+        for (T object : objects) {
+            if (!uniqueObjects.add(object)) {
+                duplicate = object;
+            }
+        }
+
+        if (duplicate != null) {
+            objects.clear();
+            objects.addAll(uniqueObjects);
+
+            String name;
+            if (duplicate instanceof BspUser) {
+                // We do not own BSP User, so special case this.
+                BspUser user = (BspUser) duplicate;
+                name = user.getFirstName() + " " + user.getLastName();
+            } else if (duplicate instanceof Displayable) {
+                Displayable displayable = (Displayable) duplicate;
+                name = displayable.getDisplayName();
+            } else {
+                name = duplicate.toString();
+            }
+
+            String message = name + " was already in the list";
+            addInfoMessage(componentId, "Duplicate item removed.", message);
+        }
     }
 }
