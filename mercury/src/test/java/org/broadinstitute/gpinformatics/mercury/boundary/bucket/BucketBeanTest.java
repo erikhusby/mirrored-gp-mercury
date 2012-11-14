@@ -110,7 +110,7 @@ public class BucketBeanTest extends ContainerTest {
         utx.rollback();
     }
 
-    @Test()
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testResource_start_entries () {
 
         bucketDao.flush();
@@ -183,7 +183,7 @@ public class BucketBeanTest extends ContainerTest {
     }
 
 
-    @Test()
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testResource_start_vessels () {
 
         bucketDao.flush();
@@ -289,7 +289,7 @@ public class BucketBeanTest extends ContainerTest {
     }
 
 
-    @Test( )
+    @Test( groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testResource_start_vessel_count () {
 
         bucketDao.flush();
