@@ -30,18 +30,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Stateless
 //@RequestScoped
 public class BucketBean {
-
-    private static final Log LOG = LogFactory.getLog (BucketBean.class);
 
     @Inject
     private LabEventFactory labEventFactory;
 
     @Inject
     private BucketEntryDao bucketEntryDao;
+
+    private final static Logger logger = Logger.getLogger(BucketBean.class.getName());
 
     public BucketBean () {
     }
@@ -53,6 +55,8 @@ public class BucketBean {
     /**
      * Put a {@link LabVessel vessel} into the bucket
      * and remember that the work is for the given {@link String product order}
+     *
+     * TODO SGM Rethink the return.  Doesn't seem to add any value
      *
      * @param vessel
      * @param productOrder
@@ -67,7 +71,7 @@ public class BucketBean {
             ServiceAccessUtility.addJiraComment(productOrder, vessel.getLabCentricName() +
                     " added to bucket " + bucket.getBucketDefinitionName());
         } catch (IOException ioe) {
-            LOG.error("error attempting to add a jira comment for adding " +
+            logger.log(Level.INFO,"error attempting to add a jira comment for adding " +
                       productOrder + ":"+vessel.getLabCentricName() + " to bucket " +
                       bucket.getBucketDefinitionName(), ioe);
         }
@@ -110,6 +114,10 @@ public class BucketBean {
             if(null == foundEntry) {
                 throw new InformaticsServiceException("Attempting to pull a vessel from a bucket when it does not exist in that bucket");
             }
+            logger.log( Level.INFO,
+                        "Adding entry " + foundEntry.getBucketEntryId () + " for vessel " + foundEntry.getLabVessel ()
+                                                                                                      .getLabCentricName () +
+                                " and PDO " + foundEntry.getPoBusinessKey () + " to be popped from bucket." );
             bucketEntrySet.add ( foundEntry ) ;
 
             // TODO SGM add logic to retrive the containing vessel
@@ -129,7 +137,7 @@ public class BucketBean {
      * @param numberOfBatchSamples
      * @param workingBucket
      */
-    public void start ( Person actor, int numberOfBatchSamples, @Nonnull Bucket workingBucket) {
+    public void start ( Person actor, final int numberOfBatchSamples, @Nonnull Bucket workingBucket) {
          start(actor, numberOfBatchSamples, workingBucket, null);
     }
 
@@ -146,19 +154,29 @@ public class BucketBean {
      * @param workingBucket
      * @param batchTicket
      */
-    public void start ( Person actor, int numberOfBatchSamples, @Nonnull Bucket workingBucket, String batchTicket ) {
+    public void start ( Person actor, final int numberOfBatchSamples,
+                        @Nonnull Bucket workingBucket, final String batchTicket ) {
 
         Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry>();
 
         List<BucketEntry> sortedBucketEntries = new LinkedList<BucketEntry>(workingBucket.getBucketEntries());
 
+        logger.log( Level.INFO,"List of Bucket entries is a size of " + sortedBucketEntries.size());
+
         Collections.sort (sortedBucketEntries, BucketEntry.byDate);
+        logger.log( Level.INFO,"List of SORTED Bucket entries is a size of " + sortedBucketEntries.size());
 
         Iterator<BucketEntry> bucketEntryIterator = sortedBucketEntries.iterator();
 
-        for(int i=0;i<=numberOfBatchSamples;i++) {
-            bucketEntrySet.add(bucketEntryIterator.next());
+        for(int i=0;i<numberOfBatchSamples && bucketEntryIterator.hasNext();i++) {
+            BucketEntry currEntry = bucketEntryIterator.next ();
+            logger.log( Level.INFO,"Adding entry "+currEntry.getBucketEntryId()+" for vessel " + currEntry.getLabVessel().getLabCentricName() +
+                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
+
+            bucketEntrySet.add(currEntry);
         }
+
+        logger.log( Level.INFO,"Bucket Entry set to pop from bucket is a size of " +bucketEntrySet.size());
         start(bucketEntrySet, actor,batchTicket);
 
     }
@@ -259,10 +277,11 @@ public class BucketBean {
                         bucketBatch.getJiraTicket().getTicketName() + " " +bucketBatch.getBatchName());
             }
         } catch (IOException ioe ) {
-            LOG.error("Error attempting to create Lab Batch in Jira");
+            logger.log(Level.INFO,"Error attempting to create Lab Batch in Jira");
             throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
         }
 
+        logger.log( Level.INFO,"Size of entries to remove is " + bucketEntries.size());
         removeEntries ( bucketEntries );
     }
 
@@ -272,7 +291,10 @@ public class BucketBean {
      */
     private void removeEntries ( @Nonnull Collection<BucketEntry> bucketEntries ) {
         for ( BucketEntry currEntry : bucketEntries ) {
-            currEntry.getBucketExistence().removeEntry(currEntry);
+            logger.log( Level.INFO,"Adding entry "+currEntry.getBucketEntryId()+" for vessel " + currEntry.getLabVessel().getLabCentricName() +
+                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
+
+            currEntry.getBucketExistence ().removeEntry(currEntry);
             bucketEntryDao.remove(currEntry);
 
             jiraRemovalUpdate ( currEntry, "Extracted for Batch" );
@@ -315,7 +337,7 @@ public class BucketBean {
                 " Removed from bucket " + bucketEntry.getBucketExistence ()
                                                      .getBucketDefinitionName () + ":: " + reason );
         } catch (IOException ioe) {
-            LOG.error("Error attempting to create jira removal comment for " +
+            logger.log(Level.INFO,"Error attempting to create jira removal comment for " +
                               bucketEntry.getPoBusinessKey() + " " +
                               bucketEntry.getLabVessel().getLabCentricName(), ioe);
         }

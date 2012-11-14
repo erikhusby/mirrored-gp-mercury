@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -151,5 +152,13 @@ public class BucketEntry  {
         int result = labVessel != null ? labVessel.hashCode () : 0;
         result = 31 * result + ( poBusinessKey != null ? poBusinessKey.hashCode () : 0 );
         return result;
+    }
+
+    public int compareTo (BucketEntry other) {
+        CompareToBuilder builder = new CompareToBuilder ();
+        builder.append(labVessel, other.getLabVessel());
+        builder.append(poBusinessKey, other.getPoBusinessKey());
+
+        return builder.toComparison();
     }
 }
