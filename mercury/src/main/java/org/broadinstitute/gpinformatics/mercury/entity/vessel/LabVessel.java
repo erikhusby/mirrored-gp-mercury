@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -29,17 +30,21 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * A piece of plastic or glass that holds sample, reagent or other plastic.
+ * In-place lab events can apply to any LabVessel, whereas SectionTransfers and CherryPickTransfers apply to
+ * LabVessels with a VesselContainer role (racks and plates), and VesselToVessel and VesselToSection transfers
+ * apply to containees (tubes and wells).
  */
 @Entity
 @Audited
@@ -61,6 +66,7 @@ public abstract class LabVessel {
 
     private Date createdOn;
 
+    // todo jmt liquid vs solid?  Not a class level role?  Large tubes can hold both.
     private Float volume;
     
     private Float concentration;
@@ -73,6 +79,7 @@ public abstract class LabVessel {
     @JoinTable(schema = "mercury")
     private Set<LabBatch> labBatches = new HashSet<LabBatch>();
 
+    // todo jmt separate role for reagents?
     @ManyToMany(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
     @JoinTable(schema = "mercury", name = "lv_reagent_contents")
@@ -84,6 +91,7 @@ public abstract class LabVessel {
     @Formula("(select count(*) from lv_reagent_contents where lv_reagent_contents.lab_vessel = lab_vessel_id)")
     private Integer reagentContentsCount = 0;
 
+    // todo jmt separate role for containee?
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "mercury")
     private Set<LabVessel> containers = new HashSet<LabVessel>();
@@ -111,8 +119,15 @@ public abstract class LabVessel {
     /** todo this is used only for experimental testing for GPLIM-64...should remove this asap! */
     private Collection<? extends LabVessel> chainOfCustodyRoots = new HashSet<LabVessel>();
 
+    // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
+
+    @OneToMany(mappedBy = "sourceVessel")
+    private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<VesselToVesselTransfer>();
+
+    @OneToMany(mappedBy = "targetLabVessel")
+    private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -120,14 +135,6 @@ public abstract class LabVessel {
     }
 
     protected LabVessel() {
-    }
-
-    public Long getLabVesselId() {
-        return labVesselId;
-    }
-
-    private void setLabVesselId(Long labVesselId) {
-        this.labVesselId = labVesselId;
     }
 
     /**
@@ -159,10 +166,13 @@ public abstract class LabVessel {
      * Special subclass for DNAReagent to deal with
      * indexes and adaptors?  Or give Reagent a way
      * to express how it modifies the molecular envelope?
-     * @return
+     * @return reagents
      */
-    public Collection<Reagent> getReagentContents() {
-        return reagentContents;
+    public Set<Reagent> getReagentContents() {
+        if(getReagentContentsCount() != null && getReagentContentsCount() > 0) {
+            return reagentContents;
+        }
+        return Collections.emptySet();
     }
 
     public void addReagent(Reagent reagent) {
@@ -194,14 +204,6 @@ public abstract class LabVessel {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public boolean isProgeny(LabVessel ancestor) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
-    public boolean isAncestor(LabVessel progeny) {
-        throw new RuntimeException("I haven't been written yet.");
-    }
-
     public void addToContainer(VesselContainer vesselContainer) {
         this.containers.add(vesselContainer.getEmbedder());
         if(this.containersCount == null) {
@@ -214,18 +216,14 @@ public abstract class LabVessel {
         Set<VesselContainer<?>> vesselContainers = new HashSet<VesselContainer<?>>();
         if(containersCount != null && containersCount > 0) {
             for (LabVessel container : containers) {
-                vesselContainers.add(OrmUtil.proxySafeCast(container, VesselContainerEmbedder.class).getVesselContainer());
+                vesselContainers.add(container.getContainerRole());
             }
         }
 
         return Collections.unmodifiableSet(vesselContainers);
     }
 
-    public Integer getContainersCount() {
-        return containersCount;
-    }
-
-    // todo notion of a "sample group", not a cohorot,
+    // todo notion of a "sample group", not a cohort,
     // but rather an ID for the pool of samples within
     // a container.  useful for finding "related"
     // libraries, related by the group of samples
@@ -243,7 +241,6 @@ public abstract class LabVessel {
      */
     @Transient
     public String getLabCentricName() {
-        // todo jmt what should this do?
         String vesselContentName;
 
         try {
@@ -259,16 +256,38 @@ public abstract class LabVessel {
     }
 
     /**
-     * This needs to be really, really fast.
-     * @return
+     * Get LabEvents that are transfers from this vessel
+     * @return transfers
      */
-    public abstract Set<LabEvent> getTransfersFrom();
+    public Set<LabEvent> getTransfersFrom(){
+        if (getContainerRole() == null) {
+            Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
+            for (VesselContainer<?> vesselContainer : getContainers()) {
+                transfersFrom.addAll(vesselContainer.getTransfersFrom());
+            }
+            return transfersFrom;
+        } else {
+            return getContainerRole().getTransfersFrom();
+        }
+        // todo jmt vessel to vessel transfers
+    }
 
     /**
-     * This needs to be really, really fast.
-     * @return
+     * Get LabEvents that are transfers to this vessel
+     * @return transfers
      */
-    public abstract Set<LabEvent> getTransfersTo();
+    public Set<LabEvent> getTransfersTo(){
+        if (getContainerRole() == null) {
+            Set<LabEvent> transfersTo = new HashSet<LabEvent>();
+            for (VesselContainer<?> vesselContainer : getContainers()) {
+                transfersTo.addAll(vesselContainer.getTransfersTo());
+            }
+            return transfersTo;
+        } else {
+            return getContainerRole().getTransfersTo();
+        }
+        // todo jmt vessel to vessel transfers
+    }
 
 /*
     public void addNoteToProjects(String message) {
@@ -344,6 +363,36 @@ public abstract class LabVessel {
         ILLUMINA_RUN_CHAMBER
     }
 
+    static class VesselEvent {
+        private LabVessel labVessel;
+        private VesselContainer vesselContainer;
+        private VesselPosition position;
+        private LabEvent labEvent;
+
+        public VesselEvent(LabVessel labVessel, VesselContainer vesselContainer, VesselPosition position, LabEvent labEvent) {
+            this.labVessel = labVessel;
+            this.vesselContainer = vesselContainer;
+            this.position = position;
+            this.labEvent = labEvent;
+        }
+
+        public LabVessel getLabVessel() {
+            return labVessel;
+        }
+
+        public LabEvent getLabEvent() {
+            return labEvent;
+        }
+
+        public VesselPosition getPosition() {
+            return position;
+        }
+
+        public VesselContainer getVesselContainer() {
+            return vesselContainer;
+        }
+    }
+
     /**
      * Probably a transient that computes the {@link SampleInstance} data
      * on-the-fly by walking the history and applying the
@@ -351,33 +400,117 @@ public abstract class LabVessel {
      * @return
      */
     public Set<SampleInstance> getSampleInstances() {
-        Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
-
-        if (isSampleAuthority()) {
-            for (MercurySample mercurySample : mercurySamples) {
-                sampleInstances.add(new SampleInstance(mercurySample, null, null));
-            }
-        } else {
-            for (VesselContainer<?> vesselContainer : this.getContainers()) {
-                sampleInstances.addAll(vesselContainer.getSampleInstancesAtPosition(vesselContainer.getPositionOfVessel(this)));
-            }
+        if(getContainerRole() != null) {
+            return getContainerRole().getSampleInstances();
         }
-        return sampleInstances;
+        TraversalResults traversalResults = traverseAncestors();
+        return traversalResults.getSampleInstances();
     }
 
     /**
-     * I'm avoiding parent/child semantics
-     * here deliberately to avoid confusion
-     * with transfer graphs and the notion
-     * of ancestor/descendant.
-     *
-     * If this {@link LabVessel} is a {@link VesselPosition},
-     * then the containing vessel could be a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate}.
-     * If this {@link LabVessel} is a {@link org.broadinstitute.gpinformatics.mercury.entity.run.RunChamber flowcell lane},
-     * then perhaps the containing {@link LabVessel} is a {@link org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge flowcell}.
-     * @return
+     * The results of traversing (ancestor) vessels
      */
-    public abstract LabVessel getContainingVessel();
+    static class TraversalResults {
+        private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        private Set<Reagent> reagents = new HashSet<Reagent>();
+
+        void add(TraversalResults traversalResults) {
+            sampleInstances.addAll(traversalResults.getSampleInstances());
+            reagents.addAll(traversalResults.getReagents());
+        }
+
+        public Set<SampleInstance> getSampleInstances() {
+            return sampleInstances;
+        }
+
+        public Set<Reagent> getReagents() {
+            return reagents;
+        }
+
+        public void add(SampleInstance sampleInstance) {
+            sampleInstances.add(sampleInstance);
+        }
+
+        public void add(Reagent reagent) {
+            reagents.add(reagent);
+        }
+
+        /**
+         * After traversing all ancestors in a level in the hierarchy, apply reagents to that level, if any.
+         * Reagents are consumed when they are applied to SampleInstances, they don't continue to be applied to
+         * other levels.
+         */
+        public void completeLevel() {
+            if(!sampleInstances.isEmpty() && !reagents.isEmpty()) {
+                for (SampleInstance sampleInstance : sampleInstances) {
+                    for (Reagent reagent : reagents) {
+                        sampleInstance.addReagent(reagent);
+                    }
+                }
+                reagents.clear();
+            }
+        }
+    }
+
+    /**
+     * Traverse all ancestors of this vessel, accumulating SampleInstances
+     * @return accumulated sampleInstances
+     */
+    TraversalResults traverseAncestors() {
+        TraversalResults traversalResults = new TraversalResults();
+
+        List<VesselEvent> vesselEvents = getAncestors();
+        for (VesselEvent vesselEvent : vesselEvents) {
+            LabVessel labVessel = vesselEvent.getLabVessel();
+            // todo jmt put this logic in VesselEvent?
+            if(labVessel == null) {
+                traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition()));
+            } else {
+                traversalResults.add(labVessel.traverseAncestors());
+            }
+        }
+        if (isSampleAuthority()) {
+            for (MercurySample mercurySample : mercurySamples) {
+                traversalResults.add(new SampleInstance(mercurySample, null, null));
+            }
+        }
+        for (Reagent reagent : getReagentContents()) {
+            traversalResults.add(reagent);
+        }
+
+        traversalResults.completeLevel();
+        return traversalResults;
+    }
+
+    /**
+     * Get the immediate ancestor vessels to this vessel, in the transfer graph
+     * @return ancestors and events
+     */
+    private List<VesselEvent> getAncestors() {
+        List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
+            vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null, vesselToVesselTransfer.getLabEvent()));
+        }
+        for (LabVessel container : containers) {
+            vesselEvents.addAll(container.getContainerRole().getAncestors(this));
+        }
+        return vesselEvents;
+    }
+
+    /**
+     * Get the immediate descendant vessels to this vessel, in the transfer graph
+     * @return descendant and events
+     */
+    private List<VesselEvent> getDescendants() {
+        List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
+        for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
+            vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetLabVessel(), null, null, vesselToVesselTransfer.getLabEvent()));
+        }
+        for (LabVessel container : containers) {
+            vesselEvents.addAll(container.getContainerRole().getDescendants(this));
+        }
+        return vesselEvents;
+    }
 
     /**
      * Metrics are captured on vessels, but when we
@@ -413,7 +546,7 @@ public abstract class LabVessel {
         NEAREST_DESCENDANT,
         /**
          * Find the metric on the nearest
-         * vessell, irrespective of
+         * vessel, irrespective of
          * ancestor or descendant.
          */
         NEAREST
@@ -421,11 +554,16 @@ public abstract class LabVessel {
 
     /**
      * Get all events that have happened directly to
-     * this vesell.  Really, really fast.  Like
-     * right now.
-     * @return
+     * this vessel.
+     * @return in place events, transfers from, transfers to
      */
-    public abstract Collection<LabEvent> getEvents();
+    public Set<LabEvent> getEvents() {
+        Set<LabEvent> events = new HashSet<LabEvent>();
+        events.addAll(getInPlaceEvents());
+        events.addAll(getTransfersFrom());
+        events.addAll(getTransfersTo());
+        return events;
+    }
 
     /**
      * PM Dashboard will want to show the most recent
@@ -612,6 +750,47 @@ public abstract class LabVessel {
     public int hashCode () {
         return label != null ? label.hashCode () : 0;
     }
+
+    /**
+     * This is over ridden by subclasses that implement {@link VesselContainerEmbedder}
+     * @return object representing this vessel's role as a container of other vessels
+     */
+    public VesselContainer getContainerRole() {
+        return null;
+    }
+
+    public void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
+            TransferTraverserCriteria.TraversalDirection traversalDirection) {
+        evaluateCriteria(transferTraverserCriteria, traversalDirection, null, 0);
+    }
+
+    void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
+            TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
+        transferTraverserCriteria.evaluateVesselPreOrder(this, labEvent, hopCount);
+        if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
+            for (VesselEvent vesselEvent : getAncestors()) {
+                LabVessel labVessel = vesselEvent.getLabVessel();
+                if(labVessel == null) {
+                    vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getVesselContainer().getPositionOfVessel(this),
+                            transferTraverserCriteria, traversalDirection, null, hopCount);
+                } else {
+                    labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                            vesselEvent.getLabEvent(), hopCount + 1);
+                }
+            }
+        } else if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
+            getDescendants();
+            for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
+                vesselToVesselTransfer.getTargetLabVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                        vesselToVesselTransfer.getLabEvent(), hopCount + 1);
+            }
+        } else {
+            throw new RuntimeException("Unknown direction " + traversalDirection.name());
+        }
+        for (LabVessel container : containers) {
+            VesselContainer containerRole = container.getContainerRole();
+            containerRole.evaluateCriteria(containerRole.getPositionOfVessel(this), transferTraverserCriteria, traversalDirection, null, hopCount);
+        }
+        transferTraverserCriteria.evaluateVesselPostOrder(this, labEvent, hopCount);
+    }
 }
-
-

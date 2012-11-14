@@ -3,9 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
@@ -94,8 +91,7 @@ public class LabEventHandler {
         // and leave the override processing for on-the-fly work in VesselContainer
         //processProjectPlanOverrides(labEvent, workflow);
 
-        GenericLabEvent genericEvent = OrmUtil.proxySafeCast(labEvent,GenericLabEvent.class);
-        JiraCommentUtil.postUpdate(genericEvent.getLabEventType().getName() + " Event Applied",null,labEvent.getAllLabVessels());
+        JiraCommentUtil.postUpdate(labEvent.getLabEventType().getName() + " Event Applied",null,labEvent.getAllLabVessels());
         try {
             labEvent.applyMolecularStateChanges();
             enqueueForPostProcessing(labEvent);
@@ -135,7 +131,7 @@ public class LabEventHandler {
 //            for (LabVessel labVessel : labEvent.getAllLabVessels()) {
 //                if (OrmUtil.proxySafeIsInstance(labVessel, VesselContainerEmbedder.class)) {
 //                    Collection<LabVessel> containedVessels = OrmUtil.proxySafeCast(labVessel, VesselContainerEmbedder.class).
-//                            getVesselContainer().getContainedVessels();
+//                            getContainerRole().getContainedVessels();
 //                    if (containedVessels.isEmpty()) {
 //                        processProjectPlanOverrides(labEvent,labVessel,workflow);
 //                    }
@@ -305,7 +301,7 @@ public class LabEventHandler {
         StringBuilder alertText = new StringBuilder();
 
         alertText.append(message).append("\n");
-        alertText.append(event.getEventName() + " from " + event.getEventOperator().getLogin() + " sent on " + event.getEventDate());
+        alertText.append(event.getLabEventType().getName() + " from " + event.getEventOperator().getLogin() + " sent on " + event.getEventDate());
     }
 
 }

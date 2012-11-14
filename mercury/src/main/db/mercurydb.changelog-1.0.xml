@@ -268,4 +268,26 @@
             <column name="created_on"  type="oracle.sql.TIMESTAMP" />
         </addColumn>
     </changeSet>
+    
+    <changeSet id="GPLIM-73-7" author="thompson">
+        <dropColumn tableName="lab_event" columnName="dtype" schemaName="mercury"/>
+    </changeSet>
+    <changeSet id="GPLIM-73-8" author="thompson">
+        <dropColumn tableName="lab_event_aud" columnName="dtype" schemaName="mercury"/>
+    </changeSet>
+    <changeSet id="GPLIM-73-10" author="thompson">
+        <addUniqueConstraint tableName="molecular_indexing_scheme" columnNames="name"
+                             constraintName="uk_mis_name" schemaName="mercury"/>
+    </changeSet>
+    <!--
+    todo jmt enable these constraints
+    <changeSet id="GPLIM-73-9" author="thompson">
+        <addUniqueConstraint tableName="molecular_index_position" columnNames="SCHEME_ID, POSITION_HINT"
+                             constraintName="uk_mip_scheme_position" schemaName="mercury"/>
+    </changeSet>
+    <changeSet id="GPLIM-73-11" author="thompson">
+        <addUniqueConstraint tableName="molecular_index" columnNames="sequence"
+                             constraintName="uk_mi_sequence" schemaName="mercury"/>
+    </changeSet>
+-->
 </databaseChangeLog>

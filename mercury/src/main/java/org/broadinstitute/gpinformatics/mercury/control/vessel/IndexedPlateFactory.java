@@ -124,7 +124,7 @@ public class IndexedPlateFactory {
                     this.indexingSchemeFactory.findOrCreateIndexingScheme(Arrays.asList(plateWellIndex.getPositionPairs()));
             plateWell.addReagent(new MolecularIndexReagent(indexingScheme));
 
-            plate.getVesselContainer().addContainedVessel(plateWell, vesselPosition);
+            plate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
         }
 
         LOG.info("Number of plates: " + platesByBarcode.keySet().size());

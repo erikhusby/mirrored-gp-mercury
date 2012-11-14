@@ -11,14 +11,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-import org.primefaces.event.SelectEvent;
-import org.primefaces.event.UnselectEvent;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -81,14 +78,9 @@ public class ProductForm extends AbstractJsfBean {
     private List<PriceItem> priceItems;
 
     /**
-     * Even though the
-     * underlying {@link Product} has a single-valued default price item, this is a collection so we can use
-     * the multi-select {@link org.primefaces.component.autocomplete.AutoComplete} that's used everywhere else in
-     * the application.  PriceItem is in its own field and not referenced through the Product model since this is
-     * a JAXB {@link PriceItem} DTO and not a JPA entity,
+     * This is in its own field since this is a JAXB {@link PriceItem} DTO and not a JPA entity
      */
-    private List<PriceItem> defaultPriceItems;
-
+    private PriceItem defaultPriceItem;
 
     private List<Product> addOns;
 
@@ -164,13 +156,12 @@ public class ProductForm extends AbstractJsfBean {
                 if (product.getDefaultPriceItem() != null) {
                     PriceItem priceItemDto = entityToDto(product.getDefaultPriceItem());
 
-                    // Warn if default price item is unrecognized and null it out
                     if (! priceListCache.contains(priceItemDto)) {
                         issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, true));
-                        defaultPriceItems = null;
+                        defaultPriceItem = null;
                     }
                     else {
-                        defaultPriceItems = Collections.singletonList(entityToDto(product.getDefaultPriceItem()));
+                        defaultPriceItem = entityToDto(product.getDefaultPriceItem());
                     }
                 }
                 if (product.getPriceItems() != null) {
@@ -178,9 +169,9 @@ public class ProductForm extends AbstractJsfBean {
                     for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
 
                         PriceItem priceItemDto = entityToDto(priceItem);
-                        // Warn if this optional price item is unrecognized and null it out
                         if (! priceListCache.contains(priceItemDto)) {
                             issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
+                            defaultPriceItem = null;
                         }
                         else {
                             priceItems.add(priceItemDto);
@@ -220,7 +211,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     public List<ProductFamily> getProductFamilies() {
         List<ProductFamily> productFamilies = productFamilyDao.findAll();
-        Collections.sort(productFamilies, ProductFamily.PRODUCT_FAMILY_COMPARATOR);
+        Collections.sort(productFamilies);
 
         return productFamilies;
     }
@@ -320,13 +311,13 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void addAllPriceItemsToProduct() throws ApplicationValidationException {
 
-        if (defaultPriceItems == null || defaultPriceItems.size() == 0) {
+        if (defaultPriceItem == null) {
             // ApplicationValidationException is rollback=true, but we're not in a transaction at the time of this
-            // validation, we're just reusing the same exception type
+            // validation, I just wanted to reuse the same exception type since this is an application validation
             throw new ApplicationValidationException("Default price item must be entered");
         }
 
-        product.setDefaultPriceItem(findEntity(defaultPriceItems.get(0)));
+        product.setDefaultPriceItem(findEntity(defaultPriceItem));
 
         product.getPriceItems().clear();
         if (priceItems != null) {
@@ -422,18 +413,15 @@ public class ProductForm extends AbstractJsfBean {
 
     /**
      *
-     * Used for {@link org.primefaces.component.autocomplete.AutoComplete}ing the default price item,
-     * excludes already selected price items and returns no results if a default price item is already set
+     * Used for {@link org.primefaces.component.autocomplete.AutoComplete}ing the default price item, restrict search
+     * to only the currently selected {@link PriceItem}s.  If there is already a default price item, no results will
+     * be returned to prevent an additional default price item from being set
      *
      * @param query
      * @return
      */
-    public List<PriceItem> searchForDefaultPriceItem(String query) {
-        if (conversationData.getSelectedDefaultPriceItem() == null) {
-            // if there's no currently selected price item, search is the same as for optional price items
-            return searchForOptionalPriceItems(query);
-        }
-        return null;
+    public List<PriceItem> searchSelectedPriceItems(String query) {
+        return priceListCache.searchPriceItems(query);
     }
 
 
@@ -443,66 +431,25 @@ public class ProductForm extends AbstractJsfBean {
      * @param query
      * @return
      */
-    public List<PriceItem> searchForOptionalPriceItems(String query) {
+    public List<PriceItem> searchPriceItems(String query) {
         List<PriceItem> searchResults = priceListCache.searchPriceItems(query);
         // filter out price items that are already selected
-
-        for (PriceItem priceItem : conversationData.getAllSelectedPriceItems()) {
-            searchResults.remove(priceItem);
+        if (priceItems != null) {
+            for (PriceItem priceItem : priceItems) {
+                searchResults.remove(priceItem);
+            }
         }
+        searchResults.remove(defaultPriceItem);
 
         return searchResults;
     }
 
-
-    /**
-     * AJAX listener method for selection of optional price item
-     * @param selectEvent
-     */
-    public void onOptionalPriceItemSelect(SelectEvent selectEvent) {
-        conversationData.addSelectedOptionalPriceItem((PriceItem) selectEvent.getObject());
+    public PriceItem getDefaultPriceItem() {
+        return defaultPriceItem;
     }
 
-
-    /**
-     * AJAX listener method for unselection of optional price item
-     * @param unselectEvent
-     */
-    public void onOptionalPriceItemUnselect(UnselectEvent unselectEvent) {
-        conversationData.removeSelectedOptionalPriceItem((PriceItem) unselectEvent.getObject());
-    }
-
-
-    /**
-     * AJAX listener method for selection of default price item
-     * @param selectEvent
-     */
-    public void onDefaultPriceItemSelect(SelectEvent selectEvent) {
-        conversationData.setSelectedDefaultPriceItem((PriceItem) selectEvent.getObject());
-    }
-
-    /**
-     * AJAX listener method for unselection of default price item
-     * @param ignored
-     */
-    public void onDefaultPriceItemUnselect(UnselectEvent ignored) {
-        conversationData.setSelectedDefaultPriceItem(null);
-    }
-
-    /**
-     * Property access for default price items "list"
-     * @return
-     */
-    public List<PriceItem> getDefaultPriceItems() {
-        return defaultPriceItems;
-    }
-
-    /**
-     * Setter for default price items "list"
-     * @param defaultPriceItems
-     */
-    public void setDefaultPriceItems(List<PriceItem> defaultPriceItems) {
-        this.defaultPriceItems = defaultPriceItems;
+    public void setDefaultPriceItem(PriceItem defaultPriceItem) {
+        this.defaultPriceItem = defaultPriceItem;
     }
 
     /**
@@ -543,5 +490,4 @@ public class ProductForm extends AbstractJsfBean {
         }
         return product.getProductName();
     }
-
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -21,7 +22,7 @@ import java.util.List;
  */
 @Named
 @ApplicationScoped
-public class PriceListCache implements Serializable {
+public class PriceListCache extends AbstractCache implements Serializable {
     
     private PriceList priceList;
 
@@ -53,13 +54,14 @@ public class PriceListCache implements Serializable {
      */
     public PriceList getPriceList() {
         if (priceList == null) {
-            refreshPriceList();
+            refreshCache();
         }
 
         return priceList;
     }
 
-    public synchronized void refreshPriceList() {
+    @Override
+    public synchronized void refreshCache() {
         try {
             PriceList rawPriceList = quoteService.getAllPriceItems();
 

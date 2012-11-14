@@ -20,6 +20,7 @@ import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -98,6 +99,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
+        // todo create Product, Research Project, Product Order
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + testPrefix + rackPosition;
@@ -169,6 +171,9 @@ public class BettalimsMessageResourceTest extends Arquillian {
             twoDBarcodedTubeDAO.clear();
         }
 //        Controller.stopCPURecording();
+        TwoDBarcodedTube pooltube = twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
+        Assert.assertEquals(pooltube.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
+                "Wrong number of sample instances");
 
         String runName = "TestRun" + testPrefix;
         try {

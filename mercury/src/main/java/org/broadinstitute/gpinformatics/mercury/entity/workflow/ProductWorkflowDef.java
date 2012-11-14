@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -92,8 +91,7 @@ public class ProductWorkflowDef {
     private boolean validateTransfers(String nextEventTypeName, List<String> errors, Set<String> validPredecessorEventNames,
             LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers) {
         for (LabEvent labEvent : transfers) {
-            GenericLabEvent genericLabEvent = (GenericLabEvent) labEvent;
-            String actualEventName = genericLabEvent.getLabEventType().getName();
+            String actualEventName = labEvent.getLabEventType().getName();
             actualEventNames.add(actualEventName);
 /*
             if(actualEventName.equals(nextEventTypeName)) {

@@ -1,9 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
+import org.apache.commons.logging.Log;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
+import javax.inject.Inject;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
@@ -17,9 +18,10 @@ import java.lang.management.ManagementFactory;
  *
  * In Jconsole, look for beans under the category {@link #APP_NAME}
  */
-@Singleton
-@Startup
 public abstract class AbstractCacheControl implements CacheControlMXBean {
+
+    @Inject
+    private Log log;
 
     private MBeanServer platformMBeanServer;
 
@@ -27,27 +29,29 @@ public abstract class AbstractCacheControl implements CacheControlMXBean {
 
     private static final String APP_NAME = "Mercury";
 
-    public AbstractCacheControl() {}
-
     @PostConstruct
     public void registerInJMX() {
         try {
-            objectName = new ObjectName(APP_NAME + ":class=" + this.getClass().getName());
+            objectName = new ObjectName(APP_NAME + ":class=" + getClass().getName());
             platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
             if (!platformMBeanServer.isRegistered(objectName)) {
                 platformMBeanServer.registerMBean(this, objectName);
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Problem during registration of Monitoring into JMX:" + e);
+            String message = "Problem during registration of Monitoring into JMX";
+            log.error(message, e);
+            throw new IllegalStateException(message, e);
         }
     }
 
     @PreDestroy
     public void unregisterFromJMX() {
         try {
-            platformMBeanServer.unregisterMBean(this.objectName);
+            platformMBeanServer.unregisterMBean(objectName);
         } catch (Exception e) {
-            throw new IllegalStateException("Problem during unregistration of Monitoring into JMX:" + e);
+            String message = "Problem during unregistration of Monitoring from JMX";
+            log.error(message, e);
+            throw new IllegalStateException(message, e);
         }
     }
 }
