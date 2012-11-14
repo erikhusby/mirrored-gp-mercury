@@ -3,9 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItemComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.athena.presentation.products.ProductForm;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
@@ -78,11 +76,11 @@ public class ProductViewBean extends AbstractJsfBean {
 
     public Product getProduct() {
 
-        // if the model is not set but we have the business key in our cache binding, run the converter
-        // to generate the model.  we expect to be in this case for every ajax request on this page.
+        // if the model is not set but we have the business key in our cache, use the dao to get the Product
+        // for this business key.  we expect to be in this case for every ajax request on this page.
         //
-        // else if we have the model but have not yet set the business key into our cache binding, set the key
-        // into the cache binding.  we expect to be in this case on the initial page render when the f:param
+        // else if we have the model but have not yet set the business key into our cache, set the key
+        // into the cache.  we expect to be in this case on the initial page render when the f:viewParam
         // has run the productConverter to set the model into this backing bean
         if (product == null && getCachedBusinessKey() != null) {
             product = productDao.findByPartNumber(getCachedBusinessKey());
@@ -99,36 +97,31 @@ public class ProductViewBean extends AbstractJsfBean {
     }
 
     public List<Product> getAddOns() {
-
-        if (getProduct() != null && addOns == null) {
+        if (addOns == null) {
             addOns = new ArrayList<Product>(getProduct().getAddOns());
-            // TODO make ProductComparator a static field on Product
-            Collections.sort(addOns, new ProductComparator());
+            Collections.sort(addOns);
         }
-
         return addOns;
     }
 
     public List<PriceItem> getPriceItems() {
-        if (getProduct() != null && priceItems == null) {
+        if (priceItems == null) {
             priceItems = new ArrayList<PriceItem>(getProduct().getPriceItems());
-            // TODO make PriceItemComparator a static field on PriceItem
-            Collections.sort(priceItems, new PriceItemComparator());
+            Collections.sort(priceItems);
         }
-
         return priceItems;
     }
 
 
     public void onPreRenderView() throws IOException {
-        if ( getProduct() == null ) {
+        if (getProduct() == null) {
             addErrorMessage("No product with this part number exists.");
             facesContext.renderResponse();
         }
     }
 
     public String getAvailabilityDate() {
-        if (getProduct() == null || getProduct().getAvailabilityDate() == null) {
+        if (getProduct().getAvailabilityDate() == null) {
             return "";
         }
 
@@ -137,7 +130,7 @@ public class ProductViewBean extends AbstractJsfBean {
 
 
     public String getDiscontinuedDate() {
-        if (getProduct() == null || getProduct().getDiscontinuedDate() == null) {
+        if (getProduct().getDiscontinuedDate() == null) {
             return "";
         }
 

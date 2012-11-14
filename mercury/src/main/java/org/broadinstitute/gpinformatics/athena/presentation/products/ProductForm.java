@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationVali
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -355,7 +354,7 @@ public class ProductForm extends AbstractJsfBean {
             return new ArrayList<Product>();
         }
         ArrayList<Product> addOns = new ArrayList<Product>(product.getAddOns());
-        Collections.sort(addOns, new ProductComparator());
+        Collections.sort(addOns);
         return addOns;
     }
 
