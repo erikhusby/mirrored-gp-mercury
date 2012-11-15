@@ -38,23 +38,23 @@ public class ExtractTransform {
     public static final String READY_FILE_SUFFIX = "_is_ready";
     /** This date format matches what cron job expects in filenames, and in SqlLoader data files. */
     public static final SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    /** Name of file that contains the mSec time of the last etl run. */
+    public static final String LAST_ETL_FILE = "last_etl_run";
+    /** Name of subdirectory under configured ETL root dir where new sqlLoader files are put. */
+    public static final String DATAFILE_SUBDIR = "/new";
+    /** Name of directory where sqlLoader files are put. */
+    private static String datafileDir;
 
-
-    private static final String LAST_ETL_FILE = "last_etl_run";
     private static final long MSEC_IN_MINUTE = 60 * 1000;
     private static final Logger logger = Logger.getLogger(ExtractTransform.class);
     private static final Semaphore mutex = new Semaphore(1);
     private static long currentRunStartTime = 0;  // only useful for logging
-    /** Directory for sqlLoader data files. */
-    private static String datafileDir = null;
-    private static final String DATAFILE_SUBDIR = "/new";
+    private EtlConfig etlConfig = null;
 
     @Inject
     private Deployment deployment;
-
     @Inject
     private AuditReaderEtl auditReaderEtl;
-
     @Inject
     private BillableItemEtl billableItemEtl;
     @Inject
@@ -84,16 +84,27 @@ public class ExtractTransform {
     @Inject
     private ProductOrderAddOnEtl productOrderAddOnEtl;
 
-    /** public getter */
-    public static String getDatafileDir() {
-        return datafileDir;
-    }
-
     /**
      * JEE auto-schedules incremental ETL.
      */
     @Schedule(hour="*", minute="*/15", persistent=false)
-    private void incrementalEtl() {
+    private void scheduledEtl() {
+        if (null == etlConfig) {
+            etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
+            setDatafileDir(etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR);
+        }
+        // Only runs periodic ETL if deployed to production.
+        if (etlConfig.getExternalDeployment() == Deployment.PROD) {
+            incrementalEtl();
+        }
+    }
+
+    /**
+     * Extracts data from operational database, transforms the data to data warehouse records,
+     * and writes the records to files, one per DW table.
+     * @return record count, or -1 if could not run
+     */
+    public int incrementalEtl() {
 
         // If previous run is still busy it is unusual but not an error.  Only one incrementalEtl
         // may run at a time.  Does not queue a new job if busy, to avoid snowball effect if system is
@@ -101,16 +112,17 @@ public class ExtractTransform {
         if (!mutex.tryAcquire()) {
             logger.info("Skipping new ETL run since previous run is still busy ("
                     + (int)Math.ceil((System.currentTimeMillis() - currentRunStartTime) / MSEC_IN_MINUTE) + " minutes).");
-            return;
+            return -1;
         }
         try {
-            EtlConfig etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
-            datafileDir = etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR;
-
             // Bails if target directory is missing.
-            if (datafileDir == null || datafileDir.length() == 0 || !(new File(datafileDir)).exists()) {
-                logger.fatal("ETL data file directory is missing: " + datafileDir);
-                return;
+            String dataDir = getDatafileDir();
+            if (null == dataDir || dataDir.length() == 0) {
+                logger.fatal("ETL data file directory is not configured.");
+                return -1;
+            } else if (!(new File(dataDir)).exists()) {
+                logger.fatal("ETL data file directory is missing: " + dataDir);
+                return -1;
             }
 
             // The same etl_date is used for all DW data processed by one ETL run.
@@ -118,11 +130,11 @@ public class ExtractTransform {
             final String etlDateStr = fullDateFormat.format(etlDate);
             currentRunStartTime = etlDate.getTime();
 
-            final long lastRev = readLastEtlRun();
+            final long lastRev = readLastEtlRun(dataDir);
             final long etlRev = auditReaderEtl.currentRevNumber(etlDate);
-            if (lastRev == etlRev) {
+            if (lastRev >= etlRev) {
                 logger.info("Incremental ETL found no changes since rev " + lastRev);
-                return;
+                return 0;
             }
             logger.info("Doing incremental ETL for rev numbers " + lastRev + " to " + etlRev);
             if (0L == lastRev) {
@@ -146,12 +158,14 @@ public class ExtractTransform {
             recordCount += productOrderStatusEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += productOrderAddOnEtl.doEtl(lastRev, etlRev, etlDateStr);
 
-            boolean lastEtlFileWritten = writeLastEtlRun(etlRev);
+            boolean lastEtlFileWritten = writeLastEtlRun(dataDir, etlRev);
             if (recordCount > 0 && lastEtlFileWritten) {
-                writeIsReadyFile(etlDateStr);
+                writeIsReadyFile(dataDir, etlDateStr);
                 logger.info("Incremental ETL created " + recordCount + " data records in "
                         + (int)Math.ceil((System.currentTimeMillis() - currentRunStartTime) / 1000.) + " seconds.");
             }
+
+            return recordCount;
 
         } finally {
             mutex.release();
@@ -162,10 +176,10 @@ public class ExtractTransform {
      * Reads the last incremental ETL run file and returns start of this etl interval.
      * @return the end rev of last incremental ETL
      */
-    private long readLastEtlRun() {
+    public long readLastEtlRun(String dataDir) {
         BufferedReader rdr = null;
         try {
-            File file = new File (datafileDir, LAST_ETL_FILE);
+            File file = new File (dataDir, LAST_ETL_FILE);
             rdr = new BufferedReader(new FileReader(file));
             String s = rdr.readLine();
             return Long.parseLong(s);
@@ -176,7 +190,7 @@ public class ExtractTransform {
             logger.error("Error processing file " + LAST_ETL_FILE, e);
             return 0L;
         } catch (NumberFormatException e) {
-            logger.error("Cannot parse " + LAST_ETL_FILE, e);
+            logger.error("Cannot parse " + LAST_ETL_FILE + " : " + e);
             return 0L;
         } finally {
             try {
@@ -194,9 +208,9 @@ public class ExtractTransform {
      * @param etlRev last rev of the etl run to record
      * @return true if file was written ok
      */
-    private boolean writeLastEtlRun(long etlRev) {
+    public boolean writeLastEtlRun(String dataDir, long etlRev) {
         try {
-            File file = new File (datafileDir, LAST_ETL_FILE);
+            File file = new File (dataDir, LAST_ETL_FILE);
             FileWriter fw = new FileWriter(file, false);
             fw.write(String.valueOf(etlRev));
             fw.close();
@@ -211,9 +225,9 @@ public class ExtractTransform {
      * Writes the file used by cron job to know when this etl run has completed and data file processing can start.
      * @param etlDateStr used to name the file
      */
-    private void writeIsReadyFile(String etlDateStr) {
+    public void writeIsReadyFile(String dataDir, String etlDateStr) {
         try {
-            File file = new File (datafileDir, etlDateStr + READY_FILE_SUFFIX);
+            File file = new File (dataDir, etlDateStr + READY_FILE_SUFFIX);
             FileWriter fw = new FileWriter(file, false);
             fw.write(" ");
             fw.close();
@@ -222,5 +236,20 @@ public class ExtractTransform {
         }
     }
 
+    public static String getDatafileDir() {
+        return datafileDir;
+    }
+
+    public static void setDatafileDir(String s) {
+        datafileDir = s;
+    }
+
+    public static Semaphore getMutex() {
+        return mutex;
+    }
+
+    public static long getCurrentRunStartTime() {
+        return currentRunStartTime;
+    }
 }
 
