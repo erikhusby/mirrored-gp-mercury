@@ -8,9 +8,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -62,14 +61,14 @@ public class JiraServiceTest {
                     //        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
 
 
-            final CreateIssueResponse createIssueResponse =
+            final JiraIssue jiraIssue =
                     service.createIssue(CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix(), null,
                                         CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL,
                                         "Summary created from Mercury", "Description created from Mercury",
                                         customFieldList);
 
 
-            final String lcsetJiraKey = createIssueResponse.getTicketName();
+            final String lcsetJiraKey = jiraIssue.getTicketName();
 
             Assert.assertNotNull(lcsetJiraKey);
 
@@ -93,12 +92,12 @@ public class JiraServiceTest {
             customFieldList.add(new CustomField(requiredFields.get(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()),
                                                 "Test Exome Express", CustomField.SingleFieldType.TEXT ));
 
-            final CreateIssueResponse createIssueResponse =
+            final JiraIssue jiraIssue =
                     service.createIssue(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix(), "hrafal",
                                         CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER,
                                         "Athena Test case:::  Test new Summary Addition",
                                         "Athena Test Case:  Test description setting",customFieldList);
-            final String pdoJiraKey = createIssueResponse.getTicketName();
+            final String pdoJiraKey = jiraIssue.getTicketName();
 
             Assert.assertNotNull(pdoJiraKey);
 

@@ -1,10 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
-
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
@@ -16,9 +15,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 
-
 public interface JiraService extends Serializable {
-
 
     /**
      * Create an issue with a project prefix specified by projectPrefix; i.e. for this method projectPrefix would be 'TP' and not 'TP-5' for
@@ -33,8 +30,16 @@ public interface JiraService extends Serializable {
      * @return
      * @throws IOException
      */
-    CreateIssueResponse createIssue(String projectPrefix, String reporter, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException;
+    JiraIssue createIssue(String projectPrefix, String reporter,
+                                    CreateIssueRequest.Fields.Issuetype issuetype, String summary,
+                                    String description, Collection<CustomField> customFields) throws IOException;
 
+    /**
+     * Get the JiraIssue object for a JIRA key.
+     * @param key the key
+     * @return the issue object for the key
+     */
+    JiraIssue getIssue(String key);
 
     /**
      * Add a publicly visible comment to the specified issue.
@@ -44,7 +49,6 @@ public interface JiraService extends Serializable {
      * @param body
      */
     void addComment(String key, String body) throws IOException;
-
 
     /**
      * Add a comment to the specified issue whose visibility is restricted by the {@link Visibility} specifiers.

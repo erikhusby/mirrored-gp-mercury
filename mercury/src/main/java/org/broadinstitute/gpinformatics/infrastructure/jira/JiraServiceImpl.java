@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldJsonParser;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
@@ -69,8 +69,26 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         return baseUrl;
     }
 
+    private static class JiraIssueData {
+        private String id;
+        private String key;
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        public void setSelf(String self) {
+        }
+
+        JiraIssueData() { }
+    }
+
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, String reporter, CreateIssueRequest.Fields.Issuetype issueType,
+    public JiraIssue createIssue(String projectPrefix, String reporter, CreateIssueRequest.Fields.Issuetype issueType,
                                            String summary, String description,
                                            Collection<CustomField> customFields) throws IOException {
 
@@ -89,8 +107,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         WebResource webResource = getJerseyClient().resource(urlString);
 
+        JiraIssueData data = post(webResource, issueRequest, new GenericType<JiraIssueData>() {});
+        return new JiraIssue(data.id, data.key, this);
+    }
 
-        return post(webResource, issueRequest, new GenericType<CreateIssueResponse>() {});
+    @Override
+    public JiraIssue getIssue(String key) {
+        return new JiraIssue(key, key, this);
     }
 
 

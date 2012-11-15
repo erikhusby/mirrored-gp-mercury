@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
@@ -30,8 +30,13 @@ public class JiraServiceStub implements JiraService {
     private Log logger = LogFactory.getLog(JiraServiceStub.class);
 
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, String reporter, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException {
-        return new CreateIssueResponse("123",projectPrefix + "-123");
+    public JiraIssue createIssue(String projectPrefix, String reporter, CreateIssueRequest.Fields.Issuetype issuetype, String summary, String description, Collection<CustomField> customFields) throws IOException {
+        return new JiraIssue("123", projectPrefix + "-123", this);
+    }
+
+    @Override
+    public JiraIssue getIssue(String key) {
+        return new JiraIssue(key, key, this);
     }
 
     @Override

@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
@@ -193,14 +193,14 @@ public class ExomeExpressEndToEndTest {
             allCustomFields.add(protocolCustomField);
 
             for (LabBatch labBatch : labBatches) {
-                CreateIssueResponse createResponse = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
+                JiraIssue jira = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
                         "hrafal",
                         CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL,
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
-                Assert.assertNotNull(createResponse);
-                Assert.assertNotNull(createResponse.getTicketName());
-                jiraTicket = new JiraTicket( createResponse.getTicketName(), createResponse.getId());
+                Assert.assertNotNull(jira);
+                Assert.assertNotNull(jira.getTicketName());
+                jiraTicket = new JiraTicket( jira.getTicketName(), jira.getId());
                 labBatch.setJiraTicket(jiraTicket);
                 //labBatch.get
             }

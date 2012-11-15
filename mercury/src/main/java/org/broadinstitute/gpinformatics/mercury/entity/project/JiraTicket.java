@@ -7,13 +7,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueL
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.annotation.Nonnull;
+import javax.persistence.*;
 import java.io.IOException;
 
 @Entity
@@ -37,18 +32,24 @@ public class JiraTicket {
      */
     private String browserUrl;
 
-    public JiraTicket() {}
-    
-    public JiraTicket ( String ticketName, String ticketId ) {
+    @Transient
+    private JiraService jiraService;
+
+    public JiraTicket() {
+        jiraService = ServiceAccessUtility.getBean(JiraService.class);
+    }
+
+    public JiraTicket(@Nonnull String ticketName, @Nonnull String ticketId) {
         if (ticketName == null) {
             throw new NullPointerException("ticketName cannot be null.");
         }
         if (ticketId == null) {
             throw new NullPointerException("ticketId cannot be null.");
         }
+        jiraService = ServiceAccessUtility.getBean(JiraService.class);
         this.ticketName = ticketName;
         this.ticketId = ticketId;
-        this.browserUrl = ServiceAccessUtility.getTicketUrl ( ticketName );
+        this.browserUrl = jiraService.createTicketUrl(ticketName);
     }
 
     /**
@@ -74,9 +75,8 @@ public class JiraTicket {
      */
     public void addComment(String text) {
         try {
-            ServiceAccessUtility.addJiraComment(ticketName,text);
-        }
-        catch(IOException  e) {
+            jiraService.addComment(ticketName,text);
+        } catch(IOException e) {
             throw new RuntimeException("Could not log message '" + text + "' to jira ticket " + ticketName + ".  Is the jira server okay?",e);
         }
     }
@@ -88,7 +88,7 @@ public class JiraTicket {
      * @throws IOException
      */
     public void addWatcher(String personLoginId) throws IOException {
-        ServiceAccessUtility.addJiraWatcher(ticketName, personLoginId);
+        jiraService.addWatcher(ticketName, personLoginId);
     }
 
     /**
@@ -99,10 +99,9 @@ public class JiraTicket {
      * @throws IOException
      */
     public void addJiraLink (String targetTicketKey) throws IOException {
-
-        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related ,ticketName,
-                                                targetTicketKey);
+        jiraService.addLink( AddIssueLinkRequest.LinkType.Related ,ticketName, targetTicketKey);
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
