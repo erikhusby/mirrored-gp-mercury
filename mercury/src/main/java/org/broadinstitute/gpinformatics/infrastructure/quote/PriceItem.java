@@ -228,12 +228,9 @@ public class PriceItem {
     @Override
     public String toString() {
         return "PriceItem{" +
-                "platform='" + platformName + '\'' +
-                ", categoryName='" + categoryName + '\'' +
-                ", id='" + id + '\'' +
+                "platformName='" + platformName + '\'' +
                 ", name='" + name + '\'' +
-                ", price='" + price + '\'' +
-                ", units='" + unit + '\'' +
+                ", categoryName='" + categoryName + '\'' +
                 '}';
     }
 }

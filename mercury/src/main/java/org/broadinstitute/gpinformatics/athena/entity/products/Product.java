@@ -329,4 +329,12 @@ public class Product implements Serializable, Comparable<Product> {
     public int compareTo(Product that) {
         return PRODUCT_COMPARATOR.compare(this, that);
     }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "productName='" + productName + '\'' +
+                ", partNumber='" + partNumber + '\'' +
+                '}';
+    }
 }

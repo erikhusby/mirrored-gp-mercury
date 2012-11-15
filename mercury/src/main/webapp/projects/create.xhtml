@@ -63,7 +63,7 @@
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
-                            <p:ajax event="itemSelect" listener="#{researchProjectForm.updateForDuplicates(researchProjectForm.projectManagers, 'projectManagers')}" update="projectManagers, pmMessage"/>
+                            <p:ajax event="itemSelect" listener="#{researchProjectForm.removeDuplicates(researchProjectForm.projectManagers, 'projectManagers')}" update="projectManagers, pmMessage"/>
                         </p:autoComplete>
                         <p:watermark for="projectManagers" value="Type name to search"/>
                         <p:message id="pmMessage" for="projectManagers"/>
@@ -82,7 +82,7 @@
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
-                            <p:ajax event="itemSelect" listener="#{researchProjectForm.updateForDuplicates(researchProjectForm.broadPIs, 'broadPIs')}" update="broadPIs, piMessage"/>
+                            <p:ajax event="itemSelect" listener="#{researchProjectForm.removeDuplicates(researchProjectForm.broadPIs, 'broadPIs')}" update="broadPIs, piMessage"/>
                         </p:autoComplete>
                         <p:watermark for="broadPIs" value="Type name to search"/>
                         <p:message id="piMessage" for="broadPIs"/>
@@ -102,7 +102,7 @@
                                 <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
                             <p:ajax event="itemSelect"
-                                listener="#{researchProjectForm.updateForDuplicates(researchProjectForm.scientists, 'scientists')}"
+                                listener="#{researchProjectForm.removeDuplicates(researchProjectForm.scientists, 'scientists')}"
                                 update="scientists, scientistMessage"/>
                         </p:autoComplete>
                         <p:watermark for="scientists" value="Type name to search"/>
@@ -123,7 +123,7 @@
                                 <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
                             <p:ajax event="itemSelect"
-                                listener="#{researchProjectForm.updateForDuplicates(researchProjectForm.externalCollaborators, 'externalCollaborators')}"
+                                listener="#{researchProjectForm.removeDuplicates(researchProjectForm.externalCollaborators, 'externalCollaborators')}"
                                 update="externalCollaborators, externalCollaboratorsMessage"/>
                         </p:autoComplete>
                         <p:watermark for="externalCollaborators" value="Type name to search"/>
@@ -144,7 +144,7 @@
                                 <div class="ac-dropdown-subtext">#{funding.matchDescription}:</div>
                             </p:column>
                             <p:ajax event="itemSelect"
-                                listener="#{researchProjectForm.updateForDuplicates(researchProjectForm.fundingSources, 'fundingSources')}"
+                                listener="#{researchProjectForm.removeDuplicates(researchProjectForm.fundingSources, 'fundingSources')}"
                                 update="fundingSources, fundingSourcesMessage"/>
                         </p:autoComplete>
                         <p:watermark for="fundingSources" value="Type text to search"/>
@@ -165,7 +165,7 @@
                                 <div class="ac-dropdown-subtext">#{cohort.group}: #{cohort.category}</div>
                             </p:column>
                             <p:ajax event="itemSelect"
-                                    listener="#{researchProjectForm.updateForDuplicates(researchProjectForm.sampleCohorts, 'sampleCohorts')}"
+                                    listener="#{researchProjectForm.removeDuplicates(researchProjectForm.sampleCohorts, 'sampleCohorts')}"
                                     update="sampleCohorts, sampleCohortsMessage"/>
 
                         </p:autoComplete>
@@ -186,7 +186,7 @@
                                 <div class="ac-dropdown-text">#{irb.displayName}</div>
                             </p:column>
                             <p:ajax event="itemSelect"
-                                    listener="#{researchProjectForm.updateForDuplicates(researchProjectForm.irbs, 'irbs')}"
+                                    listener="#{researchProjectForm.removeDuplicates(researchProjectForm.irbs, 'irbs')}"
                                     update="irbs, irbsMessage"/>
                         </p:autoComplete>
                         <p:watermark for="irbs" value="Type irb name"/>
