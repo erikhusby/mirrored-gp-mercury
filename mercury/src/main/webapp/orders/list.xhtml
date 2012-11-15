@@ -21,7 +21,6 @@
             <p:commandButton value="Generate Billing Tracker" action="#{productOrderBean.downloadLedgerUpdate}" ajax="false"/>
 
             <p:dataTable value="#{productOrderBean.allProductOrders}"
-                         filteredValue="#{productOrderBean.filteredProductOrders}"
                          sortBy="#{order.title}"
                          sortOrder="ascending"
                          var="order"

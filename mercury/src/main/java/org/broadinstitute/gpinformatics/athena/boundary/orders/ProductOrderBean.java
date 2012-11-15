@@ -28,8 +28,6 @@ public class ProductOrderBean {
     /** All product orders, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
     private ProductOrderListModel allProductOrders;
 
-    private List<ProductOrder> filteredProductOrders;
-
     private ProductOrder[] selectedProductOrders;
 
     /**
@@ -64,13 +62,6 @@ public class ProductOrderBean {
         return BoundaryUtils.buildEnumFilterList(BillingStatus.values());
     }
 
-    public List<ProductOrder> getFilteredProductOrders() {
-        return filteredProductOrders;
-    }
-
-    public void setFilteredProductOrders(List<ProductOrder> filteredProductOrders) {
-        this.filteredProductOrders = filteredProductOrders;
-    }
 
     /**
      * Returns a list of SelectItems for all people who are owners of research projects.
