@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationVali
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -40,11 +39,6 @@ public class ProductForm extends AbstractJsfBean {
     @Inject
     private Log logger;
 
-    /**
-     * Holder of long-running conversation state needed for price items
-     */
-    @Inject
-    private ProductFormConversationData conversationData;
 
     @Inject
     private FacesContext facesContext;
@@ -85,15 +79,11 @@ public class ProductForm extends AbstractJsfBean {
     private List<Product> addOns;
 
 
-
-
-
     /**
      * Hook for the preRenderView event that initiates the long running conversation and sets up conversation scoped
      * data from the product, also initializes the form as appropriate
      */
     public void onPreRenderView() {
-        conversationData.beginConversation(product);
         initForm();
     }
 
@@ -116,7 +106,7 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public boolean isCreating() {
-        return product.getProductId() == null;
+        return product == null || product.getProductId() == null;
     }
 
 
@@ -218,12 +208,22 @@ public class ProductForm extends AbstractJsfBean {
 
 
     public String save() {
-        if (isCreating()) {
-            return create();
+        // need to calculate 'creating' here, doing it after writing out the entity is too late (we always get 'updating')
+        boolean creating = isCreating();
+
+        try {
+            addAllAddOnsToProduct();
+            addAllPriceItemsToProduct();
+
+            productManager.save(product);
         }
-        else {
-            return edit();
+        catch (Exception e ) {
+            addErrorMessage(e.getMessage());
+            return null;
         }
+
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been " + (creating ? "created." : "updated."));
+        return redirect("view") + addProductParam();
     }
 
 
@@ -231,42 +231,6 @@ public class ProductForm extends AbstractJsfBean {
         return "&product=" + product.getBusinessKey();
     }
 
-
-    public String create() {
-        try {
-            addAllAddOnsToProduct();
-            addAllPriceItemsToProduct();
-
-            productManager.create(product);
-        }
-        catch (Exception e ) {
-            addErrorMessage(e.getMessage());
-            return null;
-        }
-
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.");
-        conversationData.endConversation();
-        return redirect("view") + addProductParam();
-    }
-
-
-    public String edit() {
-        try {
-            addAllAddOnsToProduct();
-            addAllPriceItemsToProduct();
-
-            productManager.edit(product);
-
-        }
-        catch (Exception e ) {
-            addErrorMessage(e.getMessage());
-            return null;
-        }
-
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.");
-        conversationData.endConversation();
-        return redirect("view") + addProductParam();
-    }
 
     /**
      * Entify all the addons from our JAXB DTOs and add them to the {@link Product} before persisting
@@ -354,8 +318,11 @@ public class ProductForm extends AbstractJsfBean {
         if (product == null) {
             return new ArrayList<Product>();
         }
-        ArrayList<Product> addOns = new ArrayList<Product>(product.getAddOns());
-        Collections.sort(addOns, new ProductComparator());
+
+        if (addOns == null) {
+            addOns = new ArrayList<Product>(product.getAddOns());
+            Collections.sort(addOns);
+        }
         return addOns;
     }
 
@@ -365,20 +332,11 @@ public class ProductForm extends AbstractJsfBean {
     }
 
 
-    /**
-     * Pull {@link PriceItem} data from conversation scoped {@link ProductFormConversationData}
-     *
-     * @return
-     */
     public List<PriceItem> getPriceItems() {
         return priceItems;
     }
 
-    /**
-     * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
-     * actual setting of {@link PriceItem}s is handled in the ajax event listener only
-     * @param priceItems
-     */
+
     public void setPriceItems(List<PriceItem> priceItems) {
         this.priceItems = priceItems;
     }
