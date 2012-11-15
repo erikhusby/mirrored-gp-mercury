@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -48,9 +49,9 @@ public class ResearchProjectTest {
 
         Assert.assertNull(researchProject.getJiraTicketKey());
 
-        Assert.assertEquals(researchProject.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.RESEARCH_PROJECT );
+        Assert.assertEquals(researchProject.fetchJiraIssueType(), CreateFields.IssueType.RESEARCH_PROJECT );
 
-        Assert.assertEquals(researchProject.fetchJiraProject(), CreateIssueRequest.Fields.ProjectType.Research_Projects);
+        Assert.assertEquals(researchProject.fetchJiraProject(), CreateFields.ProjectType.Research_Projects);
 
         try {
             researchProject.setJiraTicketKey(null);

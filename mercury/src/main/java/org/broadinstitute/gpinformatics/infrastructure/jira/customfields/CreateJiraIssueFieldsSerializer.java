@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.customfields;
 
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
@@ -13,37 +13,22 @@ import java.io.IOException;
  * {@link org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition#getJiraCustomFieldId()}
  * between dev/test jira and production jira
  */
-public class CreateJiraIssueFieldsSerializer extends JsonSerializer<Fields> {
+public class CreateJiraIssueFieldsSerializer extends JsonSerializer<CreateFields> {
 
     @Override
-    public void serialize(Fields fields, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+    public void serialize(CreateFields fields, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         jsonGenerator.writeStartObject();
-        jsonGenerator.writeObjectField("project",fields.getProject());
-        jsonGenerator.writeObjectField("issuetype",fields.getIssuetype());
-        jsonGenerator.writeObjectField("summary",fields.getSummary());
-        jsonGenerator.writeObjectField("description",fields.getDescription());
+        jsonGenerator.writeObjectField("project", fields.getProject());
+        jsonGenerator.writeObjectField("issuetype", fields.getIssueType());
+        jsonGenerator.writeObjectField("summary", fields.getSummary());
+        jsonGenerator.writeObjectField("description", fields.getDescription());
 
         if (fields.getReporter() != null) {
             jsonGenerator.writeObjectField("reporter",fields.getReporter());
         }
 
-        writeCustomFields(fields,jsonGenerator);
+        UpdateJiraIssueUpdateSerializer.writeCustomFields(fields.getCustomFields(), jsonGenerator);
 
         jsonGenerator.writeEndObject();
     }
-
-    private void writeCustomFields(Fields fields,JsonGenerator jsonGenerator) throws IOException {
-        for (CustomField customField : fields.getCustomFields()) {
-            String jiraFieldName = customField.getFieldDefinition().getJiraCustomFieldId();
-            if( CustomField.SingleFieldType.RADIO_BUTTON.equals(customField.getFieldType())) {
-                jsonGenerator.writeFieldName(jiraFieldName);
-                jsonGenerator.writeStartObject();
-                jsonGenerator.writeObjectField("value",customField.getValue());
-                jsonGenerator.writeEndObject();
-            } else {
-                jsonGenerator.writeObjectField(jiraFieldName,customField.getValue());
-            }
-        }
-    }
-
 }

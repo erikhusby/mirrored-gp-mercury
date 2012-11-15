@@ -1,6 +1,19 @@
 # External system definitions.  These describe the various deployments of external systems with which Mercury might
 # integrate.
 
+app:
+
+    DEV:
+      url:      http://localhost:8080/Mercury/
+
+    TEST:
+      url:      http://seq01.broadinstitute.org:8080/Mercury/
+
+    QA:
+      url:      http://pmbridgedev.broadinstitute.org:8081/Mercury/
+
+    PROD:
+      url:      http://mercury.broadinstitute.org/Mercury/
 
 bsp:
 
@@ -172,6 +185,7 @@ mercury:
 
     DEV:
 
+      app:      DEV
       bsp:      DEV
       gap:      DEV
       jira:     TEST
@@ -184,6 +198,7 @@ mercury:
 
     TEST:
 
+      app:      TEST
       bsp:      QA
       gap:      QA
       jira:     TEST
@@ -196,6 +211,7 @@ mercury:
 
     QA:
 
+      app:      QA
       bsp:      QA
       gap:      QA
       jira:     TEST
@@ -208,6 +224,7 @@ mercury:
 
     PROD:
 
+      app:      PROD
       bsp:      PROD
       gap:      PROD
       jira:     PROD

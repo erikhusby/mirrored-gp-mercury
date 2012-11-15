@@ -8,9 +8,10 @@ import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
@@ -422,8 +423,9 @@ public class ResearchProject {
     public void submit() throws IOException {
 
         if (jiraTicketKey == null) {
-            Map<String, CustomFieldDefinition> submissionFields =
-                    ServiceAccessUtility.getJiraCustomFields ( );
+            JiraService jiraService = ServiceAccessUtility.lookupBean(JiraService.class);
+
+            Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
             List<CustomField> listOfFields = new ArrayList<CustomField>();
 
@@ -465,13 +467,19 @@ public class ResearchProject {
                                     "", CustomField.SingleFieldType.TEXT ));
 
             CreateIssueResponse researchProjectResponse =
-                    ServiceAccessUtility.createJiraTicket(
-                        fetchJiraProject().getKeyPrefix(),
-                        ServiceAccessUtility.getBspUserForId(createdBy).getUsername(),
-                        fetchJiraIssueType(), title, synopsis, listOfFields);
+                    jiraService.createIssue(fetchJiraProject().getKeyPrefix(),
+                            ServiceAccessUtility.getBspUserForId(createdBy).getUsername(), fetchJiraIssueType(),
+                            title, synopsis, listOfFields);
 
             // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
             jiraTicketKey = researchProjectResponse.getKey();
+
+            // Update ticket with link back into Mercury
+            CustomField mercuryUrlField = new CustomField(
+                    submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                    ServiceAccessUtility.getMercuryUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey,
+                    CustomField.SingleFieldType.TEXT);
+            jiraService.updateIssue(jiraTicketKey, Collections.singleton(mercuryUrlField));
 
             addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
         }
@@ -507,12 +515,12 @@ public class ResearchProject {
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
-     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType} that
      * represents the Jira Project for Research Projects
      */
     @Transient
-    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
-        return CreateIssueRequest.Fields.ProjectType.Research_Projects;
+    public CreateFields.ProjectType fetchJiraProject() {
+        return CreateFields.ProjectType.Research_Projects;
     }
 
     /**
@@ -521,12 +529,12 @@ public class ResearchProject {
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
-     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType} that
      * represents the Jira Issue Type for Research Projects
      */
     @Transient
-    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
-        return CreateIssueRequest.Fields.Issuetype.RESEARCH_PROJECT;
+    public CreateFields.IssueType fetchJiraIssueType() {
+        return CreateFields.IssueType.Research_Project;
     }
 
     /**
