@@ -9,7 +9,9 @@ import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @ManagedBean(name = "lookupBean")
 @ViewScoped
@@ -19,6 +21,11 @@ public class LookupBean implements Serializable {
     private String barcode;
     private LabVessel selectedVessel;
     private List<LabVessel> foundVessels;
+    private Map<LabVessel, Integer> vesselSampleSizeMap = new HashMap<LabVessel, Integer>();
+
+    public Map<LabVessel, Integer> getVesselSampleSizeMap() {
+        return vesselSampleSizeMap;
+    }
 
     public List<LabVessel> getFoundVessels() {
         return foundVessels;
@@ -53,6 +60,9 @@ public class LookupBean implements Serializable {
     public void barcodeSearch() {
         List<String> barcodeList = Arrays.asList(barcode.trim().split(","));
         foundVessels = labVesselDao.findByListIdentifiers(barcodeList);
+        for (LabVessel foundVessel : foundVessels) {
+            vesselSampleSizeMap.put(foundVessel, foundVessel.getSampleInstances().size());
+        }
     }
 
     public void onRowToggle(ToggleEvent event) {

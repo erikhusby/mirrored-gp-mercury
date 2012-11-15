@@ -36,13 +36,13 @@
                             <f:facet name="header">
                                 <h:outputText value="Sample Details"/>
                             </f:facet>
-                            <p:rowToggler rendered="#{foundVessel.sampleInstancesList.size() > 0}"/>
+                            <p:rowToggler rendered="#{lookupBean.vesselSampleSizeMap.get(foundVessel) > 0}"/>
                         </p:column>
                         <p:column>
                             <f:facet name="header">
                                 <h:outputText value="Sample #"/>
                             </f:facet>
-                            <h:outputText value="#{foundVessel.sampleInstancesList.size()}"/>
+                            <h:outputText value="#{lookupBean.vesselSampleSizeMap.get(foundVessel)}"/>
                         </p:column>
                         <p:column sortBy="#{foundVessel.label}">
                             <f:facet name="header">
