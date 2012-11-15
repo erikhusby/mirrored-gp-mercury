@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +36,7 @@ public class JiraCustomFieldsUtil {
     public static Map<String,CustomFieldDefinition> getRequiredLcSetFieldDefinitions(JiraService jiraService) throws IOException {
         final Map<String, CustomFieldDefinition> allCustomFields =
                 jiraService.getRequiredFields ( new CreateIssueRequest.Fields.Project ( LabBatch.LCSET_PROJECT_PREFIX ),
-                                                CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel );
+                                                CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
 
         final Map<String,CustomFieldDefinition> requiredCustomFieldDefinitions = new HashMap<String,CustomFieldDefinition>();
 

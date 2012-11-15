@@ -14,7 +14,7 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}">
+                <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}">
                     <f:event type="preValidate" listener="#{productForm.initEmptyProduct}"/>
                 </f:viewParam>
             </f:metadata>
@@ -174,9 +174,10 @@
                             <p:column style="width:100%">
                                 <div>#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name}</div>
                             </p:column>
+                            <p:ajax event="itemSelect" listener="#{productForm.removeDuplicates(productForm.priceItems, 'priceItem')}" update="priceItem, optionalPriceItemsMessage"/>
                         </p:autoComplete>
                         <p:watermark for="priceItem" value="Type text to search for Price Items"/>
-                        <p:message for="priceItem" />
+                        <p:message id="optionalPriceItemsMessage" for="priceItem" />
                     </div>
                 </div>
 
@@ -191,9 +192,10 @@
                                 <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>
                                 <div class="ac-dropdown-subtext">#{product.productFamily.name}</div>
                             </p:column>
+                            <p:ajax event="itemSelect" listener="#{productForm.removeDuplicates(productForm.addOns, 'addOns')}" update="addOns, addOnsMessage"/>
                         </p:autoComplete>
                         <p:watermark for="addOns" value="Type text to search to search for Add-ons"/>
-                        <p:message for="addOns"/>
+                        <p:message id="addOnsMessage" for="addOns"/>
                     </div>
                 </div>
 
@@ -202,20 +204,11 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary" rendered="#{productForm.creating}" />
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary" rendered="#{ ! productForm.creating}" >
-                                    <!-- GPLIM-208 adding this parameter to the command button forces our converter to run
-                                         in preference to taking the local value (the detached Product instance) stored in
-                                         our components.  forcing the converter to run gives us our persistent Product entity.
-
-                                         this parameter value seems to get lost after failing form validation so
-                                         we have to get it out of the request -->
-                                    <f:param name="product" value="#{request.getParameter('product')}" />
-                                </p:commandButton>
+                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="offset2">
-                                <h:link outcome="list" value="Cancel" rendered="#{productForm.product.productId == null}"/>
-                                <h:link outcome="view" value="Cancel" rendered="#{productForm.product.productId != null}">
+                                <h:link outcome="list" value="Cancel" rendered="#{productForm.creating}"/>
+                                <h:link outcome="view" value="Cancel" rendered="#{!productForm.creating}">
                                     <f:param name="product" value="#{productForm.product.businessKey}"/>
                                 </h:link>
                             </div>

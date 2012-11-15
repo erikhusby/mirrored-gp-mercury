@@ -195,12 +195,12 @@ public class ExomeExpressEndToEndTest {
             for (LabBatch labBatch : labBatches) {
                 CreateIssueResponse createResponse = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
                         "hrafal",
-                        CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel,
+                        CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL,
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
                 Assert.assertNotNull(createResponse);
                 Assert.assertNotNull(createResponse.getTicketName());
-                jiraTicket = new JiraTicket(jiraService, createResponse.getTicketName(), createResponse.getId());
+                jiraTicket = new JiraTicket( createResponse.getTicketName(), createResponse.getId());
                 labBatch.setJiraTicket(jiraTicket);
                 //labBatch.get
             }
@@ -343,7 +343,7 @@ public class ExomeExpressEndToEndTest {
             // MockQuoteService.registerNewWork
 
 
-            final TwoDBarcodedTube currEntry = poolingResult.getVesselContainer().getVesselAtPosition(VesselPosition.A01);
+            final TwoDBarcodedTube currEntry = poolingResult.getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
             final SequelLibrary registerLibrary = RegistrationJaxbConverter.squidify(currEntry/*, projectPlan*/);
 
@@ -366,7 +366,7 @@ public class ExomeExpressEndToEndTest {
 //            Assert.assertEquals(startersFromProjectPlan.size(), numStartersFromSampleInstances);
 
             // todo arz fix semantics: is it "single sample ancestor" or "sequencing library"?
-            Map<MercurySample, Collection<LabVessel>> singleSampleAncestors = poolingResult.getVesselContainer().getSingleSampleAncestors(VesselPosition.A01);
+            Map<MercurySample, Collection<LabVessel>> singleSampleAncestors = poolingResult.getContainerRole().getSingleSampleAncestors(VesselPosition.A01);
 
 //            for (Starter starter : projectPlan.getStarters()) {
 //                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
@@ -383,7 +383,7 @@ public class ExomeExpressEndToEndTest {
 //            }
             Assert.assertEquals(singleSampleAncestors.size(), 2);
 
-            Collection<LabBatch> nearestBatches = poolingResult.getVesselContainer().getNearestLabBatches(VesselPosition.A01);
+            Collection<LabBatch> nearestBatches = poolingResult.getContainerRole().getNearestLabBatches(VesselPosition.A01);
             Assert.assertEquals(nearestBatches.size(), 1);
             LabBatch labBatch = nearestBatches.iterator().next();
 

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
 
 import javax.xml.bind.annotation.XmlAttribute;
@@ -10,7 +11,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Date;
 
 @XmlRootElement(name = "Funding")
-public class Funding {
+public class Funding implements Displayable {
 
     public static final String FUNDS_RESERVATION = "Funds Reservation";
 
@@ -48,7 +49,7 @@ public class Funding {
         this.costObject = costObject;
     }
 
-    public String getFundingTypeAndName() {
+    public String getDisplayName() {
         return FUNDS_RESERVATION.equals(getFundingType()) ? "CO-" + grantNumber : "PO-" + purchaseOrderNumber;
     }
 
@@ -174,13 +175,13 @@ public class Funding {
         }
 
         Funding castOther = (Funding) other;
-        return new EqualsBuilder().append(getCostObject(), castOther.getCostObject())
-                                  .append(getPurchaseOrderNumber(), castOther.getPurchaseOrderNumber())
-                                  .append(getFundingType(), castOther.getFundingType()).isEquals();
+        return new EqualsBuilder().append(costObject, castOther.getCostObject())
+                                  .append(purchaseOrderNumber, castOther.getPurchaseOrderNumber())
+                                  .append(fundingType, castOther.getFundingType()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getCostObject()).append(getPurchaseOrderNumber()).append(getFundingType()).toHashCode();
+        return new HashCodeBuilder().append(costObject).append(purchaseOrderNumber).append(fundingType).toHashCode();
     }
 }

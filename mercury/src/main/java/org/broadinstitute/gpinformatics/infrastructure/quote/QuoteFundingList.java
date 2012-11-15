@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -18,7 +19,7 @@ import java.util.Set;
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
 @Singleton
-public class QuoteFundingList {
+public class QuoteFundingList extends AbstractCache {
 
     private Set<Funding> fundingList;
 
@@ -34,7 +35,7 @@ public class QuoteFundingList {
     public Set<Funding> getFunding() {
         // any time the funding is null but we are asking for it, try and retrieve it again
         if (fundingList == null) {
-            refreshFunding();
+            refreshCache();
         }
 
         return fundingList;
@@ -48,7 +49,7 @@ public class QuoteFundingList {
     public Funding getById(String fundingTypeAndName) {
         if (getFunding() != null) {
             for (Funding funding : getFunding()) {
-                if (funding.getFundingTypeAndName().equals(fundingTypeAndName)) {
+                if (funding.getDisplayName().equals(fundingTypeAndName)) {
                     return funding;
                 }
             }
@@ -93,14 +94,21 @@ public class QuoteFundingList {
         return results;
     }
 
-    private boolean anyFieldMatches(String lowerQuery, Funding funding) {
-        return funding.getFundingTypeAndName().toLowerCase().contains(lowerQuery) ||
+    private static boolean anyFieldMatches(String lowerQuery, Funding funding) {
+        return funding.getDisplayName().toLowerCase().contains(lowerQuery) ||
                funding.getMatchDescription().toLowerCase().contains(lowerQuery);
     }
 
-    public synchronized void refreshFunding() {
+    public synchronized void refreshCache() {
         try {
-            fundingList = ImmutableSet.copyOf(quoteService.getAllFundingSources());
+            Set<Funding> rawFunding = quoteService.getAllFundingSources();
+
+            // if fails, use previous cache entry (even if it's null)
+            if (rawFunding == null) {
+                return;
+            }
+
+            fundingList = ImmutableSet.copyOf(rawFunding);
         } catch (Exception ex) {
             logger.debug("Could not refresh the funding list", ex);
         }

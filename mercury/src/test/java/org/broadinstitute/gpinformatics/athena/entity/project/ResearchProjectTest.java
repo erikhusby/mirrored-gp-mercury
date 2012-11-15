@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -20,21 +21,7 @@ public class ResearchProjectTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        researchProject  = createDummyResearchProject();
-    }
-
-    public static ResearchProject createDummyResearchProject() {
-        ResearchProject researchProject = new ResearchProject(10950L, "MyResearchProject", "To study stuff.", ResearchProject.IRB_ENGAGED);
-
-        researchProject.addFunding(new ResearchProjectFunding(researchProject, "TheGrant"));
-        researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO"));
-
-        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, ResearchProjectIRB.IrbType.BROAD, "irb123"));
-        researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, ResearchProjectIRB.IrbType.OTHER, "irb456"));
-
-        researchProject.addPerson(RoleType.SCIENTIST, 111L);
-        researchProject.addPerson(RoleType.SCIENTIST, 222L);
-        return researchProject;
+        researchProject  = AthenaClientServiceStub.createDummyResearchProject ();
     }
 
     @Test
@@ -61,7 +48,7 @@ public class ResearchProjectTest {
 
         Assert.assertNull(researchProject.getJiraTicketKey());
 
-        Assert.assertEquals(researchProject.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.Research_Project);
+        Assert.assertEquals(researchProject.fetchJiraIssueType(), CreateIssueRequest.Fields.Issuetype.RESEARCH_PROJECT );
 
         Assert.assertEquals(researchProject.fetchJiraProject(), CreateIssueRequest.Fields.ProjectType.Research_Projects);
 

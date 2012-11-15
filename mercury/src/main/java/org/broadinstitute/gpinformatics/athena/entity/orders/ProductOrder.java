@@ -831,7 +831,7 @@ public class ProductOrder implements Serializable {
      */
     @Transient
     public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
-        return CreateIssueRequest.Fields.Issuetype.Product_Order;
+        return CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER;
     }
 
     public String getSampleBillingSummary() {

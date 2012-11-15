@@ -43,7 +43,7 @@ public class LabEventProjectPlanOverrider {
         }
         else if (possibleBatches.size() == 1) {
             LabBatch batch = possibleBatches.iterator().next();
-            batch.getJiraTicket().addComment(labEvent.getEventOperator().getLogin() + "is processing " + labEvent.getEventName().name() + " at " + labEvent.getEventLocation());
+            batch.getJiraTicket().addComment(labEvent.getEventOperator().getLogin() + "is processing " + labEvent.getLabEventType().getName() + " at " + labEvent.getEventLocation());
             for (LabVessel vessel : vessels) {
 //                ProjectPlan projectPlanOverride = batch.getProjectPlanOverride(vessel);
 //                if (projectPlanOverride != null) {
@@ -56,7 +56,7 @@ public class LabEventProjectPlanOverrider {
     }
 
     public void setProjectPlanOverrides(LabEvent labEvent,RackOfTubes rackOfTubes) {
-        Collection<TwoDBarcodedTube> sourceTubes = rackOfTubes.getVesselContainer().getContainedVessels();
+        Collection<TwoDBarcodedTube> sourceTubes = rackOfTubes.getContainerRole().getContainedVessels();
         setProjectPlanOverrides(labEvent,sourceTubes,labBatchDAO.guessActiveBatchesForVessels(sourceTubes));
     }
 

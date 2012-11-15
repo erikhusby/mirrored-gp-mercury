@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.project;
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -49,7 +48,7 @@ public class JiraTicketDaoTest extends ContainerTest{
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFetchByName() {
         String ticketName = "UT-" + UUID.randomUUID();
-        JiraTicket jiraTicket = new JiraTicket(new JiraServiceStub(), ticketName, ticketName);
+        JiraTicket jiraTicket = new JiraTicket( ticketName, ticketName);
         jiraTicketDao.persist(jiraTicket);
         jiraTicketDao.flush();
         jiraTicketDao.clear();
