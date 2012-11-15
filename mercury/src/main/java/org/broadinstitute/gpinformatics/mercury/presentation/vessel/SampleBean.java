@@ -113,4 +113,22 @@ public class SampleBean implements Serializable {
         }
         return positions;
     }
+
+    public List<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
+        if (vesselContainer != null) {
+            return vesselContainer.getSampleInstancesAtPositionList(position);
+        } else {
+            return vessel.getSampleInstancesList();
+        }
+    }
+
+    public LabVessel getVesselAtPosition(VesselPosition position) {
+        LabVessel vesselAtPosition;
+        if (vesselContainer != null && !vesselContainer.hasAnonymousVessels()) {
+            vesselAtPosition = vesselContainer.getVesselAtPosition(position);
+        } else {
+            vesselAtPosition = vessel;
+        }
+        return vesselAtPosition;
+    }
 }

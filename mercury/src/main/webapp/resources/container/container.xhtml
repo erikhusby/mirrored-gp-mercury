@@ -6,8 +6,8 @@
       xmlns:cc="http://java.sun.com/jsf/composite"
       xmlns:p="http://primefaces.org/ui"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:ui="http://java.sun.com/jsf/facelets"
         >
+
 
 <cc:interface>
     <cc:attribute name="barcode" required="true"/>
@@ -15,24 +15,25 @@
 <cc:implementation>
     <h:outputStylesheet library="css" name="container.css" target="head"/>
     <h:outputText value="#{containerBean.updateVessel(cc.attrs.barcode)}"/>
-    <p:dataGrid id="containerGrid" var="well" columns="#{containerBean.columns}" emptyMessage=""
-                rows="#{containerBean.columns * containerBean.rows}" value="#{containerBean.geometry}"
-                styleClass="ui-container" rendered="#{containerBean.geometry.size() > 1}">
-        <f:facet name="header">
-            Sample Layout for #{containerBean.barcode}
-        </f:facet>
-        <p:panel>
-            <h:outputText value="#{containerBean.getRowNumIndex()} " style="font-size: x-small;
-                                  font-family: monospace; vertical-align: super"/>
-            <br/>
-            <ui:repeat value="#{containerBean.samplesAtPosition()}" var="sample" varStatus="status">
-                <h:outputText value="#{sample.startingSample.sampleKey}&lt;br/&gt;" escape="false"
-                              style="font-size: smaller;" rendered="#{status.index lt 3}"/>
-            </ui:repeat>
-            <h:outputText value="..." rendered="#{containerBean.samplesAtPosition().size() gt 3}"/>
-            <h:outputText value="EMPTY" rendered="#{containerBean.samplesAtPosition().size() == 0}"
-                          style="font-size: smaller;"/>
-        </p:panel>
-    </p:dataGrid>
+    <p:panel id="gridPanel">
+        <p:dataGrid id="containerGrid" var="well" columns="#{containerBean.columns}" emptyMessage=""
+                    rows="#{containerBean.columns * containerBean.rows}" value="#{containerBean.geometry}"
+                    styleClass="ui-container" rendered="#{containerBean.geometry.size() > 1}">
+
+            <f:facet name="header">
+                Sample Layout for #{containerBean.barcode}
+            </f:facet>
+            <p:dataTable value="#{containerBean.samplesAtPosition()}" var="sample" emptyMessage="EMPTY">
+                <f:facet name="header">
+                    <h:outputText value="#{containerBean.getRowNumIndex()} " style="font-family: monospace;
+                            vertical-align: super"/>
+                </f:facet>
+                <p:column>
+                    <h:outputText value="#{sample.startingSample.sampleKey}&lt;br/&gt;" escape="false"
+                                  style="font-size: smaller;"/>
+                </p:column>
+            </p:dataTable>
+        </p:dataGrid>
+    </p:panel>
 </cc:implementation>
 </html>

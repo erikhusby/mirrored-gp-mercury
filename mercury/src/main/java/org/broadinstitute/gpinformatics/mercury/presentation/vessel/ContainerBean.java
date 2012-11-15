@@ -12,7 +12,6 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @ManagedBean
 @RequestScoped
@@ -21,10 +20,11 @@ public class ContainerBean implements Serializable {
     private LabVesselDao labVesselDao;
 
     private LabVessel vessel;
-    private String selectedSample;
     private Integer index = -1;
     private String barcode;
     private List<String> geometry = new ArrayList<String>();
+
+    private boolean showSamples = false;
 
     public String getBarcode() {
         return barcode;
@@ -32,22 +32,6 @@ public class ContainerBean implements Serializable {
 
     public void setBarcode(String barcode) {
         this.barcode = barcode;
-    }
-
-    public String getSelectedSample() {
-        return selectedSample;
-    }
-
-    public void setSelectedSample(String selectedSample) {
-        this.selectedSample = selectedSample;
-    }
-
-    public LabVessel getVessel() {
-        return vessel;
-    }
-
-    public void setVessel(LabVessel vessel) {
-        this.vessel = vessel;
     }
 
     public void updateVessel(String barcode) {
@@ -104,22 +88,21 @@ public class ContainerBean implements Serializable {
             String rowName = vessel.getVesselGeometry().getRowNames()[getRowNumFromIndex()];
             VesselPosition position = VesselPosition.getByName(rowName + columnName);
             VesselContainer<?> vesselContainer = null;
-            if(OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
-                vesselContainer = ((RackOfTubes)vessel).getContainerRole();
+            if (OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
+                vesselContainer = ((RackOfTubes) vessel).getContainerRole();
             }
-            if(OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
-                vesselContainer = ((StaticPlate)vessel).getContainerRole();
+            if (OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
+                vesselContainer = ((StaticPlate) vessel).getContainerRole();
             }
-            if(OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
-                vesselContainer = ((StripTube)vessel).getContainerRole();
+            if (OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
+                vesselContainer = ((StripTube) vessel).getContainerRole();
             }
-            if(OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
-                vesselContainer = ((IlluminaFlowcell)vessel).getContainerRole();
+            if (OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
+                vesselContainer = ((IlluminaFlowcell) vessel).getContainerRole();
             }
-            if(vesselContainer != null){
+            if (vesselContainer != null) {
                 sampleInstances = vesselContainer.getSampleInstancesAtPositionList(position);
-            }
-            else {
+            } else {
                 sampleInstances = vessel.getSampleInstancesList();
             }
 
