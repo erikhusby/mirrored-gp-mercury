@@ -318,8 +318,11 @@ public class ProductForm extends AbstractJsfBean {
         if (product == null) {
             return new ArrayList<Product>();
         }
-        ArrayList<Product> addOns = new ArrayList<Product>(product.getAddOns());
-        Collections.sort(addOns);
+
+        if (addOns == null) {
+            addOns = new ArrayList<Product>(product.getAddOns());
+            Collections.sort(addOns);
+        }
         return addOns;
     }
 
@@ -333,11 +336,7 @@ public class ProductForm extends AbstractJsfBean {
         return priceItems;
     }
 
-    /**
-     * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
-     * actual setting of {@link PriceItem}s is handled in the ajax event listener only
-     * @param priceItems
-     */
+
     public void setPriceItems(List<PriceItem> priceItems) {
         this.priceItems = priceItems;
     }
