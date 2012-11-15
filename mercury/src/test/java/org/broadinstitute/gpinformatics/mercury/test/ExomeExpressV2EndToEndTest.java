@@ -1,6 +1,26 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Test Exome Express in Mercury
@@ -19,6 +39,8 @@ public class ExomeExpressV2EndToEndTest {
         // Define Cohort/Collection
         // {Create Quote/Setup Funding}
         // Create Product Order (key lab personnel and PDMs are notified)
+        ProductOrder productOrder1 = AthenaClientServiceStub.createDummyProductOrder();
+
         // Define travel group (can be independent of product order)
         // {Create kit and Ship kit}
         // - Upload metadata through BSP portal
@@ -31,10 +53,28 @@ public class ExomeExpressV2EndToEndTest {
         // Create JIRA ticket configured in bucket (There is a ticket for an LCSet but none for the extraction/pico work)
         // BSP registers batch in Mercury
         // BSP Manual messaging for extractions, various batches
-        // Bucket for Shearing
+        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+        LabEventFactory labEventFactory = new LabEventFactory();
+        List<String> shearingTubeBarcodes = Arrays.asList("SH1", "SH2", "SH3");
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildPlateToRack("PlatingToShearingTubes",
+                "NormPlate", "CovarisRack", shearingTubeBarcodes);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes = new HashMap<String, TwoDBarcodedTube>();
+        LabEvent labEvent = labEventFactory.buildFromBettaLimsPlateToRackDbFree(plateTransferEventType,
+                new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96), mapBarcodeToTargetTubes);
+        // Bucket for Shearing - enters from workflow?
+        BucketBean bucketBean = new BucketBean();
+        WorkflowLoader workflowLoader = new WorkflowLoader();
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(productOrder1.getProduct().getWorkflowName());
+        ProductWorkflowDefVersion productWorkflowDefVersion = productWorkflowDef.getEffectiveVersion();
+        // todo get from message event name to bucket def
+        Bucket shearingBucket = new Bucket(new WorkflowBucketDef("Shearing"));
+        // todo plates vs tubes?
+        bucketBean.add(productOrder1.getBusinessKey(), labEvent.getTargetLabVessels(), shearingBucket, new Person());
         // - Deck calls web service to verify source barcodes?
         // - Deck calls web service to validate next action against workflow and batch
         // Decks (BSP and Sequencing) send messages to Mercury, first message auto-drains bucket
+        bucketBean.start();
         // Various messages advance workflow (test JMS vs JAX-RS)
         // Non ExEx messages handled by BettaLIMS
         // Automation uploads QC
