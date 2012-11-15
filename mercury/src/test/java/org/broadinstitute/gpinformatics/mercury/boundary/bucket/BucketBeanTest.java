@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import junit.framework.Assert;
-import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDaoTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -148,7 +146,7 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertEquals(1, testEntry4.getLabVessel().getInPlaceEvents().size());
 
-        resource.start(bucketBatch, howieTest );
+        resource.start(bucketBatch, howieTest, LabEvent.UI_EVENT_LOCATION );
 
         Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
@@ -183,7 +181,7 @@ public class BucketBeanTest extends ContainerTest {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testResource_start_vessels () {
 
         bucketDao.flush();
@@ -200,24 +198,21 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
 
 
-        BucketEntry testEntry2 = resource.add (new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket);
-        BucketEntry testEntry3 = resource.add (new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey2, bucket);
-        BucketEntry testEntry4 = resource.add (new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey3, bucket);
+        BucketEntry testEntry2 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket);
+        BucketEntry testEntry3 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey2, bucket);
+        BucketEntry testEntry4 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey3, bucket);
 
-        Assert.assertTrue(bucket.contains(testEntry2));
-        Assert.assertTrue(bucket.contains(testEntry3));
-        Assert.assertTrue(bucket.contains(testEntry4));
 
         Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
+        Set<BucketEntry> bucketCreateBatch = new HashSet<BucketEntry>();
 
         Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry1, testEntry2, testEntry3 ) );
+        Assert.assertTrue ( Collections.addAll ( bucketCreateBatch, testEntry2, testEntry3, testEntry4  ) );
 
-        Set<LabVessel> vesselBucketBatch = new HashSet<LabVessel>();
+        resource.add(bucketCreateBatch,bucket,howieTest);
 
-        bucketDao.flush ();
+        bucketDao.flush();
         bucketDao.clear ();
-
-        bucket = bucketDao.findByName(bucketCreationName);
 
 
         LabVessel vessel1 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode1);
@@ -225,31 +220,53 @@ public class BucketBeanTest extends ContainerTest {
         LabVessel vessel3 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode3);
         LabVessel vessel4 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode4);
 
+        testEntry1 = bucketEntryDao.findByVesselAndBucket(vessel1, bucket);
+        testEntry2 = bucketEntryDao.findByVesselAndBucket(vessel2, bucket);
+        testEntry3 = bucketEntryDao.findByVesselAndBucket(vessel3, bucket);
+        testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
+
+        Assert.assertTrue(bucket.contains(testEntry2));
+        Assert.assertTrue(bucket.contains(testEntry3));
+        Assert.assertTrue(bucket.contains(testEntry4));
+
+        Set<LabVessel> vesselBucketBatch = new HashSet<LabVessel>();
+
+        bucketDao.flush ();
+        bucketDao.clear ();
+
+        bucket = bucketDao.findByName ( bucketCreationName );
+
+
+        vessel1 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode1);
+        vessel2 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode2);
+        vessel3 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode3);
+        vessel4 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode4);
+
 
 
         Assert.assertTrue ( Collections.addAll ( vesselBucketBatch, vessel1,
                                                  vessel2, vessel3) );
 
-        Assert.assertFalse(vessel1.getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, vessel1.getInPlaceEvents().size());
-        Assert.assertFalse(vessel2.getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, vessel2.getInPlaceEvents().size());
-        Assert.assertFalse(vessel3.getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, vessel3.getInPlaceEvents().size());
-        Assert.assertFalse(vessel4.getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, vessel4.getInPlaceEvents().size());
+        Assert.assertFalse(vessel1.getInPlaceEvents ().isEmpty());
+        Assert.assertEquals(1, vessel1.getInPlaceEvents ().size());
+        Assert.assertFalse(vessel2.getInPlaceEvents ().isEmpty());
+        Assert.assertEquals(1, vessel2.getInPlaceEvents ().size());
+        Assert.assertFalse(vessel3.getInPlaceEvents ().isEmpty());
+        Assert.assertEquals(1, vessel3.getInPlaceEvents ().size());
+        Assert.assertFalse(vessel4.getInPlaceEvents ().isEmpty());
+        Assert.assertEquals(1, vessel4.getInPlaceEvents ().size());
 
-        resource.start(howieTest,vesselBucketBatch,bucket);
+        resource.start(howieTest,vesselBucketBatch,bucket, LabEvent.UI_EVENT_LOCATION );
 
         bucketDao.flush ();
         bucketDao.clear ();
 
         bucket = bucketDao.findByName(bucketCreationName);
 
-        Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
+        Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents ().isEmpty());
+        Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents ().isEmpty());
+        Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEvents ().isEmpty());
+        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents ().isEmpty());
 
         for(BucketEntry currEntry:bucketBatch) {
             boolean doesEventHavePDO = false;
@@ -289,7 +306,7 @@ public class BucketBeanTest extends ContainerTest {
     }
 
 
-    @Test( groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test( groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testResource_start_vessel_count () {
 
         bucketDao.flush();
@@ -306,17 +323,35 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
 
 
-        BucketEntry testEntry2 = resource.add (new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket);
-        BucketEntry testEntry3 = resource.add (new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey2, bucket);
-        BucketEntry testEntry4 = resource.add (new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey3, bucket);
+        BucketEntry testEntry2 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket);
+        BucketEntry testEntry3 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey2, bucket);
+        BucketEntry testEntry4 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey3, bucket);
+
+        Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
+        Set<BucketEntry> bucketCreateBatch = new HashSet<BucketEntry>();
+        Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry1, testEntry2, testEntry3 ) );
+        Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry2, testEntry3, testEntry4  ) );
+
+        resource.add(bucketCreateBatch,bucket,howieTest);
+
+        bucketDao.flush();
+        bucketDao.clear ();
+
+
+        LabVessel vessel1 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode1);
+        LabVessel vessel2 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode2);
+        LabVessel vessel3 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode3);
+        LabVessel vessel4 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode4);
+
+        testEntry1 = bucketEntryDao.findByVesselAndBucket(vessel1, bucket);
+        testEntry2 = bucketEntryDao.findByVesselAndBucket(vessel2, bucket);
+        testEntry3 = bucketEntryDao.findByVesselAndBucket(vessel3, bucket);
+        testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
 
         Assert.assertTrue(bucket.contains(testEntry2));
         Assert.assertTrue(bucket.contains(testEntry3));
         Assert.assertTrue(bucket.contains(testEntry4));
 
-        Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
-
-        Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry1, testEntry2, testEntry3 ) );
 
         Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertEquals(1, testEntry1.getLabVessel().getInPlaceEvents().size());
@@ -331,7 +366,7 @@ public class BucketBeanTest extends ContainerTest {
                                      " Entries in it" );
 
         bucketDao.flush();
-        bucketDao.clear();
+        bucketDao.clear ();
 
         bucket = bucketDao.findByName(bucketCreationName);
 
@@ -342,8 +377,8 @@ public class BucketBeanTest extends ContainerTest {
 
         bucket = bucketDao.findByName(bucketCreationName);
 
-        logger.log( Level.INFO, "After the start method.  The bucket has " + bucket.getBucketEntries ().size () +
-                                     " Entries in it" );
+        logger.log ( Level.INFO, "After the start method.  The bucket has " + bucket.getBucketEntries ().size () +
+                " Entries in it" );
 
 
         Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
@@ -365,10 +400,10 @@ public class BucketBeanTest extends ContainerTest {
             }
         }
 
-        LabVessel vessel1 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode1);
-        LabVessel vessel2 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode2);
-        LabVessel vessel3 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode3);
-        LabVessel vessel4 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode4);
+        vessel1 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode1);
+        vessel2 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode2);
+        vessel3 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode3);
+        vessel4 = twoDBarcodedTubeDAO.findByBarcode(twoDBarcode4);
 
         testEntry1 = bucketEntryDao.findByVesselAndBucket(vessel1, bucket);
         testEntry2 = bucketEntryDao.findByVesselAndBucket(vessel2, bucket);

@@ -69,9 +69,15 @@ public class BucketEntry  {
     }
 
     public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey, @Nonnull Bucket bucket ) {
+
+        this(labVesselIn, poBusinessKey);
+        bucketExistence = bucket;
+
+    }
+
+    public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey) {
         labVessel = labVesselIn;
         this.poBusinessKey = poBusinessKey;
-        bucketExistence = bucket;
 
         createdDate = new Date();
 
