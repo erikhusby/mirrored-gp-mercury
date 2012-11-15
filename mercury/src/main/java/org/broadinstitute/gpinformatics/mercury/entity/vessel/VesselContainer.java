@@ -383,4 +383,15 @@ public class VesselContainer<T extends LabVessel> {
     public List<LabVessel.VesselEvent> getDescendants(LabVessel containee) {
         return getDescendants(getPositionOfVessel(containee));
     }
+
+    public boolean hasAnonymousVessels(){
+        boolean anonymousVessels = false;
+        LabVessel.CONTAINER_TYPE type = embedder.getType();
+        if(type == LabVessel.CONTAINER_TYPE.STATIC_PLATE
+                || type == LabVessel.CONTAINER_TYPE.FLOWCELL
+                || type == LabVessel.CONTAINER_TYPE.STRIP_TUBE){
+            anonymousVessels = true;
+        }
+        return anonymousVessels;
+    }
 }
