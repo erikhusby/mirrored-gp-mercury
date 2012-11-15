@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -19,6 +20,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -70,11 +72,16 @@ public class ExomeExpressV2EndToEndTest {
         // todo get from message event name to bucket def
         Bucket shearingBucket = new Bucket(new WorkflowBucketDef("Shearing"));
         // todo plates vs tubes?
-        bucketBean.add(productOrder1.getBusinessKey(), labEvent.getTargetLabVessels(), shearingBucket, new Person());
+        final Person testActor = new Person ();
+        bucketBean.add(productOrder1.getBusinessKey(), labEvent.getTargetLabVessels(), shearingBucket, testActor );
         // - Deck calls web service to verify source barcodes?
         // - Deck calls web service to validate next action against workflow and batch
         // Decks (BSP and Sequencing) send messages to Mercury, first message auto-drains bucket
-        bucketBean.start();
+
+        bucketBean.start(testActor,
+                         new LinkedList<LabVessel> ()/* TODO SGM Need to define Vessels from test message*/,
+                         shearingBucket,"");
+
         // Various messages advance workflow (test JMS vs JAX-RS)
         // Non ExEx messages handled by BettaLIMS
         // Automation uploads QC

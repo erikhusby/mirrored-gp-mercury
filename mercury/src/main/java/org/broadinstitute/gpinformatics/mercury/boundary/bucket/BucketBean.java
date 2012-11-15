@@ -76,7 +76,19 @@ public class BucketBean {
         return newEntry;
     }
 
+    /**
+     * adds a pre-defined collection of {@link LabVessel}s to a given bucket
+     *
+     * @param productOrder
+     * @param entriesToAdd
+     * @param bucket
+     * @param actor
+     */
     public void add ( String productOrder, @Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket, Person actor ) {
+
+        for(LabVessel currVessel:entriesToAdd) {
+            bucket.addEntry(productOrder, currVessel);
+        }
 
         Map<String, Collection<LabVessel>> pdoKeyToVesselMap =
                 new HashMap<String, Collection<LabVessel>>();
