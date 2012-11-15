@@ -26,9 +26,11 @@ public class ProductOrderBean {
     private BSPUserList bspUserList;
 
     /** All product orders, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
-    private List<ProductOrder> allProductOrders;
+    private ProductOrderListModel allProductOrders;
 
     private List<ProductOrder> filteredProductOrders;
+
+    private ProductOrder[] selectedProductOrders;
 
     /**
      * Returns a list of all product orders. Only actually fetches the list from the database once per request
@@ -36,9 +38,9 @@ public class ProductOrderBean {
      *
      * @return list of all product orders
      */
-    public List<ProductOrder> getAllProductOrders() {
+    public ProductOrderListModel getAllProductOrders() {
         if (allProductOrders == null) {
-            allProductOrders = productOrderDao.findAll();
+            allProductOrders = new ProductOrderListModel(productOrderDao.findAll());
         }
 
         return allProductOrders;
@@ -77,8 +79,8 @@ public class ProductOrderBean {
      */
     public List<SelectItem> getAllProjectOwners() {
         Set<BspUser> owners = new HashSet<BspUser>();
-        for (ProductOrder project : getAllProductOrders()) {
-            Long createdBy = project.getCreatedBy();
+        for (ProductOrder order : getAllProductOrders()) {
+            Long createdBy = order.getCreatedBy();
             if (createdBy != null) {
                 BspUser bspUser = bspUserList.getById(createdBy);
                 if (bspUser != null) {
@@ -100,5 +102,15 @@ public class ProductOrderBean {
         return productOrderDao.findByBusinessKey(productOrderKey);
     }
 
+    public ProductOrder[] getSelectedProductOrders() {
+        return selectedProductOrders;
+    }
 
+    public void setSelectedProductOrders(ProductOrder[] selectedProductOrders) {
+        this.selectedProductOrders = selectedProductOrders;
+    }
+
+    public String downloadLedgerUpdate() {
+        return "got it";
+    }
 }

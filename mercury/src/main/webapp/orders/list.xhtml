@@ -17,11 +17,18 @@
             <div class="row">
                 <h:link value="New Product Order" outcome="create" styleClass="pull-right"/>
             </div>
+
+            <p:commandButton value="Generate Billing Tracker" action="#{productOrderBean.downloadLedgerUpdate}" ajax="false"/>
+
             <p:dataTable value="#{productOrderBean.allProductOrders}"
                          filteredValue="#{productOrderBean.filteredProductOrders}"
                          sortBy="#{order.title}"
                          sortOrder="ascending"
-                         var="order">
+                         var="order"
+                         selection="#{productOrderBean.selectedProductOrders}">
+
+                <p:column selectionMode="multiple" style="width:18px" />
+
                 <p:column headerText="Name" sortBy="#{order.title}" sortingComparator="caseInsensitiveText">
                     <h:link outcome="view" value="#{order.title}">
                         <f:param name="productOrder" value="#{order.businessKey}"/>
