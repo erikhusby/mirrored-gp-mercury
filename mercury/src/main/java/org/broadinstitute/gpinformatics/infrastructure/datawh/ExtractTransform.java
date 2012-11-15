@@ -133,10 +133,10 @@ public class ExtractTransform {
             final long lastRev = readLastEtlRun(dataDir);
             final long etlRev = auditReaderEtl.currentRevNumber(etlDate);
             if (lastRev >= etlRev) {
-                logger.info("Incremental ETL found no changes since rev " + lastRev);
+                logger.debug("Incremental ETL found no changes since rev " + lastRev);
                 return 0;
             }
-            logger.info("Doing incremental ETL for rev numbers " + lastRev + " to " + etlRev);
+            logger.debug("Doing incremental ETL for rev numbers " + lastRev + " to " + etlRev);
             if (0L == lastRev) {
                 logger.warn("Cannot determine time of last incremental ETL.  Doing a full ETL.");
             }
@@ -161,7 +161,7 @@ public class ExtractTransform {
             boolean lastEtlFileWritten = writeLastEtlRun(dataDir, etlRev);
             if (recordCount > 0 && lastEtlFileWritten) {
                 writeIsReadyFile(dataDir, etlDateStr);
-                logger.info("Incremental ETL created " + recordCount + " data records in "
+                logger.debug("Incremental ETL created " + recordCount + " data records in "
                         + (int)Math.ceil((System.currentTimeMillis() - currentRunStartTime) / 1000.) + " seconds.");
             }
 
