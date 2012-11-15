@@ -181,7 +181,7 @@ public class BucketBeanTest extends ContainerTest {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testResource_start_vessels () {
 
         bucketDao.flush();
@@ -198,18 +198,19 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
 
 
-        BucketEntry testEntry2 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket);
-        BucketEntry testEntry3 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey2, bucket);
-        BucketEntry testEntry4 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey3, bucket);
+        BucketEntry testEntry2;// = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket);
+        BucketEntry testEntry3;// = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey1, bucket);
+        BucketEntry testEntry4;// = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey1, bucket);
 
 
-        Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
-        Set<BucketEntry> bucketCreateBatch = new HashSet<BucketEntry>();
+        Set<LabVessel> bucketCreateBatch = new HashSet<LabVessel>();
 
-        Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry1, testEntry2, testEntry3 ) );
-        Assert.assertTrue ( Collections.addAll ( bucketCreateBatch, testEntry2, testEntry3, testEntry4  ) );
 
-        resource.add(bucketCreateBatch,bucket,howieTest);
+        Assert.assertTrue( Collections.addAll(bucketCreateBatch, new TwoDBarcodedTube(twoDBarcode2),
+                                              new TwoDBarcodedTube(twoDBarcode3), new TwoDBarcodedTube(twoDBarcode4)));
+
+
+        resource.add( poBusinessKey1, bucketCreateBatch,bucket,howieTest);
 
         bucketDao.flush();
         bucketDao.clear ();
@@ -224,6 +225,9 @@ public class BucketBeanTest extends ContainerTest {
         testEntry2 = bucketEntryDao.findByVesselAndBucket(vessel2, bucket);
         testEntry3 = bucketEntryDao.findByVesselAndBucket(vessel3, bucket);
         testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
+
+        Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
+        Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry1, testEntry2, testEntry3 ) );
 
         Assert.assertTrue(bucket.contains(testEntry2));
         Assert.assertTrue(bucket.contains(testEntry3));
@@ -306,7 +310,7 @@ public class BucketBeanTest extends ContainerTest {
     }
 
 
-    @Test( groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test( groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testResource_start_vessel_count () {
 
         bucketDao.flush();
@@ -323,16 +327,17 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
 
 
-        BucketEntry testEntry2 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket);
-        BucketEntry testEntry3 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey2, bucket);
-        BucketEntry testEntry4 = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey3, bucket);
+        BucketEntry testEntry2;// = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket);
+        BucketEntry testEntry3;// = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey1, bucket);
+        BucketEntry testEntry4;// = new BucketEntry(new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey1, bucket);
 
-        Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
-        Set<BucketEntry> bucketCreateBatch = new HashSet<BucketEntry>();
-        Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry1, testEntry2, testEntry3 ) );
-        Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry2, testEntry3, testEntry4  ) );
+        Set<LabVessel> bucketCreateBatch = new HashSet<LabVessel>();
 
-        resource.add(bucketCreateBatch,bucket,howieTest);
+        Assert.assertTrue ( Collections.addAll ( bucketCreateBatch, new TwoDBarcodedTube(twoDBarcode2),
+                                                 new TwoDBarcodedTube(twoDBarcode3),
+                                                 new TwoDBarcodedTube(twoDBarcode4)) ) ;
+
+        resource.add( poBusinessKey1, bucketCreateBatch,bucket,howieTest);
 
         bucketDao.flush();
         bucketDao.clear ();
@@ -347,6 +352,9 @@ public class BucketBeanTest extends ContainerTest {
         testEntry2 = bucketEntryDao.findByVesselAndBucket(vessel2, bucket);
         testEntry3 = bucketEntryDao.findByVesselAndBucket(vessel3, bucket);
         testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
+
+        Set<BucketEntry> bucketBatch = new HashSet<BucketEntry>();
+        Assert.assertTrue ( Collections.addAll ( bucketBatch, testEntry1, testEntry2, testEntry3 ) );
 
         Assert.assertTrue(bucket.contains(testEntry2));
         Assert.assertTrue(bucket.contains(testEntry3));

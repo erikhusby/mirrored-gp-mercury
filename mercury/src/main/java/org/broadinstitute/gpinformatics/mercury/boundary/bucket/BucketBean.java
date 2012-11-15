@@ -76,21 +76,12 @@ public class BucketBean {
         return newEntry;
     }
 
-    public void add ( @Nonnull Collection<BucketEntry> entriesToAdd, @Nonnull Bucket bucket, Person actor ) {
+    public void add ( String productOrder, @Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket, Person actor ) {
 
-        Map<String, List<LabVessel>> pdoKeyToVesselMap = new HashMap<String, List<LabVessel>> ();
-        Set<LabVessel> eventVessels = new HashSet<LabVessel> ();
+        Map<String, Collection<LabVessel>> pdoKeyToVesselMap =
+                new HashMap<String, Collection<LabVessel>>();
 
-
-        for ( BucketEntry currEntry : entriesToAdd ) {
-            if ( !pdoKeyToVesselMap.containsKey ( currEntry.getPoBusinessKey () ) ) {
-                pdoKeyToVesselMap.put ( currEntry.getPoBusinessKey (), new LinkedList<LabVessel> () );
-            }
-            pdoKeyToVesselMap.get ( currEntry.getPoBusinessKey () ).add ( currEntry.getLabVessel () );
-            eventVessels.add ( currEntry.getLabVessel () );
-
-            bucket.addEntry(currEntry);
-        }
+        pdoKeyToVesselMap.put(productOrder, entriesToAdd);
 
         Set<LabEvent> eventList = new HashSet<LabEvent> ();
         eventList.addAll ( labEventFactory.buildFromBatchRequests ( pdoKeyToVesselMap, actor, null,
@@ -271,7 +262,8 @@ public class BucketBean {
          * Create (if necessary) a new batch
          */
 
-        Map<String, List<LabVessel>> pdoKeyToVesselMap = new HashMap<String, List<LabVessel>> ();
+        Map<String, Collection<LabVessel>> pdoKeyToVesselMap =
+                new HashMap<String, Collection<LabVessel>>();
         Set<LabVessel> batchVessels = new HashSet<LabVessel> ();
 
         List<LabBatch> trackBatches = null;
