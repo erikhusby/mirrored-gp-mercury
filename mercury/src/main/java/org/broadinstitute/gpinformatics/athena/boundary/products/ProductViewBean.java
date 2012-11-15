@@ -7,9 +7,12 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.ProductConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.products.ProductForm;
+import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
+import javax.enterprise.context.Conversation;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.inject.New;
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
@@ -27,6 +30,20 @@ public class ProductViewBean extends AbstractJsfBean {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
 
+    @Inject
+    private Conversation conversation;
+
+    @Inject
+    private TableData addOnData;
+
+    public TableData getAddOnData() {
+        return addOnData;
+    }
+
+    public void setAddOnData(TableData addOnData) {
+        this.addOnData = addOnData;
+    }
+
     /**
      * Model object
      */
@@ -43,6 +60,16 @@ public class ProductViewBean extends AbstractJsfBean {
 
     public void setVsBusinessKeyCache(UIInput vsBusinessKeyCache) {
         this.vsBusinessKeyCache = vsBusinessKeyCache;
+    }
+
+    private UIInput viewParam;
+
+    public UIInput getViewParam() {
+        return viewParam;
+    }
+
+    public void setViewParam(UIInput viewParam) {
+        this.viewParam = viewParam;
     }
 
     /**
@@ -63,9 +90,21 @@ public class ProductViewBean extends AbstractJsfBean {
     @Inject
     private ProductConverter productConverter;
 
+    public void initView() {
+        if (!facesContext.isPostback()) {
+            addOnData.setValues(new ArrayList<Product>(product.getAddOns()));
+            if (conversation.isTransient()) {
+                conversation.begin();
+            }
+        }
+    }
 
     public Product getProduct() {
+//        loadProduct();
+        return product;
+    }
 
+    public void loadProduct() {
         // if the model is not set but we have the business key in our cache binding, run the converter
         // to generate the model.  we expect to be in this case for every ajax request on this page.
         if (product == null && vsBusinessKeyCache != null && vsBusinessKeyCache.getValue() != null) {
@@ -77,8 +116,6 @@ public class ProductViewBean extends AbstractJsfBean {
         else if (vsBusinessKeyCache != null && vsBusinessKeyCache.getValue() == null && product != null) {
             vsBusinessKeyCache.setValue(product.getBusinessKey());
         }
-
-        return product;
     }
 
     public void setProduct(Product product) {
@@ -86,10 +123,11 @@ public class ProductViewBean extends AbstractJsfBean {
     }
 
     public List<Product> getAddOns() {
+//        loadProduct();
 
-        if (getProduct() != null && addOns == null) {
+        if (product != null && addOns == null) {
             addOns = new ArrayList<Product>();
-            addOns.addAll(getProduct().getAddOns());
+            addOns.addAll(product.getAddOns());
             // TODO make ProductComparator a static field on Product
             Collections.sort(addOns, new ProductComparator());
         }
@@ -98,9 +136,11 @@ public class ProductViewBean extends AbstractJsfBean {
     }
 
     public List<PriceItem> getPriceItems() {
-        if (getProduct() != null && priceItems == null) {
+//        loadProduct();
+
+        if (product != null && priceItems == null) {
             priceItems = new ArrayList<PriceItem>();
-            priceItems.addAll(getProduct().getPriceItems());
+            priceItems.addAll(product.getPriceItems());
             // TODO make PriceItemComparator a static field on PriceItem
             Collections.sort(priceItems, new PriceItemComparator());
         }
@@ -110,42 +150,52 @@ public class ProductViewBean extends AbstractJsfBean {
 
 
     public void onPreRenderView() throws IOException {
-        if ( getProduct() == null ) {
+//        loadProduct();
+
+        if ( product == null ) {
             addErrorMessage("No product with this part number exists.");
             facesContext.renderResponse();
         }
     }
 
     public String getAvailabilityDate() {
-        if (getProduct() == null || getProduct().getAvailabilityDate() == null) {
+        loadProduct();
+
+        if (product == null || product.getAvailabilityDate() == null) {
             return "";
         }
 
-        return DATE_FORMAT.format(getProduct().getAvailabilityDate());
+        return DATE_FORMAT.format(product.getAvailabilityDate());
     }
 
 
     public String getDiscontinuedDate() {
-        if (getProduct() == null || getProduct().getDiscontinuedDate() == null) {
+        loadProduct();
+
+        if (product == null || product.getDiscontinuedDate() == null) {
             return "";
         }
 
-        return DATE_FORMAT.format(getProduct().getDiscontinuedDate());
+        return DATE_FORMAT.format(product.getDiscontinuedDate());
     }
 
 
     public Integer getExpectedCycleTimeDays() {
-        return ProductForm.convertCycleTimeSecondsToDays(getProduct().getExpectedCycleTimeSeconds()) ;
+        loadProduct();
+        return ProductForm.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
     public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
-        getProduct().setExpectedCycleTimeSeconds(ProductForm.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
+        loadProduct();
+        product.setExpectedCycleTimeSeconds(ProductForm.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
 
     public Integer getGuaranteedCycleTimeDays() {
-        return ProductForm.convertCycleTimeSecondsToDays(getProduct().getGuaranteedCycleTimeSeconds()) ;
+        loadProduct();
+        return ProductForm.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
-        getProduct().setGuaranteedCycleTimeSeconds(ProductForm.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+        loadProduct();
+        product.setGuaranteedCycleTimeSeconds(ProductForm.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
     }
 
 }

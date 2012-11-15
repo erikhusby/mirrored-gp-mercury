@@ -4,8 +4,10 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
+import javax.faces.event.ValueChangeEvent;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -31,5 +33,12 @@ public class ProductConverter implements Converter {
             return ((Product) object).getBusinessKey();
         }
         return "";
+    }
+
+    public void updateModel(ValueChangeEvent event) {
+        UIInput input = (UIInput) event.getComponent();
+        input.getValueExpression("value").setValue(FacesContext.getCurrentInstance().getELContext(), event.getNewValue());
+        // prevent setter being called again during update-model phase
+        input.setLocalValueSet(false);
     }
 }
