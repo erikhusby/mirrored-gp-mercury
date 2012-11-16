@@ -111,7 +111,7 @@ public class JiraServiceTest {
         CustomField mercuryUrlField = new CustomField(
                 allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getFieldName()),
                 "http://www.broadinstitute.org/", CustomField.SingleFieldType.TEXT);
-        service.updateIssue(issue.getKey(), Collections.singletonList(mercuryUrlField));
+        issue.updateIssue(Collections.singletonList(mercuryUrlField));
     }
 
     public void testAddWatcher() {

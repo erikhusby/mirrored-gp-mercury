@@ -31,7 +31,7 @@ public interface JiraService extends Serializable {
      * @throws IOException
      */
     JiraIssue createIssue(String projectPrefix, String reporter,
-                                    CreateFields.IssueType issuetype, String summary,
+                                    CreateFields.IssueType issueType, String summary,
                                     String description, Collection<CustomField> customFields) throws IOException;
 
     /**

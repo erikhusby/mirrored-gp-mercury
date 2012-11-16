@@ -2,11 +2,13 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collection;
 
 public class JiraIssue implements Serializable {
     
@@ -32,6 +34,15 @@ public class JiraIssue implements Serializable {
     
     public String getKey() {
         return key;
+    }
+
+    /**
+     * Updates an issue, modifying the custom fields supplied.
+     *
+     * @param customFields    the fields to modify
+     */
+    public void updateIssue(Collection<CustomField> customFields) throws IOException {
+        jiraService.updateIssue(key, customFields);
     }
 
     /**
