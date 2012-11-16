@@ -109,6 +109,7 @@ public class ResearchProject implements Serializable {
     private List<ProductOrder> productOrders = new ArrayList<ProductOrder>();
 
     @Index(name = "ix_rp_jira")
+    @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
     @Transient

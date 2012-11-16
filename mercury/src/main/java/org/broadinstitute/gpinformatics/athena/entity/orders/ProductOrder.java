@@ -74,6 +74,7 @@ public class ProductOrder implements Serializable {
     private String comments;
 
     /** Reference to the Jira Ticket created when the order is submitted */
+    @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
@@ -673,6 +674,10 @@ public class ProductOrder implements Serializable {
     public int getMissingBspMetaDataCount() {
         counts.generateCounts();
         return counts.missingBspMetaDataCount;
+    }
+
+    public Long getProductOrderId() {
+        return productOrderId;
     }
 
     private static void addCustomField(Map<String, CustomFieldDefinition> submissionFields,
